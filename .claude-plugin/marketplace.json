@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
+  "name": "nocode-toolkit",
+  "owner": { "name": "Harrison", "url": "https://github.com/3dot141" },
+  "plugins": [
+    {
+      "name": "nocode-toolkit",
+      "description": "Harrison 的个人工具箱：全局规则注入 + skills 扩展位",
+      "source": "./."
+    }
+  ]
+}
