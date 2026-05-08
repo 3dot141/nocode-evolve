@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 # SessionStart hook：先注入插件全局规则，再叠加项目自定义规则。
 # - 全局：${CLAUDE_PLUGIN_ROOT}/rules/global-rules.md
-# - 项目：<project_root>/.nocode/AGENTS.md（存在则追加，用于每个工程的定制）
+# - 项目：<project_root>/.agents-personal/AGENTS.md（存在则追加，用于每个工程的定制）
 set -euo pipefail
 
 GLOBAL_RULES="${CLAUDE_PLUGIN_ROOT}/rules/global-rules.md"
 PROJECT_DIR="${CLAUDE_PROJECT_DIR:-$PWD}"
-PROJECT_RULES="${PROJECT_DIR}/.nocode/AGENTS.md"
+PROJECT_RULES="${PROJECT_DIR}/.agents-personal/AGENTS.md"
 
 content=""
 
