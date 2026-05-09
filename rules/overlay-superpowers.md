@@ -18,13 +18,12 @@ docs/plans/{username}/yymmdd-<topic>-design.md
 
 > 不再使用 skill 内默认的 `docs/plans/YYYY-MM-DD-<topic>-design.md`。
 
-### 文档模板
+### 写作工作流
 
-写设计文档前，**必须先 Read** 模板：
+走到 step 5（写设计文档）时，**调用 `nocode-toolkit:design-doc-writing` skill**，由它处理：
 
-```
-${CLAUDE_PLUGIN_ROOT}/resources/brainstorming-design-template.md
-```
+- 类型选择（feature-design / adr / refactor-plan / system-design）
+- 模板加载与章节填写
+- 自检准则
 
-按模板的章节顺序与标题层级填充，不要自由发挥章节结构。
-模板中标记为「可选」的章节按需保留，其余必填。
+不要自由发挥章节结构，也不要绕过该 skill 直接写。
