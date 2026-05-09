@@ -1,18 +1,25 @@
 #!/usr/bin/env bash
-# SessionStart hook：先注入插件 agent 行为准则，再叠加项目自定义规则。
-# - 跨项目：${CLAUDE_PLUGIN_ROOT}/rules/agent-guidelines.md
-# - 项目：<project_root>/.agents-personal/AGENTS.md（存在则追加，用于每个工程的定制）
+# SessionStart hook：注入插件 agent rules 与项目自定义规则。
+# - 插件：${CLAUDE_PLUGIN_ROOT}/rules/*.md（按文件名排序，全部追加）
+# - 项目：<project_root>/.agents-personal/AGENTS.md（存在则追加）
+# 注入前会把 rule 内容里字面量 ${CLAUDE_PLUGIN_ROOT} 替换为实际绝对路径，
+# 这样 rule 内引用的资源（如 resources/*.md）AI 能直接 Read。
 set -euo pipefail
 
-AGENT_GUIDELINES="${CLAUDE_PLUGIN_ROOT}/rules/agent-guidelines.md"
+PLUGIN_ROOT="${CLAUDE_PLUGIN_ROOT:-}"
 PROJECT_DIR="${CLAUDE_PROJECT_DIR:-$PWD}"
 PROJECT_RULES="${PROJECT_DIR}/.agents-personal/AGENTS.md"
 
 content=""
 
-if [ -f "$AGENT_GUIDELINES" ]; then
-  content+="<!-- source: nocode-toolkit/rules/agent-guidelines.md -->"$'\n'
-  content+="$(cat "$AGENT_GUIDELINES")"
+if [ -n "$PLUGIN_ROOT" ] && [ -d "${PLUGIN_ROOT}/rules" ]; then
+  for f in "${PLUGIN_ROOT}/rules"/*.md; do
+    [ -f "$f" ] || continue
+    [ -n "$content" ] && content+=$'\n\n---\n\n'
+    rel="${f#${PLUGIN_ROOT}/}"
+    content+="<!-- source: nocode-toolkit/${rel} -->"$'\n'
+    content+="$(sed "s|\${CLAUDE_PLUGIN_ROOT}|${PLUGIN_ROOT}|g" "$f")"
+  done
 fi
 
 if [ -f "$PROJECT_RULES" ]; then
@@ -21,7 +28,7 @@ if [ -f "$PROJECT_RULES" ]; then
   content+="$(cat "$PROJECT_RULES")"
 fi
 
-# 两个文件都没有就静默退出，不污染上下文
+# 都没有就静默退出，不污染上下文
 [ -n "$content" ] || exit 0
 
 if command -v jq >/dev/null 2>&1; then
