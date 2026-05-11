@@ -20,10 +20,17 @@ docs/plans/{username}/yymmdd-<topic>-design.md
 
 ### 写作工作流
 
-走到 step 5（写设计文档）时，**调用 `nocode-toolkit:design-doc-writing` skill**，由它处理：
+走到 step 5（写设计文档）时，**依次链式调用两个 skill**：
 
-- 类型选择（feature-design / adr / refactor-plan / system-design）
-- 模板加载与章节填写
-- 自检准则
+1. **`nocode-toolkit:design-doc-writing`** —— 生成 markdown 设计文档
+   - 类型选择（按 layer × intent 双轴）
+   - 章节填写与自检
+   - 输出 `docs/plans/{username}/yymmdd-<topic>-design.md`
 
-不要自由发挥章节结构，也不要绕过该 skill 直接写。
+2. **`nocode-toolkit:design-doc-rendering`** —— 渲染 single-file HTML 展示版
+   - 输入：上一步刚写的 markdown
+   - 输出：同目录、同名、换后缀 `.html`
+   - HTML 含 TOC / 折叠 / 暗黑模式 / 代码高亮 / 回到顶部 5 个交互
+
+两步都要走，不要省略 HTML 渲染。
+不要自由发挥章节结构，也不要绕过这两个 skill 直接写。

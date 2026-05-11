@@ -1,3 +1,4 @@
 .DS_Store
 *.log
 .agents-personal/
+docs/plans/**/*.html
