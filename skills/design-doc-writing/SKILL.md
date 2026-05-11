@@ -1,23 +1,25 @@
 ---
 name: design-doc-writing
-description: 写设计文档时使用。按"开发维度（架构层/开发层）"和"业务维度（做功能/重构/选型/复杂 bug）"两个正交维度选关注点，组装一份按需展开的 markdown 文档。当 superpowers:brainstorming 走到"写设计文档"环节时调用本 skill；当用户要求"写设计文档"「RFC」「ADR」「重构方案」「系统设计」「架构记录」时也用。即使用户没说"用模板"，只要要做的事是产出一份正式的设计性文档，就该用本 skill。不要用本 skill 写代码注释、PR 描述、commit message、README、changelog。
+description: 写设计文档时使用。按业界主流 4 类 doc-type 主轴（PRD / RFC / Design Doc / ADR）选合适类型；Design Doc 内部按覆盖深度叠加 architecture + implementation layer。工作流含 write → review 循环（spawn design-doc-reviewer subagent，最多 3 轮）。当 superpowers:brainstorming 走到「写设计文档」环节时调用本 skill；当用户要求「写设计文档 / RFC / ADR / 提案 / 架构记录 / 重构方案 / 系统设计」时也用。即使用户没说"用模板"，只要要做的事是产出一份正式的设计性文档，就该用本 skill。不要用本 skill 写代码注释 / PR 描述 / commit message / README / changelog。
 ---
 
 # 设计文档写作
 
-把「已经讨论清楚的设计」落地成结构化的 markdown 文档。不负责讨论（那是 brainstorming 的事），不负责实施（那是 writing-plans / executing-plans 的事）——只负责**写**。
+把「已经讨论清楚的设计」落地成结构化的 markdown 文档。不负责讨论（brainstorming 的事），不负责实施（writing-plans / executing-plans 的事）——只负责**写**。
+
+工作流包含 write → review 循环：写完初稿后 spawn `design-doc-reviewer` subagent 审查，根据反馈修订，最多 3 轮。
 
 ## 何时使用
 
 **应该用：**
 
 - superpowers:brainstorming 流程走到 step 5（写设计文档）时
-- 用户说「帮我写个设计文档 / RFC / ADR / 重构方案 / 系统设计 / 架构记录」
-- 你即将创建一个 `*-design.md` / `*-adr.md` / `*-refactor.md` 性质的文件
+- 用户说「帮我写个 PRD / RFC / 设计文档 / ADR / 重构方案 / 系统设计 / 架构记录 / 提案」
+- 你即将创建一个 `*-design.md` / `*-prd.md` / `*-rfc.md` / `*-adr.md` 性质的文件
 
 **不要用：**
 
-- 写代码注释、PR 描述、commit message、README、changelog（这些都不是设计文档）
+- 写代码注释、PR 描述、commit message、README、changelog
 - 用户只是问「X 应该怎么做」——这是讨论阶段，先用 brainstorming
 - 简单 bug 修复（用 superpowers:debugging）
 
@@ -31,149 +33,126 @@ docs/plans/{username}/yymmdd-<topic>-design.md
 
 写之前确认 rule 当前值（user 可能已经改过）。
 
-## 选关注点
+## 选 doc-type（主轴）
 
-设计文档**没有死板的类型**——按两个正交维度判断该写什么。
+设计文档分 4 类，按**这份文档主要回答什么问题**选：
 
-### 维度 1：开发维度（粒度）
+| 任务特征 | doc-type | 主要回答 | 长度 |
+|---|---|---|---|
+| 产品 / feature 立项，定义需求 | `prd` | what + why（用户痛点 + 目标） | 1-2 页 |
+| 跨团队提案，需收 feedback | `rfc` | Is this right direction? | 3-10 页 |
+| 实施前详细设计 | `design-doc` | How to build? | 5-15 页 |
+| 单一架构决策记录 | `adr` | Why we decided X? | 1-2 页 |
 
-你在哪一层思考？
+选不准时优先 `design-doc`——它最通用且最 detailed。
 
-| 粒度 | 选关注点文件 |
-|---|---|
-| **架构层**：系统/模块/服务级——需要画框图、定边界、考虑跨进程通信 | `references/layer/architecture.md` |
-| **开发层**：具体功能/具体改动——改某几个函数、加某个 API、动某张表 | `references/layer/implementation.md` |
+判断小贴士：
+- 用户角度还是工程角度？用户 → PRD；工程 → 后三个
+- 需要跨团队对齐？→ RFC
+- 只是记录一个决定？→ ADR
+- 实施前详细设计？→ Design Doc
 
-判断小窍门：粗到一句话能讲清=开发层；需要画框图=架构层。
+## Design Doc 内部：覆盖深度（layer 叠加）
 
-### 维度 2：业务维度（任务性质）
+仅 `design-doc` type 用——判断系统级 vs 小改动：
 
-你在做什么类型的事？
+| 任务粒度 | 读什么 reference | layer 字段 |
+|---|---|---|
+| **小改动**：改某几个函数 / 加字段 / 调配置 | 只读 `references/layer-supplements/implementation.md` | `implementation` |
+| **系统级**：新模块 / 新服务 / 子系统重新设计 | 读 `architecture.md` **+** `implementation.md`（叠加） | `architecture+implementation` |
 
-| 类型 | 选关注点文件 |
-|---|---|
-| **做新功能 / 扩展能力** | `references/intent/feature.md` |
-| **重构 / 改造老代码** | `references/intent/refactor.md` |
-| **多方案选型 / 技术决策**（ADR 用这个） | `references/intent/decision.md` |
-| **复杂 bug 修复**（少见） | `references/intent/bugfix.md` |
-
-bugfix 通常用 superpowers:debugging skill，**不写设计文档**——只在跨多模块/需阶段性回滚/事故复盘时才用本 skill。
-
-### 通用配件
-
-`references/common.md` 列了跨维度都可能用到的章节：备选方案、测试策略、监控、安全、性能预算、迁移、时间、风险、待确认。**按需挑**。
+**不是二选一**——架构层是叠加的。系统级文档必须**既有**架构思考（边界 / 组件 / 数据流 / 失败模式）**也有**实施细节（接口 / 数据 / 错误处理）。
 
 ## 工作流
 
-1. **判断两个维度**：
-   - layer：架构 / 开发
-   - intent：feature / refactor / decision / bugfix
-2. **Read** `references/layer/<层>.md` 和 `references/intent/<业务>.md`
-3. （可选）**Read** `references/common.md`，挑通用配件
-4. **组装**文档：
-   - frontmatter（type 写成 `<layer>-<intent>`，如 `architecture-feature`、`implementation-refactor`、`architecture-decision`）
-   - TL;DR 一句话
-   - intent 主线节（顺序按 intent 文件）
-   - layer 补充节（架构 or 开发关注点）
-   - 通用配件（按需）
-5. **自检**：
-   - 写出来的每节都有具体内容（真实组件名 / 文件路径 / 函数名 / 链接，不要泛泛）
-   - 不适用的节**直接不写**——保留空标题或 N/A 比删掉更糟
-   - 简单任务可能就是 TL;DR + 2-3 节，**宁可短**，不要硬凑节数
-6. **保存**到输出路径
-
-## 文档骨架
-
-不论选了什么组合，文档基本结构都是：
-
-```markdown
----
-type: <layer>-<intent>     # 如 architecture-feature
-topic: <一句话>
-date: YYMMDD
-author: {username}
-status: draft               # draft | approved | implemented | obsolete
----
-
-# <标题>
-
-> **TL;DR**：一句话。
-
-## <intent 主线节 1>
-## <intent 主线节 2>
-...
-
-## <layer 补充节 1>
-## <layer 补充节 2>
-...
-
-## <通用配件>               # 按需，不需要就不写
-...
 ```
+1. 判断 doc-type（按上表）
+2. Read references/doc-types/<type>.md 看主线节
+3. (仅 design-doc) 判断覆盖深度，Read 对应 layer-supplements/*.md
+4. Read references/examples/example-<type>.md 学习真实示例
+5. (necessary) Read references/common.md（cross-cutting checklist）
+6. 写初稿（frontmatter + 主线节 + 上半 / 下半结构）
+7. spawn design-doc-reviewer subagent（输入：doc_path / iteration=1）
+8. review loop：
+   - Verdict=Approved → 进入 step 9
+   - Not approved 且 iteration<3 → 据 Critical+Warning 修订 → iteration++ → 回 step 7
+   - iteration=3 仍 Not approved → "Max iterations，建议人工"，停
+9. 保存到输出路径
+10. (by overlay) 调 design-doc-rendering skill 出 HTML
+```
+
+## 状态机
+
+各 doc-type 状态机：
+
+- **PRD**：`draft → in-review → approved → implemented → archived`
+- **RFC**：`open → accepted → implemented → superseded` / `open → withdrawn` / `open → rejected`
+- **Design Doc**：`draft → in-review → approved → implemented → archived`（**living**，approved 后仍可修改）
+- **ADR**：`proposed → accepted → superseded` / `proposed → rejected` / `accepted → deprecated`（**immutable**，accept 后绝不改）
+
+注：ADR 一旦 accept 不可修改；改决策就写新 ADR + supersede 旧的。
 
 ## 写作准则
 
-理解原则比死守章节更重要。每条附 ✅正例 / ❌反例对照——例子比抽象描述更能内化。
+理解原则比死守章节更重要。每条附 ✅正例 / ❌反例。
 
 ### 1. 写"为什么"，不只是"是什么"
 
-每个决策附理由。reviewer 看文档要的是判断你**为什么这么选**，不是听你描述代码长什么样——代码自己会说。
+每个决策附理由。reviewer 看文档要的是**为什么这么选**，不是描述代码长什么样。
 
-> ✅ 正例：「Auth 模块独立 package。这样 password hashing 的依赖（bcrypt）不会被业务代码引入，减少攻击面。」  
-> ❌ 反例：「Auth 模块独立 package。包含 user.go、session.go、token.go 三个文件。」
+> ✅ 正例：「Auth 独立 package。这样 password hashing 的依赖（bcrypt）不被业务代码引入，减少攻击面。」  
+> ❌ 反例：「Auth 独立 package。包含 user.go / session.go / token.go。」
 
 ### 2. 具体优于抽象
 
-用真实文件路径、函数名、表名、数据 schema、指标值。具体让 reviewer 能精准提问，抽象只能笼统点头。
+用真实路径、函数名、表名、数据 schema、指标值。
 
-> ✅ 正例：「`POST /api/v1/orders/{id}/cancel`，body `{reason?: string}`，已发货返回 409 + `{error: "order_not_cancellable", state: "shipped"}`」  
-> ❌ 反例：「取消订单接口在订单已发货时拒绝请求。」
+> ✅ 正例：「`POST /api/v1/orders/{id}/cancel`，body `{reason?: string}`，已发货返 409 + `{error: "order_not_cancellable", state: "shipped"}`」  
+> ❌ 反例：「取消订单接口在已发货时拒绝请求。」
 
-### 3. 显式列取舍和被否决方案
+### 3. Non-Goals 与 Goals 同等重要
 
-不写出来 = 你没考虑过 = reviewer 会问「为什么不用 X」让你返工。一句话讲清「考虑过 X，否决因为 Y」是最便宜的防御。
+明确"不做什么"——防 scope creep。Non-Goals 必须具体，不能写「其他都不做」敷衍。
 
-> ✅ 正例：「选 PostgreSQL。考虑过 SQLite（否决，单进程写入瓶颈，预期 QPS > 50 会卡）和 MySQL（否决，团队没人熟）。」  
-> ❌ 反例：「我们使用 PostgreSQL。」
+> ✅ 正例：「不做多语言；不做团队权限；不引入 Web UI」  
+> ❌ 反例：「这次先做核心功能，其他需求后续再说」
 
-### 4. 删掉不适用的节
+### 4. Alternatives 真备选 + 真否决理由
 
-保留空标题或 N/A 比删掉更糟——它在告诉 reviewer「我没想过这个」。删除是判断，留空是逃避。
+不写 alternatives 等于"没考虑过"。每个备选要有具体否决理由。
 
-> ✅ 正例：feature 文档只有「背景动机 / 用户故事 / 验证」三节，60 行左右  
-> ❌ 反例：feature 文档 12 个标题，「数据模型变更：无变更」「监控：暂无」「安全：N/A」「性能：暂无」「迁移：N/A」5 节空话
+> ✅ 正例：「方案 B：用 SQLite。否决：单进程写入瓶颈，QPS > 50 会卡」  
+> ❌ 反例：「考虑过 SQLite，但 PostgreSQL 更好」
 
-### 5. 宁可短
+### 5. 删掉不适用的节
 
-硬凑节数会稀释信号。reviewer 阅读 30 行有内容的文档比 200 行半空文档更准。文档价值在 reviewer 多快看到关键决策。
+保留空标题或 N/A 比删掉更糟——告诉 reviewer「我没想过」。
 
-> ✅ 正例：简单 feature 文档 3 节、200 字，一眼审完  
-> ❌ 反例：同样的简单 feature 12 节、2000 字、5 节空话——reviewer 翻 5 屏才看到关键决策
+> ✅ 正例：feature 简单时只有 TL;DR + 3 个主线节，不凑数  
+> ❌ 反例：12 个标题，5 个写「N/A」「无变更」「暂无」
+
+## Cross-cutting Concerns
+
+design-doc 的下半部**必须**包含 cross-cutting checklist（详见 `references/common.md`）。每条要么有内容要么明示 N/A + 理由：
+
+- Security / Privacy
+- Monitoring / Observability
+- Performance Budget
+- Migration / Rollout
+- Backwards Compatibility
+- Documentation Updates
+
+PRD / RFC / ADR 不强制，但鼓励。
 
 ## 常见反模式
 
-写文档时容易掉的坑——每条反例配上对应正例。
+- ❌ **章节空话**：「需要保证安全性、性能、可维护性」——等于没写。具体到「请求体 >1MB 拒绝」「P99 < 200ms」
+- ❌ **"将来式"占位**（YAGNI）：「未来如果有 X 需求，可扩展为 Y」——删
+- ❌ **抄需求**：把用户原话粘到背景节——背景要回答**为什么值得做**
+- ❌ **避谈失败**：只写 happy path 反面。要列真实故障：网络断、磁盘满、并发写、依赖挂
+- ❌ **跳过 reviewer**：不 spawn reviewer 直接交付——本工作流核心是 write/review 循环
+- ❌ **混淆 doc-type**：PRD 写 SQL schema / ADR 写百页 implementation / Design Doc 写不到 1 页——选错 type 的信号
 
-### 1. 章节空话
+## 看 examples 而不是自由发挥
 
-> ❌ 反例：「需要保证安全性、性能和可维护性」  
-> ✅ 正例：「请求体超过 1MB 拒绝；P99 < 200ms；auth 独立 package 不引业务依赖」
-
-### 2. "将来式"占位（违反 YAGNI）
-
-> ❌ 反例：「未来如果有多语言需求，可以扩展为按 locale 路由」  
-> ✅ 正例：「当前只支持英文。多语言需求出现时重新设计——现在不预留。」
-
-### 3. 抄需求
-
-背景节不是复述用户的话，要回答「**为什么**值得做」「不做的代价」。
-
-> ❌ 反例：「用户希望能看到订单的物流状态。」  
-> ✅ 正例：「客服周均 12 单『我的包裹到哪了』咨询，每单平均 3 分钟。前端加物流详情页可估算每月省 ~36 小时客服时间。」
-
-### 4. 避谈失败
-
-错误处理只写 happy path 的反面。
-
-> ❌ 反例：「如有错误，返回错误信息给用户。」  
-> ✅ 正例：「网络中断 → 客户端 30s 超时 → 重试 3 次（指数退避）+ 幂等键防重；DB 主库挂 → 切只读 → 写请求返 503」
+每个 doc-type 在 `references/examples/example-<type>.md` 有完整真实示例（dogfood 本插件历史决策）。**先看 example 学习结构**，再按 doc-type reference 填内容。这比自由发挥可靠得多。
