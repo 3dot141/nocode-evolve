@@ -1,7 +1,7 @@
 ---
 type: rfc
 rfc_id: RFC-001
-topic: 是否在 nocode-toolkit 引入项目级 wiki 系统
+topic: 是否在 nocode-evolve 引入项目级 wiki 系统
 date: 260509
 author: 3dot141
 status: accepted
@@ -11,7 +11,7 @@ status: accepted
 
 ## Summary
 
-为 nocode-toolkit 增加项目级长期记忆能力：用户主动 `/wiki-update`，AI 从当前会话提炼项目知识写入 `.agents-personal/wiki/pages/`，自动派生 INDEX；AI 在新会话遇到项目背景问题时主动 search。
+为 nocode-evolve 增加项目级长期记忆能力：用户主动 `/wiki-update`，AI 从当前会话提炼项目知识写入 `.agents-personal/wiki/pages/`，自动派生 INDEX；AI 在新会话遇到项目背景问题时主动 search。
 
 ## Motivation
 

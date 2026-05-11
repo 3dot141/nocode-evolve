@@ -258,4 +258,4 @@ frontmatter schema 变更已在「目标状态」节列出。
 
 **总计：约 100 分钟。**
 
-注：examples/ 4 份可能拖时间——用本插件历史决策作为 dogfood 素材（PRD 写"nocode-toolkit"产品定义、RFC 写"是否引入 wiki 系统"、design-doc 写本次重构本身、ADR 写"reviewer 采用 humanizer 两遍法"）能复用现有思考，加速。
+注：examples/ 4 份可能拖时间——用本插件历史决策作为 dogfood 素材（PRD 写"nocode-evolve"产品定义、RFC 写"是否引入 wiki 系统"、design-doc 写本次重构本身、ADR 写"reviewer 采用 humanizer 两遍法"）能复用现有思考，加速。

@@ -1,4 +1,4 @@
-# nocode-toolkit
+# nocode-evolve
 
 Harrison 的 Claude Code 个人插件：通过 SessionStart hook 注入两层规则——
 插件自带的 `rules/agent-guidelines.md` 作为跨项目默认行为准则，再叠加项目根的 `.agents-personal/AGENTS.md` 做工程级定制。
@@ -20,7 +20,7 @@ Harrison 的 Claude Code 个人插件：通过 SessionStart hook 注入两层规
 ## 当前结构
 
 ```
-nocode-toolkit/
+nocode-evolve/
 ├── .claude-plugin/
 │   ├── plugin.json          # 插件清单
 │   └── marketplace.json     # GitHub marketplace 描述
@@ -35,34 +35,34 @@ nocode-toolkit/
 
 ### 方式 A：本地直接挂载（开发期）
 ```bash
-claude --plugin-dir /Users/yes365/AI/nocode-evolve/nocode-toolkit
+claude --plugin-dir /Users/yes365/AI/nocode-evolve
 ```
 仅当前会话生效，改完文件重启即可。
 
 ### 方式 B：本地 marketplace（持久化，本机所有项目）
 ```bash
 # 在 Claude Code 内执行（注意是 slash 命令）
-/plugin marketplace add /Users/yes365/AI/nocode-evolve/nocode-toolkit
-/plugin install nocode-toolkit@nocode-toolkit
+/plugin marketplace add /Users/yes365/AI/nocode-evolve
+/plugin install nocode-evolve@nocode-evolve
 ```
 
 ### 方式 C：GitHub marketplace（跨设备同步）
-1. 把本目录推到 `https://github.com/3dot141/nocode-toolkit`
+1. 把本目录推到 `https://github.com/3dot141/nocode-evolve`
 2. 在 Claude Code 内：
    ```
-   /plugin marketplace add 3dot141/nocode-toolkit
-   /plugin install nocode-toolkit@nocode-toolkit
+   /plugin marketplace add 3dot141/nocode-evolve
+   /plugin install nocode-evolve@nocode-evolve
    ```
 
 ## 日常操作
 
 | 操作 | 命令 |
 |---|---|
-| 启用 / 禁用 | `/plugin enable nocode-toolkit@nocode-toolkit` / `/plugin disable ...` |
+| 启用 / 禁用 | `/plugin enable nocode-evolve@nocode-evolve` / `/plugin disable ...` |
 | 改完热加载 | `/reload-plugins` |
 | 校验清单 | `/plugin validate` |
 | 查看加载详情 | `claude --debug` 启动 |
-| 卸载 | `claude plugin uninstall nocode-toolkit@nocode-toolkit --scope user` |
+| 卸载 | `claude plugin uninstall nocode-evolve@nocode-evolve --scope user` |
 
 ## 后续扩展（按需加目录即可，无需改 plugin.json）
 
@@ -72,7 +72,7 @@ skills/
 └── my-skill/
     └── SKILL.md          # frontmatter 必填 description
 ```
-安装后调用名为 `/nocode-toolkit:my-skill`。
+安装后调用名为 `/nocode-evolve:my-skill`。
 
 `SKILL.md` 模板：
 ```markdown

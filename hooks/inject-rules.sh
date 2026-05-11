@@ -17,7 +17,7 @@ if [ -n "$PLUGIN_ROOT" ] && [ -d "${PLUGIN_ROOT}/rules" ]; then
     [ -f "$f" ] || continue
     [ -n "$content" ] && content+=$'\n\n---\n\n'
     rel="${f#${PLUGIN_ROOT}/}"
-    content+="<!-- source: nocode-toolkit/${rel} -->"$'\n'
+    content+="<!-- source: nocode-evolve/${rel} -->"$'\n'
     content+="$(sed "s|\${CLAUDE_PLUGIN_ROOT}|${PLUGIN_ROOT}|g" "$f")"
   done
 fi

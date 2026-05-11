@@ -1,12 +1,12 @@
 ---
 type: prd
-topic: nocode-toolkit——Harrison 个人 Claude Code 工具箱
+topic: nocode-evolve——Harrison 个人 Claude Code 工具箱
 date: 260511
 author: 3dot141
 status: approved
 ---
 
-# PRD：nocode-toolkit
+# PRD：nocode-evolve
 
 ## Problem Statement
 
@@ -52,7 +52,7 @@ status: approved
 
 **Story 1：跨项目工作切换**
 
-Harrison 上午在 project-A（backend service）讨论 auth 设计，下午切到 project-B（frontend app）继续 UI 工作。两个项目都加载 nocode-toolkit plugin，相同的 agent-guidelines 保证 AI 行为一致；项目本地的 `.agents-personal/AGENTS.md` 各自覆盖项目特定约定。
+Harrison 上午在 project-A（backend service）讨论 auth 设计，下午切到 project-B（frontend app）继续 UI 工作。两个项目都加载 nocode-evolve plugin，相同的 agent-guidelines 保证 AI 行为一致；项目本地的 `.agents-personal/AGENTS.md` 各自覆盖项目特定约定。
 
 **Story 2：写设计文档**
 
