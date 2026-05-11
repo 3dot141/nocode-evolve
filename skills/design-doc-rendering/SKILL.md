@@ -33,10 +33,10 @@ description: 把 design-doc-writing skill 生成的 markdown 设计文档渲染�
 | 维度 | 要求 |
 |---|---|
 | 文件名 | 与 markdown **同目录、同名、换后缀 `.html`** |
-| 形态 | single-file（CSS / JavaScript / SVG 全部内联） |
-| 依赖 | **不引入外网资源**（不用 CDN、不用 Google Fonts、不用 highlight.js）。可双击浏览器离线打开 |
+| 形态 | single-file（项目内不分文件） |
+| 依赖 | **CDN 可用**（Google Fonts / highlight.js / Mermaid / Tailwind 等）。但必须有降级：CDN 失败时核心阅读体验不能崩——字体用 fallback 系统字体栈，代码块即使没高亮也要可读 |
 | 响应式 | 移动端 / 平板可读（用 media query 处理断点） |
-| 文件大小 | 控制在 100KB 以内；超过则考虑章节折叠或拆分 |
+| 文件大小 | 控制在 200KB 以内（含 CDN 引用不计）；超过则考虑章节折叠 |
 
 ## 必须的 5 个交互（**不可省**）
 
@@ -45,7 +45,7 @@ description: 把 design-doc-writing skill 生成的 markdown 设计文档渲染�
 1. **TOC 侧栏**——左侧固定（移动端折叠为顶部下拉）；滚动时跟随当前章节高亮
 2. **章节折叠**——`<details>` 或自写脚本；点击 H2/H3 大标题可折叠该节；默认全展开
 3. **暗黑模式 toggle**——右上角按钮；切换写入 `localStorage`，下次打开记住偏好
-4. **代码高亮**——手写 CSS 类（按语言 token 着色），**不引 highlight.js / prism CDN**
+4. **代码高亮**——按语言 token 着色。highlight.js / Prism CDN 推荐，或手写 CSS 类均可
 5. **回到顶部**——滚动超过一屏时浮出 floating 按钮
 
 ## 可选加分项（看内容判断）
@@ -58,16 +58,59 @@ description: 把 design-doc-writing skill 生成的 markdown 设计文档渲染�
 - **Alternatives Considered 折叠隐藏**——被否决方案默认折叠，点击展开
 - **决策树 SVG**——文档有判定流程（如 wiki-update 的整合决策树）时画图
 
+## Vibe 设计流程（写 CSS 前先想这些）
+
+**Vibe rendering 的灵魂——不是套通用模板，是为这份文档做"性格判断"。**
+
+拿到 markdown 后，**先回答以下 3 个问题，再动手写 CSS / JS**：
+
+### 1. 这份文档的 personality 是什么？
+
+依 frontmatter 的 type + 内容情感决定主色调与气质：
+
+| type / 内容性质 | 性格 | 推荐主色 |
+|---|---|---|
+| `*-decision` / ADR | 严肃、克制、需要权威感 | navy / 深绿 + 中性灰 + 一个强调色（橙/青）|
+| `*-feature` | 活力、视觉感、需要"想看下去"的吸引 | 亮色（蓝/紫/teal）+ 强调色 |
+| `*-refactor` | 工程感、有阶段感 | 深色系（slate / charcoal）+ 阶段 status color（绿=完成/橙=进行中/红=阻塞）|
+| `*-bugfix` | 警示但专业，不慌张 | 深红/橙作 accent + 灰背景，避免大面积红 |
+
+### 2. 内容里有什么独特结构需要为它定制？
+
+扫文档章节，看到这些**主动加视觉处理**：
+
+| 内容特征 | 视觉处理 |
+|---|---|
+| 架构 / 数据流描述 | 画 inline SVG（节点 + 箭头）|
+| 「方案 A vs B」表格 | split 视图（左右栏对比） |
+| 阶段步骤 / 迁移路径 | 横向或纵向时间线 |
+| 失败模式表 | color-coded 行（按严重度上色）|
+| 决策树 / if-else 流程 | SVG 决策树 |
+| 大量代码引用 | 双栏布局（左 TOC + 右代码主导）|
+| Alternatives Considered | 默认折叠隐藏，点击展开 |
+
+### 3. 这份文档的「展示亮点」是什么？
+
+**每份文档应该有 1-2 个特别为它定制的视觉处理**——不是套通用模板。
+
+例：
+
+- 「rules 注入机制」文档 → 顶部一张数据流 SVG（hook → rules → context）作 hero
+- 「wiki-update 命令」文档 → 整合判断决策树 SVG + 折叠的整合 examples 表格
+- 「ADR：选 PG 不选 SQLite」 → Consequences 节用 ✅⚠️❌ 三色 grid
+
+**Vibe 不等于乱来。**前面"5 个必有交互"和"视觉风格 ✅/❌"是骨架，Vibe 是在骨架上发挥个性。
+
 ## 视觉风格准则
 
 风格要像 **2024 年后的现代技术文档**，不是 2010 年的 GitHub README。
 
 ✅ 做：
 
-- 现代 sans-serif（用 `system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif` 系统字体栈）
+- 现代 sans-serif：CDN 用 Inter / IBM Plex Sans / Noto Sans SC；fallback `system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif`
 - 合理留白（正文 `max-width: 760px`、`line-height: 1.7`+）
-- 配色专业（主色 navy / forest green / 深紫 + 强调色橙/青；不只是纯黑白）
-- 代码块圆角（`border-radius: 8px`）+ 内边距 + 等宽字（`"SF Mono", Menlo, Consolas, monospace`）
+- 配色专业（主色 navy / forest green / 深紫 / teal + 强调色；不只是纯黑白）
+- 代码块圆角（`border-radius: 8px`）+ 内边距 + 等宽字（CDN 用 JetBrains Mono / Fira Code；fallback `"SF Mono", Menlo, Consolas, monospace`）
 - 表格有 hover 高亮 + 斑马纹
 - 引用块用左边色条 + 浅色背景，不是默认灰边
 - 链接有 hover 动效（underline 渐入、颜色变化）
@@ -75,8 +118,8 @@ description: 把 design-doc-writing skill 生成的 markdown 设计文档渲染�
 ❌ 不做：
 
 - 默认 `<h1>`/`<p>`/`<pre>` 无样式
-- Bootstrap / Tailwind / Material 全套引入——重，破坏 single-file
-- jQuery / React / 重型 JS 框架——纯 vanilla JS 完成
+- 重型 UI 框架全套引入（Bootstrap / Material / 整套 React）——但 Tailwind CDN utility 可用
+- jQuery / React / Vue 等运行时框架——vanilla JS 已够用
 - 一坨墙 of text、无视觉节奏
 
 ## 工作流
@@ -97,13 +140,14 @@ description: 把 design-doc-writing skill 生成的 markdown 设计文档渲染�
 
 ## 反模式
 
-- ❌ **依赖 CDN**——破坏 single-file 离线可用承诺。所有资源内联。
+- ⚠️ **CDN 没有 fallback**——CDN 可用，但字体要有 system-ui fallback，代码即使没高亮也要可读；不要假设网络永远好
 - ❌ **完全照搬 markdown 结构**——HTML 是新载体，可重组：TL;DR 放醒目位置、alternatives 折叠隐藏、frontmatter 转 metadata 卡片
 - ❌ **过度 vibe 牺牲一致性**——色板和 SVG 可以变，但 5 个必有交互**永远不可省**
 - ❌ **HTML 比 markdown 多新信息**——HTML 是派生不是再创作；想补充信息要改 markdown 重渲染
 - ❌ **超长不切分**——20+ 章节的文档，HTML 应充分利用折叠 / TOC 跳转，不能一坨展开
 - ❌ **暗黑模式只反色**——要专门设计暗黑配色（深底 + 高对比文字 + 调饱和度的强调色），不是简单 `filter: invert`
 - ❌ **TOC 不跟随滚动**——TOC 必须有"当前章节高亮"，否则失去导航价值
+- ❌ **跳过 vibe 流程直接套通用模板**——拿到文档不思考 personality 就开始写 CSS——所有文档长一样就失去 HTML 的核心价值
 
 ## 边界情况
 
