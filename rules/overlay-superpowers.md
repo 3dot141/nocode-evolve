@@ -30,7 +30,7 @@ docs/plans/{username}/yymmdd-<topic>-design.md
 
 2. **`design-doc-reviewer` subagent**（在 design-doc-writing 工作流内 spawn）
    - 独立 context 审查质量
-   - 6 维度核心审查 + AI patterns 附带检查 + Self-Audit 两遍法
+   - 7 维度核心审查（含 Prose Quality）+ AI patterns 附带检查 + Self-Audit 两遍法
    - 输出分级 Review Report（Critical / Warning / Suggestion），每条带短编号（C1/W1/S1...）
    - **不自动循环修订**：Report 原样呈现给用户，逐条勾选 fix / skip（也可一键全修/全跳过/自由指示）
    - 据用户决定修订主体后，**本轮 Report 全文 + 用户决定 + 修订摘要 append 到文档末尾 `## Review Log`**
