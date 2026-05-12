@@ -60,11 +60,27 @@ description: 把 design-doc-writing skill 生成的 markdown 设计文档渲染�
 
 ## Vibe 设计流程（写 CSS 前先想这些）
 
-**Vibe rendering 的灵魂——不是凭空臆想，是为这份文档"选基底 + 加个性"。**
+**Vibe rendering 的灵魂——不是凭空臆想，是为这份文档"选 flavor + 选基底 + 加个性"。**
 
-拿到 markdown 后，**先按下面 3 步选基底再写 CSS / JS**：
+拿到 markdown 后，**先按下面 4 步选基底再写 CSS / JS**：
 
-### 1. 选 preset（核心一步——决定整份文档的视觉骨架）
+### 0. 必读 manifesto（动手前的态度校准）
+
+强制 Read 这 3 个 references——它们叠加在 preset 之上，是反 AI slop 的硬规则：
+
+1. **`references/aesthetics.md`** — 字体 NEVER 列表（Inter / Roboto / Arial / Space Grotesk 禁用）/ 12 种 BOLD flavor / dominant + sharp accent 配色原则
+2. **`references/motion.md`** — page-load staggered reveal / scroll-trigger / details 平滑展开 / hover surprise 等动效 recipe
+3. **`references/background.md`** — noise texture / dot grid / gradient mesh / CRT scanline / drop cap 等背景细节
+
+> ⚠️ **跳过本步 = 默认 AI slop**。preset 给的是骨架，但骨架默认配 Inter + solid color = 撞脸所有 SaaS。manifesto 把骨架"染色"成 distinctive。
+
+### 1. 先选 BOLD flavor（aesthetics.md 12 种里选 1）
+
+不是混合——committed to one：`editorial` / `brutally minimal` / `industrial` / `vintage computing` / `brutalist` / `editorial luxury` / 等。
+
+design-doc 默认偏向前 4 种。选了之后再去选 preset。
+
+### 2. 选 preset（视觉骨架）
 
 `references/presets/` 下有 8 个**真实站点抽出来的设计系统** preset。**不要凭空发挥**，先按下表 + 内容性格选一个 preset 作为视觉基底，**Read 那个文件**，拿到完整的 design token（color hex / typography hierarchy / component spec / 5 个必有交互的具体处理）。
 
@@ -83,7 +99,7 @@ description: 把 design-doc-writing skill 生成的 markdown 设计文档渲染�
 
 > ⚠️ 不要"自己想一套配色 + 自己挑字体"——所有"凭空发挥"的产物都会回到平庸的浅蓝/灰白。Preset 是天花板抬升器。
 
-### 2. 这份文档的 personality 是什么？（在 preset 上调 accent / 强调色）
+### 3. 这份文档的 personality 是什么？（在 preset 上调 accent / 强调色）
 
 preset 给骨架，**accent 用来在骨架上"染色"**，依 frontmatter 的 type + 内容情感微调：
 
@@ -94,7 +110,7 @@ preset 给骨架，**accent 用来在骨架上"染色"**，依 frontmatter 的 t
 | `*-refactor` | 阶段感 | 用 preset 的 status color（绿=完成/橙=进行中/红=阻塞）|
 | `*-bugfix` | 警示但专业 | accent 用 preset 调色板里的 warning/danger 色 |
 
-### 3. 内容里有什么独特结构需要为它定制？
+### 4. 内容里有什么独特结构需要为它定制？
 
 扫文档章节，看到这些**主动加视觉处理**：
 
@@ -108,7 +124,7 @@ preset 给骨架，**accent 用来在骨架上"染色"**，依 frontmatter 的 t
 | 大量代码引用 | 双栏布局（左 TOC + 右代码主导）|
 | Alternatives Considered | 默认折叠隐藏，点击展开 |
 
-### 4. 这份文档的「展示亮点」是什么？
+### 5. 这份文档的「展示亮点」是什么？
 
 **每份文档应该有 1-2 个特别为它定制的视觉处理**——不是套通用模板。
 
@@ -152,20 +168,26 @@ preset 给骨架，**accent 用来在骨架上"染色"**，依 frontmatter 的 t
 
 1. **Read** 输入的 markdown 文件全文
 2. **理解结构**：扫 frontmatter（type / topic / date / author / status）+ 章节布局
-3. **选 preset**（核心一步）：按 Vibe step 1 决策表选一个 preset
-4. **Read 选中的 preset**：`references/presets/<name>.md` 全文，拿到完整 design token（不要只读标题）
-5. **在 preset 上做局部决策**：
-   - accent 倾向（依文档 type，见 Vibe step 2）
+3. **必读 manifesto**（反 AI slop 校准）：依次 Read `references/aesthetics.md` + `references/motion.md` + `references/background.md`
+4. **选 BOLD flavor**（aesthetics.md 12 种选 1，commit 到底，不要混合）
+5. **选 preset 骨架**：按 Vibe step 2 决策表选一个 preset
+6. **Read 选中的 preset**：`references/presets/<name>.md` 全文，拿到完整 design token
+7. **字体 sanity check**：若 preset 默认字体 ∈ NEVER 列表（Inter / Roboto / Arial / Space Grotesk）→ 按 `aesthetics.md` 候选表替换；否则保留 preset 字体
+8. **在 preset 上做局部决策**：
+   - accent 倾向（依文档 type，见 Vibe step 3）
    - 哪些章节适合 SVG 图（架构 / 数据流 / 决策树）
-   - 是否有 alternatives / 备选方案节适合折叠隐藏
-   - 1-2 个为这份文档定制的视觉亮点（Vibe step 4）
-6. **生成** single-file HTML：
-   - `<head>` 内联 `<style>`：preset 的字体 CDN `<link>` + CSS reset + preset token + 响应式 media query + 暗黑模式 `[data-theme="dark"]`（除非 preset 明示 light-only）
-   - `<body>` 渲染内容：preset 指定的 layout（多数左 TOC + 右主内容）；frontmatter 转顶部 metadata 卡片
-   - `<script>` 内联 vanilla JS：TOC 滚动高亮（IntersectionObserver）+ 折叠（click 监听）+ 暗黑切换（toggle + localStorage）+ 回到顶部
-   - SVG 直接嵌入（不引外链）；fill / stroke 用 preset 调色板
-7. **写入** 与 markdown 同目录、同名、`.html` 后缀
-8. **报告**：「渲染完成：`<path>`，preset：`<name>`。双击浏览器打开查看。」
+   - 是否有 alternatives 节适合折叠隐藏
+   - 1-2 个为这份文档定制的视觉亮点（Vibe step 5）
+   - 从 `motion.md` 选 2-3 个 recipe（默认 1 + 2）
+   - 从 `background.md` 选 1-2 个 recipe（按 flavor 推荐表）
+9. **生成** single-file HTML：
+   - `<head>` 内联 `<style>`：字体 CDN `<link>` + CSS reset + preset token + flavor 染色 + motion keyframes + background recipe + 响应式 media query + 暗黑模式（除非 preset 明示 light-only）
+   - `<body>` 渲染内容：preset 指定的 layout；frontmatter 转顶部 metadata 卡片
+   - `<script>` 内联 vanilla JS：TOC 滚动高亮 + 折叠 + 暗黑切换 + 回到顶部 + motion 触发
+   - SVG 直接嵌入；fill / stroke 用 preset 调色板
+10. **写入** 与 markdown 同目录、同名、`.html` 后缀
+11. **过 NEVER 清单**：aesthetics.md 末尾的 NEVER 清单逐条检视——任何一条命中 → 改
+12. **报告**：「渲染完成：`<path>`，flavor：`<flavor>`，preset：`<name>`。双击浏览器打开查看。」
 
 ## 反模式
 
