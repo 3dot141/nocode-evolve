@@ -25,17 +25,20 @@ Documentation-as-product 的明亮 reading-first 美学——白色画布、5% o
 ```html
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 ```
 
 ```css
 :root {
-  --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  /* Bricolage Grotesque：aesthetics.md 推荐的"优雅替代 Inter"，保留 Mintlify reading-first 轻盈感且不在 NEVER 列表 */
+  --font-sans: 'Bricolage Grotesque', 'DM Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --font-mono: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 ```
 
 权重档位：400 / 500 / 600。不用 700。Geist Mono 严格用于代码与技术 label（label 多为 uppercase + tracking 0.6px）。
+
+> ⚠️ **字体历史变更说明**：源 Mintlify.com 设计用 Inter，但本插件 `aesthetics.md` NEVER 列表禁用 Inter。**已切到 `Bricolage Grotesque`**——气质相近、variable axis 丰富、能维持 Mintlify "reading-first + 轻盈" 的招牌人格。如读者强烈期待 Inter 视觉效果，作为 fallback 可降级 `DM Sans`，但禁止直接用 Inter。
 
 ## 视觉系统
 
@@ -180,6 +183,82 @@ dark token 参考 Mintlify 自家 docs site 的 dark theme：bg `#0c0d10` 偏冷
 - 不要把 brand green 用作装饰填充
 - 不要用 weight 700
 - 不要让 shadow 抢戏
+
+## Class Cheatsheet（drop-in CSS snippet）
+
+> 借鉴 taste-skill：paste-ready 的最小骨架。Mintlify 招牌：reading-first 白底 + 5% opacity 极细边框 + brand green `#18E299` + pill 9999px 按钮。
+
+### CSS variables
+
+```css
+:root {
+  /* 字体见下方注释：Inter 被 manifesto NEVER 列表禁用——优先 Bricolage Grotesque 替代 */
+  --font-sans: 'Bricolage Grotesque', 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  --bg: #ffffff;             --bg-surface: #fafafa;       --bg-hover: #f5f5f5;
+  --text-primary: #0d0d0d;   --text-secondary: #333333;   --text-tertiary: #666666;
+  --brand: #18E299;          --accent: #0fa76e;           --accent-soft-bg: #d4fae8;
+  --border-subtle: rgba(0,0,0,0.05);  --border-std: rgba(0,0,0,0.08);
+  --code-bg: #fafafa;        --code-inline-bg: #f5f5f5;
+  --shadow-ambient: rgba(0,0,0,0.03) 0px 2px 4px;
+  --shadow-button: rgba(0,0,0,0.06) 0px 1px 2px;
+  --focus-ring: 0 0 0 3px rgba(24,226,153,0.25);
+}
+[data-theme="dark"] {
+  --bg: #0c0d10;             --bg-surface: #15161a;       --bg-hover: #1d1f24;
+  --text-primary: #f3f4f6;   --text-secondary: #c8cad0;   --text-tertiary: #888888;
+  --brand: #34F2A6;          --accent: #34F2A6;           --accent-soft-bg: rgba(52,242,166,0.12);
+  --border-subtle: rgba(255,255,255,0.06);  --border-std: rgba(255,255,255,0.1);
+  --code-bg: #15161a;        --code-inline-bg: rgba(255,255,255,0.08);
+}
+```
+
+> ⚠️ **字体说明**：源 Mintlify 设计用 Inter，但本插件 manifesto `aesthetics.md` 把 Inter 列入 NEVER 列表。**首选 Bricolage Grotesque**（manifesto 推荐的"优雅替代 Inter"）；如必须保留 Inter feel，可降级用 `'DM Sans'`。Inter 仅作 fallback 链中后段。
+
+### Typography & body（招牌：负字距 display + 1.65 line-height body）
+
+```css
+body { font: 400 16px/1.65 var(--font-sans); color: var(--text-secondary); background: var(--bg); }
+h1 { font: 600 40px/1.10 var(--font-sans); letter-spacing: -0.8px; color: var(--text-primary); margin: 0 0 24px; }
+h2 { font: 600 28px/1.25 var(--font-sans); letter-spacing: -0.4px; color: var(--text-primary); margin: 56px 0 12px; }
+h3 { font: 600 20px/1.30 var(--font-sans); letter-spacing: -0.2px; margin: 32px 0 8px; }
+p  { max-width: 72ch; margin: 0 0 16px; }
+code { font: 500 0.9em/inherit var(--font-mono); background: var(--code-inline-bg);
+       padding: 2px 6px; border-radius: 6px; }
+pre  { background: var(--code-bg); border: 1px solid var(--border-subtle); padding: 16px 20px;
+       border-radius: 12px; font: 500 13.5px/1.55 var(--font-mono); overflow-x: auto; }
+blockquote { background: var(--accent-soft-bg); border-left: 3px solid var(--brand);
+             padding: 12px 20px; border-radius: 0 12px 12px 0; margin: 16px 0; }
+a { color: var(--accent); }
+.btn { border-radius: 9999px; padding: 8px 24px; }   /* Mintlify pill 招牌 */
+```
+
+### 5 必有交互（核心 snippet）
+
+```css
+.toc a { color: var(--text-tertiary); font: 500 14px/1.5 var(--font-sans);
+         padding: 6px 12px; display: block; border-radius: 8px; transition: 150ms ease; }
+.toc a:hover { color: var(--text-primary); }
+.toc a.active { color: var(--accent); background: var(--accent-soft-bg); }   /* pill bg, 无左竖线 */
+.theme-toggle { position: fixed; top: 24px; right: 24px; width: 40px; height: 40px;
+                border-radius: 9999px; background: var(--bg);
+                border: 1px solid var(--border-std); color: var(--text-primary); }
+.back-to-top { position: fixed; right: 24px; bottom: 24px; width: 40px; height: 40px; border-radius: 9999px;
+               background: var(--bg); border: 1px solid var(--border-std);
+               box-shadow: rgba(0,0,0,0.06) 0px 4px 12px; color: var(--text-primary);
+               opacity: 0; transform: translateY(8px); transition: 200ms ease; }
+.back-to-top.visible { opacity: 1; transform: none; }
+.back-to-top:hover { background: var(--accent-soft-bg); color: var(--accent);
+                     box-shadow: rgba(24,226,153,0.2) 0px 4px 16px; }
+```
+
+### 本 preset 不可让步
+
+- ❌ button radius < 9999px（pill 是 Mintlify 不可替代形状）
+- ❌ section 换灰底分隔（全白 + border + 留白）
+- ❌ 文字用纯黑 `#000000`（用 `#0d0d0d`）
+- ❌ weight 700
+- ❌ shadow 抢戏（≤ 6% opacity，仅 button + card）
 
 ## Map to Design Doc Components
 

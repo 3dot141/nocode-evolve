@@ -233,6 +233,58 @@ body {
 - 不要在 inline code 上加圆角 8px——保持 2px
 - 不要把 phosphor green `#39ff14` 大面积铺——它只在 hover/active 时短暂显形
 
+## Class Cheatsheet（drop-in CSS snippet）
+
+> 借鉴 taste-skill：paste-ready 的最小骨架。terminal-mono 招牌：通篇 JetBrains Mono + void black + emerald `#10b981`（默认）/ phosphor `#39ff14`（hover-only）+ radius 2px。CSS variables 见上方「CSS 实现骨架」，本节补 typography / 交互。
+
+### Typography & body（招牌：通篇 mono + 1.7 line-height 救可读性）
+
+```css
+body { font: 400 14.5px/1.7 var(--font-mono); color: var(--text-secondary); background: var(--bg);
+       letter-spacing: 0.01em; font-feature-settings: "calt" 1, "liga" 0; }   /* 关 ligature */
+h1 { font: 700 32px/1.2 var(--font-mono); letter-spacing: -0.02em; color: var(--text-primary); margin: 0 0 28px; }
+h2 { font: 600 22px/1.3 var(--font-mono); letter-spacing: -0.01em; color: var(--text-primary); margin: 48px 0 14px; }
+h3 { font: 600 17px/1.4 var(--font-mono); color: var(--text-primary); margin: 28px 0 10px; }
+p  { max-width: 68ch; margin: 0 0 16px; }   /* mono 字宽偏大，68ch ≈ sans 72ch */
+code { font: 500 0.95em/inherit var(--font-mono); background: var(--code-inline-bg);
+       color: var(--text-primary); padding: 1px 6px; border-radius: 2px; }
+pre  { background: var(--code-bg); border: 1px solid var(--border-std); padding: 14px 18px;
+       border-radius: 2px; font: 400 13.5px/1.55 var(--font-mono); overflow-x: auto; }
+blockquote { border-left: 2px solid var(--accent); padding: 4px 0 4px 18px;
+             color: var(--text-secondary); font-weight: 500; margin: 16px 0; }   /* italic 替代 */
+a { color: var(--accent); text-decoration: underline; }
+a:hover { color: var(--accent-hover); }   /* phosphor green only on dark hover */
+.label { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
+```
+
+### 5 必有交互（核心 snippet）
+
+```css
+.toc a { color: var(--text-tertiary); font: 400 12.5px/1.5 var(--font-mono);
+         padding: 6px 12px; display: block; border-left: 2px solid transparent;
+         transition: color 120ms linear, background 120ms linear; }   /* linear, not ease */
+.toc a:hover { color: var(--text-primary); background: rgba(255,255,255,0.03); }
+.toc a.active { color: var(--accent); background: rgba(16,185,129,0.06); border-left-color: var(--accent); }
+.toc a.active::before { content: "▸ "; }   /* terminal 风前缀替代 dot */
+.theme-toggle { position: fixed; top: 24px; right: 24px; width: 36px; height: 36px; border-radius: 2px;
+                background: var(--bg-surface); border: 1px solid var(--accent); color: var(--accent); }
+.back-to-top { position: fixed; right: 24px; bottom: 24px; width: 36px; height: 36px; border-radius: 2px;
+               background: var(--bg-surface); border: 1px solid var(--border-std); color: var(--text-tertiary);
+               opacity: 0; transition: opacity 120ms linear; }
+.back-to-top.visible { opacity: 1; }
+.back-to-top:hover { border-color: var(--accent); color: var(--accent); }
+.back-to-top:active { color: var(--accent-hover); }   /* phosphor flash */
+```
+
+### 本 preset 不可让步
+
+- ❌ 任何 sans-serif 混入（Inter / Geist / system-ui）—— 通篇 mono 是灵魂
+- ❌ pill `9999px` 任何元素 —— radius 永远 0 或 2px
+- ❌ phosphor green `#39ff14` 大面积铺（仅 hover/active 闪现）
+- ❌ macOS 圆点窗口 chrome（红绿黄圆点 = IDE cosplay）
+- ❌ gradient / glow（仅极少 hero 决策块）
+- ❌ italic 给 emphasis（mono italic 通常很丑；用 weight 500）
+
 ## Map to Design Doc Components
 
 | Design Doc 组件 | 视觉处理 |

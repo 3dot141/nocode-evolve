@@ -179,6 +179,78 @@ light token 参考 Linear.app 实际的 light theme（settings 页面切到 ligh
 - 不要用 weight 700
 - 不要在 dark surface 上用 drop shadow 表达 elevation
 
+## Class Cheatsheet（drop-in CSS snippet）
+
+> 借鉴 taste-skill：paste-ready 的最小骨架。Linear 招牌：dark luminance 阶梯 + semi-transparent 白边 + 靛紫 accent。
+
+### CSS variables（dark = primary）
+
+```css
+:root {
+  --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  /* primary: dark */
+  --bg: #08090a;             --bg-panel: #0f1011;         --bg-surface: #191a1b;
+  --text-primary: #f7f8f8;   --text-secondary: #d0d6e0;   --text-tertiary: #8a8f98;
+  --brand: #5e6ad2;          --accent: #7170ff;           --accent-hover: #828fff;
+  --border-subtle: rgba(255,255,255,0.05);
+  --border-std: rgba(255,255,255,0.08);
+  --code-bg: #0f1011;        --code-inline-bg: rgba(255,255,255,0.06);
+  --quote-bg: rgba(94,106,210,0.06);
+}
+[data-theme="light"] {
+  --bg: #f7f8f8;             --bg-panel: #ffffff;         --bg-surface: #ffffff;
+  --text-primary: #08090a;   --text-secondary: #3d4248;   --text-tertiary: #6f757e;
+  --accent: #5b5bd6;         --accent-hover: #7170ff;
+  --border-subtle: rgba(0,0,0,0.05);
+  --border-std: rgba(0,0,0,0.08);
+  --code-bg: #f4f5f6;        --code-inline-bg: rgba(0,0,0,0.05);
+}
+```
+
+### Typography & body（招牌：Inter 500 + OpenType `cv01,ss03`）
+
+```css
+body { font: 400 16px/1.65 var(--font-sans); color: var(--text-secondary); background: var(--bg);
+       font-feature-settings: "cv01", "ss03"; }
+h1 { font: 500 32px/1.13 var(--font-sans); letter-spacing: -0.704px; color: var(--text-primary); margin: 0 0 32px; }
+h2 { font: 500 24px/1.33 var(--font-sans); letter-spacing: -0.288px; color: var(--text-primary);
+     margin: 56px 0 16px; border-bottom: 1px solid var(--border-subtle); padding-bottom: 8px; }
+h3 { font: 600 20px/1.33 var(--font-sans); letter-spacing: -0.24px; margin: 32px 0 12px; }
+p  { max-width: 72ch; margin: 0 0 16px; }
+code { font: 400 0.92em/inherit var(--font-mono); background: var(--code-inline-bg);
+       color: var(--text-primary); padding: 2px 6px; border-radius: 4px; }
+pre  { background: var(--code-bg); border: 1px solid var(--border-std); padding: 16px 20px;
+       border-radius: 8px; font: 400 14px/1.55 var(--font-mono); overflow-x: auto; }
+blockquote { background: var(--quote-bg); border-left: 2px solid var(--brand);
+             padding: 12px 20px; border-radius: 0 6px 6px 0; margin: 16px 0; }
+a { color: var(--accent); }
+```
+
+### 5 必有交互（核心 snippet）
+
+```css
+.toc a { color: var(--text-tertiary); font: 500 13px/1.5 var(--font-sans);
+         padding: 6px 12px; display: block; border-left: 2px solid transparent; transition: 150ms ease; }
+.toc a:hover { color: var(--text-secondary); background: rgba(255,255,255,0.03); }
+.toc a.active { color: var(--accent); background: rgba(113,112,255,0.08); border-left-color: var(--accent); }
+.theme-toggle { position: fixed; top: 24px; right: 24px; width: 40px; height: 40px; border-radius: 9999px;
+                background: var(--bg-surface); border: 1px solid var(--border-std); color: var(--text-secondary); }
+.back-to-top { position: fixed; right: 24px; bottom: 24px; width: 40px; height: 40px; border-radius: 9999px;
+               background: rgba(255,255,255,0.05); border: 1px solid var(--border-std);
+               color: var(--text-secondary); box-shadow: rgba(0,0,0,0.4) 0px 2px 8px;
+               opacity: 0; transition: opacity 200ms ease; }
+.back-to-top.visible { opacity: 1; }
+.back-to-top:hover { background: rgba(113,112,255,0.15); color: var(--accent); }
+```
+
+### 本 preset 不可让说
+
+- ❌ 正文用纯白 `#ffffff`（用 `#f7f8f8` 防眼疲劳）
+- ❌ button 用 solid color 填充（除 brand indigo CTA）
+- ❌ weight 700（最大 600）
+- ❌ dark surface 上用 drop shadow 表达 elevation（靠 luminance 阶梯）
+
 ## Map to Design Doc Components
 
 | Design Doc 组件 | 视觉处理 |

@@ -234,6 +234,76 @@ Success：`bg=rgba(21,190,83,0.2)` / `text=#108c3d` / `border=1px solid rgba(21,
 - ruby/magenta 不用于按钮/链接（仅装饰）
 - 不在 display 上用正字距
 
+## Class Cheatsheet（drop-in CSS snippet）
+
+> 借鉴 taste-skill：paste-ready 的最小骨架。Stripe 招牌：weight 300 标题 + blue-tinted shadow + Purple `#533afd`。
+
+### CSS variables
+
+```css
+:root {
+  --font-sans: 'Source Sans 3', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'Source Code Pro', ui-monospace, SFMono-Regular, Menlo, monospace;
+  --bg: #ffffff;             --bg-surface: #f6f9fc;
+  --text-primary: #061b31;   --text-secondary: #273951;   --text-tertiary: #64748d;
+  --brand: #533afd;          --accent: #533afd;           --accent-hover: #4434d4;
+  --border-subtle: #e5edf5;  --border-std: #e5edf5;
+  --code-bg: #0d253d;        --code-inline-bg: #f6f9fc;   --code-inline-text: #533afd;
+  --shadow-elevated: rgba(50,50,93,0.25) 0px 30px 45px -30px, rgba(0,0,0,0.1) 0px 18px 36px -18px;
+  --shadow-ambient: rgba(23,23,23,0.06) 0px 3px 6px;
+}
+[data-theme="dark"] {
+  --bg: #0d253d;             --bg-surface: #1c1e54;
+  --text-primary: #e5edf5;   --text-secondary: #b8c2d6;   --text-tertiary: #8590a8;
+  --accent: #7c6bff;         --accent-hover: #9c8fff;
+  --border-subtle: rgba(229,237,245,0.08);  --border-std: rgba(229,237,245,0.12);
+  --code-bg: #0d253d;        --code-inline-bg: rgba(124,107,255,0.12);  --code-inline-text: #9c8fff;
+  --shadow-elevated: rgba(83,58,253,0.4) 0px 30px 45px -30px, rgba(0,0,0,0.5) 0px 18px 36px -18px;
+}
+```
+
+### Typography & body（招牌：weight 300 display）
+
+```css
+body { font: 400 16px/1.6 var(--font-sans); color: var(--text-secondary); background: var(--bg); }
+h1 { font: 300 48px/1.15 var(--font-sans); letter-spacing: -0.96px; color: var(--text-primary); margin: 0 0 32px; }
+h2 { font: 300 32px/1.10 var(--font-sans); letter-spacing: -0.64px; margin: 48px 0 16px;
+     border-bottom: 1px solid var(--border-subtle); padding-bottom: 8px; }
+h3 { font: 400 22px/1.10 var(--font-sans); letter-spacing: -0.22px; margin: 32px 0 12px; }
+p  { max-width: 72ch; margin: 0 0 14px; }
+code { font: 500 0.9em/inherit var(--font-mono); background: var(--code-inline-bg);
+       color: var(--code-inline-text); padding: 2px 6px; border-radius: 4px;
+       border: 1px solid var(--border-subtle); }
+pre  { background: var(--code-bg); color: #e5edf5; padding: 20px 24px; border-radius: 6px;
+       box-shadow: var(--shadow-elevated); font: 500 13px/1.7 var(--font-mono); overflow-x: auto; }
+a { color: var(--accent); }
+table { font-feature-settings: "tnum" 1; }
+```
+
+### 5 必有交互（核心 snippet）
+
+```css
+.toc a { color: var(--text-tertiary); font: 400 14px/1.5 var(--font-sans);
+         padding: 6px 12px; display: block; border-left: 2px solid transparent;
+         transition: 180ms ease; }
+.toc a.active { color: var(--accent); background: rgba(83,58,253,0.05); border-left-color: var(--accent); }
+.theme-toggle { position: fixed; top: 24px; right: 24px; width: 40px; height: 40px; border-radius: 9999px;
+                background: var(--bg); box-shadow: rgba(50,50,93,0.25) 0px 6px 12px -6px;
+                color: var(--accent); }
+.back-to-top { position: fixed; right: 32px; bottom: 32px; width: 48px; height: 48px; border-radius: 8px;
+               background: var(--accent); color: #fff;
+               box-shadow: rgba(50,50,93,0.25) 0px 8px 16px -8px, rgba(0,0,0,0.1) 0px 4px 8px -4px;
+               opacity: 0; transition: opacity 240ms ease; }
+.back-to-top.visible { opacity: 1; }
+```
+
+### 本 preset 不可让步
+
+- ❌ 标题用 weight ≥ 600（违背 weight-300 luxury 招牌）
+- ❌ radius > 8px 或 pill 形（破坏保守气质）
+- ❌ 中性灰 shadow（必须 `rgba(50,50,93,...)` 蓝调）
+- ❌ ruby / magenta 用于按钮或链接（仅装饰）
+
 ## Map to Design Doc Components
 
 | Design Doc 组件 | 视觉处理 |

@@ -229,6 +229,59 @@ PostHog 的视觉语言是「逃逸到互联网上的创业公司内部 wiki」�
 - 不要去掉 orange hover——它是核心交互
 - 不要用纯白背景
 
+## Class Cheatsheet（drop-in CSS snippet）
+
+> 借鉴 taste-skill：paste-ready 的最小骨架。PostHog 招牌：sage-cream paper + IBM Plex Sans 700/800 + hover 闪 orange `#F54E00`。CSS variables 见上方「CSS 实现骨架」，本节补 typography / 交互。
+
+### Typography & body（招牌：bold 700/800 标题 + 1.50-1.71 慷慨行高）
+
+```css
+body { font: 400 16px/1.71 var(--font-sans, 'IBM Plex Sans', system-ui, sans-serif);
+       color: var(--text-secondary); background: var(--bg);
+       font-feature-settings: "liga" 1, "calt" 1; }
+h1 { font: 800 30px/1.20 var(--font-sans); letter-spacing: -0.75px; color: var(--text-primary);
+     padding-bottom: 24px; border-bottom: 1px solid var(--border-std); margin: 0 0 24px; }
+h2 { font: 700 36px/1.50 var(--font-sans); letter-spacing: 0; color: var(--text-primary); margin: 48px 0 16px; }
+h3 { font: 700 24px/1.33 var(--font-sans); color: var(--text-primary); margin: 32px 0 12px; }
+p  { max-width: 72ch; margin: 0 0 16px; }
+code { font: 500 14px/inherit var(--font-mono, 'Source Code Pro', monospace);
+       background: var(--code-inline-bg); color: var(--text-primary);
+       padding: 2px 6px; border-radius: 4px; }
+pre  { background: var(--code-bg); border: 1px solid var(--border-std); padding: 16px 20px;
+       border-radius: 6px; font: 500 14px/1.6 var(--font-mono); overflow-x: auto; }
+blockquote { background: var(--code-inline-bg); border-left: 4px solid var(--accent);
+             padding: 12px 16px; margin: 16px 0; font-style: italic; }
+a { color: var(--text-primary); text-decoration: underline; transition: color 150ms ease; }
+a:hover { color: var(--brand); }   /* PostHog Orange 隐藏 hover 签名 */
+```
+
+### 5 必有交互（核心 snippet）
+
+```css
+.toc a { color: var(--text-tertiary); font: 400 15px/1.5 var(--font-sans);
+         padding: 6px 12px; display: block; transition: 150ms ease; }
+.toc a:hover { color: var(--brand); }   /* orange flash */
+.toc a.active { color: var(--text-primary); background: var(--bg-hover);
+                font-weight: 600; border-radius: 4px; }
+.theme-toggle { position: fixed; top: 24px; right: 24px; width: 40px; height: 40px; border-radius: 4px;
+                background: var(--bg-surface); border: 1px solid var(--border-std);
+                color: var(--accent); }
+.back-to-top { position: fixed; right: 24px; bottom: 24px; width: 44px; height: 44px;
+               border-radius: 9999px; background: #1e1f23; color: var(--bg);
+               box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+               opacity: 0; transition: opacity 200ms ease; }
+.back-to-top.visible { opacity: 1; }
+.back-to-top:hover { opacity: 0.85; color: var(--accent); }   /* amber flash on dark btn */
+```
+
+### 本 preset 不可让步
+
+- ❌ 蓝紫 SaaS 套路色（PostHog 是 olive/sage/amber 家族）
+- ❌ 任何元素 weight 700+ 之外的 bold（保留 700/800 给标题）
+- ❌ 纯白背景（用 `#fdfdf8` warm parchment）
+- ❌ card radius ≥ 12px（保持 4-6px）
+- ❌ 去掉 orange hover（是核心交互签名）
+
 ## Map to Design Doc Components
 
 | Design Doc 组件 | 本 preset 的视觉处理 |

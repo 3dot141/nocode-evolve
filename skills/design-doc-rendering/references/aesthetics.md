@@ -91,15 +91,21 @@ design-doc 默认偏向前 4 种。**playful / pastel / organic 慎用**——�
 
 ## 例外：preset 内已选定字体
 
-某些 preset 的字体本身就是**反 AI slop 的选择**：
+某些 preset 的字体本身就是**反 AI slop 的选择**，或通过 OpenType stylistic set 把 Inter "去通用化"成 distinctive 身份——这些**保留原 preset 字体不替换**：
 
 | preset | 字体 | 状态 |
 |---|---|---|
 | `vercel-geist` | Geist + Geist Mono | ✅ 保留——Vercel 自家字体，非通用 Inter |
+| `linear-precision` | Inter + OpenType `cv01, ss03` | ✅ 保留——Inter 本身在 NEVER 列表，但配上 Linear 招牌的 `cv01, ss03` stylistic set 后字形与 default Inter 显著不同，构成 Linear distinctive 身份；**前提是 `font-feature-settings: "cv01", "ss03"` 必须全局打开**，否则降级为普通 Inter，回到 NEVER 状态 |
 | `tufte-essay` | Source Serif 4 | ✅ 保留——衬线、distinctive |
 | `terminal-mono` | JetBrains Mono | ✅ 保留——可叠加 Departure Mono 作 display |
+| `warp-blocks` | Geist + Geist Mono | ✅ 保留——同 vercel-geist 字体家族，distinctive |
+| `posthog-playful` | IBM Plex Sans | ✅ 保留——IBM enterprise terminal feel，distinctive |
+| `stripe-purple` | Source Sans 3 | ✅ 保留——Stripe 招牌的 weight-300 light luxury feel 已经 distinctive |
 
-其它 preset 默认用 Inter——**渲染时主动替换**为本文档候选列表之一。
+其它 preset（**`mintlify-reading`**）历史默认用 Inter——**渲染时主动替换**为本文档候选列表之一（推荐 `Bricolage Grotesque` 作 Inter 优雅替代）。
+
+> ⚠️ **若 OpenType feature 没开**：linear-precision 的 Inter 例外失效。Cheatsheet 已经在 `body { font-feature-settings: "cv01", "ss03"; }` 里写了，**确认 body 规则已应用**再判定是否 distinctive。
 
 ## 配色
 
@@ -132,19 +138,15 @@ design-doc 默认 layout = 两栏 + 居中阅读区——这是 **AI slop 安全
 
 **对称是 default，不对称才是 design**：把 TOC / metadata / 章节标号其中一个打破对称。
 
-## Motion（详见 `motion.md`）
+## Motion（详见 `motion.md` + SKILL.md「MOTION_INTENSITY Dial」）
 
-一个高质量 page-load staggered reveal > 5 个散落 micro-interaction。
+> ⚠️ **本节的具体 recipe 选取已由 dial 决定**——见 `SKILL.md` 的「MOTION_INTENSITY Dial（可选调档）」节。本节仅保留**全档位通用**的硬规则。
 
-design-doc 鼓励：
-- 首屏 H1 + metadata 卡片淡入（150-300ms 错开）
-- 章节滚动到视口时淡入
-- 折叠展开过渡（180ms ease）
+通用硬规则（任何 dial 档位都成立）：
 
-**不要**：
-- 弹跳 / 旋转
-- 抢眼 hover（文档不是 demo）
-- 自动播放视频背景
+- **不要**：弹跳 / 旋转过度 / 抢眼 hover / 自动播放视频背景 / Easter-egg 类装饰
+- **一个高质量 page-load > 5 个散落 micro-interaction**：dial 4-7 默认只做 1 个 staggered reveal + 章节进入视区淡入；不要堆叠
+- **details 折叠过渡**：永远是 `180-240ms ease`——这是 5 必有交互的一部分，与 dial 无关
 
 ## Backgrounds & Visual Details（详见 `background.md`）
 
@@ -157,8 +159,54 @@ design-doc 鼓励：
 
 **禁用**：大面积 gradient / 动态渐变流光 / video 背景。
 
+## Anti-Generic Content（"Jane Doe Effect"）
+
+> 借鉴 taste-skill 节 7 - Content & Data。设计文档的视觉做对了、但**示例内容**仍是 generic 占位时，整体仍掉档。
+
+渲染时如果文档里出现以下"AI placeholder 信号"，**应在 HTML 渲染层加视觉警示**（如 `data-anti-slop="placeholder"` 灰化处理）或在报告中提醒作者改 markdown：
+
+### 占位方案名 / 系统名
+
+- ❌ `方案 A / 方案 B / 方案 C` —— 各方案应有反映其性质的命名
+  > ✅ 替代：「PG-backed scheme」/「SQLite-only scheme」/「外置 Redis cache scheme」
+- ❌ `Component X / Service Foo / Module Bar / Acme Inc / Nexus Corp / SmartFlow`
+  > ✅ 替代：用真实路径或与项目主题契合的命名
+
+### 假人名 / 假账号
+
+- ❌ `John Doe / Sarah Chan / Jack Su` —— 示例用户
+- ❌ `user@example.com / test@test.com` —— 示例邮箱  
+- ❌ 标准 SVG "egg" 头像 / Lucide user 图标
+  > ✅ 替代：用与文档主题相关的具体场景化命名；头像用具体风格化占位（如 [picsum.photos](https://picsum.photos/seed/x/40/40)）
+
+### 假数据 / 整数百分比
+
+- ❌ `99.99% / 50% / 100%` —— 太整齐 = AI 拍脑袋
+- ❌ `1234567 / 12345 / 99999` —— 阶梯数字
+- ❌ 性能表里 P99 都是整百整千（`100ms / 200ms / 500ms`）
+  > ✅ 替代：用有机不规则数字 `47.2% / 187ms / P99 213ms / 1,847 RPS`
+- ❌ SLA 承诺写 `99.99%` 而无 SLO budget 推导
+  > ✅ 替代：`99.9%（误差预算 8.76 小时/年），实测 99.94%`
+
+### AI 文案套话（与 design-doc-reviewer agent.md 的 AI Writing Patterns 互补）
+
+视觉渲染层不修改 markdown 文本，但**渲染前过一遍这些字**——出现 = 在 Pre-Flight 提示作者改 markdown：
+
+- ❌ `Elevate / Seamless / Unleash / Next-Gen / Leverage / Synergy`
+- ❌ `深入探讨 / 核心要素 / 至关重要 / 值得一提 / 展望未来`
+- ❌ `灵活、可扩展、易维护`（凑三式）
+- ❌ `行业领先 / 业界标杆 / 最佳实践`（无引用）
+
+### 外部资源
+
+- ❌ **Unsplash 直链**（半年内大批量被裁，链接会 broken；且 Unsplash 改 license 限制商用 hot link）
+- ❌ Lorem Ipsum 文字（design-doc 不应该有未填内容）
+- ✅ **`picsum.photos/seed/{topic}/{w}/{h}` 是 OK 的**——不要和 Unsplash 混为一谈：picsum 是基于 seed 的**确定性**占位图（同 seed 永远拿到同张图），上游 Lorem Picsum 服务多年稳定、不依赖授权图库；用法举例 `https://picsum.photos/seed/design-doc-rendering/800/600`
+- ✅ 文档主题相关具体内容、SVG inline 占位、纯文字 `data:` URI 占位都比 hot link 稳
+
 ## NEVER 清单（一句话过)
 
+视觉层：
 - ❌ Inter / Roboto / Arial / Space Grotesk
 - ❌ 紫渐变 + 白底
 - ❌ purely solid color 背景
@@ -166,6 +214,14 @@ design-doc 鼓励：
 - ❌ 圆角统一 8px（特征化失败）
 - ❌ "predictable layout"——header + sidebar + content + footer 默认排
 - ❌ 套通用模板凑数
+- ❌ 纯黑 `#000000`（用 off-black / zinc-950 / charcoal）
+
+内容层（"Jane Doe Effect"）：
+- ❌ `方案 A / B / C` 占位名
+- ❌ `John Doe / Acme Inc / SmartFlow` 通用占位人/产品
+- ❌ `99.99% / 50% / 100%` 整数假数据
+- ❌ `Elevate / Seamless / Unleash / 深入探讨` AI 文案套话
+- ❌ Lorem Ipsum / Unsplash hot link
 
 ## 实施复杂度匹配美学
 

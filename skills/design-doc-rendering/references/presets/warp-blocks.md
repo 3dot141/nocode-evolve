@@ -235,6 +235,60 @@ Typography 是秘密武器：Geist（替代 Matter）以 geometric sans-serif + 
 - 不要紧凑挤压排版——保留 editorial 大间距
 - 不要混入 Geist / Inter 之外的字体
 
+## Class Cheatsheet（drop-in CSS snippet）
+
+> 借鉴 taste-skill：paste-ready 的最小骨架。Warp 招牌：warm near-black + Geist Regular（400）全局 + 半透明 border + uppercase tracking 2.4px label。CSS variables 见上方「CSS 实现骨架」，本节补 typography / 交互。
+
+### Typography & body（招牌：weight 400 包揽一切 + 暖白文字）
+
+```css
+body { font: 400 18px/1.65 var(--font-sans, 'Geist', system-ui, sans-serif);
+       color: var(--text-secondary); background: var(--bg);
+       font-feature-settings: "ss01" 1; }
+h1 { font: 400 48px/1.20 var(--font-sans); letter-spacing: -0.56px; color: var(--text-primary);
+     padding-bottom: 32px; border-bottom: 1px solid var(--border-subtle); margin: 0 0 32px; }
+h2 { font: 400 32px/1.19 var(--font-sans); letter-spacing: -0.32px; color: var(--text-primary); margin: 64px 0 20px; }
+h3 { font: 400 24px/1.20 var(--font-sans); letter-spacing: -0.24px; color: var(--text-primary); margin: 40px 0 14px; }
+p  { max-width: 72ch; margin: 0 0 16px; }
+code { font: 400 15px/inherit var(--font-mono, 'Geist Mono', monospace);
+       background: var(--code-inline-bg); color: var(--text-primary);
+       padding: 2px 6px; border-radius: 4px; }
+pre  { background: var(--code-bg); border: 1px solid var(--border-subtle); padding: 18px 22px;
+       border-radius: 10px; font: 400 15px/1.6 var(--font-mono); color: var(--text-primary);
+       overflow-x: auto; }
+blockquote { background: rgba(255,255,255,0.03); border-left: 2px solid var(--text-secondary);
+             padding: 14px 20px; margin: 16px 0; color: var(--text-secondary); }
+a { color: var(--text-primary); text-decoration: underline; text-decoration-color: var(--text-tertiary); }
+.label { font-size: 12px; letter-spacing: 2.4px; text-transform: uppercase; color: var(--text-tertiary); }
+```
+
+### 5 必有交互（核心 snippet）
+
+```css
+.toc a { color: var(--text-tertiary); font: 400 16px/1.5 var(--font-sans);
+         padding: 6px 12px; display: block; border-left: 2px solid transparent;
+         transition: color 200ms ease, border-color 200ms ease; }
+.toc a:hover { color: var(--text-secondary); }
+.toc a.active { color: var(--text-primary); font-weight: 500; border-left-color: var(--text-primary); }
+.theme-toggle { position: fixed; top: 24px; right: 24px; border-radius: 9999px; padding: 10px 20px;
+                background: #353534; color: var(--text-secondary);
+                border: 1px solid var(--border-subtle); }
+.back-to-top { position: fixed; right: 32px; bottom: 32px; width: 48px; height: 48px; border-radius: 9999px;
+               background: #353534; color: var(--text-secondary); border: 1px solid var(--border-subtle);
+               opacity: 0; transform: translateY(8px); transition: 250ms ease; }
+.back-to-top.visible { opacity: 1; transform: none; }
+.back-to-top:hover { color: var(--text-primary); }
+```
+
+### 本 preset 不可让步
+
+- ❌ 纯白文字 `#ffffff`（用 warm `#faf9f6`）
+- ❌ 任何 weight 700+
+- ❌ pill `border-radius: 9999px` 之外，按钮其他 shape
+- ❌ 冷蓝暗底（必须 warm near-black）
+- ❌ gradient / glow
+- ❌ Geist / Inter 之外的字体混入
+
 ## Map to Design Doc Components
 
 | Design Doc 组件 | 本 preset 的视觉处理 |

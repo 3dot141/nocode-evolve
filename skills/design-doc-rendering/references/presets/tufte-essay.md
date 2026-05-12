@@ -206,6 +206,86 @@ body {
 - 不要给 blockquote 加左色条——那是 SaaS 文档风
 - 不要表格 hover bg / 斑马纹——干扰阅读
 
+## Class Cheatsheet（drop-in CSS snippet）
+
+> 借鉴 taste-skill：paste-ready 的最小骨架。Tufte 招牌：通篇 Source Serif 4（含 H1/H2）+ warm paper `#fffff8` + italic 替代 bold + crimson `#a00000` 单 accent + 三横线表格。CSS variables 见上方「CSS 实现骨架」，本节补 typography / 交互。
+
+### Typography & body（招牌：size 而非 weight 做层级 + italic 替 bold）
+
+```css
+body { font: 400 17px/1.65 var(--font-serif, 'Source Serif 4', Palatino, Georgia, serif);
+       color: var(--text-primary); background: var(--bg);
+       font-feature-settings: "kern" 1, "liga" 1, "onum" 1; }   /* oldstyle nums */
+h1 { font: 400 32px/1.25 var(--font-serif); color: var(--text-primary); margin: 0 0 40px;
+     text-align: center; }   /* 学术 paper 居中 */
+h2 { font: 400 22px/1.35 var(--font-serif); font-style: italic; color: var(--text-primary); margin: 56px 0 16px; }
+h3 { font: 600 17px/1.4 var(--font-serif); color: var(--text-primary); margin: 28px 0 10px; }   /* 唯一允许 600 */
+p  { max-width: 880px; margin: 0 0 1em; }
+em, .emphasized { font-style: italic; font-weight: 400; }   /* italic 替代 bold */
+code { font: 400 0.92em/inherit var(--font-mono, 'JetBrains Mono', monospace);
+       background: var(--code-inline-bg); padding: 0 4px; border-radius: 1px; }
+pre  { background: transparent; border-left: 2px solid var(--border-std); padding: 4px 0 4px 14px;
+       font: 400 14px/1.55 var(--font-mono); color: var(--text-secondary); margin: 1em 0; overflow-x: auto; }
+blockquote { background: transparent; border: none; padding: 8px 32px;
+             font-style: italic; color: var(--text-secondary); margin: 16px 0; }
+a { color: var(--accent); border-bottom: 0.5px solid var(--accent); text-decoration: none;
+    text-underline-offset: 0.18em; }
+a:hover { background: rgba(160,0,0,0.08); border-bottom-width: 1px; }
+
+/* Tufte 三横线表格 */
+table { border-collapse: collapse; }
+table { border-top: 1px solid var(--border-strong); border-bottom: 1px solid var(--border-strong); }
+thead { border-bottom: 0.5px solid var(--border-std); }
+thead th { font-style: italic; font-weight: 400; color: var(--text-tertiary); }
+/* no vertical rules, no row hover, no zebra — Tufte 纪律 */
+
+/* Sidenote */
+.sidenote { float: right; clear: right; width: 220px; margin-right: -260px;
+            font-size: 13px; color: var(--text-tertiary); line-height: 1.45; }
+@media (max-width: 900px) {
+  .sidenote { float: none; width: auto; margin: 0.5em 0; font-style: italic; }
+}
+
+[data-theme="dark"] body { font-size: 18px; letter-spacing: 0.005em; }   /* 衬线 dark 救糊 */
+```
+
+### 5 必有交互（核心 snippet）
+
+```css
+.toc a { color: var(--text-tertiary); font: 400 14px/1.5 var(--font-serif);
+         padding-left: 4px; display: block; transition: color 200ms ease; }
+.toc a:hover { color: var(--text-primary); }
+.toc a.active { color: var(--accent); font-style: italic; padding-left: 8px; }   /* 无 bg/border */
+.theme-toggle { position: fixed; top: 24px; right: 24px; background: transparent; border: none;
+                color: var(--text-tertiary); font-style: italic; font-size: 14px;
+                border-bottom: 0.5px solid var(--text-tertiary); padding: 2px 4px; }
+.back-to-top { position: fixed; right: 32px; bottom: 32px; background: transparent; border: none;
+               color: var(--text-tertiary); font: italic 400 14px/1 var(--font-serif);
+               border-bottom: 0.5px solid var(--border-std); padding: 2px 4px;
+               opacity: 0; transition: opacity 300ms ease; }
+.back-to-top.visible { opacity: 1; }
+.back-to-top:hover { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* 打印友好（Tufte handout 应该可印） */
+@media print {
+  body { background: #fff; color: #000; font-size: 11pt; }
+  .toc-sidebar, .back-to-top, .theme-toggle { display: none; }
+  .sidenote { float: none; width: auto; margin: 0.5em 0; font-style: italic; }
+  pre, blockquote { page-break-inside: avoid; }
+  a { color: #000; text-decoration: underline; }
+  a[href^="http"]::after { content: " (" attr(href) ")"; font-size: 0.85em; }
+}
+```
+
+### 本 preset 不可让步
+
+- ❌ 任何 sans-serif 用在 H1 / H2 / metadata（包括 Inter / system-ui）—— 通篇 serif 是灵魂
+- ❌ blockquote 加左色条 / 浅色填底（SaaS 风，非 essay 风）
+- ❌ code block 设计成显眼填色卡片（在 essay 里 code 是注脚）
+- ❌ 链接 hover 切色相（只加粗下划线，不变色）
+- ❌ box-shadow / gradient / pill 任何元素（屏幕原生 UI 与 essay 美学冲突）
+- ❌ 表格加 hover bg / 斑马纹 / vertical rules（三横线纪律）
+
 ## Map to Design Doc Components
 
 | Design Doc 组件 | 视觉处理 |

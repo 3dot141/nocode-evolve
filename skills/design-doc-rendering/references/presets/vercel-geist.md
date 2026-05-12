@@ -210,6 +210,73 @@ Pill Badge：`bg=#ebf5ff` / `text=#0068d6` / `padding=0px 10px` / `radius=9999px
 - shadow opacity 不超过 0.1
 - 主按钮不用 pill radius（9999px）
 
+## Class Cheatsheet（drop-in CSS snippet）
+
+> 借鉴 taste-skill：paste-ready 的最小骨架。Agent 直接 copy 到 `<style>` 内，按下方 typography / 交互 snippet 扩展。
+
+### CSS variables
+
+```css
+:root {
+  --font-sans: 'Geist', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  --bg: #ffffff;             --bg-surface: #fafafa;
+  --text-primary: #171717;   --text-secondary: #4d4d4d;   --text-tertiary: #666666;
+  --accent: #0072f5;         --border-subtle: #ebebeb;    --border-std: rgba(0,0,0,0.08);
+  --code-bg: #fafafa;        --code-inline-bg: #fafafa;
+  --shadow-ring: rgba(0,0,0,0.08) 0px 0px 0px 1px;
+  --shadow-card: rgba(0,0,0,0.08) 0px 0px 0px 1px, rgba(0,0,0,0.04) 0px 2px 2px, #fafafa 0px 0px 0px 1px;
+}
+[data-theme="dark"] {
+  --bg: #000000;             --bg-surface: #111111;
+  --text-primary: #ededed;   --text-secondary: #a1a1a1;   --text-tertiary: #888888;
+  --accent: #52a8ff;         --border-subtle: rgba(255,255,255,0.06); --border-std: rgba(255,255,255,0.06);
+  --code-bg: #0a0a0a;        --code-inline-bg: #1a1a1a;
+  --shadow-ring: rgba(255,255,255,0.06) 0px 0px 0px 1px;
+  --shadow-card: rgba(255,255,255,0.06) 0px 0px 0px 1px, rgba(0,0,0,0.6) 0px 2px 2px, #1a1a1a 0px 0px 0px 1px;
+}
+```
+
+### Typography & body（招牌：Geist + 激进负字距 + shadow-as-border）
+
+```css
+body { font: 400 18px/1.56 var(--font-sans); color: var(--text-primary); background: var(--bg);
+       font-feature-settings: "liga" 1; }
+h1 { font: 600 40px/1.20 var(--font-sans); letter-spacing: -2.4px; color: var(--text-primary); margin: 0 0 32px; }
+h2 { font: 600 32px/1.25 var(--font-sans); letter-spacing: -1.28px; margin: 48px 0 16px;
+     border-bottom: 1px solid var(--border-subtle); padding-bottom: 8px; }
+h3 { font: 600 24px/1.33 var(--font-sans); letter-spacing: -0.96px; margin: 32px 0 12px; }
+p  { max-width: 72ch; margin: 0 0 16px; }
+code { font: 400 0.9em/inherit var(--font-mono); background: var(--code-inline-bg);
+       padding: 2px 6px; border-radius: 4px; box-shadow: var(--shadow-ring); }
+pre  { background: var(--code-bg); padding: 20px 24px; border-radius: 8px;
+       box-shadow: rgba(0,0,0,0.08) 0px 0px 0px 1px, rgba(0,0,0,0.04) 0px 2px 2px;
+       font: 400 14px/1.6 var(--font-mono); overflow-x: auto; }
+a { color: var(--accent); text-underline-offset: 3px; }
+```
+
+### 5 必有交互（核心 snippet）
+
+```css
+.toc a { color: var(--text-tertiary); font: 400 14px/1.5 var(--font-sans);
+         padding: 6px 12px; display: block; border-left: 2px solid transparent; transition: 150ms ease; }
+.toc a.active { color: var(--text-primary); background: var(--bg-surface); font-weight: 600;
+                border-left-color: var(--text-primary); }
+.theme-toggle { position: fixed; top: 24px; right: 24px; width: 40px; height: 40px;
+                border-radius: 9999px; background: var(--bg); box-shadow: var(--shadow-card);
+                color: var(--text-primary); }
+.back-to-top { position: fixed; right: 32px; bottom: 32px; width: 40px; height: 40px;
+               border-radius: 9999px; background: var(--bg); box-shadow: var(--shadow-card);
+               color: var(--text-primary); opacity: 0; transition: opacity 200ms ease; }
+.back-to-top.visible { opacity: 1; }
+```
+
+### 本 preset 不可让步
+
+- ❌ 任何卡片用传统 CSS `border` —— 必须 `box-shadow: ...0 0 0 1px` shadow-as-border
+- ❌ 文字用纯黑 `#000000`（用 `#171717`）
+- ❌ display 标题用 weight 700 或正字距（保持 600 + 强负字距）
+
 ## Map to Design Doc Components
 
 | Design Doc 组件 | 视觉处理 |
