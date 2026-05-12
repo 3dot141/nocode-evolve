@@ -297,12 +297,13 @@ table { font-feature-settings: "tnum" 1; }
 .back-to-top.visible { opacity: 1; }
 ```
 
-### 本 preset 不可让步
+### 本 preset 不可让步（破红线 = 不再是 Stripe Purple）
 
-- ❌ 标题用 weight ≥ 600（违背 weight-300 luxury 招牌）
-- ❌ radius > 8px 或 pill 形（破坏保守气质）
-- ❌ 中性灰 shadow（必须 `rgba(50,50,93,...)` 蓝调）
-- ❌ ruby / magenta 用于按钮或链接（仅装饰）
+3 条 hard red lines；其他战术性 don't 见上方「Do's & Don'ts」：
+
+- ❌ 标题用 weight ≥ 600（违背 weight-300 light luxury 招牌——这是 Stripe 区别于所有金融产品的标志性反常规选择）
+- ❌ shadow 用中性灰（必须 blue-tinted `rgba(50,50,93,...)` —— 招牌的 chromatic depth）
+- ❌ radius > 8px 或 pill 形（破坏保守 fintech 气质）
 
 ## Map to Design Doc Components
 

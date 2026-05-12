@@ -96,45 +96,7 @@ PostHog 的视觉语言是「逃逸到互联网上的创业公司内部 wiki」�
 | `--code-bg` | `#15171e` | `#fdfdf8` | `<pre>` 块底 |
 | `--code-inline-bg` | `rgba(247,165,1,0.12)` | `#eeefe9` | 行内 code 底（dark 用 amber tint 招牌细节） |
 
-**CSS 实现骨架**
-
-```css
-:root {
-  /* primary: dark */
-  --bg: #1d1f27;
-  --bg-panel: #232530;
-  --bg-surface: #2a2c38;
-  --bg-hover: #33353f;
-  --text-primary: #fdfdf8;
-  --text-secondary: #d4c9b8;
-  --text-tertiary: #9ea096;
-  --text-quat: #5d5f56;
-  --brand: #F54E00;
-  --accent: #F7A501;
-  --border-subtle: rgba(253, 253, 248, 0.06);
-  --border-std: rgba(253, 253, 248, 0.1);
-  --border-strong: rgba(253, 253, 248, 0.18);
-  --code-bg: #15171e;
-  --code-inline-bg: rgba(247, 165, 1, 0.12);
-}
-[data-theme="light"] {
-  --bg: #fdfdf8;
-  --bg-panel: #fdfdf8;
-  --bg-surface: #f2f0e9;
-  --bg-hover: #f4f4f4;
-  --text-primary: #151515;
-  --text-secondary: #4d4f46;
-  --text-tertiary: #65675e;
-  --text-quat: #9ea096;
-  --brand: #F54E00;
-  --accent: #F7A501;
-  --border-subtle: #bfc1b7;
-  --border-std: #bfc1b7;
-  --border-strong: #b17816;
-  --code-bg: #fdfdf8;
-  --code-inline-bg: #eeefe9;
-}
-```
+> 完整 CSS variables `:root` / `[data-theme="light"]` 块见下方「Class Cheatsheet（drop-in CSS snippet）」节——所有 paste-ready 代码集中在 cheatsheet 一处。
 
 **关键 mode 差异说明**
 - Dark mode 不用纯黑——`#1d1f27` 保留 warm 倾向，避免冷蓝暗色调
@@ -231,7 +193,29 @@ PostHog 的视觉语言是「逃逸到互联网上的创业公司内部 wiki」�
 
 ## Class Cheatsheet（drop-in CSS snippet）
 
-> 借鉴 taste-skill：paste-ready 的最小骨架。PostHog 招牌：sage-cream paper + IBM Plex Sans 700/800 + hover 闪 orange `#F54E00`。CSS variables 见上方「CSS 实现骨架」，本节补 typography / 交互。
+> 借鉴 taste-skill：paste-ready 的最小骨架。PostHog 招牌：sage-cream paper + IBM Plex Sans 700/800 + hover 闪 orange `#F54E00`。
+
+### CSS variables
+
+```css
+:root {
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'Source Code Pro', ui-monospace, SFMono-Regular, Menlo, monospace;
+  /* primary: dark */
+  --bg: #1d1f27;             --bg-panel: #232530;         --bg-surface: #2a2c38;       --bg-hover: #33353f;
+  --text-primary: #fdfdf8;   --text-secondary: #d4c9b8;   --text-tertiary: #9ea096;    --text-quat: #5d5f56;
+  --brand: #F54E00;          --accent: #F7A501;
+  --border-subtle: rgba(253,253,248,0.06);  --border-std: rgba(253,253,248,0.1);  --border-strong: rgba(253,253,248,0.18);
+  --code-bg: #15171e;        --code-inline-bg: rgba(247,165,1,0.12);
+}
+[data-theme="light"] {
+  --bg: #fdfdf8;             --bg-panel: #fdfdf8;         --bg-surface: #f2f0e9;       --bg-hover: #f4f4f4;
+  --text-primary: #151515;   --text-secondary: #4d4f46;   --text-tertiary: #65675e;    --text-quat: #9ea096;
+  --brand: #F54E00;          --accent: #F7A501;
+  --border-subtle: #bfc1b7;  --border-std: #bfc1b7;       --border-strong: #b17816;
+  --code-bg: #fdfdf8;        --code-inline-bg: #eeefe9;
+}
+```
 
 ### Typography & body（招牌：bold 700/800 标题 + 1.50-1.71 慷慨行高）
 
@@ -274,13 +258,13 @@ a:hover { color: var(--brand); }   /* PostHog Orange 隐藏 hover 签名 */
 .back-to-top:hover { opacity: 0.85; color: var(--accent); }   /* amber flash on dark btn */
 ```
 
-### 本 preset 不可让步
+### 本 preset 不可让步（破红线 = 不再是 PostHog Playful）
 
-- ❌ 蓝紫 SaaS 套路色（PostHog 是 olive/sage/amber 家族）
-- ❌ 任何元素 weight 700+ 之外的 bold（保留 700/800 给标题）
-- ❌ 纯白背景（用 `#fdfdf8` warm parchment）
-- ❌ card radius ≥ 12px（保持 4-6px）
-- ❌ 去掉 orange hover（是核心交互签名）
+3 条 hard red lines；其他战术性 don't 见上方「Do's & Don'ts」：
+
+- ❌ 蓝紫 SaaS 套路色 —— PostHog 整套是 olive/sage/amber/orange 暖系，蓝紫立刻塌成普通 SaaS doc
+- ❌ 去掉 orange hover —— PostHog Orange `#F54E00` 仅在 hover 出现是**隐藏品牌签名**，删了就失去人格
+- ❌ 用纯白背景 —— 必须 `#fdfdf8` warm parchment（sage cream），纯白即"医院白"
 
 ## Map to Design Doc Components
 

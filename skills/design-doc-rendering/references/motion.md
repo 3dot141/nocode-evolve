@@ -7,6 +7,31 @@
 - design-doc 是技术文档，动效**克制 > 抢眼**
 - 一份文档**最多 3 处** motion；超过 = 视觉噪音
 - 永远 respect `prefers-reduced-motion`
+- **按 MOTION_INTENSITY 档位选 recipe**（dial 在 SKILL.md 决定，落地到本文件 recipe 数量 / 强度）
+
+## Dial 映射表（哪个 recipe 在哪一档触发）
+
+> Dial 是叠在 preset 之上的强度旋钮，1-10；详见 SKILL.md「MOTION_INTENSITY Dial」。本表列出每个 recipe 在哪个档位激活——**dial 之外的 recipe 不要用**（不是"可选"而是"禁用"）。
+
+| Recipe | dial 1-3 静态 | dial 4-7（默认 5）标准 | dial 8-10 强烈 |
+|---|:---:|:---:|:---:|
+| **1. page-load staggered reveal** | ❌ 禁用 | ✅ 默认开 | ✅ 必有 + 延迟控制更激进 |
+| **2. scroll-trigger fade** | ❌ 禁用 | ✅ 大段章节用 | ✅ 多处触发 + parallax |
+| **3. details 折叠平滑展开** | ✅ 必有（属 5 必有交互） | ✅ 必有 | ✅ 必有 + spring physics |
+| **4. hover surprise** | ❌ 禁用（hover 只用静态状态切换） | ✅ 选 1 处用 | ✅ 多处用 + 引入 spring |
+| **5. TOC active 切换** | ✅ 必有（属 5 必有交互） | ✅ 必有 | ✅ 必有 + transition 加 motion blur |
+| **6. reading progress bar** | ❌ 禁用 | ⚠️ 看文档长度（>3000 字才开） | ✅ 默认开 |
+| **Perpetual loops**（pulse / float / shimmer） | ❌ 禁用 | ❌ 禁用 | ✅ 仅 dial 8-10 启用，且需隔离到独立元素（见 SKILL.md Performance Guardrails） |
+
+**规则**：
+- dial ≤ 3 → **只** Recipe 3 + 5（这两个属于 5 必有交互，任何档位都必须）
+- dial 4-7 → 加 Recipe 1（page-load）；视需要加 Recipe 2 / 4，Recipe 6 看长度
+- dial 8-10 → 全部 recipe + perpetual loop（隔离）
+
+**永远不做的（任何档位）**：
+- 弹跳 / 旋转过度
+- 自动播放视频背景
+- 用 `window.addEventListener('scroll')` 实现 scroll-trigger（用 `IntersectionObserver`，见 SKILL.md Performance Guardrails 速查 snippet）
 
 ## Recipe 1：page-load staggered reveal（强烈推荐）
 

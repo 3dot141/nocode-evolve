@@ -109,30 +109,13 @@ toggleBtn.addEventListener('click', () => {
 
 > 渲染时如果选了 mode-locked preset 的 primary（如 linear-precision dark / tufte-essay light），切换到 secondary mode 时 preset 应保证"可读、不灾难"，**不强求媲美 primary**。
 
-## MOTION_INTENSITY Dial（可选调档）
+## preset 与风格决策（写 CSS 前先想这些）
 
-> 借鉴 taste-skill 的 dial 思路——preset 给视觉骨架，dial 调强度。preset 的 light/dark token 与 typography 不受 dial 影响，dial 只决定**动效层级**。
+**核心准则：preset 是天花板。** 选了 preset 就老老实实抄它的 color / typography / component / shadow，不要"觉得自己审美更好"就乱改——所有"凭空发挥"的产物会回到平庸的浅蓝/灰白。本节是这一准则的**唯一规范出处**。
 
-**默认 5**（中等）。用户在 prompt 里说"动效强一点 / 弱一点 / 静态 / 打印友好 / 演讲版"时上调或下调：
+> **Vibe rendering 的灵魂——不是凭空臆想，是为这份文档"选 flavor + 选基底 + 加个性"。**
 
-| 档位 | 含义 | 落地到 motion.md / background.md recipe |
-|---|---|---|
-| **1-3 静态** | 只 hover / active，几乎无 page-load 动画 | motion.md recipe **全部跳过**；不嵌 motion library；background.md 只用 static recipe（noise / dot grid），跳过 gradient mesh 等持续动画 |
-| **4-7（默认 5）** | 标准 page-load staggered reveal + scroll-trigger 选 1-2 个 | motion.md 挑 staggered reveal + details 平滑展开 + 1 个 hover surprise；不上 perpetual loop |
-| **8-10 强烈** | 全 recipe + perpetual micro-interactions | motion.md 全 recipe + pulse / float / shimmer 等无限动效；hover 用 spring physics；scroll-trigger 多处触发 |
-
-**触发判定**（按优先级取首项）：
-1. 用户 prompt 明确档位词 → 直接用：「安静 / 克制 / 打印 / 静态」→ 2；「炫 / 演讲版 / 动感」→ 8
-2. 文档 frontmatter 暗示场景：`*-decision` / ADR → 3；`*-feature` → 5；marketing-ish 演示 → 7
-3. 都没说 → 5
-
-> ⚠️ Dial 是**叠在 preset 之上的乘数**，不替换 preset 的视觉决策。Dial 只影响"动多少"，不影响"长什么样"。
-
-## Vibe 设计流程（写 CSS 前先想这些）
-
-**Vibe rendering 的灵魂——不是凭空臆想，是为这份文档"选 flavor + 选基底 + 加个性"。**
-
-拿到 markdown 后，**先按下面 4 步选基底再写 CSS / JS**。本节子小节用描述性标题而非数字编号——避免与下方「工作流」12 步编号混淆。
+拿到 markdown 后，先按下面 6 个 sub-decision 选基底再写 CSS / JS。本节子小节用描述性标题而非数字编号——避免与下方「工作流」step 编号混淆。
 
 ### 必读 manifesto（动手前的态度校准）
 
@@ -159,8 +142,9 @@ design-doc 默认偏向前 4 种。选了之后再去选 preset。
 | ADR / 严肃 decision / RFC（强调权威感） | `vercel-geist` | pure black + Geist 字体 + 极简极客 |
 | 大型 PRD / 重要对外提案 | `stripe-purple` | 紫渐变 + 优雅 light + 商业感 |
 | Feature design doc（产品工程） | `linear-precision` | 暗紫 dark + 精密克制 |
+| **System-level Refactor / Implementation-refactor / 架构重构提案** | `vercel-geist` 或 `linear-precision` | 工程严肃，前者偏 light shadow-as-border，后者偏 dark luminance 阶梯 |
 | **通用 design-doc（不知道选啥就这个）** | `mintlify-reading` | 绿色 accent + 双栏 reading-optimized |
-| Refactor / exploration / playful 主题 | `posthog-playful` | dev-friendly 暗色 + 有人情味的色彩 |
+| Refactor 中的探索 / 偏 playful 主题 / 内部 wiki | `posthog-playful` | dev-friendly 暗色 + 有人情味的色彩 |
 | CLI 工具 / 终端 / 块状交互文档 | `warp-blocks` | IDE 块状 + 命令面板感 |
 | 极客向 CLI / 命令行项目 ADR | `terminal-mono` | void-black + 全 mono + emerald/phosphor 强调 |
 | 长篇 thinking piece / 技术随笔 | `tufte-essay` | 衬线 + sidenotes + 学术留白（light primary，dark 为 night-reading fallback）|
@@ -206,12 +190,9 @@ preset 给骨架，**accent 用来在骨架上"染色"**，依 frontmatter 的 t
 
 **Vibe 不等于乱来**——preset 与「5 必有交互」是地基（见下方「视觉风格准则」），亮点是在地基上发挥个性。
 
-## 视觉风格准则
+### preset 内容速查（每个 preset 都给了什么）
 
-**核心准则：preset 是天花板。** 选了 preset 就老老实实抄它的 color / typography / component / shadow，不要"觉得自己审美更好"就乱改——所有"凭空发挥"的产物会回到平庸的浅蓝/灰白。本节是这一准则的**唯一规范出处**，前面 Vibe 节里的提醒都指回这里。
-
-每个 preset 已经给了：
-- 字体 CDN + fallback stack（Geist / IBM Plex / JetBrains Mono / Source Serif 4 / Bricolage Grotesque 等都已在 preset 内定好；**Inter 已按 manifesto NEVER 列表禁用**——若 preset 文档历史用 Inter，cheatsheet 里已切到推荐替代）
+- 字体 CDN + fallback stack（Geist / IBM Plex / JetBrains Mono / Source Serif 4 / Bricolage Grotesque 等都在 preset 内定好；**Inter 已按 manifesto NEVER 列表禁用**——若 preset 文档历史用 Inter，cheatsheet 已切到推荐替代）
 - 完整 color token（不是"navy/teal"抽象词，是具体 hex）
 - Typography hierarchy（H1/H2/H3/body/code 的 size/weight/line-height/letter-spacing）
 - 组件规格（buttons / cards / inputs / code blocks / tables）
@@ -219,7 +200,7 @@ preset 给骨架，**accent 用来在骨架上"染色"**，依 frontmatter 的 t
 - "5 必有交互"在该 preset 下的具体落实方案
 - **Class Cheatsheet（drop-in CSS snippet）**——paste-ready 的 `<style>` 骨架（CSS variables + typography + 5 必有交互核心 snippet），agent 拿到直接 copy 扩展，不用从 token 表反向手写
 
-**全局兜底（与 preset 无关，永远成立）：**
+### 全局兜底（与 preset 无关，永远成立）
 
 ✅ 做：
 
@@ -234,6 +215,31 @@ preset 给骨架，**accent 用来在骨架上"染色"**，依 frontmatter 的 t
 - jQuery / React / Vue 等运行时框架——vanilla JS 已够用
 - **绕过 preset 自己选字体 / 调色板**（除非用户明确说"换个主色"）
 - 一坨墙 of text、无视觉节奏
+
+## MOTION_INTENSITY Dial（可选调档）
+
+> 借鉴 taste-skill 的 dial 思路——preset 给视觉骨架，dial 调强度。preset 的 light/dark token 与 typography 不受 dial 影响，dial 只决定**动效层级**。
+
+**默认 5**（中等）。用户在 prompt 里说"动效强一点 / 弱一点 / 静态 / 打印友好 / 演讲版"时上调或下调：
+
+| 档位 | 含义 | 落地到 motion.md / background.md recipe |
+|---|---|---|
+| **1-3 静态** | 只 hover / active，几乎无 page-load 动画 | motion.md recipe **全部跳过**；不嵌 motion library；background.md 只用 static recipe（noise / dot grid），跳过 gradient mesh 等持续动画 |
+| **4-7（默认 5）** | 标准 page-load staggered reveal + scroll-trigger 选 1-2 个 | motion.md 挑 staggered reveal + details 平滑展开 + 1 个 hover surprise；不上 perpetual loop |
+| **8-10 强烈** | 全 recipe + perpetual micro-interactions | motion.md 全 recipe + pulse / float / shimmer 等无限动效；hover 用 spring physics；scroll-trigger 多处触发 |
+
+**触发判定**（按优先级取首项）：
+1. 用户 prompt 明确档位词 → 直接用：「安静 / 克制 / 打印 / 静态」→ 2；「炫 / 演讲版 / 动感」→ 8
+2. 文档 frontmatter 暗示场景：
+   - `*-decision` / ADR → 3
+   - `*-refactor` / `implementation-*` / 系统级重构提案 → 4
+   - `*-feature` / 通用 design-doc → 5
+   - `*-bugfix` / 故障复盘 → 4
+   - 长篇 thinking piece / Tufte → 2（dial-low 也保留 hover surprise）
+   - marketing-ish 演示 / 外部提案 → 7
+3. 都没说 → 5
+
+> ⚠️ Dial 是**叠在 preset 之上的乘数**，不替换 preset 的视觉决策。Dial 只影响"动多少"，不影响"长什么样"。
 
 ## Performance Guardrails（强制规则）
 
@@ -276,29 +282,42 @@ document.querySelectorAll('h2, h3').forEach(h => observer.observe(h));
 
 ## 工作流
 
-1. **Read** 输入的 markdown 文件全文
-2. **理解结构**：扫 frontmatter（type / topic / date / author / status）+ 章节布局
+四阶段 → 每阶段内含 sub-step。前一阶段不完成不进下一阶段。
+
+### Phase 1 — 摄入
+
+1. **Read** 输入 markdown 全文
+2. **理解结构**：frontmatter（type / topic / date / author / status）+ 章节布局 + 关键 cross-cutting 节（Alternatives / Failure modes / Performance / Migration）
+
+### Phase 2 — 决策（不写 CSS）
+
 3. **必读 manifesto**（反 AI slop 校准）：依次 Read `references/aesthetics.md` + `references/motion.md` + `references/background.md`
 4. **选 BOLD flavor**（aesthetics.md 12 种选 1，commit 到底，不要混合）
 5. **选 preset 骨架**：按 Vibe 节「选 preset」决策表选一个 preset
-6. **Read 选中的 preset**：`references/presets/<name>.md` 全文——重点是 **Class Cheatsheet 节**（drop-in CSS 起点）+ Map to Design Doc Components + 5 必有交互
-7. **字体 sanity check**：若 preset 默认字体 ∈ NEVER 列表 → 查 `aesthetics.md` 「例外：preset 内已选定字体」表——若 preset 在例外表 → 保留；不在 → 按候选表替换（如 mintlify 已切到 Bricolage Grotesque）
-8. **确定 MOTION_INTENSITY 档位**（1-10，默认 5）——按上方「MOTION_INTENSITY Dial」节的触发判定决定，**显式记下数字**，后续 step 9 引用
-9. **在 preset 上做局部决策**：
+6. **Read 选中的 preset**：`references/presets/<name>.md` 全文——重点 **Class Cheatsheet**（drop-in CSS）+ Map to Design Doc Components + 5 必有交互
+7. **字体 sanity check**：若 preset 默认字体 ∈ NEVER 列表 → 查 `aesthetics.md`「例外」表——在 → 保留；不在 → 按候选表替换（如 mintlify 已切到 Bricolage Grotesque）
+8. **确定 MOTION_INTENSITY 档位**（1-10，默认 5）—— 按「MOTION_INTENSITY Dial」节触发判定决定，**显式写下数字**，后续 Phase 3 引用
+9. **局部决策清单**：
    - accent 倾向（依文档 type，见 Vibe 节「调 accent」）
-   - 哪些章节适合 SVG 图（架构 / 数据流 / 决策树，见 Vibe 节「内容定制视觉处理」表）
-   - 是否有 alternatives 节适合折叠隐藏
-   - 1-2 个为这份文档定制的视觉亮点（Vibe 节「展示亮点」）
-   - 按 step 8 的 MOTION_INTENSITY 档位 → 从 `motion.md` 选对应数量 recipe（dial ≤ 3 → 0 个；4-7 → 1-2 个；8-10 → 全部 + perpetual）
+   - 哪些章节适合 SVG 图（架构 / 数据流 / 决策树）
+   - alternatives 节是否折叠隐藏
+   - 1-2 个本文档定制视觉亮点（Vibe 节「展示亮点」）
+   - 按 step 8 dial → 从 `motion.md` 选 recipe（dial ≤ 3 → 0 个；4-7 → 1-2 个；8-10 → 全部 + perpetual）
    - 从 `background.md` 选 1-2 个 recipe（按 flavor 推荐表，dial ≤ 3 时跳过动态 recipe）
-10. **生成** single-file HTML：
-    - `<head>` 内联 `<style>`：字体 CDN `<link>` + **粘贴 preset 的 Class Cheatsheet 作起点** + flavor 染色 + motion keyframes（按 step 8 档位）+ background recipe + 响应式 media query
-    - `<body>` 渲染内容：preset 指定的 layout；frontmatter 转顶部 metadata 卡片
-    - `<script>` 内联 vanilla JS：TOC 滚动高亮（用 `IntersectionObserver`）+ 折叠 + 暗黑切换 + 回到顶部 + motion 触发
+
+### Phase 3 — 生成
+
+10. **生成 single-file HTML**：
+    - `<head>` 内联 `<style>`：字体 CDN `<link>` + **粘贴 preset 的 Class Cheatsheet 作起点** + flavor 染色 + motion keyframes（按 dial 档位）+ background recipe + 响应式 media query
+    - `<body>`：preset 指定 layout；frontmatter 转顶部 metadata 卡片
+    - `<script>` 内联 vanilla JS：TOC 高亮（`IntersectionObserver`）+ 折叠 + 暗黑切换 + 回到顶部 + motion 触发
     - SVG 直接嵌入；fill / stroke 用 preset 调色板
-11. **写入** 与 markdown 同目录、同名、`.html` 后缀
-12. **过 Pre-Flight Check 自检表**（见下方独立节）——任何一项不勾 → 改完再 ship；不许跳
-13. **报告**：「渲染完成：`<path>`，flavor：`<flavor>`，preset：`<name>`，motion：`<dial 数值>`。双击浏览器打开查看。」
+
+### Phase 4 — 验证 & 交付
+
+11. **过 Pre-Flight Check 自检表**（独立节）—— 任何一项不勾 → 回 Phase 3 改完再 ship；不许跳
+12. **写入** 与 markdown 同目录、同名、`.html` 后缀
+13. **报告**：「渲染完成：`<path>`，flavor：`<flavor>`，preset：`<name>`，motion：`<dial>`。双击浏览器打开查看。」
 
 ## 反模式
 

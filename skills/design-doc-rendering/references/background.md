@@ -7,6 +7,31 @@
 - 背景**永远是配角**——它的作用是给文字一个**氛围**，不是**展示自己**
 - 永远可关——CDN / data URI 失败时降级到 solid color 也要可读
 - 暗黑底色 + 亮文字时，背景纹理 opacity 应 ≤ 4%；亮底相反更克制
+- **按 MOTION_INTENSITY 档位选 recipe**：静态 recipe 任意档位都可用，动态 recipe 只在 dial ≥ 4 启用
+
+## Dial 映射表（哪个 recipe 在哪一档触发）
+
+> Dial 见 SKILL.md「MOTION_INTENSITY Dial」。静态背景与动效无关，但有 1-2 个 recipe（gradient mesh、CRT scanline）含动画版本——这些受 dial 控制。
+
+| Recipe | 是否含动画 | dial 1-3 静态 | dial 4-7 标准 | dial 8-10 强烈 |
+|---|---|:---:|:---:|:---:|
+| **1. 极轻噪点** | 否（纯静态 SVG） | ✅ 通用 | ✅ 通用 | ✅ 通用 |
+| **2. dot grid** | 否 | ✅ 通用 | ✅ 通用 | ✅ 通用 |
+| **3. grid lines** | 否 | ✅ industrial 用 | ✅ industrial 用 | ✅ industrial 用 |
+| **4. gradient mesh**（静态版） | 否 | ✅ hero 区 | ✅ hero 区 | ✅ hero 区 |
+| **4. gradient mesh**（动画版 lava-lamp blob） | 是 | ❌ 禁用 | ⚠️ 节制使用 | ✅ 启用 |
+| **5. dashed border / ASCII frame** | 否 | ✅ vintage computing 用 | ✅ vintage computing 用 | ✅ vintage computing 用 |
+| **6. section ruler** | 否 | ✅ 替代 `<hr>` | ✅ | ✅ |
+| **7. CRT scanline overlay**（静态版） | 否 | ✅ terminal-mono 用 | ✅ terminal-mono 用 | ✅ terminal-mono 用 |
+| **7. CRT scanline overlay**（动画版 moving） | 是 | ❌ 禁用 | ⚠️ 不推荐 | ✅ terminal-mono 8-10 才用 |
+| **8. drop cap** | 否 | ✅ editorial 用 | ✅ | ✅ |
+| **9. margin tick marks** | 否 | ✅ Tufte 用 | ✅ | ✅ |
+| **10. subtle vignette** | 否 | ✅ hero / heavy doc | ✅ | ✅ |
+
+**规则**：
+- 大多数 recipe 静态 → 与 dial 无关，按 flavor / preset 推荐表选
+- dial ≤ 3 → **禁用** gradient mesh 动画版 / CRT scanline 动画版
+- dial 8-10 → 可启用动画版本，但仍需挂在 `position: fixed + pointer-events: none` 独立层（见 SKILL.md Performance Guardrails）
 
 ## Recipe 1：极轻噪点（最通用，几乎所有 flavor 都能用）
 

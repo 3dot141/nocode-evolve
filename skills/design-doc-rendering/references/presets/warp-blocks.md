@@ -92,45 +92,7 @@ Typography 是秘密武器：Geist（替代 Matter）以 geometric sans-serif + 
 | `--code-bg` | `#1a1a18` | `#f2f0eb` | `<pre>` 块底（light 用最深一档纸色拉对比） |
 | `--code-inline-bg` | `rgba(255,255,255,0.06)` | `rgba(26,26,24,0.06)` | 行内 code |
 
-**CSS 实现骨架**
-
-```css
-:root {
-  /* primary: dark */
-  --bg: #1a1a18;
-  --bg-panel: #121211;
-  --bg-surface: rgba(255, 255, 255, 0.04);
-  --bg-hover: rgba(255, 255, 255, 0.06);
-  --text-primary: #faf9f6;
-  --text-secondary: #afaeac;
-  --text-tertiary: #868584;
-  --text-quat: #666469;
-  --brand: #faf9f6;
-  --accent: #5e8de8;
-  --border-subtle: rgba(226, 226, 226, 0.2);
-  --border-std: rgba(226, 226, 226, 0.35);
-  --border-strong: rgba(226, 226, 226, 0.5);
-  --code-bg: #1a1a18;
-  --code-inline-bg: rgba(255, 255, 255, 0.06);
-}
-[data-theme="light"] {
-  --bg: #faf9f6;
-  --bg-panel: #f2f0eb;
-  --bg-surface: #ffffff;
-  --bg-hover: rgba(26, 26, 24, 0.04);
-  --text-primary: #1a1a18;
-  --text-secondary: #3d3d3a;
-  --text-tertiary: #6b6a68;
-  --text-quat: #9a9996;
-  --brand: #1a1a18;
-  --accent: #5e8de8;
-  --border-subtle: rgba(26, 26, 24, 0.1);
-  --border-std: rgba(26, 26, 24, 0.15);
-  --border-strong: rgba(26, 26, 24, 0.25);
-  --code-bg: #f2f0eb;
-  --code-inline-bg: rgba(26, 26, 24, 0.06);
-}
-```
+> 完整 CSS variables `:root` / `[data-theme="light"]` 块见下方「Class Cheatsheet（drop-in CSS snippet）」节。
 
 **关键 mode 差异说明**
 - 两 mode 都不使用纯黑/纯白——dark `#1a1a18` 与 light `#faf9f6` 互为对称的 warm 端点
@@ -237,7 +199,31 @@ Typography 是秘密武器：Geist（替代 Matter）以 geometric sans-serif + 
 
 ## Class Cheatsheet（drop-in CSS snippet）
 
-> 借鉴 taste-skill：paste-ready 的最小骨架。Warp 招牌：warm near-black + Geist Regular（400）全局 + 半透明 border + uppercase tracking 2.4px label。CSS variables 见上方「CSS 实现骨架」，本节补 typography / 交互。
+> 借鉴 taste-skill：paste-ready 的最小骨架。Warp 招牌：warm near-black + Geist Regular（400）全局 + 半透明 border + uppercase tracking 2.4px label。
+
+### CSS variables
+
+```css
+:root {
+  --font-sans: 'Geist', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  /* primary: dark */
+  --bg: #1a1a18;             --bg-panel: #121211;         --bg-surface: rgba(255,255,255,0.04);
+  --bg-hover: rgba(255,255,255,0.06);
+  --text-primary: #faf9f6;   --text-secondary: #afaeac;   --text-tertiary: #868584;    --text-quat: #666469;
+  --brand: #faf9f6;          --accent: #5e8de8;
+  --border-subtle: rgba(226,226,226,0.2);   --border-std: rgba(226,226,226,0.35);  --border-strong: rgba(226,226,226,0.5);
+  --code-bg: #1a1a18;        --code-inline-bg: rgba(255,255,255,0.06);
+}
+[data-theme="light"] {
+  --bg: #faf9f6;             --bg-panel: #f2f0eb;         --bg-surface: #ffffff;
+  --bg-hover: rgba(26,26,24,0.04);
+  --text-primary: #1a1a18;   --text-secondary: #3d3d3a;   --text-tertiary: #6b6a68;    --text-quat: #9a9996;
+  --brand: #1a1a18;          --accent: #5e8de8;
+  --border-subtle: rgba(26,26,24,0.1);  --border-std: rgba(26,26,24,0.15);  --border-strong: rgba(26,26,24,0.25);
+  --code-bg: #f2f0eb;        --code-inline-bg: rgba(26,26,24,0.06);
+}
+```
 
 ### Typography & body（招牌：weight 400 包揽一切 + 暖白文字）
 
@@ -280,14 +266,13 @@ a { color: var(--text-primary); text-decoration: underline; text-decoration-colo
 .back-to-top:hover { color: var(--text-primary); }
 ```
 
-### 本 preset 不可让步
+### 本 preset 不可让步（破红线 = 不再是 Warp Blocks）
 
-- ❌ 纯白文字 `#ffffff`（用 warm `#faf9f6`）
-- ❌ 任何 weight 700+
-- ❌ pill `border-radius: 9999px` 之外，按钮其他 shape
-- ❌ 冷蓝暗底（必须 warm near-black）
-- ❌ gradient / glow
-- ❌ Geist / Inter 之外的字体混入
+3 条 hard red lines；其他战术性 don't 见上方「Do's & Don'ts」：
+
+- ❌ 冷蓝暗底 —— 必须 warm near-black `#1a1a18`，冷蓝立刻失去"夜色森林营火"灵魂
+- ❌ 任何 weight 700+ —— Warp 是 Regular 400 全包（仅 button 用 500），bold 标题直接出戏
+- ❌ gradient / glow —— Warp 整套是平面 + 半透明 border 构成 ghostly containment，加发光即"web SaaS"
 
 ## Map to Design Doc Components
 

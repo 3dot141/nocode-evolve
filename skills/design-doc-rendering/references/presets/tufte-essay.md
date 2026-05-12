@@ -84,49 +84,7 @@ body {
 | `--code-bg` | `transparent` | `transparent` | 两 mode 都 transparent——code 在 essay 里降权，只靠左 border |
 | `--code-inline-bg` | `rgba(217,212,200,0.35)` | `rgba(232,226,212,0.1)` | 极淡 rule 色 tint |
 
-**CSS 实现骨架**
-
-```css
-:root {
-  /* primary: light */
-  --bg: #fffff8;
-  --bg-panel: #fffff8;
-  --bg-surface: rgba(217, 212, 200, 0.25);
-  --bg-hover: rgba(17, 17, 17, 0.04);
-  --text-primary: #111111;
-  --text-secondary: #222222;
-  --text-tertiary: #666666;
-  --text-quat: #999999;
-  --brand: #a00000;
-  --accent: #a00000;
-  --border-subtle: #d9d4c8;
-  --border-std: #d9d4c8;
-  --border-strong: #111111;
-  --code-bg: transparent;
-  --code-inline-bg: rgba(217, 212, 200, 0.35);
-}
-[data-theme="dark"] {
-  --bg: #1a1814;
-  --bg-panel: #15130f;
-  --bg-surface: rgba(232, 226, 212, 0.04);
-  --bg-hover: rgba(232, 226, 212, 0.06);
-  --text-primary: #e8e2d4;
-  --text-secondary: #d4cdbb;
-  --text-tertiary: #9a9282;
-  --text-quat: #6e6757;
-  --brand: #d6646e;
-  --accent: #d6646e;
-  --border-subtle: #3a342c;
-  --border-std: #3a342c;
-  --border-strong: #e8e2d4;
-  --code-bg: transparent;
-  --code-inline-bg: rgba(232, 226, 212, 0.1);
-}
-
-/* Dark mode 衬线发糊补救：正文字号轻微上调 */
-[data-theme="dark"] body { font-size: 18px; }
-[data-theme="dark"] p, [data-theme="dark"] li { letter-spacing: 0.005em; }
-```
+> 完整 CSS variables `:root` / `[data-theme="dark"]` 块（含衬线发糊补救）见下方「Class Cheatsheet（drop-in CSS snippet）」节。
 
 **关键 mode 差异说明**
 - Dark mode 用 **warm dark brown** `#1a1814` 而不是 cool blue dark `#0d1117` 系——Tufte 流派的整套美学是暖纸感，dark fallback 必须延续这个温度
@@ -208,7 +166,34 @@ body {
 
 ## Class Cheatsheet（drop-in CSS snippet）
 
-> 借鉴 taste-skill：paste-ready 的最小骨架。Tufte 招牌：通篇 Source Serif 4（含 H1/H2）+ warm paper `#fffff8` + italic 替代 bold + crimson `#a00000` 单 accent + 三横线表格。CSS variables 见上方「CSS 实现骨架」，本节补 typography / 交互。
+> 借鉴 taste-skill：paste-ready 的最小骨架。Tufte 招牌：通篇 Source Serif 4（含 H1/H2）+ warm paper `#fffff8` + italic 替代 bold + crimson `#a00000` 单 accent + 三横线表格。
+
+### CSS variables
+
+```css
+:root {
+  --font-serif: 'Source Serif 4', 'ET Book', 'iowan old style', 'Apple Garamond', Palatino, 'Palatino Linotype', 'Hoefler Text', 'Times New Roman', Georgia, serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  /* primary: light */
+  --bg: #fffff8;             --bg-panel: #fffff8;         --bg-surface: rgba(217,212,200,0.25);
+  --bg-hover: rgba(17,17,17,0.04);
+  --text-primary: #111111;   --text-secondary: #222222;   --text-tertiary: #666666;    --text-quat: #999999;
+  --brand: #a00000;          --accent: #a00000;
+  --border-subtle: #d9d4c8;  --border-std: #d9d4c8;       --border-strong: #111111;
+  --code-bg: transparent;    --code-inline-bg: rgba(217,212,200,0.35);
+}
+[data-theme="dark"] {
+  --bg: #1a1814;             --bg-panel: #15130f;         --bg-surface: rgba(232,226,212,0.04);
+  --bg-hover: rgba(232,226,212,0.06);
+  --text-primary: #e8e2d4;   --text-secondary: #d4cdbb;   --text-tertiary: #9a9282;    --text-quat: #6e6757;
+  --brand: #d6646e;          --accent: #d6646e;
+  --border-subtle: #3a342c;  --border-std: #3a342c;       --border-strong: #e8e2d4;
+  --code-bg: transparent;    --code-inline-bg: rgba(232,226,212,0.1);
+}
+/* Dark 衬线发糊补救 */
+[data-theme="dark"] body { font-size: 18px; }
+[data-theme="dark"] p, [data-theme="dark"] li { letter-spacing: 0.005em; }
+```
 
 ### Typography & body（招牌：size 而非 weight 做层级 + italic 替 bold）
 
@@ -277,14 +262,13 @@ thead th { font-style: italic; font-weight: 400; color: var(--text-tertiary); }
 }
 ```
 
-### 本 preset 不可让步
+### 本 preset 不可让步（破红线 = 不再是 Tufte Essay）
 
-- ❌ 任何 sans-serif 用在 H1 / H2 / metadata（包括 Inter / system-ui）—— 通篇 serif 是灵魂
-- ❌ blockquote 加左色条 / 浅色填底（SaaS 风，非 essay 风）
-- ❌ code block 设计成显眼填色卡片（在 essay 里 code 是注脚）
-- ❌ 链接 hover 切色相（只加粗下划线，不变色）
-- ❌ box-shadow / gradient / pill 任何元素（屏幕原生 UI 与 essay 美学冲突）
-- ❌ 表格加 hover bg / 斑马纹 / vertical rules（三横线纪律）
+3 条 hard red lines；其他战术性 don't 见上方「Do's & Don'ts」：
+
+- ❌ 任何 sans-serif 用在 H1 / H2 / metadata（包括 Inter / system-ui）—— **通篇 serif 是灵魂**
+- ❌ box-shadow / gradient / pill 任何元素 —— 屏幕原生 UI 与 paper handout 美学根本冲突
+- ❌ 表格加 hover bg / 斑马纹 / vertical rules —— 三横线 (top / thead-bottom / bottom) 是 Tufte 表格纪律
 
 ## Map to Design Doc Components
 

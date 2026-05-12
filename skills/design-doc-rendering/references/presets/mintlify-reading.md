@@ -252,13 +252,13 @@ a { color: var(--accent); }
                      box-shadow: rgba(24,226,153,0.2) 0px 4px 16px; }
 ```
 
-### 本 preset 不可让步
+### 本 preset 不可让步（破红线 = 不再是 Mintlify Reading）
 
-- ❌ button radius < 9999px（pill 是 Mintlify 不可替代形状）
-- ❌ section 换灰底分隔（全白 + border + 留白）
-- ❌ 文字用纯黑 `#000000`（用 `#0d0d0d`）
-- ❌ weight 700
-- ❌ shadow 抢戏（≤ 6% opacity，仅 button + card）
+3 条 hard red lines；其他战术性 don't 见上方「Do's & Don'ts」：
+
+- ❌ button radius < 9999px —— **pill 形是 Mintlify 不可替代的形状人格**，回退到 6/8px 即破灵魂
+- ❌ section 换灰底分隔 —— 全白底 + 5% opacity border + 慷慨留白 = paper-like 平整感，灰底立刻塌
+- ❌ 用 Inter —— mintlify 已切到 Bricolage Grotesque（aesthetics.md NEVER 列表），回退 Inter 即破规则
 
 ## Map to Design Doc Components
 

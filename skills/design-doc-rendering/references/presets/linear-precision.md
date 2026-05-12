@@ -244,12 +244,13 @@ a { color: var(--accent); }
 .back-to-top:hover { background: rgba(113,112,255,0.15); color: var(--accent); }
 ```
 
-### 本 preset 不可让说
+### 本 preset 不可让步（破红线 = 不再是 Linear Precision）
 
-- ❌ 正文用纯白 `#ffffff`（用 `#f7f8f8` 防眼疲劳）
-- ❌ button 用 solid color 填充（除 brand indigo CTA）
-- ❌ weight 700（最大 600）
-- ❌ dark surface 上用 drop shadow 表达 elevation（靠 luminance 阶梯）
+3 条 hard red lines；其他战术性 don't 见上方「Do's & Don'ts」：
+
+- ❌ 不开 OpenType `font-feature-settings: "cv01", "ss03"` —— Inter 的例外资格全靠这个，关了就回到 NEVER 列表
+- ❌ dark surface 上用 drop shadow 表达 elevation（必须靠 luminance 阶梯 `rgba(255,255,255,0.02→0.05)`）
+- ❌ button 用 solid color 填充（仅 brand indigo CTA 例外，其他都用 `rgba(255,255,255,0.02-0.05)` 半透明）
 
 ## Map to Design Doc Components
 

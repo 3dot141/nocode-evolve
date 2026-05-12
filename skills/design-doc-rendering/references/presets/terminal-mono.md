@@ -106,47 +106,7 @@ body {
 | `--code-bg` | `#0f0f0f` | `#efeadf` | `<pre>` 块底——比正文背景深一阶 |
 | `--code-inline-bg` | `rgba(16,185,129,0.08)` | `rgba(5,150,105,0.1)` | emerald tint 招牌细节，两 mode 都保留 |
 
-**CSS 实现骨架**
-
-```css
-:root {
-  /* primary: dark */
-  --bg: #0a0a0a;
-  --bg-panel: #050505;
-  --bg-surface: #141414;
-  --bg-hover: #1c1c1c;
-  --text-primary: #ededed;
-  --text-secondary: #d4d4d4;
-  --text-tertiary: #8a8a8a;
-  --text-quat: #525252;
-  --brand: #10b981;
-  --accent: #10b981;
-  --accent-hover: #39ff14;  /* phosphor green only on dark hover */
-  --border-subtle: rgba(255, 255, 255, 0.06);
-  --border-std: rgba(255, 255, 255, 0.08);
-  --border-strong: rgba(255, 255, 255, 0.16);
-  --code-bg: #0f0f0f;
-  --code-inline-bg: rgba(16, 185, 129, 0.08);
-}
-[data-theme="light"] {
-  --bg: #f7f4ec;
-  --bg-panel: #efeadf;
-  --bg-surface: #ffffff;
-  --bg-hover: #ece6d8;
-  --text-primary: #1a1a18;
-  --text-secondary: #2e2e2a;
-  --text-tertiary: #5e5e58;
-  --text-quat: #9a9690;
-  --brand: #059669;
-  --accent: #059669;
-  --accent-hover: #047857;  /* phosphor green 在 light 上不存在；只用 deeper emerald 两档 */
-  --border-subtle: rgba(26, 26, 24, 0.08);
-  --border-std: rgba(26, 26, 24, 0.12);
-  --border-strong: rgba(26, 26, 24, 0.2);
-  --code-bg: #efeadf;
-  --code-inline-bg: rgba(5, 150, 105, 0.1);
-}
-```
+> 完整 CSS variables `:root` / `[data-theme="light"]` 块见下方「Class Cheatsheet（drop-in CSS snippet）」节。
 
 **关键 mode 差异说明**
 - **Phosphor green `#39ff14` 是 dark-only 的**——在 light paper 底上完全失效（饱和度太高、对比度太低）。Light mode 用 deeper emerald `#059669` 替代默认 accent，`#047857` 替代 hover 态——降饱和到能用，但承认这是妥协
@@ -235,7 +195,30 @@ body {
 
 ## Class Cheatsheet（drop-in CSS snippet）
 
-> 借鉴 taste-skill：paste-ready 的最小骨架。terminal-mono 招牌：通篇 JetBrains Mono + void black + emerald `#10b981`（默认）/ phosphor `#39ff14`（hover-only）+ radius 2px。CSS variables 见上方「CSS 实现骨架」，本节补 typography / 交互。
+> 借鉴 taste-skill：paste-ready 的最小骨架。terminal-mono 招牌：通篇 JetBrains Mono + void black + emerald `#10b981`（默认）/ phosphor `#39ff14`（hover-only）+ radius 2px。
+
+### CSS variables
+
+```css
+:root {
+  --font-mono: 'JetBrains Mono', 'Geist Mono', 'Fira Code',
+               ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+  --font-sans: var(--font-mono);   /* 故意指向 mono：通篇 mono 是灵魂 */
+  /* primary: dark */
+  --bg: #0a0a0a;             --bg-panel: #050505;         --bg-surface: #141414;       --bg-hover: #1c1c1c;
+  --text-primary: #ededed;   --text-secondary: #d4d4d4;   --text-tertiary: #8a8a8a;    --text-quat: #525252;
+  --brand: #10b981;          --accent: #10b981;           --accent-hover: #39ff14;     /* phosphor: dark hover only */
+  --border-subtle: rgba(255,255,255,0.06);  --border-std: rgba(255,255,255,0.08);  --border-strong: rgba(255,255,255,0.16);
+  --code-bg: #0f0f0f;        --code-inline-bg: rgba(16,185,129,0.08);
+}
+[data-theme="light"] {
+  --bg: #f7f4ec;             --bg-panel: #efeadf;         --bg-surface: #ffffff;       --bg-hover: #ece6d8;
+  --text-primary: #1a1a18;   --text-secondary: #2e2e2a;   --text-tertiary: #5e5e58;    --text-quat: #9a9690;
+  --brand: #059669;          --accent: #059669;           --accent-hover: #047857;     /* 无 phosphor，只 deeper emerald */
+  --border-subtle: rgba(26,26,24,0.08);  --border-std: rgba(26,26,24,0.12);  --border-strong: rgba(26,26,24,0.2);
+  --code-bg: #efeadf;        --code-inline-bg: rgba(5,150,105,0.1);
+}
+```
 
 ### Typography & body（招牌：通篇 mono + 1.7 line-height 救可读性）
 
@@ -276,14 +259,13 @@ a:hover { color: var(--accent-hover); }   /* phosphor green only on dark hover *
 .back-to-top:active { color: var(--accent-hover); }   /* phosphor flash */
 ```
 
-### 本 preset 不可让步
+### 本 preset 不可让步（破红线 = 不再是 Terminal Mono）
 
-- ❌ 任何 sans-serif 混入（Inter / Geist / system-ui）—— 通篇 mono 是灵魂
-- ❌ pill `9999px` 任何元素 —— radius 永远 0 或 2px
-- ❌ phosphor green `#39ff14` 大面积铺（仅 hover/active 闪现）
-- ❌ macOS 圆点窗口 chrome（红绿黄圆点 = IDE cosplay）
-- ❌ gradient / glow（仅极少 hero 决策块）
-- ❌ italic 给 emphasis（mono italic 通常很丑；用 weight 500）
+3 条 hard red lines；其他战术性 don't 见上方「Do's & Don'ts」：
+
+- ❌ 任何 sans-serif 混入（Inter / Geist / system-ui）—— **通篇 mono 是灵魂**，混 sans 立刻塌成"代码截图组件"
+- ❌ phosphor green `#39ff14` 当默认 accent —— 它只在 hover/active 闪现；默认必须 emerald `#10b981`
+- ❌ pill / 圆角 ≥ 4px —— radius 永远 0 或 2px，回到圆角即破"硬件感"
 
 ## Map to Design Doc Components
 

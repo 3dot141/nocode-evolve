@@ -271,11 +271,13 @@ a { color: var(--accent); text-underline-offset: 3px; }
 .back-to-top.visible { opacity: 1; }
 ```
 
-### 本 preset 不可让步
+### 本 preset 不可让步（破红线 = 不再是 Vercel Geist）
 
-- ❌ 任何卡片用传统 CSS `border` —— 必须 `box-shadow: ...0 0 0 1px` shadow-as-border
-- ❌ 文字用纯黑 `#000000`（用 `#171717`）
-- ❌ display 标题用 weight 700 或正字距（保持 600 + 强负字距）
+3 条 hard red lines；其他战术性 don't 见上方「Do's & Don'ts」：
+
+- ❌ 卡片用传统 CSS `border`（必须 `box-shadow: ...0 0 0 1px` 的 shadow-as-border 招牌）
+- ❌ display 标题用正字距或 weight 700（保持 600 + `-2.4px` ~ `-2.88px` 强负字距）
+- ❌ 文字用纯黑 `#000000`（用 `#171717` 保留微暖）
 
 ## Map to Design Doc Components
 
