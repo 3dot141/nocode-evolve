@@ -31,14 +31,15 @@ docs/plans/{username}/yymmdd-<topic>-design.md
 2. **`design-doc-reviewer` subagent**（在 design-doc-writing 工作流内 spawn）
    - 独立 context 审查质量
    - 6 维度核心审查 + AI patterns 附带检查 + Self-Audit 两遍法
-   - 输出分级 Review Report（Critical / Warning / Suggestion）
-   - writer 据 Critical + Warning 修订，最多 3 轮
-   - 3 轮仍有 Critical 时报告"Max iterations，建议人工"
+   - 输出分级 Review Report（Critical / Warning / Suggestion），每条带短编号（C1/W1/S1...）
+   - **不自动循环修订**：Report 原样呈现给用户，逐条勾选 fix / skip（也可一键全修/全跳过/自由指示）
+   - 据用户决定修订主体后，**本轮 Report 全文 + 用户决定 + 修订摘要 append 到文档末尾 `## Review Log`**
+   - 是否再来一轮 review 由用户决定，不再有"最多 3 轮"硬限制
 
 3. **`nocode-evolve:design-doc-rendering`** —— 渲染 single-file HTML 展示版
    - 输入：reviewer 通过的 markdown
    - 输出：同目录、同名、换后缀 `.html`
    - HTML 含 TOC / 折叠 / 暗黑模式 / 代码高亮 / 回到顶部 5 个交互
 
-三步都要走，不要省略 review 循环或 HTML 渲染。
-不要自由发挥章节结构，也不要绕过这两个 skill 直接写。
+三步都要走：写 → 评审 + **用户逐条确认** + 追加 Review Log → 渲染。
+不要省略 reviewer，不要代用户拍板 issue 修不修，不要绕过这两个 skill 直接写。

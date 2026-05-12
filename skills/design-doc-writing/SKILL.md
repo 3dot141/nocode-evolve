@@ -7,7 +7,7 @@ description: 写设计文档时使用。按业界主流 4 类 doc-type 主轴（
 
 把「已经讨论清楚的设计」落地成结构化的 markdown 文档。不负责讨论（brainstorming 的事），不负责实施（writing-plans / executing-plans 的事）——只负责**写**。
 
-工作流包含 write → review 循环：写完初稿后 spawn `design-doc-reviewer` subagent 审查，根据反馈修订，最多 3 轮。
+工作流：write → review → **用户逐条确认** → 修订 → 追加 Review Log。reviewer 只列问题，**不自动循环修订**——是否修、修哪些由用户决定。
 
 ## 何时使用
 
@@ -72,14 +72,58 @@ docs/plans/{username}/yymmdd-<topic>-design.md
 4. Read references/examples/example-<type>.md 学习真实示例
 5. (necessary) Read references/common.md（cross-cutting checklist）
 6. 写初稿（frontmatter + 主线节 + 上半 / 下半结构）
-7. spawn design-doc-reviewer subagent（输入：doc_path / iteration=1）
-8. review loop：
-   - Verdict=Approved → 进入 step 9
-   - Not approved 且 iteration<3 → 据 Critical+Warning 修订 → iteration++ → 回 step 7
-   - iteration=3 仍 Not approved → "Max iterations，建议人工"，停
-9. 保存到输出路径
-10. (by overlay) 调 design-doc-rendering skill 出 HTML
+7. spawn design-doc-reviewer subagent（输入：doc_path）
+8. 用户确认环节（核心 gate，见下方）：
+   - 默认：把 Report 完整呈现给用户，每条问题前编号，**逐条让用户勾选** fix / skip
+   - 用户可一键说「全修 Critical+Warning」「全跳过」「我来给指示」走捷径
+   - reviewer 已 ✅ Pass：跳过此步直接进 step 12
+9. 据用户决定修订文档（in-place 改主体）；不在用户清单里的问题**不要顺手修**
+10. 把本轮 Report 全文 + 用户决定 + 修订摘要 append 到文档末尾 `## Review Log`（无则新建）
+11. 询问用户「再来一轮 review？」
+    - 是 → 回 step 7
+    - 否 → 进 step 12
+12. 保存到输出路径
+13. (by overlay) 调 design-doc-rendering skill 出 HTML
 ```
+
+## 用户确认环节（step 8 细则）
+
+reviewer 输出 Report 后，**不要自己挑哪些修哪些不修**。把决定权交给用户：
+
+1. 把 Report 原样展示给用户（Critical / Warning / Suggestion 三档保留）
+2. 给每条问题一个**短编号**（`C1 / C2 / W1 / S1 ...`），方便用户引用
+3. 用 AskUserQuestion 或文字 prompt 让用户选：
+   - 默认多选：勾选要修的编号
+   - 提供快捷选项：「全修 Critical+Warning」「全跳过」「自由指示」
+4. 用户确认前**不要动文档主体**——只能等
+
+例外：reviewer Verdict 是 ✅ Pass 时跳过这一步，直接进 step 12。
+
+## Review Log 格式
+
+写到设计文档末尾，每轮 review 追加一条：
+
+```markdown
+## Review Log
+
+### Review 1 — 2026-05-12
+
+<!-- Reviewer Report 全文（含 Critical / Warning / Suggestion / Self-Audit / Verdict） -->
+
+**用户决定**：fix C1, C2, W1；skip C3（理由：暂不在 scope）、W2、S1
+
+**本轮修订**：
+- C1：Problem statement 加了具体痛点（第 2 节）
+- C2：Alternatives 方案 B 补量化否决理由（第 5 节）
+- W1：「会话模块」改为 `auth/session.go::CreateSession`（第 7 节）
+
+---
+
+### Review 2 — 2026-05-12
+...
+```
+
+Review Log 与文档主体同步演进——主体回答「为什么这样设计」，Log 留下「这份文档怎么演化来的」的审计轨迹。
 
 ## 状态机
 
@@ -150,7 +194,9 @@ PRD / RFC / ADR 不强制，但鼓励。
 - ❌ **"将来式"占位**（YAGNI）：「未来如果有 X 需求，可扩展为 Y」——删
 - ❌ **抄需求**：把用户原话粘到背景节——背景要回答**为什么值得做**
 - ❌ **避谈失败**：只写 happy path 反面。要列真实故障：网络断、磁盘满、并发写、依赖挂
-- ❌ **跳过 reviewer**：不 spawn reviewer 直接交付——本工作流核心是 write/review 循环
+- ❌ **跳过 reviewer**：不 spawn reviewer 直接交付——本工作流核心是 write → review → 用户确认
+- ❌ **代用户拍板**：拿到 Report 就自己挑「这些重要那些不重要」开始改——用户确认环节是 hard gate，**问，不要猜**
+- ❌ **吞掉 Review Log**：只 in-place 改主体，不 append 到末尾——审计轨迹断了，下次 review 不知道这版哪些是修过的
 - ❌ **混淆 doc-type**：PRD 写 SQL schema / ADR 写百页 implementation / Design Doc 写不到 1 页——选错 type 的信号
 
 ## 看 examples 而不是自由发挥
