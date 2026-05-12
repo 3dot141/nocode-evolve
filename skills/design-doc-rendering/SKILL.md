@@ -204,7 +204,7 @@ preset 给骨架，**accent 用来在骨架上"染色"**，依 frontmatter 的 t
 
 ✅ 做：
 
-- 段落级元素（`p`/`ul`/`ol`/`blockquote`）行宽 `max-width: 72ch`（约 760-880px）保证可读性
+- 段落级元素（`p`/`ul`/`ol`/`blockquote`）行宽 `max-width: 90ch`（约 950-1080px）—— design-doc 技术内容含大量 inline code，90ch 是"屏宽利用 + 可读性"的甜点（详见下方「段落 cap」节）
 - **宽元素**（`pre`/`table`/`figure`/`.hero`/`.mermaid`）**不设 max-width**，跟随 main 容器宽度，宽屏时能 break-out 舒展
 - 表格 hover 高亮 + 斑马纹（preset 没说就用 `rgba(0,0,0,0.02)` 兜底）
 - 链接 hover 动效（underline 渐入 / 颜色微变）
@@ -220,59 +220,68 @@ preset 给骨架，**accent 用来在骨架上"染色"**，依 frontmatter 的 t
 
 ## Layout：宽屏适配 + 双重 cap 分离（强制规则）
 
-### 宽屏 (Wide-screen) 分档适配
+### 宽屏 (Wide-screen) 跟随 viewport
 
-旧规则 page container 一刀切 `max-width: 1280px`——超宽屏（1920+ / 4K）下整页贴左、右侧大片留白。新规则：**shell `max-width` 跟随屏宽分档**。
-
-| 屏宽 | shell `max-width` | TOC sidebar 宽度 |
-|---|---|---|
-| `< 900px` (mobile) | 100%（TOC 折叠为顶部下拉） | — |
-| `900-1280px` (laptop) | `1280px` | 240px |
-| `1280-1920px` (desktop) | `1440px` | 260px |
-| `≥ 1920px` (wide / 4K) | `1600-1800px` | 280px |
-
-实现：用 `@media (min-width: ...)` breakpoint 多档调整。Snippet：
+旧规则 page container 一刀切 `max-width: 1280px`——超宽屏（1920+ / 4K）下整页贴左、右侧大片留白。新规则：**shell 随 viewport 撑开**，只在小屏 / 超宽屏设软上限。
 
 ```css
 .shell {
   display: grid;
-  grid-template-columns: 240px minmax(0, 1fr);
-  max-width: 1280px;
+  grid-template-columns: 260px minmax(0, 1fr);
+  width: min(96vw, 1920px);    /* 默认占 96% viewport，超宽屏 cap 1920 */
   margin: 0 auto;
 }
-@media (min-width: 1280px) {
-  .shell { max-width: 1440px; grid-template-columns: 260px minmax(0, 1fr); }
+
+/* 笔记本及窄屏：边距收紧，shell 用满 */
+@media (max-width: 1280px) {
+  .shell { width: 100%; grid-template-columns: 240px minmax(0, 1fr); }
 }
-@media (min-width: 1920px) {
-  .shell { max-width: 1680px; grid-template-columns: 280px minmax(0, 1fr); }
+
+/* 大屏：TOC 适度放宽 */
+@media (min-width: 1600px) {
+  .shell { grid-template-columns: 300px minmax(0, 1fr); }
 }
+
+/* mobile：TOC 折叠 */
 @media (max-width: 900px) {
-  .shell { grid-template-columns: 1fr; max-width: 100%; }
+  .shell { grid-template-columns: 1fr; width: 100%; }
 }
 ```
 
-### 段落 cap vs 宽元素 cap 分离
+| 屏宽 | shell 实际宽 | TOC | 留给 main |
+|---|---|---|---|
+| < 900 (mobile) | 100% | 折叠 | viewport - 48 |
+| 900-1280 (laptop) | 100% | 240 | viewport - 240 - padding |
+| 1280-1600 (desktop) | 96vw | 260 | ~ 96vw - 260 |
+| 1600-1920 (wide) | 96vw | 300 | ~ 96vw - 300 |
+| ≥ 1920 (4K) | 1920 | 300 | ~ 1620 |
 
-⚠️ **`main` 元素绝对不设 `max-width`**。段落与宽元素 cap 走两条独立路线：
+**关键差异**：不再死 cap 1680，而是 `96vw` 跟着屏走——4K 屏（3840）能用到 1920 上限，2560 屏能用 ~2460，1440 屏能用 ~1380。**屏宽得到充分利用**。
+
+### 段落 cap：90ch 不是 72ch
+
+72ch 是 typographic 黄金行宽（"single sentence per line"），但 design doc 大量技术 inline code / 嵌入路径——单 token 占字符多，**实际可读行宽可以放宽到 90ch**（学术界可读性上限 100ch）。
 
 ```css
 main {
-  padding: 56px 64px 120px;   /* 仅 padding，不 cap */
+  padding: 56px 64px 120px;
   /* NO max-width here */
 }
 
-/* 段落级元素：72ch 行宽约束（typography 可读性） */
-p, ul, ol, blockquote { max-width: 72ch; }
+/* 段落级元素：90ch（约 950-1080px @ 16px Inter） */
+p, ul, ol, blockquote, dl { max-width: 90ch; }
 
-/* 宽元素：跟随 main 实际宽度，宽屏 break-out */
-pre, table, figure, .hero, .mermaid, details {
-  max-width: 100%;   /* 或不设——让它们 100% 撑满 main */
+/* 宽元素：100% 撑满 main，宽屏 break-out */
+pre, table, figure, .hero, .mermaid, details, .problem-block, .logic-block {
+  max-width: 100%;
 }
 ```
 
-效果：
-- 笔记本（main 可用宽度 ≈ 900px）：段落 720px 居左，代码 / 表格 / SVG 占满 900px
-- 宽屏（main 可用宽度 ≈ 1270px）：段落仍 720px，代码 / 表格 / SVG 占满 1270px——**ASCII 树和数据可视化显著更舒展**
+效果对比（main 可用宽 1500px）：
+- 旧 72ch ≈ 720px：右侧空 ~780px（**视觉浪费**，用户反馈"屏幕效果不对"）
+- 新 90ch ≈ 1000px：右侧空 ~500px（仍有空白但显著减少，配合多图能填满）
+
+> **typography 取舍声明**：72ch 是单段连续阅读最舒服的；90ch 在技术文档场景"屏宽利用率 + 可读性"的甜点。如果文档是长篇散文（如 PRD 用户场景叙事），可以局部 override 回 72ch。
 
 ## Design Doc 结构化内容的视觉处理（强制规则）
 
@@ -377,13 +386,46 @@ p:has(code + code + code) code {
 }
 ```
 
-### Hero SVG 不强制首屏
+## 视觉密度：尽可能多图（强制规则）
 
-design-doc 是阅读型文档，首屏应该是**标题 + frontmatter 卡片 + 背景节开场**让读者快速进入语境——不是复杂数据流图。
+design-doc 是技术文档，但**图比文字密度高**——一张图传达的设计关系，文字写 5 段也讲不清。宽屏渲染下，**图填充段落两侧的 break-out 空间**是利用宽屏的核心手段；段落保持 72ch 不动，**视觉空间由图占据**。
 
-- Hero SVG 应放在「架构.架构图」或「架构.流程图」节内，作为该节的开场视觉
-- 真的需要全局 hero 时，放在标题下方但 **`<details>` 折叠默认收起**，让读者主动展开看
-- 不要让复杂 SVG 在第一屏强行扑面
+### 每份 design-doc HTML 至少 3-5 个视觉元素
+
+至少覆盖：
+
+1. **Hero 顶部视觉**（强烈推荐）——标题下方一张数据流 / 整体架构 SVG。读者首屏 grasp 全局
+2. **「架构.架构图」节**——必须有图。markdown 没明示就基于上下文画一张组件 + 关系图
+3. **「架构.流程图」节**——必须有图。markdown 给了 ASCII 流程图时，HTML 渲染要**升级为 inline SVG**（保留 ASCII `<pre>` 作 detail，外面包 `<details>`）
+4. **「问题 X.方案对比」**有 ≥2 个方案时——split 对比卡 / mini 决策树
+5. **「逻辑 X.异常与失败模式」**含 ≥3 个场景时——状态机 SVG / 故障分类树
+
+### ASCII 流程图升级为 SVG（推荐处理）
+
+markdown 给了 ASCII 流程图（如 `节点 ↓ 节点`），HTML 渲染时**两种形态并存**：
+
+```html
+<figure class="flow-figure">
+  <svg viewBox="0 0 800 320" ...>
+    <!-- 主视觉：方框 + 箭头 + 标签 -->
+  </svg>
+  <details>
+    <summary>原始 ASCII 流程图</summary>
+    <pre><code>...原始 ASCII...</code></pre>
+  </details>
+</figure>
+```
+
+SVG 优先显示，ASCII 作 fallback / 文本可搜索版本。
+
+### Hero SVG 推荐布局
+
+Hero 在 H1 下方、frontmatter 卡片之后、第一个 H2 之前。占满 main 宽度（break-out）。**包含**：
+
+- 系统主路径（如 `LLM stream → sanitizer → SSE → 前端`）
+- 关键决策点高亮（用 accent 色 + dashed border 标记 "Q1/Q2/Q3 在此处"）
+- 顶部小 label 注明 "DATA FLOW · <一句话主题>"
+- 高度 200-320px，aspect ratio ≈ 3:1 横向
 
 ## MOTION_INTENSITY Dial（可选调档）
 
