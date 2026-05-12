@@ -8,6 +8,8 @@
 
 Warm-dark 终端美学的「夜色森林营火」——克制、极简、近乎单色暖灰，写给极客但拒绝冷峻。
 
+**Primary mode: dark**（理由：Warp 整套设计语言围绕 warm near-black + 半透明 border + 极少 accent 展开，灵魂在暗色 campfire 氛围；light 是 "paper terminal" fallback——保留同样的克制单色 warm-gray 调，但搬到 warm-paper 底上）
+
 ## 何时选这个 preset
 
 - CLI / 终端工具 / 系统内核 / 性能 benchmark 类 ADR
@@ -67,6 +69,74 @@ Typography 是秘密武器：Geist（替代 Matter）以 geometric sans-serif + 
 **Semantic**：近乎单色——无 bold accent；交互状态靠 opacity + underline 表达。
 
 **Gradient System**：无显式渐变。深度靠半透明 layer。
+
+### Light / Dark Token Pairs
+
+两套 token 完整对照——dark 是 primary（写在 `:root`），light 是 "paper terminal" fallback（写在 `[data-theme="light"]`）。CSS 变量命名跨 8 个 preset 对齐。
+
+| Variable | Dark (primary, `:root`) | Light (`[data-theme="light"]`) | 备注 |
+|---|---|---|---|
+| `--bg` | `#1a1a18` | `#faf9f6` | dark：warm near-black；light：warm paper（与 dark 文字色对称） |
+| `--bg-panel` | `#121211` | `#f2f0eb` | sidebar / 更深底（light 用更暖一阶纸色） |
+| `--bg-surface` | `rgba(255,255,255,0.04)` | `#ffffff` | metadata 卡片表面（light 用纯白浮起一阶） |
+| `--bg-hover` | `rgba(255,255,255,0.06)` | `rgba(26,26,24,0.04)` | hover 状态——叠加同色低 opacity |
+| `--text-primary` | `#faf9f6` | `#1a1a18` | 主标题（dark：warm parchment 不用纯白；light：deep warm ink 不用纯黑） |
+| `--text-secondary` | `#afaeac` | `#3d3d3a` | 正文 body workhorse |
+| `--text-tertiary` | `#868584` | `#6b6a68` | metadata label / muted |
+| `--text-quat` | `#666469` | `#9a9996` | 最弱 / placeholder |
+| `--brand` | `#faf9f6` | `#1a1a18` | warp 品牌色就是文字本身——跨 mode 反转 |
+| `--accent` | `#5e8de8` | `#5e8de8` | 紫蓝 accent——跨 mode 不变（low-saturation 在两侧都柔） |
+| `--border-subtle` | `rgba(226,226,226,0.2)` | `rgba(26,26,24,0.1)` | 极细分隔 |
+| `--border-std` | `rgba(226,226,226,0.35)` | `rgba(26,26,24,0.15)` | 标准 |
+| `--border-strong` | `rgba(226,226,226,0.5)` | `rgba(26,26,24,0.25)` | hover / 强调 |
+| `--code-bg` | `#1a1a18` | `#f2f0eb` | `<pre>` 块底（light 用最深一档纸色拉对比） |
+| `--code-inline-bg` | `rgba(255,255,255,0.06)` | `rgba(26,26,24,0.06)` | 行内 code |
+
+**CSS 实现骨架**
+
+```css
+:root {
+  /* primary: dark */
+  --bg: #1a1a18;
+  --bg-panel: #121211;
+  --bg-surface: rgba(255, 255, 255, 0.04);
+  --bg-hover: rgba(255, 255, 255, 0.06);
+  --text-primary: #faf9f6;
+  --text-secondary: #afaeac;
+  --text-tertiary: #868584;
+  --text-quat: #666469;
+  --brand: #faf9f6;
+  --accent: #5e8de8;
+  --border-subtle: rgba(226, 226, 226, 0.2);
+  --border-std: rgba(226, 226, 226, 0.35);
+  --border-strong: rgba(226, 226, 226, 0.5);
+  --code-bg: #1a1a18;
+  --code-inline-bg: rgba(255, 255, 255, 0.06);
+}
+[data-theme="light"] {
+  --bg: #faf9f6;
+  --bg-panel: #f2f0eb;
+  --bg-surface: #ffffff;
+  --bg-hover: rgba(26, 26, 24, 0.04);
+  --text-primary: #1a1a18;
+  --text-secondary: #3d3d3a;
+  --text-tertiary: #6b6a68;
+  --text-quat: #9a9996;
+  --brand: #1a1a18;
+  --accent: #5e8de8;
+  --border-subtle: rgba(26, 26, 24, 0.1);
+  --border-std: rgba(26, 26, 24, 0.15);
+  --border-strong: rgba(26, 26, 24, 0.25);
+  --code-bg: #f2f0eb;
+  --code-inline-bg: rgba(26, 26, 24, 0.06);
+}
+```
+
+**关键 mode 差异说明**
+- 两 mode 都不使用纯黑/纯白——dark `#1a1a18` 与 light `#faf9f6` 互为对称的 warm 端点
+- 半透明 border 在 dark 上是 white opacity（叠在暗底浮出 ghostly containment），light 上反转为 black opacity（叠在纸面浮出印刷感）
+- Accent 蓝紫 `#5e8de8` 跨 mode 不变——本身低饱和，在两 mode 上都不抢眼
+- Light mode 是真实存在的"paper terminal"——Warp.dev 官方 light theme 是同一组件库的反相版本，不是单独设计
 
 ### Typography
 
@@ -188,7 +258,7 @@ Typography 是秘密武器：Geist（替代 Matter）以 geometric sans-serif + 
 
 1. **TOC 跟随**：active `text #faf9f6 weight 500 + 左 2px 色条 #faf9f6`；hover `text #afaeac`；IntersectionObserver `rootMargin: -10% 0px -70% 0px`；transition `color 200ms ease, border-color 200ms ease`——无 bg 切换（避免破坏单色 calm）
 2. **章节折叠**（H2 `<details>`）：summary 箭头 `#868584`（展开旋转 90deg，transition 200ms ease）；展开内容 fade-in 200ms ease；summary hover bg `rgba(255,255,255,0.04)`
-3. **暗黑模式 toggle**：本 preset 是 **dark-only**——理由：Warp 的核心人格是「warm dark 终端美学」，强翻 light 会丢失整套 warm-near-black + 半透明 border 系统。Toggle 按钮仍保留，点击时切换 reading mode（字号 18→20、line-height 1.65→1.8），并提示「此 preset 仅暗色」
+3. **暗黑模式 toggle**：本 preset 是 **both（强制）**，**primary 为 dark**——首次加载按 `new Date().getHours()` 自动选（6-19 点 light，否则 dark）。点击 toggle 在 `:root` 与 `[data-theme="light"]` 间切换 CSS variable，transition `background 250ms ease, color 250ms ease, border-color 250ms ease`——慢一档与 Warp 的 calm aesthetic 一致。Light mode 是 "paper terminal" fallback——同一组半透明 border 系统反相后落在 warm paper 底上，保留单色 warm-gray + uppercase label 的招牌克制。Toggle 按钮形态：暗色 pill `#353534` icon `#afaeac` → light 上 pill `#e8e6e0` icon `#3d3d3a`
 4. **代码高亮**：highlight.js 主题用 `atom-one-dark` 作 base，覆写：bg → 透明（让 `<pre>` 自身 bg 透出）、keyword `#faf9f6`、string `#afaeac`、comment `#666469` italic、function `#faf9f6` weight 500、number `#afaeac`——保持单色 warm gray 体系
 5. **回到顶部按钮**：浮 right-bottom 32px，bg `#353534`，icon `#afaeac`，radius 50px（pill），size 48x48px，border 1px `rgba(226,226,226,0.2)`；hover icon `#faf9f6` + bg brightness +5%；scrollY > viewport height 时 `opacity 0 → 1 + translateY 8px → 0` transition 250ms ease
 

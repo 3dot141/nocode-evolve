@@ -44,9 +44,70 @@ description: 把 design-doc-writing skill 生成的 markdown 设计文档渲染�
 
 1. **TOC 侧栏**——左侧固定（移动端折叠为顶部下拉）；滚动时跟随当前章节高亮
 2. **章节折叠**——`<details>` 或自写脚本；点击 H2/H3 大标题可折叠该节；默认全展开
-3. **暗黑模式 toggle**——右上角按钮；切换写入 `localStorage`，下次打开记住偏好
+3. **light / dark 主题（强制双 mode）**——所有 preset 必须同时提供 light + dark token；右上角 toggle 切换并写入 `localStorage`；详见下方「主题策略」节
 4. **代码高亮**——按语言 token 着色。highlight.js / Prism CDN 推荐，或手写 CSS 类均可
 5. **回到顶部**——滚动超过一屏时浮出 floating 按钮
+
+## 主题策略（强制规则）
+
+**所有 preset 不论原设计取舍，都必须同时支持 light + dark**——即使 preset 文档里说"dark-only 是灵魂"也要给完整 light token 作 fallback。理由：用户预期、屏幕环境多样、accessibility。
+
+### 初始主题选择优先级
+
+渲染时按以下顺序决定首次加载的主题：
+
+1. **`localStorage.getItem('doc-theme')`** 有值（`'light'` / `'dark'`）→ 直接用，用户手动切过就尊重偏好
+2. 否则按**浏览器本地时间**：`new Date().getHours()` 在 `[6, 19)` → `light`；否则 → `dark`
+3. （不使用 `prefers-color-scheme`——用户明确要求按时间，不按 system 偏好）
+
+### 标准 JS 模板（每份 HTML 必嵌）
+
+```html
+<script>
+(function() {
+  const KEY = 'doc-theme';
+  const stored = localStorage.getItem(KEY);
+  let theme;
+  if (stored === 'light' || stored === 'dark') {
+    theme = stored;
+  } else {
+    const h = new Date().getHours();
+    theme = (h >= 6 && h < 19) ? 'light' : 'dark';
+  }
+  document.documentElement.setAttribute('data-theme', theme);
+})();
+</script>
+```
+
+**关键**：这段 inline 脚本必须放在 `<head>` 内、CSS `<link>` 之后、`<body>` 之前——避免 FOUC（先按默认渲染一帧再切）。
+
+### Toggle 按钮逻辑
+
+```js
+const toggleBtn = document.getElementById('themeToggle');
+toggleBtn.addEventListener('click', () => {
+  const cur = document.documentElement.getAttribute('data-theme');
+  const next = cur === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem('doc-theme', next);
+});
+```
+
+### CSS 选择器约定
+
+所有 preset 用 `[data-theme="light"]` / `[data-theme="dark"]` 二选一（**不要** `prefers-color-scheme` media query 作 primary 切换源——会与 JS 控制冲突）：
+
+```css
+:root,
+[data-theme="dark"] { --bg: #0f1115; --text: #f5f6f8; /* dark tokens */ }
+[data-theme="light"] { --bg: #fafaf7; --text: #1a1a1f; /* light tokens */ }
+```
+
+### 单 mode 例外（已废除）
+
+历史上 `linear-precision` / `terminal-mono` / `tufte-essay` 标过"single-mode 是设计灵魂"——**现在全部废除**。preset 文件内保留原设计取舍说明作为"primary recommendation"，但**必须提供另一 mode 的完整 token**。
+
+> 渲染时如果选了 mode-locked preset 的 primary（如 linear-precision dark / tufte-essay light），切换到 secondary mode 时 preset 应保证"可读、不灾难"，**不强求媲美 primary**。
 
 ## 可选加分项（看内容判断）
 

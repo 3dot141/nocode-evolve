@@ -8,6 +8,10 @@
 
 Documentation-as-product 的明亮 reading-first 美学——白色画布、5% opacity 极细边框、绿色品牌点缀，气质开朗、清晰、好读、适合长时间阅读。
 
+**Primary mode: light**——Mintlify 的设计灵魂在明亮 reading-first：白底 `#ffffff` + near-black 文字 `#0d0d0d` + 5% opacity 极细 border 的"paper-like 平整感" 是这套设计**不可替代**的核心。Brand Green `#18E299` 是为了在亮色文档里点缀提示而存在。
+
+> **NOTE：dark mode 是兼容性 fallback，Mintlify 的明亮 reading-first 灵魂在 light。** 强制提供 dark mode 是为了满足 "所有 preset 必须支持双 mode" 的全局规则与夜间用户需求。dark 配色参考 Mintlify 自家 docs site 的 dark theme（bg `#0c0d10` + surface `#15161a`）—— "paper-like 平整感" 在 dark 下会变成"dark surface 上极细 border 的克制层次感"，但失去 Mintlify 招牌的"开朗清晰"气质。如果文档目的是 long-form reading（PRD、入门 RFC），优先维持 light default。
+
 ## 何时选这个 preset
 
 - **PRD / Product Spec**：面向 PM / 设计 / non-engineer stakeholder 的产品需求
@@ -64,6 +68,46 @@ Mintlify 不依赖阴影做层次——靠 5% opacity border + 大量留白 + �
 **Border**
 - Subtle `rgba(0,0,0,0.05)` 默认
 - Medium `rgba(0,0,0,0.08)` 交互元素
+
+### Light / Dark Token Pairs
+
+**强制双 mode 支持**——首次加载按 `new Date().getHours()` 自动选 mode（6-19 点 light，否则 dark）。**light 是 primary**，写在 `:root`；dark 是 fallback，写在 `[data-theme="dark"]`。
+
+dark token 参考 Mintlify 自家 docs site 的 dark theme：bg `#0c0d10` 偏冷的 near-black、surface `#15161a` 微高于 bg、text `#f3f4f6` near-white、border `rgba(255,255,255,0.06)` 极细。Brand Green 在 dark 下从 `#18E299` 提亮到 `#34F2A6` 以增加 luminance，hover 与 active 状态也跟着调。
+
+| Token | Light (`:root`, primary) | Dark (`[data-theme="dark"]`, fallback) |
+|---|---|---|
+| `--bg` | `#ffffff` | `#0c0d10` |
+| `--bg-panel` | `#ffffff` | `#0c0d10` |
+| `--bg-surface` | `#fafafa` | `#15161a` |
+| `--bg-hover` | `#f5f5f5` | `#1d1f24` |
+| `--text-primary` | `#0d0d0d` | `#f3f4f6` |
+| `--text-secondary` | `#333333` | `#c8cad0` |
+| `--text-tertiary` | `#666666` | `#888888` |
+| `--text-quat` | `#888888` | `#6b6e74` |
+| `--brand` | `#18E299` | `#34F2A6` |
+| `--accent` | `#0fa76e` | `#34F2A6` |
+| `--accent-soft-bg` | `#d4fae8` | `rgba(52,242,166,0.12)` |
+| `--accent-soft-text` | `#0fa76e` | `#34F2A6` |
+| `--border-subtle` | `rgba(0,0,0,0.05)` | `rgba(255,255,255,0.06)` |
+| `--border-std` | `rgba(0,0,0,0.08)` | `rgba(255,255,255,0.1)` |
+| `--border-strong` | `#e5e5e5` | `rgba(255,255,255,0.16)` |
+| `--code-bg` | `#fafafa` | `#15161a` |
+| `--code-inline-bg` | `#f5f5f5` | `rgba(255,255,255,0.08)` |
+| `--shadow-ambient` | `rgba(0,0,0,0.03) 0px 2px 4px` | `rgba(0,0,0,0.4) 0px 2px 4px` |
+| `--shadow-button-micro` | `rgba(0,0,0,0.06) 0px 1px 2px` | `rgba(0,0,0,0.5) 0px 1px 2px` |
+| `--focus-ring` | `0 0 0 3px rgba(24,226,153,0.25)` + `1px solid #18E299` | `0 0 0 3px rgba(52,242,166,0.3)` + `1px solid #34F2A6` |
+| `--warning-bg` | `rgba(195,125,13,0.08)` | `rgba(195,125,13,0.15)` |
+| `--warning-text` | `#c37d0d` | `#e5a55c` |
+| `--info-text` | `#3772cf` | `#7aa8ed` |
+
+**Dark mode 关键校准**：
+- bg 用 `#0c0d10`（Mintlify 自家 docs site 的实际 dark bg）而非 `#0d0d0d`——略微冷调，与 Linear 的 `#08090a` 区分（Mintlify 的 dark 没那么"严肃"）
+- surface `#15161a` 略高于 bg——保留 Mintlify "card 浮在背景上"的层次感
+- Brand Green 从 `#18E299` → `#34F2A6`：dark bg 上 `#18E299` 对比度 6.8:1 已达标但视觉略沉，提亮到 `#34F2A6` 后约 8.2:1，更接近 Mintlify dark docs 的"发光感"
+- accent `--accent-soft-bg`：light 用 `#d4fae8` 实底浅绿，dark 用半透明 `rgba(52,242,166,0.12)`——dark 下实底浅绿会撞色，用半透明
+- border 从 `rgba(0,0,0,0.05)` 直接翻成 `rgba(255,255,255,0.06)`——Mintlify 在 dark 下用 6% 而非 5%，因为白色在 dark bg 上需要稍微多一点 opacity 才能保持同等可见度
+- code-bg dark 用 `#15161a` 与 surface 同色——保持 Mintlify "code block 不抢戏" 的低对比策略
 
 ### Typography
 
@@ -162,7 +206,18 @@ Mintlify 不依赖阴影做层次——靠 5% opacity border + 大量留白 + �
 
 2. **章节折叠**（H2 `<details>`）：summary `cursor:pointer`，前置 ▸ 三角 `#888888`，open 时旋转 90° 变 `#0fa76e`；transition `transform 180ms cubic-bezier(0.2,0.8,0.2,1), color 150ms ease`；展开内容 fade-in 200ms。
 
-3. **暗黑模式 toggle**：本 preset **both** 支持。dark 配色板：bg `#0d0d0d`，card bg `#141414`，text primary `#ededed`，text secondary `#a0a0a0`，border `rgba(255,255,255,0.08)`，brand green `#18E299` 保持不变（在两种背景上都成立）。code block dark：bg `#141414` border `rgba(255,255,255,0.06)`。toggle button 在 nav 右上，使用 ☀ / ☾ icon，prefers-color-scheme 自动初始化，`localStorage` 记忆。
+3. **暗黑模式 toggle**：**both（强制）**——primary mode 是 **light**（Mintlify 的明亮 reading-first 灵魂）；dark 是强制完整支持的兼容性 fallback，参考 Mintlify 自家 docs site dark theme
+   - 完整 token 见上方「Light / Dark Token Pairs」表
+   - 关键差异速览：
+     - bg：`#ffffff` ↔ `#0c0d10`（Mintlify 自家 docs dark bg）
+     - surface：`#fafafa` ↔ `#15161a`
+     - text-primary：`#0d0d0d` ↔ `#f3f4f6`
+     - brand green：`#18E299` ↔ `#34F2A6`（提亮，dark 下增加 luminance 与发光感）
+     - accent-soft-bg：实底 `#d4fae8` ↔ 半透明 `rgba(52,242,166,0.12)`
+     - border：`rgba(0,0,0,0.05)` ↔ `rgba(255,255,255,0.06)`（dark 多 1pp opacity 维持等价可见度）
+   - toggle 按钮：nav 右上，pill shape `40x40` radius 9999px，light 下 `bg #ffffff` border `rgba(0,0,0,0.08)` icon `#0d0d0d`；dark 下 `bg #15161a` border `rgba(255,255,255,0.1)` icon `#f3f4f6`；icon ☀ / ☾
+   - 首次加载逻辑：`new Date().getHours()` 在 [6,19] 用 light，否则 dark；之后 `localStorage` 记忆用户选择
+   - **设计取舍提示**：如果文档目的是 long-form reading（PRD、入门 RFC、教程式 doc），建议把 default 锁死为 light 而非按小时切换——dark mode 在 Mintlify 里始终是 fallback，"明亮、轻盈、reading-first"的人格在 dark 下不可能完全成立
 
 4. **代码高亮**：light 用 highlight.js **`github-light`** 或 **`atom-one-light`**；dark 用 **`github-dark-dimmed`**。override：light keyword `#0fa76e`，string `#c37d0d`，comment `#888888` italic，function `#0d0d0d` weight 500；dark keyword `#18E299`，comment `#888888` italic。
 

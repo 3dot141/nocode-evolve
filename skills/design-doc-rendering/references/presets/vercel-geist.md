@@ -8,6 +8,8 @@
 
 工程师写给工程师看的极简主义：白底、近黑文字、shadow-as-border、紧致负字距——所有装饰都被剥到只剩结构，像一份被 minifier 压过的源代码。
 
+**Primary mode: light**——Vercel Geist 的视觉灵魂在白底 + shadow-as-border 系统上：阴影边框（`rgba(0,0,0,0.08) 0px 0px 0px 1px`）+ 内圈高光（`#fafafa 0px 0px 0px 1px`）+ 近黑 `#171717` 文字是这套设计的招牌组合。dark mode 完整支持（强制提供），但更像 vercel.com 的 dark theme：纯黑 `#000` 底 + `#ededed` 文字 + 反向 shadow-as-border `rgba(255,255,255,0.06)`，作为夜间阅读 fallback。
+
 ## 何时选这个 preset
 
 - **System-level Design Doc** / **Architecture RFC**：需要长篇代码、命令行、终端输出，要求读者能专注阅读不被花哨视觉打断
@@ -79,6 +81,39 @@ Vercel 的视觉系统是一种 "minimalism as engineering principle"——白�
 - Subtle Elevation `rgba(0, 0, 0, 0.04) 0px 2px 2px`
 - Card Stack `rgba(0,0,0,0.08) 0px 0px 0px 1px, rgba(0,0,0,0.04) 0px 2px 2px, rgba(0,0,0,0.04) 0px 8px 8px -8px, #fafafa 0px 0px 0px 1px`
 - Ring Border `rgb(235, 235, 235) 0px 0px 0px 1px`
+
+### Light / Dark Token Pairs
+
+**强制双 mode 支持**——首次加载按 `new Date().getHours()` 自动选 mode（6-19 点 light，否则 dark）。CSS 用 `:root`（light = primary）+ `[data-theme="dark"]`（dark = secondary fallback）切换。
+
+| Token | Light (`:root`) | Dark (`[data-theme="dark"]`) |
+|---|---|---|
+| `--bg` | `#ffffff` | `#000000` |
+| `--bg-panel` | `#ffffff` | `#0a0a0a` |
+| `--bg-surface` | `#fafafa` | `#111111` |
+| `--bg-hover` | `#fafafa` | `#1a1a1a` |
+| `--text-primary` | `#171717` | `#ededed` |
+| `--text-secondary` | `#4d4d4d` | `#a1a1a1` |
+| `--text-tertiary` | `#666666` | `#888888` |
+| `--text-quat` | `#808080` | `#666666` |
+| `--brand` | `#171717` | `#ededed` |
+| `--accent` | `#0072f5` | `#52a8ff` |
+| `--border-subtle` | `#ebebeb` | `rgba(255,255,255,0.06)` |
+| `--border-std` | `rgba(0,0,0,0.08)` | `rgba(255,255,255,0.06)` |
+| `--border-strong` | `#171717` | `#ededed` |
+| `--code-bg` | `#fafafa` | `#0a0a0a` |
+| `--code-inline-bg` | `#fafafa` | `#1a1a1a` |
+| `--shadow-ring` | `rgba(0,0,0,0.08) 0px 0px 0px 1px` | `rgba(255,255,255,0.06) 0px 0px 0px 1px` |
+| `--shadow-card-stack` | `rgba(0,0,0,0.08) 0px 0px 0px 1px, rgba(0,0,0,0.04) 0px 2px 2px, #fafafa 0px 0px 0px 1px` | `rgba(255,255,255,0.06) 0px 0px 0px 1px, rgba(0,0,0,0.6) 0px 2px 2px, #1a1a1a 0px 0px 0px 1px` |
+| `--focus-ring` | `hsla(212,100%,48%,1)` | `hsla(212,100%,60%,1)` |
+| `--badge-info-bg` | `#ebf5ff` | `rgba(0,114,245,0.15)` |
+| `--badge-info-text` | `#0068d6` | `#52a8ff` |
+
+**Dark mode 关键校准**：
+- bg 用纯 `#000` 而非 `#0a0a0a`——对齐 vercel.com 实际效果
+- shadow-as-border 系统在 dark 下变成 white-tinted（`rgba(255,255,255,0.06)`）但保持同样的 0 spread 1px 1px 结构
+- 内圈高光从 `#fafafa` 翻成 `#1a1a1a`（dark surface 微微高于背景，维持"被造出来"的层次感）
+- `#171717` 在 dark 下变成 `#ededed`——同样不是纯白/纯黑，保留 0.1 偏移避免眼疲劳
 
 ### Typography
 
@@ -208,15 +243,16 @@ Pill Badge：`bg=#ebf5ff` / `text=#0068d6` / `padding=0px 10px` / `radius=9999px
    - `transition: transform 180ms ease`
    - 展开 `<details[open]>` 时 summary 加 `border-bottom: 1px solid #ebebeb`
 
-3. **暗黑模式**：**both**（light-first，提供 dark 切换）
-   - Light：见上方 palette
-   - Dark token：
-     - bg `#0a0a0a` / surface `#171717` / surface-2 `#262626`
-     - text-primary `#fafafa` / text-secondary `#a3a3a3` / text-tertiary `#737373`
-     - border-shadow `rgba(255, 255, 255, 0.1) 0px 0px 0px 1px`
-     - inner glow 改 `#262626 0px 0px 0px 1px`
-     - link `#52a8ff` / focus `hsla(212, 100%, 60%, 1)`
-   - 切换按钮放在 right-top fixed，圆形 `40x40` shadow-border，icon 用 ☀ / ☾
+3. **暗黑模式**：**both（强制）**——primary mode 是 **light**（Vercel 的招牌 shadow-as-border 在白底上最具识别度）；dark 是强制完整支持的 fallback，模拟 vercel.com 的夜间版本
+   - 完整 token 见上方「Light / Dark Token Pairs」表
+   - 关键差异速览：
+     - bg：`#ffffff` ↔ `#000000`
+     - shadow-as-border：`rgba(0,0,0,0.08)` ↔ `rgba(255,255,255,0.06)`
+     - 内圈高光：`#fafafa` ↔ `#1a1a1a`
+     - text-primary：`#171717` ↔ `#ededed`
+     - accent link：`#0072f5` ↔ `#52a8ff`
+   - 切换按钮：right-top fixed，圆形 `40x40` shadow-border，icon ☀ / ☾，`color` 跟随 `--text-primary`
+   - 首次加载逻辑：`new Date().getHours()` 在 [6,19] 用 light，否则 dark；之后 `localStorage` 记忆用户选择
 
 4. **代码高亮**：highlight.js 主题 **`vs`**（light）/ **`vs2015`**（dark）
    - 或自写 token 用 Console Blue `#0070f3`（keyword）/ Console Purple `#7928ca`（function）/ Console Pink `#eb367f`（string）/ `#4d4d4d`（comment）

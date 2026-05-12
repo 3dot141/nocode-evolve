@@ -8,6 +8,10 @@
 
 Dark-mode-native 精密工程美学——near-black 画布上，信息通过 white opacity 与极细 border 分层浮现，气质冷峻、严肃、克制。
 
+**Primary mode: dark**——Linear 的视觉灵魂在 dark：`#08090a` near-black 画布上靠白色 opacity 0.02 → 0.04 → 0.05 → 0.08 构建的 luminance 阶梯是这套设计**不可替代**的核心。`#5e6ad2`/`#7170ff` 靛紫 accent 是为了在 dark 上发光而存在。
+
+> **WARNING：light mode 是兼容性 fallback，Linear 的设计灵魂在 dark。** 强制提供 light mode 是为了满足 "所有 preset 必须支持双 mode" 的全局规则与日间用户需求。但 luminance 阶梯系统（半透明白叠加在 near-black）在 light 下不可能成立——light mode 改用 Linear.app 自家的实际 light theme 作参考（bg `#f7f8f8` + surface `#ffffff` + text `#08090a`），气质会从"冷峻的星光"切换到"克制的工程笔记"。如果文档严肃度要求最大化，请保留 dark default 且明确告知读者。
+
 ## 何时选这个 preset
 
 - **System-level Design Doc** / 架构 RFC：内容密度高、决策严肃、读者是 senior engineer
@@ -70,6 +74,43 @@ Linear 是 dark-mode-first 产品设计的范本——near-black 画布（`#0809
 - Subtle `rgba(255,255,255,0.05)`（默认）
 - Standard `rgba(255,255,255,0.08)`（cards / inputs）
 - Solid Primary `#23252a`
+
+### Light / Dark Token Pairs
+
+**强制双 mode 支持**——首次加载按 `new Date().getHours()` 自动选 mode（6-19 点 light，否则 dark）。**dark 是 primary**，写在 `:root`；light 是 fallback，写在 `[data-theme="light"]`。
+
+light token 参考 Linear.app 实际的 light theme（settings 页面切到 light 后取色）：bg `#f7f8f8` 偏冷灰白、surface 纯白 `#ffffff`、text `#08090a` near-black、border `rgba(0,0,0,0.08)`、品牌 indigo `#5e6ad2` 保持，accent violet 由 `#7170ff` 微调暗到 `#5b5bd6` 以保对比度。
+
+| Token | Dark (`:root`, primary) | Light (`[data-theme="light"]`, fallback) |
+|---|---|---|
+| `--bg` | `#08090a` | `#f7f8f8` |
+| `--bg-panel` | `#0f1011` | `#ffffff` |
+| `--bg-surface` | `#191a1b` | `#ffffff` |
+| `--bg-hover` | `#28282c` | `#eceef0` |
+| `--text-primary` | `#f7f8f8` | `#08090a` |
+| `--text-secondary` | `#d0d6e0` | `#3d4248` |
+| `--text-tertiary` | `#8a8f98` | `#6f757e` |
+| `--text-quat` | `#62666d` | `#9ca0a8` |
+| `--brand` | `#5e6ad2` | `#5e6ad2` |
+| `--accent` | `#7170ff` | `#5b5bd6` |
+| `--accent-hover` | `#828fff` | `#7170ff` |
+| `--border-subtle` | `rgba(255,255,255,0.05)` | `rgba(0,0,0,0.05)` |
+| `--border-std` | `rgba(255,255,255,0.08)` | `rgba(0,0,0,0.08)` |
+| `--border-strong` | `#23252a` | `#d8dade` |
+| `--code-bg` | `#0f1011` | `#f4f5f6` |
+| `--code-inline-bg` | `rgba(255,255,255,0.06)` | `rgba(0,0,0,0.05)` |
+| `--shadow-ring` | `rgba(0,0,0,0.2) 0px 0px 0px 1px` | `rgba(0,0,0,0.06) 0px 0px 0px 1px` |
+| `--shadow-elevated` | `rgba(0,0,0,0.4) 0px 2px 4px` | `rgba(0,0,0,0.06) 0px 2px 4px` |
+| `--focus-ring` | `#7170ff` | `#5b5bd6` |
+| `--quote-bg` | `rgba(94,106,210,0.06)` | `rgba(94,106,210,0.06)` |
+
+**Light mode 关键校准**：
+- bg 用 `#f7f8f8`（Linear 实际 light theme）而非纯白——保留 Linear "冷灰底" 性格
+- surface 用纯 `#ffffff` 浮在 `#f7f8f8` 上——形成 light 版的"luminance 阶梯"（虽然只剩一档）
+- accent violet 从 `#7170ff` 调暗到 `#5b5bd6`——白底上 `#7170ff` 对比度仅 3.1:1 不达标，`#5b5bd6` ≈ 4.6:1 过 WCAG AA
+- brand indigo `#5e6ad2` 在两种 mode 都保持——CTA 按钮颜色不变是 Linear 的品牌恒等元素
+- light 下半透明白色 opacity → 半透明黑色 opacity（直接反相）
+- shadow 在 light 下重新启用（dark 下故意几乎不用 shadow，light fallback 中可用）
 
 ### Typography
 
@@ -163,7 +204,18 @@ Linear 是 dark-mode-first 产品设计的范本——near-black 画布（`#0809
 
 2. **章节折叠**（H2 `<details>`）：summary `cursor:pointer`，前置 ▸ 三角 color `#62666d`，open 时旋转 90° 变 `#7170ff`；transition `transform 180ms ease, color 150ms ease`；content fade-in 180ms。
 
-3. **暗黑模式 toggle**：本 preset 是 **dark-only**——这是 Linear 的核心人格。toggle button 仍保留，但点击时在 dark / 略亮 dark（bg `#0f1011` → `#1a1b1d`）间切换作为"reading mode"。理由：light mode 会摧毁 luminance 阶梯系统，与 brand 冲突；强行 invert 会得到劣化的 Mintlify。
+3. **暗黑模式 toggle**：**both（强制）**——primary mode 是 **dark**（Linear 的核心人格 = near-black luminance 阶梯系统）；light 是强制完整支持的兼容性 fallback，参考 Linear.app 自家 light theme
+   - 完整 token 见上方「Light / Dark Token Pairs」表
+   - 关键差异速览：
+     - bg：`#08090a`（near-black）↔ `#f7f8f8`（cool gray-white，Linear 自家 light）
+     - surface：`#191a1b` ↔ `#ffffff`
+     - text-primary：`#f7f8f8` ↔ `#08090a`（直接反相）
+     - accent：`#7170ff` ↔ `#5b5bd6`（暗化以过 WCAG AA on light bg）
+     - brand `#5e6ad2` 两种 mode 不变——品牌恒等元素
+     - border：`rgba(255,255,255,0.08)` ↔ `rgba(0,0,0,0.08)`（半透明白 → 半透明黑）
+   - toggle 按钮：right-top fixed，圆形 `40x40`，dark 下 `bg rgba(255,255,255,0.05)` border `rgba(255,255,255,0.08)` icon `#d0d6e0`；light 下 `bg #ffffff` border `rgba(0,0,0,0.08)` icon `#3d4248`；icon ☀ / ☾
+   - 首次加载逻辑：`new Date().getHours()` 在 [6,19] 用 light，否则 dark；之后 `localStorage` 记忆用户选择
+   - **设计取舍提示**：如果文档严肃度优先（架构 RFC、ADR），建议把 default 锁死为 dark 而非按小时切换——light mode 在 Linear 里始终是 fallback，luminance 阶梯系统在 light 下退化为单一层级
 
 4. **代码高亮**：highlight.js 用 **`atom-one-dark`** 或 **`tokyo-night-dark`**；override 关键 token：keyword `#7170ff`，string `#10b981`，comment `#62666d` italic，function `#d0d6e0`，bg 强制 `#0f1011` 对齐代码块外框。
 
@@ -174,5 +226,5 @@ Linear 是 dark-mode-first 产品设计的范本——near-black 画布（`#0809
 - ❌ 不要保留 source "visual thesis / masterclass / starlight" 之类自吹文案
 - ❌ 不要保留 source Section 9 "Agent Prompt Guide" 的任何 example prompt
 - ❌ Map 表格里禁止出现"主色 / 次要色 / 强调色"这种抽象词——必须落到 hex
-- ❌ 不要给 light mode 配色板——本 preset 是 dark-only
 - ❌ 不要把 brand indigo 当装饰色铺满 H2 标题——只用在 active / accent / CTA
+- ⚠ light mode 是兼容性 fallback——不要在 light mode 下追求"和 dark 一样冷峻"的效果。light 下接受"克制工程笔记"气质即可，不要硬抢 dark 的星光美学

@@ -7,6 +7,10 @@
 
 复古计算机美学被升级到 2025——void-black 画布上跑着 phosphor green，**通篇 mono 字体**（标题、正文、code 全是 JetBrains Mono），像在一台校准过的 ANSI 终端里阅读规范文档。
 
+**Primary mode: dark**（理由：terminal-mono 的灵魂在 dark CRT——void black + phosphor green 是 brand metaphor 本体；light 是 "paper terminal" fallback——把同样的 mono 排版和 ASCII frame 搬到 warm paper 上，但要承认 phosphor green 必须降饱和到 emerald 才能在 light 上看见）
+
+> ⚠️ **Light mode warning**：light 是 paper terminal fallback；terminal-mono 的灵魂在 dark CRT。Light 下不要期待"phosphor 发光感"——那是 dark-only 的物理属性。如果文档主受众必须在白天/亮屏环境阅读，请改选 vercel-geist 或 warp-blocks 而不是依赖本 preset 的 light fallback。
+
 ## 何时选这个 preset
 
 - **CLI 工具 / shell utility / runtime 相关 design doc**：preset 气质与产品本体一致
@@ -79,6 +83,76 @@ body {
 - Warning `#f0b400`（amber，不用 orange——orange 太"web"）
 - Error `#ef4444`
 - Info `#67e8f9`（cyan；致敬终端 ANSI color 6）
+
+### Light / Dark Token Pairs
+
+两套 token 完整对照——dark 是 primary（写在 `:root`），light 是 paper terminal fallback（写在 `[data-theme="light"]`）。CSS 变量命名跨 8 个 preset 对齐。
+
+| Variable | Dark (primary, `:root`) | Light (`[data-theme="light"]`) | 备注 |
+|---|---|---|---|
+| `--bg` | `#0a0a0a` | `#f7f4ec` | dark：void black；light：warm paper（不是冷白） |
+| `--bg-panel` | `#050505` | `#efeadf` | sidebar / TOC bg（light 用更深一阶纸色） |
+| `--bg-surface` | `#141414` | `#ffffff` | cards / panels（light 用纯白浮起 + border） |
+| `--bg-hover` | `#1c1c1c` | `#ece6d8` | hover 状态 |
+| `--text-primary` | `#ededed` | `#1a1a18` | 主标题 ink（light 不用纯黑——纸上太硬） |
+| `--text-secondary` | `#d4d4d4` | `#2e2e2a` | 正文 |
+| `--text-tertiary` | `#8a8a8a` | `#5e5e58` | metadata / caption |
+| `--text-quat` | `#525252` | `#9a9690` | 最弱 / disabled |
+| `--brand` | `#10b981` | `#059669` | dark 用 emerald；light **必须**降饱和到 deeper emerald `#059669`——`#39ff14` 在 light 上完全失效 |
+| `--accent` | `#39ff14` (hover-only) / `#10b981` (默认) | `#059669` (默认) / `#047857` (hover) | phosphor green 在 light 上不存在；用 deeper emerald 两档替代 |
+| `--border-subtle` | `rgba(255,255,255,0.06)` | `rgba(26,26,24,0.08)` | 极细分隔 |
+| `--border-std` | `rgba(255,255,255,0.08)` | `rgba(26,26,24,0.12)` | 标准（ASCII frame 用） |
+| `--border-strong` | `rgba(255,255,255,0.16)` | `rgba(26,26,24,0.2)` | 强调 / hover |
+| `--code-bg` | `#0f0f0f` | `#efeadf` | `<pre>` 块底——比正文背景深一阶 |
+| `--code-inline-bg` | `rgba(16,185,129,0.08)` | `rgba(5,150,105,0.1)` | emerald tint 招牌细节，两 mode 都保留 |
+
+**CSS 实现骨架**
+
+```css
+:root {
+  /* primary: dark */
+  --bg: #0a0a0a;
+  --bg-panel: #050505;
+  --bg-surface: #141414;
+  --bg-hover: #1c1c1c;
+  --text-primary: #ededed;
+  --text-secondary: #d4d4d4;
+  --text-tertiary: #8a8a8a;
+  --text-quat: #525252;
+  --brand: #10b981;
+  --accent: #10b981;
+  --accent-hover: #39ff14;  /* phosphor green only on dark hover */
+  --border-subtle: rgba(255, 255, 255, 0.06);
+  --border-std: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.16);
+  --code-bg: #0f0f0f;
+  --code-inline-bg: rgba(16, 185, 129, 0.08);
+}
+[data-theme="light"] {
+  --bg: #f7f4ec;
+  --bg-panel: #efeadf;
+  --bg-surface: #ffffff;
+  --bg-hover: #ece6d8;
+  --text-primary: #1a1a18;
+  --text-secondary: #2e2e2a;
+  --text-tertiary: #5e5e58;
+  --text-quat: #9a9690;
+  --brand: #059669;
+  --accent: #059669;
+  --accent-hover: #047857;  /* phosphor green 在 light 上不存在；只用 deeper emerald 两档 */
+  --border-subtle: rgba(26, 26, 24, 0.08);
+  --border-std: rgba(26, 26, 24, 0.12);
+  --border-strong: rgba(26, 26, 24, 0.2);
+  --code-bg: #efeadf;
+  --code-inline-bg: rgba(5, 150, 105, 0.1);
+}
+```
+
+**关键 mode 差异说明**
+- **Phosphor green `#39ff14` 是 dark-only 的**——在 light paper 底上完全失效（饱和度太高、对比度太低）。Light mode 用 deeper emerald `#059669` 替代默认 accent，`#047857` 替代 hover 态——降饱和到能用，但承认这是妥协
+- Dark `#0a0a0a` 不是纯黑（差 4%），light `#f7f4ec` 不是纯白——两端都保留"warm 纸感/灰感"
+- ASCII dashed frame（招牌细节）在两 mode 都保留——dashed border 颜色随 `--border-std` 自动切换
+- Inline code 的 emerald tint 在 light 上 opacity 提高到 0.1（dark 0.08 在白底上看不见）
 
 ### Typography
 
@@ -184,7 +258,7 @@ body {
 
 2. **章节折叠**（H2 `<details>`）：summary `cursor:pointer`，前置 `▸` 字符（不是 unicode triangle，用 ASCII 风 `▸` 或 `>`）color `#525252`，open 时变 `#10b981` 并旋转 90°；transition `transform 120ms linear, color 120ms linear`（同上，linear）；content 无 fade-in，**直接显示**——terminal 输出从来不 fade。
 
-3. **暗黑模式 toggle**：本 preset 是 **dark-only**——terminal 美学是夜行性的，反色后会变成"phosphor 绿在白纸上"，与 brand 冲突。toggle button **保留但功能改为「reading mode」**：在 void black `#0a0a0a` 与稍暖的 `#121010`（微红偏移 1%）之间切换，模拟 CRT amber 模式 vs green 模式。理由写在 HTML 注释里：「Terminal aesthetic is dark-only by design; light mode would invert the phosphor metaphor.」
+3. **暗黑模式 toggle**：本 preset 是 **both（强制）**，**primary 为 dark**——首次加载按 `new Date().getHours()` 自动选（6-19 点 light，否则 dark）。点击 toggle 在 `:root` 与 `[data-theme="light"]` 间切换 CSS variable，transition `background 120ms linear, color 120ms linear`（**linear 不是 ease**——terminal 应"瞬切"）。Light mode 是 paper terminal fallback：保留 mono + ASCII frame 招牌，但 phosphor green `#39ff14` 必须降到 `#059669` deeper emerald（高饱和绿在 light 上看不见）。Toggle 按钮形态：dark bg `#141414` border `#10b981` icon `#10b981` ↔ light bg `#ffffff` border `#059669` icon `#059669`。HTML 内可保留注释：「Terminal aesthetic is dark-first; light mode is a paper-terminal fallback — phosphor green degrades to emerald and the CRT metaphor is lost. Prefer dark for full fidelity.」
 
 4. **代码高亮**：highlight.js 用 **`atom-one-dark`** 或 **`base16/eighties`**（后者更复古，与 preset 匹配度更高）；override 关键 token 对齐 palette：keyword `#10b981`，string `#67e8f9`（cyan / ANSI 6），comment `#525252` weight 500（**不用 italic**——mono italic 丑），function `#ededed`，number `#f0b400`，bg 强制 `#0f0f0f` 对齐代码块外框，无 border。
 

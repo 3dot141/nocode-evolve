@@ -8,6 +8,8 @@
 
 Warm-sage 编辑风格的「工程师的内部 wiki」——技术严肃，但语气松弛、带点 hand-drawn 的人味。
 
+**Primary mode: dark**（理由：PostHog.com 现产品形态是 dev-friendly dark-first——暗背景 + amber/orange 品牌色暖人情味，与 dev 受众的"夜行性"工作习惯吻合；light 是 cream-toned paper fallback，保留 sage cream + olive 调色，不能滑向"医院白"）
+
 ## 何时选这个 preset
 
 - Refactor 提案 / 新功能 PRD：作者想强调「实用、可落地」而不是「未来主义」
@@ -71,6 +73,74 @@ PostHog 的视觉语言是「逃逸到互联网上的创业公司内部 wiki」�
 - Dark Text `#111827`：高对比链接文字
 
 **Gradient System**：无渐变。深度通过 layered surface + border 实现。
+
+### Light / Dark Token Pairs
+
+两套 token 完整对照——dark 是 primary（写在 `:root`），light 是 fallback（写在 `[data-theme="light"]`）。CSS 变量命名跨 8 个 preset 对齐。
+
+| Variable | Dark (primary, `:root`) | Light (`[data-theme="light"]`) | 备注 |
+|---|---|---|---|
+| `--bg` | `#1d1f27` | `#fdfdf8` | dark：warm near-black 微带蓝灰；light：warm parchment（非纯白） |
+| `--bg-panel` | `#232530` | `#fdfdf8` | sidebar / toc bg |
+| `--bg-surface` | `#2a2c38` | `#f2f0e9` | metadata 卡片（light 用偏暖灰，比 cream 深一阶） |
+| `--bg-hover` | `#33353f` | `#f4f4f4` | hover 底色 |
+| `--text-primary` | `#fdfdf8` | `#151515` | 主标题 / 强 contrast（dark 用 warm parchment 不用纯白） |
+| `--text-secondary` | `#d4c9b8` | `#4d4f46` | 正文（dark：warm tan 减灼烧；light：olive ink） |
+| `--text-tertiary` | `#9ea096` | `#65675e` | metadata label |
+| `--text-quat` | `#5d5f56` | `#9ea096` | 最弱 |
+| `--brand` | `#F54E00` | `#F54E00` | PostHog orange——跨 mode 不变 |
+| `--accent` | `#F7A501` | `#F7A501` | amber gold——dark 主用作 CTA active 与 link；light 仅 hover/blockquote 用 |
+| `--border-subtle` | `rgba(253,253,248,0.06)` | `#bfc1b7` | 极细分隔 |
+| `--border-std` | `rgba(253,253,248,0.1)` | `#bfc1b7` | 标准 border |
+| `--border-strong` | `rgba(253,253,248,0.18)` | `#b17816` | 强调（light 用 gold border） |
+| `--code-bg` | `#15171e` | `#fdfdf8` | `<pre>` 块底 |
+| `--code-inline-bg` | `rgba(247,165,1,0.12)` | `#eeefe9` | 行内 code 底（dark 用 amber tint 招牌细节） |
+
+**CSS 实现骨架**
+
+```css
+:root {
+  /* primary: dark */
+  --bg: #1d1f27;
+  --bg-panel: #232530;
+  --bg-surface: #2a2c38;
+  --bg-hover: #33353f;
+  --text-primary: #fdfdf8;
+  --text-secondary: #d4c9b8;
+  --text-tertiary: #9ea096;
+  --text-quat: #5d5f56;
+  --brand: #F54E00;
+  --accent: #F7A501;
+  --border-subtle: rgba(253, 253, 248, 0.06);
+  --border-std: rgba(253, 253, 248, 0.1);
+  --border-strong: rgba(253, 253, 248, 0.18);
+  --code-bg: #15171e;
+  --code-inline-bg: rgba(247, 165, 1, 0.12);
+}
+[data-theme="light"] {
+  --bg: #fdfdf8;
+  --bg-panel: #fdfdf8;
+  --bg-surface: #f2f0e9;
+  --bg-hover: #f4f4f4;
+  --text-primary: #151515;
+  --text-secondary: #4d4f46;
+  --text-tertiary: #65675e;
+  --text-quat: #9ea096;
+  --brand: #F54E00;
+  --accent: #F7A501;
+  --border-subtle: #bfc1b7;
+  --border-std: #bfc1b7;
+  --border-strong: #b17816;
+  --code-bg: #fdfdf8;
+  --code-inline-bg: #eeefe9;
+}
+```
+
+**关键 mode 差异说明**
+- Dark mode 不用纯黑——`#1d1f27` 保留 warm 倾向，避免冷蓝暗色调
+- Light mode 不用纯白——`#fdfdf8` warm parchment + `#f2f0e9` 表面层是 PostHog.com 真实 cream-toned 风格
+- Brand orange `#F54E00` 跨 mode 不变——隐藏品牌色逻辑（hover 才出现）两 mode 都保留
+- Amber `#F7A501` 在 dark 上是主交互色（高频出现），在 light 上是低频强调（blockquote/hover）
 
 ### Typography
 
@@ -182,7 +252,7 @@ PostHog 的视觉语言是「逃逸到互联网上的创业公司内部 wiki」�
 
 1. **TOC 跟随**：active item `bg #e5e7e0 + text #23251d weight 600`；hover `text #F54E00`；IntersectionObserver 在 H2/H3 进入 viewport 上半（rootMargin: `-10% 0px -70% 0px`）时切换 active；transition `background-color 150ms ease`
 2. **章节折叠**（H2 click 包成 `<details>`）：summary 左侧三角箭头 `#65675e`（展开旋转 90deg，transition 180ms ease）；展开内容 `max-height` 动画 200ms ease；summary hover bg `#f4f4f4`
-3. **暗黑模式 toggle**：本 preset 是 **light-only**——理由：PostHog 的核心人格是「sage cream 暖纸感」，强行翻成暗色会破坏 olive 调色体系。Toggle 按钮仍保留，但点击时仅切换正文 max-width 与字号（reading mode），并提示「此 preset 暂不支持暗色」
+3. **暗黑模式 toggle**：本 preset 是 **both（强制）**，**primary 为 dark**——首次加载按 `new Date().getHours()` 自动选（6-19 点 light，否则 dark）。点击 toggle 在 `:root` 与 `[data-theme="light"]` 间切换 CSS variable，transition `background 200ms ease, color 200ms ease`。两 mode 都遵守"hover 闪 orange/amber"的招牌交互——dark 上 amber 是默认 link 色，light 上 amber 仅 hover 显现。Toggle 按钮形态：dark 上 bg `#2a2c38` + icon `#F7A501`；light 上 bg `#e5e7e0` + icon `#65675e`
 4. **代码高亮**：highlight.js 主题用 `github`（light, warm 调），关键字色覆写为 `#23251d`，字符串 `#65675e`，注释 `#9ea096` italic——避免 highlight.js 默认蓝色破坏 sage 体系
 5. **回到顶部按钮**：浮 right-bottom 24px，bg `#1e1f23`，icon `#fdfdf8`，radius 9999px，size 44x44px，box-shadow `0 25px 50px -12px rgba(0,0,0,0.25)`；hover opacity 0.7 + icon `#F7A501`；scrollY > viewport height 时 `opacity 0 → 1` transition 200ms
 

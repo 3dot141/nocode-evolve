@@ -8,6 +8,8 @@
 
 精致、专业、premium——金融级气质：深海军蓝标题、Stripe 紫作为唯一交互色、蓝色调阴影让 elevation 都自带品牌色。读起来像一份被 type foundry 重做过的金融机构白皮书。
 
+**Primary mode: light**——Stripe 的视觉灵魂在白底 + 深海军蓝标题 `#061b31` + Stripe Purple `#533afd` 的对比上：blue-tinted shadow（`rgba(50,50,93,0.25)`）是品牌身份的核心元素，只在 light 模式中真正成立。dark mode 完整支持（强制提供），底色用深海军蓝 `#0d253d`、blueprint indigo `#1c1e54`，紫色 accent 提亮到 `#7c6bff` 以保持对比度，气质从"金融白皮书"切换到"夜间数据仪表盘"。
+
 ## 何时选这个 preset
 
 - **PRD (Product Requirements Document)**：要展示给非工程 stakeholder（PM、设计、商务、高管），需要色彩引导和 premium 感
@@ -92,6 +94,42 @@ Stripe 的视觉系统同时做到 technical 与 luxurious：白底 `#ffffff` + 
 - Shadow Black `rgba(0,0,0,0.1)`
 - Shadow Ambient `rgba(23,23,23,0.08)`
 - Shadow Soft `rgba(23,23,23,0.06)`
+
+### Light / Dark Token Pairs
+
+**强制双 mode 支持**——首次加载按 `new Date().getHours()` 自动选 mode（6-19 点 light，否则 dark）。CSS 用 `:root`（light = primary）+ `[data-theme="dark"]`（dark = secondary fallback）切换。
+
+| Token | Light (`:root`) | Dark (`[data-theme="dark"]`) |
+|---|---|---|
+| `--bg` | `#ffffff` | `#0d253d` |
+| `--bg-panel` | `#ffffff` | `#0a1d33` |
+| `--bg-surface` | `#f6f9fc` | `#1c1e54` |
+| `--bg-hover` | `#f6f9fc` | `#27306b` |
+| `--text-primary` | `#061b31` | `#e5edf5` |
+| `--text-secondary` | `#273951` | `#b8c2d6` |
+| `--text-tertiary` | `#64748d` | `#8590a8` |
+| `--text-quat` | `#94a3b8` | `#6b7896` |
+| `--brand` | `#533afd` | `#7c6bff` |
+| `--accent` | `#533afd` | `#7c6bff` |
+| `--accent-hover` | `#4434d4` | `#9c8fff` |
+| `--border-subtle` | `#e5edf5` | `rgba(229,237,245,0.08)` |
+| `--border-std` | `#e5edf5` | `rgba(229,237,245,0.12)` |
+| `--border-strong` | `#b9b9f9` | `rgba(124,107,255,0.4)` |
+| `--code-bg` | `#0d253d` | `#0d253d` |
+| `--code-inline-bg` | `#f6f9fc` | `rgba(124,107,255,0.12)` |
+| `--code-inline-text` | `#533afd` | `#9c8fff` |
+| `--shadow-ambient` | `rgba(23,23,23,0.06) 0px 3px 6px` | `rgba(0,0,0,0.4) 0px 3px 6px` |
+| `--shadow-elevated` | `rgba(50,50,93,0.25) 0px 30px 45px -30px, rgba(0,0,0,0.1) 0px 18px 36px -18px` | `rgba(83,58,253,0.4) 0px 30px 45px -30px, rgba(0,0,0,0.5) 0px 18px 36px -18px` |
+| `--focus-ring` | `#533afd` | `#7c6bff` |
+| `--success-bg` | `rgba(21,190,83,0.2)` | `rgba(21,190,83,0.25)` |
+| `--success-text` | `#108c3d` | `#34d39a` |
+
+**Dark mode 关键校准**：
+- bg 用 Stripe 自己的 Dark Navy `#0d253d`——这是原 palette 里的"最深 neutral"，恰好是 light mode 代码块底色，dark mode 复用形成 brand 自洽
+- 面板/卡片层用 Brand Dark `#1c1e54`（原 palette 的"dark indigo 区块背景"）+ 更深的 `#27306b` 做 surface-2
+- code block dark 下保持 `#0d253d`——与页面 bg 同色，仅靠 border `rgba(124,107,255,0.2)` 区隔（避免代码块在 dark 上"漂浮"）
+- 紫色 accent 从 `#533afd` 提亮到 `#7c6bff`——保证 WCAG AA 对比度（≥4.5:1 on `#0d253d`）
+- 招牌 blue-tinted shadow 在 dark 下变成 **purple-tinted**（`rgba(83,58,253,0.4)`）——紫味更浓，模拟"夜间品牌色发光"
 
 ### Typography
 
@@ -230,15 +268,16 @@ Success：`bg=rgba(21,190,83,0.2)` / `text=#108c3d` / `border=1px solid rgba(21,
    - `transition: transform 200ms ease, color 200ms ease`
    - 展开 `<details[open]> > summary` 加 `border-bottom: 1px solid #e5edf5`
 
-3. **暗黑模式**：**both**（light-first，dark 切换）
-   - Light：见 palette
-   - Dark token：
-     - bg `#0d253d` / surface `#1c1e54` / surface-2 `#27306b`
-     - text-primary `#e5edf5` / text-secondary `#b8c2d6` / text-tertiary `#8590a8`
-     - border `rgba(229, 237, 245, 0.1)`
-     - link/CTA `#7c6bff`（提亮版 Stripe Purple，dark 下保证对比度）
-     - shadow 提亮到 `rgba(83, 58, 253, 0.4) 0px 30px 45px -30px, rgba(0,0,0,0.4) 0px 18px 36px -18px`（紫味更浓）
-   - toggle 按钮：right-top fixed 圆形 `40x40` `bg=#ffffff` shadow `rgba(50,50,93,0.25) 0px 6px 12px -6px`，icon ☀ / ☾ `color=#533afd`
+3. **暗黑模式**：**both（强制）**——primary mode 是 **light**（金融白皮书气质 + Stripe Purple `#533afd` 在白底上对比最强）；dark 是强制完整支持的 fallback
+   - 完整 token 见上方「Light / Dark Token Pairs」表
+   - 关键差异速览：
+     - bg：`#ffffff` ↔ `#0d253d`（Stripe 自家 Dark Navy）
+     - surface：`#f6f9fc` ↔ `#1c1e54`（Brand Dark Indigo）
+     - accent：`#533afd` ↔ `#7c6bff`（提亮以保对比度）
+     - code-bg：`#0d253d` 两种 mode 不变（dark 时与页面 bg 同色，靠 `rgba(124,107,255,0.2)` border 区隔）
+     - shadow：blue-tinted `rgba(50,50,93,0.25)` ↔ purple-tinted `rgba(83,58,253,0.4)`
+   - toggle 按钮：right-top fixed 圆形 `40x40`，light 下 `bg=#ffffff` shadow `rgba(50,50,93,0.25) 0px 6px 12px -6px`，dark 下 `bg=#1c1e54` shadow `rgba(83,58,253,0.4) 0px 6px 12px -6px`，icon ☀ / ☾ `color=var(--accent)`
+   - 首次加载逻辑：`new Date().getHours()` 在 [6,19] 用 light，否则 dark；之后 `localStorage` 记忆用户选择
 
 4. **代码高亮**：highlight.js 主题 **`atom-one-light`**（light）/ **`atom-one-dark`**（dark）
    - 或自写：keyword `#533afd` / function `#ea2261` / string `#108c3d` / number `#9b6829`（`"tnum"`）/ comment `#64748d`

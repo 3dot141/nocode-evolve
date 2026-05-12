@@ -7,6 +7,10 @@
 
 学术 essay + handout 排版——衬线字体、宽 margin、sidenote 而非 footnote、大量留白，气质像 Gwern 长文或 Tufte handout，**适合需要 narrative 阅读体验的 design doc**。
 
+**Primary mode: light**（理由：Tufte 流派的灵魂是 paper handout——`#fffff8` warm paper + serif ink 是 essay 美学的物理本体；dark 是 "night reading" fallback——保留暖色基调（warm dark brown 不是 cool blue dark）以延续 paper handout 的温度，但承认衬线小字在 dark 上易发糊）
+
+> ⚠️ **Dark mode warning**：dark 是 night reading fallback；Tufte 的灵魂在 paper light。Source Serif 4 / ET Book 衬线在暗底上小字（< 17px）会发糊——本 preset 的 dark mode 将正文字号上调到 18px 并把 weight 400→450 的 hint 留给浏览器渲染器；如读者主要在白天阅读，请尽可能停留在 light primary，dark 只作低光环境短读 fallback。
+
 ## 何时选这个 preset
 
 - **长篇 thinking piece / vision doc**：内容是 narrative argument，需要读者像读论文一样从头读到尾，不是扫文档
@@ -57,6 +61,79 @@ body {
 - **Accent Crimson** `#a00000`：链接、链接下划线（唯一的"色彩"；克制使用）
 
 可选第 6 个：**Margin Note Bg** `rgba(217, 212, 200, 0.25)`——sidenote 区域偶尔需要的极淡背景；不是必需。
+
+### Light / Dark Token Pairs
+
+两套 token 完整对照——light 是 primary（写在 `:root`），dark 是 night reading fallback（写在 `[data-theme="dark"]`）。CSS 变量命名跨 8 个 preset 对齐。
+
+| Variable | Light (primary, `:root`) | Dark (`[data-theme="dark"]`) | 备注 |
+|---|---|---|---|
+| `--bg` | `#fffff8` | `#1a1814` | light：warm paper；dark：warm dark brown（**不是 cool blue dark**——保留 Tufte 暖基调） |
+| `--bg-panel` | `#fffff8` | `#15130f` | TOC 侧栏 |
+| `--bg-surface` | `rgba(217,212,200,0.25)` | `rgba(232,226,212,0.04)` | sidenote 区可选淡底 |
+| `--bg-hover` | `rgba(17,17,17,0.04)` | `rgba(232,226,212,0.06)` | 极淡 hover——essay 不喜显眼 |
+| `--text-primary` | `#111111` | `#e8e2d4` | 主 ink（dark 用 cream warm 不用纯白——纯白在 warm brown 上太冷） |
+| `--text-secondary` | `#222222` | `#d4cdbb` | 正文 ink（light 与 primary 几乎一致；dark 略次） |
+| `--text-tertiary` | `#666666` | `#9a9282` | faded ink / metadata / sidenote |
+| `--text-quat` | `#999999` | `#6e6757` | 最弱 |
+| `--brand` | `#a00000` | `#d6646e` | crimson 链接色——dark 上 lift 到 oxblood `#d6646e` 保证对比度 |
+| `--accent` | `#a00000` | `#d6646e` | 同 brand，唯一的"色彩" |
+| `--border-subtle` | `#d9d4c8` | `#3a342c` | 极细分隔（dark 用 warm dark brown 系列） |
+| `--border-std` | `#d9d4c8` | `#3a342c` | 标准（Tufte 表格 0.5px rule 用） |
+| `--border-strong` | `#111111` | `#e8e2d4` | 强（Tufte 三横线表格 top/bottom 用） |
+| `--code-bg` | `transparent` | `transparent` | 两 mode 都 transparent——code 在 essay 里降权，只靠左 border |
+| `--code-inline-bg` | `rgba(217,212,200,0.35)` | `rgba(232,226,212,0.1)` | 极淡 rule 色 tint |
+
+**CSS 实现骨架**
+
+```css
+:root {
+  /* primary: light */
+  --bg: #fffff8;
+  --bg-panel: #fffff8;
+  --bg-surface: rgba(217, 212, 200, 0.25);
+  --bg-hover: rgba(17, 17, 17, 0.04);
+  --text-primary: #111111;
+  --text-secondary: #222222;
+  --text-tertiary: #666666;
+  --text-quat: #999999;
+  --brand: #a00000;
+  --accent: #a00000;
+  --border-subtle: #d9d4c8;
+  --border-std: #d9d4c8;
+  --border-strong: #111111;
+  --code-bg: transparent;
+  --code-inline-bg: rgba(217, 212, 200, 0.35);
+}
+[data-theme="dark"] {
+  --bg: #1a1814;
+  --bg-panel: #15130f;
+  --bg-surface: rgba(232, 226, 212, 0.04);
+  --bg-hover: rgba(232, 226, 212, 0.06);
+  --text-primary: #e8e2d4;
+  --text-secondary: #d4cdbb;
+  --text-tertiary: #9a9282;
+  --text-quat: #6e6757;
+  --brand: #d6646e;
+  --accent: #d6646e;
+  --border-subtle: #3a342c;
+  --border-std: #3a342c;
+  --border-strong: #e8e2d4;
+  --code-bg: transparent;
+  --code-inline-bg: rgba(232, 226, 212, 0.1);
+}
+
+/* Dark mode 衬线发糊补救：正文字号轻微上调 */
+[data-theme="dark"] body { font-size: 18px; }
+[data-theme="dark"] p, [data-theme="dark"] li { letter-spacing: 0.005em; }
+```
+
+**关键 mode 差异说明**
+- Dark mode 用 **warm dark brown** `#1a1814` 而不是 cool blue dark `#0d1117` 系——Tufte 流派的整套美学是暖纸感，dark fallback 必须延续这个温度
+- Crimson link `#a00000` 在 dark 上对比度不够，**lift 到 oxblood `#d6646e`**——同色相但提亮饱和度，保留"克制的色彩"克制感
+- Rule color `#3a342c` 是 paper rule `#d9d4c8` 的反相版本——保持暖灰基调
+- Code block 两 mode 都 transparent（无填色卡片）——Tufte 流派的核心纪律之一
+- Dark 上正文上调到 18px + 微 letter-spacing 是必要补救——衬线小字在暗底易发糊
 
 ### Typography
 
@@ -149,15 +226,15 @@ body {
 | Review Log `<details>` | summary 文字 Source Serif 4 14px italic color `#666666` "*Review Log →*"，hover color `#111111`，无 bg；open 时三角变 `▼`，展开后内容左 border `1px solid #d9d4c8` padding 12px 20px |
 | Accent 强调 | 文字内联：text `#a00000` weight 400（**不加粗**）。整段警告：italic + 段前小段 em-dash + caption「*Caveat:* 」起头，文字 color `#666666` |
 
-## 5 个必有交互的视觉处理（本 preset 是 4 + 1 建议）
+## 5 个必有交互的视觉处理
 
-> **特别声明**：本 preset 主动放弃 design-doc-rendering 默认 5 必有交互中的 **#3 暗黑模式切换**。理由：衬线 + 学术 essay 美学反色后，paper 变 black、ink 变 cream，整体气质塌成廉价 dark blog；强行 invert 会得到劣化版的 Mintlify 文档。Tufte handout 没有 dark mode；Gwern.net 没有 dark mode；本 preset 也不应该有。**补一项：打印友好（@media print）**——essay 应该可以印出来读。
+> **历史声明（保留作 design rationale）**：本 preset 原稿主动放弃 #3 暗黑模式切换，理由是 Tufte handout 没有 dark mode、衬线美学反色后塌成廉价 dark blog。该判断在视觉上至今成立——但 design-doc-rendering skill 现已强制要求 light + dark 双 mode；本 preset 按规则补齐了 night reading dark fallback，并通过"warm dark brown + 字号上调 + oxblood crimson"三处补救尽量缓和衬线发糊问题。Light 仍是 primary——dark 只作低光环境短读 fallback。**附加项：打印友好（@media print）**——essay 应该可以印出来读。
 
 1. **TOC 跟随**：active item text `#a00000` italic + 左 4px padding（**不用 bg、不用 border**——essay 不喜欢矩形高亮）；hover text 从 `#666666` → `#111111` 不变样式。IntersectionObserver `rootMargin: '-25% 0px -65% 0px'`。过渡 `color 200ms ease`（比 terminal preset 略慢——essay 不赶）。
 
 2. **章节折叠**（H2 `<details>`）：summary `cursor:pointer`，前置 small `›` 字符 color `#666666`，open 时变 `‹`（**用方向变化而不是旋转**——避免"加载"机械感）；no transition on the marker（即时切换），content fade-in 240ms ease。
 
-3. **暗黑模式**：**light-only by design**。toggle button **完全移除**——不要在右上角放一个"残废"按钮。HTML 里写注释解释：「Tufte-essay preset is light-only by design. Dark mode would invert the paper metaphor and break the serif essay aesthetic. To read in low light, use the browser's "Reader Mode" or system-level dark filter.」
+3. **暗黑模式 toggle**：本 preset 是 **both（强制）**，**primary 为 light**——首次加载按 `new Date().getHours()` 自动选（6-19 点 light，否则 dark）。点击 toggle 在 `:root` 与 `[data-theme="dark"]` 间切换 CSS variable，transition `background 320ms ease, color 320ms ease`（**比其他 preset 慢一档**——essay 不赶时间，缓慢淡入更符合 paper-to-night 的隐喻）。Dark mode 是 night reading fallback：warm dark brown `#1a1814` + cream ink `#e8e2d4` + oxblood crimson `#d6646e` + rule color `#3a342c`，正文字号上调到 18px 缓解衬线发糊。Toggle 按钮形态：light 上是纯文字 italic 链接 "*night reading*" color `#666666` 下划线 0.5px ↔ dark 上 "*paper*" color `#9a9282`——按钮本体也走 essay 风（无 bg / 无 border / 无 icon）。HTML 内可保留注释：「Dark mode is a night-reading fallback; serif at small sizes degrades on dark. Prefer light primary for full Tufte fidelity.」
 
 4. **代码高亮**：highlight.js 用 **`atom-one-light`** 或 **`github-light`**；override：keyword `#a00000`，string `#666666`（**不用绿色 / 紫色** 等鲜艳色——essay 不允许彩虹 syntax），comment `#999999` italic，function `#111111`，bg 强制 transparent 对齐降权的 code block。整体让 code 看起来像被印刷在 paper 上而不是发光的 IDE。
 
