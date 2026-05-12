@@ -204,17 +204,186 @@ preset 给骨架，**accent 用来在骨架上"染色"**，依 frontmatter 的 t
 
 ✅ 做：
 
-- 合理留白（正文 `max-width: 760-880px`、行高在 preset 给的范围内）
+- 段落级元素（`p`/`ul`/`ol`/`blockquote`）行宽 `max-width: 72ch`（约 760-880px）保证可读性
+- **宽元素**（`pre`/`table`/`figure`/`.hero`/`.mermaid`）**不设 max-width**，跟随 main 容器宽度，宽屏时能 break-out 舒展
 - 表格 hover 高亮 + 斑马纹（preset 没说就用 `rgba(0,0,0,0.02)` 兜底）
 - 链接 hover 动效（underline 渐入 / 颜色微变）
 
 ❌ 不做：
 
 - 用默认 `<h1>`/`<p>`/`<pre>` 无样式
+- **在 `main` 元素加额外 `max-width`**（如 `max-width: 920px`）——这会双重叠加段落 72ch cap，让宽元素也被压死，宽屏没法 break-out
 - 重型 UI 框架全套引入（Bootstrap / Material / 整套 React）——但 Tailwind CDN utility 可用作补丁
 - jQuery / React / Vue 等运行时框架——vanilla JS 已够用
 - **绕过 preset 自己选字体 / 调色板**（除非用户明确说"换个主色"）
 - 一坨墙 of text、无视觉节奏
+
+## Layout：宽屏适配 + 双重 cap 分离（强制规则）
+
+### 宽屏 (Wide-screen) 分档适配
+
+旧规则 page container 一刀切 `max-width: 1280px`——超宽屏（1920+ / 4K）下整页贴左、右侧大片留白。新规则：**shell `max-width` 跟随屏宽分档**。
+
+| 屏宽 | shell `max-width` | TOC sidebar 宽度 |
+|---|---|---|
+| `< 900px` (mobile) | 100%（TOC 折叠为顶部下拉） | — |
+| `900-1280px` (laptop) | `1280px` | 240px |
+| `1280-1920px` (desktop) | `1440px` | 260px |
+| `≥ 1920px` (wide / 4K) | `1600-1800px` | 280px |
+
+实现：用 `@media (min-width: ...)` breakpoint 多档调整。Snippet：
+
+```css
+.shell {
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr);
+  max-width: 1280px;
+  margin: 0 auto;
+}
+@media (min-width: 1280px) {
+  .shell { max-width: 1440px; grid-template-columns: 260px minmax(0, 1fr); }
+}
+@media (min-width: 1920px) {
+  .shell { max-width: 1680px; grid-template-columns: 280px minmax(0, 1fr); }
+}
+@media (max-width: 900px) {
+  .shell { grid-template-columns: 1fr; max-width: 100%; }
+}
+```
+
+### 段落 cap vs 宽元素 cap 分离
+
+⚠️ **`main` 元素绝对不设 `max-width`**。段落与宽元素 cap 走两条独立路线：
+
+```css
+main {
+  padding: 56px 64px 120px;   /* 仅 padding，不 cap */
+  /* NO max-width here */
+}
+
+/* 段落级元素：72ch 行宽约束（typography 可读性） */
+p, ul, ol, blockquote { max-width: 72ch; }
+
+/* 宽元素：跟随 main 实际宽度，宽屏 break-out */
+pre, table, figure, .hero, .mermaid, details {
+  max-width: 100%;   /* 或不设——让它们 100% 撑满 main */
+}
+```
+
+效果：
+- 笔记本（main 可用宽度 ≈ 900px）：段落 720px 居左，代码 / 表格 / SVG 占满 900px
+- 宽屏（main 可用宽度 ≈ 1270px）：段落仍 720px，代码 / 表格 / SVG 占满 1270px——**ASCII 树和数据可视化显著更舒展**
+
+## Design Doc 结构化内容的视觉处理（强制规则）
+
+新 design-doc 骨架（背景 → 目标 → 架构 → 实现）有几处**结构性内容是 markdown 看不出的、但渲染时必须给予视觉锚点**。生成 HTML 时主动识别这些 pattern 并加 class / 包裹结构。
+
+### 问题三件套（说明 / 方案对比 / 结论）
+
+markdown 形态：
+
+```
+#### 问题一：xxx
+**说明**：...
+**方案对比**：
+- 方案 A：...
+- 方案 B：...
+**结论**：...
+```
+
+渲染时**主动包成 `<section class="problem-block">`**：
+
+```html
+<section class="problem-block">
+  <h4 class="problem-title">
+    <span class="problem-num">Q1</span>
+    <span class="problem-name">xxx</span>
+  </h4>
+  <div class="three-piece three-piece-说明">
+    <span class="three-piece-label">说明</span>
+    <p>...</p>
+  </div>
+  <div class="three-piece three-piece-options">
+    <span class="three-piece-label">方案对比</span>
+    <ul>...</ul>
+  </div>
+  <div class="three-piece three-piece-conclusion">
+    <span class="three-piece-label">结论</span>
+    <p>...</p>
+  </div>
+</section>
+```
+
+CSS 约定：
+
+- `.problem-block`：左边线 accent + padding + 微背景，作为整块的视觉容器
+- `.problem-title`：visual treatment 接近 H3 重要度（不让 H4 被埋）
+- `.problem-num`：单独 monospace badge（如 `Q1`），accent 色
+- `.three-piece-label`：小 uppercase mono 标签（接近 `eyebrow text` 风格），与下方内容分离
+- `.three-piece-conclusion`：背景比前两段更强（accent tint），强调结论位置——读者扫读时眼睛先到结论
+
+### 逻辑三子节（业务流 / 关键契约 / 异常与失败模式）
+
+同样处理。markdown 形态：
+
+```
+### 逻辑一：xxx
+**业务流**
+<伪代码 pre 块>
+**关键契约**
+- 方法签名 / 字段 ...
+**异常与失败模式**
+| 场景 | 触发 | 处理 | 上抛吞 |
+```
+
+渲染时包成 `<section class="logic-block">`，三子节各有 class。业务流伪代码额外加 `<pre class="pseudocode">` 标记，CSS 给左边线 accent 色 + 顶部小 label "PSEUDOCODE" 强调"这是设计层伪代码、不是 production code"。
+
+### H4 视觉提升
+
+默认 `<h4>` 太小、与 inline bold 几无差。当 H4 用作「问题 X」「逻辑 X」时必须有：
+
+- 左边线 / 背景 / 数字 badge
+- font-size 接近 H3（18-20px），weight 600
+- margin-top 较大（≥ 32px）从前面段落分开
+
+```css
+h4 {
+  font: 600 18px/1.4 var(--font-sans);
+  color: var(--text-primary);
+  margin: 32px 0 12px;
+  padding-left: 12px;
+  border-left: 3px solid var(--accent);
+}
+```
+
+### 内联 code 减噪
+
+design-doc 大量出现路径 / 行号 / 类名 / 方法名 inline code，密集情况下段落看起来斑驳。轻处理：
+
+```css
+code {
+  font: 400 0.92em/inherit var(--font-mono);
+  background: rgba(127,127,127,0.06);   /* 比旧 rgba(255,255,255,0.06) 更弱 */
+  color: var(--text-primary);
+  padding: 1px 5px;                       /* 紧凑 padding */
+  border-radius: 3px;
+}
+
+/* 段落内连续 ≥3 个 code 时（路径密集段），整段给弱化容器 */
+p:has(code + code + code) code {
+  background: transparent;
+  padding: 0 2px;
+  color: var(--text-tertiary);
+}
+```
+
+### Hero SVG 不强制首屏
+
+design-doc 是阅读型文档，首屏应该是**标题 + frontmatter 卡片 + 背景节开场**让读者快速进入语境——不是复杂数据流图。
+
+- Hero SVG 应放在「架构.架构图」或「架构.流程图」节内，作为该节的开场视觉
+- 真的需要全局 hero 时，放在标题下方但 **`<details>` 折叠默认收起**，让读者主动展开看
+- 不要让复杂 SVG 在第一屏强行扑面
 
 ## MOTION_INTENSITY Dial（可选调档）
 

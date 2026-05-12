@@ -176,14 +176,65 @@ Review Log 与文档主体同步演进——主体回答"为什么这样设计"�
 > ✅「dogfood（用自己产出的工具实测）本插件历史决策……」  
 > ❌ 通篇用 humanizer / layer-supplements 却没告诉读者这是什么
 
+### 7. 小黄鸭式讲解：把每一步的"为什么"讲透
+
+把读者当成完全没看过这个项目的小黄鸭——每个决策、每个跳跃、每个数字都要 explain。遇到「显然」「众所周知」「不言而喻」→ 信号说明跳步了，回去补"为什么"。
+
+数字 / 阈值 / 模块名 / 行号 都要交代来源——不允许 magic number。
+
+> ✅「`HOLD_SIZE = 64` 字符。来源：入口点最长 `NumberFormatConfig.percentage(`（30 字符）+ LLM token chunk 平均 3-5 字符 × 容差 → 64 字符滑窗才能稳定捕获跨 chunk 拼接。」  
+> ❌「`HOLD_SIZE = 64`（显然够用）。」
+
+### 8. 费曼式简化：用最简单的话讲复杂概念
+
+如果一句话讲不清楚某个概念，说明你也没真懂——回去搞懂再写。复杂机制用类比 / 简单例子 / 一行伪代码讲明白，**先讲直觉、再补细节**，不要一上来堆术语。
+
+检验：能教一个**从没接触过项目的同事**吗？如果一份 design doc 拿给他读完，他能复述出问题 / 解法 / 权衡 → pass。复述不出来 → 你写得不够清楚。
+
+> ✅「sanitizer 像污水处理栅——chunk 进来先囤 64 字符的桶里；符合 DSL 入口点特征（`Query.from(` 等）的整段丢弃；普通字符 overflow 后正常下游送给 SSE。」  
+> ❌「sanitizer 基于 sliding-window heuristic entry-point detection 实现 hold-and-scan 流式预处理管道。」
+
 ## 实现的边界：design-doc vs plan
 
 design-doc 的「实现」节止于：
 
-- **业务流伪代码**：类名 + 方法调用 + 主路径 + 异常路径
+- **业务流（必须是伪代码）**：`function`/`method` 签名 + 函数体行，含主路径 + 异常路径。**不是**文件结构树、**不是**层次列表、**不是**散文描述
 - **关键契约**：public 方法签名、关键字段、对外暴露状态
 - **异常与失败模式**：每条逻辑特有异常（场景 / 触发 / 处理 / 上抛 or 吞）
 - （细节性逻辑）**实现选择**：非显然的实施层决策（visitor / Strategy 等），超 3 段就该升格到架构.问题拆解
+
+**业务流伪代码硬规则**：
+
+- 必须用 `function` / `method` 签名 + 函数体行（每行一句意图）
+- **每行都要有 `//` 注释**，讲清"这行干什么 / 为什么这么做"——小黄鸭式讲解，不允许"显然"
+- 命名用真实类名 / 方法名（如 `AgentLoop.callLlmForTurn`），不用 placeholder
+- 涉及数字 / 阈值时注释里讲清来源（如 `// HOLD_SIZE=64，来源：最长入口点 30 字符 + chunk 容差`）
+
+**对的写法**（每行带注释）：
+
+```
+function callLlmForTurn(messages, ctx):              // 完成一轮 LLM 对话，messages 已含历史
+    try:
+        return callLlmOnce(messages)                 // 正常调 LLM 一次返回响应
+    catch OutputViolationException as e:             // 业务异常：sanitizer 检测到 DSL 泄漏抛的
+        log.warn("DSL violation: {}", e.type)        // 记录违规类型，便于事后追溯
+        messages.add(buildCorrection(e.releasedTail)) // 把"已流出尾部"塞进新一轮 prompt
+                                                      // 让 LLM 知道用户屏幕停在哪、好接着写
+        return callLlmOnce(messages)                 // 重新调一次 LLM，让它改写
+    catch (ReasoningLengthExceeded | TimeOut) as e:  // 系统异常（长度超 / 超时）
+        throw e                                       // 不在本逻辑 scope，上抛给外层处理
+```
+
+**错的写法**（这是文件层次描述，属于「影响文件」节）：
+
+```
+NinesAgent.java
+  ├─ setContentStreamHandler 包装
+  └─ finally 块 flush
+AgentLoop.java
+  ├─ instanceof 白名单
+  └─ catch + 注入
+```
 
 留给 plan（writing-plans skill）：
 

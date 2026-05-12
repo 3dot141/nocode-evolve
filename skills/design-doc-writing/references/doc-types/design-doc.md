@@ -91,10 +91,27 @@ ASCII 树 + (改)/(NEW) + 编号要点。**路径完整到包名**，不缩略�
 
 每条逻辑并列 3-4 子节：
 
-- **业务流**：类名 + 方法调用 + 主路径 + 异常路径的伪代码。停在"足以让 reviewer 判断设计合理"的粒度，不进 class 内部细节。
+- **业务流（必须是伪代码）**：用 `function`/`method` 签名 + 函数体行写出主路径 + 异常路径。停在"足以让 reviewer 判断设计合理"的粒度，不进 class 内部细节。**不是文件结构树、不是层次列表、不是散文描述**——文件层次属于「影响文件」节。
 - **关键契约**：新引入或修改的类的 public 方法签名、关键字段、对外状态。
 - **异常与失败模式**：本逻辑特有异常的表格——场景 / 触发条件 / 处理方式 / 上抛 or 吞。
 - （仅细节性逻辑）**实现选择**：非显然的实施层决策（用了 visitor / Strategy / pattern X），1-3 段说选了什么 + 为什么。超 3 段就升格到架构.问题拆解。
+
+业务流伪代码示例（**每行必带 `//` 注释**——小黄鸭式讲解，不假设读者懂）：
+
+```
+function callLlmForTurn(messages, ctx):              // 完成一轮 LLM 对话，messages 已含历史
+    try:
+        return callLlmOnce(messages)                 // 正常调 LLM 一次返回响应
+    catch OutputViolationException as e:             // 业务异常：sanitizer 检测到 DSL 泄漏抛的
+        log.warn("DSL violation: {}", e.type)        // 记录违规类型，便于事后追溯
+        messages.add(buildCorrection(e.releasedTail)) // 把"已流出尾部"塞进新一轮 prompt
+                                                      // 让 LLM 知道用户屏幕停在哪、好接着写
+        return callLlmOnce(messages)                 // 重新调一次 LLM，让它改写
+    catch (ReasoningLengthExceeded | TimeOut) as e:  // 系统异常（长度超 / 超时）
+        throw e                                       // 不在本逻辑 scope，上抛给外层处理
+```
+
+数字 / 阈值出现在伪代码或注释里时，必须**注明来源**（如 `// HOLD_SIZE=64，来源：最长入口点 30 字符 + chunk 容差`），不允许 magic number。
 
 跨多逻辑共享的异常（如"权限不足在所有调用都可能"）——单开一条「逻辑：权限校验」处理，归到细节性逻辑。**不立"全局异常基线"节**。
 

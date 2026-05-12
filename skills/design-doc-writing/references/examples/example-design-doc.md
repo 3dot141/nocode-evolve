@@ -133,15 +133,18 @@ nocode-evolve/
 **业务流**
 
 ```
-SKILL.md
-  ├─ 工作流 step 列表：判断 doc-type → Read references → 写初稿 → reviewer → 用户确认 → 修订 → 渲染
-  ├─ 写作准则 6 条（依次解决问题一/二/三 + pain point 主次 + 术语解释 + 节间承接）
-  └─ 边界声明：design-doc 止于伪代码 + 契约 + 异常；class 内部 + TDD 步骤进 plan
+function rewriteSkeleton():                              // 主入口：统一改造 4 类 doc-type 骨架
+    forEach docType in [design-doc, prd, rfc, adr]:      // 4 类 doc-type 各处理一遍
+        ref = read("references/doc-types/" + docType + ".md")
+        removeMetaLabels(ref)                            // 删「上半/下半」「Human Review」等 H2 元标签
+        replaceWithLinearSkeleton(ref, docType)          // 换成「背景→目标→...→后果」线性骨架
+        write(ref)                                       // 落盘
 
-references/doc-types/<type>.md
-  ├─ 该 type 的骨架代码块（H2 / H3 列表）
-  ├─ 各节写作要点（一段话讲该节回答什么）
-  └─ 写作纪律 + 长度参考 + frontmatter schema
+    skill = read("SKILL.md")
+    dropHardRules(skill, ["TL;DR", "Non-Goals", "Cross-cutting"])  // 删旧 3 个硬约束
+    addLogicReadabilityRules(skill, 6)                   // 加 6 条逻辑可读性准则（节间承接 / 主次 / 术语 等）
+    addBoundaryWithPlan(skill)                           // 加「design-doc vs plan」边界声明
+    write(skill)
 ```
 
 **关键契约**
@@ -163,22 +166,15 @@ references/doc-types/<type>.md
 **业务流**
 
 ```
-example-design-doc.md（即本文件）
-  └─ dogfood 本次重构本身
-     ├─ 演示问题拆解三件套（本文件含 3 个问题）
-     ├─ 演示影响文件 ASCII 多模块树
-     ├─ 演示逻辑 X 的三子节（业务流 / 关键契约 / 异常与失败模式）
-     └─ 演示节间承上启下 / 主因辅因 / 术语 inline 解释
+function rewriteExamples():                              // 主入口：3 类 example 全量重写
+    forEach docType in [design-doc, prd, adr]:           // RFC 暂沿用旧版，故不在循环里
+        topic = pickDogfoodTopic(docType)                // 选本插件历史决策作 dogfood 主题
+        skeleton = readDocTypeReference(docType)         // 加载该 type 的最新骨架定义
+        example = writeFullExample(topic, skeleton)      // 不省略章节、不写 "..."、每节都有内容
+        annotateAtTop(example, "dogfood: " + topic)      // 顶部注明这是 dogfood 哪个真实决策
+        write("references/examples/example-" + docType + ".md", example)
 
-example-prd.md
-  └─ dogfood：nocode-evolve 整体作为 PRD
-     ├─ 演示用户场景结构化（角色 / 触发 / 当前流程 / 期望流程 / 痛点定位）
-     └─ 演示验收标准 + 明确排除
-
-example-adr.md
-  └─ dogfood：本次重构里的某个具体决策（如"去掉 layer 概念"）
-     ├─ 演示方案对比简短写法（每方案 1-3 行）
-     └─ 演示后果含负面
+    verifyConsistency()                                  // 末尾验证：example 是否符合自家 reference 骨架
 ```
 
 **关键契约**
@@ -201,18 +197,24 @@ example-adr.md
 **业务流**
 
 ```
-design-doc-reviewer.md
-  ├─ 核心审查从 6 维度扩为 7 维度
-  │   ├─ 新增维度：「骨架可读性」——专门覆盖新 6 条逻辑可读性准则
-  │   │   ├─ 入口段是否自洽（不引未定义术语）
-  │   │   ├─ 章节是否用内容实体名（非元标签）
-  │   │   ├─ 节间是否承上启下
-  │   │   ├─ pain point 是否分主次
-  │   │   ├─ 架构问题 ↔ 实现逻辑是否映射
-  │   │   └─ 项目内自创词是否首次解释
-  │   └─ 既有 6 维度（意图清晰 / 决策站得住 / 设计完整 / 实施可执行 / 一致性 / 范围）保留
-  ├─ Structural 检查项按新 frontmatter / 骨架更新
-  └─ Critical 边界明确：骨架可读性问题"实际影响读者理解"时上 Critical
+function reviewDesignDoc(docPath):                       // reviewer 主入口：审查一份 design doc
+    doc = read(docPath)                                  // 读全文 + frontmatter
+    issues = []
+
+    forEach dim in [1..7]:                               // 7 维度核心审查（旧 6 + 新增"骨架可读性"）
+        issues += checkDimension(doc, dim)               // 每维度独立检查，按重要性排序输出
+
+    issues += checkStructural(doc, doc.type)             // 按 doc-type 检查 frontmatter / 章节齐全
+    issues += checkAIPatterns(doc)                       // humanizer 风格抽样 10 类（套话/AI vocab/等）
+
+    selfAuditIssues = selfAudit(doc)                     // 第二遍：自问"刚加入项目的工程师读完卡哪"
+    issues += selfAuditIssues
+
+    forEach issue in issues:                             // 给每条问题打短编号供用户引用
+        issue.id = generateId(issue.severity)            // C1 / W1 / S1 ...
+
+    return formatReport(issues)                          // 三档分级输出（Critical/Warning/Suggestion）
+                                                         // 不自循环——是否再来一轮由用户决定
 ```
 
 **关键契约**
