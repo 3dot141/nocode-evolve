@@ -1,6 +1,6 @@
 # Design Doc（Detailed Design Document）
 
-详细设计文档——回答 **"how will we implement this?"**，工程团队实施前的 alignment。
+详细设计文档——回答 **"how will we build this?"**，工程团队实施前的 alignment。
 
 ## 何时用 Design Doc
 
@@ -10,71 +10,93 @@
 - **不是** 单一架构决策（用 ADR）
 - **不是** 产品需求（用 PRD）
 
-## 主线节（上半 / 下半两半结构）
+## 骨架
 
-### 上半（Human Review）
+线性递进，无元结构标签。详细写作要点见 SKILL.md《写作准则》。
 
-#### TL;DR
-- 30 秒读懂核心
-- 这是什么 + 为什么做 + 怎么做（一句话）
+```
+## 背景            (核心痛点 + 主因/辅因划分)
+## 目标            (本 doc 要达成什么)
+## 架构
+### 架构图         (ASCII，可选)
+### 流程图         (ASCII，可选)
+### 问题拆解
+#### 问题一 <名字>
+说明：...
+方案对比：...
+结论：...
+#### 问题二 ...
+### 架构总结       (把各问题结论串成整体决策一段话)
+## 实现
+### 影响文件
+   <多模块 ASCII 树，文件后标 (改)/(NEW) + ① ② ③ 改动要点>
+### 逻辑一 <名字>  (默认对应 架构.问题一)
+**业务流**       (类名 + 伪代码 主路径)
+**关键契约**     (public 方法签名 / 字段 / 状态)
+**异常与失败模式**  (本逻辑特有异常，含场景/触发/处理/上抛吞)
+### 逻辑二 ...
+```
 
-#### Problem Statement
-- 要解决什么问题？
-- 现状 / 痛点（具体到 file path、metric、bug ID）
+**关键约束**：
 
-#### Goals / Non-Goals【必填】
-- Goals: 这个设计要达成什么
-- Non-Goals: 明确**不做**什么——同等具体
+- 「架构.问题拆解」每个问题对应「实现.逻辑 X」一条，命名引用；允许"细节性逻辑"独立成节但须在节首说明
+- 「实现.逻辑 X」内部并列三子节（业务流 / 关键契约 / 异常与失败模式）；reviewer 评估单个逻辑不跳节
+- 不再有 TL;DR / Non-Goals 必填 / Cross-cutting Checklist 必填 / 全局 Alternatives / 全局 Trade-offs 等硬约束——相关信息已分散到各问题的"方案对比 + 结论"
+- 「实现」节止于伪代码 + 公共契约 + 异常；class 内部、TDD 步骤、具体 catch 块写法**留给 plan**
 
-#### Alternatives Considered【≥1 + 否决理由】
-- 至少 1 个被否决方案 + 具体理由
-- 复杂决策建议 ≥2
+## 各节写作要点
 
-#### Trade-offs
-- 这个方案有什么代价？
-- 牺牲了什么换什么？
+### 背景
 
-### 下半（Agent Implementation）
+回答**为什么这件事值得做**。列具体痛点，**显式标出主因 vs 辅因**——不要平铺 5 条 bullet 让读者自己排序。
 
-#### Component / Module Design
-- 主要组件清单（职责 / 接口）
-- 与现有模块的关系
+不要复述用户原 prompt；不要写"现状描述"流水账。痛点要具体到 file path / metric / bug ID / 行号 / 真实场景。
 
-#### API Contracts / Function Signatures
-- 接口的**具体形状**（代码 / JSON 示例）
-- 不要描述，给真实形状
+### 目标
 
-#### Data Model
-- 新表 / 新字段 / 迁移脚本
-- 无变更也明示"无变更"
+本 doc 要达成的终态。可量化最好（"P99 < 200ms"、"配置时间从 30 min 降到 5 min"）。
 
-#### Error Handling
-- 失败模式表（场景 / 用户感知 / 系统行为）
-- 真实可能发生，不要假想
+不允许"灵活、可扩展、易维护"凑数。
 
-#### Testing Strategy
-- 单测 / 集成 / 人工验证具体场景
+### 架构
 
-#### Cross-cutting Concerns Checklist【必逐项回应，N/A 也要说理由】
-- [ ] Security / Privacy
-- [ ] Monitoring / Observability
-- [ ] Performance Budget
-- [ ] Migration / Rollout
-- [ ] Backwards Compatibility
-- [ ] Documentation Updates
+#### 架构图 / 流程图
 
-详见 `common.md`。
+可选。ASCII 形式。组件 ≤ 7，流程节点 ≤ 10。简单设计可整个跳过。
 
-## 覆盖深度：架构层 vs 开发层
+#### 问题拆解
 
-判断任务粒度，决定是否叠加 architecture layer：
+**核心节**。把架构层的设计决策拆成 N 个具体问题，每个问题独立讨论：
 
-| 任务粒度 | 该读什么 | layer 字段值 |
-|---|---|---|
-| **小改动**：改某几个函数、加字段、调整配置 | 只读 `layer-supplements/implementation.md` | `implementation` |
-| **系统级**：新模块 / 新服务 / 子系统重新设计 | 读 `layer-supplements/architecture.md` **+** `implementation.md`（两者**叠加**） | `architecture+implementation` |
+```
+#### 问题一 <名字>
+说明：这是什么问题、为什么需要回答
+方案对比：方案 A / B / C 的关键差异（trade-off）
+结论：选 X，因为 Y（具体否决其他方案的理由）
+```
 
-**不是二选一——架构层是叠加的**。系统级文档必须**既有**架构思考（边界 / 组件 / 数据流 / 失败模式）**也有**实施细节（接口 / 数据 / 错误处理）。
+数量取决于复杂度——简单设计 1-2 个，复杂系统 4-6 个。**3 个以上就该 review 是否过度拆**。
+
+#### 架构总结
+
+一段话把各问题的结论串成整体决策："基于问题 1-N 的结论，整体架构为……"。承接「实现」节。
+
+### 实现
+
+#### 影响文件
+
+ASCII 树 + (改)/(NEW) + 编号要点。**路径完整到包名**，不缩略。同一文件多改动用 ① ② ③ 编号。详见 SKILL.md《影响文件节硬格式》。
+
+#### 逻辑 X
+
+每条逻辑并列 3-4 子节：
+
+- **业务流**：类名 + 方法调用 + 主路径 + 异常路径的伪代码。停在"足以让 reviewer 判断设计合理"的粒度，不进 class 内部细节。
+- **关键契约**：新引入或修改的类的 public 方法签名、关键字段、对外状态。
+- **异常与失败模式**：本逻辑特有异常的表格——场景 / 触发条件 / 处理方式 / 上抛 or 吞。
+- （仅细节性逻辑）**实现选择**：非显然的实施层决策（用了 visitor / Strategy / pattern X），1-3 段说选了什么 + 为什么。超 3 段就升格到架构.问题拆解。
+
+跨多逻辑共享的异常（如"权限不足在所有调用都可能"）——单开一条「逻辑：权限校验」处理，归到细节性逻辑。**不立"全局异常基线"节**。
 
 ## 状态机
 
@@ -91,7 +113,6 @@ draft → in-review → approved → implemented → archived
 ```yaml
 ---
 type: design-doc
-layer: implementation   # 或 architecture+implementation（系统级）
 topic: <一句话讲设计>
 date: YYMMDD
 author: <username>
@@ -100,16 +121,17 @@ last_updated: YYMMDD   # 实施中修订时更新
 ---
 ```
 
-## 写作纪律
-
-- ✅ 上半给人 review，下半给 agent 实施——边界清楚
-- ✅ Non-Goals 必填，与 Goals 同等具体
-- ✅ Alternatives 真备选 + 真否决理由
-- ✅ 下半部具体（文件路径 / 函数名 / 数据 shape）
-- ✅ Cross-cutting checklist 每条都回应（即使 N/A）
-- ❌ 不要把 PRD 的"用户需求"塞 design doc——上游已有 PRD 就 cross-ref
-- ❌ Cross-cutting 不写"N/A"敷衍——要说明为什么不适用
+无 `layer` 字段——新骨架下「架构」与「实现」是内置二级节，覆盖深度由 writer 在「问题拆解」节数 + 「逻辑 X」详细度调节，不需要 frontmatter 显式声明。
 
 ## 长度参考
 
 5-15 页常见；小改动 2-3 页；系统级 10-20 页。超过 20 页考虑拆分。
+
+## 写作纪律
+
+- 「背景」必含主因/辅因划分
+- 「架构.问题拆解」每问题必含 说明 / 方案对比 / 结论 三件套
+- 「实现.逻辑 X」必含 业务流 / 关键契约 / 异常与失败模式 三子节
+- 影响文件 ASCII 树带 (改)/(NEW) + 编号要点 + 行号 / 函数名（能给则给）
+- 不写 TL;DR / 上半 / 下半 / Cross-cutting Checklist
+- 不把 plan 内容（class 内部 / TDD 步骤）塞进 design doc

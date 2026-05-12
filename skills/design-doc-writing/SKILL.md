@@ -1,21 +1,21 @@
 ---
 name: design-doc-writing
-description: 写设计文档时使用。按业界主流 4 类 doc-type 主轴（PRD / RFC / Design Doc / ADR）选合适类型；Design Doc 内部按覆盖深度叠加 architecture + implementation layer。工作流含 write → review 循环（spawn design-doc-reviewer subagent，最多 3 轮）。当 superpowers:brainstorming 走到「写设计文档」环节时调用本 skill；当用户要求「写设计文档 / RFC / ADR / 提案 / 架构记录 / 重构方案 / 系统设计」时也用。即使用户没说"用模板"，只要要做的事是产出一份正式的设计性文档，就该用本 skill。不要用本 skill 写代码注释 / PR 描述 / commit message / README / changelog。
+description: 写设计文档时使用。按业界主流 4 类 doc-type 主轴（PRD / RFC / Design Doc / ADR）选合适类型，每个 doc-type 有自己的"背景→...→后果"线性骨架。工作流含 write → review 循环（spawn design-doc-reviewer subagent，用户逐条确认）。当 superpowers:brainstorming 走到「写设计文档」环节时调用本 skill；当用户要求「写设计文档 / RFC / ADR / 提案 / 架构记录 / 重构方案 / 系统设计」时也用。即使用户没说"用模板"，只要要做的事是产出一份正式的设计性文档，就该用本 skill。不要用本 skill 写代码注释 / PR 描述 / commit message / README / changelog。
 ---
 
 # 设计文档写作
 
-把「已经讨论清楚的设计」落地成结构化的 markdown 文档。不负责讨论（brainstorming 的事），不负责实施（writing-plans / executing-plans 的事）——只负责**写**。
+把"已经讨论清楚的设计"落地成结构化的 markdown 文档。不负责讨论（brainstorming 的事），不负责实施（writing-plans / executing-plans 的事）——只负责**写**。
 
-工作流：write → review → **用户逐条确认** → 修订 → 追加 Review Log。reviewer 只列问题，**不自动循环修订**——是否修、修哪些由用户决定。
+工作流：write → review → 用户逐条确认 → 修订 → 追加 Review Log。reviewer 只列问题，**不自动循环修订**——是否修、修哪些由用户决定。
 
 ## 何时使用
 
 **应该用：**
 
-- superpowers:brainstorming 流程走到 step 5（写设计文档）时
+- superpowers:brainstorming 走到 step 5（写设计文档）时
 - 用户说「帮我写个 PRD / RFC / 设计文档 / ADR / 重构方案 / 系统设计 / 架构记录 / 提案」
-- 你即将创建一个 `*-design.md` / `*-prd.md` / `*-rfc.md` / `*-adr.md` 性质的文件
+- 你即将创建 `*-design.md` / `*-prd.md` / `*-rfc.md` / `*-adr.md` 性质的文件
 
 **不要用：**
 
@@ -31,9 +31,9 @@ description: 写设计文档时使用。按业界主流 4 类 doc-type 主轴（
 docs/plans/{username}/yymmdd-<topic>-design.md
 ```
 
-写之前确认 rule 当前值（user 可能已经改过）。
+写之前确认 rule 当前值。
 
-## 选 doc-type（主轴）
+## 选 doc-type
 
 设计文档分 4 类，按**这份文档主要回答什么问题**选：
 
@@ -44,49 +44,39 @@ docs/plans/{username}/yymmdd-<topic>-design.md
 | 实施前详细设计 | `design-doc` | How to build? | 5-15 页 |
 | 单一架构决策记录 | `adr` | Why we decided X? | 1-2 页 |
 
-选不准时优先 `design-doc`——它最通用且最 detailed。
+选不准时优先 `design-doc`——最通用且最 detailed。
 
-判断小贴士：
-- 用户角度还是工程角度？用户 → PRD；工程 → 后三个
-- 需要跨团队对齐？→ RFC
-- 只是记录一个决定？→ ADR
-- 实施前详细设计？→ Design Doc
+## 各 doc-type 骨架（速记）
 
-## Design Doc 内部：覆盖深度（layer 叠加）
+详见 `references/doc-types/<type>.md`。线性递进，无元结构标签：
 
-仅 `design-doc` type 用——判断系统级 vs 小改动：
-
-| 任务粒度 | 读什么 reference | layer 字段 |
-|---|---|---|
-| **小改动**：改某几个函数 / 加字段 / 调配置 | 只读 `references/layer-supplements/implementation.md` | `implementation` |
-| **系统级**：新模块 / 新服务 / 子系统重新设计 | 读 `architecture.md` **+** `implementation.md`（叠加） | `architecture+implementation` |
-
-**不是二选一**——架构层是叠加的。系统级文档必须**既有**架构思考（边界 / 组件 / 数据流 / 失败模式）**也有**实施细节（接口 / 数据 / 错误处理）。
+- **design-doc**：背景 → 目标 → 架构（架构图 / 流程图 / 问题拆解 / 架构总结）→ 实现（影响文件 / 逻辑 X）
+- **PRD**：背景 → 目标 → 用户场景 → 验收标准
+- **RFC**：背景 → 目标 → 提案（问题拆解 + 总结）→ 影响评估 → 开放问题
+- **ADR**：背景 → 决策（说明 / 方案对比 / 结论）→ 后果
 
 ## 工作流
 
 ```
 1. 判断 doc-type（按上表）
-2. Read references/doc-types/<type>.md 看主线节
-3. (仅 design-doc) 判断覆盖深度，Read 对应 layer-supplements/*.md
-4. Read references/examples/example-<type>.md 学习真实示例
-5. (necessary) Read references/common.md（cross-cutting checklist）
-6. 写初稿（frontmatter + 主线节 + 上半 / 下半结构）
-7. spawn design-doc-reviewer subagent（输入：doc_path）
-8. 用户确认环节（核心 gate，见下方）：
+2. Read references/doc-types/<type>.md（学骨架 + 写作要点）
+3. Read references/examples/example-<type>.md（看真实示例）
+4. 写初稿
+5. spawn design-doc-reviewer subagent（输入：doc_path）
+6. 用户确认环节（核心 gate，见下方）：
    - 默认：把 Report 完整呈现给用户，每条问题前编号，**逐条让用户勾选** fix / skip
    - 用户可一键说「全修 Critical+Warning」「全跳过」「我来给指示」走捷径
-   - reviewer 已 ✅ Pass：跳过此步直接进 step 12
-9. 据用户决定修订文档（in-place 改主体）；不在用户清单里的问题**不要顺手修**
-10. 把本轮 Report 全文 + 用户决定 + 修订摘要 append 到文档末尾 `## Review Log`（无则新建）
-11. 询问用户「再来一轮 review？」
-    - 是 → 回 step 7
-    - 否 → 进 step 12
-12. 保存到输出路径
-13. (by overlay) 调 design-doc-rendering skill 出 HTML
+   - reviewer 已 ✅ Pass：跳过此步直接进 step 10
+7. 据用户决定修订文档（in-place 改主体）；不在用户清单里的问题**不要顺手修**
+8. 把本轮 Report 全文 + 用户决定 + 修订摘要 append 到文档末尾 `## Review Log`（无则新建）
+9. 询问用户「再来一轮 review？」
+   - 是 → 回 step 5
+   - 否 → 进 step 10
+10. 保存到输出路径
+11. (by overlay) 调 design-doc-rendering skill 出 HTML
 ```
 
-## 用户确认环节（step 8 细则）
+## 用户确认环节（step 6 细则）
 
 reviewer 输出 Report 后，**不要自己挑哪些修哪些不修**。把决定权交给用户：
 
@@ -97,7 +87,7 @@ reviewer 输出 Report 后，**不要自己挑哪些修哪些不修**。把决�
    - 提供快捷选项：「全修 Critical+Warning」「全跳过」「自由指示」
 4. 用户确认前**不要动文档主体**——只能等
 
-例外：reviewer Verdict 是 ✅ Pass 时跳过这一步，直接进 step 12。
+例外：reviewer Verdict 是 ✅ Pass 时跳过这一步，直接进 step 10。
 
 ## Review Log 格式
 
@@ -113,9 +103,9 @@ reviewer 输出 Report 后，**不要自己挑哪些修哪些不修**。把决�
 **用户决定**：fix C1, C2, W1；skip C3（理由：暂不在 scope）、W2、S1
 
 **本轮修订**：
-- C1：Problem statement 加了具体痛点（第 2 节）
-- C2：Alternatives 方案 B 补量化否决理由（第 5 节）
-- W1：「会话模块」改为 `auth/session.go::CreateSession`（第 7 节）
+- C1：架构.问题一 补主因 vs 辅因划分
+- C2：实现.逻辑二 加异常子节
+- W1：路径补全到包名
 
 ---
 
@@ -123,7 +113,7 @@ reviewer 输出 Report 后，**不要自己挑哪些修哪些不修**。把决�
 ...
 ```
 
-Review Log 与文档主体同步演进——主体回答「为什么这样设计」，Log 留下「这份文档怎么演化来的」的审计轨迹。
+Review Log 与文档主体同步演进——主体回答"为什么这样设计"，Log 留下"这份文档怎么演化来的"的审计轨迹。
 
 ## 状态机
 
@@ -136,95 +126,123 @@ Review Log 与文档主体同步演进——主体回答「为什么这样设计
 
 注：ADR 一旦 accept 不可修改；改决策就写新 ADR + supersede 旧的。
 
-## 写作准则
+## 写作准则（核心）
 
-理解原则比死守章节更重要。每条附 ✅正例 / ❌反例。
+理解原则比死守章节更重要。每条附 ✅ 正例 / ❌ 反例。
 
-### 1. 写"为什么"，不只是"是什么"
+### 1. 入口段必须自洽
 
-每个决策附理由。reviewer 看文档要的是**为什么这么选**，不是描述代码长什么样。
+新骨架默认无 TL;DR——文档从「背景」起步即可。
+若加了 Summary / TL;DR / 提要 一类入口段，**绝不能引用全文才会出现的概念 / 缩写**——读者读完入口段必须能 grasp 核心，不需回头查。
 
-> ✅ 正例：「Auth 独立 package。这样 password hashing 的依赖（bcrypt）不被业务代码引入，减少攻击面。」  
-> ❌ 反例：「Auth 独立 package。包含 user.go / session.go / token.go。」
+> ✅「把 design-doc 模板从'上下半结构'改成'背景 → 架构 → 实现'线性骨架。」  
+> ❌「把 design-doc 从 layer × intent 双轴改为 doc-type 主轴 + reviewer 跑 humanizer 风格附带检查。」（layer、intent、humanizer 都是文中才出现的术语）
 
-### 2. 具体优于抽象
+### 2. 章节标题用内容实体，不用元结构标签
 
-用真实路径、函数名、表名、数据 schema、指标值。
+「上半」「下半」「Human Review」「Agent Implementation」一律不用——这些是告诉读者"这一节是给谁看的"的标签，消耗注意力但不传递信息。直接用内容实体名：背景 / 目标 / 架构 / 实现 / 决策 / 后果。
 
-> ✅ 正例：「`POST /api/v1/orders/{id}/cancel`，body `{reason?: string}`，已发货返 409 + `{error: "order_not_cancellable", state: "shipped"}`」  
-> ❌ 反例：「取消订单接口在已发货时拒绝请求。」
+> ✅ `## 架构` `## 实现`  
+> ❌ `## 上半：Human Review` `## 下半：Agent Implementation`
 
-### 3. Non-Goals 与 Goals 同等重要
+### 3. 节间承上启下
 
-明确"不做什么"——防 scope creep。Non-Goals 必须具体，不能写「其他都不做」敷衍。
+每节开头一句承接上一节的结论，读者跳读时能 trace 论证链。
 
-> ✅ 正例：「不做多语言；不做团队权限；不引入 Web UI」  
-> ❌ 反例：「这次先做核心功能，其他需求后续再说」
+> ✅ 架构.架构总结末尾："基于以上 3 个问题的结论，整体架构为 X"；实现节开头："按架构总结，本节展开 X 的 3 条业务流。"  
+> ❌ 架构节末尾戛然而止；实现节直接讲第一个文件改动
 
-### 4. Alternatives 真备选 + 真否决理由
+### 4. pain point 分主次
 
-不写 alternatives 等于"没考虑过"。每个备选要有具体否决理由。
+「背景」节列多条问题时，必须**显式标注主因 vs 辅因**。允许一句话定主因（"核心问题是 X；附带还有 Y、Z"），不允许平铺 5 条 bullet 让读者自己排序。
 
-> ✅ 正例：「方案 B：用 SQLite。否决：单进程写入瓶颈，QPS > 50 会卡」  
-> ❌ 反例：「考虑过 SQLite，但 PostgreSQL 更好」
+> ✅「核心问题：每次新会话项目背景丢失。附带的 wiki 缺自动维护、跨项目共享难——本 doc 不解决。」  
+> ❌「问题：1. 重复配置 2. 缺一致性 3. 项目记忆丢失 4. 文档质量参差」（4 条平铺，不知道哪条最痛）
 
-### 5. 删掉不适用的节
+### 5. 架构问题 ↔ 实现逻辑 默认 1:1 映射
 
-保留空标题或 N/A 比删掉更糟——告诉 reviewer「我没想过」。
+「架构.问题拆解」每个问题，**默认**对应「实现.逻辑 X」一条业务流，命名直接引用。
 
-> ✅ 正例：feature 简单时只有 TL;DR + 3 个主线节，不凑数  
-> ❌ 反例：12 个标题，5 个写「N/A」「无变更」「暂无」
+允许例外：实现层有架构层未讨论的细节性逻辑（如「内部缓存策略」「事件 dispatch 走 visitor」）——独立成「逻辑 Y」，命名暗示其性质，并在节首一句话说明"本逻辑未在架构讨论，因为是实施层细节"。
 
-### 6. 整体行文连贯，再回头看段落可读
+> ✅ 架构.问题一: 输出违规怎么拦 → 实现.逻辑一: 输出违规拦截链路  
+> ✅ 实现.逻辑三: 内部缓存策略（细节性，未在架构讨论；跨多问题且属实施层）  
+> ❌ 架构讨论 3 个问题，实现凭空 5 条逻辑，没说哪条对应哪个问题
 
-**先保整体论证链立得住，再看局部段落 / 句子。**整体思路断了，单句再漂亮也救不回来。顺序不要颠倒——先别花力气琢磨某句话用词，先确认这份文档**跳着读不会断**。
+### 6. 项目内部术语首次出现 inline 解释
 
-**整体层（先解决）：**
+业界通用名词（HTTP / PostgreSQL / TDD / retry / callback）不解释；**项目内自创词或缩写**（dogfood / two-half / humanizer / 自定义 component 名）首次出现必须一句话 inline 解释或链接 glossary，后续可直接用。
 
-- 论证链：TL;DR → Goals → Alternatives → Detailed Design 是不是顺着推下来？第 N 节用到的概念在第 N+M 节才定义是断点
-- 决策与展开承接：Alternatives 选了 A，Detailed Design 开头要承接「下面展开 A」，不能直接讲接口让读者自己拼
-- 跨章不重复：同一个论点在 3 个节复述是冗余，要么合并要么改成第一次完整、后面引用
-- 关键决策点位：最重要的决策段不要被埋在 200 字长段中间，提到段首或独立成段
+> ✅「dogfood（用自己产出的工具实测）本插件历史决策……」  
+> ❌ 通篇用 humanizer / layer-supplements 却没告诉读者这是什么
 
-**局部层（整体过关再看）：**
+## 实现的边界：design-doc vs plan
 
-- 段落墙：单段 >8 句、无列表无 break → 拆或加列表
-- 信息密度失衡：一段塞 5 个独立论点（拆）；三段说同一件事（合）
-- 节奏单调：连续 5 段都是无差别长段、零列表零表格 → 加视觉锚点
-- 视觉媒介错配：内容明显是表格 / 时间线 / 决策树，写成连续段落
+design-doc 的「实现」节止于：
 
-> ✅ 正例：Detailed Design 节开头一句承接「Alternatives 选了 A，下面展开 A 的接口与失败模式」；关键决策独占一段 2-3 句讲清；schema 用表格，迁移路径用时间线
-> 
-> ❌ 反例：Alternatives 选了 A，Detailed Design 直接讲 B 的接口；schema / 错误处理 / 监控 / 回滚塞同一段 9 句话；明显的对比表硬写成两个相邻长段
+- **业务流伪代码**：类名 + 方法调用 + 主路径 + 异常路径
+- **关键契约**：public 方法签名、关键字段、对外暴露状态
+- **异常与失败模式**：每条逻辑特有异常（场景 / 触发 / 处理 / 上抛 or 吞）
+- （细节性逻辑）**实现选择**：非显然的实施层决策（visitor / Strategy 等），超 3 段就该升格到架构.问题拆解
 
-## Cross-cutting Concerns
+留给 plan（writing-plans skill）：
 
-design-doc 的下半部**必须**包含 cross-cutting checklist（详见 `references/common.md`）。每条要么有内容要么明示 N/A + 理由：
+- class 内部具体实现（私有方法 / 循环 / retry 退避算法 / null 检查）
+- TDD 步骤化清单（先写哪个测试 → 再写哪段实现）
+- 每步验证命令
 
-- Security / Privacy
-- Monitoring / Observability
-- Performance Budget
-- Migration / Rollout
-- Backwards Compatibility
-- Documentation Updates
+**判据**：design doc 让 reviewer 能 challenge "**设计**是否合理"，但不需要"逐行能照抄成代码"。后者是 plan 的工作。
 
-PRD / RFC / ADR 不强制，但鼓励。
+## 「影响文件」节硬格式
+
+多模块 ASCII 树 + (改)/(NEW) + ① ② ③ 编号要点。例：
+
+```
+fx-agent-workspace-api/                                ← API 模块
+└── src/main/java/com/fanruan/core/agent/workspace/observe/
+    └── AgentEvent.java                 (改)  新增 OutputViolation record
+
+fx-agent-workspace/                                    ← impl 模块
+└── src/main/java/com/fanruan/core/agent/workspace/agent/
+    ├── loop/
+    │   ├── OutputViolationException.java   (NEW)
+    │   └── AgentLoop.java                  (改)  ① 1802 行 instanceof 白名单加 OutputViolationException
+    │                                              ② callLlmForTurn 加 catch
+    │                                              ③ 新增 injectOutputViolationCorrection 方法
+    └── nines/
+        ├── NinesContentSanitizer.java      (NEW)
+        └── NinesPrompts.java               (改)  事前防御硬规则
+```
+
+要求：路径完整到包名（不缩略）；同一文件多处改动用 ①②③ 编号；行号 / 函数名能给就给。
+
+## 架构图 / 流程图
+
+默认 ASCII，**可选**——内容简单时省略，命名/结构 writer 自决。
+
+mini cheat sheet：
+
+- **组件**：方框 `┌─┐ │ │ └─┘` 或 `+---+`
+- **依赖**：`→` 或 `↓`
+- **时序流程**：节点 + `↓` 串联
+- **粒度**：组件 ≤ 7 个、流程节点 ≤ 10 个，超了拆图或退抽象层
 
 ## 常见反模式
 
-- ❌ **章节空话**：「需要保证安全性、性能、可维护性」——等于没写。具体到「请求体 >1MB 拒绝」「P99 < 200ms」
-- ❌ **"将来式"占位**（YAGNI）：「未来如果有 X 需求，可扩展为 Y」——删
-- ❌ **抄需求**：把用户原话粘到背景节——背景要回答**为什么值得做**
-- ❌ **避谈失败**：只写 happy path 反面。要列真实故障：网络断、磁盘满、并发写、依赖挂
-- ❌ **论证链断点**：第 N 节用的概念在第 N+M 节才定义，或选了方案 A 但下文展开 B
-- ❌ **段落墙**：单段 ≥8 句、无列表无 break，关键决策被埋在中间——拆段或加列表
-- ❌ **跨章重复**：同一个论点在 3+ 节复述——合并或第一次完整、后面引用
-- ❌ **视觉媒介错配**：明显是对比表 / 时间线 / 决策树的内容，硬写成连续长段
-- ❌ **跳过 reviewer**：不 spawn reviewer 直接交付——本工作流核心是 write → review → 用户确认
-- ❌ **代用户拍板**：拿到 Report 就自己挑「这些重要那些不重要」开始改——用户确认环节是 hard gate，**问，不要猜**
-- ❌ **吞掉 Review Log**：只 in-place 改主体，不 append 到末尾——审计轨迹断了，下次 review 不知道这版哪些是修过的
-- ❌ **混淆 doc-type**：PRD 写 SQL schema / ADR 写百页 implementation / Design Doc 写不到 1 页——选错 type 的信号
+- ❌ **入口段堆未定义术语**：读者必须读完全文才懂 TL;DR / Summary
+- ❌ **元结构标签作 H2**：上半 / 下半 / Human Review / Agent Implementation
+- ❌ **章节戛然而止**：下一节换话题不交代来源——论证链断
+- ❌ **pain point 平铺不分主次**：5 条 bullet 让读者自己排重要性
+- ❌ **架构问题数 ≠ 实现逻辑数 且无说明对应关系**：reviewer 拼不起 decision-implementation 映射
+- ❌ **项目内自创词不解释**：dogfood / humanizer / 双轴 / two-half 通篇出现
+- ❌ **plan 内容塞 design doc**：class 内部循环 / TDD 步骤 / 具体 catch 块写法
+- ❌ **影响文件不给行号 / 函数名 / 改动编号**：reviewer 不知道哪一处具体改
+- ❌ **章节空话**：「需要保证安全性、性能」「值得一提」「未来可扩展」
+- ❌ **跳过 reviewer**：不 spawn reviewer 直接交付
+- ❌ **代用户拍板**：拿到 Report 自己挑修——用户确认是 hard gate
+- ❌ **吞 Review Log**：只 in-place 改主体不 append——审计轨迹断
+- ❌ **混淆 doc-type**：PRD 写 SQL schema / ADR 写百页 implementation / Design Doc 写不到 1 页
 
-## 看 examples 而不是自由发挥
+## 看 examples 不要自由发挥
 
-每个 doc-type 在 `references/examples/example-<type>.md` 有完整真实示例（dogfood 本插件历史决策）。**先看 example 学习结构**，再按 doc-type reference 填内容。这比自由发挥可靠得多。
+每个 doc-type 在 `references/examples/example-<type>.md` 有完整真实示例（dogfood 本插件历史决策）。**先看 example 学结构，再按 doc-type reference 填内容**——比自由发挥可靠得多。

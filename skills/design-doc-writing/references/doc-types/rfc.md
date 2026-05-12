@@ -1,6 +1,6 @@
 # RFC（Request for Comments）
 
-提案性文档——回答 **"is this the right direction?"**，跨团队收集反馈用。
+提案性文档——回答 **"is this the right direction?"**，跨团队收 feedback 用。
 
 ## 何时用 RFC
 
@@ -9,49 +9,92 @@
 - 期望多方反馈（多种意见、对立观点）
 - **不是** 单一团队内决策（用 Design Doc 或 ADR）
 
-## 主线节（上半 / 下半两半结构）
+## 骨架
 
-### 上半（Human Review）
+```
+## 背景         (跨团队的真实痛点 + evidence)
+## 目标         (RFC 要争取认同的事 / 目标)
+## 提案
+### 提案核心    (一段话讲清"提议做什么 + 期望什么变化")
+### 问题拆解
+#### 问题一 <名字>
+说明 / 方案对比 / 结论
+#### 问题二 ...
+### 提案总结    (整体方案一段话)
+## 影响评估
+### 受影响方     (列谁会被影响、怎么被影响)
+### 缺点 / 风险  (必含——promo 文不是 RFC)
+### 迁移 / 兼容  (如有)
+## 开放问题     (留给 reviewer 回答的问题；评审中讨论)
+```
 
-#### Summary
-- 1 段，让 reader 30 秒理解
-- 包含核心 motivation + proposal 的一句话
+**关键约束**：
 
-#### Motivation【最重要节，必含 evidence】
-- 为什么这个变更**现在**必须做？
-- 力的对抗：x 约束 vs y 约束，不决定的代价
-- 数据 / 调研 / 真实需求支撑（不是"感觉应该"）
+- 「背景」必含 evidence（数据 / 调研 / 真实需求）——不是"感觉应该"
+- 「问题拆解」每问题三件套（说明 / 方案对比 / 结论），与 Design Doc 一致
+- 「影响评估.缺点 / 风险」**必填**——不写就是 promo 文
+- 「开放问题」是 RFC 特有节，列**还没确定、希望 reviewer 回答**的问题
+- 不展开实施细节（接口签名 / 具体代码改动）——那是 Design Doc 的事
 
-#### Guide-level Explanation
-- 教读者"如同已实现"
-- 给具体 example / 用户视角
-- 命名 / 术语 / adoption path
+## 各节写作要点
 
-#### Drawbacks【必填，最容易被回避】
-- 这个变更的负面 / 风险 / 代价
-- 不写 drawback 的 RFC 是促销文，不是 RFC
+### 背景
 
-#### Rationale & Alternatives【≥2 个备选 + 否决理由】
-- 为什么选这个方案 vs 其他？
-- 至少 2 个 alternative + 具体否决理由
-- 对比矩阵（trade-offs）
+跨团队的真实痛点 + 量化 evidence。
 
-### 下半（Agent Implementation）
+**力的对抗**写法：x 约束 vs y 约束 + 不做的代价——这种格式特别适合 RFC，让 reviewer 看到张力。
 
-#### Reference-level Explanation
-- 详细技术设计
-- 接口签名 / data shape
-- 与现有系统的 integration points
-- Diagrams（架构图 / 数据流图）
+不允许"业界都这么做"式 vague attribution——给具体来源 / 数据 / 案例。
 
-#### Implementation Plan
-- 分 phase 实施
-- 每 phase 的 deliverable + acceptance
-- Migration / rollback strategy
+### 目标
 
-#### Unresolved Questions
-- 还没确定的问题
-- 需要 RFC 评审中讨论的点
+本 RFC 要争取的认同 / 决策。不是技术目标——是"团队接受这个方向"的目标。
+
+### 提案
+
+#### 提案核心
+
+一段话讲清提议做什么 + 期望什么变化。读者读完这一段应能 grasp 整体提案。
+
+#### 问题拆解
+
+与 Design Doc 同——每问题独立讨论，方案对比 + 否决理由。
+
+跨团队 RFC 通常 4-6 个问题（团队各自关心点不同）；单团队内问题集中。
+
+#### 提案总结
+
+整体方案一段话，承接「影响评估」。
+
+### 影响评估
+
+#### 受影响方
+
+列谁会被影响（用户 / 团队 / 服务）、被影响什么（接口变 / 流程变 / SLA 变 / 数据迁移）。
+
+#### 缺点 / 风险
+
+必填。RFC 没缺点节就是 promo 文。
+
+- 实施成本（人月 / 时间）
+- 引入的新复杂度
+- 失败模式 / 回滚难度
+- 与现有系统的摩擦
+
+#### 迁移 / 兼容（如有）
+
+涉及 schema / API breaking / data migration 时必写迁移路径。
+
+### 开放问题
+
+RFC 特有——列**评审中希望讨论的问题**：
+
+```
+- 问题 1：<具体问题，期望 reviewer 给意见>
+- 问题 2：...
+```
+
+不是"未来可能扩展" / "后续可考虑"占位话——这些直接删。
 
 ## 状态机
 
@@ -74,14 +117,15 @@ status: open   # open | accepted | rejected | withdrawn | implemented | supersed
 ---
 ```
 
-## 写作纪律
-
-- ✅ Motivation 必含 evidence（数据 / 调研 / 真实需求）
-- ✅ Alternatives ≥2 个真备选（不是稻草人方案，要有真否决理由）
-- ✅ Drawbacks 必填（promo 文不是 RFC）
-- ❌ 不要写得像 promo（"this is the future" / "revolutionary"）
-- ❌ 不要 RFC + ADR 混淆：RFC 是讨论中的提案，ADR 是已做的决策
-
 ## 长度参考
 
 3-10 页常见；评审周期通常 1-2 周；accept 后可衍生多个 Design Doc + ADR。
+
+## 写作纪律
+
+- 「背景」必含 evidence
+- 「问题拆解」每问题 说明 / 方案对比 / 结论 三件套
+- 「影响评估.缺点 / 风险」必填
+- 「开放问题」列具体问题，不堆"未来可扩展"占位话
+- 不写实施细节（具体接口 / 代码）
+- 不写"this is the future" / "revolutionary" 等 promo 用语
