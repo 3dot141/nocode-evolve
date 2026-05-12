@@ -229,20 +229,28 @@ body::before {
 - ❌ 全屏 video 背景
 - ❌ 动态流光 / 自动旋转 gradient
 - ❌ 大面积 gradient（占整屏）
-- ❌ 多个 recipe 叠加（≥ 3 个 = 视觉灾难）
+- ❌ **dark bg 上叠 ≥ 2 个 recipe = 视觉灾难**（dark + noise + dot grid 实测看着像"扫码失败的工业仪表盘"——dark 本身已是强 framework，多任何一层都会过载）
+- ❌ light bg 上叠 ≥ 3 个 recipe（light 容忍度高一点，但也不要堆）
 - ❌ 高 opacity 噪点（> 5% 让文字发糊）
+- ❌ 背景抢走前景章节号 / corner ticks / ruler 等"工程结构"细节的注意力（这些前景元素**已经承担了 flavor 表达**，背景该让位）
 
 ## 组合建议（按 flavor）
 
-| flavor | 推荐组合 |
-|---|---|
-| brutally minimal | 1（极轻噪点 1%）|
-| editorial / editorial luxury | 1 + 6（noise + section ruler）+ 8（drop cap）|
-| industrial / linear-precision | 2 或 3（dot grid 或 grid lines） + 1 极轻 |
-| vintage computing / terminal-mono | 5 + 7（ASCII frame + CRT scanline）|
-| brutalist | 6（section ruler）+ 1（noise）|
-| tufte-essay | 9（margin ticks）+ 8（drop cap）|
-| posthog-playful | 4（gradient mesh，hero 局部）|
+**铁律：择一为主，绝不叠加。**前景细节（章节号 / corner ticks / drop cap / ruler）已经承担 flavor 表达，背景纯 solid + 0-1 个细节足够。
+
+| flavor | 推荐（择一）| 可叠加 hero 局部 |
+|---|---|---|
+| brutally minimal | solid only | — |
+| editorial / editorial luxury | 6（section ruler）**或** 8（drop cap） | — |
+| industrial / linear-precision | **solid + 顶部极淡 cyan glow**（< 4% opacity 椭圆）| 章节号 §NN cyan 已是 flavor 主载体 |
+| vintage computing / terminal-mono | 7（CRT scanline）**或** 5（ASCII frame）| — |
+| brutalist | 6（section ruler）| — |
+| tufte-essay | 9（margin ticks）**或** 8（drop cap）| — |
+| posthog-playful | 4（gradient mesh，**仅 hero 局部**，绝不全屏）| — |
+
+> ⚠️ 之前给 industrial 写"2 或 3 + 1 极轻"是错的——dark 画布上 dot grid 24px + noise 实测看着像故障仪表盘。**已修正为 "solid + 顶部极淡 glow"**。
+>
+> 决策法则：dark bg → 背景几乎完全留空；light bg → 最多 1 个 recipe + 1 个 hero 局部细节。
 
 ## Performance 检查
 
