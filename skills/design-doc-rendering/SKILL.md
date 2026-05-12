@@ -60,22 +60,41 @@ description: 把 design-doc-writing skill 生成的 markdown 设计文档渲染�
 
 ## Vibe 设计流程（写 CSS 前先想这些）
 
-**Vibe rendering 的灵魂——不是套通用模板，是为这份文档做"性格判断"。**
+**Vibe rendering 的灵魂——不是凭空臆想，是为这份文档"选基底 + 加个性"。**
 
-拿到 markdown 后，**先回答以下 3 个问题，再动手写 CSS / JS**：
+拿到 markdown 后，**先按下面 3 步选基底再写 CSS / JS**：
 
-### 1. 这份文档的 personality 是什么？
+### 1. 选 preset（核心一步——决定整份文档的视觉骨架）
 
-依 frontmatter 的 type + 内容情感决定主色调与气质：
+`references/presets/` 下有 8 个**真实站点抽出来的设计系统** preset。**不要凭空发挥**，先按下表 + 内容性格选一个 preset 作为视觉基底，**Read 那个文件**，拿到完整的 design token（color hex / typography hierarchy / component spec / 5 个必有交互的具体处理）。
 
-| type / 内容性质 | 性格 | 推荐主色 |
+| Doc 性格 / 类型 | 推荐 preset | 一句话气质 |
 |---|---|---|
-| `*-decision` / ADR | 严肃、克制、需要权威感 | navy / 深绿 + 中性灰 + 一个强调色（橙/青）|
-| `*-feature` | 活力、视觉感、需要"想看下去"的吸引 | 亮色（蓝/紫/teal）+ 强调色 |
-| `*-refactor` | 工程感、有阶段感 | 深色系（slate / charcoal）+ 阶段 status color（绿=完成/橙=进行中/红=阻塞）|
-| `*-bugfix` | 警示但专业，不慌张 | 深红/橙作 accent + 灰背景，避免大面积红 |
+| ADR / 严肃 decision / RFC（强调权威感） | `vercel-geist` | pure black + Geist 字体 + 极简极客 |
+| 大型 PRD / 重要对外提案 | `stripe-purple` | 紫渐变 + 优雅 light + 商业感 |
+| Feature design doc（产品工程） | `linear-precision` | 暗紫 dark + 精密克制 |
+| **通用 design-doc（不知道选啥就这个）** | `mintlify-reading` | 绿色 accent + 双栏 reading-optimized |
+| Refactor / exploration / playful 主题 | `posthog-playful` | dev-friendly 暗色 + 有人情味的色彩 |
+| CLI 工具 / 终端 / 块状交互文档 | `warp-blocks` | IDE 块状 + 命令面板感 |
+| 极客向 CLI / 命令行项目 ADR | `terminal-mono` | void-black + 全 mono + emerald/phosphor 强调 |
+| 长篇 thinking piece / 技术随笔 | `tufte-essay` | 衬线 + sidenotes + 学术留白（light-only） |
 
-### 2. 内容里有什么独特结构需要为它定制？
+选不准时默认 `mintlify-reading`——它最通用、阅读门槛最低。
+
+> ⚠️ 不要"自己想一套配色 + 自己挑字体"——所有"凭空发挥"的产物都会回到平庸的浅蓝/灰白。Preset 是天花板抬升器。
+
+### 2. 这份文档的 personality 是什么？（在 preset 上调 accent / 强调色）
+
+preset 给骨架，**accent 用来在骨架上"染色"**，依 frontmatter 的 type + 内容情感微调：
+
+| type / 内容性质 | accent 倾向 | 在 preset 上怎么用 |
+|---|---|---|
+| `*-decision` / ADR | 克制中性 | 用 preset 默认 accent，不要换 |
+| `*-feature` | 活力 | accent 用 preset 调色板里**最亮**的那个 |
+| `*-refactor` | 阶段感 | 用 preset 的 status color（绿=完成/橙=进行中/红=阻塞）|
+| `*-bugfix` | 警示但专业 | accent 用 preset 调色板里的 warning/danger 色 |
+
+### 3. 内容里有什么独特结构需要为它定制？
 
 扫文档章节，看到这些**主动加视觉处理**：
 
@@ -89,7 +108,7 @@ description: 把 design-doc-writing skill 生成的 markdown 设计文档渲染�
 | 大量代码引用 | 双栏布局（左 TOC + 右代码主导）|
 | Alternatives Considered | 默认折叠隐藏，点击展开 |
 
-### 3. 这份文档的「展示亮点」是什么？
+### 4. 这份文档的「展示亮点」是什么？
 
 **每份文档应该有 1-2 个特别为它定制的视觉处理**——不是套通用模板。
 
@@ -99,44 +118,54 @@ description: 把 design-doc-writing skill 生成的 markdown 设计文档渲染�
 - 「wiki-update 命令」文档 → 整合判断决策树 SVG + 折叠的整合 examples 表格
 - 「ADR：选 PG 不选 SQLite」 → Consequences 节用 ✅⚠️❌ 三色 grid
 
-**Vibe 不等于乱来。**前面"5 个必有交互"和"视觉风格 ✅/❌"是骨架，Vibe 是在骨架上发挥个性。
+**Vibe 不等于乱来。**preset（视觉骨架）和"5 个必有交互"是地基，亮点是在地基上发挥个性。
 
 ## 视觉风格准则
 
-风格要像 **2024 年后的现代技术文档**，不是 2010 年的 GitHub README。
+**核心准则：preset 是天花板。** 选了 preset 就老老实实抄它的 color / typography / component / shadow，不要"觉得自己审美更好"就乱改——所有"凭空发挥"的产物会回到平庸的浅蓝/灰白。
+
+每个 preset 已经给了：
+- 字体 CDN + fallback stack（Inter / Geist / IBM Plex / JetBrains Mono / ET Book 等都已在 preset 内定好）
+- 完整 color token（不是"navy/teal"抽象词，是具体 hex）
+- Typography hierarchy（H1/H2/H3/body/code 的 size/weight/line-height/letter-spacing）
+- 组件规格（buttons / cards / inputs / code blocks / tables）
+- 阴影与边框系统
+- "5 个必有交互"在该 preset 下的具体落实方案
+
+**全局兜底（与 preset 无关，永远成立）：**
 
 ✅ 做：
 
-- 现代 sans-serif：CDN 用 Inter / IBM Plex Sans / Noto Sans SC；fallback `system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif`
-- 合理留白（正文 `max-width: 760px`、`line-height: 1.7`+）
-- 配色专业（主色 navy / forest green / 深紫 / teal + 强调色；不只是纯黑白）
-- 代码块圆角（`border-radius: 8px`）+ 内边距 + 等宽字（CDN 用 JetBrains Mono / Fira Code；fallback `"SF Mono", Menlo, Consolas, monospace`）
-- 表格有 hover 高亮 + 斑马纹
-- 引用块用左边色条 + 浅色背景，不是默认灰边
-- 链接有 hover 动效（underline 渐入、颜色变化）
+- 合理留白（正文 `max-width: 760-880px`、行高在 preset 给的范围内）
+- 表格 hover 高亮 + 斑马纹（preset 没说就用 `rgba(0,0,0,0.02)` 兜底）
+- 链接 hover 动效（underline 渐入 / 颜色微变）
 
 ❌ 不做：
 
-- 默认 `<h1>`/`<p>`/`<pre>` 无样式
-- 重型 UI 框架全套引入（Bootstrap / Material / 整套 React）——但 Tailwind CDN utility 可用
+- 用默认 `<h1>`/`<p>`/`<pre>` 无样式
+- 重型 UI 框架全套引入（Bootstrap / Material / 整套 React）——但 Tailwind CDN utility 可用作补丁
 - jQuery / React / Vue 等运行时框架——vanilla JS 已够用
+- **绕过 preset 自己选字体 / 调色板**（除非用户明确说"换个主色"）
 - 一坨墙 of text、无视觉节奏
 
 ## 工作流
 
 1. **Read** 输入的 markdown 文件全文
 2. **理解结构**：扫 frontmatter（type / topic / date / author / status）+ 章节布局
-3. **设计**：根据文档内容决定：
-   - 主色调（设计文档严肃感建议 navy / 深绿 / 深紫 + 一个强调色）
-   - 哪些章节适合用 SVG 图（架构 / 数据流 / 决策树）
+3. **选 preset**（核心一步）：按 Vibe step 1 决策表选一个 preset
+4. **Read 选中的 preset**：`references/presets/<name>.md` 全文，拿到完整 design token（不要只读标题）
+5. **在 preset 上做局部决策**：
+   - accent 倾向（依文档 type，见 Vibe step 2）
+   - 哪些章节适合 SVG 图（架构 / 数据流 / 决策树）
    - 是否有 alternatives / 备选方案节适合折叠隐藏
-4. **生成** single-file HTML：
-   - `<head>` 内联 `<style>`：CSS reset + 主样式 + 响应式 media query + 暗黑模式 `[data-theme="dark"]` 选择器
-   - `<body>` 渲染内容：左 TOC + 右主内容；frontmatter 转顶部 metadata 卡片
+   - 1-2 个为这份文档定制的视觉亮点（Vibe step 4）
+6. **生成** single-file HTML：
+   - `<head>` 内联 `<style>`：preset 的字体 CDN `<link>` + CSS reset + preset token + 响应式 media query + 暗黑模式 `[data-theme="dark"]`（除非 preset 明示 light-only）
+   - `<body>` 渲染内容：preset 指定的 layout（多数左 TOC + 右主内容）；frontmatter 转顶部 metadata 卡片
    - `<script>` 内联 vanilla JS：TOC 滚动高亮（IntersectionObserver）+ 折叠（click 监听）+ 暗黑切换（toggle + localStorage）+ 回到顶部
-   - SVG 直接嵌入（不引外链）
-5. **写入** 与 markdown 同目录、同名、`.html` 后缀
-6. **报告**：「渲染完成：`<path>`。双击浏览器打开查看。」
+   - SVG 直接嵌入（不引外链）；fill / stroke 用 preset 调色板
+7. **写入** 与 markdown 同目录、同名、`.html` 后缀
+8. **报告**：「渲染完成：`<path>`，preset：`<name>`。双击浏览器打开查看。」
 
 ## 反模式
 
@@ -148,6 +177,8 @@ description: 把 design-doc-writing skill 生成的 markdown 设计文档渲染�
 - ❌ **暗黑模式只反色**——要专门设计暗黑配色（深底 + 高对比文字 + 调饱和度的强调色），不是简单 `filter: invert`
 - ❌ **TOC 不跟随滚动**——TOC 必须有"当前章节高亮"，否则失去导航价值
 - ❌ **跳过 vibe 流程直接套通用模板**——拿到文档不思考 personality 就开始写 CSS——所有文档长一样就失去 HTML 的核心价值
+- ❌ **不读 preset 凭印象写**——选了 `vercel-geist` 不去 Read preset 文件、靠"我大概记得 Vercel 是黑白"就开始写——preset 的精华在 hex / hierarchy 表里，不读等于没选
+- ❌ **挑选 preset 时凭"我喜欢"而非 doc personality**——`tufte-essay` 适合长篇 thinking 不适合 CLI 工具 ADR；选错 preset 比平庸更糟
 
 ## 边界情况
 
