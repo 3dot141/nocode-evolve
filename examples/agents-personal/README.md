@@ -22,7 +22,7 @@ cp -r <plugin-root>/examples/agents-personal .agents-personal
 ├── AGENTS.md           # 路由表 + 项目级覆盖（每次会话注入）
 ├── rules/              # 按场景细分的指令文件（按需读取）
 │   └── pr-create.md    # 示例：提 PR 流程
-└── wiki/               # （可选）项目历史记忆，由 /wiki-update 维护
+└── wiki/               # （可选）项目历史记忆，由 /project-wiki-distill 维护
 ```
 
 ## 设计约定

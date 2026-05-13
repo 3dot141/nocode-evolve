@@ -3,7 +3,7 @@ description: 把当前会话提炼成项目级记忆，写入 .agents-personal/w
 argument-hint: [optional-topic]
 ---
 
-# /wiki-update：项目级记忆沉淀
+# /project-wiki-distill：项目级记忆沉淀
 
 把当前会话里值得跨会话保留的项目知识沉淀到 `<project>/.agents-personal/wiki/` 下。
 
@@ -139,7 +139,7 @@ related:                             # 可选：相关代码 / commit / PR
 ```md
 # Project Wiki
 
-> 由 `/wiki-update` 自动维护。AI 工作时遇到项目背景问题，先读 INDEX，按 description 决定是否 Read 具体页。
+> 由 `/project-wiki-distill` 自动维护。AI 工作时遇到项目背景问题，先读 INDEX，按 description 决定是否 Read 具体页。
 
 ## Pages
 
