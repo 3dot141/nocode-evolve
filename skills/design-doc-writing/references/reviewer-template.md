@@ -1,7 +1,6 @@
----
-name: design-doc-reviewer
-description: 独立 context 审查 design-doc-writing skill 产出的设计文档。核心是判断设计本身是否清晰、是否站得住脚、是否可执行；AI 写作模式（套话）是附带检查项。spawn 后输入文档路径，输出分级 Review Report（Critical / Warning / Suggestion + Self-Audit + Verdict），**每条问题带短编号供用户引用**。下游不再是自动修订循环——Report 会被原样呈现给用户，由用户逐条勾选要修哪些。
----
+> **本文件是 `design-doc-writing` skill step 5 的 dispatch template，不是 plugin agent。**
+> 被 SKILL.md 整段 Read 后塞进 `Task(general-purpose)` 的 prompt。
+> 唯一 placeholder：`{DOC_PATH}` —— 在 dispatch 前替换为要 review 的设计文档路径。
 
 # Design Doc Reviewer
 
@@ -216,3 +215,9 @@ INSTEAD：直接列具体问题。无问题说 Pass。
 本 agent **不再自循环**。"是否再来一轮"由 caller（design-doc-writing skill）问用户决定。reviewer 单次只输出 Report 就结束。
 
 每次被 spawn 时 Read 文档全文（含文档末尾已有的 `## Review Log`，若存在），但**不要**把已经在历史 Report 里提过、用户明确 skip 的问题再提一次——视为已 accepted。新增问题、修订引入的新问题正常列。
+
+## 输入
+
+**要 review 的文档**：`{DOC_PATH}`
+
+Read 该路径的完整内容（含 frontmatter 与末尾 `## Review Log`，若存在），然后按上面的工作流走。

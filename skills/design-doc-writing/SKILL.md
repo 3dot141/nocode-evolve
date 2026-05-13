@@ -62,7 +62,11 @@ docs/plans/{username}/yymmdd-<topic>-design.md
 2. Read references/doc-types/<type>.md（学骨架 + 写作要点）
 3. Read references/examples/example-<type>.md（看真实示例）
 4. 写初稿
-5. spawn design-doc-reviewer subagent（输入：doc_path）
+5. Dispatch reviewer subagent（接通方式：`general-purpose` + template）：
+   a. Read `skills/design-doc-writing/references/reviewer-template.md`
+   b. 把模板内容里的 `{DOC_PATH}` 替换为当前文档路径
+   c. 调用 Task tool（subagent_type=`general-purpose`，description=`"Review design doc"`，prompt=上一步替换后的全文）
+   d. subagent 返回 Review Report 后进入 step 6
 6. 用户确认环节（核心 gate，见下方）：
    - 默认：把 Report 完整呈现给用户，每条问题前编号，**逐条让用户勾选** fix / skip
    - 用户可一键说「全修 Critical+Warning」「全跳过」「我来给指示」走捷径

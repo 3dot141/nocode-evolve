@@ -29,7 +29,7 @@ docs/plans/{username}/yymmdd-<topic>-design.md
    - Read examples + doc-types reference 学习结构
    - 输出 `docs/plans/{username}/yymmdd-<topic>-design.md`
 
-2. **`design-doc-reviewer` subagent**（在 design-doc-writing 工作流内 spawn）
+2. **`design-doc-reviewer` subagent**（在 design-doc-writing 工作流内通过 `Task(general-purpose)` + `references/reviewer-template.md` dispatch）
    - 独立 context 审查质量
    - 7 维度核心审查（含「骨架可读性」专门检查新骨架）+ AI patterns 附带检查 + Self-Audit 两遍法
    - 输出分级 Review Report（Critical / Warning / Suggestion），每条带短编号（C1/W1/S1...）
