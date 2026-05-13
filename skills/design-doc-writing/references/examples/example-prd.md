@@ -25,7 +25,7 @@ status: approved
 ## 目标
 
 - **跨会话延续**：新会话开始 AI 主动 search 项目记忆，≥ 80% 会话不再重新解释项目背景
-- **跨项目规则一致**：通过 plugin 统一加载 agent-guidelines，所有项目共享行为基线
+- **跨项目规则一致**：通过 plugin 统一加载 agent-karpathy，所有项目共享行为基线
 - **项目本地覆盖**：项目特定约定（如 `{username}`）可以覆盖默认值
 - **结构化设计文档**：4 类 doc-type（PRD / RFC / Design Doc / ADR）骨架统一
 - **配置时间**：新项目 setup 从 30-60 min 降到 < 5 min

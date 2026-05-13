@@ -1,14 +1,14 @@
 # nocode-evolve
 
 Harrison 的 Claude Code 个人插件：通过 SessionStart hook 注入两层规则——
-插件自带的 `rules/agent-guidelines.md` 作为跨项目默认行为准则，再叠加项目根的 `.agents-personal/AGENTS.md` 做工程级定制。
+插件自带的 `rules/agent-karpathy.md` 作为跨项目默认行为准则，再叠加项目根的 `.agents-personal/AGENTS.md` 做工程级定制。
 另外预留 skills / agents / MCP 扩展位。
 
 ## 规则注入顺序
 
 每次会话启动时，hook 依次拼接：
 
-1. `${CLAUDE_PLUGIN_ROOT}/rules/agent-guidelines.md` —— 跨项目共享的 agent 行为准则
+1. `${CLAUDE_PLUGIN_ROOT}/rules/agent-karpathy.md` —— 跨项目共享的 agent 行为准则
 2. `<project_root>/.agents-personal/AGENTS.md` —— 当前项目的自定义规则（存在时才注入，可覆盖/补充上一层）
 
 两段之间用 `---` 分隔，并在每段前用 HTML 注释标注来源，便于排查。
@@ -16,6 +16,7 @@ Harrison 的 Claude Code 个人插件：通过 SessionStart hook 注入两层规
 
 > 项目根由 `$CLAUDE_PROJECT_DIR` 决定（不存在则回退到 `$PWD`）。
 > 想给某个工程定制规则，只需在该工程根目录建 `.agents-personal/AGENTS.md` 即可，无需改插件。
+> **模板见 `examples/agents-personal/`** —— 复制到项目根、改占位符即可使用，含四章骨架（角色 / 行为准则 / 占位符 / 项目指令）与 `rules/<topic>.md` 拆分示例。
 
 ## 当前结构
 
@@ -27,8 +28,10 @@ nocode-evolve/
 ├── hooks/
 │   ├── hooks.json           # SessionStart 注册
 │   └── inject-rules.sh      # 注入脚本（jq 优先，python3 兜底）
-└── rules/
-    └── agent-guidelines.md  # 跨项目 agent 行为准则正文
+├── rules/
+│   └── agent-karpathy.md    # 跨项目 agent 行为准则正文
+└── examples/
+    └── agents-personal/     # 项目本地 .agents-personal/ 模板（复制改占位符即可用）
 ```
 
 ## 安装方式
@@ -103,6 +106,6 @@ agents/
 
 ## 重要限制（设计依据）
 
-- **不能直接挂载 `CLAUDE.md`**：plugin 根的 `CLAUDE.md` 不会被加载。本插件的 SessionStart hook 是官方推荐的等效方案，会把 `rules/agent-guidelines.md` 内容（以及可选的项目级 `.agents-personal/AGENTS.md`）作为 `additionalContext` 注入。
+- **不能直接挂载 `CLAUDE.md`**：plugin 根的 `CLAUDE.md` 不会被加载。本插件的 SessionStart hook 是官方推荐的等效方案，会把 `rules/agent-karpathy.md` 内容（以及可选的项目级 `.agents-personal/AGENTS.md`）作为 `additionalContext` 注入。
 - `version` 不写时会用 git commit SHA 作版本号——每次提交都视为新版本。
 - 安装范围：`--scope user`（默认，跨项目）/ `--scope project`（团队共享，进 git）/ `--scope local`（仅本项目，gitignore）。
