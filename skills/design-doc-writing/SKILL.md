@@ -189,13 +189,13 @@ Review Log 与文档主体同步演进——主体回答"为什么这样设计"�
 > ✅「`HOLD_SIZE = 64` 字符。来源：入口点最长 `NumberFormatConfig.percentage(`（30 字符）+ LLM token chunk 平均 3-5 字符 × 容差 → 64 字符滑窗才能稳定捕获跨 chunk 拼接。」  
 > ❌「`HOLD_SIZE = 64`（显然够用）。」
 
-### 8. 费曼式简化：用最简单的话讲复杂概念
+### 8. 直白讲：用最简单的话讲复杂概念
 
-如果一句话讲不清楚某个概念，说明你也没真懂——回去搞懂再写。复杂机制用类比 / 简单例子 / 一行伪代码讲明白，**先讲直觉、再补细节**，不要一上来堆术语。
+如果一句话讲不清楚某个概念，说明你也没真懂——回去搞懂再写。复杂机制用简单例子 / 一行伪代码讲明白，**先讲直觉、再补细节**，不要一上来堆术语，**也不要硬塞类比**——类比常常把简单事情说复杂。
 
 检验：能教一个**从没接触过项目的同事**吗？如果一份 design doc 拿给他读完，他能复述出问题 / 解法 / 权衡 → pass。复述不出来 → 你写得不够清楚。
 
-> ✅「sanitizer 像污水处理栅——chunk 进来先囤 64 字符的桶里；符合 DSL 入口点特征（`Query.from(` 等）的整段丢弃；普通字符 overflow 后正常下游送给 SSE。」  
+> ✅「sanitizer：流入 chunk 先囤进 64 字符滑窗；符合 DSL 入口点特征（`Query.from(` 等）的整段丢弃；普通字符 overflow 后正常下游送给 SSE。」
 > ❌「sanitizer 基于 sliding-window heuristic entry-point detection 实现 hold-and-scan 流式预处理管道。」
 
 ## 实现的边界：design-doc vs plan
