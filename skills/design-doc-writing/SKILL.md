@@ -84,11 +84,11 @@ docs/plans/{username}/yymmdd-<topic>-design.md
 
 reviewer 输出 Report 后，**不要自己挑哪些修哪些不修**。把决定权交给用户：
 
-1. 把 Report 原样展示给用户（Critical / Warning / Suggestion 三档保留）
-2. 给每条问题一个**短编号**（`C1 / C2 / W1 / S1 ...`），方便用户引用
+1. 把 Report 原样展示给用户（Critical / Warning / Suggestion / **Self-Audit** 四档全部保留——Self-Audit 常是隐藏的 Critical（"实施时第一行就被卡住"），**绝不能漏展示**）
+2. 给每条问题一个**短编号**（`C1 / C2 / W1 / S1 / SA1 ...`），方便用户引用。**Self-Audit 也必须编号**——`SA1, SA2, ...`；与 C/W 重叠时 reviewer 应已标注「与 Cx 同根」帮用户去重
 3. 用 AskUserQuestion 或文字 prompt 让用户选：
-   - 默认多选：勾选要修的编号
-   - 提供快捷选项：「全修 Critical+Warning」「全跳过」「自由指示」
+   - 默认多选：勾选要修的编号（含 SA）
+   - 提供快捷选项：「全修 Critical+Warning+Self-Audit」「全跳过」「自由指示」
 4. 用户确认前**不要动文档主体**——只能等
 
 例外：reviewer Verdict 是 ✅ Pass 时跳过这一步，直接进 step 10。
@@ -104,12 +104,13 @@ reviewer 输出 Report 后，**不要自己挑哪些修哪些不修**。把决�
 
 <!-- Reviewer Report 全文（含 Critical / Warning / Suggestion / Self-Audit / Verdict） -->
 
-**用户决定**：fix C1, C2, W1；skip C3（理由：暂不在 scope）、W2、S1
+**用户决定**：fix C1, C2, W1, SA2；skip C3（理由：暂不在 scope）、W2、S1、SA3
 
 **本轮修订**：
 - C1：架构.问题一 补主因 vs 辅因划分
 - C2：实现.逻辑二 加异常子节
 - W1：路径补全到包名
+- SA2：实现.逻辑一 补"AI 数轮次"工具能力假设
 
 ---
 
