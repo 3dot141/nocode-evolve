@@ -210,7 +210,7 @@ Pill Badge：`bg=#ebf5ff` / `text=#0068d6` / `padding=0px 10px` / `radius=9999px
 - shadow opacity 不超过 0.1
 - 主按钮不用 pill radius（9999px）
 
-## Class Cheatsheet（drop-in CSS snippet）
+## CSS Cheatsheet（drop-in CSS snippet）
 
 > 借鉴 taste-skill：paste-ready 的最小骨架。Agent 直接 copy 到 `<style>` 内，按下方 typography / 交互 snippet 扩展。
 

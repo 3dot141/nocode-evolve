@@ -106,7 +106,7 @@ body {
 | `--code-bg` | `#0f0f0f` | `#efeadf` | `<pre>` 块底——比正文背景深一阶 |
 | `--code-inline-bg` | `rgba(16,185,129,0.08)` | `rgba(5,150,105,0.1)` | emerald tint 招牌细节，两 mode 都保留 |
 
-> 完整 CSS variables `:root` / `[data-theme="light"]` 块见下方「Class Cheatsheet（drop-in CSS snippet）」节。
+> 完整 CSS variables `:root` / `[data-theme="light"]` 块见下方「CSS Cheatsheet（drop-in CSS snippet）」节。
 
 **关键 mode 差异说明**
 - **Phosphor green `#39ff14` 是 dark-only 的**——在 light paper 底上完全失效（饱和度太高、对比度太低）。Light mode 用 deeper emerald `#059669` 替代默认 accent，`#047857` 替代 hover 态——降饱和到能用，但承认这是妥协
@@ -193,7 +193,7 @@ body {
 - 不要在 inline code 上加圆角 8px——保持 2px
 - 不要把 phosphor green `#39ff14` 大面积铺——它只在 hover/active 时短暂显形
 
-## Class Cheatsheet（drop-in CSS snippet）
+## CSS Cheatsheet（drop-in CSS snippet）
 
 > 借鉴 taste-skill：paste-ready 的最小骨架。terminal-mono 招牌：通篇 JetBrains Mono + void black + emerald `#10b981`（默认）/ phosphor `#39ff14`（hover-only）+ radius 2px。
 

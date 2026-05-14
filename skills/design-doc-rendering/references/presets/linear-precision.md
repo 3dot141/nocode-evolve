@@ -179,7 +179,7 @@ light token 参考 Linear.app 实际的 light theme（settings 页面切到 ligh
 - 不要用 weight 700
 - 不要在 dark surface 上用 drop shadow 表达 elevation
 
-## Class Cheatsheet（drop-in CSS snippet）
+## CSS Cheatsheet（drop-in CSS snippet）
 
 > 借鉴 taste-skill：paste-ready 的最小骨架。Linear 招牌：dark luminance 阶梯 + semi-transparent 白边 + 靛紫 accent。
 

@@ -42,34 +42,20 @@ graph TD
 
 ## HTML（fallback：inline SVG）
 
-Mermaid CDN 不可用 / agent 想精确控制布局时：
+**仅当 Mermaid CDN 不可用 / 需精确像素级布局**时使用。骨架：
 
 ```html
 <figure class="decision-tree">
   <span class="figure-label">DECISION TREE</span>
   <svg class="decision-tree-svg" viewBox="0 0 600 360" xmlns="http://www.w3.org/2000/svg">
-    <!-- 决策菱形 -->
-    <g class="dt-decision" transform="translate(220, 20)">
-      <polygon points="80,0 160,40 80,80 0,40" />
-      <text x="80" y="46" text-anchor="middle">登录?</text>
-    </g>
-    <!-- 边 + label -->
-    <path class="dt-edge" d="M260 100 L120 180" />
-    <text class="dt-edge-label" x="180" y="140">否</text>
-    <path class="dt-edge" d="M340 100 L480 180" />
-    <text class="dt-edge-label" x="420" y="140">是</text>
-    <!-- 终节点 -->
-    <g class="dt-terminal" transform="translate(40, 200)">
-      <rect width="160" height="60" rx="6" />
-      <text x="80" y="36" text-anchor="middle">拒绝</text>
-    </g>
-    <g class="dt-terminal" transform="translate(400, 200)">
-      <rect width="160" height="60" rx="6" />
-      <text x="80" y="36" text-anchor="middle">继续</text>
-    </g>
+    <g class="dt-decision">       <polygon .../>  <text>...?</text>  </g>  <!-- 菱形决策 -->
+    <path class="dt-edge"/>       <text class="dt-edge-label">是/否</text>   <!-- 边 + label -->
+    <g class="dt-terminal">       <rect rx="6"/>  <text>...</text>     </g>  <!-- 终节点圆角矩形 -->
   </svg>
 </figure>
 ```
+
+下方 CSS Cheatsheet 同时覆盖 `dt-decision` / `dt-edge` / `dt-terminal` 三类，agent 按 viewBox 布局填坐标即可。
 
 ## CSS Cheatsheet
 

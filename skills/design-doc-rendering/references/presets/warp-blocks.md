@@ -92,7 +92,7 @@ Typography 是秘密武器：Geist（替代 Matter）以 geometric sans-serif + 
 | `--code-bg` | `#1a1a18` | `#f2f0eb` | `<pre>` 块底（light 用最深一档纸色拉对比） |
 | `--code-inline-bg` | `rgba(255,255,255,0.06)` | `rgba(26,26,24,0.06)` | 行内 code |
 
-> 完整 CSS variables `:root` / `[data-theme="light"]` 块见下方「Class Cheatsheet（drop-in CSS snippet）」节。
+> 完整 CSS variables `:root` / `[data-theme="light"]` 块见下方「CSS Cheatsheet（drop-in CSS snippet）」节。
 
 **关键 mode 差异说明**
 - 两 mode 都不使用纯黑/纯白——dark `#1a1a18` 与 light `#faf9f6` 互为对称的 warm 端点
@@ -197,7 +197,7 @@ Typography 是秘密武器：Geist（替代 Matter）以 geometric sans-serif + 
 - 不要紧凑挤压排版——保留 editorial 大间距
 - 不要混入 Geist / Inter 之外的字体
 
-## Class Cheatsheet（drop-in CSS snippet）
+## CSS Cheatsheet（drop-in CSS snippet）
 
 > 借鉴 taste-skill：paste-ready 的最小骨架。Warp 招牌：warm near-black + Geist Regular（400）全局 + 半透明 border + uppercase tracking 2.4px label。
 

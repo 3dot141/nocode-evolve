@@ -29,23 +29,23 @@ markdown 形态命中：
     </tr>
   </thead>
   <tbody>
-    <tr class="failure-row failure-row-上抛">
+    <tr class="failure-row failure-row-throw">
       <td>网络断开</td>
       <td><code>timeout 30s</code></td>
       <td>retry 3 次后给用户提示</td>
-      <td><span class="failure-tag failure-tag-上抛">上抛</span></td>
+      <td><span class="failure-tag failure-tag-throw">上抛</span></td>
     </tr>
-    <tr class="failure-row failure-row-吞">
+    <tr class="failure-row failure-row-swallow">
       <td>用户取消</td>
       <td><code>abort signal</code></td>
       <td>静默退出</td>
-      <td><span class="failure-tag failure-tag-吞">吞</span></td>
+      <td><span class="failure-tag failure-tag-swallow">吞</span></td>
     </tr>
-    <tr class="failure-row failure-row-降级">
+    <tr class="failure-row failure-row-degrade">
       <td>数据校验失败</td>
       <td>字段缺失</td>
       <td>默认值兜底</td>
-      <td><span class="failure-tag failure-tag-降级">降级</span></td>
+      <td><span class="failure-tag failure-tag-degrade">降级</span></td>
     </tr>
   </tbody>
 </table>
@@ -85,13 +85,13 @@ markdown 形态命中：
 .failure-table tbody tr:last-child td { border-bottom: 0; }
 
 /* 按严重度 left border 着色 */
-.failure-row-上抛 { box-shadow: inset 4px 0 0 var(--status-danger-text, #dc2626); }
-.failure-row-降级 { box-shadow: inset 4px 0 0 var(--status-warn-text, #d97706); }
-.failure-row-吞   { box-shadow: inset 4px 0 0 var(--text-tertiary); }
+.failure-row-throw { box-shadow: inset 4px 0 0 var(--status-danger-text, #dc2626); }
+.failure-row-degrade { box-shadow: inset 4px 0 0 var(--status-warn-text, #d97706); }
+.failure-row-swallow   { box-shadow: inset 4px 0 0 var(--text-tertiary); }
 
-.failure-row-上抛 > td:first-child { padding-left: 18px; }
-.failure-row-降级 > td:first-child { padding-left: 18px; }
-.failure-row-吞   > td:first-child { padding-left: 18px; }
+.failure-row-throw > td:first-child { padding-left: 18px; }
+.failure-row-degrade > td:first-child { padding-left: 18px; }
+.failure-row-swallow   > td:first-child { padding-left: 18px; }
 
 /* Disposition tag */
 .failure-tag {
@@ -102,15 +102,15 @@ markdown 形态命中：
   font: 600 11px/1.2 var(--font-mono);
   letter-spacing: 0.04em;
 }
-.failure-tag-上抛 {
+.failure-tag-throw {
   background: color-mix(in srgb, var(--status-danger-text, #dc2626) 14%, transparent);
   color: var(--status-danger-text, #dc2626);
 }
-.failure-tag-降级 {
+.failure-tag-degrade {
   background: color-mix(in srgb, var(--status-warn-text, #d97706) 14%, transparent);
   color: var(--status-warn-text, #d97706);
 }
-.failure-tag-吞 {
+.failure-tag-swallow {
   background: var(--bg-surface);
   color: var(--text-tertiary);
 }

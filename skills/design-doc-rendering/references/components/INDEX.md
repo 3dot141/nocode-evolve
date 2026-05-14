@@ -8,7 +8,7 @@ design-doc 渲染时**重复出现的内容块**——每个 component 是一份
 
 1. **扫 markdown** —— 识别命中哪些 component 的触发 pattern（见下方索引表）
 2. **Read 命中的 component md** —— 拿 HTML 结构 + CSS Cheatsheet
-3. **合并 cheatsheet 进 `<style>`** —— 紧跟 preset Class Cheatsheet 后面 paste
+3. **合并 cheatsheet 进 `<style>`** —— 紧跟 preset CSS Cheatsheet 后面 paste
 4. **包裹 markdown 渲染输出** —— 把命中段落用 component 的 HTML 结构包起来
 
 > ⚠️ component 假定 preset 提供了下方「**CSS Variables 契约**」列出的 var。如果选的 preset 没提供某 var，agent 要么在 `<style>` 里兜底定义，要么改选 preset。
@@ -17,8 +17,8 @@ design-doc 渲染时**重复出现的内容块**——每个 component 是一份
 
 | Markdown 触发 pattern | Component | 一句话用途 |
 |---|---|---|
-| frontmatter 顶部块 | `frontmatter-card` | type/date/status/author 元数据卡 |
-| H1 下方第一个 H2 之前 | `hero-svg` | 顶部数据流 SVG（3:1 横向） |
+| **必触发**（每份 design-doc 都有 frontmatter） | `frontmatter-card` | type/date/status/author 元数据卡 |
+| **推荐触发**（ADR 短决策 / < 500 字文档可省，其他都加） | `hero-svg` | 顶部数据流 SVG（3:1 横向） |
 | `#### 问题 N：xxx` + 说明/方案对比/结论 | `problem-block` | 问题三件套结构容器 |
 | `### 逻辑 N：xxx` + 业务流/关键契约/异常 | `logic-block` | 逻辑三子节结构容器 |
 | 标注 "**业务流**" 下的 `<pre>` 块 | `pseudocode-block` | 顶部 PSEUDOCODE label 的伪代码块 |

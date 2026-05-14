@@ -32,36 +32,22 @@ stateDiagram-v2
 
 ## HTML（inline SVG fallback）
 
+**仅当 Mermaid CDN 不可用**时使用。骨架（agent 按状态机布局填坐标）：
+
 ```html
 <figure class="state-machine">
   <span class="figure-label">STATE MACHINE</span>
   <svg class="state-machine-svg" viewBox="0 0 700 320" xmlns="http://www.w3.org/2000/svg">
-    <g class="sm-state" transform="translate(40, 130)">
-      <rect width="120" height="60" rx="30" />
-      <text x="60" y="36" text-anchor="middle">Idle</text>
-    </g>
-    <g class="sm-state" transform="translate(220, 130)">
-      <rect width="120" height="60" rx="30" />
-      <text x="60" y="36" text-anchor="middle">Connecting</text>
-    </g>
-    <g class="sm-state sm-state-active" transform="translate(400, 130)">
-      <rect width="120" height="60" rx="30" />
-      <text x="60" y="36" text-anchor="middle">Connected</text>
-    </g>
-    <g class="sm-state sm-state-error" transform="translate(540, 250)">
-      <rect width="120" height="60" rx="30" />
-      <text x="60" y="36" text-anchor="middle">Failed</text>
-    </g>
-    <!-- 转换边 + 触发 label -->
-    <path class="sm-edge" d="M160 160 L220 160" />
-    <text class="sm-edge-label" x="190" y="150">connect()</text>
-    <path class="sm-edge" d="M340 160 L400 160" />
-    <text class="sm-edge-label" x="370" y="150">on_open</text>
-    <path class="sm-edge sm-edge-error" d="M280 190 L560 250" />
-    <text class="sm-edge-label" x="430" y="225">timeout</text>
+    <g class="sm-state">                <rect rx="30"/> <text>Idle</text>      </g>  <!-- 普通态：rx=30 椭圆 -->
+    <g class="sm-state sm-state-active"> <rect rx="30"/> <text>Connected</text> </g>  <!-- 当前态：accent fill -->
+    <g class="sm-state sm-state-error">  <rect rx="30"/> <text>Failed</text>    </g>  <!-- 错误终态 -->
+    <path class="sm-edge"/>       <text class="sm-edge-label">connect()</text>        <!-- 正常转换 -->
+    <path class="sm-edge sm-edge-error"/>  <text class="sm-edge-label">timeout</text> <!-- 错误转换 dashed -->
   </svg>
 </figure>
 ```
+
+下方 CSS Cheatsheet 同时覆盖 `sm-state` / `sm-state-active` / `sm-state-error` / `sm-edge` / `sm-edge-error` 五类。
 
 ## CSS Cheatsheet
 

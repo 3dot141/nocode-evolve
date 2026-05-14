@@ -184,7 +184,7 @@ dark token 参考 Mintlify 自家 docs site 的 dark theme：bg `#0c0d10` 偏冷
 - 不要用 weight 700
 - 不要让 shadow 抢戏
 
-## Class Cheatsheet（drop-in CSS snippet）
+## CSS Cheatsheet（drop-in CSS snippet）
 
 > 借鉴 taste-skill：paste-ready 的最小骨架。Mintlify 招牌：reading-first 白底 + 5% opacity 极细边框 + brand green `#18E299` + pill 9999px 按钮。
 

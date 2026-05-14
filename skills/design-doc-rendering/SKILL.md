@@ -1,6 +1,6 @@
 ---
 name: design-doc-rendering
-description: 把 markdown 设计文档渲染成 single-file HTML 展示版。Workflow：read preset → 从 Class Cheatsheet 起步 → 套 manifesto。HTML 含 TOC / 章节折叠 / 双 mode toggle / 代码高亮 / 回到顶部 5 个必有交互；CDN 字体与高亮可用但必须有 system 字体栈 fallback。当 overlay-superpowers.md 走完 design-doc-writing 后链式调用；用户说「转 HTML / 生成展示版 / 渲染 HTML 制品」时也用。不要用来渲染 README / changelog / blog 等非设计文档。
+description: 把 markdown 设计文档渲染成 single-file HTML 展示版——含 TOC / 章节折叠 / light-dark 切换 / 代码高亮 / 回到顶部 5 必有交互，主动卡片化 problem-block / logic-block / timeline / callout / failure-table / decision-tree 等 14 类内容容器，从 8 个 real-site preset（vercel-geist / shadcn-default / linear-precision / mintlify-reading / tufte-essay 等）选视觉骨架。Make sure to use this skill whenever 用户说「转 HTML / 生成展示版 / 渲染 HTML 制品 / 把这份设计文档做成网页 / 把 markdown 设计文档变成可分享的页面」，或 design-doc-writing skill 走完后链式调用。不要用来渲染 README / changelog / blog post 等非设计文档——那些不需要 design-doc 专属的结构化容器。
 ---
 
 # 设计文档 HTML 渲染
@@ -148,7 +148,7 @@ design-doc 默认偏向前 4 种。选了之后再去选 preset。
 
 ### 选 preset（视觉骨架）
 
-`references/presets/` 下有 8 个**真实站点抽出来的设计系统** preset。**不要凭空发挥**，先按下表 + 内容性格选一个 preset 作为视觉基底，**Read 那个文件**，拿到完整的 design token（color hex / typography hierarchy / component spec / 5 必有交互的具体处理 / Class Cheatsheet）。
+`references/presets/` 下有 8 个**真实站点抽出来的设计系统** preset。**不要凭空发挥**，先按下表 + 内容性格选一个 preset 作为视觉基底，**Read 那个文件**，拿到完整的 design token（color hex / typography hierarchy / component spec / 5 必有交互的具体处理 / CSS Cheatsheet）。
 
 | Doc 性格 / 类型 | 推荐 preset | 一句话气质 |
 |---|---|---|
@@ -156,16 +156,18 @@ design-doc 默认偏向前 4 种。选了之后再去选 preset。
 | 大型 PRD / 重要对外提案 | `stripe-purple` | 紫渐变 + 优雅 light + 商业感 |
 | Feature design doc（产品工程） | `linear-precision` | 暗紫 dark + 精密克制 |
 | **System-level Refactor / Implementation-refactor / 架构重构提案** | `vercel-geist` 或 `linear-precision` | 工程严肃，前者偏 light shadow-as-border，后者偏 dark luminance 阶梯 |
-| **通用 design-doc（不知道选啥就这个）** | `mintlify-reading` | 绿色 accent + 双栏 reading-optimized |
-| **中性 SaaS-y / 跨团队对外 / 安全默认 #2** | `shadcn-default` | shadcn 中性 zinc + Plus Jakarta Sans + 业界最大公约数 |
+| **长文阅读 / 知识库 / 双栏排版需求** | `mintlify-reading` | 绿色 accent + Bricolage Grotesque + 双栏 reading + 左 TOC |
+| **中性 SaaS-y / 跨团队对外 / 管理后台风格 / 无 brand 色** | `shadcn-default` | shadcn 中性 zinc + Plus Jakarta Sans + 1px border 美学 |
 | Refactor 中的探索 / 偏 playful 主题 / 内部 wiki | `posthog-playful` | dev-friendly 暗色 + 有人情味的色彩 |
 | CLI 工具 / 终端 / 块状交互文档 | `warp-blocks` | IDE 块状 + 命令面板感 |
 | 极客向 CLI / 命令行项目 ADR | `terminal-mono` | void-black + 全 mono + emerald/phosphor 强调 |
 | 长篇 thinking piece / 技术随笔 | `tufte-essay` | 衬线 + sidenotes + 学术留白（light primary，dark 为 night-reading fallback）|
 
-选不准时有两个安全默认：
-- `mintlify-reading`——绿色 accent 双栏 reading-optimized（**注意**：mintlify 已切到 Bricolage Grotesque，不再用 Inter）
-- `shadcn-default`——shadcn 中性 zinc + Plus Jakarta Sans，**无 brand 色**，跨团队对外提案最不出错
+**两个安全默认按场景选**，**不要**两个都当"无脑兜底"：
+- `mintlify-reading`——**长文档**（≥ 8 个 H2 / ≥ 3000 字 / 含大段 user story 叙事）；提供绿色 brand accent + 双栏 reading + Bricolage Grotesque
+- `shadcn-default`——**中短文档 + 跨团队**（管理后台 / 工具类 / 对外提案）；**无 brand 色**（accent = primary），不会触怒任何审美
+
+判断不准：看文档是要让人**坐下来一口气读完**（→ mintlify）还是**作为团队工件存档 / 流转**（→ shadcn）。
 
 > ⚠️ **不要"自己想一套配色 + 自己挑字体"**——所有"凭空发挥"的产物都会回到平庸的浅蓝/灰白。preset 的"是天花板"角色见下方「视觉风格准则」节，本节不重复。
 
@@ -214,7 +216,7 @@ preset 给骨架，**accent 用来在骨架上"染色"**，依 frontmatter 的 t
 - 组件规格（buttons / cards / inputs / code blocks / tables）
 - 阴影与边框系统
 - "5 必有交互"在该 preset 下的具体落实方案
-- **Class Cheatsheet（drop-in CSS snippet）**——paste-ready 的 `<style>` 骨架（CSS variables + typography + 5 必有交互核心 snippet），agent 拿到直接 copy 扩展，不用从 token 表反向手写
+- **CSS Cheatsheet（drop-in CSS snippet）**——paste-ready 的 `<style>` 骨架（CSS variables + typography + 5 必有交互核心 snippet），agent 拿到直接 copy 扩展，不用从 token 表反向手写
 
 ### Components 内容速查（与 preset 正交的内容卡片层）
 
@@ -259,166 +261,32 @@ preset 给骨架，**accent 用来在骨架上"染色"**，依 frontmatter 的 t
 - **绕过 preset 自己选字体 / 调色板**（除非用户明确说"换个主色"）
 - 一坨墙 of text、无视觉节奏
 
-## Layout：宽屏适配 + 双重 cap 分离（强制规则）
+## Layout：宽屏适配 + 双重 cap 分离
 
-### 宽屏 (Wide-screen) 跟随 viewport
+宽屏 shell `min(96vw, 1920px)` 跟随 viewport，超宽屏 cap 1920；段落级元素 `max-width: 90ch`，宽元素（pre / table / figure / hero / mermaid / details / problem-block / logic-block）不设 max-width 撑满 main——details 见 `references/layout-rules.md`。
 
-旧规则 page container 一刀切 `max-width: 1280px`——超宽屏（1920+ / 4K）下整页贴左、右侧大片留白。新规则：**shell 随 viewport 撑开**，只在小屏 / 超宽屏设软上限。
-
-```css
-.shell {
-  display: grid;
-  grid-template-columns: 260px minmax(0, 1fr);
-  width: min(96vw, 1920px);    /* 默认占 96% viewport，超宽屏 cap 1920 */
-  margin: 0 auto;
-}
-
-/* 笔记本及窄屏：边距收紧，shell 用满 */
-@media (max-width: 1280px) {
-  .shell { width: 100%; grid-template-columns: 240px minmax(0, 1fr); }
-}
-
-/* 大屏：TOC 适度放宽 */
-@media (min-width: 1600px) {
-  .shell { grid-template-columns: 300px minmax(0, 1fr); }
-}
-
-/* mobile：TOC 折叠 */
-@media (max-width: 900px) {
-  .shell { grid-template-columns: 1fr; width: 100%; }
-}
-```
-
-| 屏宽 | shell 实际宽 | TOC | 留给 main |
-|---|---|---|---|
-| < 900 (mobile) | 100% | 折叠 | viewport - 48 |
-| 900-1280 (laptop) | 100% | 240 | viewport - 240 - padding |
-| 1280-1600 (desktop) | 96vw | 260 | ~ 96vw - 260 |
-| 1600-1920 (wide) | 96vw | 300 | ~ 96vw - 300 |
-| ≥ 1920 (4K) | 1920 | 300 | ~ 1620 |
-
-**关键差异**：不再死 cap 1680，而是 `96vw` 跟着屏走——4K 屏（3840）能用到 1920 上限，2560 屏能用 ~2460，1440 屏能用 ~1380。**屏宽得到充分利用**。
-
-### 段落 cap：90ch 不是 72ch
-
-72ch 是 typographic 黄金行宽（"single sentence per line"），但 design doc 大量技术 inline code / 嵌入路径——单 token 占字符多，**实际可读行宽可以放宽到 90ch**（学术界可读性上限 100ch）。
-
-```css
-main {
-  padding: 56px 64px 120px;
-  /* NO max-width here */
-}
-
-/* 段落级元素：90ch（约 950-1080px @ 16px Inter） */
-p, ul, ol, blockquote, dl { max-width: 90ch; }
-
-/* 宽元素：100% 撑满 main，宽屏 break-out */
-pre, table, figure, .hero, .mermaid, details, .problem-block, .logic-block {
-  max-width: 100%;
-}
-```
-
-效果对比（main 可用宽 1500px）：
-- 旧 72ch ≈ 720px：右侧空 ~780px（**视觉浪费**，用户反馈"屏幕效果不对"）
-- 新 90ch ≈ 1000px：右侧空 ~500px（仍有空白但显著减少，配合多图能填满）
-
-> **typography 取舍声明**：72ch 是单段连续阅读最舒服的；90ch 在技术文档场景"屏宽利用率 + 可读性"的甜点。如果文档是长篇散文（如 PRD 用户场景叙事），可以局部 override 回 72ch。
+⚠ **不要给 `main` 加额外 `max-width`**（如 920px）——会双重叠加段落 cap，宽元素被压死。
 
 ## Design Doc 结构化内容的视觉处理（强制规则）
 
-新 design-doc 骨架（背景 → 目标 → 架构 → 实现）有几处**结构性内容是 markdown 看不出的、但渲染时必须给予视觉锚点**。生成 HTML 时主动识别这些 pattern 并加 class / 包裹结构。
+新 design-doc 骨架（背景 → 目标 → 架构 → 实现）有几处**结构性内容是 markdown 看不出的、但渲染时必须给予视觉锚点**——读者扫读时第一眼应该看到结论、关键决策点、异常分类，而不是一坨平铺段落。
 
-### 问题三件套（说明 / 方案对比 / 结论）
+**实现层**：所有结构容器的 HTML 模板 + CSS Cheatsheet 在 `references/components/` 维护，本节**不重复**——见下方触发对应表，按 markdown pattern 命中读对应 component md。
 
-markdown 形态：
+| 触发 markdown pattern | Component | 视觉锚点本质 |
+|---|---|---|
+| `#### 问题 N：xxx` + 说明 / 方案对比 / 结论 | `problem-block` | 三件套容器；conclusion 段背景更强（读者眼先到结论） |
+| `### 逻辑 N：xxx` + 业务流 / 关键契约 / 异常 | `logic-block` | 三子节容器；业务流伪代码挂 PSEUDOCODE label |
+| `**业务流**` 下的 `<pre>` | `pseudocode-block` | 设计层伪代码 ≠ production code，视觉上一眼区分 |
+| `| 场景 | 触发 | 处理 | 上抛吞 |` 表 | `failure-table` | 按严重度 color-coded 行（上抛红 / 降级 amber / 吞 grey） |
 
-```
-#### 问题一：xxx
-**说明**：...
-**方案对比**：
-- 方案 A：...
-- 方案 B：...
-**结论**：...
-```
+> ⚠️ **不要给 H4 单独写视觉提升 CSS**——`problem-block` / `logic-block` 已经用 `.problem-title` / `.logic-title` 处理；preset 的 typography 负责通用 H4。两边别撞。
 
-渲染时**主动包成 `<section class="problem-block">`**：
+### 内联 code 减噪（全局 CSS，与 component 无关）
 
-```html
-<section class="problem-block">
-  <h4 class="problem-title">
-    <span class="problem-num">Q1</span>
-    <span class="problem-name">xxx</span>
-  </h4>
-  <div class="three-piece three-piece-说明">
-    <span class="three-piece-label">说明</span>
-    <p>...</p>
-  </div>
-  <div class="three-piece three-piece-options">
-    <span class="three-piece-label">方案对比</span>
-    <ul>...</ul>
-  </div>
-  <div class="three-piece three-piece-conclusion">
-    <span class="three-piece-label">结论</span>
-    <p>...</p>
-  </div>
-</section>
-```
-
-CSS 约定：
-
-- `.problem-block`：左边线 accent + padding + 微背景，作为整块的视觉容器
-- `.problem-title`：visual treatment 接近 H3 重要度（不让 H4 被埋）
-- `.problem-num`：单独 monospace badge（如 `Q1`），accent 色
-- `.three-piece-label`：小 uppercase mono 标签（接近 `eyebrow text` 风格），与下方内容分离
-- `.three-piece-conclusion`：背景比前两段更强（accent tint），强调结论位置——读者扫读时眼睛先到结论
-
-### 逻辑三子节（业务流 / 关键契约 / 异常与失败模式）
-
-同样处理。markdown 形态：
-
-```
-### 逻辑一：xxx
-**业务流**
-<伪代码 pre 块>
-**关键契约**
-- 方法签名 / 字段 ...
-**异常与失败模式**
-| 场景 | 触发 | 处理 | 上抛吞 |
-```
-
-渲染时包成 `<section class="logic-block">`，三子节各有 class。业务流伪代码额外加 `<pre class="pseudocode">` 标记，CSS 给左边线 accent 色 + 顶部小 label "PSEUDOCODE" 强调"这是设计层伪代码、不是 production code"。
-
-### H4 视觉提升
-
-默认 `<h4>` 太小、与 inline bold 几无差。当 H4 用作「问题 X」「逻辑 X」时必须有：
-
-- 左边线 / 背景 / 数字 badge
-- font-size 接近 H3（18-20px），weight 600
-- margin-top 较大（≥ 32px）从前面段落分开
+design-doc 大量出现路径 / 行号 / 类名 / 方法名 inline code，密集情况下段落看起来斑驳。所有 preset 已在 body code 样式里处理基本 inline code；本节只补一条 `:has()` 兜底规则——段落里 ≥ 3 个连续 code 时弱化为透明背景：
 
 ```css
-h4 {
-  font: 600 18px/1.4 var(--font-sans);
-  color: var(--text-primary);
-  margin: 32px 0 12px;
-  padding-left: 12px;
-  border-left: 3px solid var(--accent);
-}
-```
-
-### 内联 code 减噪
-
-design-doc 大量出现路径 / 行号 / 类名 / 方法名 inline code，密集情况下段落看起来斑驳。轻处理：
-
-```css
-code {
-  font: 400 0.92em/inherit var(--font-mono);
-  background: rgba(127,127,127,0.06);   /* 比旧 rgba(255,255,255,0.06) 更弱 */
-  color: var(--text-primary);
-  padding: 1px 5px;                       /* 紧凑 padding */
-  border-radius: 3px;
-}
-
 /* 段落内连续 ≥3 个 code 时（路径密集段），整段给弱化容器 */
 p:has(code + code + code) code {
   background: transparent;
@@ -429,44 +297,18 @@ p:has(code + code + code) code {
 
 ## 视觉密度：尽可能多图（强制规则）
 
-design-doc 是技术文档，但**图比文字密度高**——一张图传达的设计关系，文字写 5 段也讲不清。宽屏渲染下，**图填充段落两侧的 break-out 空间**是利用宽屏的核心手段；段落保持 72ch 不动，**视觉空间由图占据**。
+一张图传达的设计关系，文字写 5 段也讲不清。**每份 design-doc HTML 至少 3-5 个视觉元素**（hero / 架构图 / 流程图 / 方案对比 / 失败分类等）——具体怎么画见对应 component md：
 
-### 每份 design-doc HTML 至少 3-5 个视觉元素
+| 节 / 内容触发 | 视觉处理 | Component |
+|---|---|---|
+| H1 下方（首屏 anchor） | 数据流 / 整体架构 SVG | `hero-svg` |
+| 「架构.流程图」/ ASCII 流程图 | Mermaid 主视觉 + ASCII fallback | `flow-figure` |
+| if-else / 多分支 / 决策 | Mermaid `graph TD` | `decision-tree` |
+| 状态转换 / lifecycle | Mermaid `stateDiagram` | `state-machine` |
+| 「方案 A vs B」≥2 个方案 | 左右栏对比卡 + 推荐 badge | `split-compare` |
+| Phase 1/2/3 / 迁移计划 | 横/纵向时间线 | `timeline` |
 
-至少覆盖：
-
-1. **Hero 顶部视觉**（强烈推荐）——标题下方一张数据流 / 整体架构 SVG。读者首屏 grasp 全局
-2. **「架构.架构图」节**——必须有图。markdown 没明示就基于上下文画一张组件 + 关系图
-3. **「架构.流程图」节**——必须有图。markdown 给了 ASCII 流程图时，HTML 渲染要**升级为 inline SVG**（保留 ASCII `<pre>` 作 detail，外面包 `<details>`）
-4. **「问题 X.方案对比」**有 ≥2 个方案时——split 对比卡 / mini 决策树
-5. **「逻辑 X.异常与失败模式」**含 ≥3 个场景时——状态机 SVG / 故障分类树
-
-### ASCII 流程图升级为 SVG（推荐处理）
-
-markdown 给了 ASCII 流程图（如 `节点 ↓ 节点`），HTML 渲染时**两种形态并存**：
-
-```html
-<figure class="flow-figure">
-  <svg viewBox="0 0 800 320" ...>
-    <!-- 主视觉：方框 + 箭头 + 标签 -->
-  </svg>
-  <details>
-    <summary>原始 ASCII 流程图</summary>
-    <pre><code>...原始 ASCII...</code></pre>
-  </details>
-</figure>
-```
-
-SVG 优先显示，ASCII 作 fallback / 文本可搜索版本。
-
-### Hero SVG 推荐布局
-
-Hero 在 H1 下方、frontmatter 卡片之后、第一个 H2 之前。占满 main 宽度（break-out）。**包含**：
-
-- 系统主路径（如 `LLM stream → sanitizer → SSE → 前端`）
-- 关键决策点高亮（用 accent 色 + dashed border 标记 "Q1/Q2/Q3 在此处"）
-- 顶部小 label 注明 "DATA FLOW · <一句话主题>"
-- 高度 200-320px，aspect ratio ≈ 3:1 横向
+宽屏渲染下图填充段落两侧 break-out 空间——段落保持 90ch 不动，**视觉空间由图占据**。
 
 ## MOTION_INTENSITY Dial（可选调档）
 
@@ -546,7 +388,7 @@ document.querySelectorAll('h2, h3').forEach(h => observer.observe(h));
 3. **必读 manifesto**（反 AI slop 校准）：依次 Read `references/aesthetics.md` + `references/motion.md` + `references/background.md`
 4. **选 BOLD flavor**（aesthetics.md 12 种选 1，commit 到底，不要混合）
 5. **选 preset 骨架**：按 Vibe 节「选 preset」决策表选一个 preset
-6. **Read 选中的 preset**：`references/presets/<name>.md` 全文——重点 **Class Cheatsheet**（drop-in CSS）+ Map to Design Doc Components + 5 必有交互
+6. **Read 选中的 preset**：`references/presets/<name>.md` 全文——重点 **CSS Cheatsheet**（drop-in CSS）+ Map to Design Doc Components + 5 必有交互
 7. **字体 sanity check**：若 preset 默认字体 ∈ NEVER 列表 → 查 `aesthetics.md`「例外」表——在 → 保留；不在 → 按候选表替换（如 mintlify 已切到 Bricolage Grotesque）
 8. **确定 MOTION_INTENSITY 档位**（1-10，默认 5）—— 按「MOTION_INTENSITY Dial」节触发判定决定，**显式写下数字**，后续 Phase 3 引用
 9. **局部决策清单**：
@@ -562,7 +404,7 @@ document.querySelectorAll('h2, h3').forEach(h => observer.observe(h));
 
 11. **拼 `<style>` 起点**（推荐用脚本，也可手 paste）：
     - 脚本方式：`bash scripts/extract-cheatsheet.sh preset <name>` + `bash scripts/extract-cheatsheet.sh component <c1>,<c2>,...` —— stdout 输出合并 CSS
-    - 手 paste：先 preset Class Cheatsheet 块，再每个命中 component 的 CSS Cheatsheet 块
+    - 手 paste：先 preset CSS Cheatsheet 块，再每个命中 component 的 CSS Cheatsheet 块
 12. **生成 single-file HTML**：
     - `<head>` 内联 `<style>`：字体 CDN `<link>` + step 11 拼出来的 CSS 起点 + flavor 染色 + motion keyframes（按 dial 档位）+ background recipe + 响应式 media query
     - `<body>`：preset 指定 layout；frontmatter 转顶部 metadata 卡片；命中的 component 按各自 HTML 模板包裹对应 markdown 段
@@ -588,9 +430,10 @@ document.querySelectorAll('h2, h3').forEach(h => observer.observe(h));
 - ❌ **暗黑模式只反色**——要专门设计暗黑配色（深底 + 高对比文字 + 调饱和度的强调色），不是简单 `filter: invert`
 - ❌ **TOC 不跟随滚动**——TOC 必须有"当前章节高亮"，否则失去导航价值
 - ❌ **跳过 vibe 流程直接套通用模板**——拿到文档不思考 personality 就开始写 CSS——所有文档长一样就失去 HTML 的核心价值
-- ❌ **不读 preset 凭印象写**——选了 `vercel-geist` 不去 Read preset 文件、靠"我大概记得 Vercel 是黑白"就开始写——preset 的精华在 hex / hierarchy 表 + Class Cheatsheet 里，不读等于没选
-- ❌ **不用 Class Cheatsheet 反向手写 CSS**——选了 preset 不从其 Class Cheatsheet 起步、自己从 token 表反向凑 `:root` 块——直接 ROI 倒退
+- ❌ **不读 preset 凭印象写**——选了 `vercel-geist` 不去 Read preset 文件、靠"我大概记得 Vercel 是黑白"就开始写——preset 的精华在 hex / hierarchy 表 + CSS Cheatsheet 里，不读等于没选
+- ❌ **不用 preset CSS Cheatsheet 反向手写 CSS**——选了 preset 不从其 CSS Cheatsheet 起步、自己从 token 表反向凑 `:root` 块——直接 ROI 倒退
 - ❌ **不扫 components 直接手写容器**——markdown 出现「问题 N」/「逻辑 N」/「Phase 1/2/3」/ ASCII 流程图却不查 `components/INDEX.md`、自己临时画 div + 写 inline CSS——重发明轮子且不一致
+- ❌ **不用 component CSS Cheatsheet 反向手写**——命中 component 后没 Read 对应 md 拿 CSS、靠"我大概记得 callout 应该左 border + 浅色背景"自己凑 CSS——和 preset Cheatsheet 反模式同构，component CSS 也是 paste-ready 资源不是参考素材
 - ❌ **挑选 preset 时凭"我喜欢"而非 doc personality**——`tufte-essay` 适合长篇 thinking 不适合 CLI 工具 ADR；选错 preset 比平庸更糟
 
 ## Pre-Flight Check（输出前自检表）
@@ -627,7 +470,7 @@ document.querySelectorAll('h2, h3').forEach(h => observer.observe(h));
 - [ ] HTML 没补充 markdown 原文档没有的信息？
 - [ ] frontmatter 转的顶部 metadata 卡片实际呈现 type / date / status / author？
 - [ ] 章节折叠默认状态合理（>20 H2 时默认全折叠，TL;DR 和第一节除外）？
-- [ ] **`<head>` 内的 CSS 起点是从 preset 的 Class Cheatsheet 粘贴的**（不是自己反向手写 `:root` 块）？
+- [ ] **`<head>` 内的 CSS 起点是从 preset 的 CSS Cheatsheet 粘贴的**（不是自己反向手写 `:root` 块）？
 
 **MOTION_INTENSITY 档位（dial-specific）**
 - [ ] 已显式 commit dial 数值（1-10），与文档场景匹配（ADR ≤ 3，feature/演示 ≥ 5）？

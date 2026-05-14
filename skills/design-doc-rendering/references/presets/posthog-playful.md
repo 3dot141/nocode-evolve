@@ -96,7 +96,7 @@ PostHog 的视觉语言是「逃逸到互联网上的创业公司内部 wiki」�
 | `--code-bg` | `#15171e` | `#fdfdf8` | `<pre>` 块底 |
 | `--code-inline-bg` | `rgba(247,165,1,0.12)` | `#eeefe9` | 行内 code 底（dark 用 amber tint 招牌细节） |
 
-> 完整 CSS variables `:root` / `[data-theme="light"]` 块见下方「Class Cheatsheet（drop-in CSS snippet）」节——所有 paste-ready 代码集中在 cheatsheet 一处。
+> 完整 CSS variables `:root` / `[data-theme="light"]` 块见下方「CSS Cheatsheet（drop-in CSS snippet）」节——所有 paste-ready 代码集中在 cheatsheet 一处。
 
 **关键 mode 差异说明**
 - Dark mode 不用纯黑——`#1d1f27` 保留 warm 倾向，避免冷蓝暗色调
@@ -191,7 +191,7 @@ PostHog 的视觉语言是「逃逸到互联网上的创业公司内部 wiki」�
 - 不要去掉 orange hover——它是核心交互
 - 不要用纯白背景
 
-## Class Cheatsheet（drop-in CSS snippet）
+## CSS Cheatsheet（drop-in CSS snippet）
 
 > 借鉴 taste-skill：paste-ready 的最小骨架。PostHog 招牌：sage-cream paper + IBM Plex Sans 700/800 + hover 闪 orange `#F54E00`。
 

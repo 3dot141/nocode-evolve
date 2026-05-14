@@ -25,7 +25,7 @@ markdown 形态命中：
     <span class="problem-num">Q1</span>
     <span class="problem-name">问题标题</span>
   </h4>
-  <div class="three-piece three-piece-说明">
+  <div class="three-piece three-piece-explain">
     <span class="three-piece-label">说明</span>
     <p>问题背景与上下文……</p>
   </div>
@@ -96,7 +96,7 @@ markdown 形态命中：
 .three-piece > ul,
 .three-piece > ol { margin: 0; }
 
-.three-piece-说明 { background: transparent; }
+.three-piece-explain { background: transparent; }
 .three-piece-options { background: var(--bg-panel, var(--bg)); }
 .three-piece-conclusion {
   background: color-mix(in srgb, var(--accent) 8%, transparent);

@@ -234,7 +234,7 @@ Success：`bg=rgba(21,190,83,0.2)` / `text=#108c3d` / `border=1px solid rgba(21,
 - ruby/magenta 不用于按钮/链接（仅装饰）
 - 不在 display 上用正字距
 
-## Class Cheatsheet（drop-in CSS snippet）
+## CSS Cheatsheet（drop-in CSS snippet）
 
 > 借鉴 taste-skill：paste-ready 的最小骨架。Stripe 招牌：weight 300 标题 + blue-tinted shadow + Purple `#533afd`。
 

@@ -11,13 +11,15 @@ shadcn 的"中性主义"——zinc 灰阶 + 高对比文字 + 4px / 6px / 8px �
 
 ## 何时选这个 preset
 
-- **通用 design-doc / PRD / 中性提案**——不知道选哪个 preset 时的"安全默认"
-- **跨团队对外提案**——shadcn 视觉是业界最大公约数，不会触怒任何审美
-- **管理后台 / 工具类内部文档**——shadcn 本身就是为这类产品造的
+- **中短文档 + 跨团队流转**——< 8 个 H2 / < 3000 字 / 多人传阅；shadcn 视觉是业界最大公约数，不触怒任何审美
+- **管理后台 / 工具类 / 内部 SaaS 文档**——shadcn 本身就是为这类产品造的，气质天然契合
+- **PRD / 中性提案 / 评审材料**——无 brand 色 = 内容自己说话，不被视觉带节奏
+- **vs `mintlify-reading`**：mintlify 是**长文阅读首选**（双栏 reading + 绿色 brand accent + Bricolage Grotesque）；shadcn 是**短中文档跨团队首选**（单栏 + 无 brand 色 + 紧凑 spacing）——看文档要让人"坐下来读完"还是"作为工件流转"
 - **不适合**：
   - 严肃 ADR / 极客 CLI 文档（用 `vercel-geist` / `terminal-mono` 更有气质）
   - 长篇 thinking piece（用 `tufte-essay`）
   - playful 内部 wiki（用 `posthog-playful`）
+  - 长文知识库 / 大型 PRD（用 `mintlify-reading` 双栏 reading 更舒服）
 
 ## 字体（含 CDN 与 fallback）
 
@@ -207,7 +209,7 @@ Ghost：`bg=transparent` / `text=var(--text-primary)` / hover `bg=var(--bg-surfa
 - 不要重 shadow（避免 SaaS 卡片悬浮感）
 - 不要双 mode 都用同 destructive 色——dark 下用 zinc-rose 而不是亮红
 
-## Class Cheatsheet（drop-in CSS snippet）
+## CSS Cheatsheet（drop-in CSS snippet）
 
 ### CSS variables
 

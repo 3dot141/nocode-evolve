@@ -84,7 +84,7 @@ body {
 | `--code-bg` | `transparent` | `transparent` | 两 mode 都 transparent——code 在 essay 里降权，只靠左 border |
 | `--code-inline-bg` | `rgba(217,212,200,0.35)` | `rgba(232,226,212,0.1)` | 极淡 rule 色 tint |
 
-> 完整 CSS variables `:root` / `[data-theme="dark"]` 块（含衬线发糊补救）见下方「Class Cheatsheet（drop-in CSS snippet）」节。
+> 完整 CSS variables `:root` / `[data-theme="dark"]` 块（含衬线发糊补救）见下方「CSS Cheatsheet（drop-in CSS snippet）」节。
 
 **关键 mode 差异说明**
 - Dark mode 用 **warm dark brown** `#1a1814` 而不是 cool blue dark `#0d1117` 系——Tufte 流派的整套美学是暖纸感，dark fallback 必须延续这个温度
@@ -164,7 +164,7 @@ body {
 - 不要给 blockquote 加左色条——那是 SaaS 文档风
 - 不要表格 hover bg / 斑马纹——干扰阅读
 
-## Class Cheatsheet（drop-in CSS snippet）
+## CSS Cheatsheet（drop-in CSS snippet）
 
 > 借鉴 taste-skill：paste-ready 的最小骨架。Tufte 招牌：通篇 Source Serif 4（含 H1/H2）+ warm paper `#fffff8` + italic 替代 bold + crimson `#a00000` 单 accent + 三横线表格。
 
