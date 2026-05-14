@@ -38,6 +38,19 @@ description: 把 markdown 设计文档渲染成 single-file HTML 展示版。Wor
 | 响应式 | 移动端 / 平板可读（用 media query 处理断点） |
 | 文件大小 | 控制在 200KB 以内（含 CDN 引用不计）；超过则考虑章节折叠 |
 
+## 推荐 CDN 物料表
+
+| 物料 | CDN | 用途 | 必选 / 可选 |
+|---|---|---|---|
+| **highlight.js** | `https://cdn.jsdelivr.net/npm/highlight.js@11/lib/core.min.js` + 主题 CSS | 代码块语言 token 着色 | 必选（文档有代码块时） |
+| **Mermaid** | `https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs` | 流程图 / 状态机 / 决策树 / 时间线 / ER —— `decision-tree` / `state-machine` / `flow-figure` 等 component 首选实现 | 推荐 |
+| **Lucide Icons** | `https://unpkg.com/lucide@latest/dist/umd/lucide.js` | inline icon（callout / badge / toggle 等） | 可选 |
+| **Google Fonts** | preset 内定义 | 字体（必须有 system fallback stack） | 按 preset |
+
+> ❌ **不引入**：React / Vue / jQuery / Bootstrap / DaisyUI / Shoelace / 整套 Material 框架——撞 vanilla 约束 + 文件大小预算 + token 冲突。Tailwind Play CDN 可作 utility 补丁，但**不强制**。
+
+> ⚠️ Mermaid 主题用 `theme: 'base' + themeVariables` 把 hex 换成 CSS variable 引用（如 `nodeBackground: 'var(--bg-surface)'`），自动跟随 light/dark token——避免硬写颜色撞 preset。
+
 ## 必须的 5 个交互（**不可省**）
 
 无论文档内容多简单，这 5 个交互**都要有**：
@@ -144,12 +157,15 @@ design-doc 默认偏向前 4 种。选了之后再去选 preset。
 | Feature design doc（产品工程） | `linear-precision` | 暗紫 dark + 精密克制 |
 | **System-level Refactor / Implementation-refactor / 架构重构提案** | `vercel-geist` 或 `linear-precision` | 工程严肃，前者偏 light shadow-as-border，后者偏 dark luminance 阶梯 |
 | **通用 design-doc（不知道选啥就这个）** | `mintlify-reading` | 绿色 accent + 双栏 reading-optimized |
+| **中性 SaaS-y / 跨团队对外 / 安全默认 #2** | `shadcn-default` | shadcn 中性 zinc + Plus Jakarta Sans + 业界最大公约数 |
 | Refactor 中的探索 / 偏 playful 主题 / 内部 wiki | `posthog-playful` | dev-friendly 暗色 + 有人情味的色彩 |
 | CLI 工具 / 终端 / 块状交互文档 | `warp-blocks` | IDE 块状 + 命令面板感 |
 | 极客向 CLI / 命令行项目 ADR | `terminal-mono` | void-black + 全 mono + emerald/phosphor 强调 |
 | 长篇 thinking piece / 技术随笔 | `tufte-essay` | 衬线 + sidenotes + 学术留白（light primary，dark 为 night-reading fallback）|
 
-选不准时默认 `mintlify-reading`——它最通用、阅读门槛最低（**注意**：mintlify 已切到 Bricolage Grotesque，不再用 Inter）。
+选不准时有两个安全默认：
+- `mintlify-reading`——绿色 accent 双栏 reading-optimized（**注意**：mintlify 已切到 Bricolage Grotesque，不再用 Inter）
+- `shadcn-default`——shadcn 中性 zinc + Plus Jakarta Sans，**无 brand 色**，跨团队对外提案最不出错
 
 > ⚠️ **不要"自己想一套配色 + 自己挑字体"**——所有"凭空发挥"的产物都会回到平庸的浅蓝/灰白。preset 的"是天花板"角色见下方「视觉风格准则」节，本节不重复。
 
@@ -199,6 +215,31 @@ preset 给骨架，**accent 用来在骨架上"染色"**，依 frontmatter 的 t
 - 阴影与边框系统
 - "5 必有交互"在该 preset 下的具体落实方案
 - **Class Cheatsheet（drop-in CSS snippet）**——paste-ready 的 `<style>` 骨架（CSS variables + typography + 5 必有交互核心 snippet），agent 拿到直接 copy 扩展，不用从 token 表反向手写
+
+### Components 内容速查（与 preset 正交的内容卡片层）
+
+`references/components/` 提供**与 preset 正交的内容容器**——任意 preset × 任意 component 都能组合。先 Read `references/components/INDEX.md` 拿索引，再 Read 命中的具体 component md 拿 paste-ready HTML + CSS Cheatsheet。
+
+| Component | 触发 markdown pattern | 一句话用途 |
+|---|---|---|
+| `frontmatter-card` | frontmatter 顶部 | type/date/status/author 元数据卡 |
+| `hero-svg` | H1 后第一个 H2 前 | 顶部数据流 SVG (3:1 横向) |
+| `problem-block` | `#### 问题 N：xxx` + 说明/对比/结论 | 问题三件套容器 |
+| `logic-block` | `### 逻辑 N：xxx` + 业务流/契约/异常 | 逻辑三子节容器 |
+| `pseudocode-block` | 「业务流」下的 `<pre>` | 顶部 PSEUDOCODE label 的伪代码块 |
+| `split-compare` | 方案 A vs B 表格/列表 | 左右栏对比卡 + 推荐 badge |
+| `failure-table` | 「场景/触发/处理/上抛吞」表 | 失败模式表（按严重度 color-coded） |
+| `timeline` | Phase 1/2/3 / 阶段 / 迁移路径 | 横/纵向时间线 |
+| `decision-tree` | if-else / yes-no 决策描述 | 决策树 SVG（首选 Mermaid） |
+| `state-machine` | 状态转换 / lifecycle | 状态机 SVG（首选 Mermaid） |
+| `flow-figure` | ASCII 流程图 | SVG 主视觉 + `<details>` ASCII fallback |
+| `alternatives-fold` | 「Alternatives Considered」 | 默认折叠的备选方案容器 |
+| `callout` | 注意 / 警告 / 风险 / 推荐 段 | 4 色横条 (info/warning/danger/success) |
+| `primitives` | badge / chip / kbd / divider | 通用 UI 原子合集 |
+
+**与 preset 的契约**：所有 component 用 preset 提供的 CSS variables（`--bg`/`--text-primary`/`--accent` 等），不写死 hex。具体 var 清单见 `components/INDEX.md` 「CSS Variables 契约」节。
+
+> 视具体内容触发，命中即 Read 对应 component md；不命中的不读。
 
 ### 全局兜底（与 preset 无关，永远成立）
 
@@ -515,20 +556,25 @@ document.querySelectorAll('h2, h3').forEach(h => observer.observe(h));
    - 1-2 个本文档定制视觉亮点（Vibe 节「展示亮点」）
    - 按 step 8 dial → 从 `motion.md` 选 recipe（dial ≤ 3 → 0 个；4-7 → 1-2 个；8-10 → 全部 + perpetual）
    - 从 `background.md` 选 1-2 个 recipe（按 flavor 推荐表，dial ≤ 3 时跳过动态 recipe）
+10. **扫 markdown → 命中 components**：Read `references/components/INDEX.md` 拿索引表，按触发 pattern 匹配 markdown 内容（如「问题 N」→ `problem-block`；ASCII 流程图 → `flow-figure`），列出命中的 component 清单 → Read 每个命中 component 的 md 文件拿 HTML 结构 + CSS Cheatsheet
 
 ### Phase 3 — 生成
 
-10. **生成 single-file HTML**：
-    - `<head>` 内联 `<style>`：字体 CDN `<link>` + **粘贴 preset 的 Class Cheatsheet 作起点** + flavor 染色 + motion keyframes（按 dial 档位）+ background recipe + 响应式 media query
-    - `<body>`：preset 指定 layout；frontmatter 转顶部 metadata 卡片
+11. **拼 `<style>` 起点**（推荐用脚本，也可手 paste）：
+    - 脚本方式：`bash scripts/extract-cheatsheet.sh preset <name>` + `bash scripts/extract-cheatsheet.sh component <c1>,<c2>,...` —— stdout 输出合并 CSS
+    - 手 paste：先 preset Class Cheatsheet 块，再每个命中 component 的 CSS Cheatsheet 块
+12. **生成 single-file HTML**：
+    - `<head>` 内联 `<style>`：字体 CDN `<link>` + step 11 拼出来的 CSS 起点 + flavor 染色 + motion keyframes（按 dial 档位）+ background recipe + 响应式 media query
+    - `<body>`：preset 指定 layout；frontmatter 转顶部 metadata 卡片；命中的 component 按各自 HTML 模板包裹对应 markdown 段
     - `<script>` 内联 vanilla JS：TOC 高亮（`IntersectionObserver`）+ 折叠 + 暗黑切换 + 回到顶部 + motion 触发
-    - SVG 直接嵌入；fill / stroke 用 preset 调色板
+    - SVG / Mermaid 直接嵌入；node fill / stroke 用 preset CSS variables
 
 ### Phase 4 — 验证 & 交付
 
-11. **过 Pre-Flight Check 自检表**（独立节）—— 任何一项不勾 → 回 Phase 3 改完再 ship；不许跳
-12. **写入** 与 markdown 同目录、同名、`.html` 后缀
-13. **报告**：「渲染完成：`<path>`，flavor：`<flavor>`，preset：`<name>`，motion：`<dial>`。双击浏览器打开查看。」
+13. **过 Pre-Flight Check 自检表**（独立节）—— 任何一项不勾 → 回 Phase 3 改完再 ship；不许跳
+14. **（推荐）跑 check-preflight.sh**：`bash scripts/check-preflight.sh <path-to-rendered.html>` —— 自动检查字体黑名单 / 文件大小 / 5 必有交互标识 / prefers-color-scheme / AI slop 文案。有 FAIL → 回 Phase 3 修
+15. **写入** 与 markdown 同目录、同名、`.html` 后缀
+16. **报告**：「渲染完成：`<path>`，flavor：`<flavor>`，preset：`<name>`，命中 components：`<list>`，motion：`<dial>`。双击浏览器打开查看。」
 
 ## 反模式
 
@@ -544,6 +590,7 @@ document.querySelectorAll('h2, h3').forEach(h => observer.observe(h));
 - ❌ **跳过 vibe 流程直接套通用模板**——拿到文档不思考 personality 就开始写 CSS——所有文档长一样就失去 HTML 的核心价值
 - ❌ **不读 preset 凭印象写**——选了 `vercel-geist` 不去 Read preset 文件、靠"我大概记得 Vercel 是黑白"就开始写——preset 的精华在 hex / hierarchy 表 + Class Cheatsheet 里，不读等于没选
 - ❌ **不用 Class Cheatsheet 反向手写 CSS**——选了 preset 不从其 Class Cheatsheet 起步、自己从 token 表反向凑 `:root` 块——直接 ROI 倒退
+- ❌ **不扫 components 直接手写容器**——markdown 出现「问题 N」/「逻辑 N」/「Phase 1/2/3」/ ASCII 流程图却不查 `components/INDEX.md`、自己临时画 div + 写 inline CSS——重发明轮子且不一致
 - ❌ **挑选 preset 时凭"我喜欢"而非 doc personality**——`tufte-essay` 适合长篇 thinking 不适合 CLI 工具 ADR；选错 preset 比平庸更糟
 
 ## Pre-Flight Check（输出前自检表）
@@ -576,6 +623,7 @@ document.querySelectorAll('h2, h3').forEach(h => observer.observe(h));
 - [ ] 没用整数百分比假数据（99.99% / 50% / 100%）？
 
 **结构性**
+- [ ] 已扫 `components/INDEX.md` 触发表，markdown 命中的 component 都已用对应 HTML 结构包裹（不是裸 markdown 渲染）？
 - [ ] HTML 没补充 markdown 原文档没有的信息？
 - [ ] frontmatter 转的顶部 metadata 卡片实际呈现 type / date / status / author？
 - [ ] 章节折叠默认状态合理（>20 H2 时默认全折叠，TL;DR 和第一节除外）？
