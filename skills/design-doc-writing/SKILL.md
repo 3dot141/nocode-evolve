@@ -1,6 +1,6 @@
 ---
 name: design-doc-writing
-description: 写设计文档时使用。按业界主流 4 类 doc-type 主轴（PRD / RFC / Design Doc / ADR）选合适类型，每个 doc-type 有自己的"背景→...→后果"线性骨架。工作流含 write → review 循环（spawn design-doc-reviewer subagent，用户逐条确认）。当 superpowers:brainstorming 走到「写设计文档」环节时调用本 skill；当用户要求「写设计文档 / RFC / ADR / 提案 / 架构记录 / 重构方案 / 系统设计」时也用。即使用户没说"用模板"，只要要做的事是产出一份正式的设计性文档，就该用本 skill。不要用本 skill 写代码注释 / PR 描述 / commit message / README / changelog。
+description: 写设计文档时使用。按业界主流 4 类 doc-type 主轴（PRD / RFC / Design Doc / ADR）选合适类型，每个 doc-type 有自己的"背景→...→后果"线性骨架。工作流含 write → review 循环（spawn design-doc-reviewer subagent，用户逐条确认）。当 superpowers:brainstorming 走到「写设计文档」环节时调用本 skill；当用户要求「写设计文档 / PRD / RFC / ADR / 重构方案 / 系统设计 / 技术 spec / API 或数据库设计 / migration 方案 / 提案 / 架构记录」时也用。即使用户没说"用模板"，只要要做的事是产出一份正式的设计性文档（不是代码 / 实施步骤），就该用本 skill。不要用本 skill 写代码注释 / PR 描述 / commit message / README / changelog。
 ---
 
 # 设计文档写作
@@ -112,6 +112,8 @@ Review Log 与文档主体同步演进——主体回答"为什么这样设计"�
 
 ## 写作准则（核心）
 
+> **同源 note**：本节 8 条准则与 `references/reviewer-template.md`《核心审查》7 维度是同一套规则的两个视角——writer 视角"做什么"（积极指令） vs reviewer 视角"挑什么"（消极挑刺）。改一处务必同步检查另一处，避免 reviewer 不查 writer 必做的事，或反过来。
+
 理解原则比死守章节更重要。每条附 ✅ 正例 / ❌ 反例。
 
 ### 1. 入口段必须自洽
@@ -158,7 +160,7 @@ Review Log 与文档主体同步演进——主体回答"为什么这样设计"�
 业界通用名词（HTTP / PostgreSQL / TDD / retry / callback）不解释；**项目内自创词或缩写**（dogfood / two-half / humanizer / 自定义 component 名）首次出现必须一句话 inline 解释或链接 glossary，后续可直接用。
 
 > ✅「dogfood（用自己产出的工具实测）本插件历史决策……」  
-> ❌ 通篇用 humanizer / layer-supplements 却没告诉读者这是什么
+> ❌ 通篇用 humanizer / two-half / 自定义 sanitizer 却没告诉读者这是什么
 
 ### 7. 小黄鸭式讲解：把每一步的"为什么"讲透
 
@@ -190,24 +192,11 @@ design-doc 的「实现」节止于：
 **业务流伪代码硬规则**：
 
 - 必须用 `function` / `method` 签名 + 函数体行（每行一句意图）
-- **每行都要有 `//` 注释**，讲清"这行干什么 / 为什么这么做"——小黄鸭式讲解，不允许"显然"
+- **每行都要有 `//` 注释**——小黄鸭式讲解，不允许"显然"。简单流程注释可短，复杂逻辑 / 数字阈值必须讲来源
 - 命名用真实类名 / 方法名（如 `AgentLoop.callLlmForTurn`），不用 placeholder
 - 涉及数字 / 阈值时注释里讲清来源（如 `// HOLD_SIZE=64，来源：最长入口点 30 字符 + chunk 容差`）
 
-**对的写法**（每行带注释）：
-
-```
-function callLlmForTurn(messages, ctx):              // 完成一轮 LLM 对话，messages 已含历史
-    try:
-        return callLlmOnce(messages)                 // 正常调 LLM 一次返回响应
-    catch OutputViolationException as e:             // 业务异常：sanitizer 检测到 DSL 泄漏抛的
-        log.warn("DSL violation: {}", e.type)        // 记录违规类型，便于事后追溯
-        messages.add(buildCorrection(e.releasedTail)) // 把"已流出尾部"塞进新一轮 prompt
-                                                      // 让 LLM 知道用户屏幕停在哪、好接着写
-        return callLlmOnce(messages)                 // 重新调一次 LLM，让它改写
-    catch (ReasoningLengthExceeded | TimeOut) as e:  // 系统异常（长度超 / 超时）
-        throw e                                       // 不在本逻辑 scope，上抛给外层处理
-```
+**对的写法示例**：详见 `references/doc-types/design-doc.md`《业务流伪代码示例》或任一 example 的「逻辑 X.业务流」节。
 
 **错的写法**（这是文件层次描述，属于「影响文件」节）：
 
@@ -264,18 +253,12 @@ mini cheat sheet：
 
 ## 常见反模式
 
-- ❌ **入口段堆未定义术语**：读者必须读完全文才懂 TL;DR / Summary
-- ❌ **元结构标签作 H2**：上半 / 下半 / Human Review / Agent Implementation
-- ❌ **章节戛然而止**：下一节换话题不交代来源——论证链断
-- ❌ **pain point 平铺不分主次**：5 条 bullet 让读者自己排重要性
-- ❌ **架构问题数 ≠ 实现逻辑数 且无说明对应关系**：reviewer 拼不起 decision-implementation 映射
-- ❌ **项目内自创词不解释**：dogfood / humanizer / 双轴 / two-half 通篇出现
-- ❌ **plan 内容塞 design doc**：class 内部循环 / TDD 步骤 / 具体 catch 块写法
-- ❌ **影响文件不给行号 / 函数名 / 改动编号**：reviewer 不知道哪一处具体改
-- ❌ **章节空话**：「需要保证安全性、性能」「值得一提」「未来可扩展」
-- ❌ **跳过 reviewer**：不 spawn reviewer 直接交付
-- ❌ **代用户拍板**：拿到 Report 自己挑修——用户确认是 hard gate
-- ❌ **吞 Review Log**：只 in-place 改主体不 append——审计轨迹断
+> 内容层反例已分散在《写作准则》8 条每条的 ❌ 反例里，本节只列**写作准则未覆盖的工作流 / 选型 / 套话**反模式。
+
+- ❌ **章节空话**：「需要保证安全性、性能」「值得一提」「未来可扩展」——无具体内容的填充段
+- ❌ **跳过 reviewer**：不 spawn reviewer 直接交付——评审是工作流硬 gate
+- ❌ **代用户拍板**：拿到 Report 自己挑修哪些——用户确认是 hard gate
+- ❌ **吞 Review Log**：只 in-place 改主体不 append Review Log——审计轨迹断
 - ❌ **混淆 doc-type**：PRD 写 SQL schema / ADR 写百页 implementation / Design Doc 写不到 1 页
 
 ## 看 examples 学结构，不照搬措辞
