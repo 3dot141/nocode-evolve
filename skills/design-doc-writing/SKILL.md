@@ -23,16 +23,6 @@ description: 写设计文档时使用。按业界主流 4 类 doc-type 主轴（
 - 用户只是问「X 应该怎么做」——这是讨论阶段，先用 brainstorming
 - 简单 bug 修复（用 superpowers:debugging）
 
-## 输出路径
-
-由 `rules/overlay-superpowers.md` 与 `rules/agent-about.md` 共同定义，默认：
-
-```
-docs/plans/{username}/yymmdd-<topic>-design.md
-```
-
-写之前确认 rule 当前值。
-
 ## 选 doc-type
 
 设计文档分 4 类，按**这份文档主要回答什么问题**选：
@@ -119,17 +109,6 @@ reviewer 输出 Report 后，**不要自己挑哪些修哪些不修**。把决�
 ```
 
 Review Log 与文档主体同步演进——主体回答"为什么这样设计"，Log 留下"这份文档怎么演化来的"的审计轨迹。
-
-## 状态机
-
-各 doc-type 状态机：
-
-- **PRD**：`draft → in-review → approved → implemented → archived`
-- **RFC**：`open → accepted → implemented → superseded` / `open → withdrawn` / `open → rejected`
-- **Design Doc**：`draft → in-review → approved → implemented → archived`（**living**，approved 后仍可修改）
-- **ADR**：`proposed → accepted → superseded` / `proposed → rejected` / `accepted → deprecated`（**immutable**，accept 后绝不改）
-
-注：ADR 一旦 accept 不可修改；改决策就写新 ADR + supersede 旧的。
 
 ## 写作准则（核心）
 
@@ -302,3 +281,24 @@ mini cheat sheet：
 ## 看 examples 不要自由发挥
 
 每个 doc-type 在 `references/examples/example-<type>.md` 有完整真实示例（dogfood 本插件历史决策）。**先看 example 学结构，再按 doc-type reference 填内容**——比自由发挥可靠得多。
+
+## 状态机
+
+各 doc-type 状态机：
+
+- **PRD**：`draft → in-review → approved → implemented → archived`
+- **RFC**：`open → accepted → implemented → superseded` / `open → withdrawn` / `open → rejected`
+- **Design Doc**：`draft → in-review → approved → implemented → archived`（**living**，approved 后仍可修改）
+- **ADR**：`proposed → accepted → superseded` / `proposed → rejected` / `accepted → deprecated`（**immutable**，accept 后绝不改）
+
+注：ADR 一旦 accept 不可修改；改决策就写新 ADR + supersede 旧的。
+
+## 输出路径
+
+由 `rules/overlay-superpowers.md` 与 `rules/agent-about.md` 共同定义，默认：
+
+```
+docs/plans/{username}/yymmdd-<topic>-design.md
+```
+
+写之前确认 rule 当前值。
