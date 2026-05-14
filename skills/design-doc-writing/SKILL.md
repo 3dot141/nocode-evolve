@@ -50,7 +50,7 @@ description: 写设计文档时使用。按业界主流 4 类 doc-type 主轴（
 ```
 1. 判断 doc-type（按上表）
 2. Read references/doc-types/<type>.md（学骨架 + 写作要点）
-3. Read references/examples/example-<type>.md（看真实示例）
+3. Read references/examples/example-<type>-dogfood.md + example-<type>-business.md（看 dogfood 示例 + 业务场景示例）
 4. 写初稿
 5. Dispatch reviewer subagent（接通方式：`general-purpose` + template）：
    a. Read `skills/design-doc-writing/references/reviewer-template.md`
@@ -278,9 +278,22 @@ mini cheat sheet：
 - ❌ **吞 Review Log**：只 in-place 改主体不 append——审计轨迹断
 - ❌ **混淆 doc-type**：PRD 写 SQL schema / ADR 写百页 implementation / Design Doc 写不到 1 页
 
-## 看 examples 不要自由发挥
+## 看 examples 学结构，不照搬措辞
 
-每个 doc-type 在 `references/examples/example-<type>.md` 有完整真实示例（dogfood 本插件历史决策）。**先看 example 学结构，再按 doc-type reference 填内容**——比自由发挥可靠得多。
+每个 doc-type 在 `references/examples/` 下有两份示例：
+
+- `example-<type>-dogfood.md`：dogfood 本插件历史决策（skill 内部场景）
+- `example-<type>-business.md`：业务场景示例（虚构 SaaS 公司 ContextCo 把登录改造成 SSO+MFA 的一条故事线，从 PRD → RFC → Design Doc → ADR 串起来）
+
+两份各有价值——dogfood 看 meta 决策怎么记，business 看 B2B 工程场景怎么写。
+
+**看 example 学骨架，但不要照搬措辞 / 不要套业务情境概念**。三点提醒：
+
+- **措辞按你的语境调**：example 反复用「核心问题 / 附带问题 / 不决定的代价 / 力的对抗」这套连接词——是**结构提示不是模板填空**。你的文档按你领域的术语重写，不要让产出文档读起来都是同一个人的口吻
+- **问题数不要硬凑**：example 演示了 3-5 个问题拆解，但**你的设计核心可能只有 1 个问题**——就写 1 个；强凑 3 段反而扭曲设计意图。问题数应由设计本身的复杂度决定
+- **伪代码注释密度按复杂度调**：example 演示得很饱满（每行 `//` 讲来源），但简单流程（如"调 LLM → 解析 → 存库"三步）不需要每行加来源注释——只有数字/阈值/非显然选择才必须讲来源。机械全注释反而稀释重点
+
+目标：结构对得上 example，措辞与颗粒度匹配你的场景。比无参照自由发挥可靠，比无脑照搬 example 也可靠。
 
 ## 状态机
 
