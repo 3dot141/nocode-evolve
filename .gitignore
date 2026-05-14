@@ -2,3 +2,5 @@
 *.log
 .agents-personal/
 docs/plans/**/*.html
+__pycache__/
+*.pyc
