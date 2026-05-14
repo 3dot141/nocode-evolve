@@ -13,21 +13,28 @@
 
 由用户跑 `/project-wiki-distill` 维护。
 
-### 强制基线：每个新会话至少扫一眼 INDEX
+### 触发：会话开始只做存在性检查，3 条 OR 命中时才 Read INDEX
 
-新会话开始、**首次响应用户实质性问题前**，强制执行：
+会话开始时，做一次轻量存在性检查（成本可忽略）：
 
 ```
 ls <project>/.agents-personal/wiki/
-  ├─ 目录不存在 / 没有 INDEX.md → 跳过，按通常方式工作
-  └─ 存在 INDEX.md             → Read INDEX.md（仅 INDEX，不进 pages）
+  ├─ 目录不存在 / 没有 INDEX.md → 标记"无 wiki"，全程跳过
+  └─ 存在 INDEX.md             → 记下"待读"，但**不**立刻 Read
 ```
+
+**实际 Read INDEX.md 推迟到下列任一信号命中**（3 条 OR）：
+
+1. 即将调用 `superpowers:brainstorming` 或 `nocode-evolve:design-doc-writing` skill
+2. 用户消息含「设计 / 选型 / 方案 / 架构 / 重构 / RFC / 提案」任一关键词
+3. 当前任务进行中**升级**为以上之一（如 bug fix 中途发现要做架构决策）→ 此时回头 Read
 
 要点：
 
-- 这是**兜底动作**，不再依赖「用户问题是否暗示项目背景」之类的触发判断
-- INDEX 在同一会话内只需读一次；后续轮次命中 cache 不要重复 `ls` / `Read`
+- INDEX 在同一会话内只需 Read 一次；命中触发后读完，后续轮次不重复
+- 三条 OR 全部不触发的纯执行 / 纯调研 / 纯小修任务，**全程不读 INDEX**——避免无谓占用 context
 - 读完 INDEX 不必在回答里逐条复述——但若 INDEX 里的某条 description 显著和当前任务相关，**必须**在回答里点名引用，避免「读了等于没读」
+- 设计意图：wiki 内容是「历史设计决策 + 术语 + 踩坑」，只有做设计时才用得到——触发点与内容性质对齐，纯执行任务不付入场费
 
 ### 进一步深读 pages（按需）
 
@@ -87,7 +94,7 @@ ls <project>/.agents-personal/wiki/
 
 ### 读取时机
 
-- **新会话开始扫 AGENTS.md**：和 wiki/INDEX.md 同一时机（首次响应实质性问题前），同会话只读一次
+- **新会话开始 Read AGENTS.md**：首次响应实质性问题前 Read 一次，同会话只读一次。AGENTS.md 是路由表（按设计极短、只列触发条件），不读就丢失对 `rules/<topic>.md` 里指令的感知——**和 wiki/INDEX.md 的延迟策略不同**：wiki 是历史记忆可延迟到设计触发时再读，AGENTS.md 是当前指令路由必须实时读
 - **rules/<topic>.md 按需**：当前任务匹配某条触发条件 → Read 对应 rule 文件 → 按其指令执行
 - 命中即引用：和 wiki 一样，读了就要在回答里反映出来（不必复述全文，但要表明依据来自哪条 rule）
 
