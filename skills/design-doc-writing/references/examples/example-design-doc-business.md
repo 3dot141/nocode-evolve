@@ -140,6 +140,27 @@ WorkOS 提供 Java SDK，可嵌入现有 Spring Boot monolith、放 API Gateway 
 
 **结论**：JWT (8h, RSA) 主路径 + Redis blocklist 兜 SLO + 10s 健康检查兜 WorkOS 宕机。
 
+**子状态机：WorkOS 健康检查**（本问题合并了 3 个张力，结论纯文字读者需要在脑里画状态机才能 grasp → 加子图，触发判据见 `references/doc-types/design-doc.md`）
+
+```
+          probe ok            probe ok              probe ok
+          ┌──────┐            ┌──────┐              ┌──────┐
+          │      │            │      │              │      │
+          ▼      │            ▼      │              ▼      │
+       ┌────┐ fail│         ┌────┐ fail│         ┌────┐ fail│
+       │ UP │────┴────────►│ F1 │────┴────────►│ F2 │────┴───────┐
+       └────┘                └────┘              └────┘            │
+          ▲                                                        ▼
+          │                                                    ┌──────┐
+          │      probe ok（任一）                              │ DOWN │
+          └────────────────────────────────────────────────────┴──────┘
+
+状态行为：
+- UP / F1 / F2 ：登录走 SSO；banner 关；F1/F2 是"容忍单次抖动"的中间态
+- DOWN         ：登录页 banner 开；admin 改走密码+TOTP；已签 JWT 不受影响（下游只验签名 + blocklist）
+- 恢复路径     ：任意状态下 probe ok → UP（不需累计回正次数；上线后真出过的状况都是要么持续 ok 要么持续 fail）
+```
+
 #### 问题四：MFA TOTP 备份恢复
 
 **说明**
