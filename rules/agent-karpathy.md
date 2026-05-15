@@ -1,127 +1,62 @@
-# CLAUDE.md
+# CLAUDE.md — 12-rule template
 
-减少 LLM 常见编码错误的行为准则。可与项目自身的指令合并使用。
+These rules apply to every task in this project unless explicitly overridden.
+Bias: caution over speed on non-trivial work. Use judgment on trivial tasks.
 
-**权衡：** 这些准则倾向于「谨慎优先于速度」。对琐碎任务，自行判断即可。
+## Rule 1 — Think Before Coding
+State assumptions explicitly. If uncertain, ask rather than guess.
+Present multiple interpretations when ambiguity exists.
+Push back when a simpler approach exists.
+Stop when confused. Name what's unclear.
 
-每条规则的结构：**为什么 → Gate（识别触发信号） → 做法 → ✅ 正例 / ❌ 反例**。Gate 写成「自我识别信号」——你脑里冒出 X 就该触发本条，而不是动作前打勾走过场。
+## Rule 2 — Simplicity First
+Minimum code that solves the problem. Nothing speculative.
+No features beyond what was asked. No abstractions for single-use code.
+Test: would a senior engineer say this is overcomplicated? If yes, simplify.
 
----
+## Rule 3 — Surgical Changes
+Touch only what you must. Clean up only your own mess.
+Don't "improve" adjacent code, comments, or formatting.
+Don't refactor what isn't broken. Match existing style.
 
-## 1. 先思考再写代码
+## Rule 4 — Goal-Driven Execution
+Define success criteria. Loop until verified.
+Don't follow steps. Define success and iterate.
+Strong success criteria let you loop independently.
 
-**为什么**：模型遇到「加 X」「修 Y」时最容易直接动手——把含糊的需求私下补成自己的猜测再实现。结果：用户拿到的是模型脑补出来的需求。返工成本远高于先问一句。
+## Rule 5 — Use the model only for judgment calls
+Use me for: classification, drafting, summarization, extraction.
+Do NOT use me for: routing, retries, deterministic transforms.
+If code can answer, code answers.
 
-**Gate（满足任一即触发本条）**
-- 任务字面含「设计 / 选型 / 重构 / 抽象」
-- 需求里有未定义的术语，或你能想到 ≥2 种合理解读
-- 你心里冒出「我猜用户想要…」「顺便也…」
-- 你正要选库 / 选模式 / 选目录结构
+## Rule 6 — Token budgets are not advisory
+Per-task: 4,000 tokens. Per-session: 30,000 tokens.
+If approaching budget, summarize and start fresh.
+Surface the breach. Do not silently overrun.
 
-**做法**
-- 把假设说出来（"我假设 X 用 SQLite，错的话告诉我"）
-- 多种解读全部列出来让用户选
-- 看到更简单的方案先说一句再写
-- 不清楚就停下来问
+## Rule 7 — Surface conflicts, don't average them
+If two patterns contradict, pick one (more recent / more tested).
+Explain why. Flag the other for cleanup.
+Don't blend conflicting patterns.
 
-**✅ 正例**
-> 用户：「加个用户校验」
-> 你：「校验邮箱格式+必填，还是也要长度上限？重复邮箱返回 409 还是 422？我倾向 409，因为专表资源冲突。」
+## Rule 8 — Read before you write
+Before adding code, read exports, immediate callers, shared utilities.
+"Looks orthogonal" is dangerous. If unsure why code is structured a way, ask.
 
-**❌ 反例**
-> 用户：「加个用户校验」
-> 你：*（直接交付一份带 8 条规则、自定义异常类、i18n 错误消息的实现）*
-> ⚠ 信号：你脑补了用户没要求的 7 件事。
+## Rule 9 — Tests verify intent, not just behavior
+Tests must encode WHY behavior matters, not just WHAT it does.
+A test that can't fail when business logic changes is wrong.
 
----
+## Rule 10 — Checkpoint after every significant step
+Summarize what was done, what's verified, what's left.
+Don't continue from a state you can't describe back.
+If you lose track, stop and restate.
 
-## 2. 简单优先
+## Rule 11 — Match the codebase's conventions, even if you disagree
+Conformance > taste inside the codebase.
+If you genuinely think a convention is harmful, surface it. Don't fork silently.
 
-**为什么**：每行多余的代码都是未来要读、要测、要维护的负债。模型容易把「展示能力」误当成「解决问题」——加配置项、加抽象层、加错误分支。代码不是越多越值钱，是越少越好读。
-
-**Gate（满足任一即触发本条）**
-- 你正在加「以后可能需要」的参数、开关、抽象类
-- 你写到一半觉得「再封装一层会更优雅」
-- 你正在为一个不可能发生的输入写 try/except
-- 行数明显超过任务直觉所需（比如「加个 flag」写了 80 行）
-- 你写了工厂、策略、注册表却只有一个调用点
-
-**做法**
-- 只实现被要求的功能
-- 单一调用点不抽象，重复 3 次再考虑抽象
-- 错误处理只写边界（用户输入、外部 API），内部信任不校验
-- 写完回看："senior 会觉得这段过度复杂吗？" 是 → 砍
-
-**✅ 正例**
-> 用户：「读 config.json 拿出 port」
-> 你：`port = json.load(open("config.json"))["port"]`（3 行搞定，没有 ConfigLoader 类）
-
-**❌ 反例**
-> 用户：「读 config.json 拿出 port」
-> 你：定义 `ConfigSchema`、`ConfigLoader`、`ConfigValidator`，加缓存、加 watch reload、加默认值降级链
-> ⚠ 信号：用户说一句你写了 5 个类——「灵活性」「可扩展」是你脑补的需求。
-
----
-
-## 3. 外科手术式改动
-
-**为什么**：用户在 review 你的 diff，他想看的是「为这件事改的什么」。你顺手改的格式、重命名、注释翻译会淹没真正的改动，让 reviewer 失去判断 signal/noise 的能力，也容易夹带回归 bug。
-
-**Gate（满足任一即触发本条）**
-- 你正在改一个跟任务无关的文件
-- 你想顺手统一一下 import 顺序 / 引号风格 / 命名
-- 你看到一段「写得不好但能跑」的代码想重写它
-- 你想删掉一段看起来没人用的代码
-- diff 里出现了你解释不清"为什么这行也变了"的行
-
-**做法**
-- 每行改动都能直接追溯到用户请求；不能 → 撤回
-- 匹配现有风格，即使你不喜欢
-- 发现无关问题 → **告诉用户**，不要顺手改
-- 只清理「你这次改动」造成的新 orphan（unused import/变量），不动既有死代码
-
-**✅ 正例**
-> 任务：「修一下登录失败时 token 没清掉的 bug」
-> 你：只改 `logout()` 加 `clearToken()` 一行；commit 信息只讲这件事；附言："顺便注意到 `auth.utils.js` 有段 dead code，要不要单独清理？"
-
-**❌ 反例**
-> 任务：「修一下登录失败时 token 没清掉的 bug」
-> diff：修了 bug + 重命名了 3 个变量 + 把 `var` 改成 `const` + 删了一段你以为没人用的 helper + 调整了文件 import 顺序
-> ⚠ 信号：commit 一行能讲清的事，diff 跨了 12 个文件。
-
----
-
-## 4. 目标驱动执行
-
-**为什么**：「让它能跑」是弱标准——你不知道何时算完成，用户也无法验证。强标准（"测试通过"、"特定输入产生特定输出"）让你能独立循环到完成，不需要每步都问"现在对了吗"。
-
-**Gate（满足任一即触发本条）**
-- 任务包含「修 bug」「加功能」「重构」「优化」
-- 任务有 ≥2 步、跨多文件
-- 你不确定完成的标志是什么，想用「跑起来不报错」当终点
-- 你打算「先写实现，写完手动点一下看看」
-
-**做法**
-- 把任务翻译成可验证目标：
-  - 「加校验」→「为非法输入写测试，让它们通过」
-  - 「修 bug」→「写复现 bug 的测试，让它通过」
-  - 「重构 X」→「确保改动前后既有测试都通过」
-- 多步任务先写计划：
-  ```
-  1. [步骤] → 验证：[检查项]
-  2. [步骤] → 验证：[检查项]
-  ```
-- 每步做完跑验证，不是全做完再统一验证
-
-**✅ 正例**
-> 任务：「修 parseDate 跨年时返回 NaN 的 bug」
-> 你：先写 `expect(parseDate("2024-12-31")).not.toBeNaN()`，跑——红；改实现，跑——绿；提交。
-
-**❌ 反例**
-> 任务：「修 parseDate 跨年时返回 NaN 的 bug」
-> 你：直接改实现，本地随便试一个日期没报错就交付。
-> ⚠ 信号：没有写下任何能机器验证的判据；下次重构时这个 bug 会悄悄回来。
-
----
-
-**这些准则生效的标志：** diff 里多余的改动变少、因过度复杂而返工的次数变少、澄清问题出现在动手之前而非犯错之后、每个任务有可验证的完成判据。
+## Rule 12 — Fail loud
+"Completed" is wrong if anything was skipped silently.
+"Tests pass" is wrong if any were skipped.
+Default to surfacing uncertainty, not hiding it.
