@@ -3,19 +3,19 @@ description: 把当前会话围绕给定意图浓缩成一份长文档，归档�
 argument-hint: <一句话意图：想抽取什么内容>
 ---
 
-# /user-wiki-distill：会话浓缩成长文档归档到用户 vault Outputs 层
+# /sow：会话浓缩成长文档归档到用户 vault Outputs 层
 
 把当前会话围绕用户指定的意图浓缩成一份完整长文档，归档到 `$USER_WIKI_PATH/yymm/yymmdd-<title>.md`。
 
 设计文档：`docs/plans/3dot141/260514-user-wiki-distill-design.md`。
-姊妹命令：`/project-wiki-distill`（沉淀项目级历史记忆，写到 `<project>/.agents-personal/wiki/`）。
+上游命令：`/sediment`（识别到跨项目可复用内容时会建议跑本命令；本命令独立处理"带意图浓缩归档"语义）。
 
 ## 入参（$ARGUMENTS）
 
 **必填**——一句话意图描述「想抽取什么内容」。
 
-- 无参 → 命令报错「请说明本次要沉淀什么。用法：`/user-wiki-distill <意图描述>`」并停止。**不允许 AI 自己猜会话有没有值得写的东西。**
-- 例：`/user-wiki-distill 沉淀今天讨论的 user-wiki-distill 设计`
+- 无参 → 命令报错「请说明本次要沉淀什么。用法：`/sow <意图描述>`」并停止。**不允许 AI 自己猜会话有没有值得写的东西。**
+- 例：`/sow 沉淀今天讨论的 user-wiki-distill 设计`
 
 ## 环境依赖
 
@@ -48,14 +48,14 @@ AI veto 判据（仅 2 条 OR，AI 不引入第三条软信号）：
 - **反推 title**：从「意图 + 实际抽到内容」反推 title，**不复述意图原文**，反映会话**实际**重点
   - 约束：5-25 个显示字符（中文按 1 字符）；允许 中文/字母/数字/空格/`-`；禁止 `/ \ : * ? " < > |` 与换行
   - 含禁止字符时 AI **统一替换为下划线 `_`**（不删除，保证 hash idempotency）
-  - 术语保留原文（如 `user-wiki-distill`），不强行翻译成纯中文
+  - 术语保留原文（如 `sow` / `sediment`），不强行翻译成纯中文
 - **写 summary**：≤30 字概括「围绕意图做了什么 + 得出什么结论」，非"会话主题概述"
 - **写 body**：四段式骨架（见下方）
 
 ### 3. 调脚本
 
 ```bash
-python3 commands/user-wiki-distill/script.py \
+python3 commands/sow/script.py \
     --intent "<用户原话意图>" \
     --title "<AI 反推 + 清洗后的 title>" \
     --summary "<AI 写的 ≤30 字 summary>"
@@ -119,7 +119,7 @@ Write(target_path, full_content)
 # <title>
 
 > **intent**: <用户原话意图，逐字保留，不 paraphrase>
-> 由 /user-wiki-distill 从会话浓缩生成于 YYYY-MM-DD HH:MM
+> 由 /sow 从会话浓缩生成于 YYYY-MM-DD HH:MM
 
 ## 背景
 为什么有这次讨论，会话起点 / 触发因素。
