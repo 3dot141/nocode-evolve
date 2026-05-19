@@ -27,6 +27,7 @@ BASELINE_FILES=(
 )
 OVERLAYS_FILES=(
   "${PLUGIN_ROOT}/rules/overlay-superpowers.md"
+  "${PLUGIN_ROOT}/rules/overlay-gitworktree.md"
 )
 
 case "$GROUP" in
