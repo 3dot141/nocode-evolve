@@ -74,11 +74,12 @@ description: 写设计文档时使用。按业界主流 4 类 doc-type 主轴（
 
 reviewer 输出 Report 后，**不要自己挑哪些修哪些不修**。把决定权交给用户：
 
-1. 把 Report 原样展示给用户（Critical / Warning / Suggestion / **Self-Audit** 四档全部保留——Self-Audit 常是隐藏的 Critical（"实施时第一行就被卡住"），**绝不能漏展示**）
-2. 给每条问题一个**短编号**（`C1 / C2 / W1 / S1 / SA1 ...`），方便用户引用。**Self-Audit 也必须编号**——`SA1, SA2, ...`；与 C/W 重叠时 reviewer 应已标注「与 Cx 同根」帮用户去重
+1. 把 Report 原样展示给用户（Critical / Warning / Suggestion / **Open Questions** / **Self-Audit** 五档全部保留——Self-Audit 常是隐藏的 Critical（"实施时第一行就被卡住"），Open Questions 是 reviewer 触发 Evidence Gate 但核实不到的事实疑问，**两者都绝不能漏展示**）
+2. 给每条问题一个**短编号**（`C1 / C2 / W1 / S1 / Q1 / SA1 ...`），方便用户引用。**Open Questions 与 Self-Audit 也必须编号**——`Q1, Q2, ...` / `SA1, SA2, ...`；与 C/W 重叠时 reviewer 应已标注「与 Cx 同根」帮用户去重
 3. 用 AskUserQuestion 或文字 prompt 让用户选：
-   - 默认多选：勾选要修的编号（含 SA）
+   - 默认多选：勾选要修 / 要答的编号（含 Q、SA）
    - 提供快捷选项：「全修 Critical+Warning+Self-Audit」「全跳过」「自由指示」
+   - **Open Questions 三选**：fix（按疑问反向修文档）/ skip（接受现状，作者自负风险）/ **answer**（作者贴 `path:line` 或文字答案核实，写入 Review Log；若 answer 反证 reviewer 错了，记为"reviewer 误指控"不算修订项）
 4. 用户确认前**不要动文档主体**——只能等
 
 例外：reviewer Verdict 是 ✅ Pass 时跳过这一步，直接进 step 10。
@@ -92,15 +93,20 @@ reviewer 输出 Report 后，**不要自己挑哪些修哪些不修**。把决�
 
 ### Review 1 — 2026-05-12
 
-<!-- Reviewer Report 全文（含 Critical / Warning / Suggestion / Self-Audit / Verdict） -->
+<!-- Reviewer Report 全文（含 Critical / Warning / Suggestion / Open Questions / Self-Audit / Verdict） -->
 
-**用户决定**：fix C1, C2, W1, SA2；skip C3（理由：暂不在 scope）、W2、S1、SA3
+**用户决定**：fix C1, C2, W1, SA2；skip C3（理由：暂不在 scope）、W2、S1、SA3；answer Q1, Q2；skip Q3
 
 **本轮修订**：
 - C1：架构.问题一 补主因 vs 辅因划分
 - C2：实现.逻辑二 加异常子节
 - W1：路径补全到包名
 - SA2：实现.逻辑一 补"AI 数轮次"工具能力假设
+
+**Open Questions 答复**：
+- Q1：`auth/session.go` 是新建文件，已在「影响文件」节标 (NEW)
+- Q2：reviewer 误指控——`pkg/x/concurrent.go:88` 已支持并发，否决方案 B 的真实理由改为"配置侵入太大"，已修订
+- Q3：skip——本文档不与 ADR-0007 冲突，是平行决策；不必修订
 
 ---
 
