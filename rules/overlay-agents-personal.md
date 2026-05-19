@@ -11,7 +11,7 @@
 
 ## §1 wiki/ —— 历史记忆
 
-由用户跑 `/project-wiki-distill` 维护。
+由用户跑 `/sediment`（统一沉淀分流命令）维护——命令会自动判断该项内容走 wiki 还是 rules 出口。
 
 ### 触发：会话开始只做存在性检查，3 条 OR 命中时才 Read INDEX
 
@@ -53,11 +53,11 @@ ls <project>/.agents-personal/wiki/
 - 读了 INDEX / pages 后却不引用——既然查了就要在回答里反映出引用关系
 - 无脑把所有 pages 都拉进 context——基线只到 INDEX，pages 仍按需
 - 把 wiki 内容当作绝对真理——它是历史记录，可能被新决策 superseded
-- 试图自己写 wiki——沉淀走 `/project-wiki-distill`，AI 主动写 wiki 容易过度
+- 试图自己写 wiki——沉淀走 `/sediment`，AI 主动写 wiki 容易过度
 
 ### 关于沉淀
 
-如果你发现本会话产生了**值得沉淀**的项目级知识（新设计决策、新约定、新踩过的坑），主动建议用户跑 `/project-wiki-distill`，但不要替用户决定。
+如果你发现本会话产生了**值得沉淀**的项目级知识（新设计决策、新约定、新踩过的坑），主动建议用户跑 `/sediment`——命令会自动识别候选并贴 wiki:project / rules:project 等标签，由用户用短码勾选。不要替用户决定。
 
 ---
 
@@ -107,4 +107,4 @@ ls <project>/.agents-personal/wiki/
 
 ### 关于沉淀
 
-如果本会话产生了**值得沉淀**的项目级指令（新约定、新命令、新踩坑后的标准做法），主动建议用户写进 `.agents-personal/rules/<topic>.md` 并在 AGENTS.md 加一行触发条件。如果只是一次性背景，建议走 wiki 而非 rules。
+如果本会话产生了**值得沉淀**的项目级指令（新约定、新命令、新踩坑后的标准做法），主动建议用户跑 `/sediment`——命令会自动给候选贴 `rules:project` 标签，落地时双写 `.agents-personal/rules/<topic>.md` + AGENTS.md 触发条件。如果只是一次性背景，命令会自动判 `wiki:project` 走历史记忆侧。
