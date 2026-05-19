@@ -3,17 +3,19 @@
 执行 `superpowers:using-git-worktrees` skill 时，本文规则覆盖 skill 内默认值。
 若与 skill 内文冲突，**以本规则为准**。
 
-## 核心原则：worktree 一律落在项目**同级**目录
+## 核心原则：worktree 一律落在项目**同级**目录，扁平命名
 
 > 不再使用 skill 内默认的 `.worktrees/`（项目内）/ `worktrees/`（项目内）/ `~/.config/superpowers/worktrees/<project>/`（用户配置目录）。
 
 **统一路径模板**：
 
 ```
-<project-parent>/<project-name>.worktrees/<branch-name>/
+<project-parent>/<project-name>-<branch-flat>/
 ```
 
-即：跟当前项目根目录 **平级**，新建一个 `<project>.worktrees/` 容器目录，所有该项目的 worktree 都丢这里按分支分子目录。
+- `<project-name>`：当前项目根的 basename（`basename "$(git rev-parse --show-toplevel)"`）
+- `<branch-flat>`：分支名把 `/` 替换为 `_`（`feature/foo` → `feature_foo`）。其他字符不动。
+- 没有"容器目录"——每个 worktree 自己就是 parent 的一个平级兄弟目录
 
 ### 路径推导（粘贴可用）
 
@@ -21,20 +23,22 @@
 project_root="$(git rev-parse --show-toplevel)"
 project_name="$(basename "$project_root")"
 project_parent="$(dirname "$project_root")"
-worktree_container="${project_parent}/${project_name}.worktrees"
-worktree_path="${worktree_container}/${BRANCH_NAME}"
+branch_flat="${BRANCH_NAME//\//_}"     # feature/foo → feature_foo
+worktree_path="${project_parent}/${project_name}-${branch_flat}"
 
-mkdir -p "$worktree_container"
 git worktree add "$worktree_path" -b "$BRANCH_NAME"
 cd "$worktree_path"
 ```
 
+> 注意：`-b` 后传的仍是**原始** `BRANCH_NAME`（含 `/`），git 分支名本身不变；只有**目录名**做扁平化。
+
 ### 示例
 
-| 项目根 | branch | 最终 worktree 路径 |
+| 项目根 | branch (git 里) | 最终 worktree 路径（目录名扁平化）|
 |---|---|---|
-| `/Users/yes365/AI/nocode-evolve` | `feature/foo` | `/Users/yes365/AI/nocode-evolve.worktrees/feature/foo` |
-| `/Users/yes365/Work/Source/fx-tianwen` | `bench-restructure` | `/Users/yes365/Work/Source/fx-tianwen.worktrees/bench-restructure` |
+| `/Users/yes365/AI/nocode-evolve` | `feature/foo` | `/Users/yes365/AI/nocode-evolve-feature_foo` |
+| `/Users/yes365/AI/nocode-evolve` | `bench-restructure` | `/Users/yes365/AI/nocode-evolve-bench-restructure` |
+| `/Users/yes365/Work/Source/fx-tianwen` | `fix/login/redirect` | `/Users/yes365/Work/Source/fx-tianwen-fix_login_redirect` |
 
 ## 为什么要平级而不是项目内
 
@@ -48,6 +52,13 @@ cd "$worktree_path"
 
 平级目录把这些副作用一刀切——主仓里只看得见自己的代码，每个 worktree 也只看得见自己。
 
+## 为什么是扁平 `<project>-<branch>` 而不是容器 `<project>.worktrees/<branch>/`
+
+- **路径短一层**，`cd` / IDE 打开都更直接
+- **shell 补全友好**：在 parent 目录敲 `cd nocode-evolve<TAB>` 能同时列出主仓和所有 worktree，看一眼就知道有哪些分支在工作
+- **不需要为容器目录做 `mkdir -p`**，git worktree add 直接落地
+- 反过来"项目目录被 worktree 包围"也容易识别——同前缀视觉聚拢就够了，不必再多一层目录
+
 ## 覆盖关系（精确指出推翻 skill 内哪些段落）
 
 skill `SKILL.md` 中下列默认行为**全部失效**，按本文执行：
@@ -59,6 +70,7 @@ skill `SKILL.md` 中下列默认行为**全部失效**，按本文执行：
 | 「Ask User」三选一菜单 | 跳过——不询问，直接用平级模板 |
 | 「Safety Verification」对 `.worktrees` / `worktrees` 做 `git check-ignore` 并改 `.gitignore` | 跳过——worktree 已在项目外，不需要 ignore，也不要往项目 `.gitignore` 里加东西 |
 | 「Quick Reference」表中关于 `.worktrees/` / `worktrees/` 的 4 行 | 全部失效，按本文路径模板 |
+| 「Creation Steps」中按 `LOCATION` 分支拼路径的逻辑 | 全部失效，按本文「路径推导」脚本拼 |
 
 **保留**的 skill 内行为：
 
@@ -67,15 +79,25 @@ skill `SKILL.md` 中下列默认行为**全部失效**，按本文执行：
 - 「Report Location」（最终报路径 + 测试状态）
 - 「Common Mistakes」中除「Skipping ignore verification」「Assuming directory location」两条外的其余约束
 
-## 容器目录是否要进 `.gitignore`
+## 关于 `.gitignore`
 
-**不需要**。`<project>.worktrees/` 在项目根**之外**，根本不在仓库扫描范围里，无需 ignore。
+**不需要任何 .gitignore 改动**。worktree 目录在项目根**之外**，根本不在仓库扫描范围里。
 
-> 反过来：**不要**为了"以防万一"往主仓 `.gitignore` 里追加 `../<project>.worktrees/` 之类的条目——`.gitignore` 不支持指向仓库外的路径，加了也无效，只会让人困惑。
+> 不要为了"以防万一"往主仓 `.gitignore` 里追加 `../<project>-*/` 之类的条目——`.gitignore` 不支持指向仓库外的路径，加了也无效，只会让人困惑。
+
+## 目录名冲突怎么办
+
+`<parent>/<project>-<branch_flat>` 已经存在时：
+
+1. 先确认是不是同分支的旧 worktree 残留（`git worktree list` 看注册情况）。
+2. 是残留 → `git worktree remove` 清理后重建。
+3. 是真正的命名冲突（同 parent 下另一项目恰好叫这个名）→ 报告冲突让用户决定，**不要**自己加后缀绕过。
 
 ## 不要
 
 - 在项目内创建 `.worktrees/` 或 `worktrees/`——即便 skill 默认行为这样做，本规则覆盖
 - 用 `~/.config/superpowers/worktrees/`——本规则也不走这条
-- 在 parent 目录已有同名 `<project>.worktrees/` 时硬塞冲突分支——按分支名子目录隔离即可，分支重名时报告冲突让用户决定
-- 多项目共用一个 `worktrees/` 顶层——按项目分组（`<project>.worktrees/`），不要把不同项目的 worktree 混在一起
+- 引入 `<project>.worktrees/<branch>/` 之类的容器层——本规则就是扁平，不要回退到上一版的容器模型
+- 用别的字符替换 branch 里的 `/`（如 `-`、`.`）——统一 `_`，保持可逆识别（`_` 不出现在 git 分支名的常见命名里，回推时不易歧义）
+- 对 git 分支名本身做扁平化——只改目录名，`git worktree add -b` 仍传原始分支名
+- 自己加随机后缀绕过目录名冲突——报告让用户决定
