@@ -108,3 +108,46 @@ ls <project>/.agents-personal/wiki/
 ### 关于沉淀
 
 如果本会话产生了**值得沉淀**的项目级指令（新约定、新命令、新踩坑后的标准做法），主动建议用户跑 `/sediment`——命令会自动给候选贴 `rules:project` 标签，落地时双写 `.agents-personal/rules/<topic>.md` + AGENTS.md 触发条件。如果只是一次性背景，命令会自动判 `wiki:project` 走历史记忆侧。
+
+---
+
+## §3 删除护栏 —— `.agents-personal/` 下任何文档删除前必须用户二次确认
+
+`.agents-personal/` 下的内容（`AGENTS.md` / `rules/*.md` / `wiki/INDEX.md` / `wiki/pages/*.md` 等）是用户花时间沉淀的项目历史记忆 + 当前指令，**不可恢复**（gitignored, 没 git history 兜底）. agent 误删 = 用户工作丢失.
+
+### 触发：即将 rm / mv / 覆盖写 `.agents-personal/` 下任何文件或子目录
+
+具体包括但不限于:
+
+- `Bash` 跑 `rm` / `mv` / `find ... -delete` 涉及 `.agents-personal/` 路径
+- `Write` 工具覆盖写 `.agents-personal/` 下已存在文件 (因为 Write 会整文件覆盖)
+- `Edit` 工具把 `.agents-personal/` 下文件内容删空 / 大段抹除 (5 行以上删除)
+- subagent / Agent dispatch 时, 给 subagent 任务里含上述操作
+
+不触发: `Read` / `cat` / `grep` / `ls` 等纯读取——不会丢内容.
+
+### 标准动作: 停手 → 描述 → 等明确确认
+
+1. **停下来**, 不直接执行
+2. **明确告知用户**: 将要删除什么具体文件 / 内容范围, 删除原因是什么, 影响什么 (例: "将删 `wiki/pages/260512-redis-decision.md`, 因为内容跟新决策矛盾, 删后该决策上下文不可恢复")
+3. **等用户明确确认**——口头 "ok / 删 / 去吧 / 确认"等都可以, 但**必须**有这一轮回复, 不能 agent 自己脑补"用户应该同意"
+4. 用户确认后再执行
+
+### 例外: 用户主动指示删时仍要回显
+
+即使用户主动说"删 `.agents-personal/wiki/pages/<file>`"——视为已确认, 可以直接删, **但要在删之前回显具体路径**:
+
+> "即将 rm `.agents-personal/wiki/pages/260512-redis-decision.md` (2.3KB, 含 Redis 选型决策上下文). 确认?"
+
+回显的目的不是再要一次确认 (用户已说删), 是给用户最后一刻的"等一下别删"窗口. 用户没继续否定就执行.
+
+### 不要
+
+- 不要在 sediment / sow 等沉淀命令里"顺手"清理旧 wiki / 旧 rule——除非命令自己定义了清理动作且用户已 review 过短码勾选
+- 不要为了"重新组织" `.agents-personal/` 而批量 mv / rm——结构改动也是删除等价物, 同等待遇
+- 不要假设"反正 git mv 不算删除"——`.agents-personal/` 是 gitignored, mv 实质等同于 delete + create
+- 不要因为"文件过时 / 跟新决策矛盾"就自己拍板删——历史记忆有"被 superseded 但仍可参考"的价值, 由用户判断该删还是该加 `superseded by ...` 标记保留
+
+### 对 `$USER_WIKI_PATH` 跨项目 advisor 的同等护栏
+
+`/sediment` 的 `wiki:cross-project advisor` 出口写到 `$USER_WIKI_PATH/`——同样是用户的不可恢复知识库, 受同等护栏保护. 本节"`.agents-personal/`"凡处一律推广到 `$USER_WIKI_PATH/`.
