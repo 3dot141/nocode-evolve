@@ -36,6 +36,7 @@
 **关键约束**:
 
 - 实现 5 子节按维度拆 (影响 / 接口设计 / 业务流 / 异常 / 单测设计), 不再按"逻辑 X 三件套"分块. **业务流统一用 BF1/BF2/... 编号**, 异常表与单测节通过 BF 编号交叉引用, reviewer 读异常表能找到对应业务流.
+- 「实现.接口设计」按面分 3 段 (按需): **对外 API** (HTTP/RPC, 前后台对接) / **数据模型** (DB schema + 多表关联画 ER 图) / **内部接口** (类签名 + 类图). 简单设计可省任一段; 涉及前后台对接必有对外 API 段, 涉及多表关联必画 ER 图.
 - 「架构.文本总结」必须有 — 把图的视觉信息文字化, reviewer 不该靠看图猜架构.
 - 「实现.业务流」必须伪代码 (function/method 签名 + 函数体行), 不是文件结构树、不是层次列表、不是散文; 文件层次属「影响」节.
 - 「实现.单测设计」按业务流主路径+异常路径列 case, **不写代码** (不写 `@Test` / mock setup / assertion 语法); TDD 步骤化清单留给 plan.
@@ -87,13 +88,78 @@ ASCII 树 + (改)/(NEW) + 编号要点. **路径完整到包名**, 不缩略. �
 
 #### 接口设计
 
-新引入或修改的类 / 模块的对外暴露面. 包含:
+新引入或修改的**对外暴露面**, 按面分 3 段 (按需展开, 简单设计可省任一段):
 
-- **关键方法签名**: public 方法名 + 参数 + 返回值 + 异常声明
-- **关键字段 / 状态**: 公开字段 / 全局状态 / 配置项
-- **类图 (多类协作时画)**: ASCII 类图, 标继承 / 依赖 / 聚合关系
+##### 对外 API (前后台对接 / 跨服务)
 
-什么时候画类图: 涉及 ≥3 个新类协作 / 有继承层次 / 有 Visitor / Strategy / Observer 等需要静态视图才说清的 pattern. 单类或纯函数式逻辑不画.
+HTTP / RPC / GraphQL 接口, 给前端 / 移动端 / 上游服务调. 用表格式列出:
+
+| Method | Path | Request | Response | 错误码 | 备注 |
+|---|---|---|---|---|---|
+| POST | `/sso/callback` | `samlResponse: string, relayState: string` (form) | 302 + Set-Cookie JWT | 401 SAML 验证失败 / 302 fallback | 涉及 BF1 |
+| POST | `/mfa/verify` | `{userId, code}` | `{success: bool, token?: string}` | 401 错码 / 423 锁定 | 涉及 BF4 |
+
+或 OpenAPI / proto 片段, 但只列**关键端点**——不抄全 spec.
+
+**硬规则**:
+- 涉及**前后台对接 / 跨服务调用**必须有本段 (业务流伪代码里出现的 endpoint 必须在此汇总)
+- 鉴权方式必须标 (JWT cookie / Bearer / API key)
+- 关键错误码必须列 (≠ "see error response")
+- 详细 OpenAPI 完整 spec → 留给独立 API doc, 本段只列骨架
+
+纯内部库 / 无对外接口的重构 → 本段可省, 一行写"无对外 API 变更".
+
+##### 数据模型 (DB schema + 表关联)
+
+DDL + 表关联视图. 单表用 `CREATE TABLE` 列字段 + 索引 + 约束:
+
+```sql
+CREATE TABLE user_identities (
+    id              BIGSERIAL PRIMARY KEY,
+    user_id         BIGINT NOT NULL REFERENCES users(id),
+    idp_provider    VARCHAR(64) NOT NULL,
+    external_id     VARCHAR(255) NOT NULL,
+    UNIQUE (idp_provider, external_id),
+    UNIQUE (user_id, idp_provider)
+);
+```
+
+多表关联时**必须画 ER 图** (ASCII), 让 reviewer 一眼看清外键关系:
+
+```
+   users                  user_identities                organizations
++-----------+         +--------------------+          +---------------+
+| id (PK)   |◄────────┤ user_id (FK)       │          | id (PK)       |
+| email     |    1:N  | idp_provider       │          | name          |
+| name      |         | external_id        │      ┌──►| sso_enabled   |
++-----------+         | organization_id(FK)├──────┘   +---------------+
+                      | status             │  N:1
+                      +--------------------+
+                      UNIQUE(idp_provider, external_id)
+                      UNIQUE(user_id, idp_provider, organization_id)
+```
+
+**硬规则**:
+- 涉及**多表外键关联**必须有 ER 图; 单表 schema 可不画
+- 关键索引 + UNIQUE 约束必须标 (隐式约束容易被 reviewer 漏看)
+- 迁移涉及 breaking change (改类型 / 删字段) 必须显式标记 + 在「方案选型」加一项 Q (rollback 策略)
+- 详细 migration 脚本 (Flyway / Liquibase) → 出现在「影响」节文件树, 不抄进本段
+
+纯内存计算 / 无 DB 变更的重构 → 本段可省.
+
+##### 内部接口 (类 / 模块签名 + 类图)
+
+新引入或修改的类 / 模块的 public 方法签名 + 关键字段 / 状态 + 类图.
+
+```java
+class SamlHandler {
+    Response handleSsoInit(String orgId, String relayState);
+    Response handleSsoCallback(String samlResponse, String relayState);
+}
+class JwtIssuer  { String issue(User user); }
+```
+
+**类图触发**: 涉及 ≥3 个新类协作 / 有继承层次 / 有 Visitor / Strategy / Observer 等需要静态视图才说清的 pattern. 单类或纯函数式逻辑不画.
 
 类图示例:
 
@@ -262,6 +328,7 @@ last_updated: YYMMDD   # 实施中修订时更新
 - 「背景」必含主因/辅因划分
 - 「架构.文本总结」必须有 — 把图的视觉信息文字化, reviewer 不该靠看图猜架构
 - 「实现」5 子节顺序固定: 影响 → 接口设计 → 业务流 → 异常 → 单测设计; 子节名不可改
+- 「实现.接口设计」按面分 3 段 (按需): 对外 API / 数据模型 / 内部接口; 涉及前后台对接必有「对外 API」段, 涉及多表关联必有「数据模型.ER 图」
 - 「实现.业务流」必须 BF 编号 + 伪代码 + 每行 `//` 注释
 - 「实现.异常与失败模式」表必须含 "所属 BF" 列, 与业务流编号对齐
 - 「实现.单测设计」必须按 BF 分组 + Given/When/Then 三行/case, 不写代码

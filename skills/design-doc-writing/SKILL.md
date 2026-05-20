@@ -193,7 +193,10 @@ design-doc 是 reviewer challenge **设计**是否合理的层级，不需要 re
 ### design-doc 「实现」节止于
 
 - **影响**：多模块 ASCII 树 + (改)/(NEW) + ①②③ 改动要点。**不是**散文描述、**不是**长文件列表
-- **接口设计**：public 方法签名 / 关键字段 / 对外状态；多类协作时加 ASCII 类图
+- **接口设计**：按面分 3 段 (按需展开)
+  - **对外 API** (前后台对接 / 跨服务): HTTP / RPC / GraphQL endpoint 表 (Method / Path / Request / Response / 错误码); 涉及前后台对接必有本段
+  - **数据模型** (DB schema + 表关联): CREATE TABLE + 索引/UNIQUE 约束; 多表外键关联必画 ER 图
+  - **内部接口** (类 / 模块): public 方法签名 / 关键字段 / 对外状态; 多类协作时加 ASCII 类图
 - **业务流**：BF1/BF2/... 编号，每条 `function`/`method` 签名 + 函数体行，主路径 + 异常路径，每行 `//` 注释。**不是**文件结构树、**不是**层次列表、**不是**散文
 - **异常与失败模式**：表格含「所属 BF / 场景 / 触发 / 处理 / 上抛吞」5 列
 - **单测设计**：按 BF 分组，每条 case 用 Given/When/Then 三行；**不写代码** (不写 `@Test` / mock setup / assertion 语法)

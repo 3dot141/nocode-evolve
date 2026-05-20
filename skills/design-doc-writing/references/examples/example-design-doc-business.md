@@ -153,7 +153,124 @@ monolith/web/SessionFilter.java               (删)   迁移到 api-gateway/JwtA
 
 ### 接口设计
 
-**关键类签名**:
+**对外 API** (前后台对接 + WorkOS 回调):
+
+| Method | Path | Request | Response | 错误码 | 备注 |
+|---|---|---|---|---|---|
+| GET  | `/login`              | `?email=...` (query)                       | 200 HTML (banner 若 WorkOS DOWN)            | —                                          | LoginController.decideLoginPath, BF3 |
+| GET  | `/sso/init`           | `orgId, relayState` (query)                | 302 → IdP SAML AuthN URL                    | 400 缺参数                                   | SamlHandler.handleSsoInit |
+| POST | `/sso/callback`       | `SAMLResponse, RelayState` (form)          | 302 → 原页 (Set-Cookie JWT) / 302 MFA / 绑定 | 401 SAML 错 / 302 fallback                  | BF1 |
+| POST | `/sso/bind`           | `{tempToken, password}` (JSON)             | 200 `{success: true}` + Set-Cookie JWT      | 401 密码错 / 409 已绑 / 410 token 过期       | BF2 |
+| POST | `/mfa/enroll`         | (JWT cookie 鉴权)                          | 200 `{otpauthQrUrl, backupCodes: string[]}` | 401 未认证 / 409 已 enroll                   | BF4 |
+| POST | `/mfa/verify`         | `{code}` (JWT cookie 鉴权)                 | 200 `{verified: true}` + new JWT            | 401 错码 / 423 锁 30 min                     | BF4 |
+| POST | `/sso/slo-webhook`    | WorkOS HMAC 签名 + `{jti, remainingExpSec}` | 204                                         | 401 签名错                                   | WorkOS 推, 加 blocklist, BF3 |
+| GET  | `/bind/rollback`      | `?token=...` (邮件链接, 24h TTL)          | 200 HTML "已回滚"                            | 410 链接过期                                 | BF2 误绑回滚 |
+
+鉴权: 已登录走 `JWT` cookie (HttpOnly, Secure, SameSite=Strict); SLO webhook 用 WorkOS HMAC 签名头校验.
+
+错误响应 envelope 统一: `{error: {code: string, message: string, traceId: string}}`.
+
+完整 OpenAPI spec 在 `auth-service/openapi.yaml`, 本段只列骨架.
+
+**数据模型** (DB schema + 表关联):
+
+ER 图:
+
+```
+       users                              user_identities                       organizations
++------------------+                +------------------------+              +------------------+
+| id (PK)          |◄───────────────┤ user_id (FK NOT NULL)  │              | id (PK)          |
+| email UNIQUE     |       1:N      | idp_provider           │              | name             |
+| password_hash    |                | external_id            │     N:1      | domain UNIQUE    |
+| created_at       |                | organization_id (FK)   ├─────────────►| sso_enabled bool |
++------------------+                | status                 │              | created_at       |
+       ▲ ▲ ▲                        | created_at             │              +------------------+
+       │ │ │                        | last_used_at           │
+       │ │ │                        +------------------------+
+       │ │ │                        UNIQUE(idp_provider, external_id)
+       │ │ │                        UNIQUE(user_id, idp_provider, organization_id)
+       │ │ │
+       │ │ │ 1:1
+       │ │ └──►  mfa_secrets                          backup_codes
+       │ │      +-----------------------------+      +------------------------------+
+       │ │      | user_id (PK + FK)           |      | id (PK)                      |
+       │ │      | encrypted_secret (KMS)      |      | user_id (FK NOT NULL)        |
+       │ │      | algorithm "TOTP_SHA1"       |      | code_hash (bcrypt cost=12)   |
+       │ │      | created_at                  |      | consumed_at (NULL = active)  |
+       │ │      +-----------------------------+      | created_at                   |
+       │ │              ▲                            +------------------------------+
+       │ └──────1:N─────┘                                       ▲
+       │                                                        │
+       │                                                  1:N (per user, 10 codes)
+       │
+       │ 1:N           auth_events
+       └──────────────►+------------------------------+
+                       | id (PK)                      |
+                       | user_id (FK, NULLABLE)       |  partition by month
+                       | event_type                   |  (保留 1 年)
+                       | status / reason              |
+                       | ip / user_agent / created_at |
+                       +------------------------------+
+```
+
+关键关系:
+
+- `users` 1:N `user_identities` — 一个用户可绑多个 IdP 身份 (Okta + Azure AD 跨企业各算一条)
+- `user_identities` N:1 `organizations` — 同一 user 在不同企业可有独立绑定; 双 UNIQUE 兜底防误绑 (见 Q2)
+- `users` 1:1 `mfa_secrets` — 一个用户最多一个 TOTP secret; user_id 既是 PK 也是 FK
+- `users` 1:N `backup_codes` — enrollment 时生成 10 条; partial index 仅索引 active (`WHERE consumed_at IS NULL`) 减小体积
+- `users` 1:N `auth_events` — 审计日志; user_id 可空 (SAML 签名失败时还没确认 user)
+
+DDL:
+
+```sql
+CREATE TABLE user_identities (
+    id              BIGSERIAL PRIMARY KEY,
+    user_id         BIGINT NOT NULL REFERENCES users(id),
+    idp_provider    VARCHAR(64) NOT NULL,            -- "workos:okta" / "workos:azure_ad"
+    external_id     VARCHAR(255) NOT NULL,           -- IdP 给的稳定 user id
+    organization_id BIGINT REFERENCES organizations(id),
+    status          VARCHAR(32) NOT NULL DEFAULT 'active',
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    last_used_at    TIMESTAMPTZ,
+    UNIQUE (idp_provider, external_id),
+    UNIQUE (user_id, idp_provider, organization_id)
+);
+
+CREATE TABLE mfa_secrets (
+    user_id            BIGINT PRIMARY KEY REFERENCES users(id),
+    encrypted_secret   BYTEA NOT NULL,                -- KMS encrypted
+    algorithm          VARCHAR(32) NOT NULL DEFAULT 'TOTP_SHA1',
+    created_at         TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE backup_codes (
+    id          BIGSERIAL PRIMARY KEY,
+    user_id     BIGINT NOT NULL REFERENCES users(id),
+    code_hash   VARCHAR(255) NOT NULL,                -- bcrypt cost=12
+    consumed_at TIMESTAMPTZ,                          -- NULL = active
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX idx_backup_codes_user_active ON backup_codes(user_id) WHERE consumed_at IS NULL;
+
+CREATE TABLE auth_events (
+    id          BIGSERIAL PRIMARY KEY,
+    user_id     BIGINT REFERENCES users(id),          -- 可空 (SAML 签名失败时还没确认 user)
+    event_type  VARCHAR(64) NOT NULL,
+    status      VARCHAR(16) NOT NULL,                 -- success | failure
+    reason      TEXT,
+    ip          INET,
+    user_agent  TEXT,
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX idx_auth_events_user_time ON auth_events(user_id, created_at DESC);
+CREATE INDEX idx_auth_events_type_time ON auth_events(event_type, created_at DESC);
+-- partition by month, 保留 1 年
+```
+
+迁移: Flyway `V2026_04_01__sso_mfa_schema.sql` 单脚本, `users` 表零修改 100% 向后兼容; 回滚 `V2026_04_01.rollback.sql` 删 4 新表 (生产首次部署前确认).
+
+**内部接口** (类签名 + 类图):
 
 ```java
 class SamlHandler {
@@ -178,38 +295,7 @@ class AuthEventLogger {
 }
 ```
 
-**关键 schema**:
-
-```sql
-CREATE TABLE user_identities (
-    id              BIGSERIAL PRIMARY KEY,
-    user_id         BIGINT NOT NULL REFERENCES users(id),
-    idp_provider    VARCHAR(64) NOT NULL,            -- "workos:okta" / "workos:azure_ad"
-    external_id     VARCHAR(255) NOT NULL,           -- IdP 给的稳定 user id
-    organization_id BIGINT REFERENCES organizations(id),
-    status          VARCHAR(32) NOT NULL DEFAULT 'active',
-    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    last_used_at    TIMESTAMPTZ,
-    UNIQUE (idp_provider, external_id),
-    UNIQUE (user_id, idp_provider, organization_id)
-);
-
-CREATE TABLE auth_events (
-    id          BIGSERIAL PRIMARY KEY,
-    user_id     BIGINT REFERENCES users(id),          -- 可空 (SAML 签名失败时还没确认 user)
-    event_type  VARCHAR(64) NOT NULL,
-    status      VARCHAR(16) NOT NULL,                 -- success | failure
-    reason      TEXT,
-    ip          INET,
-    user_agent  TEXT,
-    created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-CREATE INDEX idx_auth_events_user_time ON auth_events(user_id, created_at DESC);
-CREATE INDEX idx_auth_events_type_time ON auth_events(event_type, created_at DESC);
--- 保留 1 年, partition by month
-```
-
-**类图** (auth-service 多模块协作):
+类图 (auth-service 多模块协作):
 
 ```
 +-------------+   +-------------+   +-------------+
@@ -228,7 +314,7 @@ CREATE INDEX idx_auth_events_type_time ON auth_events(event_type, created_at DES
 +-------------+   | JwtValidator  |◄── api-gateway
        │          +---------------+      (下游只信 JWT)
        ▼
-+---------------+         共享：
++---------------+         共享:
 | WorkOsHealth- |    +-------------------+
 | Checker       |◄───| AuthEventLogger   |  所有上述类调
 +---------------+    +-------------------+
