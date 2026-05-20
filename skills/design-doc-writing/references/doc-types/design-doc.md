@@ -1,133 +1,234 @@
-# Design Doc（Detailed Design Document）
+# Design Doc (Detailed Design Document)
 
-详细设计文档——回答 **"how will we build this?"**，工程团队实施前的 alignment。
+详细设计文档——回答 **"how will we build this?"**, 工程团队实施前的 alignment.
 
 ## 何时用 Design Doc
 
 - 实施前对一个 feature / system / 改造进行详细设计
-- 工程团队内部 alignment（不像 RFC 那样跨团队）
+- 工程团队内部 alignment (不像 RFC 那样跨团队)
 - 需要在写代码前讨论 trade-offs
-- **不是** 单一架构决策（用 ADR）
-- **不是** 产品需求（用 PRD）
+- **不是** 单一架构决策 (用 ADR)
+- **不是** 产品需求 (用 PRD)
 
 ## 骨架
 
-线性递进，无元结构标签。详细写作要点见 SKILL.md《写作准则》。
+线性递进, 无元结构标签. 详细写作要点见 SKILL.md《写作准则》.
 
 ```
 ## 背景            (核心痛点 + 主因/辅因划分)
-## 目标            (本 doc 要达成什么)
+## 目标            (本 doc 要达成什么, 可量化最好)
 ## 架构
-### 架构图         (ASCII，可选)
-### 流程图         (ASCII，可选)
-### 问题拆解
-#### 问题一 <名字>
-说明：...
-方案对比：...
-结论：...
-#### 问题二 ...
-### 架构总结       (把各问题结论串成整体决策一段话)
+### 架构图         (ASCII, 可选 — 组件静态依赖)
+### 流程图         (ASCII, 可选 — 单一链路串行)
+### 时序图         (ASCII, 可选 — 多角色异步/RPC 协作)
+### 文本总结       (一段话讲整体架构决策, 承接「实现」)
 ## 实现
-### 影响文件
-   <多模块 ASCII 树，文件后标 (改)/(NEW) + ① ② ③ 改动要点>
-### 逻辑一 <名字>  (默认对应 架构.问题一)
-**业务流**       (类名 + 伪代码 主路径)
-**关键契约**     (public 方法签名 / 字段 / 状态)
-**异常与失败模式**  (本逻辑特有异常，含场景/触发/处理/上抛吞)
-### 逻辑二 ...
+### 影响            (多模块 ASCII 树 + (改)/(NEW) + ①②③ 改动要点)
+### 接口设计        (关键签名/字段/状态 + 类图 [多类协作时画])
+### 业务流          (按 BF1/BF2/... 编号, 每条 = 类名 + 伪代码 主路径+异常路径, 每行 // 注释)
+### 异常与失败模式   (表: 所属 BF / 场景 / 触发 / 处理 / 上抛吞)
+### 单测设计        (按 BF 分组列 case, Given/When/Then 三行/case)
+## 方案选型         (重大决策的沟通记录, 每项 Q→选项→定 三行)
+## 其他
+### 部署            (灰度策略 / 回滚预案 / 监控指标; 详细 runbook 留给 ops doc)
 ```
 
-**关键约束**：
+**关键约束**:
 
-- 「架构.问题拆解」每个问题对应「实现.逻辑 X」一条，命名引用；允许"细节性逻辑"独立成节但须在节首说明
-- 「实现.逻辑 X」内部并列三子节（业务流 / 关键契约 / 异常与失败模式）；reviewer 评估单个逻辑不跳节
-- 不再有 TL;DR / Non-Goals 必填 / Cross-cutting Checklist 必填 / 全局 Alternatives / 全局 Trade-offs 等硬约束——相关信息已分散到各问题的"方案对比 + 结论"
-- 「实现」节止于伪代码 + 公共契约 + 异常；class 内部、TDD 步骤、具体 catch 块写法**留给 plan**
+- 实现 5 子节按维度拆 (影响 / 接口设计 / 业务流 / 异常 / 单测设计), 不再按"逻辑 X 三件套"分块. **业务流统一用 BF1/BF2/... 编号**, 异常表与单测节通过 BF 编号交叉引用, reviewer 读异常表能找到对应业务流.
+- 「架构.文本总结」必须有 — 把图的视觉信息文字化, reviewer 不该靠看图猜架构.
+- 「实现.业务流」必须伪代码 (function/method 签名 + 函数体行), 不是文件结构树、不是层次列表、不是散文; 文件层次属「影响」节.
+- 「实现.单测设计」按业务流主路径+异常路径列 case, **不写代码** (不写 `@Test` / mock setup / assertion 语法); TDD 步骤化清单留给 plan.
+- 「方案选型」每项 Q→选项→定 三行紧凑, 不展开 trade-off 长论证; 需要详细论证升格写 ADR.
+- 「其他.部署」只写策略 (灰度比例 / 回滚条件 / 关键监控指标), 具体命令 / K8s manifest / Ansible playbook 留给 ops doc 或 plan.
 
 ## 各节写作要点
 
 ### 背景
 
-回答**为什么这件事值得做**。列具体痛点，**显式标出主因 vs 辅因**——不要平铺 5 条 bullet 让读者自己排序。
+回答**为什么这件事值得做**. 列具体痛点, **显式标出主因 vs 辅因**——不要平铺 5 条 bullet 让读者自己排序.
 
-不要复述用户原 prompt；不要写"现状描述"流水账。痛点要具体到 file path / metric / bug ID / 行号 / 真实场景。
+不要复述用户原 prompt; 不要写"现状描述"流水账. 痛点要具体到 file path / metric / bug ID / 行号 / 真实场景.
 
 ### 目标
 
-本 doc 要达成的终态。可量化最好（"P99 < 200ms"、"配置时间从 30 min 降到 5 min"）。
+本 doc 要达成的终态. 可量化最好 ("P99 < 200ms"、"配置时间从 30 min 降到 5 min").
 
-不允许"灵活、可扩展、易维护"凑数。
+不允许"灵活、可扩展、易维护"凑数.
 
 ### 架构
 
-#### 架构图 / 流程图
+#### 架构图 / 流程图 / 时序图
 
-可选。ASCII 形式。**总分两层**：
+可选. ASCII 形式. **总分两层**:
 
-- **总图**（本节）：聚焦组件关系（架构图）/ 主链路（流程图），让 reviewer 30 秒 grasp 全局。**组件 ≤ 7，流程节点 ≤ 10**——超了说明本层过载，应该把细节下沉到子图
-- **子图**（在「问题 X」节下）：单一问题如果有局部交互细节 / 状态机 / 多分支，纯文字读不下去时画——见下方「问题拆解」节
+- **总图** (本节): 聚焦组件关系 (架构图) / 主链路 (流程图) / 跨角色交互 (时序图), 让 reviewer 30 秒 grasp 全局. **组件 ≤ 7, 流程节点 ≤ 10, 时序角色 ≤ 5**——超了说明本层过载, 拆细节到子图.
+- **子图** (在「实现.业务流.BFx」节下): 单条业务流如果有局部状态机 / 多分支 / 详细 sequence, 纯文字读不下去时画.
 
-简单设计可整个跳过两层。
+三种图选用:
 
-#### 问题拆解
+- **架构图** — 组件间静态依赖. 例: `[Gateway] → [Auth] → [Service] → [DB]`. 触发: 新增 / 调整模块边界
+- **流程图** — 单一请求从输入到输出的串行决策. 例: `input → 校验 → 路由 → 处理 → 输出`. 触发: 多分支判断 / 状态转换
+- **时序图** — 多角色随时间的消息往复. 例: 客户端 / 服务端 / DB 的请求-响应序列. 触发: 异步 / RPC / 跨服务 / 多角色协作
 
-**核心节**。把架构层的设计决策拆成 N 个具体问题，每个问题独立讨论：
+简单设计可整个跳过三层.
 
-```
-#### 问题一 <名字>
-说明：这是什么问题、为什么需要回答
-方案对比：方案 A / B / C 的关键差异（trade-off）
-结论：选 X，因为 Y（具体否决其他方案的理由）
-**子图（如需）**：本问题的局部状态机 / 子流程 / 局部交互
-```
+#### 文本总结
 
-**子图触发判据**（不强制——简单问题不画）：
+一段话把图的视觉信息**文字化成整体决策**, 承接「实现」节. 不要让 reviewer 自己从图里推断架构.
 
-- 问题"结论"段写完后回看，reviewer 要在脑里画一个状态机或 sequence 才能懂 → 加子图
-- 问题涉及 3+ 张力同时拍板（如"session + SLO + fallback"合并） → 加子图
-- 单问题方案对比涉及多分支跳转（A 通向 X、B 通向 Y） → 加子图
-
-反之：单 schema 表 / 单纯文字论证 / 单层算法选择 → 不画
-
-数量取决于复杂度——简单设计 1-2 个，复杂系统 4-6 个。**3 个以上就该 review 是否过度拆**。
-
-#### 架构总结
-
-一段话把各问题的结论串成整体决策："基于问题 1-N 的结论，整体架构为……"。承接「实现」节。
+格式建议: "整体架构为 X. 关键组件 A/B/C 各负责 Y/Z/W, 通过 [机制 P] 协作. 核心约束: [一两条]."
 
 ### 实现
 
-#### 影响文件
+#### 影响
 
-ASCII 树 + (改)/(NEW) + 编号要点。**路径完整到包名**，不缩略。同一文件多改动用 ① ② ③ 编号。详见 SKILL.md《影响文件节硬格式》。
+ASCII 树 + (改)/(NEW) + 编号要点. **路径完整到包名**, 不缩略. 同一文件多改动用 ① ② ③ 编号. 详见 SKILL.md《影响节硬格式》.
 
-#### 逻辑 X
+#### 接口设计
 
-每条逻辑并列 3-4 子节：
+新引入或修改的类 / 模块的对外暴露面. 包含:
 
-- **业务流（必须是伪代码）**：用 `function`/`method` 签名 + 函数体行写出主路径 + 异常路径。停在"足以让 reviewer 判断设计合理"的粒度，不进 class 内部细节。**不是文件结构树、不是层次列表、不是散文描述**——文件层次属于「影响文件」节。
-- **关键契约**：新引入或修改的类的 public 方法签名、关键字段、对外状态。
-- **异常与失败模式**：本逻辑特有异常的表格——场景 / 触发条件 / 处理方式 / 上抛 or 吞。
-- （仅细节性逻辑）**实现选择**：非显然的实施层决策（用了 visitor / Strategy / pattern X），1-3 段说选了什么 + 为什么。超 3 段就升格到架构.问题拆解。
+- **关键方法签名**: public 方法名 + 参数 + 返回值 + 异常声明
+- **关键字段 / 状态**: 公开字段 / 全局状态 / 配置项
+- **类图 (多类协作时画)**: ASCII 类图, 标继承 / 依赖 / 聚合关系
 
-业务流伪代码示例（**每行必带 `//` 注释**——小黄鸭式讲解，不假设读者懂）：
+什么时候画类图: 涉及 ≥3 个新类协作 / 有继承层次 / 有 Visitor / Strategy / Observer 等需要静态视图才说清的 pattern. 单类或纯函数式逻辑不画.
+
+类图示例:
 
 ```
-function callLlmForTurn(messages, ctx):              // 完成一轮 LLM 对话，messages 已含历史
++------------------+        +---------------------+
+|  AgentLoop       |--uses->| ContentSanitizer    |
++------------------+        +---------------------+
+        |                            ^
+        | throws                     | implements
+        v                            |
++------------------+         +---------------------+
+| OutputViolation- |         | NinesContent-       |
+| Exception        |         | Sanitizer           |
++------------------+         +---------------------+
+```
+
+#### 业务流
+
+按 **BF1 / BF2 / ...** 编号, 每条 BF 对应一条核心业务路径. 每条业务流用 `function`/`method` 签名 + 函数体行写出主路径 + 异常路径. 停在"足以让 reviewer 判断设计合理"的粒度, 不进 class 内部细节 (后者留给 plan).
+
+**业务流伪代码硬规则**:
+
+- 必须 `function` / `method` 签名 + 函数体行 (每行一句意图)
+- **每行都要有 `//` 注释** — 小黄鸭式讲解, 不允许"显然". 简单流程注释可短, 复杂逻辑 / 数字阈值必须讲来源
+- 命名用真实类名 / 方法名 (如 `AgentLoop.callLlmForTurn`), 不用 placeholder
+- 涉及数字 / 阈值时注释里讲清来源 (如 `// HOLD_SIZE=64, 来源: 最长入口点 30 字符 + chunk 容差`)
+
+格式示例:
+
+```markdown
+**BF1 — LLM 一轮对话含 sanitizer 重试**
+
+function AgentLoop.callLlmForTurn(messages, ctx):        // 完成一轮 LLM 对话, messages 已含历史
     try:
-        return callLlmOnce(messages)                 // 正常调 LLM 一次返回响应
-    catch OutputViolationException as e:             // 业务异常：sanitizer 检测到 DSL 泄漏抛的
-        log.warn("DSL violation: {}", e.type)        // 记录违规类型，便于事后追溯
-        messages.add(buildCorrection(e.releasedTail)) // 把"已流出尾部"塞进新一轮 prompt
-                                                      // 让 LLM 知道用户屏幕停在哪、好接着写
-        return callLlmOnce(messages)                 // 重新调一次 LLM，让它改写
-    catch (ReasoningLengthExceeded | TimeOut) as e:  // 系统异常（长度超 / 超时）
-        throw e                                       // 不在本逻辑 scope，上抛给外层处理
+        return callLlmOnce(messages)                     // 正常调 LLM 一次返回响应
+    catch OutputViolationException as e:                 // 业务异常: sanitizer 检测到 DSL 泄漏抛的
+        log.warn("DSL violation: {}", e.type)            // 记录违规类型, 便于事后追溯
+        messages.add(buildCorrection(e.releasedTail))    // 把"已流出尾部"塞进新一轮 prompt
+                                                          // 让 LLM 知道用户屏幕停在哪、好接着写
+        return callLlmOnce(messages)                     // 重新调一次 LLM, 让它改写
+    catch (ReasoningLengthExceeded | TimeOut) as e:      // 系统异常 (长度超 / 超时)
+        throw e                                           // 不在本逻辑 scope, 上抛给外层处理
+
+**BF2 — sanitizer 滑窗扫描**
+...
 ```
 
-数字 / 阈值出现在伪代码或注释里时，必须**注明来源**（如 `// HOLD_SIZE=64，来源：最长入口点 30 字符 + chunk 容差`），不允许 magic number。
+跨多业务流共享的横切逻辑 (如"权限校验在所有调用都先跑") — 独立成 BF, 命名暗示其性质 (如 BF0 — 权限预检).
 
-跨多逻辑共享的异常（如"权限不足在所有调用都可能"）——单开一条「逻辑：权限校验」处理，归到细节性逻辑。**不立"全局异常基线"节**。
+#### 异常与失败模式
+
+汇总表, 含 **所属 BF** 列, 让 reviewer 从业务流追到异常:
+
+| BF | 异常 | 触发场景 | 处理方式 | 上抛 or 吞 |
+|---|---|---|---|---|
+| BF1 | OutputViolationException | sanitizer 检测到 DSL 入口点 | log + 注入 correction prompt 重试一次 | 吞 (重试成功) / 上抛 (重试仍违规) |
+| BF1 | ReasoningLengthExceeded | LLM 上下文超长 | 不处理 | 上抛 |
+| BF2 | SanitizerOverflowException | 滑窗满 + 入口点匹配 | 截留尾部, 抛 OutputViolation 让 BF1 处理 | 上抛 |
+
+跨多 BF 共享的异常 (如"网络超时所有调用都可能") — 加单独一行, "所属 BF" 列填 "BF1-BF3 共享".
+
+#### 单测设计
+
+按 BF 分组, 每组下列 case. 每条 case 用 **Given / When / Then** 三行写, **不写代码** (不写 `@Test` annotation / mock setup / assertion 语法):
+
+```markdown
+**BF1 — LLM 一轮对话含 sanitizer 重试**
+
+- **case 1.1 主路径**
+  - Given: messages 已含历史, ctx 正常, LLM 输出不含 DSL 入口点
+  - When: callLlmForTurn 被调
+  - Then: 返回 LLM 响应, callLlmOnce 被调 1 次
+
+- **case 1.2 DSL 违规重试成功**
+  - Given: messages 已含历史, LLM 首次输出含 `Query.from(`, 第二次输出干净
+  - When: callLlmForTurn 被调
+  - Then: callLlmOnce 被调 2 次, 第二次 messages 多了 buildCorrection 内容, 返回干净响应
+
+- **case 1.3 DSL 违规重试仍失败**
+  - Given: LLM 两次输出都含 DSL 入口点
+  - When: callLlmForTurn 被调
+  - Then: 第二次 OutputViolationException 上抛
+```
+
+颗粒度准则:
+
+- **必须覆盖**: 每条 BF 的主路径 + 每个异常分支 (异常表里出现的每行)
+- **可省**: 内部分支细节 (private 方法的 if/else)
+- **不写代码**: 不写 `@Test` / mock 工具具体 API / assertion 语法 — TDD 步骤化清单 (先写哪个 test 再写哪段实现) 留给 plan
+
+### 方案选型
+
+把设计过程中的**重大决策**用 Q→选项→定 三行模板沉淀, 给 reviewer 看"为什么是这个方案而不是别的". 不在这里展开 trade-off 长论证, 只留**沟通记录**.
+
+格式:
+
+```markdown
+### Q1: <一句话问题>
+**选项**: A (一句话特征) vs B (一句话特征) vs C (一句话特征)
+**定**: 选 X. 因 Y (一句话否决其他的理由).
+```
+
+数量按设计复杂度——简单 1-2 项, 复杂 4-6 项. **6 项以上 review 是否过度记录** — 微小决策不必入档.
+
+如果某项 Q 需要详细论证 / 多张力对比 / 局部状态机 — 升格写成独立 ADR (新文档 + supersede 链接), 不在本节膨胀.
+
+示例:
+
+```markdown
+### Q1: sanitizer 用滑窗还是状态机?
+**选项**: 64 字符滑窗 (实现简单, 可能漏长入口点) vs 状态机 (准, 但代码量 3x)
+**定**: 滑窗. 因实测最长入口点 30 字符, 64 字符容差覆盖 99.7% case; 漏的 case 走异常上抛回退, 不阻塞主路径.
+
+### Q2: 违规重试几次?
+**选项**: 不重试直接上抛 / 重试 1 次 / 重试到成功
+**定**: 重试 1 次. 因 LLM 二次纠错命中率 ~85% (依据: 实测 200 次违规样本), 多次重试边际收益低且拖延响应.
+
+### Q3: messages 传值还是传引用?
+**选项**: 传值 (每轮 deep copy 安全) vs 传引用 (省内存但要小心 mutation)
+**定**: 传引用. 因 LLM 消息历史可能上 KB, deep copy 每轮翻倍 GC 压力; mutation 通过 `messages.add` 单点收口管控.
+```
+
+### 其他
+
+#### 部署
+
+策略性决策, 不是详细 runbook:
+
+- **灰度策略**: 比例 / 分组 / 时长. 例: "1% → 24h → 10% → 24h → 50% → 24h → 100%, 按用户 ID 哈希分组"
+- **回滚预案**: 触发条件 + 回滚操作. 例: "P99 > 500ms 持续 5 min 或 5xx 率 > 1% → 自动回滚到 v1.2.3, runbook 见 `ops/rollback-AgentLoop.md`"
+- **监控指标**: 新增的 metric 名 + 阈值. 例: "metric: `agent.sanitizer.violation_rate`, 阈值 > 5% 触发 PagerDuty P2"
+
+详细 runbook (具体命令 / K8s manifest / Ansible playbook) 留给 ops doc 或 plan.
+
+可省: 无部署变更的纯库内重构 — 一行写 "无部署变更" 即可.
 
 ## 状态机
 
@@ -135,9 +236,9 @@ function callLlmForTurn(messages, ctx):              // 完成一轮 LLM 对话�
 draft → in-review → approved → implemented → archived
 ```
 
-注：design doc 是 **living document**——approved 后实施中仍可修改（反映实际实施变化），完成后归档。
+注: design doc 是 **living document** — approved 后实施中仍可修改 (反映实际实施变化), 完成后归档.
 
-与 ADR 不同：ADR 一旦 accept 就 immutable，design doc 允许 in-place 修订。
+与 ADR 不同: ADR 一旦 accept 就 immutable, design doc 允许 in-place 修订.
 
 ## frontmatter
 
@@ -152,17 +253,20 @@ last_updated: YYMMDD   # 实施中修订时更新
 ---
 ```
 
-无 `layer` 字段——新骨架下「架构」与「实现」是内置二级节，覆盖深度由 writer 在「问题拆解」节数 + 「逻辑 X」详细度调节，不需要 frontmatter 显式声明。
-
 ## 长度参考
 
-5-15 页常见；小改动 2-3 页；系统级 10-20 页。超过 20 页考虑拆分。
+5-15 页常见; 小改动 2-3 页; 系统级 10-20 页. 超过 20 页考虑拆分.
 
 ## 写作纪律
 
 - 「背景」必含主因/辅因划分
-- 「架构.问题拆解」每问题必含 说明 / 方案对比 / 结论 三件套
-- 「实现.逻辑 X」必含 业务流 / 关键契约 / 异常与失败模式 三子节
-- 影响文件 ASCII 树带 (改)/(NEW) + 编号要点 + 行号 / 函数名（能给则给）
-- 不写 TL;DR / 上半 / 下半 / Cross-cutting Checklist
-- 不把 plan 内容（class 内部 / TDD 步骤）塞进 design doc
+- 「架构.文本总结」必须有 — 把图的视觉信息文字化, reviewer 不该靠看图猜架构
+- 「实现」5 子节顺序固定: 影响 → 接口设计 → 业务流 → 异常 → 单测设计; 子节名不可改
+- 「实现.业务流」必须 BF 编号 + 伪代码 + 每行 `//` 注释
+- 「实现.异常与失败模式」表必须含 "所属 BF" 列, 与业务流编号对齐
+- 「实现.单测设计」必须按 BF 分组 + Given/When/Then 三行/case, 不写代码
+- 「方案选型」每项必须 Q→选项→定 三行, 不展开长论证
+- 「其他.部署」只写策略 (灰度 / 回滚 / 监控), 不写命令脚本
+- 不写 TL;DR / 上半 / 下半 / Cross-cutting Checklist / 全局 Alternatives / 全局 Trade-offs
+- 不把 plan 内容 (class 内部 / TDD 步骤 / 具体 catch 块写法) 塞进 design doc
+- 不把 ops doc 内容 (具体 K8s manifest / Ansible playbook) 塞进部署节

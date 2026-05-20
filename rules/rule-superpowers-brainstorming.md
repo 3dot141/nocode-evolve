@@ -31,7 +31,7 @@ docs/plans/{username}/yymmdd-<topic>-design.md
 2. **`nocode-evolve:design-doc-writing`** —— 生成 markdown 设计文档
    - 类型选择（按业界 4 类 doc-type 主轴：PRD / RFC / Design Doc / ADR）
    - 每个 doc-type 一套线性骨架（背景 → 目标 → ... → 后果，无元结构标签）
-   - Design Doc 骨架：背景 / 目标 / 架构（架构图 / 流程图 / 问题拆解 / 架构总结）/ 实现（影响文件 / 逻辑 X，逻辑内并列 业务流 / 关键契约 / 异常与失败模式）
+   - Design Doc 骨架：背景 / 目标 / 架构（架构图 / 流程图 / 时序图 / 文本总结）/ 实现（影响 / 接口设计 / 业务流 BFx / 异常与失败模式 / 单测设计）/ 方案选型（Q→选项→定 三行）/ 其他（部署 …）
    - Read examples + doc-types reference 学习结构
    - 输出 `docs/plans/{username}/yymmdd-<topic>-design.md`（落在 step 1 创建的 worktree 内）
 
