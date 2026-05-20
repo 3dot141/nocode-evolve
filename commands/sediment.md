@@ -28,7 +28,7 @@ argument-hint: [optional-topic]
 | `wiki:project` | `<proj>/.agents-personal/wiki/pages/<slug>.md` | 历史记忆，项目专属；走整合判断 |
 | `wiki:cross-project` | （不写文件）| **advisor**：输出"建议跑 `/sow <intent>`" |
 | `rules:project` | `<proj>/.agents-personal/rules/<slug>.md` + 改 `<proj>/.agents-personal/AGENTS.md` 加触发条件 | 当前指令，项目专属；双写 |
-| `rules:plugin` | `$NOCODE_EVOLVE_REPO/rules/<axis>-<slug>.md` + 改 `hooks/inject-rules.sh` 桶 + 升 `plugin.json` | 当前指令，跨项目通用；**三步联动** |
+| `rules:plugin` | `$NOCODE_EVOLVE_REPO/rules/rule-<slug>.md` + 改 `model/agent-catalog.md` 加路由条目 + 升 `plugin.json` | 当前指令，跨项目通用；**三步联动** |
 | `skip` | （不写）| 列出原因供用户最后反悔 |
 
 ---
@@ -80,7 +80,7 @@ argument-hint: [optional-topic]
 | #  | 主题摘要                       | 建议标签         | 落地路径                          |
 |----|--------------------------------|------------------|-----------------------------------|
 | 1  | sediment 命令分流机制设计      | wiki:project     | wiki/pages/260519-sediment-...md |
-| 2  | rules 沉淀的桶联动启发式       | rules:plugin     | rules/overlay-...md + 桶 + 版本   |
+| 2  | rules 沉淀的 catalog 联动启发式 | rules:plugin     | rules/rule-...md + catalog + 版本 |
 | 3  | 一次性 bug 修复进度            | skip             | —                                 |
 
 短码：
@@ -176,8 +176,8 @@ no → 整次 sediment 终止；yes → 进入分发。
   ✓ advisor: /sow 沉淀今天讨论的 prompt 优化经验
   ✓ skip: 一次性 bug 修复（原因：无沉淀价值）
 
-⚠ 跨仓写入 plugin rule: ~/AI/nocode-evolve/rules/overlay-sediment-extension.md
-  桶: OVERLAYS_FILES  版本: 0.36.0 → 0.37.0 (minor)
+⚠ 跨仓写入 plugin rule: ~/AI/nocode-evolve/rules/rule-sediment-extension.md
+  catalog: model/agent-catalog.md 已追加路由条目  版本: 0.39.0 → 0.40.0 (minor)
   请到 nocode-evolve 仓 review + commit + 询问是否 push。
 ```
 
@@ -289,53 +289,36 @@ INDEX 模板：
 
 ## rules:plugin 三步联动
 
+新架构下 `rules/` 不再分 axis（`overlay-` / `agent-` / `tool-` 命名前缀已废弃），所有触发式规则统一命名为 `rule-<slug>.md`，由 `model/agent-catalog.md` 路由，agent 在会话中按触发条件按需 Read。
+
 ### Step 1: 写 rule 文件
 
-axis 启发式判定：
+文件路径：`${NOCODE_EVOLVE_REPO}/rules/rule-<slug>.md`。
 
-```
-内容是行为基线 / 角色配置        → agent
-覆盖第三方 skill 默认行为        → overlay
-工具调用约定 / git 检查约束等    → tool
-```
-
-模糊时**主动问用户**（不静默归 tool 兜底）：
-
-```
-此 rule 该归哪个 axis？
-  (1) agent   行为基线 / 角色
-  (2) overlay 覆盖第三方 skill 默认
-  (3) tool    工具调用约定
-```
-
-文件路径：`${NOCODE_EVOLVE_REPO}/rules/<axis>-<slug>.md`。
-
-slug 冲突 → abort："slug 冲突: `<axis>-<slug>.md`，请用 `N /<new-slug>` 改 slug 后重试"。
+slug 冲突 → abort："slug 冲突: `rule-<slug>.md`，请用 `N /<new-slug>` 改 slug 后重试"。
 
 `write(filePath, body)`。
 
-### Step 2: 改 `hooks/inject-rules.sh` 把新文件加进对应桶
+### Step 2: 改 `model/agent-catalog.md` 加路由条目
 
-bucket 启发式：
-
-| axis | bucket |
-|---|---|
-| `agent` | `BASELINE_FILES` |
-| `overlay` | `OVERLAYS_FILES` |
-| `tool` 或其他 | **主动问用户**（不静默选 PROJECT_FILES） |
+新架构下不再有 hook 桶联动——rule 文件不进 `MODEL_FILES` 桶，而是由 catalog 表格路由触发。catalog 没列就等于 agent 触发不到（sanity check 会 stderr 警告）。
 
 **实施策略（具体到 Edit 工具调用）**：
 
-1. Read `${NOCODE_EVOLVE_REPO}/hooks/inject-rules.sh`，定位 `${bucket}=(` 段
-2. 找到该桶最后一个数组元素整行（如 `  "${PLUGIN_ROOT}/rules/overlay-gitworktree.md"`）
-3. 用 Edit 工具：
-   - `old_string` = 该行整行
-   - `new_string` = 原行 + `\n  "${PLUGIN_ROOT}/rules/<axis>-<slug>.md"`
-4. 保持桶变量结尾的 `)` 行不动
+1. Read `${NOCODE_EVOLVE_REPO}/model/agent-catalog.md`，定位「规则清单」段（`## 规则清单` 标题下）
+2. 找到清单最后一条规则段（即最后一个 `### <topic>` + **触发** + **读** + **摘要** 三行块），其后紧跟分隔线 `---`
+3. 用 Edit 工具在最后一条规则段与 `---` 之间插入新段，格式：
 
-**不用 sed/awk**——bash 数组字面量多行匹配脆弱；Edit 工具的精确字符串匹配更可靠。
+```markdown
+### <slug>
+**触发**: <具体到能自识别的触发条件，不写"看情况 / 需要时">
+**读**: `${CLAUDE_PLUGIN_ROOT}/rules/rule-<slug>.md`
+**摘要**: <一句话核心动作，让 agent 看了就知道这条 rule 干什么>
+```
 
-**桶选 PROJECT_FILES 时**：仅当用户明确选，接受但提醒"PROJECT_FILES 桶语义是项目路由，乱填会破坏 hook 拆桶设计。确认？(yes/no)"。
+**触发条件写法约束**：必须具体到 agent 自己能判断命中——参考已有条目（如 push-summary 写"用户 push 后说『总结 push 内容 / 给标题描述 / PR description』"，不是"需要时读"）。
+
+**不用 sed/awk**——markdown 段落多行匹配脆弱；Edit 工具的精确字符串匹配更可靠。
 
 ### Step 3: 升 `plugin.json` 版本
 
@@ -351,7 +334,7 @@ Read `.claude-plugin/plugin.json` → bump version → Write 回去。
 
 ### 三步契约
 
-- 三步**必须按顺序**：先写文件 → 再改桶 → 再升版本；任一步失败后续不执行
+- 三步**必须按顺序**：先写 rule 文件 → 再改 catalog → 再升版本；任一步失败后续不执行
 - **本逻辑内三步不回滚已成功步**（避免半成品状态更难恢复——文件保留比删了让用户从头来更易恢复）
 - **但本项失败不影响其他候选项的分发**——与整体"非 transactional" 一致
 - commit/push 不进本逻辑——CLAUDE.md 工作流约定 commit 由主交互完成
@@ -359,23 +342,23 @@ Read `.claude-plugin/plugin.json` → bump version → Write 回去。
 ### 报告
 
 ```
-已写入 plugin rule: <axis>-<slug>.md
-桶: <bucket>
+已写入 plugin rule: rule-<slug>.md
+catalog: model/agent-catalog.md 已追加路由条目
 版本: <oldVersion> → <newVersion> (<bumpLevel>)
 请到 nocode-evolve 仓 review + commit + 询问是否 push。
 ```
 
 ### 孤儿 rule 划界
 
-如果发现 `nocode-evolve/rules/` 下有未分桶的孤儿文件（如 `tool-git-inspection.md` 历史遗留）——**不主动补**。归用户手动处理（inject-rules.sh sanity check 每 session stderr 警告，足够提示）。
+如果发现 `nocode-evolve/rules/` 下有未被 `model/agent-catalog.md` 引用的孤儿文件——**不主动补**。归用户手动处理（inject-rules.sh sanity check 每 session stderr 警告，足够提示）。
 
-理由：scope 控制——`/sediment` 是沉淀命令，不是 hook 整理工具。
+理由：scope 控制——`/sediment` 是沉淀命令，不是 catalog 整理工具。
 
 在报告末尾仅做提示：
 
 ```
-ℹ 发现孤儿 rule N 个：[tool-git-inspection.md, ...]
-   sanity check 已警告，请手动加入对应桶或评估是否删除。
+ℹ 发现孤儿 rule N 个：[rule-foo.md, ...]
+   sanity check 已警告，请手动加入 model/agent-catalog.md 路由表或评估是否删除。
 ```
 
 ---
@@ -385,7 +368,7 @@ Read `.claude-plugin/plugin.json` → bump version → Write 回去。
 - ❌ **AI 自判直接写**——必须经过候选呈现 + 用户勾选
 - ❌ **末尾 paste**：wiki:project 整合已有页时不把新内容堆到 `## YYMMDD Update` 节
 - ❌ **跨仓写入不二次确认**：cwd ≠ nocode-evolve 仓而要写 plugin rule 时，不弹二次确认就动手
-- ❌ **写 plugin rule 但忘了改 inject-rules.sh 的桶**——sanity check 警告等于白沉淀
+- ❌ **写 plugin rule 但忘了改 model/agent-catalog.md 路由表**——sanity check 警告等于白沉淀
 - ❌ **写 plugin rule 但忘升 version**——CLAUDE.md 硬约束
 - ❌ **AGENTS.md 加触发条件含糊**："需要时读 rules/foo.md" 等于没触发
 - ❌ **rules 文件名带日期**：rules 是当前指令不是历史记录，文件名只用 slug
@@ -406,12 +389,10 @@ Read `.claude-plugin/plugin.json` → bump version → Write 回去。
 | `rules:project` slug 冲突 | 报错让用户改 slug：`N /<new-slug>` |
 | `wiki:project` slug 冲突 | 走整合判断 |
 | `$NOCODE_EVOLVE_REPO` 路径不存在 | `rules:plugin` 标签在表格里降级 disabled + 标灰 |
-| Step 1 写文件后 Step 2 改 hook 失败 | 不回滚 Step 1，报"写入了 rule 文件但 hook 桶未改，请手动加" |
+| Step 1 写文件后 Step 2 改 catalog 失败 | 不回滚 Step 1，报"写入了 rule 文件但 catalog 未改，请手动加路由条目" |
 | Step 2 后 Step 3 改 plugin.json 失败 | 不回滚前两步，报"前两步完成但版本未升，请手动改 plugin.json" |
-| axis 启发式判不出 | 主动问用户 (1)agent (2)overlay (3)tool |
-| 桶选 PROJECT_FILES | 接受但提醒确认 |
 | nocode-evolve 仓有未提交改动 | 不阻断，报告里加一行"两边都要 commit" |
-| `nocode-evolve/rules/` 下有未分桶孤儿文件 | 不主动补桶；报告末尾仅提示 |
+| `nocode-evolve/rules/` 下有未被 catalog 引用的孤儿文件 | 不主动补路由；报告末尾仅提示 |
 | 用户给的 # 越界（短码） | 报"#7 不存在，当前候选 1-5"，不动 candidates |
 | 短码无法识别 | 报"语法不识别，请用短码"，等用户重打——不接受自然语言 |
 
@@ -422,6 +403,6 @@ Read `.claude-plugin/plugin.json` → bump version → Write 回去。
 不要主动 push 或 commit——按 CLAUDE.md 工作流，commit 由主交互流程在你完成所有沉淀后单独执行。
 
 如本次涉及 `rules:plugin` 出口，提醒用户：
-- `nocode-evolve` 仓有新文件（rule + hook 改 + plugin.json）
+- `nocode-evolve` 仓有新文件（rule + catalog 改 + plugin.json）
 - 主仓如有 rules:project 改动也需要 commit
 - 两边的 commit / push 由用户自己决定
