@@ -1,18 +1,26 @@
 # nocode-evolve
 
-Harrison 的 Claude Code 个人插件：通过 SessionStart hook 注入两层规则——
-插件自带的 `rules/agent-karpathy.md` 作为跨项目默认行为准则，再叠加项目根的 `.agents-personal/AGENTS.md` 做工程级定制。
+Harrison 的 Claude Code 个人插件：通过 SessionStart hook 注入**渐进式加载**的两层规则——
+插件自带的 `model/*.md`（角色 / 工程准则 / 项目本地路由 / catalog）作为会话开局即注入的基线，
+`rules/rule-*.md` 是触发式规则、由 agent 看 `model/agent-catalog.md` 命中触发后自行 Read，
+再叠加项目根的 `.agents-personal/AGENTS.md` 做工程级定制。
 另外预留 skills / agents / MCP 扩展位。
 
 ## 规则注入顺序
 
-每次会话启动时，hook 依次拼接：
+每次会话启动时，hook 跑两个 group：
 
-1. `${CLAUDE_PLUGIN_ROOT}/rules/agent-karpathy.md` —— 跨项目共享的 agent 行为准则
-2. `<project_root>/.agents-personal/AGENTS.md` —— 当前项目的自定义规则（存在时才注入，可覆盖/补充上一层）
+1. `project` group: `<project_root>/.agents-personal/AGENTS.md` —— 项目本地路由表（存在时才注入）
+2. `model` group: 顺序注入 `${CLAUDE_PLUGIN_ROOT}/model/` 下 4 个文件：
+   - `agent-about.md` —— 角色 + 全局占位符（`{username}` 等）
+   - `agent-karpathy.md` —— 12 条工程准则
+   - `agent-personal.md` —— 项目本地 `.agents-personal/` 使用约定
+   - `agent-catalog.md` —— `rules/rule-*.md` 触发式规则的路由表
+
+`rules/` 下的触发式规则**不**进入会话开局 context；agent 看 catalog 决定按需 Read 哪条。
 
 两段之间用 `---` 分隔，并在每段前用 HTML 注释标注来源，便于排查。
-若两个文件都不存在，hook 静默退出，不污染上下文。
+若 project group 文件不存在，该 group 静默退出，不污染上下文。
 
 > 项目根由 `$CLAUDE_PROJECT_DIR` 决定（不存在则回退到 `$PWD`）。
 > 想给某个工程定制规则，只需在该工程根目录建 `.agents-personal/AGENTS.md` 即可，无需改插件。
@@ -23,15 +31,23 @@ Harrison 的 Claude Code 个人插件：通过 SessionStart hook 注入两层规
 ```
 nocode-evolve/
 ├── .claude-plugin/
-│   ├── plugin.json          # 插件清单
-│   └── marketplace.json     # GitHub marketplace 描述
+│   ├── plugin.json                          # 插件清单
+│   └── marketplace.json                     # GitHub marketplace 描述
 ├── hooks/
-│   ├── hooks.json           # SessionStart 注册
-│   └── inject-rules.sh      # 注入脚本（jq 优先，python3 兜底）
-├── rules/
-│   └── agent-karpathy.md    # 跨项目 agent 行为准则正文
+│   ├── hooks.json                           # SessionStart 注册 (project + model 两个 group)
+│   └── inject-rules.sh                      # 注入脚本（jq 优先，python3 兜底；含 sanity check）
+├── model/                                   # 会话开局即注入 (基线 + 路由表)
+│   ├── agent-about.md                       # 角色 + 全局占位符
+│   ├── agent-karpathy.md                    # 12 条工程准则
+│   ├── agent-personal.md                    # 项目本地 .agents-personal/ 使用约定
+│   └── agent-catalog.md                     # rules/ 触发式规则路由表
+├── rules/                                   # 按需 Read (catalog 路由)
+│   ├── rule-superpowers-brainstorming.md    # 覆盖 superpowers:brainstorming 写设计文档流程
+│   ├── rule-git-worktree.md                 # 覆盖 superpowers:using-git-worktrees 路径策略
+│   ├── rule-push-summary.md                 # push 后总结的输出格式
+│   └── rule-git-inspection.md               # git read-only 命令合一 pattern
 └── examples/
-    └── agents-personal/     # 项目本地 .agents-personal/ 模板（复制改占位符即可用）
+    └── agents-personal/                     # 项目本地 .agents-personal/ 模板（复制改占位符即可用）
 ```
 
 ## 安装方式
@@ -106,6 +122,6 @@ agents/
 
 ## 重要限制（设计依据）
 
-- **不能直接挂载 `CLAUDE.md`**：plugin 根的 `CLAUDE.md` 不会被加载。本插件的 SessionStart hook 是官方推荐的等效方案，会把 `rules/agent-karpathy.md` 内容（以及可选的项目级 `.agents-personal/AGENTS.md`）作为 `additionalContext` 注入。
+- **不能直接挂载 `CLAUDE.md`**：plugin 根的 `CLAUDE.md` 不会被加载。本插件的 SessionStart hook 是官方推荐的等效方案，会把 `model/*.md` 内容（以及可选的项目级 `.agents-personal/AGENTS.md`）作为 `additionalContext` 注入。
 - `version` 不写时会用 git commit SHA 作版本号——每次提交都视为新版本。
 - 安装范围：`--scope user`（默认，跨项目）/ `--scope project`（团队共享，进 git）/ `--scope local`（仅本项目，gitignore）。

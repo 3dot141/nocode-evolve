@@ -61,7 +61,7 @@
 
 1. **`<project>/.agents-personal/AGENTS.md`**——项目本地针对 agent 的覆盖（最高优先级）
 2. **`<project>/CLAUDE.md` 或 `<project>/AGENTS.md`**——项目根的规范文件（人 + AI 共读）
-3. **本文件（`rules/agent-about.md`）**——插件默认值（兜底）
+3. **本文件（`model/agent-about.md`）**——插件默认值（兜底）
 
 工程内显式定义的值，**永远覆盖**本文件默认值。
 

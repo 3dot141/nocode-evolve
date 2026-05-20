@@ -1,15 +1,14 @@
 #!/usr/bin/env bash
-# SessionStart hook (拆桶版): 按 group 分批注入 rule 内容. 每个 group 一次 stdout,
-# 各自独立成一个 additionalContext. 拆桶后单次 output 都 <6KB, 避开 Claude Code
-# 单 hook output >~10KB 被截只剩 preview 的坑.
+# SessionStart hook (渐进式加载版): 只把 model/ 下的常驻基线 + 路由表注入 session,
+# rules/ 下的触发式规则由 agent 看 model/agent-catalog.md 命中触发后自行 Read.
 #
-# hooks/hooks.json 应声明 3 个 SessionStart command, 分别带 arg:
-#   inject-rules.sh project    -- 项目路由 (overlay-agents-personal + 项目 .agents-personal/AGENTS.md)
-#   inject-rules.sh baseline   -- 行为基线 (agent-about + agent-karpathy)
-#   inject-rules.sh overlays   -- skill 覆盖 (overlay-superpowers)
+# hooks/hooks.json 声明 2 个 SessionStart command, 分别带 arg:
+#   inject-rules.sh project   -- 项目本地路由 (${PROJECT_DIR}/.agents-personal/AGENTS.md, 项目无此文件则空)
+#   inject-rules.sh model     -- 行为基线 + 路由表 (model/agent-{about,karpathy,personal,catalog}.md)
 #
-# 新增 plugin rule 文件: 必须显式加到下方三个桶变量之一, 否则脚本会在 stderr 警告
-# 该文件没被注入 (sanity check), 同时该文件**不会**出现在任何 session context 里.
+# 新增 model/*.md: 必须显式加到下方 MODEL_FILES 桶, 否则脚本会在 stderr 警告
+# 新增 rules/rule-*.md: 必须在 model/agent-catalog.md 里加一段, 否则脚本会在 stderr 警告
+# (sanity check 阻止"加了文件但 agent 看不见 / 触发不到"的孤儿状态)
 set -euo pipefail
 
 PLUGIN_ROOT="${CLAUDE_PLUGIN_ROOT:-}"
@@ -18,42 +17,50 @@ GROUP="${1:-}"
 
 # 桶定义 (单一来源, 改这里即可; sanity check 自动覆盖)
 PROJECT_FILES=(
-  "${PLUGIN_ROOT}/rules/overlay-agents-personal.md"
   "${PROJECT_DIR}/.agents-personal/AGENTS.md"
 )
-BASELINE_FILES=(
-  "${PLUGIN_ROOT}/rules/agent-about.md"
-  "${PLUGIN_ROOT}/rules/agent-karpathy.md"
-  "${PLUGIN_ROOT}/rules/agent-push-summary.md"
-)
-OVERLAYS_FILES=(
-  "${PLUGIN_ROOT}/rules/overlay-superpowers.md"
-  "${PLUGIN_ROOT}/rules/overlay-gitworktree.md"
+MODEL_FILES=(
+  "${PLUGIN_ROOT}/model/agent-about.md"
+  "${PLUGIN_ROOT}/model/agent-karpathy.md"
+  "${PLUGIN_ROOT}/model/agent-personal.md"
+  "${PLUGIN_ROOT}/model/agent-catalog.md"
 )
 
 case "$GROUP" in
-  project)  files=("${PROJECT_FILES[@]}") ;;
-  baseline) files=("${BASELINE_FILES[@]}") ;;
-  overlays) files=("${OVERLAYS_FILES[@]}") ;;
+  project) files=("${PROJECT_FILES[@]}") ;;
+  model)   files=("${MODEL_FILES[@]}") ;;
   *)
-    echo "inject-rules.sh: unknown group '$GROUP' (expected: project|baseline|overlays)" >&2
+    echo "inject-rules.sh: unknown group '$GROUP' (expected: project|model)" >&2
     exit 1
     ;;
 esac
 
-# Sanity check: plugin rules/*.md 中没被任何桶覆盖的, stderr 警告 (不阻 session).
-if [ -n "$PLUGIN_ROOT" ] && [ -d "${PLUGIN_ROOT}/rules" ]; then
-  declared=("${PROJECT_FILES[@]}" "${BASELINE_FILES[@]}" "${OVERLAYS_FILES[@]}")
-  for f in "${PLUGIN_ROOT}/rules"/*.md; do
-    [ -f "$f" ] || continue
-    covered=0
-    for d in "${declared[@]}"; do
-      [ "$f" = "$d" ] && covered=1 && break
+# Sanity check (model 桶启动时跑一次足够, 避免每个 group 重复输出):
+#   - model/*.md 未在 MODEL_FILES 桶 → 不会进 session context, 警告
+#   - rules/rule-*.md 未在 model/agent-catalog.md 引用 → agent 触发不到, 警告
+if [ "$GROUP" = "model" ] && [ -n "$PLUGIN_ROOT" ]; then
+  if [ -d "${PLUGIN_ROOT}/model" ]; then
+    for f in "${PLUGIN_ROOT}/model"/*.md; do
+      [ -f "$f" ] || continue
+      covered=0
+      for d in "${MODEL_FILES[@]}"; do
+        [ "$f" = "$d" ] && covered=1 && break
+      done
+      if [ "$covered" = "0" ]; then
+        echo "inject-rules.sh WARN: ${f#${PLUGIN_ROOT}/} 在 model/ 但没分桶 MODEL_FILES, 不会注入 session." >&2
+      fi
     done
-    if [ "$covered" = "0" ]; then
-      echo "inject-rules.sh WARN: ${f#${PLUGIN_ROOT}/} 没分桶, 不会进 session context. 改本脚本的桶变量." >&2
-    fi
-  done
+  fi
+  catalog="${PLUGIN_ROOT}/model/agent-catalog.md"
+  if [ -d "${PLUGIN_ROOT}/rules" ] && [ -f "$catalog" ]; then
+    for f in "${PLUGIN_ROOT}/rules"/*.md; do
+      [ -f "$f" ] || continue
+      base=$(basename "$f")
+      if ! grep -qF "$base" "$catalog"; then
+        echo "inject-rules.sh WARN: rules/${base} 没被 model/agent-catalog.md 引用, agent 触发不到. 改 catalog 或删文件." >&2
+      fi
+    done
+  fi
 fi
 
 content=""
@@ -69,7 +76,7 @@ for f in "${files[@]}"; do
   content+="$(sed "s|\${CLAUDE_PLUGIN_ROOT}|${PLUGIN_ROOT}|g" "$f")"
 done
 
-# 空桶 (比如 project 桶在没 .agents-personal/AGENTS.md 的项目) → 静默退出
+# 空桶 (project 桶在没 .agents-personal/AGENTS.md 的项目) → 静默退出
 [ -n "$content" ] || exit 0
 
 if command -v jq >/dev/null 2>&1; then

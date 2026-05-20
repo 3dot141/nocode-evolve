@@ -13,7 +13,7 @@
 docs/plans/{username}/yymmdd-<topic>-design.md
 ```
 
-- `{username}`、`yymmdd` 占位符见 `agent-about.md`
+- `{username}`、`yymmdd` 占位符见 `model/agent-about.md`
 - `<topic>`：kebab-case 主题，简短可读
 
 > 不再使用 skill 内默认的 `docs/plans/YYYY-MM-DD-<topic>-design.md`。
@@ -24,7 +24,7 @@ docs/plans/{username}/yymmdd-<topic>-design.md
 
 1. **`superpowers:using-git-worktrees`** —— 写设计文档前先开 worktree
    - 分支名建议 `design/<topic>`，`<topic>` 沿用上面输出路径中的 kebab-case 主题
-   - worktree 路径按 `overlay-gitworktree.md` 落到项目同级 `<project>-<branch-flat>/`（例：`design/foo-bar` → `<parent>/<project>-design_foo-bar/`）
+   - worktree 路径按 `rules/rule-git-worktree.md` 落到项目同级 `<project>-<branch-flat>/`（例：`design/foo-bar` → `<parent>/<project>-design_foo-bar/`）
    - 后续 write / review / render 三步都在新 worktree 内执行——主仓 working tree 不被设计文档草稿污染，便于并行多份设计 / 多 IDE 窗口对照
    - 例外：用户显式声明「在主仓写 / 不要 worktree / 就地写」→ 跳过本步，但要回复里点名告知"按你的要求跳过 worktree，直接在主仓 <branch> 写"
 

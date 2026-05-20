@@ -17,7 +17,7 @@
 
 只要改动了被插件加载的文件，就视为插件更新，必须更新版本：
 
-- 范围：`hooks/`、`rules/`、`skills/`、`agents/`、`commands/`、`.claude-plugin/`、`.mcp.json` 等会被 Claude Code 作为插件读取的文件。
+- 范围：`hooks/`、`model/`、`rules/`、`skills/`、`agents/`、`commands/`、`.claude-plugin/`、`.mcp.json` 等会被 Claude Code 作为插件读取的文件。
 - 操作：编辑 `.claude-plugin/plugin.json` 的 `version`，按 SemVer 升级，并把版本变更包含在同一个 commit 里：
   - **patch**：bug fix / 文案修订
   - **minor**：新增 hook / skill / 兼容性增强

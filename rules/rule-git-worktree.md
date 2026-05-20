@@ -93,6 +93,49 @@ skill `SKILL.md` 中下列默认行为**全部失效**，按本文执行：
 2. 是残留 → `git worktree remove` 清理后重建。
 3. 是真正的命名冲突（同 parent 下另一项目恰好叫这个名）→ 报告冲突让用户决定，**不要**自己加后缀绕过。
 
+## Worktree 创建后：cp 主仓 gitignored env / config
+
+`git worktree add` 出来的 checkout 是**干净** checkout——只复制 tracked 内容，主仓本地的 gitignored 文件（`.env*` / `config.local.*` / 本地 secret / API token / 等）**不会**带过来. worktree 跑起依赖这些文件的命令前要从主仓 cp 过来.
+
+### 触发场景
+
+- 在 worktree 内跑命令报错：`env var missing` / `<configfile> 不存在` / 类似 secret/config 加载失败
+- 主动准备跑依赖 env 的命令（dev / test / build / 跑 benchmark），提前 verify 配置就位
+- 刚创建 worktree 第一次跑运行性命令时
+
+### 标准动作
+
+变量沿用本文「路径推导」段的 `project_root` / `worktree_path`.
+
+1. **识别要 cp 的文件**——看主仓根 + 子包 `.gitignore` + 报错指向的路径：
+
+   ```bash
+   grep -rE "\.env|config\.local|secret" \
+     "$project_root/.gitignore" "$project_root"/**/.gitignore 2>/dev/null
+   ```
+
+2. **cp 主仓 → worktree，保持完全相同的相对路径**：
+
+   ```bash
+   cp "$project_root/<rel-path>" "$worktree_path/<rel-path>"
+   ```
+
+3. **验证 worktree git status 仍 clean**（gitignored 文件 cp 后不应进 git status）：
+
+   ```bash
+   cd "$worktree_path"
+   git status -s | grep -v "^??" | head    # 不应出现 cp 过来的文件
+   ```
+
+4. **worktree 的代码版本与主仓 env 文件 schema 不兼容**（主仓 env 滞后于代码改动）：改 worktree 副本即可，**不动主仓**（除非用户明确授权改主仓）. worktree 是隔离工作区，副本改动跟主仓互不影响.
+
+### env cp 的不要
+
+- 不要 `git add -f` 这些 gitignored 文件——会带 secrets 进 git
+- 不要假设 worktree 自动有这些文件——`git worktree` 不复制 untracked
+- 不要在本节钉死具体文件名 / token 名 / 仓库特定 schema——具体细节随项目演化，本节只描述"cp gitignored env files"模式；项目特异的 env file 清单走项目本地 rule
+- 不要在 worktree 改主仓配置——主仓是 source of truth，真要更新主仓配置走主仓 working tree
+
 ## 不要
 
 - 在项目内创建 `.worktrees/` 或 `worktrees/`——即便 skill 默认行为这样做，本规则覆盖
