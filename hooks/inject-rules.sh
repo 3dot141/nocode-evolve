@@ -24,6 +24,7 @@ PROJECT_FILES=(
 BASELINE_FILES=(
   "${PLUGIN_ROOT}/rules/agent-about.md"
   "${PLUGIN_ROOT}/rules/agent-karpathy.md"
+  "${PLUGIN_ROOT}/rules/agent-push-summary.md"
 )
 OVERLAYS_FILES=(
   "${PLUGIN_ROOT}/rules/overlay-superpowers.md"
