@@ -136,6 +136,65 @@ skill `SKILL.md` 中下列默认行为**全部失效**，按本文执行：
 - 不要在本节钉死具体文件名 / token 名 / 仓库特定 schema——具体细节随项目演化，本节只描述"cp gitignored env files"模式；项目特异的 env file 清单走项目本地 rule
 - 不要在 worktree 改主仓配置——主仓是 source of truth，真要更新主仓配置走主仓 working tree
 
+## Worktree 创建后：link `.agents-personal/` 到主仓
+
+`.agents-personal/` 是项目本地针对 agent 的配置（路由表 + 项目本地 wiki/历史 + 项目本地 rules/当前指令），设计上 gitignored, 跟 env / config 一样 `git worktree add` 不会带过来. 但与 env 不同的是, `.agents-personal/` 应 **跨 worktree 共享** —— 主仓改 wiki / rules / AGENTS.md 后 worktree 立刻可见, 不需要"同步副本".
+
+实现: 用 **symlink** 而非 cp.
+
+### 触发场景
+
+- 刚创建 worktree, 准备让 agent 在 worktree 里工作
+- 在 worktree 内开新会话发现 agent 找不到项目本地路由 / wiki / rules
+- 主仓 `.agents-personal/` 存在 (`[ -d "$project_root/.agents-personal" ]`)
+
+### 标准动作
+
+变量沿用「路径推导」段的 `project_root` / `worktree_path`.
+
+```bash
+if [ -d "$project_root/.agents-personal" ] && [ ! -e "$worktree_path/.agents-personal" ]; then
+    ln -s "$project_root/.agents-personal" "$worktree_path/.agents-personal"
+fi
+```
+
+为什么 symlink 而不是 cp:
+
+- **单一来源**: 主仓改了 worktree 立刻看到, 零同步开销
+- **零 hook 改造**: SessionStart hook 仍按 `${CLAUDE_PROJECT_DIR}/.agents-personal/AGENTS.md` 读取, symlink 透明转发到主仓
+- **/sediment 写回主仓**: 在 worktree 内跑 `/sediment` 落 `wiki:project` / `rules:project` 时, 经 symlink 实际写主仓——符合"主仓是 source of truth"语义
+- **gitignored 状态保留**: worktree 的 `.gitignore` 是 tracked 跟过来的, 里头仍 ignore `.agents-personal/`, symlink 自动落进 ignore, `git status` 不污染
+
+### 销毁 worktree 前必读
+
+`git worktree remove` 默认会因 `.agents-personal/` symlink 是 untracked 而**拒绝执行**, 提示 "contains modified or untracked files, use --force". 即便加 `--force`, POSIX rm 对 dir symlink 只删 symlink 自身**不**递归 target——实测 macOS BSD rm + git worktree --force 不会误删主仓 `.agents-personal/`. 双重安全.
+
+但为了**显式控制 + 跨平台稳健**, 销毁 worktree 时先手动拆 symlink:
+
+```bash
+rm "$worktree_path/.agents-personal"       # 只删 symlink 自身, target 不动
+git worktree remove "$worktree_path"        # 不再需要 --force (前提是没别的 untracked)
+```
+
+### 想要分支化 personal 配置时
+
+99% 场景 worktree 共享主仓 personal 即可. 偶尔需要"这个 worktree 测试不同的 AGENTS.md / rules" 时, 升级路径:
+
+```bash
+rm "$worktree_path/.agents-personal"                       # 拆链
+cp -R "$project_root/.agents-personal" "$worktree_path/"   # cp 一份独立副本
+# 之后改 worktree 内副本不影响主仓
+```
+
+升级是单向的——cp 后想退回共享要先清副本再 ln, 注意.
+
+### link `.agents-personal/` 的不要
+
+- 不要 cp 一份就完事——主仓 wiki 更新 worktree 看不见, 用户会困惑
+- 不要硬链接 (`ln` 不带 `-s`)——目录不支持硬链, 而且失去"指向主仓"的明确语义
+- 不要把 `.agents-personal/` 入 git track 来绕过这个机制——personal 设计上是 user/team local, 不该入 history
+- 不要在销毁 worktree 时直接 `git worktree remove --force` 而不先拆链——虽然实测安全, 但 displayed 给人的"工具 follow symlink 删 target"印象会让协作者不放心; 显式拆链消除歧义
+
 ## 不要
 
 - 在项目内创建 `.worktrees/` 或 `worktrees/`——即便 skill 默认行为这样做，本规则覆盖

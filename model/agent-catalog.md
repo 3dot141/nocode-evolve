@@ -25,9 +25,9 @@
 **摘要**: 覆盖 brainstorming step 5 "写设计文档"环节, 工作流改成 worktree → write → review → render 四步, 设计文档落 `docs/plans/{username}/yymmdd-<topic>-design.md`
 
 ### git-worktree
-**触发**: 即将执行 `superpowers:using-git-worktrees` skill, 或用户要求创建 worktree, 或在 worktree 内跑命令报"env var missing / config 不存在"等需从主仓 cp gitignored 文件
+**触发**: 即将执行 `superpowers:using-git-worktrees` skill, 或用户要求创建 worktree, 或在 worktree 内跑命令报"env var missing / config 不存在"等需从主仓 cp gitignored 文件, 或 agent 在 worktree 找不到项目本地 `.agents-personal/` 路由
 **读**: `${CLAUDE_PLUGIN_ROOT}/rules/rule-git-worktree.md`
-**摘要**: worktree 一律落项目同级 `<project>-<branch_flat>/`, 推翻 skill 默认的 `.worktrees/` 等三种路径; 含 env / config 文件 cp 标准动作
+**摘要**: worktree 一律落项目同级 `<project>-<branch_flat>/`, 推翻 skill 默认的 `.worktrees/` 等三种路径; 含两条"创建后"标准动作——env / config 文件 cp + `.agents-personal/` symlink 共享主仓 (worktree 内 /sediment 落回主仓); 销毁 worktree 前先手动拆 symlink
 
 ### push-summary
 **触发**: 用户 push 后说「总结 push 内容 / 给标题描述 / PR description / 沉淀这个 / 这次 push 包含什么」, 或英文等价问法
