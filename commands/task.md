@@ -31,7 +31,7 @@ argument-hint: <自然语言意图>
 - `$USER_VAULT_PATH/Flow/05-Tasks/views/tasks.base` 已建
 - `$USER_VAULT_PATH/Meta/Templates/Templater/Template/Task.md` 已建 (备用录入入口)
 
-任一不满足 → 报错 + 引导用户走 plan 文档 (`docs/plans/3dot141/260521-task-management-system-plan.md`) 对应 Task; env 未设 → 报错 + 指引在 zshrc 加 `export USER_VAULT_PATH=<your-vault-root>` (跟 /sow 用的 `$USER_WIKI_PATH` 是不同 env var——后者指 Outputs 子目录).
+任一不满足 → 报错 + 引导用户走 plan 文档 (`docs/plans/3dot141/260521-task-management-system-plan.md`) 对应 Task; env 未设 → 报错 + 指引在 zshrc 加 `export USER_VAULT_PATH=<your-vault-root>`.
 
 ---
 
