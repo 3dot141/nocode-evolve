@@ -5,7 +5,7 @@ argument-hint: <自然语言意图>
 
 # /task: MyJarvis 任务管理子系统单一入口
 
-把用户的自然语言输入解析成 8 个 sub-action 之一, 操作 `~/AI/MyJarvis/Flow/05-Tasks/yymm/<yymmdd>-<slug>.md` task 文件 + 跟 Obsidian Bases 视图渲染配合.
+把用户的自然语言输入解析成 8 个 sub-action 之一, 操作 `$USER_VAULT_PATH/Flow/05-Tasks/yymm/<yymmdd>-<slug>.md` task 文件 + 跟 Obsidian Bases 视图渲染配合.
 
 **设计文档**: `docs/plans/3dot141/260521-task-management-system-design.md` (含完整业务流 BF0-BF7 + 单测 case + 方案选型).
 
@@ -26,11 +26,12 @@ argument-hint: <自然语言意图>
 
 ## 环境依赖
 
-- `~/AI/MyJarvis/` vault 路径存在
-- `~/AI/MyJarvis/Flow/05-Tasks/views/tasks.base` 已建
-- `~/AI/MyJarvis/Meta/Templates/Templater/Template/Task.md` 已建 (备用录入入口)
+- **`$USER_VAULT_PATH`** (env 变量, 必填) — 指向用户 Obsidian vault 根目录 (例: `~/AI/MyJarvis`)
+- `$USER_VAULT_PATH/` vault 路径存在
+- `$USER_VAULT_PATH/Flow/05-Tasks/views/tasks.base` 已建
+- `$USER_VAULT_PATH/Meta/Templates/Templater/Template/Task.md` 已建 (备用录入入口)
 
-任一不满足 → 报错 + 引导用户走 plan 文档 (`docs/plans/3dot141/260521-task-management-system-plan.md`) 对应 Task.
+任一不满足 → 报错 + 引导用户走 plan 文档 (`docs/plans/3dot141/260521-task-management-system-plan.md`) 对应 Task; env 未设 → 报错 + 指引在 zshrc 加 `export USER_VAULT_PATH=<your-vault-root>` (跟 /sow 用的 `$USER_WIKI_PATH` 是不同 env var——后者指 Outputs 子目录).
 
 ---
 
@@ -72,7 +73,7 @@ argument-hint: <自然语言意图>
 
 1. `slug = slugify(title)` — kebab-case, 3-7 词, 中英文均可, 长度 ≤50
 2. `yymm = format(today, "YYMM")`, `yymmdd = format(today, "YYMMDD")`
-3. `path = "~/AI/MyJarvis/Flow/05-Tasks/" + yymm + "/" + yymmdd + "-" + slug + ".md"`
+3. `path = "$USER_VAULT_PATH/Flow/05-Tasks/" + yymm + "/" + yymmdd + "-" + slug + ".md"`
 4. 检查 path 已存在 → 报错 "slug 冲突, 请改 title"; 否则继续
 5. `Flow/05-Tasks/<yymm>` 目录缺失 → `mkdir -p`
 6. Write 文件 (frontmatter + body 骨架 6 段, why 填入"目标"段)
@@ -116,7 +117,7 @@ tags: [task]
 
 **执行**:
 
-1. glob `~/AI/MyJarvis/Flow/05-Tasks/*/*` 找 frontmatter `status: todo` + title/slug 模糊匹配 `query` 的 task
+1. glob `$USER_VAULT_PATH/Flow/05-Tasks/*/*` 找 frontmatter `status: todo` + title/slug 模糊匹配 `query` 的 task
 2. 0 候选 → 报错 "no matching todo task for: <query>"
 3. 多候选 → askUser 列候选让用户选 (显示 path + title)
 4. 1 候选 → 改 frontmatter: `status: done`, `actual_min: <n>`, `outcome: <wikilink or "">`, `done_date: <now>`, `modified_date: <now>`
@@ -258,7 +259,7 @@ tags: [task]
 
 **触发**: 用户喊"拆本周计划 / 拆成 daily".
 
-**抽参**: `weeklyNotePath` (默 currentWeeklyNote: `~/AI/MyJarvis/Flow/03-Weekly/<yymm>/<yymmdd>-week<N>.md`, 推断当前周)
+**抽参**: `weeklyNotePath` (默 currentWeeklyNote: `$USER_VAULT_PATH/Flow/03-Weekly/<yymm>/<yymmdd>-week<N>.md`, 推断当前周)
 
 **执行**:
 
@@ -339,4 +340,4 @@ tags: [task]
 - ❌ **AI 自动建 weekly note 替用户写 plan** — weekly plan 是 user-content, AI 不替写
 - ❌ **改 done 状态的 task 的 status 字段 (走 cancel 后悔了不能 reopen)** — 暂不支持 status 回退
 - ❌ **NL 接受短码场景 (BF3 / BF4)** — 短码必须严格语法, AI 解析 NL 失败模式不是"懂/不懂" binary 而是"懂错", 容错收益远低于误执行风险 (跟 sediment 一致)
-- ❌ **把 `Flow/05-Tasks/` 路径写死在命令逻辑里** — 应该用 `~/AI/MyJarvis/` 推断 vault root, 后续支持其他 vault path
+- ❌ **把 vault 路径写死在命令逻辑里** — 必须用 `$USER_VAULT_PATH` env var 拼出 vault 子路径, 支持不同用户 vault 位置 / 跨设备同步差异
