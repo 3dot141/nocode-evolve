@@ -73,6 +73,8 @@ INDEX 同一会话只 Read 一次. 三条 OR 全不触发的纯执行 / 纯小�
 - 假设 git mv 不算删除 (`.agents-personal/` 是 gitignored, mv = delete + create)
 - 因"过时 / 跟新决策矛盾"自己拍板删 (superseded 仍有参考价值, 由用户判断该删还是标 `superseded by ...` 保留)
 
-### `$USER_WIKI_PATH` 同等护栏
+### `$USER_VAULT_PATH` 同等护栏
 
-`/sediment` 的 `wiki:cross-project advisor` 出口写到 `$USER_WIKI_PATH/`, 同等不可恢复, 同等护栏. 本节凡处推广.
+`/sediment` 的 `wiki:cross-project advisor` 出口建议跑 `/sow`, 后者写到 `$USER_VAULT_PATH/Memory/<layer>/`, 同等不可恢复, 同等护栏. 本节凡处推广.
+
+> v1 env 名 `USER_WIKI_PATH` (指 Memory/05-Outputs) 已弃用; sow v2 改读 `USER_VAULT_PATH` (指 vault 根).

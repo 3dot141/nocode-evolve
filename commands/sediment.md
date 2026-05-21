@@ -10,7 +10,7 @@ argument-hint: [optional-topic]
 **设计文档**：`docs/plans/3dot141/260519-sediment-design.md`
 
 **姊妹命令 / 关联**：
-- `/sow`（必填意图、围绕主题浓缩长文档归档到 `$USER_WIKI_PATH`）—— `/sediment` 在 cross-project 出口仅作 advisor，建议用户跑 `/sow`，不替执行
+- `/sow`（必填意图、围绕主题浓缩并归档到 `$USER_VAULT_PATH/Memory/<layer>/`，v2 支持 Inbox/Inputs/Outputs 三层）—— `/sediment` 在 cross-project 出口仅作 advisor，建议用户跑 `/sow`，不替执行、不替判层
 
 ---
 
@@ -123,7 +123,9 @@ no → 整次 sediment 终止；yes → 进入分发。
 原因: <这条为何跨项目>
 ```
 
-**不替 `/sow` 校验 `$USER_WIKI_PATH`**——env 检查是 `/sow` 自己的责任，见 `commands/sow.md` env 依赖节。
+**不替 `/sow` 校验 `$USER_VAULT_PATH`**——env 检查是 `/sow` 自己的责任，见 `commands/sow.md` env 依赖节。（v1 env 名 `USER_WIKI_PATH` 已弃用，sow v2 改读 `USER_VAULT_PATH`）
+
+**不替 `/sow` 判层**——sow v2 已支持三层（Inbox / Inputs / Outputs），advisor 仅推 `/sow <intent>`，由 sow 自判层 + 用户 NL 确认 loop。sediment 不预估层、不绑层、不在 advisor 输出里附加层建议，职责保单一。
 
 #### `rules:project` 出口
 
@@ -373,7 +375,7 @@ catalog: model/agent-catalog.md 已追加路由条目
 - ❌ **AGENTS.md 加触发条件含糊**："需要时读 rules/foo.md" 等于没触发
 - ❌ **rules 文件名带日期**：rules 是当前指令不是历史记录，文件名只用 slug
 - ❌ **在 sediment 内部 commit / push**：只写文件，commit/push 由用户在主交互流程里处理
-- ❌ **替 /sow 校验 env**：cross-project advisor 不检查 `$USER_WIKI_PATH`——是 /sow 自己的责任
+- ❌ **替 /sow 校验 env**：cross-project advisor 不检查 `$USER_VAULT_PATH`——是 /sow 自己的责任
 
 ---
 

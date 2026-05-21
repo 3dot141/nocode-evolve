@@ -1,14 +1,30 @@
 #!/usr/bin/env python3
-"""/user-wiki-distill 命令的 frontmatter 生成脚本。
+"""/sow v2 命令的 frontmatter + 路径生成脚本。
 
-设计文档：docs/plans/3dot141/260514-user-wiki-distill-design.md
+设计文档：docs/plans/3dot141/260521-sow-multi-layer-design.md
 
-输入：--intent / --title / --summary（CLI flag）+ $USER_WIKI_PATH（env）
+v2 vs v1 变更：
+- env 改名 + 上移：USER_WIKI_PATH (v1, 指 Memory/05-Outputs 子目录)
+  → USER_VAULT_PATH (v2, 指 vault 根, 如 ~/AI/MyJarvis)。
+- Memory/ 前缀由脚本硬编 (MEMORY_SUBDIR 常量), 不进 env, 跨命令复用同一 env。
+- 加 --layer 必填参数 (inbox / inputs / outputs), 决定子目录路径。
+- exit 3 语义扩为「目录相关错误」, 含 missing subdir + mkdir failed 两子类型,
+  stderr 子类型前缀区分。
+- exit 4 新增：layer 参数非法 (AI prompt 漏传, 不该到用户)。
+
+输入：--layer / --intent / --title / --summary（CLI flag）+ $USER_VAULT_PATH（env）
 输出（stdout 双段，固定格式）：
     <完整 frontmatter，--- 包围>
     <空行>
     TARGET_PATH: <绝对路径>
-Exit code：0 成功 / 1 路径冲突 / 2 env 错 / 3 目录创建失败
+Exit code：
+    0 成功
+    1 路径冲突 (目标文件已存在)
+    2 env 错 ($USER_VAULT_PATH 未设 / 不是目录)
+    3 目录相关错误:
+        子类型 "missing subdir:" — <vault>/Memory/{01-Inbox|02-Inputs|05-Outputs} 任一不存在
+        子类型 "mkdir failed:"  — <yymm>/ 子目录 makedirs 失败 (权限 / 磁盘满)
+    4 --layer 参数非法 (AI 内部错)
 """
 
 import argparse
@@ -18,10 +34,24 @@ import sys
 from datetime import datetime
 
 
+# Memory 子目录名 (sow 内部硬编, 不进 env)
+MEMORY_SUBDIR = "Memory"
+
+# layer → 子目录名映射
+LAYER_DIR_MAP = {
+    "inbox": "01-Inbox",
+    "inputs": "02-Inputs",
+    "outputs": "05-Outputs",
+}
+
+
 def parse_args(argv=None):
     parser = argparse.ArgumentParser(
-        description="Generate frontmatter for /user-wiki-distill"
+        description="Generate frontmatter + path for /sow v2"
     )
+    parser.add_argument("--layer", required=True,
+                        choices=list(LAYER_DIR_MAP.keys()),
+                        help="target layer: inbox / inputs / outputs")
     parser.add_argument("--intent", required=True,
                         help="user intent verbatim (audit only, not written to frontmatter)")
     parser.add_argument("--title", required=True,
@@ -76,6 +106,10 @@ def render_frontmatter(summary, created_date, modified_date, permalink):
     字段顺序固定（与 vault 现有样本对齐）：
     aliases / draft / tags / summary / source / created_date / modified_date / permalink
 
+    tags 三层共用 [ai-distill]——layer 信息已在文件路径里反映 (`01-Inbox/...`),
+    不冗余进 tag；vault 现有 frontmatter `tags:` 大多为空, 无 layer-specific tag
+    命名惯例 (设计文档 W6 决议)。
+
     summary 用 yaml 双引号字符串包围 + escape，避免含 ":" "#" 等导致 parse 错。
     """
     return (
@@ -92,17 +126,39 @@ def render_frontmatter(summary, created_date, modified_date, permalink):
     )
 
 
-def build_target_path(user_wiki_path, yymm, yymmdd, title):
-    """拼目标文件绝对路径 `<user_wiki_path>/<yymm>/<yymmdd>-<title>.md`。"""
-    return os.path.join(user_wiki_path, yymm, f"{yymmdd}-{title}.md")
+def build_memory_root(vault_path):
+    """vault 根加 Memory/ 子前缀, 得到 Memory 根。"""
+    return os.path.join(vault_path, MEMORY_SUBDIR)
 
 
-def ensure_yymm_dir(user_wiki_path, yymm):
-    """创建 `<user_wiki_path>/<yymm>/` 子目录；已存在不报错。
+def build_target_path(memory_root, layer, yymm, yymmdd, title):
+    """拼目标文件绝对路径 `<memory_root>/<layer-dir>/<yymm>/<yymmdd>-<title>.md`。"""
+    return os.path.join(memory_root, LAYER_DIR_MAP[layer], yymm, f"{yymmdd}-{title}.md")
+
+
+def check_layer_subdirs(memory_root):
+    """校验 memory_root 下三个 layer 子目录全部存在。
+
+    返回缺失子目录的完整路径列表 (空列表 = 全部就位)。
+    sow 不自动创建 layer 子目录——防止 typo / 错根目录被静默接受。
+    """
+    missing = []
+    for dirname in LAYER_DIR_MAP.values():
+        path = os.path.join(memory_root, dirname)
+        if not os.path.isdir(path):
+            missing.append(path)
+    return missing
+
+
+def ensure_yymm_dir(memory_root, layer, yymm):
+    """创建 `<memory_root>/<layer-dir>/<yymm>/` 子目录；已存在不报错。
 
     失败（权限不足 / 磁盘满）时抛 OSError——由 caller 决定 exit code。
     """
-    os.makedirs(os.path.join(user_wiki_path, yymm), exist_ok=True)
+    os.makedirs(
+        os.path.join(memory_root, LAYER_DIR_MAP[layer], yymm),
+        exist_ok=True,
+    )
 
 
 def target_exists(target_path):
@@ -113,11 +169,23 @@ def target_exists(target_path):
 def main(argv=None):
     args = parse_args(argv)
 
-    user_wiki_path = os.environ.get("USER_WIKI_PATH")
-    if not user_wiki_path:
-        print("ERROR: $USER_WIKI_PATH 未设。请在 shell rc 里 "
-              "`export USER_WIKI_PATH=<Outputs 根目录>`。", file=sys.stderr)
+    vault_path = os.environ.get("USER_VAULT_PATH")
+    if not vault_path or not os.path.isdir(vault_path):
+        print(
+            "ERROR: $USER_VAULT_PATH 未设或不是目录。请在 shell rc 里 "
+            "`export USER_VAULT_PATH=<vault 根, 例 ~/AI/MyJarvis>`。",
+            file=sys.stderr,
+        )
         return 2
+
+    memory_root = build_memory_root(vault_path)
+    missing = check_layer_subdirs(memory_root)
+    if missing:
+        print(
+            f"ERROR: missing subdir: {', '.join(missing)}。请手动 mkdir 后重试。",
+            file=sys.stderr,
+        )
+        return 3
 
     now = datetime.now()
     created_date = format_created_date(now)
@@ -127,15 +195,22 @@ def main(argv=None):
     permalink = compute_permalink(args.title, created_date)
 
     try:
-        ensure_yymm_dir(user_wiki_path, yymm)
+        ensure_yymm_dir(memory_root, args.layer, yymm)
     except OSError as e:
-        print(f"ERROR: 创建 yymm 子目录失败：{e}", file=sys.stderr)
+        target_yymm_dir = os.path.join(memory_root, LAYER_DIR_MAP[args.layer], yymm)
+        print(
+            f"ERROR: mkdir failed: {e} (path={target_yymm_dir})",
+            file=sys.stderr,
+        )
         return 3
 
-    target_path = build_target_path(user_wiki_path, yymm, yymmdd, args.title)
+    target_path = build_target_path(memory_root, args.layer, yymm, yymmdd, args.title)
     if target_exists(target_path):
-        print(f"ERROR: 已存在 {target_path}。请改 title 后重试，"
-              f"或人工删除原文件再跑。", file=sys.stderr)
+        print(
+            f"ERROR: 已存在 {target_path}。请改 title 后重试，"
+            f"或人工删除原文件再跑。",
+            file=sys.stderr,
+        )
         return 1
 
     frontmatter = render_frontmatter(
