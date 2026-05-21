@@ -55,7 +55,7 @@ AI veto 判据（仅 2 条 OR，AI 不引入第三条软信号）：
 ### 3. 调脚本
 
 ```bash
-python3 commands/sow/script.py \
+python3 commands/sow-reference/script.py \
     --intent "<用户原话意图>" \
     --title "<AI 反推 + 清洗后的 title>" \
     --summary "<AI 写的 ≤30 字 summary>"

@@ -1,6 +1,6 @@
-"""user-wiki-distill script.py 的单元测试。
+"""sow script.py 的单元测试。
 
-运行：python3 -m unittest commands/user-wiki-distill/test_script.py
+运行：python3 -m unittest commands/sow-reference/test_script.py
 """
 import io
 import os

@@ -123,7 +123,7 @@ no → 整次 sediment 终止；yes → 进入分发。
 原因: <这条为何跨项目>
 ```
 
-**不替 `/sow` 校验 `$USER_WIKI_PATH`**——env 检查是 `/sow` 自己的责任，见 `commands/sow/sow.md` env 依赖节。
+**不替 `/sow` 校验 `$USER_WIKI_PATH`**——env 检查是 `/sow` 自己的责任，见 `commands/sow.md` env 依赖节。
 
 #### `rules:project` 出口
 
