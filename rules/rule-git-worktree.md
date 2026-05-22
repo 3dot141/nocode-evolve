@@ -93,6 +93,32 @@ skill `SKILL.md` 中下列默认行为**全部失效**，按本文执行：
 2. 是残留 → `git worktree remove` 清理后重建。
 3. 是真正的命名冲突（同 parent 下另一项目恰好叫这个名）→ 报告冲突让用户决定，**不要**自己加后缀绕过。
 
+## Worktree 创建后: 切到 worktree 工作目录
+
+`git worktree add` 不改 shell cwd——命令跑完, agent / 用户仍在主仓. 后续所有动作 (cp env / link personal / run setup / verify baseline / git 操作) 都该在 worktree **内**执行, 必须先把 cwd 切过去.
+
+### 触发
+
+任何成功执行 `git worktree add` 之后, 第一件事就是切 cwd. 用 `EnterWorktree` 这类工具创建的, 如果工具自带切换可省命令, 但 agent 仍必须**确认** cwd 落在 `$worktree_path` 而非主仓.
+
+### 标准动作
+
+变量沿用「路径推导」段的 `worktree_path`.
+
+```bash
+cd "$worktree_path"
+pwd                                   # 确认切过去了
+git rev-parse --show-toplevel         # 应输出 $worktree_path, 不是 $project_root
+```
+
+cd 是后续 cp env / link personal / setup / baseline 链的前置——它们都默认在当前 cwd 跑.
+
+### 不要
+
+- 不要把 `git -C "$worktree_path" <cmd>` 当常规用法——偶发 OK, 常态化 cwd 跟参数路径分裂, 容易把主仓 working tree 改坏
+- 不要假设 agent 会自动切——`git worktree add` 是 git 命令, 不改 shell 状态, 显式 cd 才生效
+- 不要切过去后又 cd 回主仓做事——后续动作链 (cp env / link personal / setup / baseline) 应一气在 worktree 内做完
+
 ## Worktree 创建后：cp 主仓 gitignored env / config
 
 `git worktree add` 出来的 checkout 是**干净** checkout——只复制 tracked 内容，主仓本地的 gitignored 文件（`.env*` / `config.local.*` / 本地 secret / API token / 等）**不会**带过来. worktree 跑起依赖这些文件的命令前要从主仓 cp 过来.
