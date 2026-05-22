@@ -32,6 +32,11 @@
 **读**: `${CLAUDE_PLUGIN_ROOT}/rules/rule-git-inspection.md`
 **摘要**: read-only inspection 命令默认用 `&&` 串成一个 Bash call, 各段间插 `echo "---<label>"` 分隔, 减少 turn 浪费
 
+### finishing-branch
+**触发**: 即将执行 `superpowers:finishing-a-development-branch` skill, 或用户说「完成 worktree / 收尾 / 合并 / 提 PR / 创建 PR / 合并到 main / 合并到 release / 删 branch / discard worktree」
+**读**: `${CLAUDE_PLUGIN_ROOT}/rules/rule-finishing-branch.md`
+**摘要**: 覆盖 + 扩展 superpowers skill, 4 选项 (merge/PR/keep/discard) 各自含 commit 整理建议; option 2 含 4 个 Gate (M/TB/PR/D), gh 主, Bitbucket DC 项目按需读 bkt 附录; 子文件在 `rule-references/rule-finishing-branch/` 按 disposition 渐进式 Read
+
 ---
 
 ## 维护
