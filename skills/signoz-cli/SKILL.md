@@ -1,6 +1,6 @@
 ---
 name: signoz-cli
-version: "0.1.0"
+version: "0.2.0"
 description: Query traces, logs, and metrics from SigNoz using the signoz CLI. Use when debugging observability data, checking alert rules, listing services, or running PromQL/ClickHouse SQL queries against a SigNoz instance.
 metadata:
   short-description: SigNoz CLI for traces/logs/metrics queries
@@ -61,6 +61,21 @@ signoz query --url "$SIGNOZ_PROD_URL" --token "$SIGNOZ_PROD_TOKEN" --promql '...
 - 命令报 401：用 `echo "${SIGNOZ_<ENV>_URL:?未设置}"` / `echo "${SIGNOZ_<ENV>_TOKEN:+已设置}"` 确认变量存在（不要 echo token 本身）
 - 变量在 Bash 工具里读不到：变量需要写在**非交互 shell 也加载**的位置。zsh 用户用 `~/.zshenv`（√），不要放 `~/.zshrc`（×，非交互 shell 不读）；bash 用户视配置可能是 `~/.bash_profile` / `~/.profile` / `~/.bashrc`，确认你的 shell 加载顺序
 
+## Timezone (默认 Asia/Shanghai)
+
+本 skill 默认所有时间按 **Asia/Shanghai (UTC+8)** 处理. 仅影响两个边界:
+
+- **ISO 输入**: `--since` / `--until` 给 ISO 8601 时, 默认带 `+08:00` offset, 例如 `2024-01-15T00:00:00+08:00`. 不要省略 offset 凭 CLI 猜.
+- **SQL 输出展示**: ClickHouse 时间函数 (`fromUnixTimestamp64Nano` / `toDateTime` / `toStartOfInterval`) 都显式传 `'Asia/Shanghai'`, `ts` 列直接是上海时间, 让 `INTERVAL 1 DAY` 这种按上海日界对齐.
+
+不影响:
+
+- **Duration 相对量** (`--since 1h`): "1 小时前"是相对当前时刻, tz-independent, 不变.
+- **底层存储**: DB 里 `timestamp` (UInt64 ns) / `unix_milli` (Int64 ms) 都是 Unix epoch, tz-independent, 不变.
+- **`{{start_ns}}` 等注入变量**: 都是 epoch 数值, 不带 tz.
+
+需要 UTC 输出: 把 SQL 里 `'Asia/Shanghai'` 改 `'UTC'` (或删除该参数走服务器默认).
+
 ## Commands
 
 ### query — Unified query API
@@ -114,8 +129,8 @@ signoz query --promql 'rate(http_requests_total[5m])' --since 1h
 # Table output for quick scan
 signoz query --promql '{__name__="db.client.connections.usage"}' --format table
 
-# From a specific start date to now
-signoz query --promql 'process_cpu_seconds_total' --since 2024-01-15T00:00:00Z
+# From a specific start date to now (Asia/Shanghai, see Timezone section)
+signoz query --promql 'process_cpu_seconds_total' --since 2024-01-15T00:00:00+08:00
 ```
 
 #### ClickHouse SQL examples
@@ -123,7 +138,7 @@ signoz query --promql 'process_cpu_seconds_total' --since 2024-01-15T00:00:00Z
 ```bash
 # Count logs from the last 24 hours — {{start_ns}}/{{end_ns}} injected from --since
 signoz query --since 24h --sql "
-  SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 1 HOUR) AS ts,
+  SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp, 'Asia/Shanghai'), INTERVAL 1 HOUR) AS ts,
          count(*) AS value
   FROM signoz_logs.distributed_logs_v2
   WHERE timestamp >= {{start_ns}} AND timestamp <= {{end_ns}}
@@ -142,7 +157,7 @@ signoz query --since 1h --request-type raw --format table --sql "
 
 # Metric samples over the last hour
 signoz query --since 1h --sql "
-  SELECT toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), INTERVAL 1 MINUTE) AS ts,
+  SELECT toStartOfInterval(toDateTime(intDiv(unix_milli, 1000), 'Asia/Shanghai'), INTERVAL 1 MINUTE) AS ts,
          avg(value) AS value
   FROM signoz_metrics.distributed_samples_v4
   WHERE metric_name = 'signoz_calls_total'
@@ -228,7 +243,7 @@ Relative durations for `--since` and `--until` always mean **"X ago from now"**:
 | `h` | `2h` | 2 hours ago |
 | `d` | `7d` | 7 days ago |
 
-ISO 8601 dates are also accepted: `2024-01-15T00:00:00Z`.
+ISO 8601 dates are also accepted: `2024-01-15T00:00:00+08:00` (Asia/Shanghai 默认, 见 Timezone 节).
 
 ## ClickHouse SQL Reference for SigNoz
 
@@ -273,7 +288,7 @@ SigNoz expects specific column names in ClickHouse SQL results:
 
 ```bash
 signoz query --since 1h --sql "
-  SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 1 MINUTE) AS ts,
+  SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp, 'Asia/Shanghai'), INTERVAL 1 MINUTE) AS ts,
          severity_text,
          count(*) AS value
   FROM signoz_logs.distributed_logs_v2
@@ -290,7 +305,7 @@ Key log columns: `severity_text` (INFO/ERROR/...), `severity_number`, `body` (me
 
 ```bash
 signoz query --since 1h --sql "
-  SELECT toStartOfInterval(timestamp, INTERVAL 1 MINUTE) AS ts,
+  SELECT toStartOfInterval(toTimeZone(timestamp, 'Asia/Shanghai'), INTERVAL 1 MINUTE) AS ts,
          resource_string_service\$\$name AS service,
          quantile(0.99)(duration_nano) / 1e6 AS value
   FROM signoz_traces.distributed_signoz_index_v3
@@ -307,7 +322,7 @@ Key trace columns: `name` (span name), `kind_string`, `duration_nano` (Float64, 
 
 ```bash
 signoz query --since 1h --sql "
-  SELECT toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), INTERVAL 1 MINUTE) AS ts,
+  SELECT toStartOfInterval(toDateTime(intDiv(unix_milli, 1000), 'Asia/Shanghai'), INTERVAL 1 MINUTE) AS ts,
          avg(value) AS value
   FROM signoz_metrics.distributed_samples_v4
   WHERE metric_name = 'http_requests_total'
