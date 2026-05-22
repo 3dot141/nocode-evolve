@@ -34,6 +34,27 @@
 
 历史 commit 已落地不改 (改 git history 风险高), 向前注意.
 
+## 工具偏好 — 代码搜索默认走 semble-search
+
+代码搜索 (按语义 / 按符号 / 按意图 / 找实现 / 找相关代码) 默认调 `Agent(subagent_type: "semble-search")`, 不用 Grep / Glob / Read+find 这种盲扫.
+
+semble-search 走 `semble` CLI; agent 定义里已声明 fallback: PATH 没 semble → `uvx --from "semble[mcp]" semble`. 两者都不可用再退回 Bash grep / Explore agent, 并向用户报"semble 不可用, fallback 到 X".
+
+触发: 写代码搜索任意符号 / 实现位置 / 语义查询 ("找认证流程", "save_pretrained 在哪用", "X 怎么实现的"); 解释代码逻辑前的探索性查找.
+
+不触发:
+- 已知精确文件路径 → 直接 Read, 不绕 semble
+- 单行 literal 字符串精确匹配 → Bash grep (semble 杀鸡用牛刀)
+- 文件名 pattern 查找 → Bash find / Glob
+
+反例 → 正例:
+
+| 反例 | 正例 |
+|---|---|
+| `Grep "useState" src/` 找 hook 用法 | `Agent(subagent_type: "semble-search", prompt: "find useState hook usages")` |
+| `Bash find ... \| xargs grep` 探索性 | `Agent(subagent_type: "semble-search", ...)` |
+| 已知 `src/auth.py:42` 还跑 semble | 直接 Read, 已定位的不绕 |
+
 # 全局占位符
 
 | 占位符 | 默认值 | 说明 |
