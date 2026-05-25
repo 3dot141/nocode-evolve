@@ -48,6 +48,7 @@ description: 写设计文档时使用。按业界主流 4 类 doc-type 主轴（
 ## 工作流
 
 ```
+0. (by overlay) 先开 worktree —— 不分入口（brainstorming step 5 / 用户直接要求写文档），写初稿前都先开；分支 design/<topic>，路径按 rule-git-worktree.md；用户显式弃用（「在主仓写」/「不要 worktree」）则跳过，并在回复点名告知
 1. 判断 doc-type（按上表）
 2. Read references/doc-types/<type>.md（学骨架 + 写作要点）
 3. Read references/examples/example-<type>-dogfood.md + example-<type>-business.md（看 dogfood 示例 + 业务场景示例）
