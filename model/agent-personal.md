@@ -22,9 +22,9 @@ INDEX 同一会话只 Read 一次. 三条 OR 全不触发的纯执行 / 纯小�
 
 进一步 Read `pages/<file>` 按需, 触发: 对项目某设计 / 约定 / 术语不确定; 用户暗示"之前讨论过"; 你的判断可能跟过往决策冲突; 用户问"这个项目里 X 怎么处理的"; INDEX 某条 description 明显覆盖当前决策点.
 
-不要: 读了不引用; 无脑拉所有 pages; 把 wiki 当绝对真理 (它会被 superseded); 自己写 wiki (沉淀走 `/sediment`).
+不要: 读了不引用; 无脑拉所有 pages; 把 wiki 当绝对真理 (它会被 superseded); 自己写 wiki (沉淀走 `/distill`).
 
-沉淀: 发现项目级新知识时建议用户跑 `/sediment`, 命令自动贴 `wiki:project` / `rules:project` 标签, 不替用户决定.
+沉淀: 发现项目级新知识时建议用户跑 `/distill`, 命令自动贴 `wiki:project` / `rules:project` 标签, 不替用户决定.
 
 ---
 
@@ -44,9 +44,9 @@ INDEX 同一会话只 Read 一次. 三条 OR 全不触发的纯执行 / 纯小�
 
 触发条件写法: 一句"当 X 时"或"用户说 Y 时"陈述, agent 读完能直判 yes/no. 不写「可能 / 也许 / 看情况 / 需要时」——含糊触发等于没触发.
 
-不要: 在 AGENTS.md 写命令模板 / 长事实表 (挪 rule); 把 rule 当历史质疑 (改请用户改); 自己往 `.agents-personal/` 写东西 (沉淀走 `/sediment`).
+不要: 在 AGENTS.md 写命令模板 / 长事实表 (挪 rule); 把 rule 当历史质疑 (改请用户改); 自己往 `.agents-personal/` 写东西 (沉淀走 `/distill`).
 
-沉淀: 项目级新指令建议用户跑 `/sediment`, 命令自动贴 `rules:project` 标签, 落地时双写 `.agents-personal/rules/<topic>.md` + AGENTS.md 触发条件.
+沉淀: 项目级新指令建议用户跑 `/distill`, 命令自动贴 `rules:project` 标签, 落地时双写 `.agents-personal/rules/<topic>.md` + AGENTS.md 触发条件.
 
 ---
 
@@ -68,13 +68,13 @@ INDEX 同一会话只 Read 一次. 三条 OR 全不触发的纯执行 / 纯小�
 
 ### 不要
 
-- sediment / sow "顺手"清理旧 wiki / 旧 rule (除非命令定义了清理动作且用户已勾选)
+- distill / sow "顺手"清理旧 wiki / 旧 rule (除非命令定义了清理动作且用户已勾选)
 - 为"重新组织"批量 mv / rm (结构改也是删除等价物)
 - 假设 git mv 不算删除 (`.agents-personal/` 是 gitignored, mv = delete + create)
 - 因"过时 / 跟新决策矛盾"自己拍板删 (superseded 仍有参考价值, 由用户判断该删还是标 `superseded by ...` 保留)
 
 ### `$USER_VAULT_PATH` 同等护栏
 
-`/sediment` 的 `wiki:cross-project advisor` 出口建议跑 `/sow`, 后者写到 `$USER_VAULT_PATH/Memory/<layer>/`, 同等不可恢复, 同等护栏. 本节凡处推广.
+`/distill` 的 `wiki:cross-project advisor` 出口建议跑 `/sow`, 后者写到 `$USER_VAULT_PATH/Memory/<layer>/`, 同等不可恢复, 同等护栏. 本节凡处推广.
 
 > v1 env 名 `USER_WIKI_PATH` (指 Memory/05-Outputs) 已弃用; sow v2 改读 `USER_VAULT_PATH` (指 vault 根).

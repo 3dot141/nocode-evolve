@@ -3,14 +3,14 @@ description: 把当前会话沉淀分流到 wiki/rules 五个出口（项目 wik
 argument-hint: [optional-topic]
 ---
 
-# /sediment：会话沉淀分流命令
+# /distill：会话沉淀分流命令
 
 把当前会话里值得跨会话保留的内容沉淀到合适出口——AI 识别候选 + 自动贴分类标签 → 用户表格短码勾选/调整 → 五出口分发。
 
 **设计文档**：`docs/plans/3dot141/260519-sediment-design.md`
 
 **姊妹命令 / 关联**：
-- `/sow`（必填意图、围绕主题浓缩并归档到 `$USER_VAULT_PATH/Memory/<layer>/`，v2 支持 Inbox/Inputs/Outputs 三层）—— `/sediment` 在 cross-project 出口仅作 advisor，建议用户跑 `/sow`，不替执行、不替判层
+- `/sow`（必填意图、围绕主题浓缩并归档到 `$USER_VAULT_PATH/Memory/<layer>/`，v2 支持 Inbox/Inputs/Outputs 三层）—— `/distill` 在 cross-project 出口仅作 advisor，建议用户跑 `/sow`，不替执行、不替判层
 
 ---
 
@@ -35,7 +35,7 @@ argument-hint: [optional-topic]
 
 ## sessionHistory 怎么取
 
-`/sediment` 是 markdown slash command，**没有官方"会话历史"入参**。沿用 `/sow` 模式：**AI 直接看当前 context window 里的对话内容**，不读任何外部历史文件。
+`/distill` 是 markdown slash command，**没有官方"会话历史"入参**。沿用 `/sow` 模式：**AI 直接看当前 context window 里的对话内容**，不读任何外部历史文件。
 
 - 短会话（context 未压缩）：AI 能完整扫到从会话起点到现在的所有轮次
 - 长会话（context 已被自动压缩）：AI 只看得到 summary + 未滚出窗口的轮次
@@ -96,7 +96,7 @@ argument-hint: [optional-topic]
 ```
 | #  | 主题摘要                       | 建议标签         | 落地路径（disposition）                       |
 |----|--------------------------------|------------------|-----------------------------------------------|
-| 1  | sediment 命令分流机制设计      | wiki:project     | 新建 wiki/pages/260519-sediment-...md         |
+| 1  | distill 命令分流机制设计      | wiki:project     | 新建 wiki/pages/260519-sediment-...md         |
 | 2  | fork-PR / cross-fork 教训      | rules:plugin     | 融合→ rule-references/.../pr-flow-bkt-...md   |
 | 3  | rules 沉淀的 catalog 联动启发式 | rules:plugin     | 新建 rules/rule-...md + catalog + 版本        |
 | 4  | 一次性 bug 修复进度            | skip             | —                                             |
@@ -124,7 +124,7 @@ argument-hint: [optional-topic]
 项 #N (rules:plugin) 将写入 ~/AI/nocode-evolve/，确认？(yes/no)
 ```
 
-no → 整次 sediment 终止；yes → 进入分发。
+no → 整次 distill 终止；yes → 进入分发。
 
 ### 4. 五出口分发
 
@@ -145,7 +145,7 @@ no → 整次 sediment 终止；yes → 进入分发。
 
 **不替 `/sow` 校验 `$USER_VAULT_PATH`**——env 检查是 `/sow` 自己的责任，见 `commands/sow.md` env 依赖节。（v1 env 名 `USER_WIKI_PATH` 已弃用，sow v2 改读 `USER_VAULT_PATH`）
 
-**不替 `/sow` 判层**——sow v2 已支持三层（Inbox / Inputs / Outputs），advisor 仅推 `/sow <intent>`，由 sow 自判层 + 用户 NL 确认 loop。sediment 不预估层、不绑层、不在 advisor 输出里附加层建议，职责保单一。
+**不替 `/sow` 判层**——sow v2 已支持三层（Inbox / Inputs / Outputs），advisor 仅推 `/sow <intent>`，由 sow 自判层 + 用户 NL 确认 loop。distill 不预估层、不绑层、不在 advisor 输出里附加层建议，职责保单一。
 
 #### `rules:project` 出口
 
@@ -170,9 +170,9 @@ no → 整次 sediment 终止；yes → 进入分发。
 
 ```
 项 #N (rules:project) 需要 .agents-personal/AGENTS.md，文件不存在。怎么办？
-  (1) 由 sediment 创建骨架（含路由表说明 + 该项触发条目）
+  (1) 由 distill 创建骨架（含路由表说明 + 该项触发条目）
   (2) 跳过这一项（不写 rules 文件，让我先手建 AGENTS.md）
-  (3) 终止整次 sediment
+  (3) 终止整次 distill
 ```
 
 骨架模板：
@@ -200,13 +200,13 @@ no → 整次 sediment 终止；yes → 进入分发。
 ```
 沉淀完成：
   ✓ 新建 wiki: pages/260519-sediment-design.md
-  ✓ 改 rules:project: .agents-personal/rules/sediment-shortcode.md + AGENTS.md
+  ✓ 改 rules:project: .agents-personal/rules/distill-shortcode.md + AGENTS.md
   ✓ advisor: /sow 沉淀今天讨论的 prompt 优化经验
   ✓ skip: 一次性 bug 修复（原因：无沉淀价值）
 
 ⚠ 融进 plugin rule（子文件）: rules/rule-references/rule-finishing-branch/pr-flow-bkt-appendix.md
   catalog: 未动（门面 rule-finishing-branch 已路由）  版本: 1.3.1 → 1.4.0 (minor)
-⚠ 跨仓新建 plugin rule: ~/AI/nocode-evolve/rules/rule-sediment-extension.md
+⚠ 跨仓新建 plugin rule: ~/AI/nocode-evolve/rules/rule-distill-extension.md
   catalog: model/agent-catalog.md 已追加路由条目  版本: 1.4.0 → 1.5.0 (minor)
   请到 nocode-evolve 仓 review + commit + 询问是否 push。
 ```
@@ -291,7 +291,7 @@ INDEX 模板：
 ```markdown
 # Project Wiki
 
-> 由 `/sediment` 自动维护。AI 工作时遇到项目背景问题，先读 INDEX，按 description 决定是否 Read 具体页。
+> 由 `/distill` 自动维护。AI 工作时遇到项目背景问题，先读 INDEX，按 description 决定是否 Read 具体页。
 
 ## Pages
 
@@ -402,7 +402,7 @@ catalog: model/agent-catalog.md 已追加路由条目
 
 如果发现 `nocode-evolve/rules/` 下有未被 `model/agent-catalog.md` 引用的孤儿文件——**不主动补**。归用户手动处理（inject-rules.sh sanity check 每 session stderr 警告，足够提示）。
 
-理由：scope 控制——`/sediment` 是沉淀命令，不是 catalog 整理工具。
+理由：scope 控制——`/distill` 是沉淀命令，不是 catalog 整理工具。
 
 在报告末尾仅做提示：
 
@@ -424,7 +424,7 @@ catalog: model/agent-catalog.md 已追加路由条目
 - ❌ **写 plugin rule 但忘升 version**——CLAUDE.md 硬约束
 - ❌ **AGENTS.md 加触发条件含糊**："需要时读 rules/foo.md" 等于没触发
 - ❌ **rules 文件名带日期**：rules 是当前指令不是历史记录，文件名只用 slug
-- ❌ **在 sediment 内部 commit / push**：只写文件，commit/push 由用户在主交互流程里处理
+- ❌ **在 distill 内部 commit / push**：只写文件，commit/push 由用户在主交互流程里处理
 - ❌ **替 /sow 校验 env**：cross-project advisor 不检查 `$USER_VAULT_PATH`——是 /sow 自己的责任
 
 ---
@@ -437,7 +437,7 @@ catalog: model/agent-catalog.md 已追加路由条目
 | 全 skip | 报"识别 N 项均建议跳过 + 原因"，停 |
 | `optionalTopicArg` 在会话里无对应内容 | 报"未找到 topic 相关内容"，停 |
 | context 已被压缩到只剩 summary | 仍按可见内容尽力生成候选；表格脚注加 "⚠ context 部分被压缩，沉淀可能不完整" |
-| `<proj>/.agents-personal/AGENTS.md` 不存在 | 三选一：(1)创建骨架 (2)跳过本项 (3)终止 sediment |
+| `<proj>/.agents-personal/AGENTS.md` 不存在 | 三选一：(1)创建骨架 (2)跳过本项 (3)终止 distill |
 | `rules:project` / `rules:plugin` slug 冲突 | **转整合判断**（疑似融合目标）：提示 `N fuse <path>` 融进 或 `N /<new-slug>` 改名建新 |
 | `wiki:project` slug 冲突 | 走整合判断 |
 | 用户 `N fuse <path>` 指的文件不存在 | 报"`<path>` 不存在，无法融合；用 `N new` 建新或 `N fuse <正确 path>`" |

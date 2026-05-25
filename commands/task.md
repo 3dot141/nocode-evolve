@@ -249,7 +249,7 @@ tags: [task]
    - 其他动作: updateFrontmatter `{ scheduled: newScheduled, carried_from: <原 scheduled>, modified_date: now }`
 6. quit → return `{ quit: true, count: 0 }`
 
-**短码必须严格语法**, 不接受自然语言 (NL 容错收益远低于误执行风险, 跟 sediment 一致).
+**短码必须严格语法**, 不接受自然语言 (NL 容错收益远低于误执行风险, 跟 distill 一致).
 
 **报告**: `"carried <N> tasks"` (count = 实际改动数, 不含 cancelled).
 
@@ -339,5 +339,5 @@ tags: [task]
 - ❌ **AI 自动延续 carry-over 候选不让用户拍** — 必须表格短码确认
 - ❌ **AI 自动建 weekly note 替用户写 plan** — weekly plan 是 user-content, AI 不替写
 - ❌ **改 done 状态的 task 的 status 字段 (走 cancel 后悔了不能 reopen)** — 暂不支持 status 回退
-- ❌ **NL 接受短码场景 (BF3 / BF4)** — 短码必须严格语法, AI 解析 NL 失败模式不是"懂/不懂" binary 而是"懂错", 容错收益远低于误执行风险 (跟 sediment 一致)
+- ❌ **NL 接受短码场景 (BF3 / BF4)** — 短码必须严格语法, AI 解析 NL 失败模式不是"懂/不懂" binary 而是"懂错", 容错收益远低于误执行风险 (跟 distill 一致)
 - ❌ **把 vault 路径写死在命令逻辑里** — 必须用 `$USER_VAULT_PATH` env var 拼出 vault 子路径, 支持不同用户 vault 位置 / 跨设备同步差异

@@ -214,7 +214,7 @@ fi
 
 - **单一来源**: 主仓改了 worktree 立刻看到, 零同步开销
 - **零 hook 改造**: SessionStart hook 仍按 `${CLAUDE_PROJECT_DIR}/.agents-personal/AGENTS.md` 读取, symlink 透明转发到主仓
-- **/sediment 写回主仓**: 在 worktree 内跑 `/sediment` 落 `wiki:project` / `rules:project` 时, 经 symlink 实际写主仓——符合"主仓是 source of truth"语义
+- **/distill 写回主仓**: 在 worktree 内跑 `/distill` 落 `wiki:project` / `rules:project` 时, 经 symlink 实际写主仓——符合"主仓是 source of truth"语义
 - **gitignored 状态保留**: worktree 的 `.gitignore` 是 tracked 跟过来的, 里头仍 ignore `.agents-personal/`, symlink 自动落进 ignore, `git status` 不污染
 
 ### 销毁 worktree 前必读
