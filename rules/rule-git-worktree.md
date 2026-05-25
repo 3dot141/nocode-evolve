@@ -95,15 +95,40 @@ skill `SKILL.md` 中下列默认行为**全部失效**，按本文执行：
 
 ## Worktree 创建后: 切到 worktree 工作目录
 
-`git worktree add` 不改 shell cwd——命令跑完, agent / 用户仍在主仓. 后续所有动作 (cp env / link personal / run setup / verify baseline / git 操作) 都该在 worktree **内**执行, 必须先把 cwd 切过去.
+`git worktree add` 不改 shell cwd——命令跑完, agent / 用户仍在主仓. Claude Code 的 Bash tool 每次 call 结束**会把 cwd 重置回主仓** (transcript 里看到 `Shell cwd was reset to ...` 就是这个), 所以"每次 Bash 都重新 cd"是真实摩擦, 不是错觉.
+
+后续所有动作 (cp env / link personal / run setup / verify baseline / git 操作) 都该在 worktree **内**执行, 必须把 cwd 切过去**并让切换持久化**.
+
+### 推荐: `git worktree add` + `EnterWorktree(path=)` 两步组合
+
+```
+1. git worktree add "$worktree_path" -b "$BRANCH_NAME"     # 拿规则要的平级路径
+2. EnterWorktree(path="$worktree_path")                    # session cwd 持久化, 后续 Bash 不用再 cd
+```
+
+为什么必须两步, 不能 `EnterWorktree` 一把梭:
+
+- `EnterWorktree()` 无参 / `EnterWorktree(name=...)` 会**自动创建** worktree 到项目内 `.claude/worktrees/<name>/`——直接违反本 rule「平级 + 扁平命名」核心原则
+- `EnterWorktree(path=<existing>)` 模式只**进入**已存在的 worktree (要求 `path` 在 `git worktree list` 里), 不创建——这才跟规则共存
+- 退出: `ExitWorktree(action="keep")`. `path=` 模式进入的 worktree 不会被 remove, 安全
 
 ### 触发
 
-任何成功执行 `git worktree add` 之后, 第一件事就是切 cwd. 用 `EnterWorktree` 这类工具创建的, 如果工具自带切换可省命令, 但 agent 仍必须**确认** cwd 落在 `$worktree_path` 而非主仓.
+任何成功执行 `git worktree add` 之后, 第一件事就是切 cwd 并让切换持久化.
 
 ### 标准动作
 
 变量沿用「路径推导」段的 `worktree_path`.
+
+**首选 (能用 EnterWorktree 时)**:
+
+```
+EnterWorktree(path="$worktree_path")
+```
+
+之后 Bash call 起点直接是 worktree, 无须 cd 前缀.
+
+**fallback (没 EnterWorktree 时, 如纯 shell 脚本 / 别的 agent harness)**: 每次 Bash 显式 cd, 接受重复成本.
 
 ```bash
 cd "$worktree_path"
@@ -111,12 +136,13 @@ pwd                                   # 确认切过去了
 git rev-parse --show-toplevel         # 应输出 $worktree_path, 不是 $project_root
 ```
 
-cd 是后续 cp env / link personal / setup / baseline 链的前置——它们都默认在当前 cwd 跑.
+cd / EnterWorktree 是后续 cp env / link personal / setup / baseline 链的前置——它们都默认在当前 cwd 跑.
 
 ### 不要
 
+- 不要用 `EnterWorktree()` (无参) 或 `EnterWorktree(name=...)` **自动创建** worktree——会落项目内 `.claude/worktrees/`, 违反平级规则; 创建走 `git worktree add`, EnterWorktree 只负责 `path=` 模式进入
 - 不要把 `git -C "$worktree_path" <cmd>` 当常规用法——偶发 OK, 常态化 cwd 跟参数路径分裂, 容易把主仓 working tree 改坏
-- 不要假设 agent 会自动切——`git worktree add` 是 git 命令, 不改 shell 状态, 显式 cd 才生效
+- 不要假设 agent 会自动切——`git worktree add` 是 git 命令, 不改 shell 状态, 必须显式 EnterWorktree(path=) 或 cd 才生效
 - 不要切过去后又 cd 回主仓做事——后续动作链 (cp env / link personal / setup / baseline) 应一气在 worktree 内做完
 
 ## Worktree 创建后：cp 主仓 gitignored env / config
