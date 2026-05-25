@@ -27,8 +27,8 @@ argument-hint: [optional-topic]
 |---|---|---|
 | `wiki:project` | `<proj>/.agents-personal/wiki/pages/<slug>.md` | 历史记忆，项目专属；走整合判断 |
 | `wiki:cross-project` | （不写文件）| **advisor**：输出"建议跑 `/sow <intent>`" |
-| `rules:project` | `<proj>/.agents-personal/rules/<slug>.md` + 改 `<proj>/.agents-personal/AGENTS.md` 加触发条件 | 当前指令，项目专属；双写 |
-| `rules:plugin` | `$NOCODE_EVOLVE_REPO/rules/rule-<slug>.md` + 改 `model/agent-catalog.md` 加路由条目 + 升 `plugin.json` | 当前指令，跨项目通用；**三步联动** |
+| `rules:project` | 融进现有 rule，或新建 `<proj>/.agents-personal/rules/<slug>.md` + 改 `AGENTS.md` 触发条件 | 当前指令，项目专属；**先整合判断**（融合优先），否则双写新建 |
+| `rules:plugin` | 融进现有 rule（含 `rule-references/` 子文件），或新建 `$NOCODE_EVOLVE_REPO/rules/rule-<slug>.md` + 改 `model/agent-catalog.md` + 升 `plugin.json` | 当前指令，跨项目通用；**先整合判断**（融合优先），否则三步联动建新 |
 | `skip` | （不写）| 列出原因供用户最后反悔 |
 
 ---
@@ -51,13 +51,30 @@ argument-hint: [optional-topic]
 按主题聚类（同主题合并），每个候选 AI 自动贴标签 + 生成完整 body：
 
 ```
-候选 = { summary, label, slug, path, body }
-  summary  ≤40 字摘要
-  label    ∈ {wiki:project, wiki:cross-project, rules:project, rules:plugin, skip}
-  slug     kebab-case 3-5 词
-  path     按 label 算出的最终落盘路径
-  body     最终文件正文（在候选阶段就生成，分发阶段直接 write）
+候选 = { summary, label, slug, disposition, path, body }
+  summary      ≤40 字摘要
+  label        ∈ {wiki:project, wiki:cross-project, rules:project, rules:plugin, skip}
+  slug         kebab-case 3-5 词
+  disposition  新建 | 融合→<现有文件路径>（仅 wiki:project / rules:* 出口有意义；见下「整合判断」）
+  path         disposition=新建 时按 label 算落盘路径；disposition=融合 时=目标现有文件路径
+  body         disposition=新建 时=完整文件正文（分发直接 write）；融合 时=要融进目标的内容片段
 ```
+
+**整合判断（候选阶段就做，让表格诚实）**：对 `wiki:project` / `rules:project` / `rules:plugin` 候选，先读对应索引判与现有内容关系，设 `disposition`：
+
+| 出口 | 读的索引 | 强相关 → 融合目标 |
+|---|---|---|
+| `wiki:project` | `wiki/INDEX.md` description | 现有 `pages/<x>.md` |
+| `rules:project` | `AGENTS.md` 触发表 | 现有 `rules/<x>.md` |
+| `rules:plugin` | `model/agent-catalog.md` 规则清单 | 现有 `rules/rule-<x>.md`，**或其 `rule-references/<x>/<子文件>.md`** |
+
+```
+┌─ 强相关：同一系统/同一规则的延伸/演进 → disposition=融合→<现有文件>
+├─ 弱相关：提到但主题不同                → disposition=新建（+ 现有处加 see also，仅 wiki）
+└─ 无关                                  → disposition=新建
+```
+
+> **融合优先**：rules 出口默认倾向融进现有 rule，避免 catalog / AGENTS.md 触发条目碎片化。判不准时宁可标融合让用户在表格里看到目标文件，再用 `N new` 翻成新建——比默认新建后 catalog 膨胀更易纠。各出口融合的落地细节见下方分发节。
 
 **标签启发式**（仅作 AI 初始建议，用户可改）：
 
@@ -77,11 +94,12 @@ argument-hint: [optional-topic]
 输出 Markdown 表格（列固定：`# / 摘要 / 标签 / 路径`），下方附短码提示：
 
 ```
-| #  | 主题摘要                       | 建议标签         | 落地路径                          |
-|----|--------------------------------|------------------|-----------------------------------|
-| 1  | sediment 命令分流机制设计      | wiki:project     | wiki/pages/260519-sediment-...md |
-| 2  | rules 沉淀的 catalog 联动启发式 | rules:plugin     | rules/rule-...md + catalog + 版本 |
-| 3  | 一次性 bug 修复进度            | skip             | —                                 |
+| #  | 主题摘要                       | 建议标签         | 落地路径（disposition）                       |
+|----|--------------------------------|------------------|-----------------------------------------------|
+| 1  | sediment 命令分流机制设计      | wiki:project     | 新建 wiki/pages/260519-sediment-...md         |
+| 2  | fork-PR / cross-fork 教训      | rules:plugin     | 融合→ rule-references/.../pr-flow-bkt-...md   |
+| 3  | rules 沉淀的 catalog 联动启发式 | rules:plugin     | 新建 rules/rule-...md + catalog + 版本        |
+| 4  | 一次性 bug 修复进度            | skip             | —                                             |
 
 短码：
   go              全按建议执行（同 done）
@@ -90,11 +108,13 @@ argument-hint: [optional-topic]
   2 wiki          第 2 切到 wiki 轴（保持 scope）
   2 rules         第 2 切到 rules 轴
   2 /foo-bar      改第 2 的 slug
+  2 new           第 2 强制新建（覆盖 AI 的融合判断）
+  2 fuse <path>   第 2 强制融进指定现有文件（覆盖 AI 的新建判断；<path> 相对仓库根）
 ```
 
 读用户回复 → 解析短码 → in-place 改 candidates → 重绘表格 → loop until `go` 或 `done`。
 
-**不接受自然语言**——短码不识别就报错"语法不识别，请用短码：go / -N / N plug / N wiki / N rules / N /slug"，等用户重打。理由：AI 解析 NL 的失败模式不是"懂/不懂" binary，而是"懂错"，容错收益远低于误执行风险。
+**不接受自然语言**——短码不识别就报错"语法不识别，请用短码：go / -N / N plug / N wiki / N rules / N /slug / N new / N fuse <path>"，等用户重打。理由：AI 解析 NL 的失败模式不是"懂/不懂" binary，而是"懂错"，容错收益远低于误执行风险。
 
 **全 skip 后用户仍 `go`**：提示"全 skip 等价 0 候选，确认继续？(yes/no)"，no 退出。
 
@@ -129,7 +149,13 @@ no → 整次 sediment 终止；yes → 进入分发。
 
 #### `rules:project` 出口
 
-双写：
+**disposition=融合**（强相关，目标=现有 `rules/<x>.md`）：
+
+1. Read 目标 rule 全文 → 把 `body` 片段**融进合适章节**（必要时改章节结构；**不是末尾 paste**）
+2. `AGENTS.md` 该 rule 的触发条目**已存在 → 不重复加**；仅当本次融合扩了触发范围才 `edit` 改那一条
+3. 报告"融进 rules/<x>.md，AGENTS.md [未动 / 已更新触发]"
+
+**disposition=新建** → 双写：
 
 1. `write(<proj>/.agents-personal/rules/<slug>.md, body)`——文件名只用 slug，不带日期（rules 是当前指令不是历史记录）
 2. `edit(<proj>/.agents-personal/AGENTS.md)` 在合适分组下加触发条目：
@@ -161,9 +187,9 @@ no → 整次 sediment 终止；yes → 进入分发。
 **读**：rules/<slug>.md
 ```
 
-#### `rules:plugin` 出口（三步联动）
+#### `rules:plugin` 出口（融合优先，否则三步联动）
 
-见下方「rules:plugin 三步联动」节。
+按 `disposition` 走下方「rules:plugin 分发：融合路径 + 三步联动」节。
 
 #### `skip` 出口
 
@@ -178,8 +204,10 @@ no → 整次 sediment 终止；yes → 进入分发。
   ✓ advisor: /sow 沉淀今天讨论的 prompt 优化经验
   ✓ skip: 一次性 bug 修复（原因：无沉淀价值）
 
-⚠ 跨仓写入 plugin rule: ~/AI/nocode-evolve/rules/rule-sediment-extension.md
-  catalog: model/agent-catalog.md 已追加路由条目  版本: 0.39.0 → 0.40.0 (minor)
+⚠ 融进 plugin rule（子文件）: rules/rule-references/rule-finishing-branch/pr-flow-bkt-appendix.md
+  catalog: 未动（门面 rule-finishing-branch 已路由）  版本: 1.3.1 → 1.4.0 (minor)
+⚠ 跨仓新建 plugin rule: ~/AI/nocode-evolve/rules/rule-sediment-extension.md
+  catalog: model/agent-catalog.md 已追加路由条目  版本: 1.4.0 → 1.5.0 (minor)
   请到 nocode-evolve 仓 review + commit + 询问是否 push。
 ```
 
@@ -289,15 +317,35 @@ INDEX 模板：
 
 ---
 
-## rules:plugin 三步联动
+## rules:plugin 分发：融合路径 + 三步联动
 
 新架构下 `rules/` 不再分 axis（`overlay-` / `agent-` / `tool-` 命名前缀已废弃），所有触发式规则统一命名为 `rule-<slug>.md`，由 `model/agent-catalog.md` 路由，agent 在会话中按触发条件按需 Read。
 
-### Step 1: 写 rule 文件
+按候选的 `disposition` 分两条路：**融合**（强相关，融进现有 rule）走下方「融合路径」；**新建**走「三步联动」。
+
+### 融合路径（disposition=融合）
+
+目标可能是顶层 `rules/rule-<x>.md`，**也可能是门面的子文件** `rules/rule-references/<x>/<子文件>.md`（如 fork-PR 知识融进 `pr-flow-bkt-appendix.md`）。
+
+1. **Read 目标文件全文** → 把 `body` 片段**融进合适章节**（必要时改章节结构，如新增 Workflow / Step 分支；**不是末尾 paste**）
+2. **catalog 处理**（关键差异——不无脑新增条目）：
+   | 融合目标 | catalog 动作 |
+   |---|---|
+   | 顶层 `rule-<x>.md`，触发/摘要仍准确 | **不动** |
+   | 顶层 `rule-<x>.md`，本次融合扩了 scope（触发范围变大） | **Edit 现有那条**的触发/摘要，**不新增条目** |
+   | `rule-references/` 子文件（门面 `rule-<x>.md` 已路由） | **不动**（门面条目已覆盖） |
+3. **升 `plugin.json` 版本**：融合通常 `minor`（补充现有 rule 能力 = 兼容增强）或 `patch`（纯文案补充）；不默认像新建那样跳 minor
+4. 报告："融进 `<目标路径>`，catalog [未动 / 已更新条目 `<slug>`]，版本 `x → y`"
+
+> 融合路径**不新增 catalog 条目、不新建文件**——这正是「融合优先」要省下的 catalog 表面。
+
+### 三步联动（disposition=新建）
+
+#### Step 1: 写 rule 文件
 
 文件路径：`${NOCODE_EVOLVE_REPO}/rules/rule-<slug>.md`。
 
-slug 冲突 → abort："slug 冲突: `rule-<slug>.md`，请用 `N /<new-slug>` 改 slug 后重试"。
+slug 冲突 → **不直接 abort，转整合判断**：slug 已存在往往说明这就是融合目标。报"slug `rule-<slug>.md` 已存在——疑似融合目标，建议 `N fuse rules/rule-<slug>.md`（融进它）或 `N /<new-slug>`（确实是新主题，改名建新）"，回表格等用户。
 
 `write(filePath, body)`。
 
@@ -368,7 +416,9 @@ catalog: model/agent-catalog.md 已追加路由条目
 ## 反模式
 
 - ❌ **AI 自判直接写**——必须经过候选呈现 + 用户勾选
-- ❌ **末尾 paste**：wiki:project 整合已有页时不把新内容堆到 `## YYMMDD Update` 节
+- ❌ **rules 永远新建**：明明是现有 rule 的延伸还新建 `rule-<slug>.md` + 加 catalog 条目 → catalog 膨胀 + 触发条件碎片化。强相关先融合（含融进 `rule-references/` 子文件）
+- ❌ **融合还新增 catalog 条目**：融进现有 rule 时门面条目已覆盖，无脑再加一条 = 重复路由
+- ❌ **末尾 paste**：整合 wiki 已有页 / 融进现有 rule 时不把新内容堆到 `## YYMMDD Update` 节——融进合适章节
 - ❌ **跨仓写入不二次确认**：cwd ≠ nocode-evolve 仓而要写 plugin rule 时，不弹二次确认就动手
 - ❌ **写 plugin rule 但忘了改 model/agent-catalog.md 路由表**——sanity check 警告等于白沉淀
 - ❌ **写 plugin rule 但忘升 version**——CLAUDE.md 硬约束
@@ -388,8 +438,10 @@ catalog: model/agent-catalog.md 已追加路由条目
 | `optionalTopicArg` 在会话里无对应内容 | 报"未找到 topic 相关内容"，停 |
 | context 已被压缩到只剩 summary | 仍按可见内容尽力生成候选；表格脚注加 "⚠ context 部分被压缩，沉淀可能不完整" |
 | `<proj>/.agents-personal/AGENTS.md` 不存在 | 三选一：(1)创建骨架 (2)跳过本项 (3)终止 sediment |
-| `rules:project` slug 冲突 | 报错让用户改 slug：`N /<new-slug>` |
+| `rules:project` / `rules:plugin` slug 冲突 | **转整合判断**（疑似融合目标）：提示 `N fuse <path>` 融进 或 `N /<new-slug>` 改名建新 |
 | `wiki:project` slug 冲突 | 走整合判断 |
+| 用户 `N fuse <path>` 指的文件不存在 | 报"`<path>` 不存在，无法融合；用 `N new` 建新或 `N fuse <正确 path>`" |
+| 融合目标是 `rule-references/` 子文件 | catalog 不动（门面已路由）；仅升版本 |
 | `$NOCODE_EVOLVE_REPO` 路径不存在 | `rules:plugin` 标签在表格里降级 disabled + 标灰 |
 | Step 1 写文件后 Step 2 改 catalog 失败 | 不回滚 Step 1，报"写入了 rule 文件但 catalog 未改，请手动加路由条目" |
 | Step 2 后 Step 3 改 plugin.json 失败 | 不回滚前两步，报"前两步完成但版本未升，请手动改 plugin.json" |
