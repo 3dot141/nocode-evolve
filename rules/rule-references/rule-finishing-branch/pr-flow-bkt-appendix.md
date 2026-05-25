@@ -167,6 +167,8 @@ fi
 - **不要 create 时塞 `reviewers` 数组** — 单 user 错 (大小写 / 无权限) 会让整个 PR 都建不出来. 拆 "建空 reviewer PR + 逐 edit 加" 更稳
 - **不要 pipe `bkt api` 输出给 jq** — output 含真实换行 (不是 JSON-escaped), pipe 给 jq 会 parse error. 抓 id 用 `grep -oE '"id":[0-9]+' | head -1`
 - **不要假设 PR slug 跟 git remote URL 一致** — Bitbucket DC 改名后 git remote URL 可能仍是旧 slug (server redirect 兜底), 但 bkt CLI / API 调用必须用**新 slug**. 实战: `fx-data-nines.git` (remote URL) → `fx-data-agents` (实际 slug). 验证: `bkt api '/rest/api/1.0/projects/<user>/repos' --param 'limit=200' --json --jq '.values[].slug'`
+- **不要对 fork PR (Workflow B) 用 `bkt pr edit --with-default-reviewers`** — 报 `400 The source repository with id '0' does not exist` (bkt 拿不到 fork 的 source repo id). Workflow B 的 reviewer 必须 `--reviewer` 显式加 (见 Step 7.B); default reviewer 名单从 `bkt api '/rest/default-reviewers/1.0/projects/<target>/repos/<repo>/conditions'` 查, 排除作者本人
+- **不要用 `bkt pr view` 验证跨仓 (Workflow B) PR** — 它对 cross-repo PR 解析 `author` / `reviewers` 会显示 None / 空 (不可靠). 验证走 raw GET: `bkt api '/rest/api/1.0/projects/<target>/repos/<repo>/pull-requests/<id>' --json`, 看 `reviewers[].user.name` / `.status` / `author.user.name`
 
 ## 项目本地特异内容不在本附录
 
