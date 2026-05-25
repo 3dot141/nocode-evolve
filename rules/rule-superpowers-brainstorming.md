@@ -42,6 +42,7 @@ docs/plans/{username}/yymmdd-<topic>-design.md
    - **不自动循环修订**：Report 原样呈现给用户，逐条勾选 fix / skip（也可一键全修/全跳过/自由指示）
    - 据用户决定修订主体后，**本轮 Report 全文 + 用户决定 + 修订摘要 append 到文档末尾 `## Review Log`**
    - 是否再来一轮 review 由用户决定，不再有"最多 3 轮"硬限制
+   - **重档 / 重要设计文档**：这轮独立审稿优先交给 Codex 跨模型做（见 `rule-codex-review` 场景四）——避开 Claude 自审同源盲区；codex 不可用则用本步的 `design-doc-reviewer` (general-purpose) subagent。Report 分级 / 逐条确认 / Review Log 流程不变
 
 4. **`nocode-evolve:design-doc-rendering`** —— 渲染 single-file HTML 展示版
    - 输入：reviewer 通过的 markdown

@@ -62,6 +62,8 @@ Implementation complete. What would you like to do?
 
 按用户选项 Read 对应子文件, 由子文件接管细节.
 
+> **(可选) 独立 Codex review**: option 2 在 push / 建 PR 前, 可加一道跨模型独立 review (见 `rule-codex-review` 场景二, 典型 `adversarial-review --base <target>`)——主动提议、用户点头再跑, 不强制、不阻断 Gate 流程; codex 不可用则跳过.
+
 ## 4 Gate Summary
 
 | Gate | 位置 | 内容 | 用户响应 |

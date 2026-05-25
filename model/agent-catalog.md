@@ -37,6 +37,11 @@
 **读**: `${CLAUDE_PLUGIN_ROOT}/rules/rule-finishing-branch.md`
 **摘要**: 覆盖 + 扩展 superpowers skill, 4 选项 (merge/PR/keep/discard) 各自含 commit 整理建议; option 2 含 4 个 Gate (M/TB/PR/D), gh 主, Bitbucket DC 项目按需读 bkt 附录; 子文件在 `rule-references/rule-finishing-branch/` 按 disposition 渐进式 Read
 
+### codex-review
+**触发**: `red-blue-deep` 判重档走到红军环节; 或完成分支 / 显式 review 请求 (review 一下 / 看这次改动有没有问题); 或我卡住 / 想要第二实现 / 独立诊断 / 把成块实现委派出去; 或 `design-doc-writing` 走到 review 环节审重档设计文档
+**读**: `${CLAUDE_PLUGIN_ROOT}/rules/rule-codex-review.md`
+**摘要**: 把本机 Codex 当独立模型接进四场景, 直接 Bash 调 vendor 引擎 `vendor/codex/scripts/codex-companion.mjs` 的 verb (红军/诊断→`task` 只读, 代码 review→`review`/`adversarial-review`, 委派→`task --write`, 设计文档审稿→`task` 只读 + reviewer-template), 无门控全自动; 先 `setup --json` 探可用性, 不可用降级自做 + 明说 fallback; 引擎来源/升级见 `vendor/codex/UPGRADE.md`, 禁改 vendored 文件
+
 ---
 
 ## 维护
