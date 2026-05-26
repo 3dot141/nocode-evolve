@@ -1,116 +1,172 @@
+---
+type: design-doc
+topic: rule-trigger-eval
+date: 2026-05-26
+author: 3dot141
+status: draft
+---
+
 # 规则触发率 eval — 设计
 
-> 260526 · 3dot141 · status: draft（待实施）
+## 背景
 
-## 目标 / 成功标准
+本会话用户多次说"创建 PR / 提交推送 / 创建pr origin-upstream"，主 agent 未走 `rule-finishing-branch`，直接裸 `git` + `curl` 建 PR、用 `PUT` 加 reviewer（`bkt 附录`明令禁止的反模式）。该 rule 的 catalog 条目本就列了"创建 PR"做触发——措辞没问题，是没被认出/遵守。
 
-加入或修改 `agent-catalog` 里的规则条目时，保证其**触发率 ≥ 0.8**——给一组"该触发"的真实用户话术，agent 能正确认出"该读这条 rule"的比例不低于 0.8。提供一个 **Claude Code command**，按需产出触发率报告（成本低、不进 CI 硬阻断）。
+需要一个机制，在加入/修改 `agent-catalog` 规则条目时，量化它"该触发时被认出的比例"，并把不达标挡在前面。
 
-## 动机（实证失败）
+### Keystone 实证：subagent 是隔离环境
 
-本会话用户多次说"创建 PR / 提交推送 / 创建pr origin-upstream"，主 agent 未走 `rule-finishing-branch`，直接裸 `git` + `curl` 建 PR、用 `PUT` 加 reviewer（正是 `bkt 附录`明令禁止的反模式）。该 rule 的 catalog 条目本就列了"创建 PR"做触发——**措辞没问题，是没被遵守**。这暴露两个独立问题：触发措辞质量、与触发后遵守。本 eval 覆盖**触发 + 轻量遵守**。
+派 probe subagent 报告：它**不继承**主会话的 SessionStart 注入——只拿到"可调用 skill 一行 description 清单" + CLAUDE.md + 环境，没有 agent-catalog 路由、没有 model/*.md 常驻规则。含义：测某条 rule 触发率，必须往 subagent **显式重建会话上下文**再喂话术。
 
-## Keystone 实证：subagent 是 clean room
+## 目标
 
-派出的 probe subagent 报告：它**不继承**主会话的 SessionStart 规则注入——只拿到"可调用 skill 的一行 description 清单" + 全局/项目 CLAUDE.md + 环境；**没有** agent-catalog 路由表、没有"提 PR → rule-finishing-branch"指令、没有 semble/推理外化等常驻规则。
+- **主指标 route-recall ≥ 0.8**：给"该触发"的多样话术，在**重建的会话上下文**（注入 `model/*.md` + `agent-catalog`）下，subagent 把 `primary_route` 选中目标 rule 的比例 ≥ 0.8。
+- 提供 Claude Code command 按需产出报告，成本低、不进 CI 硬阻断。
 
-含义：要测某条 rule 的触发率，需往 subagent **显式注入待测的 catalog + 用户话术**。这反而让 eval 变干净——subagent 是无污染的隔离环境，变量只有"catalog 措辞 + 话术"。
+### 诚实边界（C1）
 
-## 测什么（范围）
+route-recall 测的是"重建上下文下的路由能力"，**不等于主会话真实触发率**——主会话还有对话历史、当前任务压力、已加载的其他 skill 正文，这些**无法在 probe 里完全复现**（对话历史是不可消除的 gap）。所以本 eval 是**代理指标 + 冒烟**，不是真实触发率的保证。措辞达标是必要非充分条件。
 
-- **触发**（discovery/CSO）：给"该触发"的多样话术，agent 认不认得出该读这条 rule。**这是 0.8 gate 的主指标。**
-- **轻量遵守**：命中后，agent 读了 rule、声明要走该 rule 的**关键 gate/动作**（如 finishing-branch：Gate TB/PR 确认 + 用 `bkt` 不裸 curl + reviewer 用 `bkt pr edit` 不 PUT）。
+### 阶段化目标（C5）
 
-**非目标（YAGNI）**：不测"压力下守不守规"（compliance-under-pressure，另一类测试）；不进 CI 硬阻断；不自动生成 fixtures；不引入独立 runtime/脚本（command + agent 自身即 harness）。
+- **v1（本设计）**：跑通 `finishing-branch` 一条的 fixture + report loop，确立格式与判分。**不承诺**所有 rule ≥0.8。
+- **里程碑 2**：所有 catalog rule 都有 fixture；`/rule-eval --all` + 覆盖报告（列未覆盖 rule）；"改了 catalog 条目但没跑对应 eval"能被流程发现。只有补齐这些，"每条规则 ≥0.8"才谈得上。
+
+### 非目标（YAGNI）
+
+不测"压力下守不守规"（compliance-under-pressure）；v1 不做真实遵守的执行 trace eval（C3 留 v2）；不进 CI 硬阻断；不自动生成 fixtures。
 
 ## 架构
 
-一个 plugin command 当 orchestrator → 读 fixtures → 对每条 case 派 clean-room subagent（注入整张 catalog + 一条话术）→ subagent 输出结构化 routing 决策 → orchestrator 内联判分 → 出报告。
+一个 plugin command 当 orchestrator → 读 fixtures → 对每条 case 派隔离 subagent（注入 `model/*.md` + `agent-catalog` + 一条话术）→ subagent 输出**结构化 JSON 决策** → orchestrator **机械判分**（exact-match + 布尔统计）→ 出报告（含 raw output）。
 
 ```
-fixtures/<rule>.md  ──┐
-agent-catalog.md ─────┤(注入)
-                      ▼
-   orchestrator(command) ──派生──▶ clean-room subagent ──(可 Read 命中 rule)──▶ ROUTE: + WILL_DO:
-                      ◀──────────────────────────────────────────────────────────┘
-                      │ 内联判分(无独立 judge LLM)
-                      ▼
-                  触发率报告
+fixtures/<rule>.md ──┐
+model/*.md + catalog ┤(注入,重建会话上下文)
+                     ▼
+  orchestrator(command) ──Agent 派生──▶ 隔离 subagent ──(可 Read 命中 rule)──▶ JSON{primary_route, secondary_routes, reason, read_files, will_do_actions}
+                     ◀──────────────────────────────────────────────────────────────┘
+                     │ 机械判分(exact-match, 不解读自然语言)
+                     ▼
+                  报告(route-recall / 混淆矩阵 / intent-signal / raw output)
 ```
 
-## 组件
+## 实现
+
+### 组件
 
 | 组件 | 落点 | 职责 |
 |---|---|---|
-| eval command | `commands/rule-eval.md`（`/rule-eval [<rule-id>]`） | orchestrator prompt：读 fixture(s)、逐 case 派 subagent、判分、出报告 |
-| 测试 fixtures | `eval/cases/<rule-id>.md` | 每条 rule 一文件：正样本 + 负样本 + 期望 ROUTE + 期望关键 gate 关键词 |
-| clean-room probe | 运行时由 command 用 `Agent` 派生 | 收[全 catalog + 一条话术]，可 Read 命中 rule，输出 `ROUTE:` + `WILL_DO:` |
+| eval command | `commands/rule-eval.md`（`/rule-eval [<rule-id> | --all]`） | 读 fixture(s)、逐 case 派 subagent、机械判分、出报告 |
+| fixtures | `eval/cases/<rule-id>.md` | 正/负样本（分型）+ 每 case 期望 + rule 级默认 |
+| 隔离 probe | 运行时 `Agent` 派生 | 收[model/*.md + catalog + 一条话术]，可 Read 命中 rule，输出 JSON |
 
-### probe subagent 契约
+### probe 输出契约（C4/W2）
 
-输入（command 拼装，**不含期望答案**）：
-1. 整张 `model/agent-catalog.md` 文本，作为"你的规则路由表"。
-2. 一条用户话术（fixture 里的一个样本）。
-3. 指令：判断该读哪条 rule（可 Read 命中的 `rules/rule-*.md`），末尾输出固定块：
-   ```
-   ROUTE: <rule-id | none>
-   WILL_DO: <若命中，列出你会走的关键动作/gate；否则留空>
-   ```
+subagent **必须**输出严格 JSON（orchestrator 只 exact-match，不解读自然语言）：
+```json
+{
+  "primary_route": "<rule-id | none>",
+  "secondary_routes": ["<rule-id>", ...],
+  "read_files": ["rules/rule-finishing-branch.md", ...],
+  "will_do_actions": ["gate-tb", "gate-pr", "use-bkt", "no-put-reviewer"],
+  "reason": "<一句话>"
+}
+```
+- 入口判定只看 `primary_route`；链式/嵌套看 `secondary_routes`（W2）。
+- `will_do_actions` 是**动作 ID 数组**（枚举，非自然语言），对齐 rule 里的 gate 名/步骤 ID。
+- probe 输入**不含期望答案**（防泄漏）。
 
-### fixture 格式（`eval/cases/<rule-id>.md`）
+### fixture 格式（W3/W5）
 
 ```markdown
 # rule-finishing-branch
-expected_route: finishing-branch
-key_actions: ["gate", "bkt", "不PUT"]   # 轻量遵守命中关键词(任一/全部策略见判分)
+primary_route: finishing-branch
+acceptable_alternates: []          # 真两可才填；只进歧义桶，不进 0.8 分子
+default_intent:                    # rule 级默认，case 可覆盖
+  must_action_ids:    ["gate-pr", "use-bkt"]
+  forbidden_action_ids: ["put-reviewer", "raw-curl-pr"]
+  required_read: "rules/rule-finishing-branch.md"
 
-## positive   (该触发)
+## positive            # 每条可带 case 级 expected/forbidden 覆盖默认
 - 帮我提个 PR
 - 创建 pr
 - push 完了，合并到 release
-- 这个分支收尾一下
 - submit a pull request for this
 
-## negative   (近义但不该触发)
-- 我现在在哪个分支
-- 列一下当前打开的 PR
-- 看看这次 push 都改了啥
+## negative            # 分型，每型 ≥2 条
+- [near-miss]          我现在在哪个分支
+- [explicit-exclusion] 帮我写 PR 描述但先别提交
+- [other-rule-primary] 总结这次 push 都改了啥      # → 应路由 push-summary
+- [tool-only]          列一下当前打开的 PR
 ```
 
-## 判分（orchestrator 内联，无独立 judge LLM）
+### 判分（机械，C2/C4/W1/W4）
 
-- **触发率** = 正样本中 `ROUTE == expected_route` 的占比。**≥ 0.8 → PASS。**
-- **误触发** = 负样本中 `ROUTE == expected_route`（或误命中别条）的占比，应为 0 / 接近 0。
-- **轻量遵守率** = 命中的正样本中，`WILL_DO` 含 `key_actions` 关键词的占比（关键词匹配；命中策略默认"全部关键 gate 至少各出现一次"）。
-- 判分由 orchestrator（主 agent）读 subagent 输出直接做；若日后嫌不稳再升独立 judge（v1 不做）。
+每条 case：
+- **route-recall**（主门）= 正样本中 `primary_route == 目标 rule` 的占比，重建上下文下测，**≥0.8 PASS**。
+- **acceptable_alternates**：`primary_route ∈ alternates` 的样本进"歧义桶"单列，**不进 recall 分子**（C2，避免互列虚高）。
+- **steal/precision 预算**（C2）：本 rule 抢了别条 `other-rule-primary` 负样本的占比 > 0.1 → WARNING/FAIL。
+- **失败分型**（W1）：每个 miss 标 `route_miss`（进触发 gate）/ `rule_read_but_noncompliant` / `tool_policy_violation` / `context_interference`（后三者进 intent-signal，不进 route gate）。
+- **intent-signal**（C3，**不叫"遵守率"**）= 命中样本中 `will_do_actions ⊇ must_action_ids` 且 `∩ forbidden_action_ids == ∅` 的占比。是意图信号，非真实遵守。
+- 判分全 exact-match / 布尔；报告**必列 raw output**。
 
-## 报告
+### 混淆矩阵（W4）
 
-每条 rule 一段：
-```
-## finishing-branch  [PASS]
-触发率 : 5/5 = 1.00  (gate 0.8)
-误触发 : 0/3
-轻量遵守: 4/5 = 0.80
-漏 / 误:
-  - (positive) "这个分支收尾一下" → ROUTE=none  ✗ 漏触发
-```
-v1 报告**只 inline 输出**，不落文件（YAGNI；要存再说）。
+所有 rule 正样本一起跑，记录各自 `primary_route` 落点。对角=命中，非对角=串扰。混淆矩阵是**诊断假设 + 证据**（每个 miss 列：user phrase / route / reason / read_files / 相邻 rule 描述片段），**不自动开"改措辞"这种单一处方**。
 
-## enforcement（软门，靠流程不靠 hook）
+### 报告
 
-不进 CI。写进"改/增 rule"的 rule（仿 `writing-skills` Iron Law）：**改/增 catalog 条目必跑 `/rule-eval <rule-id>`、贴报告，触发率 < 0.8 不交。** RED→GREEN：先跑看现状，措辞不行再改 catalog 条目，复跑到 ≥ 0.8。
+每条 rule 一段：route-recall N/M（vs 0.8，PASS/FAIL）+ 歧义桶 + steal 率 + intent-signal + 逐 miss 证据 + raw output。v1 inline 输出，不落文件。
 
-## v1 范围 + 耦合
+## 方案选型
 
-- **打样**：先做 `finishing-branch` 的 fixture + 跑通整 loop，再把 fixture 格式模板化推给别的 rule（semble / red-blue-deep 等）。
-- **跟 bkt 附录自我识别改动耦合**：附录改"遵守目标"为"git remote + API 自识别 source/target/branch/reviewers"，所以 finishing-branch fixture 的 `key_actions` 要相应含自识别相关词。附录这次编辑也被本 eval（至少触发层）覆盖——满足 Iron Law。
+- **隔离 probe + 注入重建上下文** vs 真主会话测：后者无法自动化、无法隔离变量；前者可自动化但有保真 gap（C1，已在目标里诚实标注）。取前者，gap 显式记。
+- **orchestrator 内联 exact-match 判分** vs 独立 judge LLM：JSON + exact-match 把自评偏差降到最低（C4），省一次 judge 调用；自然语言判断已从设计剔除。v1 取内联 exact-match。
+- **command 驱动 + agent 自派 subagent** vs 独立脚本 runtime：command 复用 agent 的 Agent 能力，无新 runtime，成本低；契合插件已有 commands/ 模式。
 
-## 待办（实施计划展开）
+## 其他
 
-1. `commands/rule-eval.md` orchestrator
-2. `eval/cases/finishing-branch.md` fixture
-3. 跑一轮（RED 基线）看现状触发率
-4. 据结果调 catalog 条目措辞到 ≥ 0.8（GREEN）
-5. bkt 附录自我识别改动 + 更新 fixture key_actions
-6. 把"改 rule 必跑 rule-eval"写进 agent-catalog 的维护段 / 相关 rule
+### 部署 / enforcement（软门，S3）
+
+不进 CI。写进"改/增 catalog 条目"的流程（仿 `writing-skills` Iron Law）：
+- 改/增条目 → 跑 `/rule-eval <rule-id>`，**PR/commit message 必含 eval 摘要**；
+- 该 rule 无 fixture → 先补 fixture 再改；
+- 紧急跳过 → 写 `skip_reason` + 补测 待办编号；
+- `route-recall < 0.8` 不交（RED→改措辞→GREEN 复跑）。
+
+### 失败模式
+
+- probe 不输出合法 JSON → 该 case 判 invalid，报告单列，不计入分母（需复跑/修 probe 指令）。
+- 注入的 model/*.md / catalog 过期 → orchestrator 每次现读源文件，不缓存。
+
+### v1 待办
+
+1. `commands/rule-eval.md`（注入 model/*.md + catalog；JSON 契约；exact-match 判分；混淆矩阵）
+2. `eval/cases/finishing-branch.md`（分型正负样本 + action-id 词表）
+3. 跑 RED 基线看现状
+4. 据混淆矩阵证据调 catalog 条目措辞到 ≥0.8（GREEN）
+5. bkt 附录自识别改动 + 同步 finishing-branch fixture 的 action-id
+6. 把"改 catalog 必跑 rule-eval"写进 agent-catalog 维护段
+
+---
+
+## Review Log
+
+### Codex 独立审稿（260526，scenario 4）
+
+| # | 级别 | 结论 | 处置 |
+|---|---|---|---|
+| C1 | Critical | clean-room 测 catalog-only 路由,代表不了主会话 | **fix**: probe 注入 model/*.md+catalog 重建上下文;目标改"route-recall(代理指标)+诚实 gap" |
+| C2 | Critical | acceptable_routes 互列虚高 | **fix**: primary_route(进分子)+acceptable_alternates(歧义桶)+steal 预算 |
+| C3 | Critical | WILL_DO 关键词撑不起"遵守" | **fix**: 改 intent-signal + action-id 枚举;真遵守 trace eval 留 v2 |
+| C4 | Critical | 主 agent 内联判分自评偏差 | **fix**: JSON 契约 + exact-match + 列 raw output |
+| C5 | Critical | 范围/承诺不匹配 | **fix**: 目标阶段化(v1 跑通;全 rule≥0.8 是里程碑2,需 --all+覆盖+变更检测) |
+| W1 | Warning | 没区分没触发 vs 触发后不遵守 | **fix**: 失败分型,只 route_miss 进 route gate |
+| W2 | Warning | 单 ROUTE 承担入口+链式 | **fix**: primary_route + secondary_routes |
+| W3 | Warning | 负样本太弱 | **fix**: 负样本分型(near-miss/explicit-exclusion/other-rule-primary/tool-only) |
+| W4 | Warning | 混淆矩阵→病因推断过强 | **fix**: 改诊断假设+证据,不自动开处方 |
+| W5 | Warning | key_actions rule 级一刀切 | **fix**: 下沉 case 级(default + case 覆盖) |
+| S1 | Suggestion | 缺 frontmatter | **fix**: 补 YAML frontmatter |
+| S2 | Suggestion | 非 design-doc 骨架 | **fix**: 重排背景/目标/架构/实现/方案选型/其他 |
+| S3 | Suggestion | 软门缺流程契约 | **fix**: 补报告位置/无 fixture/跳过/补测 契约 |
