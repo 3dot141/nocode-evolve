@@ -20,12 +20,15 @@ status: draft
 
 ## 目标
 
-- **主指标 route-recall ≥ 0.8**：给"该触发"的多样话术，在**重建的会话上下文**（注入 `model/*.md` + `agent-catalog`）下，subagent 把 `primary_route` 选中目标 rule 的比例 ≥ 0.8。
+- **主指标 momentum-aware route-recall ≥ 0.8**：给"该触发"的话术，在**重建会话上下文（`model/*.md` + `agent-catalog`）+ 任务情境 preamble（模拟主会话"正深陷另一任务、有动量"的压力）**下，subagent 把 `primary_route` 选中目标 rule 的比例 ≥ 0.8。
 - 提供 Claude Code command 按需产出报告，成本低、不进 CI 硬阻断。
 
-### 诚实边界（C1）
+### 保真度（C1，用户选"更高保真"）
 
-route-recall 测的是"重建上下文下的路由能力"，**不等于主会话真实触发率**——主会话还有对话历史、当前任务压力、已加载的其他 skill 正文，这些**无法在 probe 里完全复现**（对话历史是不可消除的 gap）。所以本 eval 是**代理指标 + 冒烟**，不是真实触发率的保证。措辞达标是必要非充分条件。
+本会话失败**不是**冷启动认不出"创建 PR"，而是主 agent **深陷 benchmark 工作、有动量**时该 rule 被淹没。所以高保真的关键不是补全完整对话历史（补不回），而是给 probe 加 **任务情境 preamble**——复现"动量/上下文负载"这个最高价值的失真来源（与 superpowers pressure-scenario 测法合流，直击真实失败）。
+
+- probe 输入 = SessionStart 重建（`model/*.md` + `catalog`）+ **preamble**（一段"你刚跑完 X、改了几个文件、正准备 Y"的任务动量铺垫）+ 触发话术。
+- **残余 gap（诚实）**：仍无法复现精确的完整 200k 历史；但动量/压力是其中最高价值的部分，已覆盖。故 route-recall 是**高保真代理 + 压力冒烟**，比冷启单句逼真得多，但仍非 100% 真实触发率——措辞+抗动量达标是必要、强相关、非充分。
 
 ### 阶段化目标（C5）
 
@@ -41,9 +44,10 @@ route-recall 测的是"重建上下文下的路由能力"，**不等于主会话
 一个 plugin command 当 orchestrator → 读 fixtures → 对每条 case 派隔离 subagent（注入 `model/*.md` + `agent-catalog` + 一条话术）→ subagent 输出**结构化 JSON 决策** → orchestrator **机械判分**（exact-match + 布尔统计）→ 出报告（含 raw output）。
 
 ```
-fixtures/<rule>.md ──┐
-model/*.md + catalog ┤(注入,重建会话上下文)
-                     ▼
+fixtures/<rule>.md ───────┐
+model/*.md + catalog ─────┤(注入,重建会话上下文)
+preamble(任务动量/压力) ──┤
+                          ▼
   orchestrator(command) ──Agent 派生──▶ 隔离 subagent ──(可 Read 命中 rule)──▶ JSON{primary_route, secondary_routes, reason, read_files, will_do_actions}
                      ◀──────────────────────────────────────────────────────────────┘
                      │ 机械判分(exact-match, 不解读自然语言)
@@ -59,7 +63,8 @@ model/*.md + catalog ┤(注入,重建会话上下文)
 |---|---|---|
 | eval command | `commands/rule-eval.md`（`/rule-eval [<rule-id> | --all]`） | 读 fixture(s)、逐 case 派 subagent、机械判分、出报告 |
 | fixtures | `eval/cases/<rule-id>.md` | 正/负样本（分型）+ 每 case 期望 + rule 级默认 |
-| 隔离 probe | 运行时 `Agent` 派生 | 收[model/*.md + catalog + 一条话术]，可 Read 命中 rule，输出 JSON |
+| 隔离 probe | 运行时 `Agent` 派生 | 收[model/*.md + catalog + **preamble(任务动量)** + 一条话术]，可 Read 命中 rule，输出 JSON |
+| preamble 库 | `eval/preambles/<profile>.md` | 共享任务情境铺垫（v1 至少 `mid-task-momentum`：模拟深陷另一任务的压力）|
 
 ### probe 输出契约（C4/W2）
 
@@ -83,6 +88,7 @@ subagent **必须**输出严格 JSON（orchestrator 只 exact-match，不解读�
 # rule-finishing-branch
 primary_route: finishing-branch
 acceptable_alternates: []          # 真两可才填；只进歧义桶，不进 0.8 分子
+preamble_profiles: [cold, mid-task-momentum]   # 每条正样本在这些情境下各跑一次；recall 取最严(动量下)
 default_intent:                    # rule 级默认，case 可覆盖
   must_action_ids:    ["gate-pr", "use-bkt"]
   forbidden_action_ids: ["put-reviewer", "raw-curl-pr"]
@@ -142,12 +148,13 @@ default_intent:                    # rule 级默认，case 可覆盖
 
 ### v1 待办
 
-1. `commands/rule-eval.md`（注入 model/*.md + catalog；JSON 契约；exact-match 判分；混淆矩阵）
-2. `eval/cases/finishing-branch.md`（分型正负样本 + action-id 词表）
-3. 跑 RED 基线看现状
-4. 据混淆矩阵证据调 catalog 条目措辞到 ≥0.8（GREEN）
-5. bkt 附录自识别改动 + 同步 finishing-branch fixture 的 action-id
-6. 把"改 catalog 必跑 rule-eval"写进 agent-catalog 维护段
+1. `commands/rule-eval.md`（注入 model/*.md + catalog + preamble；JSON 契约；exact-match 判分；混淆矩阵）
+2. `eval/preambles/mid-task-momentum.md` + `cold.md`（任务动量铺垫）
+3. `eval/cases/finishing-branch.md`（分型正负样本 + action-id 词表 + preamble_profiles）
+4. 跑 RED 基线看现状（动量情境下）
+5. 据混淆矩阵证据调 catalog 条目措辞到 ≥0.8（GREEN）
+6. bkt 附录自识别改动 + 同步 finishing-branch fixture 的 action-id
+7. 把"改 catalog 必跑 rule-eval"写进 agent-catalog 维护段
 
 ---
 
