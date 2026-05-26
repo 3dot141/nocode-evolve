@@ -26,11 +26,34 @@ project_parent="$(dirname "$project_root")"
 branch_flat="${BRANCH_NAME//\//_}"     # feature/foo → feature_foo
 worktree_path="${project_parent}/${project_name}-${branch_flat}"
 
-git worktree add "$worktree_path" -b "$BRANCH_NAME"
+# 建分支前：默认静默 fetch + 基于 upstream 最新（防 base 滞后远程导致返工）
+upstream="$(git rev-parse --abbrev-ref --symbolic-full-name @{u} 2>/dev/null)"   # 如 origin/main；无 upstream / detached 则空
+start_point=""
+if [ -n "$upstream" ]; then
+    git fetch "${upstream%%/*}" 2>/dev/null \
+        || echo "WARN: fetch 失败（离线？）—— 未拉最新，base 回落本地 HEAD"
+    ahead="$(git rev-list --count "@{u}..HEAD" 2>/dev/null || echo 0)"   # 本地独有（未 push）commit 数
+    [ "$ahead" -eq 0 ] && start_point="$upstream"   # 本地无独有 commit → 静默基于远程最新（纯落后/已最新都无损失）
+    # ahead>0（本地有独有 commit）→ start_point 留空, 走「何时弹问 base」, 不要在此静默基于远程
+fi
+
+git worktree add "$worktree_path" -b "$BRANCH_NAME" $start_point   # start_point 空则基于当前 HEAD
 cd "$worktree_path"
 ```
 
 > 注意：`-b` 后传的仍是**原始** `BRANCH_NAME`（含 `/`），git 分支名本身不变；只有**目录名**做扁平化。
+
+### 基于最新远程建分支：默认静默 fetch，仅本地有独有 commit 时弹问
+
+worktree 的新分支 base 应跟上远程，避免长在过时代码上、与已合并改动撞车返工。`git worktree add -b <branch>` 不指定 start-point 时默认基于主仓**当前 HEAD**——本地 HEAD 一旦滞后远程，整个 worktree 就长在旧代码上。规则：
+
+- **默认静默**：建分支前 `git fetch`，基于 upstream（`@{u}`，如 `origin/main`）最新 commit 建——不弹问，零摩擦。
+- **判弹问只看 `ahead`（本地独有 commit 数 = `git rev-list --count @{u}..HEAD`）**，不看 behind：
+  - `ahead == 0`（纯落后 / 已最新）→ **静默基于远程最新**。本地没有独有 commit，基于远程零损失，不打扰。
+  - `ahead > 0`（本地有未 push 的领先 commit）→ **弹问**。基于远程最新会让这些本地 commit 不在 base 里，必须让用户三选：① 基于远程 upstream 最新（放弃本地领先作为 base）② 基于当前本地 HEAD（保留本地领先）③ 指定其他 start-point。
+- **fetch 失败 / 无 upstream / detached HEAD**：不阻塞，warn + 回落本地 HEAD 继续，回复里明确告知"未拉最新，base=本地 HEAD"。
+
+> 为什么用 `ahead` 而非"behind 很多"：纯落后时基于远程最新永远无损（你没有独有 commit 会被丢），不必拿模糊阈值打扰用户；真正需要拍板的只有"本地有独有 commit 时 base 选谁"这一种分歧。
 
 ### 示例
 
