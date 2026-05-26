@@ -251,6 +251,8 @@ rm "$worktree_path/.agents-personal"       # 只删 symlink 自身, target 不�
 git worktree remove "$worktree_path"        # 不再需要 --force (前提是没别的 untracked)
 ```
 
+> **不要在销毁 worktree 时顺手清理远程分支.** worktree 移除只删工作目录、**保留 branch** (本节「目录名冲突怎么办」重建复用、通用销毁皆如此). 远程分支清理是**删 branch** 的附属动作, 归 `rule-finishing-branch.md` 的 **Gate RD** (option 1 Merge / option 4 Discard 删本地 branch 后触发), 不归 worktree 移除——在保留 branch 的场景删远程会误删正要继续的分支.
+
 ### 想要分支化 personal 配置时
 
 99% 场景 worktree 共享主仓 personal 即可. 偶尔需要"这个 worktree 测试不同的 AGENTS.md / rules" 时, 升级路径:

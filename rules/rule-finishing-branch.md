@@ -55,16 +55,18 @@ Implementation complete. What would you like to do?
 
 | Option | 主要动作 | 涉及 Gate | Read 子文件 (按需) |
 |---|---|---|---|
-| **1. Merge 回 base** | commit 整理 → 显示 merge 计划 → Gate M → 本地 merge → tests → cleanup worktree → 删 branch | Gate M | `commit-tidy.md` |
+| **1. Merge 回 base** | commit 整理 → 显示 merge 计划 → Gate M → 本地 merge → tests → cleanup worktree → (删 branch **前**捕获远程坐标) 删 branch → remote 分支清理 (Gate RD) | Gate M + Gate RD | `commit-tidy.md`, `remote-branch-cleanup.md` |
 | **2. Push + 建 PR** | commit 整理 → 生成 title/body → Gate TB → PR 计划 → Gate PR → push (含 non-ff fallback) → 建 PR → reviewer add | Gate TB + Gate PR | `commit-tidy.md`, `pr-flow-gh.md`; 若 `toolchain == "bkt"` **额外** `pr-flow-bkt-appendix.md` |
 | **3. Keep as-is** | 一行报告 worktree 路径; **不动**任何文件; 不删 branch | (无) | (无) |
-| **4. Discard** | 显示将删 (branch / commits / worktree path) → typed `discard` 字面确认 → cleanup worktree → force delete branch | Gate D | (无, Gate D 在 sp skill 自带) |
+| **4. Discard** | 显示将删 (branch / commits / worktree path) → typed `discard` 字面确认 → cleanup worktree → (force delete branch **前**捕获远程坐标) force delete branch → remote 分支清理 (Gate RD) | Gate D + Gate RD | `remote-branch-cleanup.md` (Gate D 在 sp skill 自带) |
 
 按用户选项 Read 对应子文件, 由子文件接管细节.
 
 > **(可选) 独立 Codex review**: option 2 在 push / 建 PR 前, 可加一道跨模型独立 review (见 `rule-codex-review` 场景二, 典型 `adversarial-review --base <target>`)——主动提议、用户点头再跑, 不强制、不阻断 Gate 流程; codex 不可用则跳过.
 
-## 4 Gate Summary
+## Gate Summary
+
+> RD 加入后 Gate 数已非 4, 标题不再带数字.
 
 | Gate | 位置 | 内容 | 用户响应 |
 |---|---|---|---|
@@ -72,6 +74,7 @@ Implementation complete. What would you like to do?
 | **Gate TB** (Title/Body) | option 2, commit 整理后 | 草稿 title (≤50 字) + 完整 body markdown (引用 `rule-push-summary.md` 输出契约: ≤200 字, 基础内容 + 重点评测) | OK → 进 Gate PR; 改 → agent 重生成 → 再 Gate TB (循环) |
 | **Gate PR** (PR Plan) | option 2, Gate TB 后 | `push: origin/<branch>` + `source: <owner>:<source-branch>` + `target: <owner>:<target-branch>` + `reviewer: <list>` | OK → 执行 push+create+reviewer; 改任一字段 → 局部更新 → 再 Gate PR (不重生成 title/body) |
 | **Gate D** (Discard) | option 4 | "将删 branch `<name>` + commits `<list>` + worktree `<path>`" | typed `discard` **字面**才执行; 任何其他响应 (含 'yes' / 'y' / 'OK' / 'confirm') 都算否定, 回菜单 |
+| **Gate RD** (Remote Delete) | option 1/4, 删本地 branch 后、远程有对应分支时 (无分支/检查失败则不弹) | "删本地 branch 后远程仍有 `<remote>/<remote-branch>`, 删除远程分支? ① 保留(默认) ② 删除 (附远程独有 commit 警示/提示, 见 `remote-branch-cleanup.md`)" | 选 ② 才 `git push --delete`; ① 或任何其它响应一律保留 |
 
 ## 不要
 

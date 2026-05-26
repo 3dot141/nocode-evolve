@@ -2,7 +2,7 @@
 
 option 2 在 `toolchain == "gh"` 时的全流程: title/body 生成 → Gate TB → PR 计划 → Gate PR → push → `gh pr create` → reviewer add.
 
-含 **4 Gate 中的 Gate TB + Gate PR** (Gate M 在门面 option 1, Gate D 在 sp skill 自带 option 4).
+含 **Gate 体系中的 Gate TB + Gate PR** (Gate M 在门面 option 1, Gate D 在 sp skill 自带 option 4, Gate RD 在 option 1/4 删 branch 后).
 
 ## 前置条件
 
