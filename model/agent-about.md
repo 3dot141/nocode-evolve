@@ -4,6 +4,10 @@
 
 行为基线遵循同目录 `agent-karpathy.md` 12 条工程准则; Gate / 做法 / 反例详见该文件.
 
+## 输出语言 — 跟随用户输入
+
+用户用什么语言提问就用什么语言回 (中文→中文, 英文→英文), 不擅自切换. 例外: 代码 / 命令 / 专有名词 / 引用原文保持原样.
+
 ## 推理外化 (rubber-duck)
 
 非纯执行输出 (设计 / 选型 / bug 诊断 / 方案对比 / 代码 review / 架构说明) 一次性摆出推理过程, 不等用户追问"为什么".
@@ -20,7 +24,7 @@
 
 ## 语气规范 — 工程动词用规范词, 不用口头俗语
 
-工程沟通 (commit message / PR 描述 / 设计文档 / AskUserQuestion 选项 label / 跟用户技术对话) 用规范动词. 中文口头俗语 (砍 / 砸 / 干掉) 与工程严肃度不匹配, 翻译读者读不懂, changelog 生成 / commit 检索拿不到精确动作语义.
+工程沟通 (commit / PR / 设计文档 / 选项 label / 技术对话) 用规范动词. 口头俗语 (砍 / 砸 / 干掉) 与工程严肃度不匹配, 也丢失 changelog / commit 检索的精确动作语义.
 
 反例 → 正例:
 
@@ -36,24 +40,12 @@
 
 ## 工具偏好 — 代码搜索默认走 semble-search
 
-代码搜索 (按语义 / 按符号 / 按意图 / 找实现 / 找相关代码) 默认调 `Agent(subagent_type: "semble-search")`, 不用 Grep / Glob / Read+find 这种盲扫.
+代码搜索 (按语义 / 符号 / 意图 / 找实现 / 找相关代码) 默认调 `Agent(subagent_type: "semble-search")`, 不用 Grep / Glob / Read+find 盲扫. fallback 链在 `agents/semble-search.md` 已声明; 全不可用则退 Bash grep / Explore agent 并报"semble 不可用, fallback 到 X".
 
-semble-search 走 `semble` CLI; agent 定义里已声明 fallback: PATH 没 semble → `uvx --from "semble[mcp]" semble`. 两者都不可用再退回 Bash grep / Explore agent, 并向用户报"semble 不可用, fallback 到 X".
-
-触发: 写代码搜索任意符号 / 实现位置 / 语义查询 ("找认证流程", "save_pretrained 在哪用", "X 怎么实现的"); 解释代码逻辑前的探索性查找.
-
-不触发:
-- 已知精确文件路径 → 直接 Read, 不绕 semble
-- 单行 literal 字符串精确匹配 → Bash grep (semble 杀鸡用牛刀)
+不触发 (用原生工具, 不绕 semble):
+- 已知精确文件路径 → 直接 Read
+- 单行 literal 精确匹配 → Bash grep
 - 文件名 pattern 查找 → Bash find / Glob
-
-反例 → 正例:
-
-| 反例 | 正例 |
-|---|---|
-| `Grep "useState" src/` 找 hook 用法 | `Agent(subagent_type: "semble-search", prompt: "find useState hook usages")` |
-| `Bash find ... \| xargs grep` 探索性 | `Agent(subagent_type: "semble-search", ...)` |
-| 已知 `src/auth.py:42` 还跑 semble | 直接 Read, 已定位的不绕 |
 
 # 全局占位符
 

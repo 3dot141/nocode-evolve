@@ -2,9 +2,10 @@
 # SessionStart hook (渐进式加载版): 只把 model/ 下的常驻基线 + 路由表注入 session,
 # rules/ 下的触发式规则由 agent 看 model/agent-catalog.md 命中触发后自行 Read.
 #
-# hooks/hooks.json 声明 2 个 SessionStart command, 分别带 arg:
+# hooks/hooks.json 声明 2 个 SessionStart command, 按注入顺序 (model 先, project 后):
+#   inject-rules.sh model     -- 行为基线 + 路由表 (model/agent-{about,karpathy,personal,catalog}.md), plugin global
 #   inject-rules.sh project   -- 项目本地路由 (${PROJECT_DIR}/.agents-personal/AGENTS.md, 项目无此文件则空)
-#   inject-rules.sh model     -- 行为基线 + 路由表 (model/agent-{about,karpathy,personal,catalog}.md)
+# model 先注入做兜底基线, project local 后注入可覆盖 (符合 agent-about.md 变量解析优先级: project > model)
 #
 # 新增 model/*.md: 必须显式加到下方 MODEL_FILES 桶, 否则脚本会在 stderr 警告
 # 新增 rules/rule-*.md: 必须在 model/agent-catalog.md 里加一段, 否则脚本会在 stderr 警告

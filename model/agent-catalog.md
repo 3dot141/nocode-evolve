@@ -15,12 +15,12 @@
 ### superpowers-brainstorming
 **触发**: 即将执行 `superpowers:brainstorming` skill, 或用户要求写设计文档 / PRD / RFC / Design Doc / ADR / 重构方案 / 技术 spec, 或 brainstorming 走到 step 5
 **读**: `${CLAUDE_PLUGIN_ROOT}/rules/rule-superpowers-brainstorming.md`
-**摘要**: 覆盖写设计文档场景 (brainstorming step 5 或用户直接要求写文档两条入口), 工作流统一 worktree → write → review → render 四步, 设计文档落 `docs/plans/{username}/yymmdd-<topic>-design.md`
+**摘要**: 写设计文档统一 worktree → write → review → render 四步, 落 `docs/plans/{username}/yymmdd-<topic>-design.md`; 两条入口 (brainstorming step5 / 用户直接要求) 一致
 
 ### git-worktree
 **触发**: 即将执行 `superpowers:using-git-worktrees` skill, 或用户要求创建 worktree, 或在 worktree 内跑命令报"env var missing / config 不存在"等需从主仓 cp gitignored 文件, 或 agent 在 worktree 找不到项目本地 `.agents-personal/` 路由
 **读**: `${CLAUDE_PLUGIN_ROOT}/rules/rule-git-worktree.md`
-**摘要**: worktree 一律落项目同级 `<project>-<branch_flat>/`, 推翻 skill 默认的 `.worktrees/` 等三种路径; 创建前默认静默 fetch + 基于 upstream 最新建分支 (本地有独有 commit `ahead>0` 才弹问 base); 含两条"创建后"标准动作——env / config 文件 cp + `.agents-personal/` symlink 共享主仓 (worktree 内 /distill 落回主仓); 销毁 worktree 前先手动拆 symlink
+**摘要**: worktree 落项目同级 `<project>-<branch_flat>/` (推翻 skill 默认 `.worktrees/` 等); 建前静默 fetch + 基于 upstream 最新 (本地 `ahead>0` 才弹问 base); 建后 cp env/config + symlink `.agents-personal/` 共享主仓; 销毁前先拆 symlink
 
 ### push-summary
 **触发**: 用户 push 后说「总结 push 内容 / 给标题描述 / PR description / 沉淀这个 / 这次 push 包含什么」, 或英文等价问法
@@ -35,12 +35,12 @@
 ### finishing-branch
 **触发**: 即将执行 `superpowers:finishing-a-development-branch` skill, 或用户说「完成 worktree / 收尾 / 合并 / 提 PR / 创建 PR / 合并到 main / 合并到 release / 删 branch / discard worktree」
 **读**: `${CLAUDE_PLUGIN_ROOT}/rules/rule-finishing-branch.md`
-**摘要**: 覆盖 + 扩展 superpowers skill, 4 选项 (merge/PR/keep/discard) 各自含 commit 整理建议; option 2 含 4 个 Gate (M/TB/PR/D), gh 主, Bitbucket DC 项目按需读 bkt 附录; 子文件在 `rule-references/rule-finishing-branch/` 按 disposition 渐进式 Read
+**摘要**: 覆盖 + 扩展 superpowers skill, 4 选项 (merge/PR/keep/discard); Gate 体系 M/TB/PR/D/RD (RD=删本地 branch 后清远程同名分支, option 1/4); gh 主, Bitbucket DC 读 bkt 附录; 子文件在 `rule-references/rule-finishing-branch/` 按 disposition 渐进式 Read
 
 ### codex-review
 **触发**: `red-blue-deep` 判重档走到红军环节; 或完成分支 / 显式 review 请求 (review 一下 / 看这次改动有没有问题); 或我卡住 / 想要第二实现 / 独立诊断 / 把成块实现委派出去; 或 `design-doc-writing` 走到 review 环节审重档设计文档
 **读**: `${CLAUDE_PLUGIN_ROOT}/rules/rule-codex-review.md`
-**摘要**: 把本机 Codex 当独立模型接进四场景, 直接 Bash 调 vendor 引擎 `vendor/codex/scripts/codex-companion.mjs` 的 verb (红军/诊断→`task` 只读, 代码 review→`review`/`adversarial-review`, 委派→`task --write`, 设计文档审稿→`task` 只读 + reviewer-template), 无门控全自动; 先 `setup --json` 探可用性, 不可用降级自做 + 明说 fallback; 引擎来源/升级见 `vendor/codex/UPGRADE.md`, 禁改 vendored 文件
+**摘要**: 本机 Codex 当独立模型接四场景 (红蓝红军 / 代码 review 收尾 / 委派救援 / 设计文档审稿), 直接 Bash 调 `vendor/codex/scripts/codex-companion.mjs` 的 verb (`task` 只读 / `review` / `adversarial-review` / `task --write`); 先 `setup --json` 探, 不可用降级自做 + 明说; 禁改 vendored 文件
 
 ---
 

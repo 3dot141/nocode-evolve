@@ -6,11 +6,11 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/inject-rules.sh project"
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/inject-rules.sh model"
           },
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/inject-rules.sh model"
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/inject-rules.sh project"
           }
         ]
       }
