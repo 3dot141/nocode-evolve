@@ -26,7 +26,7 @@ if (!hits.length) process.exit(0);
 
 const lines = hits.map(
   (h) =>
-    `⚠️ 触发规则【${h.rule}】: 你这条消息命中了它的触发条件。**动手前先 Read ${h.rule_file} 并按它走**, 不要凭当前任务动量直接执行。${h.note ? ' ' + h.note : ''}`
+    `⚠️ 触发规则【${h.rule}】: 你这条消息命中了它的触发条件。**动手前先 ${h.action}**, 不要凭当前任务动量直接执行。${h.note ? ' ' + h.note : ''}`
 );
 process.stdout.write('[规则触发提醒]\n' + lines.join('\n') + '\n');
 process.exit(0);
