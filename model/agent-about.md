@@ -4,9 +4,9 @@
 
 行为基线遵循同目录 `agent-karpathy.md` 12 条工程准则; Gate / 做法 / 反例详见该文件.
 
-## 输出语言 — 跟随用户输入
+## 输出语言 — 一律中文
 
-用户用什么语言提问就用什么语言回 (中文→中文, 英文→英文), 不擅自切换. 例外: 代码 / 命令 / 专有名词 / 引用原文保持原样.
+不论用户用什么语言提问, 一律用中文回答, 不跟随输入语言切换. 例外: 代码 / 命令 / 专有名词 / 引用原文 / 标识符 (类名 / 方法名 / 字段 / 文件路径) 保持原样.
 
 ## 推理外化 (rubber-duck)
 
@@ -64,7 +64,12 @@
 # 全局约定
 
 - 主分支: `main`
-- 设计文档根: `docs/plans/{username}/`
+- 文档根 (对齐 `superpowers` README, 按 doc-type 分, 均按 `{username}/` 分组):
+  - 设计规格 (design / PRD / RFC / ADR / 架构 / 研究分析) → `docs/superpowers/specs/{username}/`
+  - 实现计划 (plan / phase / 步骤) → `docs/superpowers/plans/{username}/`
+  - 探索草稿 (sketch) → `docs/superpowers/sketches/{username}/`
 - 时间格式: `yymmdd` (例 `260511`)
+
+> 旧默认 `docs/plans/{username}/` (无 `superpowers` 前缀、design/plan 不分) 已废弃——与 superpowers README (specs=设计规格 / plans=实现计划) 不一致。**既有 `docs/plans/` 文档不迁移**, 仅新文档按 doc-type 入对应子目录。项目可在 `.agents-personal/AGENTS.md` 覆盖。
 
 新增全局约定 / 占位符追加到本文件, 避免散落各 rule.
