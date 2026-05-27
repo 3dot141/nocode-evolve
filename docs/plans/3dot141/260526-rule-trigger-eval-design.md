@@ -177,3 +177,19 @@ default_intent:                    # rule 级默认，case 可覆盖
 | S1 | Suggestion | 缺 frontmatter | **fix**: 补 YAML frontmatter |
 | S2 | Suggestion | 非 design-doc 骨架 | **fix**: 重排背景/目标/架构/实现/方案选型/其他 |
 | S3 | Suggestion | 软门缺流程契约 | **fix**: 补报告位置/无 fixture/跳过/补测 契约 |
+
+## 后记：RED 基线实证 → pivot 到真实遵守
+
+跑 finishing-branch 的 RED 基线（6 正样本 × mid-task-momentum，clean-room probe）：**route-recall = 6/6 = 1.00**，每个 probe 都正确路由、读了 rule、选了 gate/bkt、拒了 PUT/裸 curl。
+
+**关键发现（实证 C1）**：eval 绿、但本会话我（真实主会话）红。一段"你很忙"的 preamble 远弱于真实 200k token 深度负载——所以**这个 eval 测不到真实失败**。触发措辞本就 ≥0.8，本会话栽的是**深度负载下知道却没在那刻行动**（遵守，非 discovery）。
+
+**决定（用户选"转去攻真实遵守"）**：eval 保留为"措辞守门"（对未来措辞糟的新规则有用），但真实遵守另用机械手段——**UserPromptSubmit hook 触发点重新浮现**：
+
+- `hooks/triggers.json`（触发词，与 catalog 触发行一致，v1 先 finishing-branch）
+- `hooks/trigger-resurface.mjs`（读 stdin prompt → 命中 → stdout 注入即时提醒）
+- 注册进 `hooks/hooks.json` 的 `UserPromptSubmit`
+- 非阻断（只追加提醒，误触发代价低）
+- 确定性测试：6/6 正样本触发、6/6 负样本静默
+
+不靠 agent 在动量里自觉——触发那刻硬把规则怼到眼前。eval（措辞质量）+ hook（即时浮现）互补闭环。

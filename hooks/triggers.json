@@ -1,0 +1,18 @@
+[
+  {
+    "rule": "finishing-branch",
+    "rule_file": "rules/rule-finishing-branch.md",
+    "patterns": [
+      "提\\s*个?\\s*pr",
+      "创建\\s*pr",
+      "建\\s*个?\\s*pr",
+      "pull\\s*request",
+      "合并到\\s*(release|main|master|主干)",
+      "收尾",
+      "完成\\s*worktree",
+      "删\\s*(branch|分支)",
+      "discard\\s*worktree"
+    ],
+    "note": "走 Gate TB/PR；Bitbucket 用 bkt 不裸 curl；reviewer 用 `bkt pr edit` 不 PUT。"
+  }
+]
