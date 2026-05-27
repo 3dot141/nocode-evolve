@@ -71,9 +71,9 @@ node "${CLAUDE_PLUGIN_ROOT}/vendor/codex/scripts/codex-companion.mjs" task --wri
 
 ## 场景 4:设计文档独立审稿
 
-**触发**:`design-doc-writing` 工作流走到 review 环节(见 `rule-superpowers-brainstorming.md` step 5 第 3 步),文档为重档 / 重要设计。
+**触发**:`design-doc-writing` 工作流走到 review 环节(见 `rule-superpowers-brainstorming.md` step 5 第 3 步)——**默认即触发**(交叉验证已是默认,不再限"重档")。仅琐碎 / 文案改动用户显式降档时才跳过。
 
-**做法**:独立审稿交给 Codex 跨模型做,而非(仅)Claude `design-doc-reviewer` subagent——
+**做法**:Codex 跨模型审稿与 Claude `design-doc-reviewer` (general-purpose) subagent **并行双跑**,合并两路 Report(交集=高置信、对称差=盲点)——
 
 ```bash
 node "${CLAUDE_PLUGIN_ROOT}/vendor/codex/scripts/codex-companion.mjs" task \
@@ -83,7 +83,7 @@ node "${CLAUDE_PLUGIN_ROOT}/vendor/codex/scripts/codex-companion.mjs" task \
    文档:<doc 路径或全文>"
 ```
 
-Review Report 后续处理(逐条勾选 fix/skip、追加 `## Review Log`)按 design-doc 工作流原样走。codex 不可用 → 退回 `design-doc-reviewer` (general-purpose) subagent。
+Review Report 后续处理(逐条勾选 fix/skip、追加 `## Review Log`)按 design-doc 工作流原样走。codex 不可用 → 降级为仅 `design-doc-reviewer` (general-purpose) subagent 单跑,并明说 fallback。
 
 ## 不要
 

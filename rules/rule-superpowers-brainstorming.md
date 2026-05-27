@@ -7,16 +7,17 @@
 
 ### 输出路径
 
-设计文档落地路径：
+设计文档 (design / PRD / RFC / ADR = 设计规格) 落地路径：
 
 ```
-docs/plans/{username}/yymmdd-<topic>-design.md
+docs/superpowers/specs/{username}/yymmdd-<topic>-design.md
 ```
 
+- 路径根见 `model/agent-about.md`「全局约定」按 doc-type 分：设计规格→`specs/`、实现计划→`docs/superpowers/plans/{username}/`、探索草稿→`docs/superpowers/sketches/{username}/`
 - `{username}`、`yymmdd` 占位符见 `model/agent-about.md`
 - `<topic>`：kebab-case 主题，简短可读
 
-> 不再使用 skill 内默认的 `docs/plans/YYYY-MM-DD-<topic>-design.md`。
+> 不再使用 skill 内默认的 `docs/plans/YYYY-MM-DD-<topic>-design.md`，也不再统一落 `docs/plans/`——对齐 superpowers README 按 doc-type 入对应子目录。
 
 ### 写作工作流
 
@@ -33,7 +34,7 @@ docs/plans/{username}/yymmdd-<topic>-design.md
    - 每个 doc-type 一套线性骨架（背景 → 目标 → ... → 后果，无元结构标签）
    - Design Doc 骨架：背景 / 目标 / 架构（架构图 / 流程图 / 时序图 / 文本总结）/ 实现（影响 / 接口设计 / 业务流 BFx / 异常与失败模式 / 单测设计）/ 方案选型（Q→选项→定 三行）/ 其他（部署 …）
    - Read examples + doc-types reference 学习结构
-   - 输出 `docs/plans/{username}/yymmdd-<topic>-design.md`（落在 step 1 创建的 worktree 内）
+   - 输出 `docs/superpowers/specs/{username}/yymmdd-<topic>-design.md`（设计规格类；落在 step 1 创建的 worktree 内）
 
 3. **`design-doc-reviewer` subagent**（在 design-doc-writing 工作流内通过 `Task(general-purpose)` + `references/reviewer-template.md` dispatch）
    - 独立 context 审查质量
@@ -42,7 +43,7 @@ docs/plans/{username}/yymmdd-<topic>-design.md
    - **不自动循环修订**：Report 原样呈现给用户，逐条勾选 fix / skip（也可一键全修/全跳过/自由指示）
    - 据用户决定修订主体后，**本轮 Report 全文 + 用户决定 + 修订摘要 append 到文档末尾 `## Review Log`**
    - 是否再来一轮 review 由用户决定，不再有"最多 3 轮"硬限制
-   - **重档 / 重要设计文档**：这轮独立审稿优先交给 Codex 跨模型做（见 `rule-codex-review` 场景四）——避开 Claude 自审同源盲区；codex 不可用则用本步的 `design-doc-reviewer` (general-purpose) subagent。Report 分级 / 逐条确认 / Review Log 流程不变
+   - **默认交叉验证**：这轮独立审稿默认 `design-doc-reviewer` (general-purpose) subagent + Codex 跨模型**并行双跑**（见 `rule-codex-review` 场景四）——一份稿两个模型审，避开 Claude 自审同源盲区，交集=高置信、对称差=盲点；codex 不可用才降级为仅 general-purpose 并明说 fallback。仅琐碎 / 文案改动可降档单跑 gp。Report 分级 / 逐条确认 / Review Log 流程不变
 
 4. **`nocode-evolve:design-doc-rendering`** —— 渲染 single-file HTML 展示版
    - 输入：reviewer 通过的 markdown

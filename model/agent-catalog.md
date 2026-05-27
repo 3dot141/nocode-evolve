@@ -15,7 +15,7 @@
 ### superpowers-brainstorming
 **触发**: 即将执行 `superpowers:brainstorming` skill, 或用户要求写设计文档 / PRD / RFC / Design Doc / ADR / 重构方案 / 技术 spec, 或 brainstorming 走到 step 5
 **读**: `${CLAUDE_PLUGIN_ROOT}/rules/rule-superpowers-brainstorming.md`
-**摘要**: 写设计文档统一 worktree → write → review → render 四步, 落 `docs/plans/{username}/yymmdd-<topic>-design.md`; 两条入口 (brainstorming step5 / 用户直接要求) 一致
+**摘要**: 写设计文档统一 worktree → write → review → render 四步, 落 `docs/superpowers/specs/{username}/yymmdd-<topic>-design.md` (按 doc-type: 设计规格→specs / 实现计划→plans / 草稿→sketches); 两条入口 (brainstorming step5 / 用户直接要求) 一致
 
 ### git-worktree
 **触发**: 即将执行 `superpowers:using-git-worktrees` skill, 或用户要求创建 worktree, 或在 worktree 内跑命令报"env var missing / config 不存在"等需从主仓 cp gitignored 文件, 或 agent 在 worktree 找不到项目本地 `.agents-personal/` 路由

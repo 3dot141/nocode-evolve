@@ -13,7 +13,7 @@ description: 把 markdown 设计文档渲染成 single-file HTML 展示版——
 
 **应该用：**
 
-- `overlay-superpowers.md` 里走完 design-doc-writing skill 后链式调用本 skill
+- `rule-superpowers-brainstorming.md` 里走完 design-doc-writing skill 后链式调用本 skill
 - 用户说「把这份设计文档渲染成 HTML / 转 HTML / 生成展示版 / 生成 HTML 制品」
 - 你即将创建一个 `*-design.html` 渲染产物
 
@@ -25,7 +25,7 @@ description: 把 markdown 设计文档渲染成 single-file HTML 展示版——
 
 ## 输入
 
-- 默认：渲染**最近写的**设计文档（路径来自 design-doc-writing 的输出，或 `docs/plans/{username}/` 下最新文件）
+- 默认：渲染**最近写的**设计文档（路径来自 design-doc-writing 的输出，或 `docs/superpowers/specs/{username}/` 下最新文件）
 - 显式：用户指定 path（绝对或相对都接受）
 
 ## 输出契约
@@ -486,4 +486,4 @@ document.querySelectorAll('h2, h3').forEach(h => observer.observe(h));
 | markdown 章节过多（>20 个 H2） | 默认全折叠（除 TL;DR 和第一节）；TOC 加层级缩进 |
 | markdown 含未关闭的代码块 | 仍尝试渲染，但在报告里提醒「markdown 第 N 行代码块未闭合，HTML 可能错位」 |
 | HTML 已存在（重 render） | 直接覆盖；不询问 |
-| 用户未指定路径 | 取 `docs/plans/{username}/` 下最新（按 mtime）的 `*-design.md` |
+| 用户未指定路径 | 取 `docs/superpowers/specs/{username}/` 下最新（按 mtime）的 `*-design.md` |

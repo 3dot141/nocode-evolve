@@ -53,13 +53,14 @@ description: 写设计文档时使用。按业界主流 4 类 doc-type 主轴（
 2. Read references/doc-types/<type>.md（学骨架 + 写作要点）
 3. Read references/examples/example-<type>-dogfood.md + example-<type>-business.md（看 dogfood 示例 + 业务场景示例）
 4. 写初稿
-5. Dispatch reviewer——两条接通方式，按 doc 重要度 / 轮次选：
-   - **默认 `general-purpose` subagent**（in-harness、模板原生、不烧额度，适合首轮抓明显问题）：
-     a. Read `skills/design-doc-writing/references/reviewer-template.md`
-     b. 把模板内容里的 `{DOC_PATH}` 替换为当前文档路径
-     c. 调用 Task tool（subagent_type=`general-purpose`，description=`"Review design doc"`，prompt=上一步替换后的全文）
-   - **codex 跨模型审稿**（重档 / 重要设计 doc，或多轮里的交叉验证轮）：按 `rule-codex-review.md` 场景 4 调 codex companion——跨模型才避得开「Claude 审 Claude」同源盲区。先 `setup --json` 探测，不可用则降级回 `general-purpose` 并明说 fallback。
-   - subagent / codex 返回 Review Report 后进入 step 6（codex 自由文本需先按 reviewer-template 五档归类）
+5. Dispatch reviewer——**默认交叉验证**（general-purpose subagent + codex 跨模型**并行各跑一遍**）。一份稿同时被两个不同模型审：交集=高置信、对称差=盲点；首轮就避开「Claude 审 Claude」同源盲区。
+   - **a. general-purpose subagent**（in-harness、模板原生）：
+     i. Read `skills/design-doc-writing/references/reviewer-template.md`
+     ii. 把模板内容里的 `{DOC_PATH}` 替换为当前文档路径
+     iii. 调用 Task tool（subagent_type=`general-purpose`，description=`"Review design doc"`，prompt=上一步替换后的全文）
+   - **b. codex 跨模型**：按 `rule-codex-review.md` 场景 4 调 codex companion（reviewer-template 准则 + 文档路径）。先 `setup --json` 探测——codex **不可用才降级为仅 general-purpose** 并明说 fallback（不让 codex 成硬依赖）。
+   - **合并两路 Report**：按 reviewer-template 五档（C/W/S/Q/SA）归类；两方都提的标「双方都提=高置信」、单方独有标来源；codex 自由文本先归类再并入。合并后进 step 6。
+   - **降档**（仅琐碎改动 / 文案修订 / 用户显式说「轻档」）：可只跑 general-purpose 一路，回复里点名「轻档，跳过 codex 交叉」。
 6. 用户确认环节（核心 gate，见下方）：
    - 默认：把 Report 完整呈现给用户，每条问题前编号，**逐条让用户勾选** fix / skip
    - 用户可一键说「全修 Critical+Warning」「全跳过」「我来给指示」走捷径
@@ -67,7 +68,7 @@ description: 写设计文档时使用。按业界主流 4 类 doc-type 主轴（
 7. 据用户决定修订文档（in-place 改主体）；不在用户清单里的问题**不要顺手修**
 8. 把本轮 Report 全文 + 用户决定 + 修订摘要 append 到文档末尾 `## Review Log`（无则新建）
 9. 询问用户「再来一轮 review？」
-   - 是 → 回 step 5（**上一轮是 general-purpose、本轮想交叉验证 → step 5 选 codex 跨模型**：盲点检测信号在清理过的稿上最值钱，交集=高置信、对称差=盲点图）
+   - 是 → 回 step 5（默认仍双路交叉；盲点检测信号在清理过的稿上最值钱，交集=高置信、对称差=盲点图）
    - 否 → 进 step 10
 10. 保存到输出路径
 11. (by overlay) 调 design-doc-rendering skill 出 HTML
@@ -334,10 +335,10 @@ mini cheat sheet：
 
 ## 输出路径
 
-由 `rules/overlay-superpowers.md` 与 `rules/agent-about.md` 共同定义，默认：
+由 `rules/rule-superpowers-brainstorming.md` 与 `model/agent-about.md` 共同定义，默认（设计规格类）：
 
 ```
-docs/plans/{username}/yymmdd-<topic>-design.md
+docs/superpowers/specs/{username}/yymmdd-<topic>-design.md
 ```
 
-写之前确认 rule 当前值。
+写之前确认 rule 当前值（实现计划走 `docs/superpowers/plans/{username}/`、草稿走 `sketches/`）。
