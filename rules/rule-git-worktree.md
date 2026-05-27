@@ -97,7 +97,7 @@ skill `SKILL.md` 中下列默认行为**全部失效**，按本文执行：
 
 **保留**的 skill 内行为：
 
-- 「Run Project Setup」（npm install / cargo build / pip install / go mod download 自动探测）
+- 「Run Project Setup」（npm install / cargo build / pip install / go mod download 自动探测）——但 npm 一支先走本文「copy 主仓 `node_modules`」, 此处 install 退化为 copy 后的增量对齐
 - 「Verify Clean Baseline」（跑测试确认起点干净，失败则报告 + 请示）
 - 「Report Location」（最终报路径 + 测试状态）
 - 「Common Mistakes」中除「Skipping ignore verification」「Assuming directory location」两条外的其余约束
@@ -168,19 +168,21 @@ cd / EnterWorktree 是后续 cp env / link personal / setup / baseline 链的前
 - 不要假设 agent 会自动切——`git worktree add` 是 git 命令, 不改 shell 状态, 必须显式 EnterWorktree(path=) 或 cd 才生效
 - 不要切过去后又 cd 回主仓做事——后续动作链 (cp env / link personal / setup / baseline) 应一气在 worktree 内做完
 
-## Worktree 创建后：cp 主仓 gitignored env / config
+## Worktree 创建后：从主仓补 gitignored 私有副本（cp）
 
-`git worktree add` 出来的 checkout 是**干净** checkout——只复制 tracked 内容，主仓本地的 gitignored 文件（`.env*` / `config.local.*` / 本地 secret / API token / 等）**不会**带过来. worktree 跑起依赖这些文件的命令前要从主仓 cp 过来.
+`git worktree add` 出来的是**干净** checkout——只复制 tracked 内容，主仓本地 gitignored 的运行物**不会**带过来，worktree 跑命令前要从主仓补齐。本节两类——env / config、`node_modules`——都用 **cp 独立副本**而非 symlink：worktree 的改动（改 env schema / 装不同分支依赖）**不该回污主仓**，cp 出来各自独立。（与之相对，`.agents-personal/` 是**该共享**的配置，用 symlink，见下一节。）两类都在 worktree 创建后、跑命令 / Run Project Setup 前做；下文变量沿用本文「路径推导」段的 `project_root` / `worktree_path`。
 
-### 触发场景
+### env / config
+
+主仓本地的 gitignored 文件（`.env*` / `config.local.*` / 本地 secret / API token / 等）跑起依赖它们的命令前从主仓 cp 过来。
+
+#### 触发场景
 
 - 在 worktree 内跑命令报错：`env var missing` / `<configfile> 不存在` / 类似 secret/config 加载失败
 - 主动准备跑依赖 env 的命令（dev / test / build / 跑 benchmark），提前 verify 配置就位
 - 刚创建 worktree 第一次跑运行性命令时
 
-### 标准动作
-
-变量沿用本文「路径推导」段的 `project_root` / `worktree_path`.
+#### 标准动作
 
 1. **识别要 cp 的文件**——看主仓根 + 子包 `.gitignore` + 报错指向的路径：
 
@@ -204,14 +206,70 @@ cd / EnterWorktree 是后续 cp env / link personal / setup / baseline 链的前
 
 4. **worktree 的代码版本与主仓 env 文件 schema 不兼容**（主仓 env 滞后于代码改动）：改 worktree 副本即可，**不动主仓**（除非用户明确授权改主仓）. worktree 是隔离工作区，副本改动跟主仓互不影响.
 
-### env cp 的不要
+#### env cp 的不要
 
 - 不要 `git add -f` 这些 gitignored 文件——会带 secrets 进 git
 - 不要假设 worktree 自动有这些文件——`git worktree` 不复制 untracked
 - 不要在本节钉死具体文件名 / token 名 / 仓库特定 schema——具体细节随项目演化，本节只描述"cp gitignored env files"模式；项目特异的 env file 清单走项目本地 rule
 - 不要在 worktree 改主仓配置——主仓是 source of truth，真要更新主仓配置走主仓 working tree
 
-## Worktree 创建后：link `.agents-personal/` 到主仓
+### node_modules（+ 增量 install 对齐）
+
+`node_modules`（gitignored）不会带过来——默认会触发一次从零 `npm install`，大仓动辄几分钟。主仓若已装好依赖，直接把 `node_modules` copy 过去复用，把"从零装"降级成"增量对齐"。
+
+#### 触发场景
+
+- 主仓存在至少一个 `node_modules`（下面 `find` 有命中）
+- 准备在 worktree 跑 dev / test / build 前
+
+#### 标准动作
+
+1. **递归找主仓所有 `node_modules`**（`-prune` 不下钻已命中目录，避免把其内部成千上万的嵌套 `node_modules` 重复列出——它们会随父目录一起 copy）：
+
+   ```bash
+   find "$project_root" -type d -name node_modules -prune
+   ```
+
+2. **每个按相同相对路径 clonefile-copy 到 worktree**（macOS APFS 写时复制：瞬间完成、近零额外空间、worktree 改依赖时才分裂；保留内部 `.bin` 等 symlink）：
+
+   ```bash
+   while IFS= read -r src; do
+       rel="${src#"$project_root"/}"
+       dst="$worktree_path/$rel"
+       [ -e "$dst" ] && continue                 # worktree 已有则跳过
+       mkdir -p "$(dirname "$dst")"
+       cp -Rc "$src" "$dst" 2>/dev/null \
+           || cp -R "$src" "$dst"                # 非 APFS / 不支持 clonefile → 退普通 cp（慢、占双倍空间）
+   done < <(find "$project_root" -type d -name node_modules -prune)
+   ```
+
+   > Linux 等价 CoW：`cp -R --reflink=auto`。本节以 macOS clonefile 为主。
+
+3. **copy 后跑一次增量 install，对齐本分支的 `package.json` / lock**（未变近乎 no-op；变了只装差量——这是把"从零重装"省成"增量"的关键，**不是跳过 install**）：
+
+   ```bash
+   cd "$worktree_path"
+   npm install            # 主仓实际用 pnpm / yarn 就换对应命令
+   ```
+
+4. **验证 worktree git status 仍 clean**（`node_modules` 是 gitignored，copy 后不应进 git status）：
+
+   ```bash
+   git status -s | grep -v "^??" | head    # 不应出现 node_modules
+   ```
+
+#### 与「Run Project Setup」的关系
+
+本子节**前置**于 skill 保留的「Run Project Setup（npm install / …）」：先 copy 复用，再让 Run Project Setup 的 install 退化成增量对齐。主仓**没有** `node_modules` 时本子节整体跳过，回落到原始的从零 install。
+
+#### node_modules copy 的不要
+
+- 不要用 symlink 把 `worktree/node_modules` 指向主仓——worktree 装 / 改依赖会污染主仓、破坏隔离；本子节要的是**独立副本**（clonefile 写时分裂正好两全）
+- 不要 copy 完就当依赖一定对——分支 `package.json` / lock 可能与主仓不同，必须跑增量 install 收口
+- 不要对包管理器想当然——主仓用 pnpm / yarn 就用对应 install，别一律 `npm`（pnpm 的 `node_modules` 结构 copy 后也要 `pnpm install` 对齐）
+- 不要漏 `-prune`——不带它会把 `node_modules` 内部嵌套的 `node_modules` 全列出来重复 copy，又慢又多余
+
+## Worktree 创建后：link `.agents-personal/` 到主仓（symlink 共享）
 
 `.agents-personal/` 是项目本地针对 agent 的配置（路由表 + 项目本地 wiki/历史 + 项目本地 rules/当前指令），设计上 gitignored, 跟 env / config 一样 `git worktree add` 不会带过来. 但与 env 不同的是, `.agents-personal/` 应 **跨 worktree 共享** —— 主仓改 wiki / rules / AGENTS.md 后 worktree 立刻可见, 不需要"同步副本".
 
