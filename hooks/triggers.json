@@ -7,6 +7,7 @@
       "创建\\s*pr",
       "建\\s*个?\\s*pr",
       "pull\\s*request",
+      "提.*?PR",
       "合并到\\s*(release|main|master|主干)",
       "收尾",
       "完成\\s*worktree",
