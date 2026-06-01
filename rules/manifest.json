@@ -1,0 +1,41 @@
+{
+  "$comment": "单一真值源。改 rule 改这里, 跑 node hooks/generate.mjs 重新生成 catalog/triggers/pretooluse-rules。禁手改生成物。",
+  "buckets": [
+    { "id": "git-lifecycle", "title": "Git 生命周期", "trigger_summary": "任何把本地改动推进到分支 / 远端协作状态的请求 (提 PR / push / 合并 / 收尾 / worktree)", "negatives": ["纯只读查询: 列 PR / 看分支 / 看 status / 看 log"] },
+    { "id": "review", "title": "评审", "trigger_summary": "对已有改动或设计求评审 / 挑错 / 独立验证 / 第二实现", "negatives": ["纯执行: 直接改代码而未求评审"] },
+    { "id": "design", "title": "设计与文档", "trigger_summary": "写设计文档 / PRD / RFC / ADR / 重构方案 / 技术 spec", "negatives": ["写代码注释 / commit message / README / changelog"] },
+    { "id": "memory", "title": "记忆与沉淀", "trigger_summary": "总结 / 沉淀 / 归档会话产出 / push 内容", "negatives": ["一次性事实查询"] }
+  ],
+  "rules": [
+    {
+      "id": "finishing-branch",
+      "bucket": "git-lifecycle",
+      "also_buckets": [],
+      "trigger_type": "regex+skill",
+      "trigger_desc": "即将执行 superpowers:finishing-a-development-branch skill, 或用户说「完成 worktree / 收尾 / 合并 / 提 PR / 创建 PR / 合并到 main / 删 branch / discard worktree」",
+      "triggers": ["提\\s*个?\\s*pr", "创建\\s*pr", "建\\s*个?\\s*pr", "pull\\s*request", "提.*?PR", "合并到\\s*(release|main|master|主干)", "收尾", "完成\\s*worktree", "删\\s*(branch|分支)", "discard\\s*worktree"],
+      "action": "Read rules/rule-finishing-branch.md 并走 Gate TB/PR",
+      "read": "${CLAUDE_PLUGIN_ROOT}/rules/rule-finishing-branch.md",
+      "summary": "覆盖+扩展 superpowers skill, 4 选项 (merge/PR/keep/discard); Gate 体系 M/TB/PR/D/RD; gh 主, Bitbucket DC 读 bkt 附录",
+      "guard": "Bitbucket 用 bkt 不裸 curl; reviewer 用 bkt pr edit 不 PUT。",
+      "pretooluse": [
+        { "pattern": "gh\\s+pr\\s+create", "action": "inject", "note": "提 PR 前先 Read rule-finishing-branch.md 走 Gate TB/PR" },
+        { "pattern": "bkt\\s+api\\s+.*--method\\s+PUT", "action": "block", "note": "禁 bkt api PUT 改 PR 元数据, 用 bkt pr edit" },
+        { "pattern": "curl\\s+.*pull-?request", "action": "block", "note": "禁裸 curl 改 PR, 用 bkt" }
+      ]
+    },
+    {
+      "id": "push-summary",
+      "bucket": "memory",
+      "also_buckets": ["git-lifecycle"],
+      "trigger_type": "regex",
+      "trigger_desc": "用户 push 后说「总结 push 内容 / 给标题描述 / PR description / 沉淀这个 / 这次 push 包含什么」",
+      "triggers": ["总结.{0,4}push", "push.{0,6}(总结|包含|改了|是什么)", "pr\\s*描述", "pr\\s*description", "给.{0,4}(标题|描述)", "沉淀", "这次\\s*push"],
+      "action": "Read rules/rule-push-summary.md",
+      "read": "${CLAUDE_PLUGIN_ROOT}/rules/rule-push-summary.md",
+      "summary": "输出 标题 + 描述, 描述 ≤200字, 含基础内容(覆盖 push range 全 commit) + 重点评测(亮点 / 风险 / 未验证项)",
+      "guard": "",
+      "pretooluse": []
+    }
+  ]
+}
