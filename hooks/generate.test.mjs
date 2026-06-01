@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { loadManifest, genTriggers, genCatalog, genPretooluse, renderAll, check } from './generate.mjs';
+import { loadManifest, genTriggers, genCatalog, genPretooluse, check } from './generate.mjs';
 
 test('genTriggers: 复现 triggers.json 格式 [{rule, action, patterns, note}]', () => {
   const t = genTriggers(loadManifest());
@@ -34,6 +34,24 @@ test('genCatalog: 跨桶 rule 标注 also_buckets', () => {
   assert.match(md, /#### push-summary[\s\S]*?\*\*也属\*\*: git-lifecycle/);
 });
 
+test('genCatalog: also_buckets 可路由 (跨桶 rule 在目标桶可发现, Codex review)', () => {
+  const md = genCatalog(loadManifest());
+  // codex-review also_buckets=[design], 应在 design 桶 section 出现
+  const designIdx = md.indexOf('### 桶: 设计与文档');
+  // 取 design 桶到下一个 ### 桶 之间
+  const afterDesign = md.slice(designIdx);
+  const nextBucket = afterDesign.indexOf('\n### 桶:', 1);
+  const designBlock = nextBucket > 0 ? afterDesign.slice(0, nextBucket) : afterDesign;
+  assert.match(designBlock, /#### codex-review \(跨桶\)/, 'codex-review 应在 design 桶可发现');
+
+  // push-summary also_buckets=[git-lifecycle], 应在 git-lifecycle 桶出现
+  const glIdx = md.indexOf('### 桶: Git 生命周期');
+  const afterGl = md.slice(glIdx);
+  const nextGl = afterGl.indexOf('\n### 桶:', 1);
+  const glBlock = nextGl > 0 ? afterGl.slice(0, nextGl) : afterGl;
+  assert.match(glBlock, /#### push-summary \(跨桶\)/, 'push-summary 应在 git-lifecycle 桶可发现');
+});
+
 test('genPretooluse: 扁平化所有 rule 的 pretooluse 靶', () => {
   const p = genPretooluse(loadManifest());
   const block = p.find((x) => x.decision === 'block' && /PUT/.test(x.pattern));
@@ -42,8 +60,9 @@ test('genPretooluse: 扁平化所有 rule 的 pretooluse 靶', () => {
   assert.ok(p.some((x) => x.decision === 'inject'), '应含 inject 靶');
 });
 
-test('check: 生成物与源一致时返回 []', () => {
-  renderAll(true);
+test('check: 生成物与源一致时返回 [] (不写文件, 直接断言, Codex review)', () => {
+  // 不调 renderAll: 直接验证当前磁盘生成物与 manifest 一致;
+  // 若 stale 该 test 失败提示重新生成 (而非静默修复)
   assert.deepEqual(check(), []);
 });
 

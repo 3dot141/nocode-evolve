@@ -30,6 +30,12 @@
 **读**: `${CLAUDE_PLUGIN_ROOT}/rules/rule-git-inspection.md`
 **摘要**: read-only inspection 命令默认用 && 串成一个 Bash call, 各段间插 echo "---<label>" 分隔, 减少 turn 浪费
 
+#### push-summary (跨桶)
+**触发**: 用户 push 后说「总结 push 内容 / 给标题描述 / PR description / 沉淀这个 / 这次 push 包含什么」
+**读**: `${CLAUDE_PLUGIN_ROOT}/rules/rule-push-summary.md`
+**摘要**: 输出 标题 + 描述, 描述 ≤200字, 含基础内容(覆盖 push range 全 commit) + 重点评测(亮点 / 风险 / 未验证项)
+**主桶**: memory (完整定义见该桶)
+
 ### 桶: 评审 (review)
 **粗触发**: 对已有改动或设计求评审 / 挑错 / 独立验证 / 第二实现
 **不含 (负例)**: 纯执行: 直接改代码而未求评审
@@ -54,6 +60,12 @@
 **触发**: 即将执行 superpowers:brainstorming skill, 或用户要求写设计文档 / PRD / RFC / Design Doc / ADR / 重构方案 / 技术 spec, 或 brainstorming 走到 step 5
 **读**: `${CLAUDE_PLUGIN_ROOT}/rules/rule-superpowers-brainstorming.md`
 **摘要**: 写设计文档统一 worktree → write → review → render 四步, 落 docs/plans/{username}/ (按 doc-type 分 specs/plans/sketches); 两条入口 (brainstorming step5 / 用户直接要求) 一致
+
+#### codex-review (跨桶)
+**触发**: red-blue-deep 判重档走到红军环节; 或完成分支 / 显式 review 请求; 或我卡住 / 想要第二实现 / 独立诊断 / 委派; 或 design-doc-writing 走到 review 环节
+**读**: `${CLAUDE_PLUGIN_ROOT}/rules/rule-codex-review.md`
+**摘要**: 本机 Codex 当独立模型接四场景 (红蓝红军 / 代码 review 收尾 / 委派救援 / 设计文档审稿); 直接 Bash 调 codex-companion.mjs; 先 setup --json 探, 不可用降级自做 + 明说; 禁改 vendored 文件
+**主桶**: review (完整定义见该桶)
 
 ### 桶: 记忆与沉淀 (memory)
 **粗触发**: 总结 / 沉淀 / 归档会话产出 / push 内容

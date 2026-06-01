@@ -43,6 +43,15 @@ export function genCatalog(m) {
       if ((r.also_buckets || []).length) out += `**也属**: ${r.also_buckets.join(', ')}\n`;
       out += '\n';
     }
+    // 跨桶 rule: also_buckets 含本桶的 rule, 列交叉引用条目 (Codex review: 让 also_buckets 可路由)
+    const crossRules = m.rules.filter((r) => (r.also_buckets || []).includes(b.id));
+    for (const r of crossRules) {
+      out += `#### ${r.id} (跨桶)\n`;
+      out += `**触发**: ${r.trigger_desc}\n`;
+      out += `**读**: \`${r.read}\`\n`;
+      out += `**摘要**: ${r.summary}\n`;
+      out += `**主桶**: ${r.bucket} (完整定义见该桶)\n\n`;
+    }
   }
   return out;
 }

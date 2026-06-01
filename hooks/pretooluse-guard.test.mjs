@@ -17,10 +17,10 @@ test('matchRules: 无关命令不命中', () => {
   assert.equal(matchRules('git status -sb', RULES).length, 0);
 });
 
-test('decide: inject → allow + additionalContext', () => {
+test('decide: inject → 无 permissionDecision (不 auto-approve) + additionalContext', () => {
   const out = decide([RULES[0]]);
   assert.equal(out.hookSpecificOutput.hookEventName, 'PreToolUse');
-  assert.equal(out.hookSpecificOutput.permissionDecision, 'allow');
+  assert.equal(out.hookSpecificOutput.permissionDecision, undefined, 'inject 不该返回 permissionDecision (否则跳过权限框)');
   assert.match(out.hookSpecificOutput.additionalContext, /finishing-branch/);
 });
 
@@ -32,4 +32,11 @@ test('decide: block 优先于 inject → deny', () => {
 
 test('decide: 无命中 → null', () => {
   assert.equal(decide([]), null);
+});
+
+test('matchRules: 换行/行续 不能绕过 block 靶 (Codex review)', () => {
+  // shell 行续: 反斜杠+换行
+  assert.equal(matchRules('bkt api x \\\n  --method PUT', RULES).length, 1, '行续 PUT 应仍命中 block');
+  // 纯换行 + 多空格
+  assert.equal(matchRules('bkt api x\n   --method PUT', RULES).length, 1, '换行 PUT 应仍命中 block');
 });
