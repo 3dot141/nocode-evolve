@@ -5,3 +5,4 @@
 docs/plans/**/*.html
 __pycache__/
 *.pyc
+.bypass-observations.jsonl
