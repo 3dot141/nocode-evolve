@@ -12,3 +12,10 @@ const MANIFEST = path.join(ROOT, 'rules/manifest.json');
 export function loadManifest() {
   return JSON.parse(fs.readFileSync(MANIFEST, 'utf8'));
 }
+
+export function genTriggers(m) {
+  // 复现现有 hooks/triggers.json 格式: [{rule, action, patterns, note}]
+  return m.rules
+    .filter((r) => r.triggers && r.triggers.length)
+    .map((r) => ({ rule: r.id, action: r.action, patterns: r.triggers, note: r.guard || '' }));
+}
