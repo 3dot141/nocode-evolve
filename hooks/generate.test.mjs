@@ -75,3 +75,16 @@ test('集合错位消除: catalog 集合 ⊇ triggers 集合; git-inspection 只
   assert.ok(catalogIds.has('red-blue-deep') && triggerIds.has('red-blue-deep'), 'red-blue-deep 两边都应有 (错位修复)');
   for (const id of triggerIds) assert.ok(catalogIds.has(id), `triggers 里的 ${id} 必须也在 catalog (单源保证)`);
 });
+
+test('genCatalog: 4 桶全部填充 (无空桶)', () => {
+  const m = loadManifest();
+  const md = genCatalog(m);
+  for (const b of m.buckets) {
+    assert.match(md, new RegExp(`### 桶: ${b.title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`), `桶 ${b.id} 应在 catalog 出现`);
+  }
+});
+
+test('genCatalog: 含二级分类指引 (命中桶后如何选具体 rule)', () => {
+  const md = genCatalog(loadManifest());
+  assert.match(md, /先命中桶.*再在桶内子规则/, '应有桶→子规则二级分类指引');
+});
