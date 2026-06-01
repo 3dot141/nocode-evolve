@@ -61,6 +61,8 @@ agent 输出生成的 title + body markdown 给用户审, 等响应:
   reviewer: <list, 含 default reviewer>
 ```
 
+**项目本地 override**: 先**仅**读 `.agents-personal/rules/personal-repo-pr.md` (reviewer 名单 / target 约定的唯一项目本地来源)。该文件不存在 = 无项目本地约定 → **直接**走下面默认优先级, **不在其他位置搜索** (不扫项目根 / docs / 其他 rule, 不"找实际位置")。
+
 查 default reviewer (按优先级试):
 
 ```bash

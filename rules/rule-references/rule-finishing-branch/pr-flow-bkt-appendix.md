@@ -172,6 +172,8 @@ fi
 
 ## 项目本地特异内容不在本附录
 
+> **查找范围**: 项目本地 PR 约定 (reviewer 名单 / slug / target) **仅限** `.agents-personal/rules/personal-repo-pr.md`。该文件不存在即视为"无项目本地约定" → 走 default-reviewers API 默认逻辑, **不扩大搜索** (不扫项目根 / docs / 其他 rule, 不"找实际位置")。
+
 - reviewer 名单 (e.g. fx-data-agents 的 `imp / ju / Kerim.Zhou / North / rinoux`) — 留项目本地 `.agents-personal/rules/personal-repo-pr.md`
 - repo slug 历史 (e.g. `fx-data-nines` → `fx-data-agents` redirect) — 同上
 - 团队 default reviewer 规则 (e.g. `bkt api '/rest/default-reviewers/1.0/projects/.../conditions'` 查询) — 项目本地 rule 给具体命令; 本附录只指明用 default-reviewers API
