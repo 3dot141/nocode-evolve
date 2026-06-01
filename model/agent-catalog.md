@@ -30,6 +30,12 @@
 **读**: `${CLAUDE_PLUGIN_ROOT}/rules/rule-git-inspection.md`
 **摘要**: read-only inspection 命令默认用 && 串成一个 Bash call, 各段间插 echo "---<label>" 分隔, 减少 turn 浪费
 
+#### git-freshness
+**触发**: 即将开始设计性动作 (写设计文档/PRD/RFC/ADR、方案对比、技术选型、重构方案、架构设计) 且不走 worktree (就地在当前分支); 开/将开 worktree 的场景由 git-worktree fetch 覆盖, 本 rule 不重复触发
+**读**: `${CLAUDE_PLUGIN_ROOT}/rules/rule-git-freshness.md`
+**摘要**: 设计/方案动作前确保当前分支基于最新远程 (fetch + behind 则 pull --rebase, ahead>0 弹问); 防基于过时代码做设计返工。走 worktree 的场景已由 git-worktree fetch 覆盖, 本 rule 管就地设计 (behavior 触发, 无强机制保证)
+**也属**: design
+
 #### push-summary (跨桶)
 **触发**: 用户 push 后说「总结 push 内容 / 给标题描述 / PR description / 沉淀这个 / 这次 push 包含什么」
 **读**: `${CLAUDE_PLUGIN_ROOT}/rules/rule-push-summary.md`
@@ -66,6 +72,12 @@
 **读**: `${CLAUDE_PLUGIN_ROOT}/rules/rule-codex-review.md`
 **摘要**: 本机 Codex 当独立模型接四场景 (红蓝红军 / 代码 review 收尾 / 委派救援 / 设计文档审稿); 直接 Bash 调 codex-companion.mjs; 先 setup --json 探, 不可用降级自做 + 明说; 禁改 vendored 文件
 **主桶**: review (完整定义见该桶)
+
+#### git-freshness (跨桶)
+**触发**: 即将开始设计性动作 (写设计文档/PRD/RFC/ADR、方案对比、技术选型、重构方案、架构设计) 且不走 worktree (就地在当前分支); 开/将开 worktree 的场景由 git-worktree fetch 覆盖, 本 rule 不重复触发
+**读**: `${CLAUDE_PLUGIN_ROOT}/rules/rule-git-freshness.md`
+**摘要**: 设计/方案动作前确保当前分支基于最新远程 (fetch + behind 则 pull --rebase, ahead>0 弹问); 防基于过时代码做设计返工。走 worktree 的场景已由 git-worktree fetch 覆盖, 本 rule 管就地设计 (behavior 触发, 无强机制保证)
+**主桶**: git-lifecycle (完整定义见该桶)
 
 ### 桶: 记忆与沉淀 (memory)
 **粗触发**: 总结 / 沉淀 / 归档会话产出 / push 内容
