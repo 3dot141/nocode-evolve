@@ -14,7 +14,7 @@
       "删\\s*(branch|分支)",
       "discard\\s*worktree"
     ],
-    "note": "Bitbucket 用 bkt 不裸 curl; reviewer 用 `bkt pr edit` 不 PUT。"
+    "note": "Bitbucket 用 bkt 不裸 curl; reviewer 用 bkt pr edit 不 PUT。"
   },
   {
     "rule": "push-summary",
@@ -28,58 +28,6 @@
       "沉淀",
       "这次\\s*push"
     ],
-    "note": "标题 + 描述≤200字, 基础内容覆盖全 commit + 重点评测。"
-  },
-  {
-    "rule": "superpowers-brainstorming",
-    "action": "Read rules/rule-superpowers-brainstorming.md (或先 Skill brainstorming)",
-    "patterns": [
-      "设计文档",
-      "design\\s*doc",
-      "\\bprd\\b",
-      "\\brfc\\b",
-      "\\badr\\b",
-      "重构方案",
-      "技术\\s*spec",
-      "技术方案"
-    ],
-    "note": "worktree→write→review→render 四步, 落 docs/plans/{username}/。"
-  },
-  {
-    "rule": "git-worktree",
-    "action": "Read rules/rule-git-worktree.md",
-    "patterns": [
-      "(创建|建|新建|开|搞).{0,3}worktree",
-      "worktree.{0,3}(创建|新建)"
-    ],
-    "note": "worktree 落 <project>-<branch>/; 建后 cp env/config + symlink .agents-personal。"
-  },
-  {
-    "rule": "codex-review",
-    "action": "Read rules/rule-codex-review.md",
-    "patterns": [
-      "review\\s*一下",
-      "帮我?\\s*审",
-      "审一遍",
-      "看.{0,6}(改动|代码|实现).{0,4}(问题|有没有|对不对)",
-      "codex\\s*review",
-      "adversarial"
-    ],
-    "note": "Codex 当独立模型; 先 setup --json 探, 不可用降级自做 + 明说。"
-  },
-  {
-    "rule": "red-blue-deep",
-    "action": "调 Skill(nocode-evolve:red-blue-deep) (别先自己给结论)",
-    "patterns": [
-      "行不行",
-      "值得吗",
-      "合适吗",
-      "该不该",
-      "选.{0,10}还是",
-      "哪个(更好|好|合适)",
-      "红蓝军",
-      "第一性原理"
-    ],
-    "note": "评估/拍板类; skill 内判轻档/重档。"
+    "note": ""
   }
 ]

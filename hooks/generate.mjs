@@ -46,3 +46,52 @@ export function genCatalog(m) {
   }
   return out;
 }
+
+export function genPretooluse(m) {
+  // 扁平化: [{rule, pattern, decision, reason}]; decision = "inject" | "block"
+  return m.rules.flatMap((r) =>
+    (r.pretooluse || []).map((p) => ({ rule: r.id, pattern: p.pattern, decision: p.action, reason: p.note })),
+  );
+}
+
+// 生成物路径与渲染内容的单一映射
+function targets(m) {
+  return [
+    { file: path.join(ROOT, 'hooks/triggers.json'), text: JSON.stringify(genTriggers(m), null, 2) + '\n' },
+    { file: path.join(ROOT, 'hooks/pretooluse-rules.json'), text: JSON.stringify(genPretooluse(m), null, 2) + '\n' },
+    { file: path.join(ROOT, 'model/agent-catalog.md'), text: genCatalog(m) },
+  ];
+}
+
+export function renderAll(write) {
+  const m = loadManifest();
+  const t = targets(m);
+  if (write) for (const { file, text } of t) fs.writeFileSync(file, text);
+  return t;
+}
+
+export function check() {
+  // 返回不一致的文件名数组; 空 = 一致
+  const drift = [];
+  for (const { file, text } of targets(loadManifest())) {
+    const cur = fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '';
+    if (cur !== text) drift.push(path.relative(ROOT, file));
+  }
+  return drift;
+}
+
+// CLI
+if (import.meta.url === `file://${process.argv[1]}`) {
+  const checkMode = process.argv.includes('--check');
+  if (checkMode) {
+    const drift = check();
+    if (drift.length) {
+      console.error('generate.mjs --check: 生成物与 manifest 漂移: ' + drift.join(', ') + '\n  修法: node hooks/generate.mjs 重新生成并提交。');
+      process.exit(1);
+    }
+    process.exit(0);
+  } else {
+    renderAll(true);
+    console.error('generate.mjs: 已从 manifest 重新生成 ' + targets(loadManifest()).map((t) => path.relative(ROOT, t.file)).join(', '));
+  }
+}

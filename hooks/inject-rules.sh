@@ -40,6 +40,12 @@ esac
 #   - model/*.md 未在 MODEL_FILES 桶 → 不会进 session context, 警告
 #   - rules/rule-*.md 未在 model/agent-catalog.md 引用 → agent 触发不到, 警告
 if [ "$GROUP" = "model" ] && [ -n "$PLUGIN_ROOT" ]; then
+  # 单源漂移兜底: 生成物与 manifest 不一致则警告 (不阻断 session)
+  if command -v node >/dev/null 2>&1 && [ -f "${PLUGIN_ROOT}/hooks/generate.mjs" ]; then
+    node "${PLUGIN_ROOT}/hooks/generate.mjs" --check 2>&1 | while read -r line; do
+      echo "inject-rules.sh WARN: $line" >&2
+    done || true
+  fi
   if [ -d "${PLUGIN_ROOT}/model" ]; then
     for f in "${PLUGIN_ROOT}/model"/*.md; do
       [ -f "$f" ] || continue

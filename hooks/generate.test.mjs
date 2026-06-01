@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { loadManifest, genTriggers, genCatalog } from './generate.mjs';
+import { loadManifest, genTriggers, genCatalog, genPretooluse, renderAll, check } from './generate.mjs';
 
 test('genTriggers: 复现 triggers.json 格式 [{rule, action, patterns, note}]', () => {
   const t = genTriggers(loadManifest());
@@ -32,4 +32,17 @@ test('genCatalog: 按粗桶分组, 含桶触发 + 负例 + 子规则三件套', 
 test('genCatalog: 跨桶 rule 标注 also_buckets', () => {
   const md = genCatalog(loadManifest());
   assert.match(md, /#### push-summary[\s\S]*?\*\*也属\*\*: git-lifecycle/);
+});
+
+test('genPretooluse: 扁平化所有 rule 的 pretooluse 靶', () => {
+  const p = genPretooluse(loadManifest());
+  const block = p.find((x) => x.decision === 'block' && /PUT/.test(x.pattern));
+  assert.ok(block, '应含 bkt PUT 的 block 靶');
+  assert.equal(block.rule, 'finishing-branch');
+  assert.ok(p.some((x) => x.decision === 'inject'), '应含 inject 靶');
+});
+
+test('check: 生成物与源一致时返回 []', () => {
+  renderAll(true);
+  assert.deepEqual(check(), []);
 });
