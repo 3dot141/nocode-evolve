@@ -36,6 +36,73 @@
       "summary": "输出 标题 + 描述, 描述 ≤200字, 含基础内容(覆盖 push range 全 commit) + 重点评测(亮点 / 风险 / 未验证项)",
       "guard": "",
       "pretooluse": []
+    },
+    {
+      "id": "superpowers-brainstorming",
+      "bucket": "design",
+      "also_buckets": [],
+      "trigger_type": "regex+skill",
+      "trigger_desc": "即将执行 superpowers:brainstorming skill, 或用户要求写设计文档 / PRD / RFC / Design Doc / ADR / 重构方案 / 技术 spec, 或 brainstorming 走到 step 5",
+      "triggers": ["设计文档", "design\\s*doc", "\\bprd\\b", "\\brfc\\b", "\\badr\\b", "重构方案", "技术\\s*spec", "技术方案"],
+      "action": "Read rules/rule-superpowers-brainstorming.md (或先 Skill brainstorming)",
+      "read": "${CLAUDE_PLUGIN_ROOT}/rules/rule-superpowers-brainstorming.md",
+      "summary": "写设计文档统一 worktree → write → review → render 四步, 落 docs/plans/{username}/ (按 doc-type 分 specs/plans/sketches); 两条入口 (brainstorming step5 / 用户直接要求) 一致",
+      "guard": "",
+      "pretooluse": []
+    },
+    {
+      "id": "git-worktree",
+      "bucket": "git-lifecycle",
+      "also_buckets": [],
+      "trigger_type": "regex+skill",
+      "trigger_desc": "即将执行 superpowers:using-git-worktrees skill, 或用户要求创建 worktree, 或在 worktree 内跑命令报「env var missing / config 不存在」需从主仓 cp gitignored 文件, 或 agent 在 worktree 找不到项目本地 .agents-personal/ 路由",
+      "triggers": ["(创建|建|新建|开|搞).{0,3}worktree", "worktree.{0,3}(创建|新建)"],
+      "action": "Read rules/rule-git-worktree.md",
+      "read": "${CLAUDE_PLUGIN_ROOT}/rules/rule-git-worktree.md",
+      "summary": "worktree 落项目同级 <project>-<branch_flat>/; 建前静默 fetch + 基于 upstream 最新; 建后 cp env/config + symlink .agents-personal/ 共享主仓; 销毁前先拆 symlink",
+      "guard": "",
+      "pretooluse": [
+        { "pattern": "git\\s+worktree\\s+add", "action": "inject", "note": "建 worktree 前先 Read rule-git-worktree.md: 落 <project>-<branch>/, 建后 cp env + symlink .agents-personal" }
+      ]
+    },
+    {
+      "id": "git-inspection",
+      "bucket": "git-lifecycle",
+      "also_buckets": [],
+      "trigger_type": "behavior",
+      "trigger_desc": "即将连续跑 ≥2 个 git read-only 命令 (status / diff / log / show / branch / ls-files / remote -v 等)",
+      "triggers": [],
+      "action": "Read rules/rule-git-inspection.md",
+      "read": "${CLAUDE_PLUGIN_ROOT}/rules/rule-git-inspection.md",
+      "summary": "read-only inspection 命令默认用 && 串成一个 Bash call, 各段间插 echo \"---<label>\" 分隔, 减少 turn 浪费",
+      "guard": "",
+      "pretooluse": []
+    },
+    {
+      "id": "codex-review",
+      "bucket": "review",
+      "also_buckets": ["design"],
+      "trigger_type": "regex+skill",
+      "trigger_desc": "red-blue-deep 判重档走到红军环节; 或完成分支 / 显式 review 请求; 或我卡住 / 想要第二实现 / 独立诊断 / 委派; 或 design-doc-writing 走到 review 环节",
+      "triggers": ["review\\s*一下", "帮我?\\s*审", "审一遍", "看.{0,6}(改动|代码|实现).{0,4}(问题|有没有|对不对)", "codex\\s*review", "adversarial"],
+      "action": "Read rules/rule-codex-review.md",
+      "read": "${CLAUDE_PLUGIN_ROOT}/rules/rule-codex-review.md",
+      "summary": "本机 Codex 当独立模型接四场景 (红蓝红军 / 代码 review 收尾 / 委派救援 / 设计文档审稿); 直接 Bash 调 codex-companion.mjs; 先 setup --json 探, 不可用降级自做 + 明说; 禁改 vendored 文件",
+      "guard": "先 setup --json 探, 不可用降级自做 + 明说; 禁改 vendor/codex/ 文件。",
+      "pretooluse": []
+    },
+    {
+      "id": "red-blue-deep",
+      "bucket": "review",
+      "also_buckets": [],
+      "trigger_type": "skill",
+      "trigger_desc": "用户问「X 怎么样 / 行不行 / 合适吗 / 值得吗 / 选 A 还是 B / 哪个更好」等评估 / 拍板类, 或显式说红蓝军 / 第一性原理",
+      "triggers": ["行不行", "值得吗", "合适吗", "该不该", "选.{0,10}还是", "哪个(更好|好|合适)", "红蓝军", "第一性原理"],
+      "action": "调 Skill(nocode-evolve:red-blue-deep) (别先自己给结论)",
+      "read": "(skill, 无 rule 文件)",
+      "summary": "评估 / 拍板类提问的红蓝军框架; skill 内判轻档 (一句表态) / 重档 (第一性原理→蓝军→红军→结论, 重档红军默认交 Codex)",
+      "guard": "",
+      "pretooluse": []
     }
   ]
 }

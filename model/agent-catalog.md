@@ -20,6 +20,41 @@
 **摘要**: 覆盖+扩展 superpowers skill, 4 选项 (merge/PR/keep/discard); Gate 体系 M/TB/PR/D/RD; gh 主, Bitbucket DC 读 bkt 附录
 **关键约束(上浮)**: Bitbucket 用 bkt 不裸 curl; reviewer 用 bkt pr edit 不 PUT。
 
+#### git-worktree
+**触发**: 即将执行 superpowers:using-git-worktrees skill, 或用户要求创建 worktree, 或在 worktree 内跑命令报「env var missing / config 不存在」需从主仓 cp gitignored 文件, 或 agent 在 worktree 找不到项目本地 .agents-personal/ 路由
+**读**: `${CLAUDE_PLUGIN_ROOT}/rules/rule-git-worktree.md`
+**摘要**: worktree 落项目同级 <project>-<branch_flat>/; 建前静默 fetch + 基于 upstream 最新; 建后 cp env/config + symlink .agents-personal/ 共享主仓; 销毁前先拆 symlink
+
+#### git-inspection
+**触发**: 即将连续跑 ≥2 个 git read-only 命令 (status / diff / log / show / branch / ls-files / remote -v 等)
+**读**: `${CLAUDE_PLUGIN_ROOT}/rules/rule-git-inspection.md`
+**摘要**: read-only inspection 命令默认用 && 串成一个 Bash call, 各段间插 echo "---<label>" 分隔, 减少 turn 浪费
+
+### 桶: 评审 (review)
+**粗触发**: 对已有改动或设计求评审 / 挑错 / 独立验证 / 第二实现
+**不含 (负例)**: 纯执行: 直接改代码而未求评审
+
+#### codex-review
+**触发**: red-blue-deep 判重档走到红军环节; 或完成分支 / 显式 review 请求; 或我卡住 / 想要第二实现 / 独立诊断 / 委派; 或 design-doc-writing 走到 review 环节
+**读**: `${CLAUDE_PLUGIN_ROOT}/rules/rule-codex-review.md`
+**摘要**: 本机 Codex 当独立模型接四场景 (红蓝红军 / 代码 review 收尾 / 委派救援 / 设计文档审稿); 直接 Bash 调 codex-companion.mjs; 先 setup --json 探, 不可用降级自做 + 明说; 禁改 vendored 文件
+**关键约束(上浮)**: 先 setup --json 探, 不可用降级自做 + 明说; 禁改 vendor/codex/ 文件。
+**也属**: design
+
+#### red-blue-deep
+**触发**: 用户问「X 怎么样 / 行不行 / 合适吗 / 值得吗 / 选 A 还是 B / 哪个更好」等评估 / 拍板类, 或显式说红蓝军 / 第一性原理
+**读**: `(skill, 无 rule 文件)`
+**摘要**: 评估 / 拍板类提问的红蓝军框架; skill 内判轻档 (一句表态) / 重档 (第一性原理→蓝军→红军→结论, 重档红军默认交 Codex)
+
+### 桶: 设计与文档 (design)
+**粗触发**: 写设计文档 / PRD / RFC / ADR / 重构方案 / 技术 spec
+**不含 (负例)**: 写代码注释 / commit message / README / changelog
+
+#### superpowers-brainstorming
+**触发**: 即将执行 superpowers:brainstorming skill, 或用户要求写设计文档 / PRD / RFC / Design Doc / ADR / 重构方案 / 技术 spec, 或 brainstorming 走到 step 5
+**读**: `${CLAUDE_PLUGIN_ROOT}/rules/rule-superpowers-brainstorming.md`
+**摘要**: 写设计文档统一 worktree → write → review → render 四步, 落 docs/plans/{username}/ (按 doc-type 分 specs/plans/sketches); 两条入口 (brainstorming step5 / 用户直接要求) 一致
+
 ### 桶: 记忆与沉淀 (memory)
 **粗触发**: 总结 / 沉淀 / 归档会话产出 / push 内容
 **不含 (负例)**: 一次性事实查询

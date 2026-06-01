@@ -16,5 +16,11 @@
     "pattern": "curl\\s+.*pull-?request",
     "decision": "block",
     "reason": "禁裸 curl 改 PR, 用 bkt"
+  },
+  {
+    "rule": "git-worktree",
+    "pattern": "git\\s+worktree\\s+add",
+    "decision": "inject",
+    "reason": "建 worktree 前先 Read rule-git-worktree.md: 落 <project>-<branch>/, 建后 cp env + symlink .agents-personal"
   }
 ]
