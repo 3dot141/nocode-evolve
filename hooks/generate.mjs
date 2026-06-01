@@ -19,3 +19,30 @@ export function genTriggers(m) {
     .filter((r) => r.triggers && r.triggers.length)
     .map((r) => ({ rule: r.id, action: r.action, patterns: r.triggers, note: r.guard || '' }));
 }
+
+export function genCatalog(m) {
+  const byBucket = new Map(m.buckets.map((b) => [b.id, []]));
+  for (const r of m.rules) byBucket.get(r.bucket)?.push(r);
+
+  let out = '# agent-catalog — nocode-evolve 插件级规则路由表\n\n';
+  out += '> 本文件由 `hooks/generate.mjs` 从 `rules/manifest.json` 生成。**禁手改**——改 rule 改 manifest 后重新生成。\n\n';
+  out += '## 读取时机\n\n会话开局本文件已在 context。响应任何任务前扫一眼下方**粗桶**匹配触发: 先命中桶(粗触发宽, 易命中), 再在桶内子规则里按 `触发` 选具体 rule → `Read` 对应文件。同一规则会话内只 Read 一次。命中桶但落在「负例」描述里 → 不触发。\n\n---\n\n## 规则清单（按粗桶分组）\n\n';
+
+  for (const b of m.buckets) {
+    const rules = byBucket.get(b.id) || [];
+    if (!rules.length) continue;
+    out += `### 桶: ${b.title} (${b.id})\n`;
+    out += `**粗触发**: ${b.trigger_summary}\n`;
+    out += `**不含 (负例)**: ${b.negatives.join('; ')}\n\n`;
+    for (const r of rules) {
+      out += `#### ${r.id}\n`;
+      out += `**触发**: ${r.trigger_desc}\n`;
+      out += `**读**: \`${r.read}\`\n`;
+      out += `**摘要**: ${r.summary}\n`;
+      if (r.guard) out += `**关键约束(上浮)**: ${r.guard}\n`;
+      if ((r.also_buckets || []).length) out += `**也属**: ${r.also_buckets.join(', ')}\n`;
+      out += '\n';
+    }
+  }
+  return out;
+}
