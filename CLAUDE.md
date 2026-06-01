@@ -25,3 +25,12 @@
 - 仓库本身就是分发物（marketplace 直接读 git），不需要额外的"打包"产物。
 
 纯文档/元数据修订（README、本文件、AGENTS.md 等）不需要升版本，但仍遵守规则 1。
+
+### 3. rule 改动走 manifest 单源
+
+`model/agent-catalog.md`、`hooks/triggers.json`、`hooks/pretooluse-rules.json` 已是**生成物，禁手改**。增删改 rule：
+
+- 改 `rules/manifest.json`（唯一真值源：buckets + rules，每条 rule 含 bucket / triggers / summary / guard / pretooluse）
+- 跑 `node hooks/generate.mjs` 重新生成三个产物
+- 一致性由 SessionStart 的 `node hooks/generate.mjs --check` 兜底报警（漂移只 warn 不阻断 session）
+- 测试：`node --test 'hooks/*.test.mjs'`
