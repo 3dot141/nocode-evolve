@@ -172,7 +172,7 @@ cd / EnterWorktree 是后续 cp env / link personal / setup / baseline 链的前
 
 ## Worktree 创建后：从主仓补 gitignored 私有副本（cp）
 
-`git worktree add` 出来的是**干净** checkout——只复制 tracked 内容，主仓本地 gitignored 的运行物**不会**带过来，worktree 跑命令前要从主仓补齐。本节两类——env / config、`node_modules`——都用 **cp 独立副本**而非 symlink：worktree 的改动（改 env schema / 装不同分支依赖）**不该回污主仓**，cp 出来各自独立。（与之相对，`.agents-personal/` 是**该共享**的配置，用 symlink，见下一节。）两类都在 worktree 创建后、跑命令 / Run Project Setup 前做；下文变量沿用本文「路径推导」段的 `project_root` / `worktree_path`。
+`git worktree add` 出来的是**干净** checkout——只复制 tracked 内容，主仓本地 gitignored 的运行物**不会**带过来，worktree 跑命令前要从主仓补齐。本节三类——env / config、IDE / 调试配置、`node_modules`——都用 **cp 独立副本**而非 symlink：worktree 的改动（改 env schema / 装不同分支依赖 / IDE 重排窗口与 run config）**不该回污主仓**，cp 出来各自独立。（与之相对，`.agents-personal/` 是**该共享**的配置，用 symlink，见下一节。）三类都在 worktree 创建后、跑命令 / Run Project Setup / 用 IDE 打开前做；下文变量沿用本文「路径推导」段的 `project_root` / `worktree_path`。
 
 ### env / config
 
@@ -214,6 +214,46 @@ cd / EnterWorktree 是后续 cp env / link personal / setup / baseline 链的前
 - 不要假设 worktree 自动有这些文件——`git worktree` 不复制 untracked
 - 不要在本节钉死具体文件名 / token 名 / 仓库特定 schema——具体细节随项目演化，本节只描述"cp gitignored env files"模式；项目特异的 env file 清单走项目本地 rule
 - 不要在 worktree 改主仓配置——主仓是 source of truth，真要更新主仓配置走主仓 working tree
+
+### IDE / 调试配置（`.vscode` / `.idea`）
+
+IDE 的 run/debug 配置目录（VS Code 的 `.vscode/`、JetBrains 的 `.idea/`）常被 gitignored，`git worktree add` 不带过来——worktree 里用 IDE 打开就没有 launch / run config，要手动重配很烦。从主仓 cp 一份独立副本即可。
+
+> 为什么 cp 不 symlink：`.idea/workspace.xml` 等存的是 **per-project IDE 状态**（打开的文件、窗口布局、模块路径）。symlink 会让两个 worktree 共享一份，JetBrains 把它们当同一 project、互相覆盖状态、索引冲突。run config 用 `$PROJECT_DIR$` 宏，cp 到 worktree 后自解析到新根，配置照常可用——cp 是对的。
+
+#### 触发场景
+
+- 刚创建 worktree，准备用 IDE 打开 / 跑 debug
+- 主仓存在 `.vscode/` 或 `.idea/`（且是 gitignored、worktree add 没带过来）
+
+#### 标准动作
+
+整目录 cp，已存在（被 worktree add 带过来或先前已 cp）则跳过：
+
+```bash
+for d in .vscode .idea; do
+    src="$project_root/$d"
+    dst="$worktree_path/$d"
+    [ -d "$src" ] || continue            # 主仓没有就跳过
+    [ -e "$dst" ] && continue            # worktree 已有（tracked 带过来 / 已 cp）则跳过
+    cp -Rc "$src" "$dst" 2>/dev/null \
+        || cp -R "$src" "$dst"           # 非 APFS / 不支持 clonefile → 退普通 cp
+done
+```
+
+验证 worktree git status 仍 clean（gitignored 的 IDE 目录 cp 后不应进 git status）：
+
+```bash
+cd "$worktree_path"
+git status -s | grep -v "^??" | head     # 不应出现 .vscode / .idea
+```
+
+#### IDE 配置 cp 的不要
+
+- 不要 symlink `.vscode` / `.idea`——IDE 会把两 worktree 当同一 project、workspace state 互相覆盖；要独立副本
+- 不要 cp 已 tracked 的目录——worktree add 已带过来，`[ -e "$dst" ]` 守卫负责跳过
+- 不要在**部分 tracked**（如 `.vscode/settings.json` tracked、`launch.json` gitignored）时整目录 cp——整目录守卫会因 tracked 文件使 `.vscode` 已存在而跳过、漏掉 gitignored 的那几个；这种项目按 env/config 那样 cp 单个 gitignored 文件
+- 不要把这些当必须——主仓没有 `.vscode` / `.idea` 就整段跳过
 
 ### node_modules（+ 增量 install 对齐）
 

@@ -21,6 +21,6 @@
     "rule": "git-worktree",
     "pattern": "git\\s+worktree\\s+add",
     "decision": "inject",
-    "reason": "建 worktree 前先 Read rule-git-worktree.md: 落 <project>-<branch>/, 建后 cp env + symlink .agents-personal"
+    "reason": "建 worktree 前先 Read rule-git-worktree.md: 落 <project>-<branch>/, 建后 cp env + IDE(.vscode/.idea) + symlink .agents-personal"
   }
 ]
