@@ -170,43 +170,34 @@ cd / EnterWorktree 是后续 cp env / link personal / setup / baseline 链的前
 - 不要切过去后又 cd 回主仓做事——后续动作链 (cp env / link personal / setup / baseline) 应一气在 worktree 内做完
 - 不要在 harness 有 EnterWorktree 时还每条 Bash 都 `cd <worktree> && export … && <cmd>` 前缀——典型反例: worktree 早建好、后续几十轮命令每次重新 cd + 重新 export env, 这是漏用 EnterWorktree 持久化造成的反复摩擦; 第一条 worktree 内命令前 `EnterWorktree(path=)` 一次到位, 之后 Bash 起点即 worktree
 
-## Worktree 创建后：从主仓补 gitignored 私有副本（cp）
+## Worktree 创建后：调 worktree-setup.mjs 补齐 gitignored 运行物
 
-`git worktree add` 出来的是**干净** checkout——只复制 tracked 内容，主仓本地 gitignored 的运行物**不会**带过来，worktree 跑命令前要从主仓补齐。本节三类——env / config、IDE / 调试配置、`node_modules`——都用 **cp 独立副本**而非 symlink：worktree 的改动（改 env schema / 装不同分支依赖 / IDE 重排窗口与 run config）**不该回污主仓**，cp 出来各自独立。（与之相对，`.agents-personal/` 是**该共享**的配置，用 symlink，见下一节。）三类都在 worktree 创建后、跑命令 / Run Project Setup / 用 IDE 打开前做；下文变量沿用本文「路径推导」段的 `project_root` / `worktree_path`。
+`git worktree add` 出来的是**干净** checkout——只复制 tracked 内容，主仓本地 gitignored 的运行物**不会**带过来。这些**确定性补齐步骤**（cp env/config、cp IDE、cp node_modules + 增量 install、symlink `.agents-personal`、`git status` clean 校验）已收进 `${CLAUDE_PLUGIN_ROOT}/scripts/worktree-setup.mjs`——EnterWorktree 之后调一次即可，不必再逐段贴 bash（变量沿用本文「路径推导」段的 `project_root` / `worktree_path`）：
 
-### env / config
+```bash
+node "${CLAUDE_PLUGIN_ROOT}/scripts/worktree-setup.mjs" setup \
+    --project-root "$project_root" --worktree-path "$worktree_path"
+# 可选: --pkg-manager npm|pnpm|yarn (不传按 lock sniff) / --skip-install / --dry-run (只输出计划不执行)
+```
 
-主仓本地的 gitignored 文件（`.env*` / `config.local.*` / 本地 secret / API token / 等）跑起依赖它们的命令前从主仓 cp 过来。
+脚本输出 JSON 报告；agent 约定**只看 `needsAttention[]`**——非空才介入，空则继续工作：
 
-#### 触发场景
+- `copied` / `symlinked`：实际 cp 的 env/IDE/node_modules 与 symlink 的 `.agents-personal`
+- `install.status`：`ran`(增量 install 跑了) / `skipped`(`--skip-install` 或探测不到包管理器) / `no-node-modules`
+- `gitStatusClean`：false 时 offenders 也进 `needsAttention`（cp 物意外进 tracking）
+- `needsAttention[]`：cp 失败 / status 不 clean / 未识别包管理器 / env schema 可能不兼容——逐条人判
 
-- 在 worktree 内跑命令报错：`env var missing` / `<configfile> 不存在` / 类似 secret/config 加载失败
-- 主动准备跑依赖 env 的命令（dev / test / build / 跑 benchmark），提前 verify 配置就位
-- 刚创建 worktree 第一次跑运行性命令时
+脚本只做**幂等、可逆**的补齐（`[ -e ]` 跳过已存在；遇分歧只报告不擅自决定）。下面四节讲**为什么这么补**——脚本是"怎么做"，规则正文留"为什么"。
 
-#### 标准动作
+> 改造前这几节是逐段教学 bash（grep/cp/find/ln），现已收进脚本；保留各节"为什么 cp 不 symlink / 为什么 clonefile / 为什么增量 install"的设计理由 + "不要"红线。设计见 `docs/superpowers/specs/3dot141/260602-worktree-setup-script-design.md`。
 
-1. **识别要 cp 的文件**——看主仓根 + 子包 `.gitignore` + 报错指向的路径：
+### env / config — 为什么 cp 独立副本
 
-   ```bash
-   grep -rE "\.env|config\.local|secret" \
-     "$project_root/.gitignore" "$project_root"/**/.gitignore 2>/dev/null
-   ```
+主仓本地 gitignored 的 `.env*` / `config.local.*` / secret / API token 等，worktree 跑依赖它们的命令前要补。用 **cp 独立副本**而非 symlink：worktree 改 env schema **不该回污主仓**，cp 出来各自独立。
 
-2. **cp 主仓 → worktree，保持完全相同的相对路径**：
-
-   ```bash
-   cp "$project_root/<rel-path>" "$worktree_path/<rel-path>"
-   ```
-
-3. **验证 worktree git status 仍 clean**（gitignored 文件 cp 后不应进 git status）：
-
-   ```bash
-   cd "$worktree_path"
-   git status -s | grep -v "^??" | head    # 不应出现 cp 过来的文件
-   ```
-
-4. **worktree 的代码版本与主仓 env 文件 schema 不兼容**（主仓 env 滞后于代码改动）：改 worktree 副本即可，**不动主仓**（除非用户明确授权改主仓）. worktree 是隔离工作区，副本改动跟主仓互不影响.
+- **触发**：worktree 内跑命令报 `env var missing` / config 加载失败；或准备跑 dev/test/build/benchmark 前。
+- **脚本探测**：扫 `.gitignore` 用**锚定** pattern 匹配 `.env`/`.env.*`/`config.local.*`/`secret`（不用裸子串、避免误命中 `*.environment`），回显候选到 `copied.env` 供复核。
+- **schema 不兼容**：worktree 代码与主仓 env schema 对不上时，改 worktree 副本即可，**不动主仓**（除非用户授权）——worktree 是隔离工作区。
 
 #### env cp 的不要
 
@@ -221,32 +212,8 @@ IDE 的 run/debug 配置目录（VS Code 的 `.vscode/`、JetBrains 的 `.idea/`
 
 > 为什么 cp 不 symlink：`.idea/workspace.xml` 等存的是 **per-project IDE 状态**（打开的文件、窗口布局、模块路径）。symlink 会让两个 worktree 共享一份，JetBrains 把它们当同一 project、互相覆盖状态、索引冲突。run config 用 `$PROJECT_DIR$` 宏，cp 到 worktree 后自解析到新根，配置照常可用——cp 是对的。
 
-#### 触发场景
-
-- 刚创建 worktree，准备用 IDE 打开 / 跑 debug
-- 主仓存在 `.vscode/` 或 `.idea/`（且是 gitignored、worktree add 没带过来）
-
-#### 标准动作
-
-整目录 cp，已存在（被 worktree add 带过来或先前已 cp）则跳过：
-
-```bash
-for d in .vscode .idea; do
-    src="$project_root/$d"
-    dst="$worktree_path/$d"
-    [ -d "$src" ] || continue            # 主仓没有就跳过
-    [ -e "$dst" ] && continue            # worktree 已有（tracked 带过来 / 已 cp）则跳过
-    cp -Rc "$src" "$dst" 2>/dev/null \
-        || cp -R "$src" "$dst"           # 非 APFS / 不支持 clonefile → 退普通 cp
-done
-```
-
-验证 worktree git status 仍 clean（gitignored 的 IDE 目录 cp 后不应进 git status）：
-
-```bash
-cd "$worktree_path"
-git status -s | grep -v "^??" | head     # 不应出现 .vscode / .idea
-```
+- **触发**：刚创建 worktree、准备用 IDE 打开 / 跑 debug；主仓存在 `.vscode/` 或 `.idea/`（gitignored、worktree add 没带过来）。
+- **脚本动作**：对 `.vscode` / `.idea` 各做整目录 clonefile cp（幂等：worktree 已有则跳过），`copied.ide` 回显实际 cp 的目录。
 
 #### IDE 配置 cp 的不要
 
@@ -255,54 +222,15 @@ git status -s | grep -v "^??" | head     # 不应出现 .vscode / .idea
 - 不要在**部分 tracked**（如 `.vscode/settings.json` tracked、`launch.json` gitignored）时整目录 cp——整目录守卫会因 tracked 文件使 `.vscode` 已存在而跳过、漏掉 gitignored 的那几个；这种项目按 env/config 那样 cp 单个 gitignored 文件
 - 不要把这些当必须——主仓没有 `.vscode` / `.idea` 就整段跳过
 
-### node_modules（+ 增量 install 对齐）
+### node_modules — 为什么 clonefile + 增量 install
 
-`node_modules`（gitignored）不会带过来——默认会触发一次从零 `npm install`，大仓动辄几分钟。主仓若已装好依赖，直接把 `node_modules` copy 过去复用，把"从零装"降级成"增量对齐"。
+`node_modules`（gitignored）不带过来会触发从零 `npm install`（大仓几分钟）。脚本用 **clonefile**（`cp -Rc`，macOS APFS 写时复制：瞬间完成、近零空间、改依赖时才分裂、保留内部 `.bin` symlink；非 APFS 回退 `cp -R`）复用主仓副本，再跑一次**增量** install 对齐本分支 `package.json`/lock——把"从零重装"省成"增量"，**不是跳过 install**。`find ... -prune` 不下钻已命中目录（嵌套 `node_modules` 随父一起 copy）。
 
-#### 触发场景
+- **触发**：主仓存在至少一个 `node_modules`，准备在 worktree 跑 dev/test/build 前。
+- **与「Run Project Setup」**：本步**前置**于 skill 的「Run Project Setup」——先 copy 复用、再让 install 退化成增量对齐；主仓没有 `node_modules` 时 `install.status="no-node-modules"`，回落原始从零 install。
+- **包管理器**：脚本按 lock 文件 sniff（pnpm-lock/yarn.lock/package-lock）；sniff 不到 → `install.status="skipped"` + `needsAttention`，不擅自 `npm install`。
 
-- 主仓存在至少一个 `node_modules`（下面 `find` 有命中）
-- 准备在 worktree 跑 dev / test / build 前
-
-#### 标准动作
-
-1. **递归找主仓所有 `node_modules`**（`-prune` 不下钻已命中目录，避免把其内部成千上万的嵌套 `node_modules` 重复列出——它们会随父目录一起 copy）：
-
-   ```bash
-   find "$project_root" -type d -name node_modules -prune
-   ```
-
-2. **每个按相同相对路径 clonefile-copy 到 worktree**（macOS APFS 写时复制：瞬间完成、近零额外空间、worktree 改依赖时才分裂；保留内部 `.bin` 等 symlink）：
-
-   ```bash
-   while IFS= read -r src; do
-       rel="${src#"$project_root"/}"
-       dst="$worktree_path/$rel"
-       [ -e "$dst" ] && continue                 # worktree 已有则跳过
-       mkdir -p "$(dirname "$dst")"
-       cp -Rc "$src" "$dst" 2>/dev/null \
-           || cp -R "$src" "$dst"                # 非 APFS / 不支持 clonefile → 退普通 cp（慢、占双倍空间）
-   done < <(find "$project_root" -type d -name node_modules -prune)
-   ```
-
-   > Linux 等价 CoW：`cp -R --reflink=auto`。本节以 macOS clonefile 为主。
-
-3. **copy 后跑一次增量 install，对齐本分支的 `package.json` / lock**（未变近乎 no-op；变了只装差量——这是把"从零重装"省成"增量"的关键，**不是跳过 install**）：
-
-   ```bash
-   cd "$worktree_path"
-   npm install            # 主仓实际用 pnpm / yarn 就换对应命令
-   ```
-
-4. **验证 worktree git status 仍 clean**（`node_modules` 是 gitignored，copy 后不应进 git status）：
-
-   ```bash
-   git status -s | grep -v "^??" | head    # 不应出现 node_modules
-   ```
-
-#### 与「Run Project Setup」的关系
-
-本子节**前置**于 skill 保留的「Run Project Setup（npm install / …）」：先 copy 复用，再让 Run Project Setup 的 install 退化成增量对齐。主仓**没有** `node_modules` 时本子节整体跳过，回落到原始的从零 install。
+> Linux 等价 CoW：`cp -R --reflink=auto`；脚本以 macOS clonefile 为主、失败回退普通 cp。
 
 #### node_modules copy 的不要
 
@@ -317,21 +245,8 @@ git status -s | grep -v "^??" | head     # 不应出现 .vscode / .idea
 
 实现: 用 **symlink** 而非 cp.
 
-### 触发场景
-
-- 刚创建 worktree, 准备让 agent 在 worktree 里工作
-- 在 worktree 内开新会话发现 agent 找不到项目本地路由 / wiki / rules
-- 主仓 `.agents-personal/` 存在 (`[ -d "$project_root/.agents-personal" ]`)
-
-### 标准动作
-
-变量沿用「路径推导」段的 `project_root` / `worktree_path`.
-
-```bash
-if [ -d "$project_root/.agents-personal" ] && [ ! -e "$worktree_path/.agents-personal" ]; then
-    ln -s "$project_root/.agents-personal" "$worktree_path/.agents-personal"
-fi
-```
+- **触发**：刚创建 worktree、准备让 agent 在内工作；或 worktree 内开新会话发现 agent 找不到项目本地路由 / wiki / rules；主仓 `.agents-personal/` 存在。
+- **脚本动作**：`ln -s` 主仓 `.agents-personal/` 到 worktree（幂等：已存在则跳过），`symlinked` 回显。
 
 为什么 symlink 而不是 cp:
 
@@ -344,11 +259,13 @@ fi
 
 `git worktree remove` 默认会因 `.agents-personal/` symlink 是 untracked 而**拒绝执行**, 提示 "contains modified or untracked files, use --force". 即便加 `--force`, POSIX rm 对 dir symlink 只删 symlink 自身**不**递归 target——实测 macOS BSD rm + git worktree --force 不会误删主仓 `.agents-personal/`. 双重安全.
 
-但为了**显式控制 + 跨平台稳健**, 销毁 worktree 时先手动拆 symlink:
+但为了**显式控制 + 跨平台稳健**, 用 teardown verb——它封装"先拆 `.agents-personal` symlink（只删 symlink 自身、target 不动）→ `git worktree remove`"的固定顺序（顺序反了 remove 会因 untracked symlink 拒绝）。销毁前先 `ExitWorktree(action="keep")` 退出 worktree（否则 cwd 卡在被删目录里）:
 
 ```bash
-rm "$worktree_path/.agents-personal"       # 只删 symlink 自身, target 不动
-git worktree remove "$worktree_path"        # 不再需要 --force (前提是没别的 untracked)
+# 先 ExitWorktree(action="keep") 退出 worktree, 再:
+node "${CLAUDE_PLUGIN_ROOT}/scripts/worktree-setup.mjs" teardown \
+    --worktree-path "$worktree_path"
+# remove 被拒绝(有其他 untracked)→ 进 needsAttention, 不自动 --force; 人工判后再处理
 ```
 
 > **不要在销毁 worktree 时顺手清理远程分支.** worktree 移除只删工作目录、**保留 branch** (本节「目录名冲突怎么办」重建复用、通用销毁皆如此). 远程分支清理是**删 branch** 的附属动作, 归 `rule-finishing-branch.md` 的 **Gate RD** (option 1 Merge / option 4 Discard 删本地 branch 后触发), 不归 worktree 移除——在保留 branch 的场景删远程会误删正要继续的分支.

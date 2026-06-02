@@ -59,10 +59,10 @@
       "triggers": ["(创建|建|新建|开|搞).{0,3}worktree", "worktree.{0,3}(创建|新建)"],
       "action": "Read rules/rule-git-worktree.md",
       "read": "${CLAUDE_PLUGIN_ROOT}/rules/rule-git-worktree.md",
-      "summary": "worktree 落项目同级 <project>-<branch_flat>/; 建前静默 fetch + 基于 upstream 最新; 建后 cp env/config + IDE 调试目录(.vscode/.idea) + symlink .agents-personal/ 共享主仓; 销毁前先拆 symlink",
+      "summary": "worktree 落项目同级 <project>-<branch_flat>/; 建前静默 fetch + 基于 upstream 最新; 建后调 worktree-setup.mjs setup 补齐(cp env/IDE/node_modules + symlink .agents-personal, 看 needsAttention[]); 销毁走 teardown verb (先 ExitWorktree)",
       "guard": "",
       "pretooluse": [
-        { "pattern": "git\\s+worktree\\s+add", "action": "inject", "note": "建 worktree 前先 Read rule-git-worktree.md: 落 <project>-<branch>/, 建后 cp env + IDE(.vscode/.idea) + symlink .agents-personal" }
+        { "pattern": "git\\s+worktree\\s+add", "action": "inject", "note": "建 worktree 前先 Read rule-git-worktree.md: 落 <project>-<branch>/, 建后调 worktree-setup.mjs setup 补齐(cp env/IDE/node_modules + symlink)" }
       ]
     },
     {
