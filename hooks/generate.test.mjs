@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { loadManifest, genTriggers, genCatalog, genPretooluse, check, patchGeneratedRegion, genCatalogSlim } from './generate.mjs';
+import { loadManifest, genTriggers, genCatalog, genPretooluse, check, patchGeneratedRegion, genCatalogSlim, genRouteTable } from './generate.mjs';
 
 test('genTriggers: 复现 triggers.json 格式 [{rule, action, patterns, note}]', () => {
   const t = genTriggers(loadManifest());
@@ -141,4 +141,14 @@ test('genCatalogSlim 含 4 粗桶 + 调 route，不含单 rule 细节', () => {
   assert.match(out, /Skill\(nocode-evolve:route\)/);
   // 不含单条 rule 的「读」路径（那是 route 正文的事）
   assert.doesNotMatch(out, /rules\/rule-finishing-branch\.md/);
+});
+
+test('genRouteTable 含每条 rule 的触发/读/摘要', () => {
+  const m = loadManifest();
+  const out = genRouteTable(m);
+  for (const r of m.rules) {
+    assert.ok(out.includes(r.id), `缺 rule ${r.id}`);
+  }
+  assert.match(out, /\*\*触发\*\*/);
+  assert.match(out, /\*\*读\*\*/);
 });

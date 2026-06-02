@@ -56,6 +56,37 @@ export function genCatalog(m) {
   return out;
 }
 
+export function genRouteTable(m) {
+  const byBucket = new Map(m.buckets.map((b) => [b.id, []]));
+  for (const r of m.rules) byBucket.get(r.bucket)?.push(r);
+  let out = '';
+  for (const b of m.buckets) {
+    const rules = byBucket.get(b.id) || [];
+    if (!rules.length) continue;
+    out += `### 桶: ${b.title} (${b.id})\n`;
+    out += `**粗触发**: ${b.trigger_summary}\n`;
+    out += `**不含 (负例)**: ${b.negatives.join('; ')}\n\n`;
+    for (const r of rules) {
+      out += `#### ${r.id}\n`;
+      out += `**触发**: ${r.trigger_desc}\n`;
+      out += `**读**: \`${r.read}\`\n`;
+      out += `**摘要**: ${r.summary}\n`;
+      if (r.guard) out += `**关键约束(上浮)**: ${r.guard}\n`;
+      if ((r.also_buckets || []).length) out += `**也属**: ${r.also_buckets.join(', ')}\n`;
+      out += '\n';
+    }
+    const crossRules = m.rules.filter((r) => (r.also_buckets || []).includes(b.id));
+    for (const r of crossRules) {
+      out += `#### ${r.id} (跨桶)\n`;
+      out += `**触发**: ${r.trigger_desc}\n`;
+      out += `**读**: \`${r.read}\`\n`;
+      out += `**摘要**: ${r.summary}\n`;
+      out += `**主桶**: ${r.bucket} (完整定义见该桶)\n\n`;
+    }
+  }
+  return out;
+}
+
 export function genCatalogSlim(m) {
   let out = '# agent-catalog — nocode-evolve 插件级粗桶路由\n\n';
   out += '> 本文件由 `hooks/generate.mjs` 从 `rules/manifest.json` 生成。**禁手改**——改 rule 改 manifest 后重新生成。\n\n';
