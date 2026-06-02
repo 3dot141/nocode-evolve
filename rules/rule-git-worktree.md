@@ -3,6 +3,17 @@
 执行 `superpowers:using-git-worktrees` skill 时，本文规则覆盖 skill 内默认值。
 若与 skill 内文冲突，**以本规则为准**。
 
+## 顶层原则：每个分支都要 worktree——不在主仓裸开 branch
+
+**所有新建分支一律走 worktree，不在主仓直接 `git checkout -b` / `git switch -c` / `git branch <new>` 起裸分支。** 一个 worktree 本质就是「分支 + 独立工作目录」，把「建分支」和「建 worktree」合成同一个动作——要分支，就建 worktree。
+
+- **为什么**：裸分支与主仓共用同一份 working tree，切分支即原地改工作目录——IDE / LSP 重新索引、watcher / 构建工具触发重跑、未提交改动跨分支串味。worktree 给每个分支独立目录，AI 多分支并行调试时互不干扰（机制论证见下文「为什么要平级而不是项目内」）。
+- **范围**：适用于**所有**新建分支，不留默认例外。真要临时裸开一个分支（快速验证 / 一次性 hotfix），需用户**显式**说「不要 worktree / 就在主仓建」才跳过——模糊信号（「快速看看 / 简单弄一下」）不算授权，拿不准就问。
+- **拦截强度**：pretooluse 命中 `git checkout -b` / `git switch -c` / `git branch <new>` 时**注入提醒**（inject，不阻断）——提示改走 `git worktree add` 平级路径。命令仍会执行，但 agent 应据提醒回到 worktree 流程，而不是无视。
+- **主分支例外**：`main` / `master` 本就住在主仓，不受此约束；本原则只管**新建**分支，不管已有的主干。
+
+下面的路径模板 / 创建后补齐 / 销毁等全部是「建 worktree 这一个动作怎么做对」的细节。
+
 ## 核心原则：worktree 一律落在项目**同级**目录，扁平命名
 
 > 不再使用 skill 内默认的 `.worktrees/`（项目内）/ `worktrees/`（项目内）/ `~/.config/superpowers/worktrees/<project>/`（用户配置目录）。

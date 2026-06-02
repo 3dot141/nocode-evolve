@@ -67,6 +67,7 @@ test('check: 生成物与源一致时返回 [] (不写文件, 直接断言, Code
 });
 
 // 改造前 triggers.json 的原始 patterns 快照 (写死作回归基线, 防迁移丢/改 pattern)
+// 断言为子集 (原始 ⊆ 当前): 原始每条必须仍在, 但允许后续经 manifest 合法新增 pattern
 const ORIGINAL_TRIGGERS = {
   'finishing-branch': ['提\\s*个?\\s*pr', '创建\\s*pr', '建\\s*个?\\s*pr', 'pull\\s*request', '提.*?PR', '合并到\\s*(release|main|master|主干)', '收尾', '完成\\s*worktree', '删\\s*(branch|分支)', 'discard\\s*worktree'],
   'push-summary': ['总结.{0,4}push', 'push.{0,6}(总结|包含|改了|是什么)', 'pr\\s*描述', 'pr\\s*description', '给.{0,4}(标题|描述)', '沉淀', '这次\\s*push'],
@@ -76,12 +77,14 @@ const ORIGINAL_TRIGGERS = {
   'red-blue-deep': ['行不行', '值得吗', '合适吗', '该不该', '选.{0,10}还是', '哪个(更好|好|合适)', '红蓝军', '第一性原理'],
 };
 
-test('回归: genTriggers 的每条 rule patterns 与改造前 triggers.json 完全一致', () => {
+test('回归: genTriggers 每条 rule 仍含改造前 triggers.json 的全部原始 patterns (允许新增)', () => {
   const t = genTriggers(loadManifest());
   for (const [rule, patterns] of Object.entries(ORIGINAL_TRIGGERS)) {
     const got = t.find((x) => x.rule === rule);
     assert.ok(got, `triggers 应含 ${rule}`);
-    assert.deepEqual(got.patterns, patterns, `${rule} patterns 与改造前不一致 (迁移丢/改了 pattern)`);
+    for (const p of patterns) {
+      assert.ok(got.patterns.includes(p), `${rule} 丢/改了原始 pattern: ${p} (迁移回归)`);
+    }
   }
 });
 

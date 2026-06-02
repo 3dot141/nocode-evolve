@@ -22,5 +22,11 @@
     "pattern": "git\\s+worktree\\s+add",
     "decision": "inject",
     "reason": "建 worktree 前先 Read rule-git-worktree.md: 落 <project>-<branch>/, 建后调 worktree-setup.mjs setup 补齐(cp env/IDE/node_modules + symlink)"
+  },
+  {
+    "rule": "git-worktree",
+    "pattern": "git\\s+(checkout\\s+-[bB]|switch\\s+-[cC]|branch\\s+[^\\s-])",
+    "decision": "inject",
+    "reason": "原则: 每个分支都要 worktree。别在主仓裸开 branch, 先 Read rule-git-worktree.md 走 git worktree add 落 <project>-<branch>/"
   }
 ]

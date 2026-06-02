@@ -50,7 +50,9 @@
     "action": "Read rules/rule-git-worktree.md",
     "patterns": [
       "(创建|建|新建|开|搞).{0,3}worktree",
-      "worktree.{0,3}(创建|新建)"
+      "worktree.{0,3}(创建|新建)",
+      "(新建|建|开|切|起).{0,2}分支",
+      "分支.{0,3}(创建|新建)"
     ],
     "note": ""
   },
