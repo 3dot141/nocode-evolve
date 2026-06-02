@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// 单源生成器: rules/manifest.json → model/agent-catalog.md + hooks/triggers.json + hooks/pretooluse-rules.json
+// 单源生成器: rules/manifest.json → model/agent-catalog.md (slim) + hooks/pretooluse-rules.json + skills/route/SKILL.md (rule-routes 生成区)
 // 用法: node hooks/generate.mjs          写出生成物
 //       node hooks/generate.mjs --check   只校验生成物与源一致, 不一致 exit 1
 import fs from 'node:fs';
@@ -8,16 +8,10 @@ import { fileURLToPath } from 'node:url';
 
 export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const MANIFEST = path.join(ROOT, 'rules/manifest.json');
+const ROUTE_SKILL = path.join(ROOT, 'skills/route/SKILL.md');
 
 export function loadManifest() {
   return JSON.parse(fs.readFileSync(MANIFEST, 'utf8'));
-}
-
-export function genTriggers(m) {
-  // 复现现有 hooks/triggers.json 格式: [{rule, action, patterns, note}]
-  return m.rules
-    .filter((r) => r.triggers && r.triggers.length)
-    .map((r) => ({ rule: r.id, action: r.action, patterns: r.triggers, note: r.guard || '' }));
 }
 
 export function genCatalog(m) {
@@ -126,25 +120,35 @@ export function patchGeneratedRegion(file, regionName, body) {
 // 生成物路径与渲染内容的单一映射
 function targets(m) {
   return [
-    { file: path.join(ROOT, 'hooks/triggers.json'), text: JSON.stringify(genTriggers(m), null, 2) + '\n' },
     { file: path.join(ROOT, 'hooks/pretooluse-rules.json'), text: JSON.stringify(genPretooluse(m), null, 2) + '\n' },
-    { file: path.join(ROOT, 'model/agent-catalog.md'), text: genCatalog(m) },
+    { file: path.join(ROOT, 'model/agent-catalog.md'), text: genCatalogSlim(m) },
   ];
 }
 
 export function renderAll(write) {
   const m = loadManifest();
   const t = targets(m);
-  if (write) for (const { file, text } of t) fs.writeFileSync(file, text);
+  if (write) {
+    for (const { file, text } of t) fs.writeFileSync(file, text);
+    const routeText = patchGeneratedRegion(ROUTE_SKILL, 'rule-routes', genRouteTable(m));
+    fs.writeFileSync(ROUTE_SKILL, routeText);
+  }
   return t;
 }
 
 export function check() {
-  // 返回不一致的文件名数组; 空 = 一致
+  const m = loadManifest();
   const drift = [];
-  for (const { file, text } of targets(loadManifest())) {
+  for (const { file, text } of targets(m)) {
     const cur = fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '';
     if (cur !== text) drift.push(path.relative(ROOT, file));
+  }
+  if (fs.existsSync(ROUTE_SKILL)) {
+    const want = patchGeneratedRegion(ROUTE_SKILL, 'rule-routes', genRouteTable(m));
+    const cur = fs.readFileSync(ROUTE_SKILL, 'utf8');
+    if (cur !== want) drift.push(path.relative(ROOT, ROUTE_SKILL));
+  } else {
+    drift.push(path.relative(ROOT, ROUTE_SKILL) + ' (缺失)');
   }
   return drift;
 }

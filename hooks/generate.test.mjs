@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { loadManifest, genTriggers, genCatalog, genPretooluse, check, patchGeneratedRegion, genCatalogSlim, genRouteTable } from './generate.mjs';
+import { loadManifest, genCatalog, genPretooluse, check, patchGeneratedRegion, genCatalogSlim, genRouteTable, renderAll } from './generate.mjs';
 
 test('genTriggers: 复现 triggers.json 格式 [{rule, action, patterns, note}]', () => {
   const t = genTriggers(loadManifest());
@@ -151,4 +151,18 @@ test('genRouteTable 含每条 rule 的触发/读/摘要', () => {
   }
   assert.match(out, /\*\*触发\*\*/);
   assert.match(out, /\*\*读\*\*/);
+});
+
+test('targets 不再含 triggers.json', () => {
+  // renderAll(false) 返回 targets 数组（{file,text}），不写盘
+  const t = renderAll(false);
+  assert.ok(!t.some((x) => x.file.endsWith('triggers.json')), 'triggers.json 不该在 targets');
+  assert.ok(t.some((x) => x.file.endsWith('agent-catalog.md')), 'catalog 应在 targets');
+  assert.ok(t.some((x) => x.file.endsWith('pretooluse-rules.json')), 'pretooluse 应在 targets');
+});
+
+test('catalog target 用 slim 内容', () => {
+  const t = renderAll(false);
+  const cat = t.find((x) => x.file.endsWith('agent-catalog.md'));
+  assert.match(cat.text, /Skill\(nocode-evolve:route\)/);
 });
