@@ -56,6 +56,19 @@ export function genCatalog(m) {
   return out;
 }
 
+export function genCatalogSlim(m) {
+  let out = '# agent-catalog — nocode-evolve 插件级粗桶路由\n\n';
+  out += '> 本文件由 `hooks/generate.mjs` 从 `rules/manifest.json` 生成。**禁手改**——改 rule 改 manifest 后重新生成。\n\n';
+  out += '## 读取时机\n\n会话开局本文件已在 context。响应任何工程任务前扫下方**粗桶**: 命中任一桶 → 调 `Skill(nocode-evolve:route)` 拿完整路由表(各 rule 触发 / 读哪个文件 / guard)与项目本地资源(.agents-personal wiki/rules)检索约定。纯只读查询 / 纯事实问答不触发。\n\n';
+  out += '## 粗桶\n\n';
+  for (const b of m.buckets) {
+    out += `- **${b.title} (${b.id})**: ${b.trigger_summary}\n`;
+    out += `  - 不含(负例): ${b.negatives.join('; ')}\n`;
+  }
+  out += '\n命中任一桶 → `Skill(nocode-evolve:route)`。同一会话 route 加载一次即可。\n';
+  return out;
+}
+
 export function genPretooluse(m) {
   // 扁平化: [{rule, pattern, decision, reason}]; decision = "inject" | "block"
   return m.rules.flatMap((r) =>

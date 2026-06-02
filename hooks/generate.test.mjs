@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { loadManifest, genTriggers, genCatalog, genPretooluse, check, patchGeneratedRegion } from './generate.mjs';
+import { loadManifest, genTriggers, genCatalog, genPretooluse, check, patchGeneratedRegion, genCatalogSlim } from './generate.mjs';
 
 test('genTriggers: 复现 triggers.json 格式 [{rule, action, patterns, note}]', () => {
   const t = genTriggers(loadManifest());
@@ -132,4 +132,13 @@ test('patchGeneratedRegion marker 缺失则抛错（不整文件覆盖）', () =
 
 test('patchGeneratedRegion 文件不存在则抛错', () => {
   assert.throws(() => patchGeneratedRegion('/nonexistent/SKILL.md', 'rule-routes', 'X'), /不存在/);
+});
+
+test('genCatalogSlim 含 4 粗桶 + 调 route，不含单 rule 细节', () => {
+  const m = loadManifest();
+  const out = genCatalogSlim(m);
+  for (const b of m.buckets) assert.ok(out.includes(b.title), `缺桶 ${b.title}`);
+  assert.match(out, /Skill\(nocode-evolve:route\)/);
+  // 不含单条 rule 的「读」路径（那是 route 正文的事）
+  assert.doesNotMatch(out, /rules\/rule-finishing-branch\.md/);
 });
