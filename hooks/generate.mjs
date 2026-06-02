@@ -63,6 +63,22 @@ export function genPretooluse(m) {
   );
 }
 
+// route SKILL.md 生成区: 只替换 marker 之间内容, marker 外手写区不动
+export function patchGeneratedRegion(file, regionName, body) {
+  const begin = `<!-- BEGIN generated: ${regionName} (from manifest, 禁手改) -->`;
+  const end = `<!-- END generated: ${regionName} -->`;
+  if (!fs.existsSync(file)) throw new Error(`patchGeneratedRegion: ${file} 不存在`);
+  const cur = fs.readFileSync(file, 'utf8');
+  const bi = cur.indexOf(begin);
+  const ei = cur.indexOf(end);
+  if (bi < 0 || ei < 0) throw new Error(`patchGeneratedRegion: ${file} 缺 marker '${regionName}'`);
+  if (cur.indexOf(begin, bi + begin.length) >= 0 || cur.indexOf(end, ei + end.length) >= 0)
+    throw new Error(`patchGeneratedRegion: ${file} marker '${regionName}' 重复`);
+  const before = cur.slice(0, bi + begin.length);
+  const after = cur.slice(ei);
+  return `${before}\n${body}\n${after}`;
+}
+
 // 生成物路径与渲染内容的单一映射
 function targets(m) {
   return [

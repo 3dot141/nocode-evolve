@@ -1,6 +1,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { loadManifest, genTriggers, genCatalog, genPretooluse, check } from './generate.mjs';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import { loadManifest, genTriggers, genCatalog, genPretooluse, check, patchGeneratedRegion } from './generate.mjs';
 
 test('genTriggers: 复现 triggers.json 格式 [{rule, action, patterns, note}]', () => {
   const t = genTriggers(loadManifest());
@@ -106,4 +109,27 @@ test('genCatalog: 4 桶全部填充 (无空桶)', () => {
 test('genCatalog: 含二级分类指引 (命中桶后如何选具体 rule)', () => {
   const md = genCatalog(loadManifest());
   assert.match(md, /先命中桶.*再在桶内子规则/, '应有桶→子规则二级分类指引');
+});
+
+test('patchGeneratedRegion 只替换 marker 区间，手写区保留', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'gen-'));
+  const f = path.join(dir, 'SKILL.md');
+  fs.writeFileSync(f,
+    '手写头\n<!-- BEGIN generated: rule-routes (from manifest, 禁手改) -->\nOLD\n<!-- END generated: rule-routes -->\n手写尾\n');
+  const out = patchGeneratedRegion(f, 'rule-routes', 'NEW BODY');
+  assert.match(out, /手写头/);
+  assert.match(out, /手写尾/);
+  assert.match(out, /NEW BODY/);
+  assert.doesNotMatch(out, /OLD/);
+});
+
+test('patchGeneratedRegion marker 缺失则抛错（不整文件覆盖）', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'gen-'));
+  const f = path.join(dir, 'SKILL.md');
+  fs.writeFileSync(f, '没有 marker 的文件\n');
+  assert.throws(() => patchGeneratedRegion(f, 'rule-routes', 'X'), /缺 marker/);
+});
+
+test('patchGeneratedRegion 文件不存在则抛错', () => {
+  assert.throws(() => patchGeneratedRegion('/nonexistent/SKILL.md', 'rule-routes', 'X'), /不存在/);
 });
