@@ -9,11 +9,11 @@
 #   拆成每文件一个 command 后各段独立判阈值 (最大 catalog ~4568 字符), 全部安全注入.
 #
 # hooks/hooks.json 的 SessionStart 数组按下列 segment 顺序列 command:
-#   model-about / model-karpathy / model-personal / model-catalog / project
+#   model-about / model-karpathy / model-catalog / project
 # 注入顺序 model 先 (兜底基线), project 后 (可覆盖, 符合 agent-about.md 优先级 project > model).
 #
 # 新增 model/*.md: 必须在 seg_file() 加 segment 并在 hooks.json 加对应 command, 否则 sanity 警告孤儿.
-# 新增 rules/rule-*.md: 必须在 model/agent-catalog.md 里加一段, 否则 sanity 警告触发不到.
+# 新增 rules/rule-*.md: 必须被 skills/route/SKILL.md 引用 (改 manifest 重新生成), 否则 sanity 警告触发不到.
 set -euo pipefail
 
 PLUGIN_ROOT="${CLAUDE_PLUGIN_ROOT:-}"
@@ -25,7 +25,6 @@ seg_file() {
   case "$1" in
     model-about)    printf '%s' "${PLUGIN_ROOT}/model/agent-about.md" ;;
     model-karpathy) printf '%s' "${PLUGIN_ROOT}/model/agent-karpathy.md" ;;
-    model-personal) printf '%s' "${PLUGIN_ROOT}/model/agent-personal.md" ;;
     model-catalog)  printf '%s' "${PLUGIN_ROOT}/model/agent-catalog.md" ;;
     project)        printf '%s' "${PROJECT_DIR}/.agents-personal/AGENTS.md" ;;
     *) return 1 ;;
@@ -33,7 +32,7 @@ seg_file() {
 }
 
 # model segment 列表 (孤儿检查用; 改这里即同步 sanity)
-MODEL_SEGMENTS="model-about model-karpathy model-personal model-catalog"
+MODEL_SEGMENTS="model-about model-karpathy model-catalog"
 
 file="$(seg_file "$SEG")" || {
   echo "inject-rules.sh: unknown segment '$SEG' (expected: ${MODEL_SEGMENTS} project)" >&2
@@ -61,13 +60,13 @@ if [ "$SEG" = "model-about" ] && [ -n "$PLUGIN_ROOT" ]; then
       esac
     done
   fi
-  catalog="${PLUGIN_ROOT}/model/agent-catalog.md"
-  if [ -d "${PLUGIN_ROOT}/rules" ] && [ -f "$catalog" ]; then
+  route_skill="${PLUGIN_ROOT}/skills/route/SKILL.md"
+  if [ -d "${PLUGIN_ROOT}/rules" ] && [ -f "$route_skill" ]; then
     for f in "${PLUGIN_ROOT}/rules"/*.md; do
       [ -f "$f" ] || continue
       base=$(basename "$f")
-      if ! grep -qF "$base" "$catalog"; then
-        echo "inject-rules.sh WARN: rules/${base} 没被 model/agent-catalog.md 引用, agent 触发不到. 改 catalog 或删文件." >&2
+      if ! grep -qF "$base" "$route_skill"; then
+        echo "inject-rules.sh WARN: rules/${base} 没被 skills/route/SKILL.md 引用, agent 触发不到. 改 manifest 重新生成或删文件." >&2
       fi
     done
   fi
