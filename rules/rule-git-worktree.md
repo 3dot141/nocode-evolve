@@ -38,7 +38,8 @@ if [ -n "$upstream" ]; then
 fi
 
 git worktree add "$worktree_path" -b "$BRANCH_NAME" $start_point   # start_point 空则基于当前 HEAD
-cd "$worktree_path"
+# 切 cwd 不在此处用 cd——见下文「Worktree 创建后: 切到 worktree 工作目录」:
+# harness 有 EnterWorktree 必用 EnterWorktree(path=) 持久化; 仅 harness 无此工具时才退每次 cd
 ```
 
 > 注意：`-b` 后传的仍是**原始** `BRANCH_NAME`（含 `/`），git 分支名本身不变；只有**目录名**做扁平化。
@@ -122,7 +123,7 @@ skill `SKILL.md` 中下列默认行为**全部失效**，按本文执行：
 
 后续所有动作 (cp env / link personal / run setup / verify baseline / git 操作) 都该在 worktree **内**执行, 必须把 cwd 切过去**并让切换持久化**.
 
-### 推荐: `git worktree add` + `EnterWorktree(path=)` 两步组合
+### 标准 (harness 有 EnterWorktree 即强制): `git worktree add` + `EnterWorktree(path=)` 两步组合
 
 ```
 1. git worktree add "$worktree_path" -b "$BRANCH_NAME"     # 拿规则要的平级路径
@@ -143,15 +144,15 @@ skill `SKILL.md` 中下列默认行为**全部失效**，按本文执行：
 
 变量沿用「路径推导」段的 `worktree_path`.
 
-**首选 (能用 EnterWorktree 时)**:
+**强制 (harness 有 EnterWorktree 工具时——Claude Code 默认就有)**:
 
 ```
 EnterWorktree(path="$worktree_path")
 ```
 
-之后 Bash call 起点直接是 worktree, 无须 cd 前缀.
+之后 Bash call 起点直接是 worktree, 无须 cd 前缀. **harness 有此工具就必须用它**, 不许退到每次 cd——重复 cd 前缀只是 fallback, 不是「有成本但可接受的等价选项」; 能 EnterWorktree 而选了 cd 即为违反本 rule.
 
-**fallback (没 EnterWorktree 时, 如纯 shell 脚本 / 别的 agent harness)**: 每次 Bash 显式 cd, 接受重复成本.
+**fallback (仅限 harness 无 EnterWorktree 时, 如纯 shell 脚本 / 别的 agent harness)**: 每次 Bash 显式 cd. 这是退路不是偏好——它存在只为没有 EnterWorktree 的 harness 兜底。
 
 ```bash
 cd "$worktree_path"
@@ -167,6 +168,7 @@ cd / EnterWorktree 是后续 cp env / link personal / setup / baseline 链的前
 - 不要把 `git -C "$worktree_path" <cmd>` 当常规用法——偶发 OK, 常态化 cwd 跟参数路径分裂, 容易把主仓 working tree 改坏
 - 不要假设 agent 会自动切——`git worktree add` 是 git 命令, 不改 shell 状态, 必须显式 EnterWorktree(path=) 或 cd 才生效
 - 不要切过去后又 cd 回主仓做事——后续动作链 (cp env / link personal / setup / baseline) 应一气在 worktree 内做完
+- 不要在 harness 有 EnterWorktree 时还每条 Bash 都 `cd <worktree> && export … && <cmd>` 前缀——典型反例: worktree 早建好、后续几十轮命令每次重新 cd + 重新 export env, 这是漏用 EnterWorktree 持久化造成的反复摩擦; 第一条 worktree 内命令前 `EnterWorktree(path=)` 一次到位, 之后 Bash 起点即 worktree
 
 ## Worktree 创建后：从主仓补 gitignored 私有副本（cp）
 
