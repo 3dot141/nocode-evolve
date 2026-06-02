@@ -5,22 +5,6 @@ import os from 'node:os';
 import path from 'node:path';
 import { loadManifest, genCatalog, genPretooluse, check, patchGeneratedRegion, genCatalogSlim, genRouteTable, renderAll } from './generate.mjs';
 
-test('genTriggers: 复现 triggers.json 格式 [{rule, action, patterns, note}]', () => {
-  const t = genTriggers(loadManifest());
-  const fb = t.find((x) => x.rule === 'finishing-branch');
-  assert.ok(fb, '应含 finishing-branch');
-  assert.equal(fb.action, 'Read rules/rule-finishing-branch.md 并走 Gate TB/PR');
-  assert.ok(fb.patterns.includes('提.*?PR'), 'patterns 应来自 manifest.triggers');
-  assert.equal(fb.note, 'Bitbucket 用 bkt 不裸 curl; reviewer 用 bkt pr edit 不 PUT。');
-});
-
-test('genTriggers: 跳过无 triggers 的 rule', () => {
-  const m = loadManifest();
-  m.rules.push({ id: 'no-regex', bucket: 'review', trigger_type: 'behavior', triggers: [], action: 'x', read: 'y', summary: 'z' });
-  const t = genTriggers(m);
-  assert.ok(!t.find((x) => x.rule === 'no-regex'), '无 triggers 的 rule 不该进 triggers.json');
-});
-
 test('genCatalog: 按粗桶分组, 含桶触发 + 负例 + 子规则三件套', () => {
   const md = genCatalog(loadManifest());
   assert.match(md, /禁手改/, '应有"生成物禁手改"提示');
@@ -67,35 +51,6 @@ test('check: 生成物与源一致时返回 [] (不写文件, 直接断言, Code
   // 不调 renderAll: 直接验证当前磁盘生成物与 manifest 一致;
   // 若 stale 该 test 失败提示重新生成 (而非静默修复)
   assert.deepEqual(check(), []);
-});
-
-// 改造前 triggers.json 的原始 patterns 快照 (写死作回归基线, 防迁移丢/改 pattern)
-const ORIGINAL_TRIGGERS = {
-  'finishing-branch': ['提\\s*个?\\s*pr', '创建\\s*pr', '建\\s*个?\\s*pr', 'pull\\s*request', '提.*?PR', '合并到\\s*(release|main|master|主干)', '收尾', '完成\\s*worktree', '删\\s*(branch|分支)', 'discard\\s*worktree'],
-  'push-summary': ['总结.{0,4}push', 'push.{0,6}(总结|包含|改了|是什么)', 'pr\\s*描述', 'pr\\s*description', '给.{0,4}(标题|描述)', '沉淀', '这次\\s*push'],
-  'superpowers-brainstorming': ['设计文档', 'design\\s*doc', '\\bprd\\b', '\\brfc\\b', '\\badr\\b', '重构方案', '技术\\s*spec', '技术方案'],
-  'git-worktree': ['(创建|建|新建|开|搞).{0,3}worktree', 'worktree.{0,3}(创建|新建)'],
-  'codex-review': ['review\\s*一下', '帮我?\\s*审', '审一遍', '看.{0,6}(改动|代码|实现).{0,4}(问题|有没有|对不对)', 'codex\\s*review', 'adversarial'],
-  'red-blue-deep': ['行不行', '值得吗', '合适吗', '该不该', '选.{0,10}还是', '哪个(更好|好|合适)', '红蓝军', '第一性原理'],
-};
-
-test('回归: genTriggers 的每条 rule patterns 与改造前 triggers.json 完全一致', () => {
-  const t = genTriggers(loadManifest());
-  for (const [rule, patterns] of Object.entries(ORIGINAL_TRIGGERS)) {
-    const got = t.find((x) => x.rule === rule);
-    assert.ok(got, `triggers 应含 ${rule}`);
-    assert.deepEqual(got.patterns, patterns, `${rule} patterns 与改造前不一致 (迁移丢/改了 pattern)`);
-  }
-});
-
-test('集合错位消除: catalog 集合 ⊇ triggers 集合; git-inspection 只在 catalog', () => {
-  const m = loadManifest();
-  const catalogIds = new Set(m.rules.map((r) => r.id));
-  const triggerIds = new Set(genTriggers(m).map((x) => x.rule));
-  assert.ok(catalogIds.has('git-inspection'), 'git-inspection 应在 catalog');
-  assert.ok(!triggerIds.has('git-inspection'), 'git-inspection 无 regex, 不该在 triggers');
-  assert.ok(catalogIds.has('red-blue-deep') && triggerIds.has('red-blue-deep'), 'red-blue-deep 两边都应有 (错位修复)');
-  for (const id of triggerIds) assert.ok(catalogIds.has(id), `triggers 里的 ${id} 必须也在 catalog (单源保证)`);
 });
 
 test('genCatalog: 4 桶全部填充 (无空桶)', () => {
