@@ -82,3 +82,18 @@ rule / skill 触发条件命中后, 要跳过 / 偏离它, **只认用户消息�
 > 旧默认 `docs/plans/{username}/` (无 `superpowers` 前缀、design/plan 不分) 已废弃——与 superpowers README (specs=设计规格 / plans=实现计划) 不一致。**既有 `docs/plans/` 文档不迁移**, 仅新文档按 doc-type 入对应子目录。项目可在 `.agents-personal/AGENTS.md` 覆盖。
 
 新增全局约定 / 占位符追加到本文件, 避免散落各 rule.
+
+## 删除护栏 — `.agents-personal/` + `$USER_VAULT_PATH` 删除前必须二次确认
+
+内容是用户沉淀的项目历史 + 当前指令, **不可恢复** (gitignored / vault, 无 git history). 误删 = 工作丢失.
+
+**触发**: 即将 rm / mv / `find -delete` / Write 覆盖已存在文件 / Edit 大段删 (≥5 行) 这些目录下任何文件或子目录 (subagent 同理). 纯读 (Read / cat / grep / ls) 不触发.
+
+**动作**: 停手 → 描述将删什么 (路径 + 内容范围) + 原因 + 影响 → 等用户明确确认再执行, 不脑补"用户应该同意". 用户主动指示删: 视为已确认, 但删前回显路径让其最后一刻能反悔.
+
+**不要**:
+- distill / sow "顺手"清理旧 wiki / rule (除非命令定义了清理且用户已勾选)
+- 为"重新组织"批量 mv / rm (结构改 = 删除等价物); 别假设 git mv 不算删 (gitignored, mv = delete + create)
+- 因"过时 / 跟新决策矛盾"自己拍板删 (superseded 仍有参考价值, 由用户判断删还是标 `superseded by ...`)
+
+> `$USER_VAULT_PATH`: `/distill` 的 `wiki:cross-project advisor` 出口建议跑 `/sow`, 写到 `$USER_VAULT_PATH/Memory/<layer>/`, 同等护栏. (v1 `USER_WIKI_PATH` 已弃用, sow v2 改读 `USER_VAULT_PATH`.)
