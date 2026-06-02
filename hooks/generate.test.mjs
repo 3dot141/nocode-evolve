@@ -111,8 +111,9 @@ test('genCatalog: 含二级分类指引 (命中桶后如何选具体 rule)', () 
   assert.match(md, /先命中桶.*再在桶内子规则/, '应有桶→子规则二级分类指引');
 });
 
-test('patchGeneratedRegion 只替换 marker 区间，手写区保留', () => {
+test('patchGeneratedRegion 只替换 marker 区间，手写区保留', (t) => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'gen-'));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
   const f = path.join(dir, 'SKILL.md');
   fs.writeFileSync(f,
     '手写头\n<!-- BEGIN generated: rule-routes (from manifest, 禁手改) -->\nOLD\n<!-- END generated: rule-routes -->\n手写尾\n');
@@ -123,8 +124,9 @@ test('patchGeneratedRegion 只替换 marker 区间，手写区保留', () => {
   assert.doesNotMatch(out, /OLD/);
 });
 
-test('patchGeneratedRegion marker 缺失则抛错（不整文件覆盖）', () => {
+test('patchGeneratedRegion marker 缺失则抛错（不整文件覆盖）', (t) => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'gen-'));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
   const f = path.join(dir, 'SKILL.md');
   fs.writeFileSync(f, '没有 marker 的文件\n');
   assert.throws(() => patchGeneratedRegion(f, 'rule-routes', 'X'), /缺 marker/);
