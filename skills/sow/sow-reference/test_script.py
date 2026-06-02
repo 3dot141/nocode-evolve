@@ -1,6 +1,6 @@
 """sow v2 script.py 的单元测试。
 
-运行：python3 -m unittest commands/sow-reference/test_script.py
+运行：python3 -m unittest skills/sow/sow-reference/test_script.py
 """
 import io
 import os
