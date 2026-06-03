@@ -85,6 +85,16 @@ agent 视角: 用户任务命中以下任一条件时, **主动一句话建议**
 
 > 项目本地资源 (\`.agents-personal/\`) 检索约定见 \`model/agent-personal.md\`. /pilot 是手动入口 skill (\`disable-model-invocation\`), agent 不直接调, 只建议用户调.
 
+## 何时主动建议 /distill · /sow · /task (用户主动键入 command)
+
+这 3 个是用户主动键入 \`/<name>\` 的**操作型 command** (有副作用: 写文件 / 改 vault / 改 task 状态), **不自动触发**. agent 在命中以下场景时**主动一句话建议**用户键入, **不替用户键**:
+
+- **\`/distill\`** — 会话末沉淀分流 (五出口: 项目 wiki / 跨项目 advisor / 项目 rules / 插件 rules / skip). 命中: 用户说「沉淀一下 / 归档这个会话 / 把刚才讨论的保留下来」且会话已有可沉淀产出
+- **\`/sow <意图>\`** — 归档到用户 vault (\`Inbox\` / \`Inputs\` / \`Outputs\` 三层). 命中: 用户说「sow 到 vault / 归档到外部 / 写到 vault / 保存这个想法」+ 有明确意图
+- **\`/task <意图>\`** — 任务管理 (8 sub-action: add / update / done / cancel / wrap-day / carry-over / breakdown / start-week). 命中: 用户说「加 task / 改 task / task 完成 / 列今天 task / 拆解 task / 周开始」等任务动作
+
+不触发 (纯讨论 / 元讨论, 不命中): 用户说「要不要 sow 这个」「task 这块要不要重构」「distill 设计怎么改」等讨论性表达——是元讨论不是动作.
+
 ---
 
 ## 规则清单 (按粗桶分组, 完整路由)
