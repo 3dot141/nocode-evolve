@@ -1,8 +1,6 @@
 ---
-name: sow
 description: 把当前会话围绕给定意图浓缩并归档到用户 vault, AI 判层 (Inbox / Inputs / Outputs) + 用户 NL 确认
 argument-hint: <一句话意图：想抽取什么内容>
-disable-model-invocation: true
 ---
 
 # /sow v2：会话沉淀到用户 vault, 支持三层
@@ -106,7 +104,7 @@ Body 预览:
 ### 4. 调脚本
 
 ```bash
-python3 ${CLAUDE_PLUGIN_ROOT}/skills/sow/sow-reference/script.py \
+python3 ${CLAUDE_PLUGIN_ROOT}/commands/sow-reference/script.py \
     --layer <inbox|inputs|outputs> \
     --intent "<用户原话意图>" \
     --title "<AI 反推 + 清洗后的 title>" \

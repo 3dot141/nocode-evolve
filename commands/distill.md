@@ -1,8 +1,6 @@
 ---
-name: distill
 description: 把当前会话沉淀分流到 wiki/rules 五个出口（项目 wiki / 跨项目 advisor / 项目 rules / 插件 rules / skip）
 argument-hint: [optional-topic]
-disable-model-invocation: true
 ---
 
 # /distill：会话沉淀分流命令

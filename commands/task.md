@@ -1,8 +1,6 @@
 ---
-name: task
 description: 任务管理子系统单一入口, AI 解析意图分发到 8 个 sub-action (add / update / done / cancel / wrap-day / carry-over / breakdown / start-week)
 argument-hint: <自然语言意图>
-disable-model-invocation: true
 ---
 
 # /task: MyJarvis 任务管理子系统单一入口
