@@ -1,6 +1,6 @@
 # nocode-evolve
 
-Harrison 的 Claude Code 个人插件。架构 v3.3.0:**两类知识分离 + 单一真值源**——
+Harrison 的 Claude Code 个人插件。架构(**两类知识分离 + 单一真值源**):
 
 - **规则知识 (reactive)**:SessionStart 注入**完整 rule 路由**(catalog 分片常驻 context,必在、无软触发漏);agent 命中桶后按需 `Read` 对应 `rules/rule-*.md`。
 - **编排知识 (proactive)**:`nocode-evolve:pilot` 手动入口 skill(`disable-model-invocation`),用户主动 `/调` 进入,给「当前阶段判断 + 下一步建议 + 备选」,**用户拍板,不自动执行**。
@@ -30,7 +30,7 @@ Harrison 的 Claude Code 个人插件。架构 v3.3.0:**两类知识分离 + 单
 ```
 nocode-evolve/
 ├── .claude-plugin/
-│   ├── plugin.json                           # 插件清单 (v3.3.0)
+│   ├── plugin.json                           # 插件清单
 │   └── marketplace.json                      # GitHub marketplace 描述
 ├── hooks/
 │   ├── hooks.json                            # SessionStart 7 segment + PreToolUse (Bash 拦截)

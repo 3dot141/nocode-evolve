@@ -43,6 +43,7 @@ export function renderBucketBody(m) {
       out += `**摘要**: ${r.summary}\n`;
       if (r.guard) out += `**关键约束(上浮)**: ${r.guard}\n`;
       if ((r.also_buckets || []).length) out += `**也属**: ${r.also_buckets.join(', ')}\n`;
+      if (r.lifecycle_stage) out += `**生命周期**: ${r.lifecycle_stage}\n`;
       out += '\n';
     }
     const crossRules = m.rules.filter((r) => (r.also_buckets || []).includes(b.id));
@@ -62,11 +63,27 @@ const CATALOG_HEADER_FIRST = `# agent-catalog — nocode-evolve 插件级规则�
 > 本文件由 \`hooks/generate.mjs\` 从 \`rules/manifest.json\` 生成. **禁手改**——改 rule 改 manifest 后重新生成.
 > 完整路由常驻 context (不再用 route skill 中转). 超 SHARD_LIMIT 自动切片 agent-catalog-2.md 等.
 
-## 读取时机
+## 触发协议 (强制工序, 非"自觉")
 
-会话开局本文件已在 context. 任何工程任务前扫下方**粗桶**: 命中桶 → 在桶内子规则按 \`触发\` 选具体 rule → \`Read\` 对应 \`rules/rule-*.md\` (同一规则会话只 Read 一次). 命中桶但落「负例」描述 → 不触发.
+**Step 0 — 每条用户消息收到后, 在动手前先扫下方 4 个粗桶的 trigger_summary 一次**:
 
-项目本地资源 (\`.agents-personal/\`) 检索约定见 \`model/agent-personal.md\`. 工程任务流程导航 (生命周期 / 下一步) 主动调 \`Skill(nocode-evolve:pilot)\`.
+- 命中桶 → 在桶内子规则按 \`触发\` 选具体 rule → \`Read\` 对应 \`rules/rule-*.md\` (同一规则会话只 Read 一次)
+- 命中桶但落「负例」描述 → 不触发
+- 全不命中 → 直接动作 (无 rule 约束)
+
+**这是工序, 不是自觉**——不论任务大小、context 深度、是否 mid-task, Step 0 都先扫. 跳过 = 软触发漏, 这正是 catalog 常驻设计要解决的.
+
+## 何时主动建议 /pilot
+
+agent 视角: 用户任务命中以下任一条件时, **主动一句话建议**「这任务多步 / 跨阶段, 要不要 /pilot 看下流程?」并停下等用户拍板:
+
+- 跨文件 + 状态未知 (不知道当前在生命周期哪一步)
+- 需要 commit / PR / 设计文档 / 评审等多阶段动作
+- 用户描述含「整个 / 整体 / 全流程 / 从头 / 完整跑通」等多步信号
+
+不触发 (直接动手, 不建议 /pilot): 单文件修改、纯查询、单步明确动作.
+
+> 项目本地资源 (\`.agents-personal/\`) 检索约定见 \`model/agent-personal.md\`. /pilot 是手动入口 skill (\`disable-model-invocation\`), agent 不直接调, 只建议用户调.
 
 ---
 

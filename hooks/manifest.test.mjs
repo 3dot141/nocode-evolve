@@ -33,3 +33,26 @@ test('manifest: 每个 bucket 有 trigger_summary + negatives', () => {
     assert.ok(Array.isArray(b.negatives), `bucket ${b.id} 缺 negatives`);
   }
 });
+
+test('manifest: schema 扩字段齐全 (depends_on / severity / lifecycle_stage)', () => {
+  const m = loadManifest();
+  const SEV = new Set(['advisory', 'warn', 'block']);
+  for (const r of m.rules) {
+    for (const f of ['depends_on', 'severity', 'lifecycle_stage']) {
+      assert.ok(r[f] !== undefined, `rule ${r.id} 缺字段 ${f}`);
+    }
+    assert.ok(Array.isArray(r.depends_on), `rule ${r.id} depends_on 应是数组`);
+    assert.ok(SEV.has(r.severity), `rule ${r.id} severity 值不合法 (${r.severity}); 必须 advisory/warn/block`);
+    assert.ok(typeof r.lifecycle_stage === 'string' && r.lifecycle_stage.length > 0, `rule ${r.id} lifecycle_stage 应是非空字符串`);
+  }
+});
+
+test('manifest: depends_on 引用的 rule id 都存在', () => {
+  const m = loadManifest();
+  const ids = new Set(m.rules.map((r) => r.id));
+  for (const r of m.rules) {
+    for (const dep of r.depends_on || []) {
+      assert.ok(ids.has(dep), `rule ${r.id} 的 depends_on ${dep} 不存在`);
+    }
+  }
+});

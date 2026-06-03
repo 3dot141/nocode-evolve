@@ -71,7 +71,7 @@ description: 写设计文档时使用。按业界主流 4 类 doc-type 主轴（
    - 是 → 回 step 5（默认仍双路交叉；盲点检测信号在清理过的稿上最值钱，交集=高置信、对称差=盲点图）
    - 否 → 进 step 10
 10. 保存到输出路径
-11. (by overlay) 按 references/rendering/SKILL.md 渲染 HTML
+11. (by overlay) 按 references/rendering/RENDERING.md 渲染 HTML
 ```
 
 ## 用户确认环节（step 6 细则）

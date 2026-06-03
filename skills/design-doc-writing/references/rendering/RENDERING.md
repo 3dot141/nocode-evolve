@@ -1,9 +1,7 @@
----
-name: design-doc-rendering
-description: 把 markdown 设计文档渲染成 single-file HTML 展示版——含 TOC / 章节折叠 / light-dark 切换 / 代码高亮 / 回到顶部 5 必有交互，主动卡片化 problem-block / logic-block / timeline / callout / failure-table / decision-tree 等 14 类内容容器，从 8 个 real-site preset（vercel-geist / shadcn-default / linear-precision / mintlify-reading / tufte-essay 等）选视觉骨架。Make sure to use this skill whenever 用户说「转 HTML / 生成展示版 / 渲染 HTML 制品 / 把这份设计文档做成网页 / 把 markdown 设计文档变成可分享的页面」，或 design-doc-writing skill 走完后链式调用。不要用来渲染 README / changelog / blog post 等非设计文档——那些不需要 design-doc 专属的结构化容器。
----
+# 设计文档 HTML 渲染 (design-doc-writing 内部 reference)
 
-# 设计文档 HTML 渲染
+> 本文件**不是独立 skill** (历史曾经是 `design-doc-rendering` skill, v3.3.0 并入 `design-doc-writing/references/rendering/`). 不自动触发, 也不能被 `Skill` 工具直接调起.
+> 调用入口: `design-doc-writing` 工作流 step 11 (write → review 通过后链式渲染). 单独渲染需求: 由 agent 在 design-doc-writing 上下文中执行本文件指引.
 
 把 markdown 设计文档渲染成 single-file HTML——一份"好看、能交互、能分享"的展示版本。
 

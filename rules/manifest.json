@@ -1,10 +1,10 @@
 {
-  "$comment": "单一真值源。改 rule 改这里, 跑 node hooks/generate.mjs 重新生成 catalog 分片 + pretooluse-rules。禁手改生成物。",
+  "$comment": "单一真值源。改 rule 改这里, 跑 node hooks/generate.mjs 重新生成 catalog 分片 + pretooluse-rules。禁手改生成物。schema 字段说明: depends_on=依赖的其他 rule id (语义关联, 非强制顺序); severity=advisory/warn/block (rule 重要度); lifecycle_stage=0 设计/1 隔离/2 实现/3 评审/4 收尾/cross-cutting (对齐 pilot 生命周期地图)。",
   "buckets": [
     { "id": "git-lifecycle", "title": "Git 生命周期", "trigger_summary": "任何把本地改动推进到分支 / 远端协作状态的请求 (提 PR / push / 合并 / 收尾 / worktree)", "negatives": ["纯只读查询: 列 PR / 看分支 / 看 status / 看 log"] },
     { "id": "review", "title": "评审", "trigger_summary": "对已有改动或设计求评审 / 挑错 / 独立验证 / 第二实现", "negatives": ["纯执行: 直接改代码而未求评审"] },
     { "id": "design", "title": "设计与文档", "trigger_summary": "写设计文档 / PRD / RFC / ADR / 重构方案 / 技术 spec", "negatives": ["写代码注释 / commit message / README / changelog"] },
-    { "id": "memory", "title": "记忆与沉淀", "trigger_summary": "总结 / 沉淀 / 归档会话产出 / push 内容", "negatives": ["一次性事实查询"] }
+    { "id": "memory", "title": "记忆与沉淀", "trigger_summary": "总结 / 沉淀 / 归档会话产出 / push 内容 / 项目本地资源 (.agents-personal/) 操作", "negatives": ["一次性事实查询"] }
   ],
   "rules": [
     {
@@ -17,12 +17,17 @@
       "action": "Read rules/rule-finishing-branch.md 并走 Gate TB/PR",
       "read": "${CLAUDE_PLUGIN_ROOT}/rules/rule-finishing-branch.md",
       "summary": "覆盖+扩展 superpowers skill, 4 选项 (merge/PR/keep/discard); Gate 体系 M/TB/PR/D/RD; gh 主, Bitbucket DC 读 bkt 附录",
-      "guard": "Bitbucket 用 bkt 不裸 curl; reviewer 用 bkt pr edit 不 PUT。",
+      "guard": "Bitbucket 用 bkt 不裸 curl; reviewer 用 bkt pr edit 不 PUT; force push 高风险二次确认。",
+      "depends_on": [],
+      "severity": "block",
+      "lifecycle_stage": "4 收尾",
       "pretooluse": [
         { "pattern": "gh\\s+pr\\s+create", "action": "inject", "note": "提 PR 前先 Read rule-finishing-branch.md 走 Gate TB/PR" },
         { "pattern": "bkt\\s+pr\\s+create.*(--reviewer|--with-default-reviewers)", "action": "inject", "note": "bkt pr create 不要带 reviewer/with-default-reviewers (部分失败会整个 create 失败 + cross-fork 解析常出错); 先 create, 再 bkt pr edit <id> --reviewer ... 加 (见 rule-finishing-branch Gate PR + pr-flow-bkt-appendix Workflow B)" },
         { "pattern": "bkt\\s+api\\s+.*--method\\s+PUT", "action": "block", "note": "禁 bkt api PUT 改 PR 元数据, 用 bkt pr edit" },
-        { "pattern": "curl\\s+.*pull-?request", "action": "block", "note": "禁裸 curl 改 PR, 用 bkt" }
+        { "pattern": "curl\\s+.*pull-?request", "action": "block", "note": "禁裸 curl 改 PR, 用 bkt" },
+        { "pattern": "git\\s+push\\s+.*--force(-with-lease)?", "action": "inject", "note": "git push --force 高风险 (覆盖远端他人 commit / 不可恢复): 1) 确认 worktree 私有 feature 分支 (非 main/release) 2) 用 --force-with-lease 不 --force 3) 先 git fetch + 看远端是否被推进过. 直接 force push 主干 = 灾难, rule-finishing-branch 已禁。" },
+        { "pattern": "gh\\s+api\\s+.*(pulls?\\b.*--method\\s+(PATCH|PUT)|--method\\s+(PATCH|PUT)\\s+.*pulls?\\b)", "action": "block", "note": "禁 gh api PATCH/PUT pulls 改 PR 元数据, 用 gh pr edit (语义清晰 + 避开 race / cross-fork base 问题)" }
       ]
     },
     {
@@ -36,6 +41,9 @@
       "read": "${CLAUDE_PLUGIN_ROOT}/rules/rule-push-summary.md",
       "summary": "输出 标题 + 描述, 描述 ≤200字, 含基础内容(覆盖 push range 全 commit) + 重点评测(亮点 / 风险 / 未验证项)",
       "guard": "",
+      "depends_on": ["finishing-branch"],
+      "severity": "advisory",
+      "lifecycle_stage": "4 收尾",
       "pretooluse": []
     },
     {
@@ -47,8 +55,11 @@
       "triggers": ["设计文档", "design\\s*doc", "\\bprd\\b", "\\brfc\\b", "\\badr\\b", "重构方案", "技术\\s*spec", "技术方案"],
       "action": "Read rules/rule-superpowers-brainstorming.md (或先 Skill brainstorming)",
       "read": "${CLAUDE_PLUGIN_ROOT}/rules/rule-superpowers-brainstorming.md",
-      "summary": "写设计文档统一 worktree → write → review → render 四步, 落 docs/plans/{username}/ (按 doc-type 分 specs/plans/sketches); 两条入口 (brainstorming step5 / 用户直接要求) 一致",
+      "summary": "写设计文档统一 worktree → write → review → render 四步, 落 docs/superpowers/specs/{username}/ (按 doc-type 分 specs/plans/sketches); 两条入口 (brainstorming step5 / 用户直接要求) 一致",
       "guard": "",
+      "depends_on": [],
+      "severity": "warn",
+      "lifecycle_stage": "0 设计",
       "pretooluse": []
     },
     {
@@ -62,6 +73,9 @@
       "read": "${CLAUDE_PLUGIN_ROOT}/rules/rule-git-worktree.md",
       "summary": "原则: 每个分支都要 worktree, 不在主仓裸开 branch (新建分支即走 worktree); worktree 落项目同级 <project>-<branch_flat>/; 建前静默 fetch + 基于 upstream 最新; 建后调 worktree-setup.mjs setup 补齐(cp env/IDE/node_modules + symlink .agents-personal, 看 needsAttention[]); 销毁走 teardown verb (先 ExitWorktree)",
       "guard": "",
+      "depends_on": [],
+      "severity": "block",
+      "lifecycle_stage": "1 隔离",
       "pretooluse": [
         { "pattern": "git\\s+worktree\\s+add", "action": "inject", "note": "建 worktree 前先 Read rule-git-worktree.md: 落 <project>-<branch>/, 建后调 worktree-setup.mjs setup 补齐(cp env/IDE/node_modules + symlink)" },
         { "pattern": "git\\s+(checkout\\s+-[bB]|switch\\s+-[cC]|branch\\s+[^\\s-])", "action": "inject", "note": "原则: 每个分支都要 worktree。别在主仓裸开 branch, 先 Read rule-git-worktree.md 走 git worktree add 落 <project>-<branch>/" }
@@ -78,6 +92,9 @@
       "read": "${CLAUDE_PLUGIN_ROOT}/rules/rule-git-inspection.md",
       "summary": "read-only inspection 命令默认用 && 串成一个 Bash call, 各段间插 echo \"---<label>\" 分隔, 减少 turn 浪费",
       "guard": "",
+      "depends_on": [],
+      "severity": "advisory",
+      "lifecycle_stage": "cross",
       "pretooluse": []
     },
     {
@@ -91,6 +108,9 @@
       "read": "${CLAUDE_PLUGIN_ROOT}/rules/rule-codex-review.md",
       "summary": "本机 Codex 当独立模型接四场景 (红蓝红军 / 代码 review 收尾 / 委派救援 / 设计文档审稿); 直接 Bash 调 codex-companion.mjs; 先 setup --json 探, 不可用降级自做 + 明说; 禁改 vendored 文件",
       "guard": "先 setup --json 探, 不可用降级自做 + 明说; 禁改 vendor/codex/ 文件。",
+      "depends_on": [],
+      "severity": "warn",
+      "lifecycle_stage": "3 评审",
       "pretooluse": []
     },
     {
@@ -104,6 +124,9 @@
       "read": "(skill, 无 rule 文件)",
       "summary": "评估 / 拍板类提问的红蓝军框架; skill 内判轻档 (一句表态) / 重档 (第一性原理→蓝军→红军→结论, 重档红军默认交 Codex)",
       "guard": "",
+      "depends_on": [],
+      "severity": "advisory",
+      "lifecycle_stage": "cross",
       "pretooluse": []
     },
     {
@@ -117,7 +140,29 @@
       "read": "${CLAUDE_PLUGIN_ROOT}/rules/rule-git-freshness.md",
       "summary": "设计/方案动作前确保当前分支基于最新远程 (fetch + behind 则 pull --rebase, ahead>0 弹问); 防基于过时代码做设计返工。走 worktree 的场景已由 git-worktree fetch 覆盖, 本 rule 管就地设计 (behavior 触发, 无强机制保证)",
       "guard": "",
+      "depends_on": ["git-worktree"],
+      "severity": "warn",
+      "lifecycle_stage": "0 设计",
       "pretooluse": []
+    },
+    {
+      "id": "personal-deletion-guard",
+      "bucket": "memory",
+      "also_buckets": [],
+      "trigger_type": "behavior",
+      "trigger_desc": "即将 rm / mv / find -delete / Write 覆盖 / Edit 大段删 在 .agents-personal/ 或 $USER_VAULT_PATH/ 下任何文件或子目录 (subagent 同理); 删除护栏规则文本常驻 model/agent-personal.md, 本 rule 提供 PreToolUse 硬兜底",
+      "triggers": [],
+      "action": "Read model/agent-personal.md 的「删除护栏」节, 停手 → 描述将删什么 + 原因 + 影响 → 等用户明确确认再执行",
+      "read": "${CLAUDE_PLUGIN_ROOT}/model/agent-personal.md",
+      "summary": ".agents-personal/ + $USER_VAULT_PATH 内容是用户沉淀的项目历史 + 当前指令, gitignored 不可恢复, 删除前必须二次确认 (rm/mv/find-delete 均视为删除等价物). PreToolUse 在命令层兜底拦 (inject 提醒, 不 block 留余地给用户授权)",
+      "guard": "",
+      "depends_on": [],
+      "severity": "warn",
+      "lifecycle_stage": "cross",
+      "pretooluse": [
+        { "pattern": "\\b(rm|mv)\\s+.*(\\.agents-personal/|\\$USER_VAULT_PATH/|\\$\\{USER_VAULT_PATH\\})", "action": "inject", "note": "rm/mv 命中 .agents-personal/ 或 $USER_VAULT_PATH/ 下路径 — 这些是 gitignored 用户沉淀, 不可恢复. 停手, 描述将删什么 + 原因 + 影响, 等用户明确确认 (model/agent-personal.md 删除护栏)" },
+        { "pattern": "find\\s+.*(\\.agents-personal|\\$USER_VAULT_PATH|\\$\\{USER_VAULT_PATH\\}).*-delete\\b", "action": "inject", "note": "find -delete 命中 .agents-personal/ 或 $USER_VAULT_PATH/ — 批量删除等同 rm, 停手二次确认 (model/agent-personal.md 删除护栏)" }
+      ]
     }
   ]
 }

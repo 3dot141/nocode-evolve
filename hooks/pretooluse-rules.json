@@ -24,6 +24,18 @@
     "reason": "禁裸 curl 改 PR, 用 bkt"
   },
   {
+    "rule": "finishing-branch",
+    "pattern": "git\\s+push\\s+.*--force(-with-lease)?",
+    "decision": "inject",
+    "reason": "git push --force 高风险 (覆盖远端他人 commit / 不可恢复): 1) 确认 worktree 私有 feature 分支 (非 main/release) 2) 用 --force-with-lease 不 --force 3) 先 git fetch + 看远端是否被推进过. 直接 force push 主干 = 灾难, rule-finishing-branch 已禁。"
+  },
+  {
+    "rule": "finishing-branch",
+    "pattern": "gh\\s+api\\s+.*(pulls?\\b.*--method\\s+(PATCH|PUT)|--method\\s+(PATCH|PUT)\\s+.*pulls?\\b)",
+    "decision": "block",
+    "reason": "禁 gh api PATCH/PUT pulls 改 PR 元数据, 用 gh pr edit (语义清晰 + 避开 race / cross-fork base 问题)"
+  },
+  {
     "rule": "git-worktree",
     "pattern": "git\\s+worktree\\s+add",
     "decision": "inject",
@@ -34,5 +46,17 @@
     "pattern": "git\\s+(checkout\\s+-[bB]|switch\\s+-[cC]|branch\\s+[^\\s-])",
     "decision": "inject",
     "reason": "原则: 每个分支都要 worktree。别在主仓裸开 branch, 先 Read rule-git-worktree.md 走 git worktree add 落 <project>-<branch>/"
+  },
+  {
+    "rule": "personal-deletion-guard",
+    "pattern": "\\b(rm|mv)\\s+.*(\\.agents-personal/|\\$USER_VAULT_PATH/|\\$\\{USER_VAULT_PATH\\})",
+    "decision": "inject",
+    "reason": "rm/mv 命中 .agents-personal/ 或 $USER_VAULT_PATH/ 下路径 — 这些是 gitignored 用户沉淀, 不可恢复. 停手, 描述将删什么 + 原因 + 影响, 等用户明确确认 (model/agent-personal.md 删除护栏)"
+  },
+  {
+    "rule": "personal-deletion-guard",
+    "pattern": "find\\s+.*(\\.agents-personal|\\$USER_VAULT_PATH|\\$\\{USER_VAULT_PATH\\}).*-delete\\b",
+    "decision": "inject",
+    "reason": "find -delete 命中 .agents-personal/ 或 $USER_VAULT_PATH/ — 批量删除等同 rm, 停手二次确认 (model/agent-personal.md 删除护栏)"
   }
 ]
