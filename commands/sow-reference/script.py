@@ -10,7 +10,7 @@ v2 vs v1 变更：
 - 加 --layer 必填参数 (inbox / inputs / outputs), 决定子目录路径。
 - exit 3 语义扩为「目录相关错误」, 含 missing subdir + mkdir failed 两子类型,
   stderr 子类型前缀区分。
-- exit 4 新增：layer 参数非法 (AI prompt 漏传, 不该到用户)。
+- --layer 非法走 argparse 默认 SystemExit(2), 与 env 错共用 exit 2 (语义都属"配置/参数错")。
 
 输入：--layer / --intent / --title / --summary（CLI flag）+ $USER_VAULT_PATH（env）
 输出（stdout 双段，固定格式）：

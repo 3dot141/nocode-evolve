@@ -139,9 +139,8 @@ TARGET_PATH: <绝对路径>
 |---|---|---|
 | 0 | 成功 | 解析 stdout, Write 落盘 |
 | 1 | 路径冲突 (目标文件已存在) | inbox 高频场景 AI 应先自动尝试加序号 (`<title>-2.md` / `-3.md` ≤3 次) 再进 exit 1; outputs / inputs 直接转告用户改 title 后 NL 内 re-propose |
-| 2 | env 错 (`$USER_VAULT_PATH` 未设 / 不是目录) | 转告 stderr + `export USER_VAULT_PATH=~/AI/MyJarvis` 示例 |
+| 2 | env 错 (`$USER_VAULT_PATH` 未设 / 不是目录) 或 argparse 参数错 (如 `--layer` 非法值) | env 错: 转告 stderr + `export USER_VAULT_PATH=~/AI/MyJarvis` 示例; argparse 错: 报"AI 内部错, 重跑 /sow" |
 | 3 | 目录相关错误 (stderr 子类型: `missing subdir:` 或 `mkdir failed:`) | 转告 stderr (含子类型 + 完整路径 + 建议 mkdir / 检查权限) |
-| 4 | --layer 非法 (argparse 已先报, 不该走到这里) | 报"AI 内部错: 重跑 /sow; 若复现请抓 log + 报 issue 给插件维护者" |
 
 非零 exit → **不写文件**，AI 把 stderr 原文转告用户.
 
