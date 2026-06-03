@@ -39,8 +39,17 @@ export function detectPkgManager(worktreePath) {
 
 // 锚定 pattern: 只命中 .env / .env.* / config.local.* / *secret* 的文件名,
 // 不用裸 /\.env/ 子串 (会误命中 app.environment 之类)。
-const ENV_PATTERNS = [/(^|\/)\.env(\.[^/]+)?$/, /(^|\/)config\.local\./, /secret/i];
-const ENV_KEYWORD = /env|config\.local|secret/i; // 粗筛 .gitignore 行
+// v3.6.2 起扩展: 覆盖 conf/<name>.{yaml,json,toml,ini,properties} 和 *.local.<ext>
+// 用户案例: fx-data-agents 用 packages/server/conf/config.yaml (gitignored 不是 .env), 旧 pattern 漏 cp.
+const ENV_PATTERNS = [
+  /(^|\/)\.env(\.[^/]+)?$/,                                     // .env, .env.*
+  /(^|\/)config\.local\./,                                      // config.local.*
+  /(^|\/)config\.(ya?ml|json|toml|ini|properties)$/i,           // config.yaml/yml/json/toml/ini/properties (v3.6.2+)
+  /(^|\/)conf\/[^/]+\.(ya?ml|json|toml|ini|properties)$/i,      // conf/<name>.<ext> 目录式 (v3.6.2+)
+  /(^|\/)[^/]+\.local\.[^/]+$/,                                 // <name>.local.<ext> 通用 local 配置 (v3.6.2+)
+  /secret/i,
+];
+const ENV_KEYWORD = /env|config|conf\/|\.local\.|secret/i; // 粗筛 .gitignore 行 (v3.6.2+ 扩 config / conf\/ / .local.)
 
 // 扫 .gitignore → 粗筛 env-ish 行 → glob 展开实际文件 → 锚定精筛文件名。
 export function planEnvCopies(projectRoot) {
@@ -247,15 +256,24 @@ function globToRe(seg) {
 }
 
 // ---------- CLI ----------
-function parseArgs(rest) {
+// 同时支持 --key value 和 --key=value 两种形式 (v3.6.2 起): 后者更符合 shell 用户习惯, 前者保留兼容.
+export function parseArgs(rest) {
   const o = {};
-  for (let i = 0; i < rest.length; i++) {
+  function take(i, name, hasValue) {
     const a = rest[i];
-    if (a === '--project-root') o.projectRoot = rest[++i];
-    else if (a === '--worktree-path') o.worktreePath = rest[++i];
-    else if (a === '--pkg-manager') o.pkgManager = rest[++i];
-    else if (a === '--dry-run') o.dryRun = true;
-    else if (a === '--skip-install') o.skipInstall = true;
+    const eq = a.indexOf('=');
+    if (eq > 0 && a.slice(0, eq) === name) return { value: a.slice(eq + 1), next: i + 1 };
+    if (a === name) return hasValue ? { value: rest[i + 1], next: i + 2 } : { value: true, next: i + 1 };
+    return null;
+  }
+  for (let i = 0; i < rest.length; ) {
+    let m;
+    if ((m = take(i, '--project-root', true))) { o.projectRoot = m.value; i = m.next; }
+    else if ((m = take(i, '--worktree-path', true))) { o.worktreePath = m.value; i = m.next; }
+    else if ((m = take(i, '--pkg-manager', true))) { o.pkgManager = m.value; i = m.next; }
+    else if ((m = take(i, '--dry-run', false))) { o.dryRun = true; i = m.next; }
+    else if ((m = take(i, '--skip-install', false))) { o.skipInstall = true; i = m.next; }
+    else i++;
   }
   return o;
 }
@@ -263,7 +281,9 @@ function usage() {
   process.stderr.write(
     'usage:\n' +
     '  worktree-setup.mjs setup --project-root <p> --worktree-path <p> [--dry-run] [--pkg-manager npm|pnpm|yarn] [--skip-install]\n' +
-    '  worktree-setup.mjs teardown --worktree-path <p> [--dry-run]\n',
+    '  worktree-setup.mjs teardown --worktree-path <p> [--dry-run]\n' +
+    '\n' +
+    '同时支持 --key value 和 --key=value 两种形式 (v3.6.2+).\n',
   );
 }
 

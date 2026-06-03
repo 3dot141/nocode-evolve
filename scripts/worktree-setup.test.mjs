@@ -12,6 +12,7 @@ import {
   copyWithFallback,
   setup,
   teardown,
+  parseArgs,
 } from './worktree-setup.mjs';
 
 // ---- fixture 工具: 真实 tmp 目录, 不 mock fs ----
@@ -110,6 +111,47 @@ test('case 2.2 — 锚定 pattern 不误命中 *.environment / development/', ()
   const cands = planEnvCopies(f.project);
   assert.deepEqual(cands, [], '无任何真 env/config/secret 文件, 候选应为空');
   f.cleanup();
+});
+
+test('case 2.3 — v3.6.2+ 扩 pattern: conf/<name>.{yaml,json,toml,...} 命中 (yaml 配置项目)', () => {
+  const f = mkfix();
+  touch(path.join(f.project, '.gitignore'), 'conf/config.yaml\nconf/secret.json\nnode_modules/\n');
+  touch(path.join(f.project, 'conf/config.yaml'), 'foo: bar');
+  touch(path.join(f.project, 'conf/secret.json'), '{}');
+  const cands = planEnvCopies(f.project);
+  assert.ok(cands.includes('conf/config.yaml'), `应命中 conf/config.yaml, 实际: ${JSON.stringify(cands)}`);
+  assert.ok(cands.includes('conf/secret.json'), `应命中 conf/secret.json (secret keyword), 实际: ${JSON.stringify(cands)}`);
+  f.cleanup();
+});
+
+test('case 2.4 — v3.6.2+ 扩 pattern: <name>.local.<ext> 通用 local 配置命中', () => {
+  const f = mkfix();
+  touch(path.join(f.project, '.gitignore'), '*.local.*\n');
+  touch(path.join(f.project, 'app.local.json'), '{}');
+  touch(path.join(f.project, 'db.local.yaml'), 'k: v');
+  const cands = planEnvCopies(f.project);
+  assert.ok(cands.includes('app.local.json'), `应命中 app.local.json`);
+  assert.ok(cands.includes('db.local.yaml'), `应命中 db.local.yaml`);
+  f.cleanup();
+});
+
+test('case 2.5 — v3.6.2+ 扩 pattern 反例: config.production.yaml / nginx.conf / appconfig.txt 不误命中', () => {
+  const f = mkfix();
+  touch(path.join(f.project, '.gitignore'), 'config.production.yaml\nnginx.conf\nappconfig.txt\n');
+  touch(path.join(f.project, 'config.production.yaml'), '');
+  touch(path.join(f.project, 'nginx.conf'), '');
+  touch(path.join(f.project, 'appconfig.txt'), '');
+  const cands = planEnvCopies(f.project);
+  assert.deepEqual(cands, [], `非 local/conf-dir/.env 风格不该命中, 实际: ${JSON.stringify(cands)}`);
+  f.cleanup();
+});
+
+test('parseArgs — v3.6.2+ 同时支持 --key value (空格) 和 --key=value (=) 两种形式', () => {
+  assert.deepEqual(parseArgs(['--project-root', '/p', '--worktree-path', '/w']), { projectRoot: '/p', worktreePath: '/w' }, '空格分隔 (旧)');
+  assert.deepEqual(parseArgs(['--project-root=/p', '--worktree-path=/w']), { projectRoot: '/p', worktreePath: '/w' }, '= 分隔 (v3.6.2+)');
+  assert.deepEqual(parseArgs(['--project-root=/p', '--worktree-path', '/w', '--dry-run']), { projectRoot: '/p', worktreePath: '/w', dryRun: true }, '混用');
+  assert.deepEqual(parseArgs(['--dry-run', '--skip-install']), { dryRun: true, skipInstall: true }, 'boolean flag 不要 value');
+  assert.deepEqual(parseArgs(['--pkg-manager=pnpm']), { pkgManager: 'pnpm' }, '--pkg-manager=value');
 });
 
 // ===== BF1 — setup dry-run 不碰 FS (case 1.1) =====

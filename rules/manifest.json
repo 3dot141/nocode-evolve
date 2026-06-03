@@ -77,8 +77,8 @@
       "severity": "block",
       "lifecycle_stage": "1 隔离",
       "pretooluse": [
-        { "pattern": "git\\s+worktree\\s+add", "action": "inject", "note": "建 worktree 前先 Read rule-git-worktree.md: 落 <project>-<branch>/, 建后调 worktree-setup.mjs setup 补齐(cp env/IDE/node_modules + symlink)" },
-        { "pattern": "git\\s+(checkout\\s+-[bB]|switch\\s+-[cC]|branch\\s+[^\\s-])", "action": "inject", "note": "原则: 每个分支都要 worktree。别在主仓裸开 branch, 先 Read rule-git-worktree.md 走 git worktree add 落 <project>-<branch>/" }
+        { "pattern": "(?:^|[;&|])\\s*git\\s+worktree\\s+add\\b", "action": "inject", "note": "建 worktree 前先 Read rule-git-worktree.md: 落 <project>-<branch>/, 建后调 worktree-setup.mjs setup 补齐(cp env/IDE/node_modules + symlink). 前置 (?:^|[;&|])\\s* 限定命令位置, 不命中 quote/heredoc 内字面文本" },
+        { "pattern": "git\\s+(checkout\\s+-[bB]|switch\\s+-[cC]|branch\\s+[^-\\s|]\\S*)", "action": "inject", "note": "原则: 每个分支都要 worktree。别在主仓裸开 branch, 先 Read rule-git-worktree.md 走 git worktree add 落 <project>-<branch>/. branch 段 [^-\\s|] 排除 -flag 和 pipe 查询, 只命中新建 git branch <name>" }
       ]
     },
     {
