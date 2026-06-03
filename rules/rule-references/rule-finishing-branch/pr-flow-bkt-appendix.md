@@ -113,6 +113,26 @@ source 是 personal repo (~$source_project), 团队成员对其无 read 权限.
 
 ### Workflow B: batch + 单个 fallback
 
+#### Step 7.B.0: 取 cross-fork 的 resolved 默认 reviewer 名单
+
+`bkt pr edit --with-default-reviewers` 在 Workflow B 失效 (见下方坑表: source repo id '0')。手动取 resolved 名单——
+**repo id 不是项目静态值, 每个 PR 从其 `fromRef`/`toRef` 现取**, 再查 default-reviewers 的 `reviewers`
+endpoint (它直接返回 resolved 适用 reviewer, 比 `/conditions` 省去自己评估规则):
+
+```bash
+# 1) 从 PR 取 source/target repo id (现取)
+src_repo_id=$(bkt api "/rest/api/1.0/projects/${target_project}/repos/${repo_slug}/pull-requests/${pr_id}" --json --jq '.fromRef.repository.id')
+tgt_repo_id=$(bkt api "/rest/api/1.0/projects/${target_project}/repos/${repo_slug}/pull-requests/${pr_id}" --json --jq '.toRef.repository.id')
+
+# 2) 查 resolved 默认 reviewer; 返回的 .name 已是精确大小写 → 直接喂 --reviewer, 无需大小写 fallback
+bkt api "/rest/default-reviewers/1.0/projects/${target_project}/repos/${repo_slug}/reviewers?sourceRepoId=${src_repo_id}&targetRepoId=${tgt_repo_id}&sourceRefId=refs/heads/${source_branch}&targetRefId=refs/heads/${target_branch}" \
+  --json --jq '.[].name'
+
+# 3) 从结果**排除 PR 作者** (作者不能 review 自己, 加了会 fail) —— 作者名见 PR 的 author.user.name
+```
+
+> 用此 endpoint 拿到的名字已 canonical, batch 加不会撞 Step 7.B.3 的大小写 409 (那是手敲 / 猜名字才会撞)。
+
 #### Step 7.B.1: 批量 add
 
 ```bash
@@ -133,7 +153,8 @@ exit_code=$?
   - 扫 `/tmp/bkt-edit.stderr` 抽 fail 的 reviewer 名
   - 对每个走下方大小写 fallback / 跳过决策
 
-> ⚠️ **此处行为假设 acceptance 未完全验证** (per Review 2 C3): bkt multi-flag 部分失败时是否 `exit_code == 0` + 成功的仍被加 + stderr 可 parse — 实施 Task 0 必须先实测确认. 若实测发现 multi-flag 整体 fail / 成功的也回滚, 本节改"逐个 add + 单个 retry"两段式.
+> ✅ **batch happy-path 已实测** (fx-data-agents PR #848, 2026-06): 单次 `bkt pr edit --reviewer ×8` (含混合大小写 `Kerim.Zhou` / `North`) 全部加成功, `exit_code == 0`, GET 验 8/8 落 `reviewers[]`. 前提: 名字精确大小写——从 Step 7.B.0 的 `/reviewers` endpoint 取即已 canonical, 故全程未触发大小写 409.
+> ⚠️ **部分失败行为仍未实测** (没构造出"单个 reviewer fail 而其余成功"的场景): multi-flag 部分失败时是否 `exit_code == 0` + 成功的仍被加 + stderr 可 parse — 真撞到时按 7.B.3 处理, 若发现整体 fail / 回滚再改"逐个 add"两段式.
 
 #### Step 7.B.3: 大小写 fallback (Workflow B 单个 409)
 
@@ -182,6 +203,7 @@ fi
 
 ## v2 待办 (Acceptance 实测后)
 
-- [ ] Task 0 实测 `bkt pr edit --reviewer A --reviewer B --reviewer C` 部分失败行为, 确认 Step 7.B.2 假设
-- [ ] 若假设不成立 → 改 Step 7 为"逐个 add + 单个 retry"两段式, 同步 design doc BF2 + case 2.7
-- [ ] 实测 `bkt pr edit` stderr 格式后, 给 Step 7.B.2 一个具体 grep pattern (e.g. `grep -oE 'reviewer "[^"]+" .* (failed|not added)'`)
+- [x] Task 0 batch happy-path 已实测 (PR #848: 8 reviewer 含混合大小写一次加成功, exit 0) — 见 Step 7.B.2 ✅
+- [ ] **部分失败**行为仍未实测 (单个 fail 而其余成功时的 exit_code / stderr) — 真撞到再补
+- [ ] 若部分失败发现整体 fail / 回滚 → 改 Step 7 为"逐个 add + 单个 retry"两段式, 同步 design doc BF2 + case 2.7
+- [ ] 实测 `bkt pr edit` 部分失败 stderr 格式后, 给 Step 7.B.2 一个具体 grep pattern (e.g. `grep -oE 'reviewer "[^"]+" .* (failed|not added)'`)
