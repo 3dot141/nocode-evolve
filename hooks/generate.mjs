@@ -1,20 +1,28 @@
 #!/usr/bin/env node
-// 单源生成器: rules/manifest.json → model/agent-catalog.md (slim) + hooks/pretooluse-rules.json + skills/route/SKILL.md (rule-routes 生成区)
-// 用法: node hooks/generate.mjs          写出生成物
+// 单源生成器: rules/manifest.json → model/agent-catalog-N.md (分片完整路由, 常驻) + hooks/pretooluse-rules.json
+// 用法: node hooks/generate.mjs          写出生成物 (并删残留旧分片)
 //       node hooks/generate.mjs --check   只校验生成物与源一致, 不一致 exit 1
+//
+// 设计要点:
+// - 完整路由 **常驻** (放 model/agent-catalog-N.md 系列), 不再用 skills/route 按需中转 ——
+//   常驻 = 必在 context、无软触发漏; 代价是多占一点常驻 context, 但路由仅 ~5K 字符可控.
+// - 按桶切分: 桶为最小切分粒度, 单条 rule 不会被切断.
+// - SHARD_LIMIT=9000 留 JSON 包裹+中文余量, 安全低于 hook 截断阈值 10000.
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const MANIFEST = path.join(ROOT, 'rules/manifest.json');
-const ROUTE_SKILL = path.join(ROOT, 'skills/route/SKILL.md');
+const MODEL_DIR = path.join(ROOT, 'model');
+
+export const SHARD_LIMIT = 9000;
 
 export function loadManifest() {
   return JSON.parse(fs.readFileSync(MANIFEST, 'utf8'));
 }
 
-// 公共桶渲染: 桶 + 子规则四件套(触发/读/摘要/guard/也属) + 跨桶 crossRules. 被 genRouteTable / genCatalog 共用.
+// 桶渲染: 桶 + 子规则四件套(触发/读/摘要/guard/也属) + 跨桶 crossRules(also_buckets 反向可路由).
 export function renderBucketBody(m) {
   const byBucket = new Map(m.buckets.map((b) => [b.id, []]));
   for (const r of m.rules) byBucket.get(r.bucket)?.push(r);
@@ -34,7 +42,6 @@ export function renderBucketBody(m) {
       if ((r.also_buckets || []).length) out += `**也属**: ${r.also_buckets.join(', ')}\n`;
       out += '\n';
     }
-    // 跨桶 rule: also_buckets 含本桶的 rule, 列交叉引用条目 (Codex review: 让 also_buckets 可路由)
     const crossRules = m.rules.filter((r) => (r.also_buckets || []).includes(b.id));
     for (const r of crossRules) {
       out += `#### ${r.id} (跨桶)\n`;
@@ -47,61 +54,75 @@ export function renderBucketBody(m) {
   return out;
 }
 
-export function genCatalog(m) {
-  let out = '# agent-catalog — nocode-evolve 插件级规则路由表\n\n';
-  out += '> 本文件由 `hooks/generate.mjs` 从 `rules/manifest.json` 生成。**禁手改**——改 rule 改 manifest 后重新生成。\n\n';
-  out += '## 读取时机\n\n会话开局本文件已在 context。响应任何任务前扫一眼下方**粗桶**匹配触发: 先命中桶(粗触发宽, 易命中), 再在桶内子规则里按 `触发` 选具体 rule → `Read` 对应文件。同一规则会话内只 Read 一次。命中桶但落在「负例」描述里 → 不触发。\n\n---\n\n## 规则清单（按粗桶分组）\n\n';
-  out += renderBucketBody(m);
-  return out;
-}
+const CATALOG_HEADER_FIRST = `# agent-catalog — nocode-evolve 插件级规则路由 (常驻完整路由)
 
-export function genRouteTable(m) {
-  return renderBucketBody(m);
-}
+> 本文件由 \`hooks/generate.mjs\` 从 \`rules/manifest.json\` 生成. **禁手改**——改 rule 改 manifest 后重新生成.
+> 完整路由常驻 context (不再用 route skill 中转). 超 SHARD_LIMIT 自动切片 agent-catalog-2.md..
 
-export function genCatalogSlim(m) {
-  let out = '# agent-catalog — nocode-evolve 插件级粗桶路由\n\n';
-  out += '> 本文件由 `hooks/generate.mjs` 从 `rules/manifest.json` 生成。**禁手改**——改 rule 改 manifest 后重新生成。\n\n';
-  out += '## 读取时机\n\n会话开局本文件已在 context。响应任何工程任务前扫下方**粗桶**: 命中任一桶 → 调 `Skill(nocode-evolve:route)` 拿完整路由表(各 rule 触发 / 读哪个文件 / guard)。项目本地资源(.agents-personal wiki/rules)检索约定常驻在 `model/agent-personal.md`。纯只读查询 / 纯事实问答不触发。\n\n';
-  out += '## 粗桶\n\n';
-  for (const b of m.buckets) {
-    out += `- **${b.title} (${b.id})**: ${b.trigger_summary}\n`;
-    out += `  - 不含(负例): ${b.negatives.join('; ')}\n`;
+## 读取时机
+
+会话开局本文件已在 context. 任何工程任务前扫下方**粗桶**: 命中桶 → 在桶内子规则按 \`触发\` 选具体 rule → \`Read\` 对应 \`rules/rule-*.md\` (同一规则会话只 Read 一次). 命中桶但落「负例」描述 → 不触发.
+
+项目本地资源 (\`.agents-personal/\`) 检索约定见 \`model/agent-personal.md\`. 工程任务流程导航 (生命周期 / 下一步) 主动调 \`Skill(nocode-evolve:pilot)\`.
+
+---
+
+## 规则清单 (按粗桶分组, 完整路由)
+
+`;
+
+const CATALOG_HEADER_CONT = `# agent-catalog (续片)
+
+> 接上一片 catalog. 同源生成, 禁手改.
+
+`;
+
+// 按桶切分完整路由, 超 SHARD_LIMIT 开新片. 桶为最小切分粒度, 不切断单 rule.
+export function genCatalogSharded(m) {
+  const body = renderBucketBody(m);
+  const bucketSections = body.split(/(?=### 桶:)/).filter((s) => s.trim());
+  const shards = [];
+  let curr = CATALOG_HEADER_FIRST;
+  for (const section of bucketSections) {
+    if ((curr + section).length > SHARD_LIMIT && curr.length > CATALOG_HEADER_FIRST.length) {
+      shards.push(curr);
+      curr = CATALOG_HEADER_CONT + section;
+    } else {
+      curr += section;
+    }
   }
-  out += '\n命中任一桶 → `Skill(nocode-evolve:route)`。同一会话 route 加载一次即可。\n';
-  return out;
+  shards.push(curr);
+  return shards.map((text, i) => ({
+    file: path.join(MODEL_DIR, `agent-catalog-${i + 1}.md`),
+    text,
+  }));
 }
 
 export function genPretooluse(m) {
-  // 扁平化: [{rule, pattern, decision, reason}]; decision = "inject" | "block"
   return m.rules.flatMap((r) =>
     (r.pretooluse || []).map((p) => ({ rule: r.id, pattern: p.pattern, decision: p.action, reason: p.note })),
   );
 }
 
-// route SKILL.md 生成区: 只替换 marker 之间内容, marker 外手写区不动
-export function patchGeneratedRegion(file, regionName, body) {
-  const begin = `<!-- BEGIN generated: ${regionName} (from manifest, 禁手改) -->`;
-  const end = `<!-- END generated: ${regionName} -->`;
-  if (!fs.existsSync(file)) throw new Error(`patchGeneratedRegion: ${file} 不存在`);
-  const cur = fs.readFileSync(file, 'utf8');
-  const bi = cur.indexOf(begin);
-  const ei = cur.indexOf(end);
-  if (bi < 0 || ei < 0) throw new Error(`patchGeneratedRegion: ${file} 缺 marker '${regionName}'`);
-  if (cur.indexOf(begin, bi + begin.length) >= 0 || cur.indexOf(end, ei + end.length) >= 0)
-    throw new Error(`patchGeneratedRegion: ${file} marker '${regionName}' 重复`);
-  if (ei < bi) throw new Error(`patchGeneratedRegion: ${file} marker '${regionName}' 顺序错乱(END 在 BEGIN 前)`);
-  const before = cur.slice(0, bi + begin.length);
-  const after = cur.slice(ei);
-  return `${before}\n${body}\n${after}`;
-}
-
-// 生成物路径与渲染内容的单一映射
 function targets(m) {
   return [
     { file: path.join(ROOT, 'hooks/pretooluse-rules.json'), text: JSON.stringify(genPretooluse(m), null, 2) + '\n' },
-    { file: path.join(ROOT, 'model/agent-catalog.md'), text: genCatalogSlim(m) },
+    ...genCatalogSharded(m),
   ];
+}
+
+// 检测残留旧 catalog 分片 (分片数变少, 或旧的 agent-catalog.md 无 N).
+function findStaleCatalogShards(wantedFiles) {
+  const stale = [];
+  if (!fs.existsSync(MODEL_DIR)) return stale;
+  const wantedSet = new Set(wantedFiles);
+  for (const f of fs.readdirSync(MODEL_DIR)) {
+    if (/^agent-catalog(-\d+)?\.md$/.test(f)) {
+      const full = path.join(MODEL_DIR, f);
+      if (!wantedSet.has(full)) stale.push(full);
+    }
+  }
+  return stale;
 }
 
 export function renderAll(write) {
@@ -109,8 +130,11 @@ export function renderAll(write) {
   const t = targets(m);
   if (write) {
     for (const { file, text } of t) fs.writeFileSync(file, text);
-    const routeText = patchGeneratedRegion(ROUTE_SKILL, 'rule-routes', genRouteTable(m));
-    fs.writeFileSync(ROUTE_SKILL, routeText);
+    const wantedCatalogs = t.filter((x) => /agent-catalog(-\d+)?\.md$/.test(x.file)).map((x) => x.file);
+    for (const s of findStaleCatalogShards(wantedCatalogs)) {
+      fs.unlinkSync(s);
+      process.stderr.write(`generate.mjs: 删残留 ${path.relative(ROOT, s)}\n`);
+    }
   }
   return t;
 }
@@ -118,16 +142,14 @@ export function renderAll(write) {
 export function check() {
   const m = loadManifest();
   const drift = [];
-  for (const { file, text } of targets(m)) {
+  const t = targets(m);
+  for (const { file, text } of t) {
     const cur = fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '';
-    if (cur !== text) drift.push(path.relative(ROOT, file));
+    if (cur !== text) drift.push(path.relative(ROOT, file) + (fs.existsSync(file) ? '' : ' (缺失)'));
   }
-  if (fs.existsSync(ROUTE_SKILL)) {
-    const want = patchGeneratedRegion(ROUTE_SKILL, 'rule-routes', genRouteTable(m));
-    const cur = fs.readFileSync(ROUTE_SKILL, 'utf8');
-    if (cur !== want) drift.push(path.relative(ROOT, ROUTE_SKILL));
-  } else {
-    drift.push(path.relative(ROOT, ROUTE_SKILL) + ' (缺失)');
+  const wantedCatalogs = t.filter((x) => /agent-catalog(-\d+)?\.md$/.test(x.file)).map((x) => x.file);
+  for (const s of findStaleCatalogShards(wantedCatalogs)) {
+    drift.push(path.relative(ROOT, s) + ' (残留, 应删)');
   }
   return drift;
 }
@@ -138,12 +160,13 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   if (checkMode) {
     const drift = check();
     if (drift.length) {
-      console.error('generate.mjs --check: 生成物与 manifest 漂移: ' + drift.join(', ') + '\n  修法: node hooks/generate.mjs 重新生成并提交。');
+      console.error('generate.mjs --check: 生成物与 manifest 漂移: ' + drift.join(', ') + '\n  修法: node hooks/generate.mjs 重新生成并提交.');
       process.exit(1);
     }
     process.exit(0);
   } else {
     renderAll(true);
-    console.error('generate.mjs: 已从 manifest 重新生成 ' + targets(loadManifest()).map((t) => path.relative(ROOT, t.file)).join(', '));
+    const files = targets(loadManifest()).map((t) => path.relative(ROOT, t.file));
+    console.error('generate.mjs: 已生成 ' + files.join(', '));
   }
 }

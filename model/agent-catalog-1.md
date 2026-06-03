@@ -1,17 +1,18 @@
+# agent-catalog — nocode-evolve 插件级规则路由 (常驻完整路由)
+
+> 本文件由 `hooks/generate.mjs` 从 `rules/manifest.json` 生成. **禁手改**——改 rule 改 manifest 后重新生成.
+> 完整路由常驻 context (不再用 route skill 中转). 超 SHARD_LIMIT 自动切片 agent-catalog-2.md..
+
+## 读取时机
+
+会话开局本文件已在 context. 任何工程任务前扫下方**粗桶**: 命中桶 → 在桶内子规则按 `触发` 选具体 rule → `Read` 对应 `rules/rule-*.md` (同一规则会话只 Read 一次). 命中桶但落「负例」描述 → 不触发.
+
+项目本地资源 (`.agents-personal/`) 检索约定见 `model/agent-personal.md`. 工程任务流程导航 (生命周期 / 下一步) 主动调 `Skill(nocode-evolve:pilot)`.
+
 ---
-name: route
-description: 工程任务规则路由入口。开始任何 git 生命周期(提 PR/push/合并/收尾/worktree)、代码评审/独立验证、设计文档/PRD/RFC/方案选型、会话沉淀类任务前加载，给出插件级规则路由表。不用于：纯只读查询、纯事实问答、与工程规则无关的对话。
----
 
-# nocode-evolve 工程规则路由
+## 规则清单 (按粗桶分组, 完整路由)
 
-会话内首次命中工程任务时加载一次。下方按粗桶列插件 rule 路由表——命中桶 → 桶内按 `触发` 选具体 rule → `Read` 对应文件。同一规则会话内只 Read 一次。
-
-> 本 skill 只管**插件 rule 路由**。项目本地资源(`.agents-personal/` wiki/rules)检索约定 + 删除护栏 + 常驻 git behavior 已移至常驻注入(每会话开局即在 context，不受本 skill「命中工程桶才加载」门槛限制)——见 `model/agent-personal.md` 与 `model/agent-about.md`。
-
-## 插件 rule 路由（生成区，禁手改）
-
-<!-- BEGIN generated: rule-routes (from manifest, 禁手改) -->
 ### 桶: Git 生命周期 (git-lifecycle)
 **粗触发**: 任何把本地改动推进到分支 / 远端协作状态的请求 (提 PR / push / 合并 / 收尾 / worktree)
 **不含 (负例)**: 纯只读查询: 列 PR / 看分支 / 看 status / 看 log
@@ -91,9 +92,3 @@ description: 工程任务规则路由入口。开始任何 git 生命周期(提 
 **摘要**: 输出 标题 + 描述, 描述 ≤200字, 含基础内容(覆盖 push range 全 commit) + 重点评测(亮点 / 风险 / 未验证项)
 **也属**: git-lifecycle
 
-
-<!-- END generated: rule-routes -->
-
-> 原 ② 项目本地资源检索 / ③ 常驻 behavior 两节已迁出本 skill(见开头说明):
-> `.agents-personal/` wiki·rules 检索 + 删除护栏 → `model/agent-personal.md`;
-> git-inspection / git-freshness behavior → `model/agent-about.md`「常驻 git 习惯」节。

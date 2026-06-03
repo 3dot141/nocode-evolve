@@ -18,7 +18,15 @@
           },
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/inject-rules.sh model-catalog"
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/inject-rules.sh model-catalog-1"
+          },
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/inject-rules.sh model-catalog-2"
+          },
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/inject-rules.sh model-catalog-3"
           },
           {
             "type": "command",

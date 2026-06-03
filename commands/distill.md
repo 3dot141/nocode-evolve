@@ -28,7 +28,7 @@ argument-hint: [optional-topic]
 | `wiki:project` | `<proj>/.agents-personal/wiki/pages/<slug>.md` | 历史记忆，项目专属；走整合判断 |
 | `wiki:cross-project` | （不写文件）| **advisor**：输出"建议跑 `/sow <intent>`" |
 | `rules:project` | 融进现有 rule，或新建 `<proj>/.agents-personal/rules/<slug>.md` + 改 `AGENTS.md` 触发条件 | 当前指令，项目专属；**先整合判断**（融合优先），否则双写新建 |
-| `rules:plugin` | 融进现有 rule（含 `rule-references/` 子文件），或新建 `$NOCODE_EVOLVE_REPO/rules/rule-<slug>.md` + 改 `rules/manifest.json` 后 `node hooks/generate.mjs` 重新生成 catalog slim + route 生成区 + 升 `plugin.json` | 当前指令，跨项目通用；**先整合判断**（融合优先），否则三步联动建新 |
+| `rules:plugin` | 融进现有 rule（含 `rule-references/` 子文件），或新建 `$NOCODE_EVOLVE_REPO/rules/rule-<slug>.md` + 改 `rules/manifest.json` 后 `node hooks/generate.mjs` 重新生成 catalog 分片 + 升 `plugin.json` | 当前指令，跨项目通用；**先整合判断**（融合优先），否则三步联动建新 |
 | `skip` | （不写）| 列出原因供用户最后反悔 |
 
 ---
@@ -207,7 +207,7 @@ no → 整次 distill 终止；yes → 进入分发。
 ⚠ 融进 plugin rule（子文件）: rules/rule-references/rule-finishing-branch/pr-flow-bkt-appendix.md
   manifest: 未动（门面 rule-finishing-branch 已在 manifest 路由）  版本: 1.3.1 → 1.4.0 (minor)
 ⚠ 跨仓新建 plugin rule: ~/AI/nocode-evolve/rules/rule-distill-extension.md
-  manifest+generate: rules/manifest.json 已加条目, generate 重新生成 route 生成区 / catalog slim  版本: 1.4.0 → 1.5.0 (minor)
+  manifest+generate: rules/manifest.json 已加条目, generate 重新生成 catalog 分片  版本: 1.4.0 → 1.5.0 (minor)
   请到 nocode-evolve 仓 review + commit + 询问是否 push。
 ```
 
@@ -319,7 +319,7 @@ INDEX 模板：
 
 ## rules:plugin 分发：融合路径 + 三步联动
 
-新架构下 `rules/` 不再分 axis（`overlay-` / `agent-` / `tool-` 命名前缀已废弃），所有触发式规则统一命名为 `rule-<slug>.md`，由 `rules/manifest.json`（单源）登记、`node hooks/generate.mjs` 生成进 `skills/route/SKILL.md` 的 `rule-routes` 生成区 + catalog slim 桶路由，agent 命中粗桶调 `Skill(nocode-evolve:route)` 拿完整路由表后按触发条件按需 Read。
+新架构下 `rules/` 不再分 axis（`overlay-` / `agent-` / `tool-` 命名前缀已废弃），所有触发式规则统一命名为 `rule-<slug>.md`，由 `rules/manifest.json`（单源）登记、`node hooks/generate.mjs` 生成进 `model/agent-catalog-*.md`（catalog 分片，完整路由常驻 context），agent 命中粗桶后按触发条件按需 Read。
 
 按候选的 `disposition` 分两条路：**融合**（强相关，融进现有 rule）走下方「融合路径」；**新建**走「三步联动」。
 
@@ -328,14 +328,14 @@ INDEX 模板：
 目标可能是顶层 `rules/rule-<x>.md`，**也可能是门面的子文件** `rules/rule-references/<x>/<子文件>.md`（如 fork-PR 知识融进 `pr-flow-bkt-appendix.md`）。
 
 1. **Read 目标文件全文** → 把 `body` 片段**融进合适章节**（必要时改章节结构，如新增 Workflow / Step 分支；**不是末尾 paste**）
-2. **manifest 处理**（关键差异——不无脑新增条目；改的是单源 `rules/manifest.json`，不手改生成物 catalog / route）：
+2. **manifest 处理**（关键差异——不无脑新增条目；改的是单源 `rules/manifest.json`，不手改生成物 catalog 分片）：
    | 融合目标 | manifest 动作 |
    |---|---|
    | 顶层 `rule-<x>.md`，触发/摘要仍准确 | **不动** |
-   | 顶层 `rule-<x>.md`，本次融合扩了 scope（触发范围变大） | **改 manifest 里那条** rule 的 triggers/summary，**不新增条目**；改后 `node hooks/generate.mjs` 重新生成 catalog slim + route 生成区 |
+   | 顶层 `rule-<x>.md`，本次融合扩了 scope（触发范围变大） | **改 manifest 里那条** rule 的 triggers/summary，**不新增条目**；改后 `node hooks/generate.mjs` 重新生成 catalog 分片 |
    | `rule-references/` 子文件（门面 `rule-<x>.md` 已路由） | **不动**（门面 rule 已在 manifest 路由） |
 3. **升 `plugin.json` 版本**：融合通常 `minor`（补充现有 rule 能力 = 兼容增强）或 `patch`（纯文案补充）；不默认像新建那样跳 minor
-4. 报告："融进 `<目标路径>`，manifest [未动 / 已更新条目 `<slug>` 并 generate 重新生成 route 生成区 / catalog slim]，版本 `x → y`"
+4. 报告："融进 `<目标路径>`，manifest [未动 / 已更新条目 `<slug>` 并 generate 重新生成 catalog 分片]，版本 `x → y`"
 
 > 融合路径**不新增 manifest 条目、不新建文件**——这正是「融合优先」要省下的路由表面。
 
@@ -351,7 +351,7 @@ slug 冲突 → **不直接 abort，转整合判断**：slug 已存在往往说�
 
 ### Step 2: 改 `rules/manifest.json`（单源）登记新 rule + 重新生成
 
-新架构下 `rules/manifest.json` 是唯一真值源；`model/agent-catalog.md`（精简桶路由）与 `skills/route/SKILL.md` 的 `rule-routes` 生成区都是 `node hooks/generate.mjs` 的**生成物**——**禁手改生成物**，只改 manifest 再重新生成。manifest 没登记就等于 agent 触发不到（sanity check 会 stderr 警告）。
+新架构下 `rules/manifest.json` 是唯一真值源；`model/agent-catalog.md`（精简桶路由）与 `model/agent-catalog-*.md (catalog 分片, 完整路由)都是 `node hooks/generate.mjs` 的**生成物**——**禁手改生成物**，只改 manifest 再重新生成。manifest 没登记就等于 agent 触发不到（sanity check 会 stderr 警告）。
 
 **实施策略（具体到 Edit 工具调用）**：
 
@@ -368,7 +368,7 @@ slug 冲突 → **不直接 abort，转整合判断**：slug 已存在往往说�
 }
 ```
 
-3. 跑 `node hooks/generate.mjs` 重新生成 catalog slim + route 生成区（`node hooks/generate.mjs --check` 验零漂移）
+3. 跑 `node hooks/generate.mjs` 重新生成 catalog 分片（`node hooks/generate.mjs --check` 验零漂移）
 
 **触发条件写法约束**：必须具体到 agent 自己能判断命中——参考 manifest 里已有条目（如 push-summary 的 `trigger_desc`，不是"需要时读"）。
 
@@ -397,14 +397,14 @@ Read `.claude-plugin/plugin.json` → bump version → Write 回去。
 
 ```
 已写入 plugin rule: rule-<slug>.md
-manifest+generate: rules/manifest.json 已加条目, node hooks/generate.mjs 重新生成 route 生成区 / catalog slim
+manifest+generate: rules/manifest.json 已加条目, node hooks/generate.mjs 重新生成 catalog 分片
 版本: <oldVersion> → <newVersion> (<bumpLevel>)
 请到 nocode-evolve 仓 review + commit + 询问是否 push。
 ```
 
 ### 孤儿 rule 划界
 
-如果发现 `nocode-evolve/rules/` 下有未被 `rules/manifest.json` 登记（故未进 route 生成区 / catalog slim）的孤儿文件——**不主动补**。归用户手动处理（inject-rules.sh sanity check 每 session stderr 警告，足够提示）。
+如果发现 `nocode-evolve/rules/` 下有未被 `rules/manifest.json` 登记（故未进 catalog 分片）的孤儿文件——**不主动补**。归用户手动处理（inject-rules.sh sanity check 每 session stderr 警告，足够提示）。
 
 理由：scope 控制——`/distill` 是沉淀命令，不是 manifest 整理工具。
 
@@ -447,7 +447,7 @@ manifest+generate: rules/manifest.json 已加条目, node hooks/generate.mjs 重
 | 用户 `N fuse <path>` 指的文件不存在 | 报"`<path>` 不存在，无法融合；用 `N new` 建新或 `N fuse <正确 path>`" |
 | 融合目标是 `rule-references/` 子文件 | catalog 不动（门面已路由）；仅升版本 |
 | `$NOCODE_EVOLVE_REPO` 路径不存在 | `rules:plugin` 标签在表格里降级 disabled + 标灰 |
-| Step 1 写文件后 Step 2 改 manifest / generate 失败 | 不回滚 Step 1，报"写入了 rule 文件但 manifest 未登记 / route 生成区未重生成，请手动改 manifest 后跑 generate" |
+| Step 1 写文件后 Step 2 改 manifest / generate 失败 | 不回滚 Step 1，报"写入了 rule 文件但 manifest 未登记 / catalog 分片未重生成，请手动改 manifest 后跑 generate" |
 | Step 2 后 Step 3 改 plugin.json 失败 | 不回滚前两步，报"前两步完成但版本未升，请手动改 plugin.json" |
 | nocode-evolve 仓有未提交改动 | 不阻断，报告里加一行"两边都要 commit" |
 | `nocode-evolve/rules/` 下有未被 catalog 引用的孤儿文件 | 不主动补路由；报告末尾仅提示 |
@@ -461,6 +461,6 @@ manifest+generate: rules/manifest.json 已加条目, node hooks/generate.mjs 重
 不要主动 push 或 commit——按 CLAUDE.md 工作流，commit 由主交互流程在你完成所有沉淀后单独执行。
 
 如本次涉及 `rules:plugin` 出口，提醒用户：
-- `nocode-evolve` 仓有新文件（rule + manifest 改 + generate 生成物 catalog slim / route 生成区 + plugin.json）
+- `nocode-evolve` 仓有新文件（rule + manifest 改 + generate 生成物 catalog 分片 + plugin.json）
 - 主仓如有 rules:project 改动也需要 commit
 - 两边的 commit / push 由用户自己决定
