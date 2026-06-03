@@ -93,56 +93,90 @@ test('case 3.1b — 子包 node_modules 各列一条', () => {
   f.cleanup();
 });
 
-// ===== BF2 — planEnvCopies (case 2.1 / 2.2) =====
-test('case 2.1 — .gitignore 含 .env.local 且文件存在 → 候选含之', () => {
+// ===== BF2 — planEnvCopies (v3.6.3+ 改人机分工: 脚本列候选, agent 判断 cp 哪些) =====
+test('case 2.1 — 候选含 .env.local (gitignored 文件实际存在 → 候选)', () => {
   const f = mkfix();
   touch(path.join(f.project, '.gitignore'), '.env.local\nnode_modules/\n');
   touch(path.join(f.project, '.env.local'), 'X=1');
   const cands = planEnvCopies(f.project);
-  assert.ok(cands.includes('.env.local'));
+  assert.ok(cands.includes('.env.local'), '.env.local 应在候选');
   f.cleanup();
 });
-test('case 2.2 — 锚定 pattern 不误命中 *.environment / development/', () => {
+
+test('case 2.2 — v3.6.3+ 候选不再 filter, 列所有 gitignored 文件 (agent 决定 cp 哪些, 不脚本写死 keyword)', () => {
   const f = mkfix();
+  // 旧测试期望 cands=[](锚定 pattern 排除 *.environment / *.log); v3.6.3+ 改 agent 判断, 候选全列.
   touch(path.join(f.project, '.gitignore'), 'dist/\n*.log\n*.environment\ndevelopment/\n');
   touch(path.join(f.project, 'app.environment'), '');
   mkdir(path.join(f.project, 'development'));
   touch(path.join(f.project, 'build.log'), '');
   const cands = planEnvCopies(f.project);
-  assert.deepEqual(cands, [], '无任何真 env/config/secret 文件, 候选应为空');
+  assert.ok(cands.includes('app.environment'), 'app.environment 是文件应列候选 (agent 判断 cp 与否)');
+  assert.ok(cands.includes('build.log'), 'build.log 是文件应列候选 (agent 判断)');
+  assert.ok(!cands.includes('development'), '目录 development/ 不应列入');
   f.cleanup();
 });
 
-test('case 2.3 — v3.6.2+ 扩 pattern: conf/<name>.{yaml,json,toml,...} 命中 (yaml 配置项目)', () => {
+test('case 2.3 — 各种本地配置 (conf/config.yaml / *.local.* / 任意命名) 都进候选 (agent 上下文判断)', () => {
   const f = mkfix();
-  touch(path.join(f.project, '.gitignore'), 'conf/config.yaml\nconf/secret.json\nnode_modules/\n');
-  touch(path.join(f.project, 'conf/config.yaml'), 'foo: bar');
-  touch(path.join(f.project, 'conf/secret.json'), '{}');
-  const cands = planEnvCopies(f.project);
-  assert.ok(cands.includes('conf/config.yaml'), `应命中 conf/config.yaml, 实际: ${JSON.stringify(cands)}`);
-  assert.ok(cands.includes('conf/secret.json'), `应命中 conf/secret.json (secret keyword), 实际: ${JSON.stringify(cands)}`);
-  f.cleanup();
-});
-
-test('case 2.4 — v3.6.2+ 扩 pattern: <name>.local.<ext> 通用 local 配置命中', () => {
-  const f = mkfix();
-  touch(path.join(f.project, '.gitignore'), '*.local.*\n');
+  touch(path.join(f.project, '.gitignore'), 'conf/config.yaml\napp.local.json\nmysetting.yaml\nrandomfile.txt\n');
+  touch(path.join(f.project, 'conf/config.yaml'), 'k: v');
   touch(path.join(f.project, 'app.local.json'), '{}');
-  touch(path.join(f.project, 'db.local.yaml'), 'k: v');
+  touch(path.join(f.project, 'mysetting.yaml'), '');
+  touch(path.join(f.project, 'randomfile.txt'), '');
   const cands = planEnvCopies(f.project);
-  assert.ok(cands.includes('app.local.json'), `应命中 app.local.json`);
-  assert.ok(cands.includes('db.local.yaml'), `应命中 db.local.yaml`);
+  // 全列, agent 决定
+  assert.ok(cands.includes('conf/config.yaml'), 'conf/config.yaml 候选');
+  assert.ok(cands.includes('app.local.json'), 'app.local.json 候选');
+  assert.ok(cands.includes('mysetting.yaml'), 'mysetting.yaml 候选');
+  assert.ok(cands.includes('randomfile.txt'), 'randomfile.txt 也候选 (agent 看名字 + 上下文判断, 脚本不替它判)');
   f.cleanup();
 });
 
-test('case 2.5 — v3.6.2+ 扩 pattern 反例: config.production.yaml / nginx.conf / appconfig.txt 不误命中', () => {
+test('case 2.4 — SKIP_LINES: node_modules/ / .idea/ / .vscode/ / .DS_Store / Thumbs.db 不进候选 (已由其他 plan 处理或不需 cp)', () => {
   const f = mkfix();
-  touch(path.join(f.project, '.gitignore'), 'config.production.yaml\nnginx.conf\nappconfig.txt\n');
-  touch(path.join(f.project, 'config.production.yaml'), '');
-  touch(path.join(f.project, 'nginx.conf'), '');
-  touch(path.join(f.project, 'appconfig.txt'), '');
+  touch(path.join(f.project, '.gitignore'), 'node_modules/\n.idea/\n.vscode/\n.DS_Store\nThumbs.db\nfoo.conf\n');
+  mkdir(path.join(f.project, 'node_modules'));
+  touch(path.join(f.project, 'node_modules/x.js'), '');
+  touch(path.join(f.project, '.DS_Store'), '');
+  touch(path.join(f.project, 'foo.conf'), '');
   const cands = planEnvCopies(f.project);
-  assert.deepEqual(cands, [], `非 local/conf-dir/.env 风格不该命中, 实际: ${JSON.stringify(cands)}`);
+  assert.ok(!cands.some(c => c.startsWith('node_modules')), 'node_modules/ 跳过');
+  assert.ok(!cands.includes('.DS_Store'), '.DS_Store 跳过');
+  assert.ok(cands.includes('foo.conf'), 'foo.conf 进候选 (普通文件由 agent 判断)');
+  f.cleanup();
+});
+
+test('case 2.5 — safety: 跳过目录 + 跳过 >5MB 文件 (避免 cp cache/data/dump)', () => {
+  const f = mkfix();
+  touch(path.join(f.project, '.gitignore'), 'data/\nbigfile\nsmallconfig.yaml\n');
+  mkdir(path.join(f.project, 'data'));
+  touch(path.join(f.project, 'data/users.sqlite'), '');
+  fs.writeFileSync(path.join(f.project, 'bigfile'), Buffer.alloc(6 * 1024 * 1024));
+  touch(path.join(f.project, 'smallconfig.yaml'), 'k: v');
+  const cands = planEnvCopies(f.project);
+  assert.ok(!cands.includes('data'), '目录跳过');
+  assert.ok(!cands.includes('bigfile'), '>5MB 文件跳过 (safety)');
+  assert.ok(cands.includes('smallconfig.yaml'), '小文件正常候选');
+  f.cleanup();
+});
+
+test('case 2.6 — setup() 不再自动 cp env, envCandidates 列在 report + needsAttention 提示 agent 主导', () => {
+  const f = mkfix();
+  touch(path.join(f.project, '.gitignore'), 'conf/config.yaml\n.env.local\n');
+  touch(path.join(f.project, 'conf/config.yaml'), 'k: v');
+  touch(path.join(f.project, '.env.local'), 'X=1');
+  const rec = recorder();
+  const report = setup({ projectRoot: f.project, worktreePath: f.worktree, dryRun: true }, { run: rec.run });
+  assert.deepEqual(report.envCandidates.sort(), ['.env.local', 'conf/config.yaml'].sort(), 'envCandidates 应含两个 gitignored 文件');
+  assert.ok(
+    !report.plannedCommands.some(c => c[0] === 'cp' && c.join(' ').includes('.env.local')),
+    '.env.local 不该在 plannedCommands (agent 判断后显式 cp)',
+  );
+  assert.ok(
+    report.needsAttention.some(s => /envCandidates|agent.*判断/i.test(s)),
+    `needsAttention 应含 agent 主导提示, 实际: ${JSON.stringify(report.needsAttention)}`,
+  );
   f.cleanup();
 });
 

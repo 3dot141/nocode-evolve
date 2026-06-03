@@ -39,19 +39,17 @@ export function detectPkgManager(worktreePath) {
 
 // 锚定 pattern: 只命中 .env / .env.* / config.local.* / *secret* 的文件名,
 // 不用裸 /\.env/ 子串 (会误命中 app.environment 之类)。
-// v3.6.2 起扩展: 覆盖 conf/<name>.{yaml,json,toml,ini,properties} 和 *.local.<ext>
-// 用户案例: fx-data-agents 用 packages/server/conf/config.yaml (gitignored 不是 .env), 旧 pattern 漏 cp.
-const ENV_PATTERNS = [
-  /(^|\/)\.env(\.[^/]+)?$/,                                     // .env, .env.*
-  /(^|\/)config\.local\./,                                      // config.local.*
-  /(^|\/)config\.(ya?ml|json|toml|ini|properties)$/i,           // config.yaml/yml/json/toml/ini/properties (v3.6.2+)
-  /(^|\/)conf\/[^/]+\.(ya?ml|json|toml|ini|properties)$/i,      // conf/<name>.<ext> 目录式 (v3.6.2+)
-  /(^|\/)[^/]+\.local\.[^/]+$/,                                 // <name>.local.<ext> 通用 local 配置 (v3.6.2+)
-  /secret/i,
-];
-const ENV_KEYWORD = /env|config|conf\/|\.local\.|secret/i; // 粗筛 .gitignore 行 (v3.6.2+ 扩 config / conf\/ / .local.)
+// v3.6.3+ 改人机分工: 脚本不再写死 local-config 启发式 (no POSITIVE/NEGATIVE keyword list), 列**全部 gitignored 文件**作 candidates,
+// 由 **agent 用项目上下文 (config 加载方式 / framework 惯例) 判断** 哪些是 local config 需 cp, 显式跑 cp 命令.
+// 脚本仅做 3 个 safety filter:
+//   1) 跳过明显的依赖/IDE/OS gitignore (node_modules/, .idea/, .vscode/, .DS_Store, Thumbs.db) — 已被 planIdeCopies/planNodeModules 处理或不需 cp
+//   2) 跳过目录 (避免 cp 整个 cache/data 目录)
+//   3) 跳过 >5MB 文件 (本地 dump/snapshot/db, agent 不需要)
+const TOO_LARGE = 5 * 1024 * 1024;
+const SKIP_LINES = /^(node_modules\/?|\.idea\/?|\.vscode\/?|\.DS_Store|Thumbs\.db)$/;
 
 // 扫 .gitignore → 粗筛 env-ish 行 → glob 展开实际文件 → 锚定精筛文件名。
+// 列所有 gitignored 候选文件 — 不做 local-config 判断 (留给 agent), 只 safety filter (目录/大文件/明显 deps).
 export function planEnvCopies(projectRoot) {
   const out = new Set();
   for (const gi of findGitignores(projectRoot)) {
@@ -61,10 +59,13 @@ export function planEnvCopies(projectRoot) {
     for (let line of lines) {
       line = line.trim();
       if (!line || line.startsWith('#')) continue;
-      if (!ENV_KEYWORD.test(line)) continue; // 粗筛
+      if (SKIP_LINES.test(line)) continue;       // 明显 deps/IDE/OS, 不进候选
       for (const f of expandGlob(baseDir, line)) {
-        const base = path.basename(f);
-        if (ENV_PATTERNS.some((p) => p.test(base))) out.add(path.relative(projectRoot, f));
+        let st;
+        try { st = fs.statSync(f); } catch { continue; }   // 文件不存在跳过
+        if (st.isDirectory()) continue;                     // 跳过目录
+        if (st.size > TOO_LARGE) continue;                  // 跳过 >5MB 文件 (safety)
+        out.add(path.relative(projectRoot, f));
       }
     }
   }
@@ -117,30 +118,33 @@ export function setup(opts, deps = {}) {
   const run = deps.run || defaultRun;
   const { projectRoot, worktreePath, dryRun = false, pkgManager = null, skipInstall = false } = opts;
 
-  const env = planEnvCopies(projectRoot);
+  const envCandidates = planEnvCopies(projectRoot);
   const ide = planIdeCopies(projectRoot, worktreePath);
   const nm = planNodeModules(projectRoot, worktreePath);
   const link = planSymlink(projectRoot, worktreePath);
 
   const plannedCommands = [];
-  for (const rel of env) plannedCommands.push(['cp', path.join(projectRoot, rel), path.join(worktreePath, rel)]);
+  // v3.6.3+ env 候选不入 plannedCommands - 由 agent 看 envCandidates 自己判断 + 显式 cp
   for (const s of ide) plannedCommands.push(['cp', '-Rc', s.src, s.dst]);
   for (const s of nm) plannedCommands.push(['cp', '-Rc', s.src, s.dst]);
   if (link) plannedCommands.push(['ln', '-s', link.target, link.link]);
 
+  const needsAttention = [];
+  if (envCandidates.length > 0) {
+    needsAttention.push(
+      `envCandidates: ${envCandidates.length} 个 gitignored 文件候选 — agent 用项目上下文 (config 加载方式 / framework 惯例) 判断哪些是 local 配置需 cp, 显式跑 cp <projectRoot>/<rel> <worktreePath>/<rel>. 脚本不自动 cp 避免误 cp build/cache/data.`,
+    );
+  }
+
   const report = {
     verb: 'setup', worktreePath,
-    copied: { env: [], ide: [], nodeModules: [] },
+    envCandidates,
+    copied: { ide: [], nodeModules: [] },
     symlinked: [], install: { status: 'skipped' },
-    gitStatusClean: null, needsAttention: [], plannedCommands,
+    gitStatusClean: null, needsAttention, plannedCommands,
   };
-  if (dryRun) return report; // 计划层结果, 不碰 FS
+  if (dryRun) return report;
 
-  for (const rel of env) {
-    const src = path.join(projectRoot, rel), dst = path.join(worktreePath, rel);
-    try { fs.mkdirSync(path.dirname(dst), { recursive: true }); run(['cp', src, dst]); report.copied.env.push(rel); }
-    catch (e) { report.needsAttention.push(`cp env 失败 ${rel}: ${e.message}`); }
-  }
   for (const s of ide) {
     try { copyWithFallback(s.src, s.dst, run); report.copied.ide.push(s.rel); }
     catch (e) { report.needsAttention.push(`cp IDE 失败 ${s.rel}: ${e.message}`); }
@@ -153,6 +157,7 @@ export function setup(opts, deps = {}) {
     try { run(['ln', '-s', link.target, link.link]); report.symlinked.push('.agents-personal'); }
     catch (e) { report.needsAttention.push(`symlink .agents-personal 失败: ${e.message}`); }
   }
+  // v3.6.3+ env 由 agent 判断 + 显式 cp (见 envCandidates 字段 + needsAttention 提示)
 
   // 增量 install: 有 node_modules 才跑; 探测不到包管理器不擅自 install
   if (skipInstall) {

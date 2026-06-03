@@ -183,7 +183,13 @@ cd / EnterWorktree 是后续 cp env / link personal / setup / baseline 链的前
 
 ## Worktree 创建后：调 worktree-setup.mjs 补齐 gitignored 运行物
 
-`git worktree add` 出来的是**干净** checkout——只复制 tracked 内容，主仓本地 gitignored 的运行物**不会**带过来。这些**确定性补齐步骤**（cp env/config、cp IDE、cp node_modules + 增量 install、symlink `.agents-personal`、`git status` clean 校验）已收进 `${CLAUDE_PLUGIN_ROOT}/scripts/worktree-setup.mjs`——EnterWorktree 之后调一次即可，不必再逐段贴 bash（变量沿用本文「路径推导」段的 `project_root` / `worktree_path`）：
+`git worktree add` 出来的是**干净** checkout——只复制 tracked 内容，主仓本地 gitignored 的运行物**不会**带过来。
+
+**人机分工 (v3.6.3+)**：
+- **脚本确定性自动 cp**：IDE (`.vscode` / `.idea`) / `node_modules` + 增量 install / symlink `.agents-personal` / `git status` clean 校验
+- **agent 判断 + 显式 cp**：env / config / 项目本地 local 配置 — 脚本不再写死 keyword 启发式 (避免漏 cp 项目特异命名如 `conf/config.yaml`)，列**全部 gitignored 文件作 candidates** (safety filter 只跳目录/>5MB/明显 deps)，agent 用项目上下文 (config 加载方式 / framework 惯例) 自己判断哪些 cp，显式跑 `cp`
+
+EnterWorktree 之后调一次脚本即可 (变量沿用本文「路径推导」段，支持 `--key=value` 或 `--key value`)：
 
 ```bash
 node "${CLAUDE_PLUGIN_ROOT}/scripts/worktree-setup.mjs" setup \
@@ -191,12 +197,16 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/worktree-setup.mjs" setup \
 # 可选: --pkg-manager npm|pnpm|yarn (不传按 lock sniff) / --skip-install / --dry-run (只输出计划不执行)
 ```
 
-脚本输出 JSON 报告；agent 约定**只看 `needsAttention[]`**——非空才介入，空则继续工作：
+脚本输出 JSON 报告；agent 检查 **`envCandidates[]` + `needsAttention[]`**——前者要 agent 判断 cp 哪些，后者非空才介入：
 
-- `copied` / `symlinked`：实际 cp 的 env/IDE/node_modules 与 symlink 的 `.agents-personal`
+- `envCandidates[]` (v3.6.3+)：**agent 主导** — 列出 .gitignore 提到 + 实际存在 + 非目录 + ≤5MB 的全部文件。agent 用项目上下文判：
+  - **应 cp**：`.env*` / `*.local.*` / `conf/config.yaml` / `secrets.json` 等 local 配置 / 凭证 → 显式 `cp <projectRoot>/<rel> <worktreePath>/<rel>`
+  - **不该 cp**：build/cache 残留 / 运行时 data / 临时文件 → skip
+  - 拿不准时优先 cp (cp 多一点 ≪ 漏 cp 关键导致 worktree 跑不起来)
+- `copied` / `symlinked`：实际 cp 的 IDE/node_modules 与 symlink 的 `.agents-personal` (env 不再含 — 见 envCandidates)
 - `install.status`：`ran`(增量 install 跑了) / `skipped`(`--skip-install` 或探测不到包管理器) / `no-node-modules`
 - `gitStatusClean`：false 时 offenders 也进 `needsAttention`（cp 物意外进 tracking）
-- `needsAttention[]`：cp 失败 / status 不 clean / 未识别包管理器 / env schema 可能不兼容——逐条人判
+- `needsAttention[]`：cp 失败 / status 不 clean / 未识别包管理器 / **envCandidates 非空时提示 agent 主导判断**——逐条人判
 
 脚本只做**幂等、可逆**的补齐（`[ -e ]` 跳过已存在；遇分歧只报告不擅自决定）。下面四节讲**为什么这么补**——脚本是"怎么做"，规则正文留"为什么"。
 
@@ -207,7 +217,8 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/worktree-setup.mjs" setup \
 主仓本地 gitignored 的 `.env*` / `config.local.*` / secret / API token 等，worktree 跑依赖它们的命令前要补。用 **cp 独立副本**而非 symlink：worktree 改 env schema **不该回污主仓**，cp 出来各自独立。
 
 - **触发**：worktree 内跑命令报 `env var missing` / config 加载失败；或准备跑 dev/test/build/benchmark 前。
-- **脚本探测**：扫 `.gitignore` 用**锚定** pattern 匹配 `.env`/`.env.*`/`config.local.*`/`secret`（不用裸子串、避免误命中 `*.environment`），回显候选到 `copied.env` 供复核。
+- **脚本职责 (v3.6.3+)**：扫 `.gitignore` 列**所有 gitignored 文件**到 `envCandidates[]` (safety filter：跳目录/>5MB/明显 deps 如 node_modules/.idea/.vscode/.DS_Store)。**不自动 cp**，不再 hardcoded keyword 启发式 — 避免漏 cp 项目特异命名 (如 `conf/config.yaml` / 自定义 secret store)。
+- **agent 职责**：看 `envCandidates[]`，用项目上下文 (config 加载入口的 `parseYaml(readFileSync(...))` / framework 惯例 / 文件名语义) 判定哪些是 local 配置需 cp，显式跑 `cp`。拿不准时优先 cp (worktree 多 1-2MB 文件 ≪ 跑不起来调试)。
 - **schema 不兼容**：worktree 代码与主仓 env schema 对不上时，改 worktree 副本即可，**不动主仓**（除非用户授权）——worktree 是隔离工作区。
 
 #### env cp 的不要
