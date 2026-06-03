@@ -4,7 +4,7 @@
 # 用法：
 #   bash check-preflight.sh <path-to-rendered.html>
 #
-# 检查项（来自 SKILL.md「Pre-Flight Check」节里能机器验证的部分）：
+# 检查项（来自 RENDERING.md「Pre-Flight Check」节里能机器验证的部分）：
 #   1. 字体黑名单（Inter / Roboto / Arial / Space Grotesk）
 #   2. 文件大小 ≤ 200KB
 #   3. 5 必有交互的关键标识

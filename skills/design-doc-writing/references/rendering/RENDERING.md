@@ -120,6 +120,15 @@ toggleBtn.addEventListener('click', () => {
 
 > 渲染时如果选了 mode-locked preset 的 primary（如 linear-precision dark / tufte-essay light），切换到 secondary mode 时 preset 应保证"可读、不灾难"，**不强求媲美 primary**。
 
+### Page Theme Lock（同页主题不混用）
+
+> 借鉴 taste-skill §4.11 —— 整页是一个 theme，section 不互相 invert。
+
+- 整页是 dark mode 时，**所有 section 都是 dark mode**。不允许在 dark section 之间夹一段 light-mode-warm-paper section（反之亦然）—— 读者不该感觉自己中途走进了另一个网站。
+- 例外（仅 1 次）：design-doc 内**显式**用"Color Block Story"作 deliberate composition（如分章节强调）时，允许**最多 1 次**完整主题翻转 + 强 transition；不允许随机 alternation。
+- **默认行为**：在 page level 选 light / dark / auto（按 `localStorage → 时间` 两步走）并锁定。同一 theme 家族的 section 背景 tint 微调（`bg-zinc-950` 紧邻 `bg-zinc-900`）OK；在 `bg-zinc-950` 页中间翻到 `bg-amber-50` = broken.
+- design-doc 在 preset 上锁 `[data-theme="light"]` / `[data-theme="dark"]` 后**不要给某些 section 单独覆盖**——单一 component（如 quote-block / pseudocode-block）的"反色 accent"使用同 theme family 内的 token 实现，不切换 theme attribute.
+
 ## preset 与风格决策（写 CSS 前先想这些）
 
 **核心准则：preset 是天花板。** 选了 preset 就老老实实抄它的 color / typography / component / shadow，不要"觉得自己审美更好"就乱改——所有"凭空发挥"的产物会回到平庸的浅蓝/灰白。本节是这一准则的**唯一规范出处**。
@@ -308,30 +317,61 @@ p:has(code + code + code) code {
 
 宽屏渲染下图填充段落两侧 break-out 空间——段落保持 90ch 不动，**视觉空间由图占据**。
 
-## MOTION_INTENSITY Dial（可选调档）
+## THREE DIALS（叠在 preset 之上的调档）
 
-> 借鉴 taste-skill 的 dial 思路——preset 给视觉骨架，dial 调强度。preset 的 light/dark token 与 typography 不受 dial 影响，dial 只决定**动效层级**。
+> 借鉴 taste-skill §1 三 Dial——preset 给视觉骨架，三个 dial 各自调一个独立维度。preset 的 light/dark token 与 typography 不受 dial 影响。
 
-**默认 5**（中等）。用户在 prompt 里说"动效强一点 / 弱一点 / 静态 / 打印友好 / 演讲版"时上调或下调：
+| Dial | 默认 | 范围 | 控制什么 |
+|---|---|---|---|
+| **`DESIGN_VARIANCE`** | 5 | 1 = 极简对称（Tufte essay 通篇衬线一种 block 样式）/ 10 = 多样性高（agency wild 多种 block + 不规则布局） | 整页布局变化度：单栏一致 vs 多种 block 形态 |
+| **`MOTION_INTENSITY`** | 5 | 1 = 静态 / 10 = cinematic（spring physics + perpetual） | 动效层级 |
+| **`VISUAL_DENSITY`** | 4 | 1 = airy 留白型（mintlify reading）/ 10 = packed dashboard 信息密集 | 信息密度 / 留白比例 |
+
+**Baseline 默认：`5 / 5 / 4`**。三个 dial 互相独立 —— 一个低 motion + 高 density 是合法的（eg. ADR 静态高信息密度）；高 motion + 低 density 也合法（演讲版 airy）。
+
+### Dial 推断（design read → dial 值）
+
+| 文档信号 | VARIANCE | MOTION | DENSITY |
+|---|---|---|---|
+| `*-decision` / ADR / 严肃 RFC | 3-4 | 2-3 | 4-5 |
+| `*-refactor` / `implementation-*` / 系统级重构提案 | 5 | 4 | 4 |
+| `*-feature` / 通用 design-doc | 6 | 5 | 4 |
+| `*-bugfix` / 故障复盘 | 5 | 4 | 5 |
+| 长篇 thinking piece / Tufte | 5 | 2 | 3 |
+| 矩阵驱动（评测体系 / 路由表 / 状态机） | 6 | 5 | 5 |
+| marketing-ish / 外部提案 / 演讲版 | 8 | 7-8 | 3 |
+
+### 触发判定（按优先级取首项）
+
+1. 用户 prompt 明确档位词 → 直接用：「安静 / 克制 / 打印 / 静态」→ MOTION 2；「炫 / 演讲版 / 动感」→ MOTION 8；「dense / packed / dashboard」→ DENSITY 7；「airy / 留白」→ DENSITY 2；「artsy / wild / 多样」→ VARIANCE 8；「symmetric / Tufte / 对称」→ VARIANCE 3
+2. 文档 frontmatter 暗示场景 → 按上方 Dial 推断表
+3. 都没说 → `5 / 5 / 4` baseline
+
+### MOTION_INTENSITY 具体落地（其他 dial 类推）
 
 | 档位 | 含义 | 落地到 motion.md / background.md recipe |
 |---|---|---|
-| **1-3 静态** | 只 hover / active，几乎无 page-load 动画 | motion.md recipe **全部跳过**；不嵌 motion library；background.md 只用 static recipe（noise / dot grid），跳过 gradient mesh 等持续动画 |
-| **4-7（默认 5）** | 标准 page-load staggered reveal + scroll-trigger 选 1-2 个 | motion.md 挑 staggered reveal + details 平滑展开 + 1 个 hover surprise；不上 perpetual loop |
-| **8-10 强烈** | 全 recipe + perpetual micro-interactions | motion.md 全 recipe + pulse / float / shimmer 等无限动效；hover 用 spring physics；scroll-trigger 多处触发 |
+| **MOTION 1-3 静态** | 只 hover / active，几乎无 page-load 动画 | motion.md recipe **全部跳过**；不嵌 motion library；background.md 只用 static recipe（noise / dot grid），跳过 gradient mesh 等持续动画 |
+| **MOTION 4-7（默认 5）** | 标准 page-load staggered reveal + scroll-trigger 选 1-2 个 | motion.md 挑 staggered reveal + details 平滑展开 + 1 个 hover surprise；不上 perpetual loop |
+| **MOTION 8-10 强烈** | 全 recipe + perpetual micro-interactions | motion.md 全 recipe + pulse / float / shimmer 等无限动效；hover 用 spring physics；scroll-trigger 多处触发 |
 
-**触发判定**（按优先级取首项）：
-1. 用户 prompt 明确档位词 → 直接用：「安静 / 克制 / 打印 / 静态」→ 2；「炫 / 演讲版 / 动感」→ 8
-2. 文档 frontmatter 暗示场景：
-   - `*-decision` / ADR → 3
-   - `*-refactor` / `implementation-*` / 系统级重构提案 → 4
-   - `*-feature` / 通用 design-doc → 5
-   - `*-bugfix` / 故障复盘 → 4
-   - 长篇 thinking piece / Tufte → 2（dial-low 也保留 hover surprise）
-   - marketing-ish 演示 / 外部提案 → 7
-3. 都没说 → 5
+### Motion 必须被 motivate（强制规则）
 
-> ⚠️ Dial 是**叠在 preset 之上的乘数**，不替换 preset 的视觉决策。Dial 只影响"动多少"，不影响"长什么样"。
+> 借鉴 taste-skill §5 "MOTION MUST BE MOTIVATED" —— 不为动效而动效。
+
+加任何动画前问一句："这个动画在传达什么?"
+
+**合法答案**：
+- 层级（吸引读者注意到右边的内容）
+- 叙事（按情节顺序揭示内容）
+- 反馈（确认用户动作）
+- 状态转换（显示状态变化）
+
+**不合法答案**：「看起来酷」「GSAP 反正引了用一下」。每个 ScrollTrigger / marquee / pin section 都需要一句话能讲清的 reason。讲不清就**删动画**。
+
+⚠️ **"Motion 声称, motion 必现"**：如果 `MOTION_INTENSITY > 4`，页面必须**真的有运动**（hero 入场 / scroll-reveal / hover physics 至少一项）。静态页面声称 `MOTION_INTENSITY 7` = broken；同理无法 ship 工作动效就**降 dial 到 3 + ship 干净静态页**，不要半残动画。
+
+> ⚠️ Dial 是**叠在 preset 之上的乘数**，不替换 preset 的视觉决策。Dial 只影响"动多少 / 多紧凑 / 多变化"，不影响"长什么样"。
 
 ## Performance Guardrails（强制规则）
 
@@ -341,6 +381,11 @@ p:has(code + code + code) code {
 - **Mobile Safari Viewport**：full-height 区块用 `min-height: 100dvh` 而非 `100vh`，避免 iOS 工具栏伸缩抖动；hero 区也用 `dvh`
 - **Grain / Noise 滤镜挂载**：grain / noise overlay **只能**挂在 `position: fixed; inset: 0; pointer-events: none` 的伪元素或独立层上；**严禁**挂在滚动容器内部（GPU 持续重绘 = 移动端卡死）
 - **Scroll 监听禁用 raw**：`window.addEventListener('scroll', ...)` 主线程阻塞——用 `IntersectionObserver`（视区进入触发）或 CSS `@supports (animation-timeline: scroll())`（原生 scroll-tied 动画）
+- **Forbidden animation patterns**（借鉴 taste-skill §5.D）：
+  - `window.scrollY` 进 React state 计算 scroll progress —— 每帧重渲染
+  - `requestAnimationFrame` loop 触 React state —— 用 motion values 不进 state
+  - Layout transitions 包静态内容 "for safety" —— 增加 measurement 成本
+  - Staggered orchestration 跨 Client Component tree —— 父子必须同 tree（parent variants + children）
 - **Z-Index 节制**：z-index 只为 sticky nav / modal / toast / 浮动 floating button 等系统层级保留；正文严禁随意散布 `z-50` / `z-10`
 - **CDN 失败兜底**：Google Fonts / highlight.js CDN 必须有 system 字体栈 fallback（写在 `font-family` 完整 fallback 链）；CDN 挂掉时核心可读不能崩
 - **文件大小 ≤ 200KB**（与「输出契约」节的同名约束指向同一规则；以此为准）
@@ -380,6 +425,18 @@ document.querySelectorAll('h2, h3').forEach(h => observer.observe(h));
 
 1. **Read** 输入 markdown 全文
 2. **理解结构**：frontmatter（type / topic / date / author / status）+ 章节布局 + 关键 cross-cutting 节（Alternatives / Failure modes / Performance / Migration）
+3. **Design Read — 一句话锚定调子**（借鉴 taste-skill §0 BRIEF INFERENCE）：动手前用一句话锚定本文档的 vibe / audience / preset 倾向，**不让模型默认套 generic 浅蓝/灰白 + AI-purple gradient**.
+
+  格式：*"Reading this as: <doc-type> for <audience>, with a <vibe> language, leaning toward <preset> + <motion 倾向>."*
+
+  例：
+  - *"Reading this as: implementation-refactor design-doc for engineering team, with a sober language, leaning toward vercel-geist + low motion."*
+  - *"Reading this as: PRD for product stakeholders, with an editorial language, leaning toward mintlify-reading + medium motion."*
+  - *"Reading this as: 评测体系矩阵 design-doc for AI infra team, with a dense / pipeline language, leaning toward linear-precision + medium motion."*
+
+  模糊时**问 1 个**最关键 clarifying 问题（不允许 multi-question dump）——eg. "团队 review 还是对外提案?" / "更近 Linear-clean 还是 Awwwards-experimental?"。能确信推断**不要问**，直接 declare Design Read 并进 Phase 2。
+
+  > **反 default 纪律**（taste-skill §0.D 借鉴）：拒绝默认套 AI-purple gradient / 居中 hero on dark mesh / 三等分 feature card / generic glassmorphism / Inter + slate-900。这是 LLM 默认，**主动 reach past**。
 
 ### Phase 2 — 决策（不写 CSS）
 
@@ -388,7 +445,7 @@ document.querySelectorAll('h2, h3').forEach(h => observer.observe(h));
 5. **选 preset 骨架**：按 Vibe 节「选 preset」决策表选一个 preset
 6. **Read 选中的 preset**：`references/presets/<name>.md` 全文——重点 **CSS Cheatsheet**（drop-in CSS）+ Map to Design Doc Components + 5 必有交互
 7. **字体 sanity check**：若 preset 默认字体 ∈ NEVER 列表 → 查 `aesthetics.md`「例外」表——在 → 保留；不在 → 按候选表替换（如 mintlify 已切到 Bricolage Grotesque）
-8. **确定 MOTION_INTENSITY 档位**（1-10，默认 5）—— 按「MOTION_INTENSITY Dial」节触发判定决定，**显式写下数字**，后续 Phase 3 引用
+8. **确定 MOTION_INTENSITY 档位**（1-10，默认 5）—— 按「THREE DIALS」(MOTION_INTENSITY 子档)节触发判定决定，**显式写下数字**，后续 Phase 3 引用
 9. **局部决策清单**：
    - accent 倾向（依文档 type，见 Vibe 节「调 accent」）
    - 哪些章节适合 SVG 图（架构 / 数据流 / 决策树）

@@ -138,9 +138,9 @@ design-doc 默认 layout = 两栏 + 居中阅读区——这是 **AI slop 安全
 
 **对称是 default，不对称才是 design**：把 TOC / metadata / 章节标号其中一个打破对称。
 
-## Motion（详见 `motion.md` + SKILL.md「MOTION_INTENSITY Dial」）
+## Motion（详见 `motion.md` + RENDERING.md「THREE DIALS」(MOTION_INTENSITY 子档)）
 
-> ⚠️ **本节的具体 recipe 选取已由 dial 决定**——见 `SKILL.md` 的「MOTION_INTENSITY Dial（可选调档）」节。本节仅保留**全档位通用**的硬规则。
+> ⚠️ **本节的具体 recipe 选取已由 dial 决定**——见 `SKILL.md` 的「THREE DIALS（叠在 preset 之上的调档）」节。本节仅保留**全档位通用**的硬规则。
 
 通用硬规则（任何 dial 档位都成立）：
 

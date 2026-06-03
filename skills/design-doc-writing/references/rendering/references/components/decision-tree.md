@@ -38,7 +38,7 @@ graph TD
 </figure>
 ```
 
-> Mermaid CDN：`<script type="module" src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs"></script>` 后调用 `mermaid.initialize({startOnLoad: true, theme: 'base', themeVariables: {...}})` —— 详见 SKILL.md「推荐 CDN 物料表」。
+> Mermaid CDN：`<script type="module" src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs"></script>` 后调用 `mermaid.initialize({startOnLoad: true, theme: 'base', themeVariables: {...}})` —— 详见 RENDERING.md「推荐 CDN 物料表」。
 
 ## HTML（fallback：inline SVG）
 

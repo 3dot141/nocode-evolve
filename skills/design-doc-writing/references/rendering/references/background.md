@@ -11,7 +11,7 @@
 
 ## Dial 映射表（哪个 recipe 在哪一档触发）
 
-> Dial 见 SKILL.md「MOTION_INTENSITY Dial」。静态背景与动效无关，但有 1-2 个 recipe（gradient mesh、CRT scanline）含动画版本——这些受 dial 控制。
+> Dial 见 RENDERING.md「THREE DIALS」(MOTION_INTENSITY 子档)。静态背景与动效无关，但有 1-2 个 recipe（gradient mesh、CRT scanline）含动画版本——这些受 dial 控制。
 
 | Recipe | 是否含动画 | dial 1-3 静态 | dial 4-7 标准 | dial 8-10 强烈 |
 |---|---|:---:|:---:|:---:|

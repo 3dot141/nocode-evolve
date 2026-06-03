@@ -11,7 +11,7 @@
 
 ## Dial 映射表（哪个 recipe 在哪一档触发）
 
-> Dial 是叠在 preset 之上的强度旋钮，1-10；详见 SKILL.md「MOTION_INTENSITY Dial」。本表列出每个 recipe 在哪个档位激活——**dial 之外的 recipe 不要用**（不是"可选"而是"禁用"）。
+> Dial 是叠在 preset 之上的强度旋钮，1-10；详见 RENDERING.md「THREE DIALS」(MOTION_INTENSITY 子档)。本表列出每个 recipe 在哪个档位激活——**dial 之外的 recipe 不要用**（不是"可选"而是"禁用"）。
 
 | Recipe | dial 1-3 静态 | dial 4-7（默认 5）标准 | dial 8-10 强烈 |
 |---|:---:|:---:|:---:|
