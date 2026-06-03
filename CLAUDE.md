@@ -28,9 +28,9 @@
 
 ### 3. rule 改动走 manifest 单源
 
-`model/agent-catalog.md`、`hooks/triggers.json`、`hooks/pretooluse-rules.json` 已是**生成物，禁手改**。增删改 rule：
+`model/agent-catalog-*.md`（catalog 分片）、`hooks/pretooluse-rules.json` 已是**生成物，禁手改**。增删改 rule：
 
 - 改 `rules/manifest.json`（唯一真值源：buckets + rules，每条 rule 含 bucket / triggers / summary / guard / pretooluse）
-- 跑 `node hooks/generate.mjs` 重新生成三个产物
+- 跑 `node hooks/generate.mjs` 重新生成生成物（catalog 分片 + pretooluse-rules）
 - 一致性由 SessionStart 的 `node hooks/generate.mjs --check` 兜底报警（漂移只 warn 不阻断 session）
 - 测试：`node --test 'hooks/*.test.mjs'`

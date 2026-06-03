@@ -1,5 +1,5 @@
 {
-  "$comment": "单一真值源。改 rule 改这里, 跑 node hooks/generate.mjs 重新生成 catalog/triggers/pretooluse-rules。禁手改生成物。",
+  "$comment": "单一真值源。改 rule 改这里, 跑 node hooks/generate.mjs 重新生成 catalog 分片 + pretooluse-rules。禁手改生成物。",
   "buckets": [
     { "id": "git-lifecycle", "title": "Git 生命周期", "trigger_summary": "任何把本地改动推进到分支 / 远端协作状态的请求 (提 PR / push / 合并 / 收尾 / worktree)", "negatives": ["纯只读查询: 列 PR / 看分支 / 看 status / 看 log"] },
     { "id": "review", "title": "评审", "trigger_summary": "对已有改动或设计求评审 / 挑错 / 独立验证 / 第二实现", "negatives": ["纯执行: 直接改代码而未求评审"] },

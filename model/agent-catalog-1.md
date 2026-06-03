@@ -1,7 +1,7 @@
 # agent-catalog — nocode-evolve 插件级规则路由 (常驻完整路由)
 
 > 本文件由 `hooks/generate.mjs` 从 `rules/manifest.json` 生成. **禁手改**——改 rule 改 manifest 后重新生成.
-> 完整路由常驻 context (不再用 route skill 中转). 超 SHARD_LIMIT 自动切片 agent-catalog-2.md..
+> 完整路由常驻 context (不再用 route skill 中转). 超 SHARD_LIMIT 自动切片 agent-catalog-2.md 等.
 
 ## 读取时机
 

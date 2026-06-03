@@ -351,7 +351,7 @@ slug 冲突 → **不直接 abort，转整合判断**：slug 已存在往往说�
 
 ### Step 2: 改 `rules/manifest.json`（单源）登记新 rule + 重新生成
 
-新架构下 `rules/manifest.json` 是唯一真值源；`model/agent-catalog.md`（精简桶路由）与 `model/agent-catalog-*.md (catalog 分片, 完整路由)都是 `node hooks/generate.mjs` 的**生成物**——**禁手改生成物**，只改 manifest 再重新生成。manifest 没登记就等于 agent 触发不到（sanity check 会 stderr 警告）。
+新架构下 `rules/manifest.json` 是唯一真值源；`model/agent-catalog-*.md`（catalog 分片，完整路由常驻）是 `node hooks/generate.mjs` 的**生成物**——**禁手改生成物**，只改 manifest 再重新生成。manifest 没登记就等于 agent 触发不到（sanity check 会 stderr 警告）。
 
 **实施策略（具体到 Edit 工具调用）**：
 
