@@ -1,51 +1,77 @@
-# git-freshness — 设计 / 方案动作前确保基于最新远程代码
+# git-freshness — 设计 / 方案 / 代码搜索前确保基于最新远程
 
-设计 / 方案 / 选型 / 重构若**建立在过时代码上** → 方案与现状脱节、落地时返工。动手设计前先确保当前分支 == 远程最新。
+设计 / 方案 / 选型 / 重构 / **多文件代码搜索做方案分析**, 若建立在过时代码上 → 方案与现状脱节, 落地返工 / 搜索结果可能引用已删 / 重构代码. 动手前先用 `scripts/freshness-check.mjs` 一句拿差距, 必要时 gate 用户.
 
-## 与 `rule-git-worktree` 的边界（防重叠）
-
-两条 rule 都做"fetch + 基于最新",但**场景互斥，不重复触发**：
+## 与 `rule-git-worktree` 的边界 (防重叠)
 
 | 场景 | 谁负责 |
 |---|---|
-| **走 worktree 的设计**（`rule-superpowers-brainstorming` step1 开 worktree） | `rule-git-worktree` —— 建分支前已 `fetch` + 基于 `@{u}` 最新建,本 rule **不触发** |
-| **不走 worktree / 就地在当前分支设计** | **本 rule 接管** —— 当前分支 fetch + 拉到最新 |
+| **开 worktree 那刻** (`git worktree add` 前 fetch + 基于 `@{u}` 最新建分支) | `rule-git-worktree` — 本 rule **不触发** |
+| **就地在当前分支设计** (不走 worktree) | **本 rule** — 当前分支 vs upstream / origin/HEAD freshness |
+| **worktree 内长期工作 / 多次代码搜索 / 设计** (worktree 已开, 内部第二次以上) | **本 rule** (worktree 内 base 是它的 upstream, 可能 `origin/release/x` 非 main; `rule-git-worktree` 的 fetch 只覆盖**创建时刻**, 长期工作仍可能 stale) |
 
-判据:**已经开 / 将开 worktree → 不走本 rule**(那条链的 fetch 已覆盖);否则走本 rule。
-
-## 门禁步骤（就地场景，粘贴可用）
-
-```bash
-# 设计 / 方案动作前: 确保当前分支基于最新远程
-upstream=$(git rev-parse --abbrev-ref --symbolic-full-name @{u} 2>/dev/null)   # 如 origin/main
-if [ -z "$upstream" ]; then
-    echo "WARN: 无 upstream / detached → 未拉最新, 基于本地 HEAD 设计 (回复点名告知)"   # 不阻断
-else
-    git fetch "${upstream%%/*}" 2>/dev/null || echo "WARN: fetch 失败 (离线?) → 基于本地 HEAD, 回复点名告知"
-    behind=$(git rev-list --count "HEAD..@{u}" 2>/dev/null || echo 0)   # 落后远程的 commit 数
-    ahead=$(git rev-list --count "@{u}..HEAD" 2>/dev/null || echo 0)    # 本地独有 (未 push) commit 数
-    if [ "$behind" -eq 0 ]; then
-        : # 已是最新 (behind=0) → 直接开始设计, 零摩擦
-    elif [ "$ahead" -eq 0 ]; then
-        git pull --rebase   # 纯落后, 无本地独有 commit → 安全拉到最新
-    else
-        # ahead>0 && behind>0: 本地有未 push commit 且落后远程 → pull --rebase 可能冲突
-        echo "本地 ahead=$ahead behind=$behind: 有未 push commit + 落后远程。弹问用户三选: ① pull --rebase (可能要解冲突) ② 基于本地 HEAD 设计 (接受可能过时) ③ 先手动处理再来"
-    fi
-fi
-```
-
-与 `rule-git-worktree` 的 fetch 逻辑同源(都看 `ahead`/`behind`),差别:本 rule 动作是**当前分支 `pull --rebase` 到最新**,worktree rule 是**基于 `@{u}` 建新分支**。
+判据: `git worktree add` **那一刻** → 走 worktree rule; **之后**任何就地 / worktree 内动作 → 走本 rule.
 
 ## 触发 / 不触发
 
-**触发**: 即将开始**设计性**动作 —— 写设计文档 / PRD / RFC / ADR、方案对比、技术选型、重构方案、架构设计 —— 且**不走 worktree**(就地在当前分支)。
+**触发** (任何一项命中):
 
-**不触发**:
-- 开 / 将开 worktree（`rule-git-worktree` 的 fetch 已覆盖）
-- 纯执行 / 查询 / 小 bugfix（非设计性,不值得每次 fetch 打断）
-- 已在本会话内 fetch 过且无新远程改动
+- 即将做设计性动作 (写设计文档 / PRD / RFC / ADR / 方案对比 / 技术选型 / 重构方案 / 架构设计)
+- 即将做**代码搜索** (`Agent(subagent_type: "semble-search")` / Bash `grep -r` / `rg` / `find` 找实现 / `Explore` agent)
+- 即将做**多文件 Read** 分析方案 (≥3 文件 Read 探源)
 
-## 机制化局限（诚实标注）
+**不触发** (明确豁免):
 
-本 rule 是 **behavior 触发**(像 `git-inspection`)——"即将设计"不是一条 Bash 命令,**PreToolUse 拦不到**,UserPromptSubmit regex 也只能命中部分设计类措辞。所以它主要靠 catalog 路由 + 设计类词 hook 提醒 + agent 自觉,**深度负载下不保证必触发**。这是 behavior 触发 rule 的固有上限(见 RFC-001 深度遵守命题),非本 rule 独有。
+- 开 / 将开 worktree 那刻 (`rule-git-worktree` fetch 已覆盖)
+- 已知精确路径 Read 单文件
+- 单行 literal Bash grep / 文件名 Glob find
+- 用户显式说"直接搜 / 不要 fetch / 跳过 freshness"
+- 离线 (`fetch` 失败 → 脚本自动 warn + 继续, 不阻塞)
+- 同一 worktree / 分支 **2h 内已查过 freshness** (cache TTL 命中 → 脚本毫秒返回, 不打扰)
+
+## 门禁 — 一句调脚本
+
+机械逻辑封装到 `scripts/freshness-check.mjs`, agent 一句调:
+
+```bash
+node scripts/freshness-check.mjs --max-behind=5 --ttl=7200
+```
+
+输出 stdout JSON: `{ branch, base, behind, ahead, age_seconds, cache_hit, gate, message }`. exit code `0`=ok / `2`=gate.
+
+脚本内部逻辑 (agent 无需手动跑这些, 脚本封装):
+
+1. **base 分支推断** (优先级):
+   - `git rev-parse --abbrev-ref --symbolic-full-name HEAD@{u}` (当前分支 upstream, eg. `origin/release/x` 或 `origin/main`)
+   - 无 upstream / detached → `git rev-parse --abbrev-ref origin/HEAD` (远端 default branch, 通常 `origin/main`)
+   - 兜底 `origin/main`
+2. **cache** (`git rev-parse --git-path nocode-evolve-freshness.json` — 每 worktree 独立, `.git/` 下不被 commit):
+   - 命中条件: `branch / base 不变` + `(now - last_fetch_ms) < TTL (默认 2h)`
+   - 命中 → 直接用 cache, 毫秒返回, **不 fetch**
+3. **cache miss** → `git fetch origin <base 去 origin/ 前缀>` (静默) → 重算 `behind = HEAD..base` / `ahead = base..HEAD` → 写回 cache
+4. **离线** (fetch 失败) → stderr WARN + 用旧 cache (如有) 或视为 freshness unknown, `gate=ok` 不阻塞
+
+## Gate 行为 (脚本输出 `gate: "gate"` 时)
+
+脚本 exit 2 + `message` 含三选. **停手**, 把 `message` 原样转述给用户, 等回复后再动手. 不替用户拍板.
+
+```
+<branch> behind <base> N commits (>= 5, ahead=M). 三选:
+  a) pull --rebase 后继续 (推荐, 防过时方案; ahead>0 可能冲突)
+  b) 接受当前状态继续 (你签 off 落后可能影响判断)
+  c) 跳过 (取消本次动作)
+```
+
+`ahead>0` 时 pull --rebase 可能要解冲突 — 脚本 message 已含提醒.
+
+## 性能预算
+
+- **cache 命中** (绝大多数 2h 内调用): 读 JSON + 比时间, ~5-20ms
+- **cache miss** (首次 / 跨 2h): `git fetch` 一次, ~500-2000ms (网络); 之后 2h 内不再 fetch
+- **离线**: stderr warn + 用旧 cache, 不阻塞
+
+## 机制化局限 (诚实标注)
+
+本 rule 是 **behavior 触发** — "即将搜代码 / 设计"不是单条 Bash 命令, **PreToolUse 拦不到** (主搜索通道 `Agent(subagent_type: "semble-search")` 不经 Bash matcher). 主要靠 catalog Step 0 工序 + agent 自觉跑脚本. cache 机制大幅降低重复 fetch 成本 (2h 内 0 网络开销), 是性能上的兜底, 但不是触发上的硬保证.
+
+> 历史: v2.x 版本 git-freshness 只覆盖"就地设计 + 主仓"场景; v3.5.1 起扩到代码搜索 + worktree 内长期工作, base 分支推断支持非 main 派生 (eg. release).

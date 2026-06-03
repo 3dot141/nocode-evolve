@@ -132,17 +132,17 @@
     {
       "id": "git-freshness",
       "bucket": "git-lifecycle",
-      "also_buckets": ["design"],
+      "also_buckets": ["design", "review"],
       "trigger_type": "behavior",
-      "trigger_desc": "即将开始设计性动作 (写设计文档/PRD/RFC/ADR、方案对比、技术选型、重构方案、架构设计) 且不走 worktree (就地在当前分支); 开/将开 worktree 的场景由 git-worktree fetch 覆盖, 本 rule 不重复触发",
+      "trigger_desc": "即将做设计性动作 (设计文档/PRD/RFC/ADR/方案对比/技术选型/重构方案/架构设计), 或即将做代码搜索 (Agent semble-search / Bash grep -r/rg/find / Explore), 或多文件 Read (≥3 文件) 探源做方案分析 — 不论主仓 or worktree (worktree 内长期工作仍可能 stale, 不被 rule-git-worktree 覆盖). 一句 node scripts/freshness-check.mjs 调脚本拿 base/behind/ahead, gate=gate (behind ≥ 5) 时停手三选, 否则继续. cache TTL 2h 内毫秒返回不 fetch",
       "triggers": [],
-      "action": "Read rules/rule-git-freshness.md, 设计前 fetch + 当前分支拉到最新 (behind 则 pull --rebase, ahead>0 弹问)",
+      "action": "node scripts/freshness-check.mjs --max-behind=5 --ttl=7200; exit 2 时 Read rules/rule-git-freshness.md 走 gate 三选",
       "read": "${CLAUDE_PLUGIN_ROOT}/rules/rule-git-freshness.md",
-      "summary": "设计/方案动作前确保当前分支基于最新远程 (fetch + behind 则 pull --rebase, ahead>0 弹问); 防基于过时代码做设计返工。走 worktree 的场景已由 git-worktree fetch 覆盖, 本 rule 管就地设计 (behavior 触发, 无强机制保证)",
-      "guard": "",
+      "summary": "设计/方案动作 + 代码搜索/多文件 Read 前用 scripts/freshness-check.mjs 检查当前分支与 base (upstream → origin/HEAD → origin/main fallback) 的 behind 差距; behind ≥ 5 commits gate 三选 (pull --rebase / 接受 / 跳过); cache 2h TTL 不 fetch 不打扰; 支持 worktree 非 main 派生 base (origin/release/x 等); 离线 fetch 失败 warn 不阻塞. 主仓 + worktree 内长期工作都管 (worktree-add 那刻仍由 rule-git-worktree 覆盖)",
+      "guard": "fetch 失败 (离线) 不阻塞, warn 继续; 不替用户决定 pull-rebase / 接受 / 跳过, gate 时停手等用户回复。",
       "depends_on": ["git-worktree"],
       "severity": "warn",
-      "lifecycle_stage": "0 设计",
+      "lifecycle_stage": "cross",
       "pretooluse": []
     },
     {

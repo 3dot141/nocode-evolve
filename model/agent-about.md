@@ -61,7 +61,7 @@ nocode-evolve 通过 SessionStart hook + skills + PreToolUse 三种机制影响 
 无关键词触发, 随本文件常驻生效:
 
 - **git-inspection**: 连续跑 ≥2 个 git 只读命令(status / diff / log / show / branch / ls-files / remote -v)时, 默认用 `&&` 串成一个 Bash call, 各段间插 `echo "---<label>"` 分隔, 减少 turn 浪费。
-- **git-freshness**: 即将开始就地设计性动作(写设计文档/PRD/RFC/ADR、方案对比、技术选型、重构方案)且不走 worktree 时, 先 `fetch` + 当前分支拉到最新(behind 则 `pull --rebase`, ahead>0 弹问)。走 worktree 的场景已由 git-worktree fetch 覆盖, 本条管就地设计。
+- **git-freshness**: 即将做设计性动作 / 代码搜索 (`Agent(semble-search)` / `grep -r` / `rg` / `Explore`) / 多文件 Read 探源做方案前, 一句 `node scripts/freshness-check.mjs --max-behind=5 --ttl=7200` 拿 base (upstream → origin/HEAD → origin/main fallback) 的 behind 差距. exit 2 (behind ≥ 5) → 停手把 `message` 转述用户三选 (pull-rebase / 接受 / 跳过). cache TTL 2h 内毫秒返回不 fetch 不打扰. 支持 worktree 非 main 派生 base. `git worktree add` **那刻**仍由 `rule-git-worktree` 覆盖, 本条管之后所有就地 / worktree 内长期动作.
 
 ## 偏离 rule/skill 触发需用户显式授权
 
