@@ -45,7 +45,7 @@ docs/superpowers/specs/{username}/yymmdd-<topic>-design.md
    - 是否再来一轮 review 由用户决定，不再有"最多 3 轮"硬限制
    - **默认交叉验证**：这轮独立审稿默认 `design-doc-reviewer` (general-purpose) subagent + Codex 跨模型**并行双跑**（见 `rule-codex-review` 场景四）——一份稿两个模型审，避开 Claude 自审同源盲区，交集=高置信、对称差=盲点；codex 不可用才降级为仅 general-purpose 并明说 fallback。仅琐碎 / 文案改动可降档单跑 gp。Report 分级 / 逐条确认 / Review Log 流程不变
 
-4. **`nocode-evolve:design-doc-rendering`** —— 渲染 single-file HTML 展示版
+4. **`design-doc-writing` 内部 render 环节** (见 `skills/design-doc-writing/references/rendering/SKILL.md`) —— 渲染 single-file HTML 展示版
    - 输入：reviewer 通过的 markdown
    - 输出：同目录、同名、换后缀 `.html`
    - HTML 含 TOC / 折叠 / 暗黑模式 / 代码高亮 / 回到顶部 5 个交互

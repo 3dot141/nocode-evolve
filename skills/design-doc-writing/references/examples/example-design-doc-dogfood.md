@@ -55,7 +55,7 @@ Report 原样呈现 → 用户逐条确认
        ↓
 据用户决定修订 + 追加 Review Log
        ↓
-(by overlay) design-doc-rendering 渲染 HTML
+(内部环节) references/rendering 渲染 HTML
 ```
 
 ### 时序图
