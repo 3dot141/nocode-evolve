@@ -17,6 +17,9 @@ const MANIFEST = path.join(ROOT, 'rules/manifest.json');
 const MODEL_DIR = path.join(ROOT, 'model');
 
 export const SHARD_LIMIT = 9000;
+// 与 hooks.json SessionStart 预留的 catalog-1/2/3 段对齐. 生成片数超此值 throw, 防"生成第 4 片但 hooks 不注入"的静默漏注入.
+// 加新片要先在 hooks/hooks.json 和 hooks/inject-rules.sh 加对应 catalog-N segment, 然后调高这个值.
+export const MAX_CATALOG_SHARDS = 3;
 
 export function loadManifest() {
   return JSON.parse(fs.readFileSync(MANIFEST, 'utf8'));
@@ -92,6 +95,13 @@ export function genCatalogSharded(m) {
     }
   }
   shards.push(curr);
+  if (shards.length > MAX_CATALOG_SHARDS) {
+    throw new Error(
+      `genCatalogSharded: 生成 ${shards.length} 片 > MAX_CATALOG_SHARDS=${MAX_CATALOG_SHARDS}; ` +
+      `hooks.json 只预留 ${MAX_CATALOG_SHARDS} 个 catalog segment, 第 ${MAX_CATALOG_SHARDS + 1} 片起会静默漏注入. ` +
+      `先在 hooks/hooks.json + hooks/inject-rules.sh 加 catalog-${MAX_CATALOG_SHARDS + 1} segment, 然后调高 MAX_CATALOG_SHARDS.`,
+    );
+  }
   return shards.map((text, i) => ({
     file: path.join(MODEL_DIR, `agent-catalog-${i + 1}.md`),
     text,

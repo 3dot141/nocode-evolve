@@ -26,30 +26,39 @@ test('genCatalogSharded: 首片含头部 + 4 桶 + 每条 rule + 触发/读', ()
   assert.match(first.text, /\*\*读\*\*/);
 });
 
-test('genCatalogSharded: 构造超长 manifest 切多片, 桶不被切断', () => {
-  const base = loadManifest();
-  const proto = base.rules[0];
-  const big = 'x'.repeat(2500);
+test('genCatalogSharded: 构造超长 manifest 切多片, 桶不被切断 (在 MAX 内)', () => {
+  // 构造 2-3 片 (≤ MAX_CATALOG_SHARDS=3); 超 MAX 的 throw 行为见末尾独立 test
+  const big = 'x'.repeat(5500);
+  const subset = Array.from({ length: 3 }, (_, i) => ({
+    id: `b${i}`,
+    title: `B${i}`,
+    trigger_summary: 't',
+    negatives: ['n'],
+  }));
   const m = {
-    buckets: base.buckets,
-    rules: base.buckets.flatMap((b) =>
-      Array.from({ length: 2 }, (_, i) => ({
-        ...proto,
-        id: `proto-${b.id}-${i}`,
-        bucket: b.id,
-        also_buckets: [],
-        summary: big,
-      })),
-    ),
+    buckets: subset,
+    rules: subset.map((b, i) => ({
+      id: `r${i}`,
+      bucket: b.id,
+      trigger_type: 'regex',
+      trigger_desc: 'x'.repeat(200),
+      triggers: [],
+      action: '',
+      read: '',
+      summary: big,
+      guard: '',
+      pretooluse: [],
+      also_buckets: [],
+    })),
   };
   const shards = genCatalogSharded(m);
-  assert.ok(shards.length >= 2, '超长应切多片');
+  assert.ok(shards.length >= 2, '超长应切多片 (≤ MAX_CATALOG_SHARDS)');
   for (let i = 1; i < shards.length; i++) {
     assert.match(shards[i].text, /续片/, `第 ${i + 1} 片应有续片头`);
   }
   // 桶为切分粒度: 每片内的 ### 桶: 是完整的(没被截断到下一片)
   const full = shards.map((s) => s.text).join('');
-  for (const b of m.buckets) {
+  for (const b of subset) {
     assert.ok(full.includes(`### 桶: ${b.title}`), `桶 ${b.id} 应在分片合集中`);
   }
 });
@@ -95,4 +104,33 @@ test('targets: 含 catalog 分片 + pretooluse, 不含 route 区/triggers/旧 ca
 
 test('check: 生成物与源一致时返回 []', () => {
   assert.deepEqual(check(), []);
+});
+
+test('genCatalogSharded: 超 MAX_CATALOG_SHARDS 时 throw (防静默漏注入)', async () => {
+  const { MAX_CATALOG_SHARDS } = await import('./generate.mjs');
+  // 构造 7 桶 × 单桶 5500 字符 → 每片基本只能放 1 桶 → 7 片 > MAX
+  const m = {
+    buckets: Array.from({ length: 7 }, (_, i) => ({
+      id: `b${i}`,
+      title: `B${i}`,
+      trigger_summary: 't',
+      negatives: ['n'],
+    })),
+    rules: Array.from({ length: 7 }, (_, i) => ({
+      id: `r${i}`,
+      bucket: `b${i}`,
+      trigger_type: 'regex',
+      trigger_desc: 'x'.repeat(200),
+      triggers: [],
+      action: '',
+      read: '',
+      summary: 'x'.repeat(5500),
+      guard: '',
+      pretooluse: [],
+      also_buckets: [],
+    })),
+  };
+  assert.throws(() => genCatalogSharded(m), {
+    message: new RegExp(`> MAX_CATALOG_SHARDS=${MAX_CATALOG_SHARDS}`),
+  });
 });
