@@ -36,26 +36,29 @@ trunc() {
 }
 
 # --- directories ---
-# Entry dir  = where the session launched (gray anchor); git-normalized to repo name
-#              so worktrees show a short, stable name instead of the long branch dir.
-# Current dir= cwd after any `cd`; shown as a subpath only when it differs from entry.
-entry_cwd=$(echo "$input" | jq -r '.workspace.project_dir // .cwd // empty')
-cwd=$(echo "$input" | jq -r '.cwd // .workspace.current_dir // empty')
+# Repo root = main worktree's root, derived from the CURRENT dir's git-common-dir.
+#             Stable anchor: every linked worktree resolves to the same main repo name,
+#             and it does NOT drift with cd the way harness's project_dir does.
+# Current   = cwd relative to that root; shown whenever cwd != root, so a linked worktree
+#             shows its own dir name instead of collapsing into the anchor.
+cwd=$(echo "$input" | jq -r '.cwd // .workspace.current_dir // .workspace.project_dir // empty')
 
-anchor=$(basename "$entry_cwd" 2>/dev/null || echo "?")
-if [[ -n "$entry_cwd" && -d "$entry_cwd" ]]; then
-    ecommon=$(git -C "$entry_cwd" rev-parse --git-common-dir 2>/dev/null)
-    if [[ -n "$ecommon" ]]; then
-        case "$ecommon" in /*) ;; *) ecommon="$entry_cwd/$ecommon" ;; esac
-        anchor=$(basename "$(dirname "$ecommon")")
+repo_root="$cwd"
+if [[ -n "$cwd" && -d "$cwd" ]]; then
+    common=$(git -C "$cwd" rev-parse --git-common-dir 2>/dev/null)
+    if [[ -n "$common" ]]; then
+        case "$common" in /*) ;; *) common="$cwd/$common" ;; esac
+        # subshell cd+pwd normalizes any `..` (git can return `../.git` from a subdir)
+        repo_root=$(cd "$common/.." 2>/dev/null && pwd) || repo_root="$cwd"
     fi
 fi
+anchor=$(basename "${repo_root:-$cwd}" 2>/dev/null || echo "?")
 
 cur=""
-if [[ -n "$cwd" && "$cwd" != "$entry_cwd" ]]; then
+if [[ -n "$cwd" && "$cwd" != "$repo_root" ]]; then
     case "$cwd" in
-        "$entry_cwd"/*) cur="${cwd#"$entry_cwd"/}" ;;  # under entry -> relative subpath
-        *)              cur=$(basename "$cwd") ;;        # elsewhere   -> basename
+        "$repo_root"/*) cur="${cwd#"$repo_root"/}" ;;  # under root -> relative subpath
+        *)              cur=$(basename "$cwd") ;;       # linked worktree / elsewhere -> basename
     esac
 fi
 
