@@ -1,13 +1,15 @@
 ---
 name: route
-description: 工程任务规则路由入口。开始任何 git 生命周期(提 PR/push/合并/收尾/worktree)、代码评审/独立验证、设计文档/PRD/RFC/方案选型、会话沉淀类任务前加载，给出插件级规则路由表 + 项目本地资源(.agents-personal wiki/rules)检索约定。不用于：纯只读查询、纯事实问答、与工程规则无关的对话。
+description: 工程任务规则路由入口。开始任何 git 生命周期(提 PR/push/合并/收尾/worktree)、代码评审/独立验证、设计文档/PRD/RFC/方案选型、会话沉淀类任务前加载，给出插件级规则路由表。不用于：纯只读查询、纯事实问答、与工程规则无关的对话。
 ---
 
 # nocode-evolve 工程规则路由
 
-会话内首次命中工程任务时加载一次。按下方三段决定动作：① 查插件 rule 路由表 `Read` 对应文件；② 按需检索项目本地资源；③ behavior 型规则直接遵守（已在本文）。
+会话内首次命中工程任务时加载一次。下方按粗桶列插件 rule 路由表——命中桶 → 桶内按 `触发` 选具体 rule → `Read` 对应文件。同一规则会话内只 Read 一次。
 
-## ① 插件 rule 路由（生成区，禁手改）
+> 本 skill 只管**插件 rule 路由**。项目本地资源(`.agents-personal/` wiki/rules)检索约定 + 删除护栏 + 常驻 git behavior 已移至常驻注入(每会话开局即在 context，不受本 skill「命中工程桶才加载」门槛限制)——见 `model/agent-personal.md` 与 `model/agent-about.md`。
+
+## 插件 rule 路由（生成区，禁手改）
 
 <!-- BEGIN generated: rule-routes (from manifest, 禁手改) -->
 ### 桶: Git 生命周期 (git-lifecycle)
@@ -92,22 +94,6 @@ description: 工程任务规则路由入口。开始任何 git 生命周期(提 
 
 <!-- END generated: rule-routes -->
 
-## ② 项目本地资源 `.agents-personal/`（手写区）
-
-`<project>/.agents-personal/` 是项目本地放给 agent 的资源目录，含：
-
-- `wiki/` — 历史记忆（设计决策 / 术语 / 踩坑）。被动检索，可被新决策 superseded。
-- `AGENTS.md` + `rules/` — 当前指令（触发条件 + 操作细节）。主动按触发匹配读。
-
-wiki 是事实记录，rules 是工作指令——不把 wiki 当指令执行，不把 rules 当可质疑历史。
-
-**wiki/**：会话开局只做存在性检查（`ls`），实际 Read `INDEX.md` 推迟到：即将调 `superpowers:brainstorming` / `nocode-evolve:design-doc-writing`，或用户消息含「设计/选型/方案/架构/重构/RFC/提案」，或当前任务升级为以上。INDEX 同一会话只 Read 一次；读了必引用。进一步 Read `pages/<file>` 按需。不要：读了不引用 / 无脑拉所有 pages / 把 wiki 当绝对真理 / 自己写 wiki（沉淀走 `/distill`）。
-
-**AGENTS.md + rules/**：`AGENTS.md` 是路由表只列触发条件；`rules/<topic>.md` 放具体指令，一个 topic 一文件。新会话首次响应实质问题前 Read `AGENTS.md` 一次，`rules/<topic>.md` 按触发命中再 Read，命中即引用。不要：在 AGENTS.md 写命令模板 / 把 rule 当历史质疑 / 自己往 `.agents-personal/` 写（沉淀走 `/distill`）。
-
-> 删除护栏（rm/mv/覆盖 `.agents-personal/` 前二次确认）见常驻 `model/agent-about.md`，本文不重复。
-
-## ③ behavior 型规则（手写区，无关键词触发，随本 skill 加载即生效）
-
-- **git-inspection**：连续跑 ≥2 个 git 只读命令（status / diff / log / show / branch / ls-files / remote -v）时，默认用 `&&` 串成一个 Bash call，各段间插 `echo "---<label>"` 分隔，减少 turn 浪费。
-- **git-freshness**：即将开始就地设计性动作（写设计文档/PRD/RFC/ADR、方案对比、技术选型、重构方案）且不走 worktree 时，先 `fetch` + 当前分支拉到最新（behind 则 `pull --rebase`，ahead>0 弹问）。走 worktree 的场景已由 git-worktree fetch 覆盖，本条管就地设计。
+> 原 ② 项目本地资源检索 / ③ 常驻 behavior 两节已迁出本 skill(见开头说明):
+> `.agents-personal/` wiki·rules 检索 + 删除护栏 → `model/agent-personal.md`;
+> git-inspection / git-freshness behavior → `model/agent-about.md`「常驻 git 习惯」节。

@@ -10,6 +10,10 @@
           },
           {
             "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/inject-rules.sh model-personal"
+          },
+          {
+            "type": "command",
             "command": "${CLAUDE_PLUGIN_ROOT}/hooks/inject-rules.sh model-karpathy"
           },
           {

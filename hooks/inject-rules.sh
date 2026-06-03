@@ -24,6 +24,7 @@ SEG="${1:-}"
 seg_file() {
   case "$1" in
     model-about)    printf '%s' "${PLUGIN_ROOT}/model/agent-about.md" ;;
+    model-personal) printf '%s' "${PLUGIN_ROOT}/model/agent-personal.md" ;;
     model-karpathy) printf '%s' "${PLUGIN_ROOT}/model/agent-karpathy.md" ;;
     model-catalog)  printf '%s' "${PLUGIN_ROOT}/model/agent-catalog.md" ;;
     project)        printf '%s' "${PROJECT_DIR}/.agents-personal/AGENTS.md" ;;
@@ -32,7 +33,7 @@ seg_file() {
 }
 
 # model segment 列表 (孤儿检查用; 改这里即同步 sanity)
-MODEL_SEGMENTS="model-about model-karpathy model-catalog"
+MODEL_SEGMENTS="model-about model-personal model-karpathy model-catalog"
 
 file="$(seg_file "$SEG")" || {
   echo "inject-rules.sh: unknown segment '$SEG' (expected: ${MODEL_SEGMENTS} project)" >&2
