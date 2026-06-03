@@ -7,6 +7,12 @@
   },
   {
     "rule": "finishing-branch",
+    "pattern": "bkt\\s+pr\\s+create.*(--reviewer|--with-default-reviewers)",
+    "decision": "inject",
+    "reason": "bkt pr create 不要带 reviewer/with-default-reviewers (部分失败会整个 create 失败 + cross-fork 解析常出错); 先 create, 再 bkt pr edit <id> --reviewer ... 加 (见 rule-finishing-branch Gate PR + pr-flow-bkt-appendix Workflow B)"
+  },
+  {
+    "rule": "finishing-branch",
     "pattern": "bkt\\s+api\\s+.*--method\\s+PUT",
     "decision": "block",
     "reason": "禁 bkt api PUT 改 PR 元数据, 用 bkt pr edit"
