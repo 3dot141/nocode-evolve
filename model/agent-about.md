@@ -47,6 +47,13 @@
 - 单行 literal 精确匹配 → Bash grep
 - 文件名 pattern 查找 → Bash find / Glob
 
+## 常驻 git 习惯 (behavior)
+
+无关键词触发, 随本文件常驻生效:
+
+- **git-inspection**: 连续跑 ≥2 个 git 只读命令(status / diff / log / show / branch / ls-files / remote -v)时, 默认用 `&&` 串成一个 Bash call, 各段间插 `echo "---<label>"` 分隔, 减少 turn 浪费。
+- **git-freshness**: 即将开始就地设计性动作(写设计文档/PRD/RFC/ADR、方案对比、技术选型、重构方案)且不走 worktree 时, 先 `fetch` + 当前分支拉到最新(behind 则 `pull --rebase`, ahead>0 弹问)。走 worktree 的场景已由 git-worktree fetch 覆盖, 本条管就地设计。
+
 ## 偏离 rule/skill 触发需用户显式授权
 
 rule / skill 触发条件命中后, 要跳过 / 偏离它, **只认用户消息里的显式否定词** (「不要 X / 别 X / 在主仓写 / 就地 / 跳过 X」). 模糊信号 (「先出概览 / 快速看看 / 草稿 / 简单弄一下」) **不算授权**——拿不准就问, 不要替用户判定弃用, 更不要自己找便利理由 (「这次轻量」「概览阶段」) 跳过.
@@ -83,17 +90,4 @@ rule / skill 触发条件命中后, 要跳过 / 偏离它, **只认用户消息�
 
 新增全局约定 / 占位符追加到本文件, 避免散落各 rule.
 
-## 删除护栏 — `.agents-personal/` + `$USER_VAULT_PATH` 删除前必须二次确认
-
-内容是用户沉淀的项目历史 + 当前指令, **不可恢复** (gitignored / vault, 无 git history). 误删 = 工作丢失.
-
-**触发**: 即将 rm / mv / `find -delete` / Write 覆盖已存在文件 / Edit 大段删 (≥5 行) 这些目录下任何文件或子目录 (subagent 同理). 纯读 (Read / cat / grep / ls) 不触发.
-
-**动作**: 停手 → 描述将删什么 (路径 + 内容范围) + 原因 + 影响 → 等用户明确确认再执行, 不脑补"用户应该同意". 用户主动指示删: 视为已确认, 但删前回显路径让其最后一刻能反悔.
-
-**不要**:
-- distill / sow "顺手"清理旧 wiki / rule (除非命令定义了清理且用户已勾选)
-- 为"重新组织"批量 mv / rm (结构改 = 删除等价物); 别假设 git mv 不算删 (gitignored, mv = delete + create)
-- 因"过时 / 跟新决策矛盾"自己拍板删 (superseded 仍有参考价值, 由用户判断删还是标 `superseded by ...`)
-
-> `$USER_VAULT_PATH`: `/distill` 的 `wiki:cross-project advisor` 出口建议跑 `/sow`, 写到 `$USER_VAULT_PATH/Memory/<layer>/`, 同等护栏. (v1 `USER_WIKI_PATH` 已弃用, sow v2 改读 `USER_VAULT_PATH`.)
+> `.agents-personal/` + `$USER_VAULT_PATH` 的删除护栏(删除前二次确认)已移至常驻 `model/agent-personal.md`, 本文不重复。

@@ -4,7 +4,7 @@
 
 ## 读取时机
 
-会话开局本文件已在 context。响应任何工程任务前扫下方**粗桶**: 命中任一桶 → 调 `Skill(nocode-evolve:route)` 拿完整路由表(各 rule 触发 / 读哪个文件 / guard)与项目本地资源(.agents-personal wiki/rules)检索约定。纯只读查询 / 纯事实问答不触发。
+会话开局本文件已在 context。响应任何工程任务前扫下方**粗桶**: 命中任一桶 → 调 `Skill(nocode-evolve:route)` 拿完整路由表(各 rule 触发 / 读哪个文件 / guard)。项目本地资源(.agents-personal wiki/rules)检索约定常驻在 `model/agent-personal.md`。纯只读查询 / 纯事实问答不触发。
 
 ## 粗桶
 
