@@ -7,7 +7,7 @@
 nocode-evolve 通过 SessionStart hook + skills + PreToolUse 三种机制影响 agent 行为, 分两类知识 + 一类硬护栏:
 
 - **规则知识 (reactive)**: SessionStart 注入**完整规则路由**到 `model/agent-catalog-*.md` 分片常驻 context. 每条用户消息收到, **先扫 4 个粗桶 trigger_summary 一次** (catalog 头部 Step 0 工序), 命中 → 按需 `Read` `rules/rule-*.md`. 没有按需 route skill 中转.
-- **编排知识 (proactive)**: `Skill(nocode-evolve:pilot)` 是**手动入口** skill (`disable-model-invocation`), 用户主动 `/调` 进入获取流程导航. agent 不直接调, 在复杂多步任务时**主动一句话建议**用户调.
+- **编排知识 (proactive)**: `Skill(nocode-evolve:pilot)` 可被 model 主动调起 (也可用户 `/调` 进入) 获取流程导航. 复杂多步任务时 agent 主动调起 pilot 给阶段判断 + 下一步建议, 用户拍板, pilot 不替执行.
 - **硬护栏 (确定性)**: `PreToolUse` hook 对危险 Bash 命令 (force push / gh api PATCH pulls / `.agents-personal` 删除 / `bkt` PUT / 裸 curl) `inject` 提醒或 `block` 拒绝. 唯一不依赖 agent 自觉的确定性机制.
 - **单源生成**: `rules/manifest.json` → `hooks/generate.mjs` → catalog 分片 + `pretooluse-rules.json`. 改 rule 改 manifest, 不手改生成物 (生成物头部有禁手改标记).
 

@@ -3,7 +3,7 @@
 Harrison 的 Claude Code 个人插件。架构(**两类知识分离 + 单一真值源**):
 
 - **规则知识 (reactive)**:SessionStart 注入**完整 rule 路由**(catalog 分片常驻 context,必在、无软触发漏);agent 命中桶后按需 `Read` 对应 `rules/rule-*.md`。
-- **编排知识 (proactive)**:`nocode-evolve:pilot` 手动入口 skill(`disable-model-invocation`),用户主动 `/调` 进入,给「当前阶段判断 + 下一步建议 + 备选」,**用户拍板,不自动执行**。
+- **编排知识 (proactive)**:`nocode-evolve:pilot` 可被 model 主动调起,也可用户 `/调` 进入,给「当前阶段判断 + 下一步建议 + 备选」,**用户拍板,不替执行**。
 - **硬拦截**:`PreToolUse` hook 对危险 Bash 命令(`bkt PUT` / 裸 curl 等)`deny` / `inject`,唯一的确定性机制。
 - **单源生成**:`rules/manifest.json` → `hooks/generate.mjs` → `model/agent-catalog-*.md` 分片 + `hooks/pretooluse-rules.json`。
 
@@ -52,7 +52,7 @@ nocode-evolve/
 │   │                                         # superpowers-brainstorming
 │   └── rule-references/rule-finishing-branch/ # rule 子文件 (bkt 附录等)
 ├── skills/                                   # Claude Code skill
-│   ├── pilot/                                # 手动入口 (disable-model-invocation)
+│   ├── pilot/                                # 流程领航 (model 可主动调起)
 │   ├── bkt/                                  # Bitbucket CLI
 │   ├── design-doc-writing/                   # 设计文档 (含 references/rendering 渲染环节)
 │   ├── red-blue-deep/                        # 评估辩论框架
