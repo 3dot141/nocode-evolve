@@ -75,6 +75,46 @@ worktree 的新分支 base 应跟上远程，避免长在过时代码上、与�
 | `/Users/yes365/AI/nocode-evolve` | `bench-restructure` | `/Users/yes365/AI/nocode-evolve-bench-restructure` |
 | `/Users/yes365/Work/Source/fx-tianwen` | `fix/login/redirect` | `/Users/yes365/Work/Source/fx-tianwen-fix_login_redirect` |
 
+## 跨物理分仓：关联仓库用**相同分支名**建 worktree
+
+前面讲的是「单个仓库内，每个分支一个 worktree」。当一次工作牵涉**物理上分开的多个 git repo**（不是 monorepo 子包，是各自独立 `.git` 的仓库）时，本节把同一原则延伸到跨仓库。
+
+### 「关联仓库」定义
+
+从**当前仓库**的工作流程中，需要进入**另一个**物理 git repo 去**修改**（Edit / Write / 在那个 repo 跑改动命令）——那个 repo 就是本次工作的「关联仓库」。
+
+- 判定只看「是否去改」：只是进关联仓库**只读查看**（Read / grep / 看 log）**不算**，不触发本节。
+- 一次工作可有多个关联仓库（前端 + 后端 + 公共库各一个独立 repo）。
+
+### 约定：关联仓库同样走 worktree，分支名与当前**一致**
+
+关联仓库的改动同样不在它的主仓裸改 / 裸开分支——为这次跨仓库改动建 worktree，且：
+
+- **分支名与当前仓库当前工作分支相同**（branch 一致），作为跨仓库追踪同一组改动的锚点，便于两边 PR 关联、收尾时对齐。
+- **目录仍按各自仓库的模板**落 `<linked-repo-parent>/<linked-repo-name>-<branch_flat>/`——前缀是**关联仓库自己**的 basename，不是当前仓库的。所以目录名不会完全相同，相同的只有 branch 段。
+
+示例：当前在 `A` 仓库的 `feature/foo` 分支工作，要去 `B` 仓库改：
+
+| 仓库 | 分支（git 里） | worktree 路径 |
+|---|---|---|
+| 当前 `A` | `feature/foo` | `/parent/A-feature_foo/` |
+| 关联 `B` | `feature/foo`（**同名**） | `/parent/B-feature_foo/` |
+
+### 复用优先：关联仓库已有同名工作就进入，不重复新建
+
+进入关联仓库 `B` 前先 `git -C <B-root> worktree list` / 查 B 的分支：
+
+- **B 已有与当前分支同名的分支 / worktree** → 直接进入复用，**不**再新建（避免在 B 已活跃的分支上硬开新分支）。
+- **B 没有** → 按上面模板用当前仓库的分支名在 B 新建 worktree。创建流程、`worktree-setup.mjs` 补齐、`.agents-personal` symlink 全部照单仓库流程，只是「路径推导」段的 `project_root` 换成 B 的根。
+- **B 正在别的分支活跃工作** → 不打断它；只为本次跨仓库改动新建同名 worktree（独立目录，互不干扰），除非 B 已有同名分支可复用。
+
+### 跨仓库的不要
+
+- 不要在关联仓库的主仓 / 当前分支上直接改——跟「不在主仓裸开分支」同理，跨仓库也要隔离。
+- 不要为了「目录名完全一致」去改命名模板 / 加统一前缀——相同的是**分支名**，目录前缀各自 repo 的 basename。
+- 不要让关联仓库的分支名与当前仓库分叉（除非用户**显式**要不同名）——同名是跨仓库追踪的锚点。
+- 关联仓库本就该停在 `main`、不新建分支时（如只去同步、不改），按顶层「main 例外」不强制 worktree。
+
 ## 为什么要平级而不是项目内
 
 避免「同项目内多份 working tree」导致的相互干扰：
