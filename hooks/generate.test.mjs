@@ -16,7 +16,7 @@ test('genCatalogSharded: 首片含头部 + 4 桶 + 每条 rule + 触发/读', ()
   assert.match(first.text, /禁手改/);
   assert.match(first.text, /触发协议/, '应有触发协议 / Step 0 扫桶硬指令段');
   assert.match(first.text, /Step 0/, '应有 Step 0 扫桶硬指令');
-  assert.match(first.text, /\/pilot/, '应提示 pilot 入口');
+  assert.match(first.text, /\/dev-workflow/, '应提示 dev-workflow 入口');
   for (const b of m.buckets) {
     assert.match(first.text, new RegExp(`### 桶: ${b.title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`));
   }

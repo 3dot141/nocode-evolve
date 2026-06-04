@@ -1,9 +1,9 @@
 ---
-name: pilot
+name: dev-workflow
 description: 工程任务流程领航. 可被 model 主动调起, 也可用户 /调 进入, 给"当前阶段判断 + 下一步建议 + 备选", 用户拍板, 不替用户执行. agent 视角: 复杂 / 多步 / 跨阶段任务 (跨文件 + 状态未知 / 需要 commit / PR / 设计文档 / 评审 / 用户说"整个/整体/全流程") 时, 主动调起本 skill 给流程建议并停下等用户拍板. 不用于简单单步任务.
 ---
 
-# nocode-evolve:pilot — 工程任务流程领航
+# nocode-evolve:dev-workflow — 工程任务流程领航
 
 > 工程任务驾驶舱。**model 命中复杂多步任务时主动调起**, 用户也可 **`/调`** 进入。给建议不替执行。
 
@@ -58,7 +58,7 @@ description: 工程任务流程领航. 可被 model 主动调起, 也可用户 /
 
 ### 例 1: 简单任务 (Step 1 直接放行)
 
-用户: `/pilot 帮我把 user_id 改成 userId`
+用户: `/dev-workflow 帮我把 user_id 改成 userId`
 
 → 你回:
 
@@ -68,7 +68,7 @@ description: 工程任务流程领航. 可被 model 主动调起, 也可用户 /
 
 ### 例 2: 复杂任务 (走 Step 2-4)
 
-用户: `/pilot 我要给插件加个新 skill 叫 X`
+用户: `/dev-workflow 我要给插件加个新 skill 叫 X`
 
 → 你回:
 

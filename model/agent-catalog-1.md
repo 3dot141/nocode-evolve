@@ -13,17 +13,17 @@
 
 **这是工序, 不是自觉**——不论任务大小、context 深度、是否 mid-task, Step 0 都先扫. 跳过 = 软触发漏, 这正是 catalog 常驻设计要解决的.
 
-## 何时主动调用 /pilot
+## 何时主动调用 /dev-workflow
 
-agent 视角: 用户任务命中以下任一条件时, **主动调起 pilot skill** 进入流程导航 (pilot 给阶段判断 + 下一步建议, 用户拍板, 不替执行):
+agent 视角: 用户任务命中以下任一条件时, **主动调起 dev-workflow skill** 进入流程导航 (dev-workflow 给阶段判断 + 下一步建议, 用户拍板, 不替执行):
 
 - 跨文件 + 状态未知 (不知道当前在生命周期哪一步)
 - 需要 commit / PR / 设计文档 / 评审等多阶段动作
 - 用户描述含「整个 / 整体 / 全流程 / 从头 / 完整跑通」等多步信号
 
-不触发 (直接动手, 不建议 /pilot): 单文件修改、纯查询、单步明确动作.
+不触发 (直接动手, 不建议 /dev-workflow): 单文件修改、纯查询、单步明确动作.
 
-> 项目本地资源 (`.agents-personal/`) 检索约定见 `model/agent-personal.md`. /pilot 可被 model 主动调起, 也可用户 `/调`; 命中上述复杂多步条件时直接进 pilot, 由 pilot 给流程建议、用户拍板.
+> 项目本地资源 (`.agents-personal/`) 检索约定见 `model/agent-personal.md`. /dev-workflow 可被 model 主动调起, 也可用户 `/调`; 命中上述复杂多步条件时直接进 dev-workflow, 由 dev-workflow 给流程建议、用户拍板.
 
 ## 何时主动建议 /distill · /sow · /task (用户主动键入 command)
 
@@ -63,9 +63,9 @@ agent 视角: 用户任务命中以下任一条件时, **主动调起 pilot skil
 **生命周期**: cross
 
 #### git-freshness
-**触发**: 即将做设计性动作 (设计文档/PRD/RFC/ADR/方案对比/技术选型/重构方案/架构设计), 或即将做代码搜索 (Agent semble-search / Bash grep -r/rg/find / Explore), 或多文件 Read (≥3 文件) 探源做方案分析 — 不论主仓 or worktree (worktree 内长期工作仍可能 stale, 不被 rule-git-worktree 覆盖). 一句 node scripts/freshness-check.mjs 调脚本拿 base/behind/ahead, gate=gate (behind ≥ 5) 时停手三选, 否则继续. cache TTL 2h 内毫秒返回不 fetch
+**触发**: 即将做设计性动作 (设计文档/PRD/RFC/ADR/方案对比/技术选型/重构方案/架构设计), 或即将做代码搜索 (Agent semble-search / Bash grep -r/rg/find / Explore), 或多文件 Read (≥3 文件) 探源做方案分析 — 不论主仓 or worktree (worktree 内长期工作仍可能 stale, 不被 rule-git-worktree 覆盖). 一句 node scripts/freshness-check.mjs 调脚本拿 base/behind/ahead, gate=gate (behind ≥ 5, 或 branch+base 首次冷启动) 时停手三选, 否则继续. cache TTL 2h 内毫秒返回不 fetch
 **读**: `${CLAUDE_PLUGIN_ROOT}/rules/rule-git-freshness.md`
-**摘要**: 设计/方案动作 + 代码搜索/多文件 Read 前用 scripts/freshness-check.mjs 检查当前分支与 base (upstream → origin/HEAD → origin/main fallback) 的 behind 差距; behind ≥ 5 commits gate 三选 (pull --rebase / 接受 / 跳过); cache 2h TTL 不 fetch 不打扰; 支持 worktree 非 main 派生 base (origin/release/x 等); 离线 fetch 失败 warn 不阻塞. 主仓 + worktree 内长期工作都管 (worktree-add 那刻仍由 rule-git-worktree 覆盖)
+**摘要**: 设计/方案动作 + 代码搜索/多文件 Read 前用 scripts/freshness-check.mjs 检查当前分支与 base (upstream → origin/HEAD → origin/main fallback) 的 behind 差距; behind ≥ 5 commits 或 branch+base 首次冷启动 gate 三选 (pull --rebase / 接受 / 跳过); cache 2h TTL 不 fetch 不打扰; 支持 worktree 非 main 派生 base (origin/release/x 等); 离线 fetch 失败 warn 不阻塞. 主仓 + worktree 内长期工作都管 (worktree-add 那刻仍由 rule-git-worktree 覆盖)
 **关键约束(上浮)**: fetch 失败 (离线) 不阻塞, warn 继续; 不替用户决定 pull-rebase / 接受 / 跳过, gate 时停手等用户回复。
 **也属**: design, review
 **生命周期**: cross
@@ -95,9 +95,9 @@ agent 视角: 用户任务命中以下任一条件时, **主动调起 pilot skil
 **生命周期**: cross
 
 #### git-freshness (跨桶)
-**触发**: 即将做设计性动作 (设计文档/PRD/RFC/ADR/方案对比/技术选型/重构方案/架构设计), 或即将做代码搜索 (Agent semble-search / Bash grep -r/rg/find / Explore), 或多文件 Read (≥3 文件) 探源做方案分析 — 不论主仓 or worktree (worktree 内长期工作仍可能 stale, 不被 rule-git-worktree 覆盖). 一句 node scripts/freshness-check.mjs 调脚本拿 base/behind/ahead, gate=gate (behind ≥ 5) 时停手三选, 否则继续. cache TTL 2h 内毫秒返回不 fetch
+**触发**: 即将做设计性动作 (设计文档/PRD/RFC/ADR/方案对比/技术选型/重构方案/架构设计), 或即将做代码搜索 (Agent semble-search / Bash grep -r/rg/find / Explore), 或多文件 Read (≥3 文件) 探源做方案分析 — 不论主仓 or worktree (worktree 内长期工作仍可能 stale, 不被 rule-git-worktree 覆盖). 一句 node scripts/freshness-check.mjs 调脚本拿 base/behind/ahead, gate=gate (behind ≥ 5, 或 branch+base 首次冷启动) 时停手三选, 否则继续. cache TTL 2h 内毫秒返回不 fetch
 **读**: `${CLAUDE_PLUGIN_ROOT}/rules/rule-git-freshness.md`
-**摘要**: 设计/方案动作 + 代码搜索/多文件 Read 前用 scripts/freshness-check.mjs 检查当前分支与 base (upstream → origin/HEAD → origin/main fallback) 的 behind 差距; behind ≥ 5 commits gate 三选 (pull --rebase / 接受 / 跳过); cache 2h TTL 不 fetch 不打扰; 支持 worktree 非 main 派生 base (origin/release/x 等); 离线 fetch 失败 warn 不阻塞. 主仓 + worktree 内长期工作都管 (worktree-add 那刻仍由 rule-git-worktree 覆盖)
+**摘要**: 设计/方案动作 + 代码搜索/多文件 Read 前用 scripts/freshness-check.mjs 检查当前分支与 base (upstream → origin/HEAD → origin/main fallback) 的 behind 差距; behind ≥ 5 commits 或 branch+base 首次冷启动 gate 三选 (pull --rebase / 接受 / 跳过); cache 2h TTL 不 fetch 不打扰; 支持 worktree 非 main 派生 base (origin/release/x 等); 离线 fetch 失败 warn 不阻塞. 主仓 + worktree 内长期工作都管 (worktree-add 那刻仍由 rule-git-worktree 覆盖)
 **主桶**: git-lifecycle (完整定义见该桶)
 
 ### 桶: 设计与文档 (design)
@@ -117,9 +117,9 @@ agent 视角: 用户任务命中以下任一条件时, **主动调起 pilot skil
 **主桶**: review (完整定义见该桶)
 
 #### git-freshness (跨桶)
-**触发**: 即将做设计性动作 (设计文档/PRD/RFC/ADR/方案对比/技术选型/重构方案/架构设计), 或即将做代码搜索 (Agent semble-search / Bash grep -r/rg/find / Explore), 或多文件 Read (≥3 文件) 探源做方案分析 — 不论主仓 or worktree (worktree 内长期工作仍可能 stale, 不被 rule-git-worktree 覆盖). 一句 node scripts/freshness-check.mjs 调脚本拿 base/behind/ahead, gate=gate (behind ≥ 5) 时停手三选, 否则继续. cache TTL 2h 内毫秒返回不 fetch
+**触发**: 即将做设计性动作 (设计文档/PRD/RFC/ADR/方案对比/技术选型/重构方案/架构设计), 或即将做代码搜索 (Agent semble-search / Bash grep -r/rg/find / Explore), 或多文件 Read (≥3 文件) 探源做方案分析 — 不论主仓 or worktree (worktree 内长期工作仍可能 stale, 不被 rule-git-worktree 覆盖). 一句 node scripts/freshness-check.mjs 调脚本拿 base/behind/ahead, gate=gate (behind ≥ 5, 或 branch+base 首次冷启动) 时停手三选, 否则继续. cache TTL 2h 内毫秒返回不 fetch
 **读**: `${CLAUDE_PLUGIN_ROOT}/rules/rule-git-freshness.md`
-**摘要**: 设计/方案动作 + 代码搜索/多文件 Read 前用 scripts/freshness-check.mjs 检查当前分支与 base (upstream → origin/HEAD → origin/main fallback) 的 behind 差距; behind ≥ 5 commits gate 三选 (pull --rebase / 接受 / 跳过); cache 2h TTL 不 fetch 不打扰; 支持 worktree 非 main 派生 base (origin/release/x 等); 离线 fetch 失败 warn 不阻塞. 主仓 + worktree 内长期工作都管 (worktree-add 那刻仍由 rule-git-worktree 覆盖)
+**摘要**: 设计/方案动作 + 代码搜索/多文件 Read 前用 scripts/freshness-check.mjs 检查当前分支与 base (upstream → origin/HEAD → origin/main fallback) 的 behind 差距; behind ≥ 5 commits 或 branch+base 首次冷启动 gate 三选 (pull --rebase / 接受 / 跳过); cache 2h TTL 不 fetch 不打扰; 支持 worktree 非 main 派生 base (origin/release/x 等); 离线 fetch 失败 warn 不阻塞. 主仓 + worktree 内长期工作都管 (worktree-add 那刻仍由 rule-git-worktree 覆盖)
 **主桶**: git-lifecycle (完整定义见该桶)
 
 ### 桶: 记忆与沉淀 (memory)

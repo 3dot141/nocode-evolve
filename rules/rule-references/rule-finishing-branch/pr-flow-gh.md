@@ -156,6 +156,59 @@ gh pr edit <pr-number> --add-reviewer "alice,bob,charlie"
   - 单个 fail = 用户无 read 权限 / 用户不存在 → 跳过该 reviewer, 不阻断
   - 最后报告 "PR <url> 创建成功, reviewer X 添加失败已跳过"
 
+## Step 8: Gate WC — worktree 清理 (gh)
+
+PR 创建 + reviewer 加完后, 检测当前是否在 worktree 中. 非 worktree 则跳过.
+
+### 前置检测
+
+```bash
+git_dir=$(git rev-parse --git-dir)
+common_dir=$(git rev-parse --git-common-dir)
+[ "$git_dir" != "$common_dir" ] && is_worktree=true || is_worktree=false
+```
+
+`is_worktree == false` → 跳过, 报告 PR URL 结束.
+
+### Gate WC 文案
+
+```
+[Gate WC] PR 已创建: <pr_url>
+当前在 worktree: <worktree_path>
+
+① 保留 worktree (默认) — 继续在此 iterate PR feedback
+② 清理 worktree — 删本地 worktree, PR 合并后可删远程分支
+```
+
+### 判定
+
+- **选 ①**: 报 "worktree 已保留". 结束.
+- **选 ②**: 执行 worktree 清理, 然后输出远程分支清理提示.
+
+### 执行 (选 ②)
+
+worktree 清理 (沿用 sp skill Step 6 + `skill-overlay.md` provenance 扩展):
+
+```bash
+cd "$MAIN_ROOT"
+git worktree remove "<worktree_path>"    # 未提交改动会报错, 不加 --force
+git worktree prune
+```
+
+- `remove` 报错 → 报错因, 用户可 `git stash` 后重试
+- 成功 → 报 "已清理 worktree `<path>`"
+
+远程分支清理提示 (GitHub):
+
+```
+PR 合并后清理远程分支:
+  - GitHub PR 页面: 合并后点 "Delete branch" 按钮
+  - 或命令行: git push origin --delete <remote_branch>
+  - 或 repo Settings → General → 勾选 "Automatically delete head branches"
+```
+
+**不在此刻删远程** — PR 的 source 分支删了 PR 会关闭.
+
 ## 不要
 
 - **不要在 `gh pr create` 时塞 `--reviewer`** — 见 Step 6
@@ -166,6 +219,6 @@ gh pr edit <pr-number> --add-reviewer "alice,bob,charlie"
 
 ## Bitbucket DC 项目
 
-若 BF0 检测 `toolchain == "bkt"`, **额外** Read `pr-flow-bkt-appendix.md`, 它覆盖本文件 Step 6 (建 PR) + Step 7 (加 reviewer) 段, 用 `bkt` 命令 + cross-fork JSON body POST 替换.
+若 BF0 检测 `toolchain == "bkt"`, **额外** Read `pr-flow-bkt-appendix.md`, 它覆盖本文件 Step 6 (建 PR) + Step 7 (加 reviewer) + Step 8 远程分支清理提示段, 用 `bkt` 命令 + Bitbucket 提示替换.
 
-主流程 (Step 1-5 + Gate TB + Gate PR) 不变.
+主流程 (Step 1-5 + Gate TB + Gate PR + Step 8 worktree 清理) 不变.

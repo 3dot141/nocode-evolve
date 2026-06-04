@@ -73,17 +73,17 @@ const CATALOG_HEADER_FIRST = `# agent-catalog — nocode-evolve 插件级规则�
 
 **这是工序, 不是自觉**——不论任务大小、context 深度、是否 mid-task, Step 0 都先扫. 跳过 = 软触发漏, 这正是 catalog 常驻设计要解决的.
 
-## 何时主动调用 /pilot
+## 何时主动调用 /dev-workflow
 
-agent 视角: 用户任务命中以下任一条件时, **主动调起 pilot skill** 进入流程导航 (pilot 给阶段判断 + 下一步建议, 用户拍板, 不替执行):
+agent 视角: 用户任务命中以下任一条件时, **主动调起 dev-workflow skill** 进入流程导航 (dev-workflow 给阶段判断 + 下一步建议, 用户拍板, 不替执行):
 
 - 跨文件 + 状态未知 (不知道当前在生命周期哪一步)
 - 需要 commit / PR / 设计文档 / 评审等多阶段动作
 - 用户描述含「整个 / 整体 / 全流程 / 从头 / 完整跑通」等多步信号
 
-不触发 (直接动手, 不建议 /pilot): 单文件修改、纯查询、单步明确动作.
+不触发 (直接动手, 不建议 /dev-workflow): 单文件修改、纯查询、单步明确动作.
 
-> 项目本地资源 (\`.agents-personal/\`) 检索约定见 \`model/agent-personal.md\`. /pilot 可被 model 主动调起, 也可用户 \`/调\`; 命中上述复杂多步条件时直接进 pilot, 由 pilot 给流程建议、用户拍板.
+> 项目本地资源 (\`.agents-personal/\`) 检索约定见 \`model/agent-personal.md\`. /dev-workflow 可被 model 主动调起, 也可用户 \`/调\`; 命中上述复杂多步条件时直接进 dev-workflow, 由 dev-workflow 给流程建议、用户拍板.
 
 ## 何时主动建议 /distill · /sow · /task (用户主动键入 command)
 

@@ -206,6 +206,21 @@ fi
 - **不要对 fork PR (Workflow B) 用 `bkt pr edit --with-default-reviewers`** — 报 `400 The source repository with id '0' does not exist` (bkt 拿不到 fork 的 source repo id). Workflow B 的 reviewer 必须 `--reviewer` 显式加 (见 Step 7.B); default reviewer 名单从 `bkt api '/rest/default-reviewers/1.0/projects/<target>/repos/<repo>/conditions'` 查, 排除作者本人
 - **不要用 `bkt pr view` 验证跨仓 (Workflow B) PR** — 它对 cross-repo PR 解析 `author` / `reviewers` 会显示 None / 空 (不可靠). 验证走 raw GET: `bkt api '/rest/api/1.0/projects/<target>/repos/<repo>/pull-requests/<id>' --json`, 看 `reviewers[].user.name` / `.status` / `author.user.name`
 
+## Step 8: Gate WC — worktree 清理 (bkt)
+
+前置检测 + Gate WC 文案 + worktree 清理步骤与 `pr-flow-gh.md` Step 8 一致, 此处不重复.
+
+远程分支清理提示 (Bitbucket):
+
+```
+PR 合并后清理远程分支:
+  - Bitbucket PR 页面: 合并时勾选 "Delete source branch after merging"
+  - 或命令行: git push origin --delete <remote_branch>
+  - 或 repo Settings → Merge strategies → 勾选 "Auto delete branch on merge"
+```
+
+**不在此刻删远程** — PR 的 source 分支删了 PR 会关闭.
+
 ## 项目本地特异内容不在本附录
 
 > **查找范围**: 项目本地 PR 约定 (reviewer 名单 / slug / target) **仅限** `.agents-personal/rules/personal-repo-pr.md`。该文件不存在即视为"无项目本地约定" → 走 default-reviewers API 默认逻辑, **不扩大搜索** (不扫项目根 / docs / 其他 rule, 不"找实际位置")。
