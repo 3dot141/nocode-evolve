@@ -113,25 +113,39 @@ source 是 personal repo (~$source_project), 团队成员对其无 read 权限.
 
 ### Workflow B: batch + 单个 fallback
 
-#### Step 7.B.0: 取 cross-fork 的 resolved 默认 reviewer 名单
+#### Step 7.B.0: 取 cross-fork 的默认 reviewer 名单
 
-`bkt pr edit --with-default-reviewers` 在 Workflow B 失效 (见下方坑表: source repo id '0')。手动取 resolved 名单——
-**repo id 不是项目静态值, 每个 PR 从其 `fromRef`/`toRef` 现取**, 再查 default-reviewers 的 `reviewers`
-endpoint (它直接返回 resolved 适用 reviewer, 比 `/conditions` 省去自己评估规则):
+`bkt pr edit --with-default-reviewers` 在 Workflow B 失效 (见下方坑表: source repo id '0')。手动取名单再 `--reviewer` 显式加。
+
+**两个 endpoint 按时机选** —— `/reviewers` (resolved) **依赖 source ref 已 push 到 origin**: cross-fork 时 source 是 `~<user>/<repo>`, 分支没 push 前那边没有这个 ref → `/reviewers` 返回 **404** (实测: fx-data-agents Gate PR 预览阶段, source 未 push, `/reviewers` 404)。
+
+**(a) 建 PR 后 (Step 7 本体, source 已 push)** → 用 `/reviewers` resolved endpoint, 直接返回适用 reviewer, `.name` 已 canonical (无需大小写 fallback)。**repo id 不是项目静态值, 从 PR 的 `fromRef`/`toRef` 现取**:
 
 ```bash
 # 1) 从 PR 取 source/target repo id (现取)
 src_repo_id=$(bkt api "/rest/api/1.0/projects/${target_project}/repos/${repo_slug}/pull-requests/${pr_id}" --json --jq '.fromRef.repository.id')
 tgt_repo_id=$(bkt api "/rest/api/1.0/projects/${target_project}/repos/${repo_slug}/pull-requests/${pr_id}" --json --jq '.toRef.repository.id')
 
-# 2) 查 resolved 默认 reviewer; 返回的 .name 已是精确大小写 → 直接喂 --reviewer, 无需大小写 fallback
+# 2) 查 resolved 默认 reviewer; 返回的 .name 已是精确大小写 → 直接喂 --reviewer
 bkt api "/rest/default-reviewers/1.0/projects/${target_project}/repos/${repo_slug}/reviewers?sourceRepoId=${src_repo_id}&targetRepoId=${tgt_repo_id}&sourceRefId=refs/heads/${source_branch}&targetRefId=refs/heads/${target_branch}" \
   --json --jq '.[].name'
-
-# 3) 从结果**排除 PR 作者** (作者不能 review 自己, 加了会 fail) —— 作者名见 PR 的 author.user.name
 ```
 
-> 用此 endpoint 拿到的名字已 canonical, batch 加不会撞 Step 7.B.3 的大小写 409 (那是手敲 / 猜名字才会撞)。
+**(b) Gate PR 预览阶段 (push 前, PR 还没建)** → `/reviewers` 会 404 (source ref 不存在)。改用 `/conditions` endpoint, 它**不依赖 source ref**, 返回 default reviewer 规则, 自己按 target ref 匹配适用 condition 再 resolve `reviewers`:
+
+```bash
+# repo id 此时从 repo endpoint 取 (.id), 不是从 PR (PR 还没建)
+src_repo_id=$(bkt api "/rest/api/1.0/projects/${source_project}/repos/${repo_slug}" --json --jq '.id')
+tgt_repo_id=$(bkt api "/rest/api/1.0/projects/${target_project}/repos/${repo_slug}" --json --jq '.id')
+
+# /conditions 返回全部规则; 按 condition 的 sourceRefMatcher / targetRefMatcher 过滤命中本次 target 的 (e.g. target=persist 命中 ANY_REF + persist 两条), 取其 .reviewers[].name
+bkt api "/rest/default-reviewers/1.0/projects/${target_project}/repos/${repo_slug}/conditions" \
+  --json --jq '.[].reviewers[].name'
+```
+
+两条都要**排除 PR 作者** (作者不能 review 自己, 加了会 fail) —— 作者名见 PR `author.user.name`; 预览阶段即当前 bkt 登录用户。
+
+> (a) `/reviewers` 的名字已 canonical, batch 加不会撞 Step 7.B.3 大小写 409 (那是手敲 / 猜名字才会撞)。(b) `/conditions` 走 `--reviewer` 加前同样可先过 user API 校大小写。
 
 #### Step 7.B.1: 批量 add
 
@@ -188,6 +202,7 @@ fi
 - **不要 create 时塞 `reviewers` 数组** — 单 user 错 (大小写 / 无权限) 会让整个 PR 都建不出来. 拆 "建空 reviewer PR + 逐 edit 加" 更稳
 - **不要 pipe `bkt api` 输出给 jq** — output 含真实换行 (不是 JSON-escaped), pipe 给 jq 会 parse error. 抓 id 用 `grep -oE '"id":[0-9]+' | head -1`
 - **不要假设 PR slug 跟 git remote URL 一致** — Bitbucket DC 改名后 git remote URL 可能仍是旧 slug (server redirect 兜底), 但 bkt CLI / API 调用必须用**新 slug**. 实战: `fx-data-nines.git` (remote URL) → `fx-data-agents` (实际 slug). 验证: `bkt api '/rest/api/1.0/projects/<user>/repos' --param 'limit=200' --json --jq '.values[].slug'`
+- **`/reviewers` resolved endpoint push 前会 404** — `default-reviewers/1.0/.../reviewers?sourceRefId=refs/heads/<branch>...` 依赖 source ref 已存在于 origin; cross-fork (Workflow B) source 是 `~<user>/<repo>`, 分支没 push 前那边无此 ref → 404 (实测 fx-data-agents Gate PR 预览). 预览阶段 (push 前) 改用 `/conditions` (不依赖 source ref), push 后才用 `/reviewers` (见 Step 7.B.0 a/b)
 - **不要对 fork PR (Workflow B) 用 `bkt pr edit --with-default-reviewers`** — 报 `400 The source repository with id '0' does not exist` (bkt 拿不到 fork 的 source repo id). Workflow B 的 reviewer 必须 `--reviewer` 显式加 (见 Step 7.B); default reviewer 名单从 `bkt api '/rest/default-reviewers/1.0/projects/<target>/repos/<repo>/conditions'` 查, 排除作者本人
 - **不要用 `bkt pr view` 验证跨仓 (Workflow B) PR** — 它对 cross-repo PR 解析 `author` / `reviewers` 会显示 None / 空 (不可靠). 验证走 raw GET: `bkt api '/rest/api/1.0/projects/<target>/repos/<repo>/pull-requests/<id>' --json`, 看 `reviewers[].user.name` / `.status` / `author.user.name`
 
