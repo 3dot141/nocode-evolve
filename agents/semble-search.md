@@ -24,6 +24,11 @@ If `semble` is not on `$PATH`, use `uvx --from "semble[mcp]" semble` in its plac
 
 ## Workflow
 
+0. **Freshness gate** — before searching, run this in the target repo's cwd to check staleness:
+   ```bash
+   git fetch origin --quiet 2>/dev/null; base=$(git rev-parse --abbrev-ref --symbolic-full-name '@{u}' 2>/dev/null || echo 'origin/main'); behind=$(git rev-list --count HEAD..$base 2>/dev/null || echo '?'); echo "freshness: behind $base by $behind commits"
+   ```
+   If behind >= 5, **stop and report to the caller** (branch, base, behind count) — do not proceed with search on stale code. Let the caller decide (pull-rebase / accept / skip).
 1. Start with `semble search` to find relevant chunks.
 2. Inspect full files only when the returned chunk is not enough context.
 3. Optionally use `semble find-related` with a promising result's `file_path` and `line` to discover related implementations.
