@@ -19,32 +19,49 @@ description: 工程任务流程领航. 可被 model 主动调起, 也可用户 /
 
 然后**退出**, 不强吐方案、不画流程图。
 
-只有 **复杂 / 多步 / 不确定下一步 / 要规划整体** 时才走 Step 2-4。
+只有 **复杂 / 多步 / 不确定下一步 / 要规划整体** 时才走 Step 2-5。
 
 ### Step 2: 判当前阶段
 
-扫下方 9 阶段地图, 看会话情境 (已经做了什么、哪些 Gate 已过), 判 agent 当前处于哪个阶段。
+扫下方阶段地图, 看会话情境 (已经做了什么、哪些 Gate 已过), 判 agent 当前处于哪个阶段。
 
-### Step 3: 输出建议
+### Step 3: 用 TaskCreate 创建 todo 列表
 
-格式:
+**首次进入 workflow 时**, 用 `TaskCreate` 为**当前阶段及后续所有阶段**各创建一条 task。已完成的阶段不建。每条 task 的 subject 格式: `阶段 N: <阶段名>`。
+
+示例 (从阶段 1 开始):
+```
+TaskCreate("阶段 1: Brainstorming")
+TaskCreate("阶段 2: Create Worktree")
+TaskCreate("阶段 3: Writing Design")
+...
+TaskCreate("阶段 10: Finish Worktree")
+```
+
+**中途进入** (如用户说「从阶段 5 开始」): 只建阶段 5 及之后的 task, 之前的视为已完成。
+
+**阶段推进时**: 当前阶段 Gate 过了 → `TaskUpdate(status: completed)` 标完成 → `TaskUpdate(status: in_progress)` 标下一阶段开始。用户能随时看到整体进度。
+
+### Step 4: 输出建议 (含 rule/gate 检查)
+
+进入每个阶段前, **先 Read 该阶段对应的 rule 文件** (阶段总览表的「进入前 Read」列), 检查 Gate 条件是否满足, 然后输出建议:
 
 ```
 当前在阶段 N: <阶段名> (依据: 已过 Gate X、Y)
 建议下一步: 阶段 N+1 <阶段名>
   → 调用: <skill / rule>
   → Gate 条件: <需满足什么才能进下一阶段>
-  → 进入前 Read: <rule 文件> (如有)
+  → 进入前 Read: <rule 文件> (已读 / 待读)
 备选: 跳过 / 回退 (需用户显式授权)
 ```
 
-### Step 4: 停下来让用户拍板
+### Step 5: 停下来让用户拍板
 
 **不自动执行**下一步。等用户说 "OK" 或调整方向后再动手。
 
 ---
 
-## 9 阶段生命周期地图
+## 10 阶段生命周期地图
 
 每阶段必须过 Gate 才进入下一阶段。Gate 是软卡——agent 检查并报告状态, 用户显式说「跳过」可放行, agent 不自行判断跳过。
 
@@ -59,8 +76,9 @@ description: 工程任务流程领航. 可被 model 主动调起, 也可用户 /
 | 5 | **Writing Plan** | `superpowers:writing-plans` | (无专属 rule) | 实现计划已产出 |
 | 6 | **Executing** | `superpowers:executing-plans` / `superpowers:test-driven-development` / `superpowers:subagent-driven-development` | (无专属 rule) | 代码完成 + 测试通过 |
 | 7 | **Code Review** | 交叉评审 loop (同阶段 4 机制) | `rule-codex-review` | 用户 approve |
-| 8 | **Create PR** | `rule-finishing-branch` option 2 | `rule-finishing-branch` | Gate TB (title/body) + Gate PR (push+reviewer) 均过 |
-| 9 | **Finish Worktree** | `rule-finishing-branch` Gate WC → ExitWorktree | (同 rule-finishing-branch) | worktree 清理完成 |
+| 8 | **Create PR** | `rule-finishing-branch` option 2 | `rule-finishing-branch` | Gate TB (title/body) + push 成功 + PR 已创建 (不含 reviewer) |
+| 9 | **Add Reviewers** | `rule-finishing-branch` pr-flow-bkt-appendix Step 7 | (同 rule-finishing-branch) | reviewer 已添加 (或用户说跳过) |
+| 10 | **Finish Worktree** | `rule-finishing-branch` Gate WC → ExitWorktree | (同 rule-finishing-branch) | worktree 清理完成 |
 
 ### 横切 (任意阶段可调)
 
@@ -94,6 +112,35 @@ description: 工程任务流程领航. 可被 model 主动调起, 也可用户 /
 - **阶段 7**: 评审对象 = 代码改动 (diff)
 - **交叉**: Claude Code 自己评 + Codex 独立评 (`rule-codex-review`), 两份结果合并呈现, 避免单一视角盲区
 - **用户始终在 loop 中拍板**: fix 哪些 / 是否再评审, agent 不自行决定
+
+---
+
+## 阶段 8 + 9: Create PR → Add Reviewers (解耦)
+
+PR 创建和添加 reviewer 拆成两个独立阶段, 原因:
+- Bitbucket cross-fork 场景下 `bkt pr create --with-default-reviewers` 会失败 (`source repo id '0'`)
+- reviewer 添加可能部分失败 (大小写 / 权限), 不应阻塞 PR 创建
+- 解耦后每步可独立重试
+
+### 阶段 8: Create PR
+
+1. Read `rule-finishing-branch` + 工具栈检测 (gh / bkt)
+2. Gate TB: 生成 title + body, 用户确认
+3. Push 分支到 remote
+4. 创建 PR (**不带 reviewer**——避免单 user 错导致整个 create 失败)
+5. Gate: PR 已创建, 拿到 PR URL + id
+6. `TaskUpdate(阶段 8: completed)`
+
+### 阶段 9: Add Reviewers
+
+1. 若 toolchain == bkt:
+   - Workflow A (单仓/personal): 跳整段 (团队无 read 权限)
+   - Workflow B (cross-fork): 从 `/reviewers` endpoint 取默认 reviewer 名单 → 排除作者 → `bkt pr edit --reviewer` batch 加
+   - 详见 `rule-references/rule-finishing-branch/pr-flow-bkt-appendix.md` Step 7
+2. 若 toolchain == gh: `gh pr edit --add-reviewer`
+3. 部分失败时: 大小写 fallback → 仍失败则跳过该 reviewer + 报告
+4. Gate: reviewer 已添加 (或用户说跳过)
+5. `TaskUpdate(阶段 9: completed)`
 
 ---
 
@@ -146,3 +193,5 @@ description: 工程任务流程领航. 可被 model 主动调起, 也可用户 /
 - **不自行跳过阶段** — 跳过需用户显式授权 (「跳过 / 不要 X」), 模糊信号不算
 - **不重复规则细节** — 路由表在常驻 catalog 分片, 这里只给阶段 / 建议, 不抄 rule 内容
 - **不在 dev-workflow 内跑评审 / 写文档** — 调对应 skill / rule, 它们有各自的流程
+- **不把 Create PR 和 Add Reviewers 合并** — 解耦是刻意设计, 避免 reviewer 失败拖垮 PR 创建
+- **不跳过 TaskCreate** — 进入 workflow 必须建 todo 列表, 让用户看到整体进度
