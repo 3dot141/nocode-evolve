@@ -6,6 +6,8 @@ description: 工程任务流程领航. 可被 model 主动调起, 也可用户 /
 # nocode-evolve:dev-workflow — 工程任务流程领航
 
 > 工程任务驾驶舱。**model 命中复杂多步任务时主动调起**, 用户也可 **`/调`** 进入。给建议不替执行。
+> 
+> 规则依赖: SessionStart 已注入 `model/agent-catalog-*.md` 完整路由到 context。每个阶段对应的 rule 触发条件 / 摘要 / guard 已常驻, 需要完整指令时按需 Read `rules/rule-*.md`。
 
 ## 协议 (被调起时严格按此走)
 
@@ -21,68 +23,126 @@ description: 工程任务流程领航. 可被 model 主动调起, 也可用户 /
 
 ### Step 2: 判当前阶段
 
-据下方生命周期地图, 看会话情境 (已经做了什么、在哪一步), 判 agent 当前处于哪个阶段。
+扫下方 9 阶段地图, 看会话情境 (已经做了什么、哪些 Gate 已过), 判 agent 当前处于哪个阶段。
 
 ### Step 3: 输出建议
 
 格式:
 
 ```
-当前在 X 阶段 (依据: 已做了 A、B)
-建议下一步: Y (对应 skill/rule: Z, 理由: …)
-备选: W (如果你要跳/回退/并行做别的)
+当前在阶段 N: <阶段名> (依据: 已过 Gate X、Y)
+建议下一步: 阶段 N+1 <阶段名>
+  → 调用: <skill / rule>
+  → Gate 条件: <需满足什么才能进下一阶段>
+  → 进入前 Read: <rule 文件> (如有)
+备选: 跳过 / 回退 (需用户显式授权)
 ```
 
 ### Step 4: 停下来让用户拍板
 
-**不自动执行**下一步。等用户说 "OK, 做 Y" 或 "我要做 W" 或调整方向后再动手。
+**不自动执行**下一步。等用户说 "OK" 或调整方向后再动手。
 
 ---
 
-## 生命周期地图 (软序, 地图非轨道; 按情境跳 / 回退 / 并行)
+## 9 阶段生命周期地图
 
-| 阶段 | 对应 skill / 规则 | 何时进 / 产出 |
+每阶段必须过 Gate 才进入下一阶段。Gate 是软卡——agent 检查并报告状态, 用户显式说「跳过」可放行, agent 不自行判断跳过。
+
+### 阶段总览
+
+| # | 阶段 | 调用 | 进入前 Read | Gate (过了才进下一阶段) |
+|---|---|---|---|---|
+| 1 | **Brainstorming** | `superpowers:brainstorming` | `rule-superpowers-brainstorming` | 需求 / 设计意图明确, 用户确认 |
+| 2 | **Create Worktree** | `superpowers:using-git-worktrees` → EnterWorktree | `rule-git-worktree` | worktree 已建并进入 (pwd 在 worktree 内) |
+| 3 | **Writing Design** | `nocode-evolve:design-doc-writing` | (skill 内含流程) | 设计文档已产出 |
+| 4 | **Review Design** | 交叉评审 loop (见下方) | `rule-codex-review` | 用户 approve |
+| 5 | **Writing Plan** | `superpowers:writing-plans` | (无专属 rule) | 实现计划已产出 |
+| 6 | **Executing** | `superpowers:executing-plans` / `superpowers:test-driven-development` / `superpowers:subagent-driven-development` | (无专属 rule) | 代码完成 + 测试通过 |
+| 7 | **Code Review** | 交叉评审 loop (同阶段 4 机制) | `rule-codex-review` | 用户 approve |
+| 8 | **Create PR** | `rule-finishing-branch` option 2 | `rule-finishing-branch` | Gate TB (title/body) + Gate PR (push+reviewer) 均过 |
+| 9 | **Finish Worktree** | `rule-finishing-branch` Gate WC → ExitWorktree | (同 rule-finishing-branch) | worktree 清理完成 |
+
+### 横切 (任意阶段可调)
+
+| 能力 | 调用 | 说明 |
 |---|---|---|
-| **0 理解 / 设计** | `superpowers:brainstorming` → `nocode-evolve:design-doc-writing` (含 render 环节) | 需求不清 / 要设计文档 → 设计 spec |
-| **1 隔离环境** | `superpowers:using-git-worktrees` (+ `rule-git-worktree`) | 要动代码 / 新分支 → worktree |
-| **2 实现** | `superpowers:test-driven-development` / `subagent-driven-development` | 设计已定 → TDD 实现 |
-| **3 验证 / 评审** | `superpowers:requesting-code-review` (+ `rule-codex-review`) | 实现完, 提交前 → 评审 |
-| **4 收尾 / 沉淀** | `superpowers:finishing-a-development-branch` (+ `rule-finishing-branch` / `rule-push-summary`) | 评审过 → 合并 + 总结 |
-| **⟳ 横切 (任意阶段)** | `nocode-evolve:red-blue-deep` (评估拍板) | 需要时随时调 |
-
-> 规则细节不在此重复 —— 常驻 `model/agent-catalog-*.md` 已含完整 rule 路由 (触发 / 读 / 摘要 / guard);项目本地资源 (`.agents-personal/`) 的检索约定常驻 `model/agent-personal.md`;`git-inspection` / `git-freshness` 这两条 behavior 常驻 `model/agent-about.md` 的「常驻 git 习惯」节。需要时 Read 对应 rule 文件。
+| 评估 / 拍板 | `nocode-evolve:red-blue-deep` | 需要判断 / 权衡时随时调 |
+| Git freshness | `rule-git-freshness` | 设计 / 搜索 / 多文件 Read 前自动触发 (常驻 behavior) |
+| Git 只读合并 | `rule-git-inspection` | ≥2 git 只读命令 && 串 (常驻 behavior) |
 
 ---
 
-## 例子 (协议怎么用)
+## 阶段 4 / 7: 交叉评审 Loop
 
-### 例 1: 简单任务 (Step 1 直接放行)
+阶段 4 (设计评审) 和阶段 7 (代码评审) 共用同一个 loop 机制, 区别仅在评审对象:
 
-用户: `/dev-workflow 帮我把 user_id 改成 userId`
+```
+┌─→ Claude Code 评审 + Codex 交叉评审 (rule-codex-review)
+│     ↓
+│   汇总 findings → 呈现给用户
+│     ↓
+│   用户判断: fix 哪些 (逐条选)
+│     ↓
+│   执行 fix
+│     ↓
+│   用户判断: 需要再次评审?
+│     ├─ 是 → loop ──┘
+│     └─ 否 → approve → 进下一阶段
+```
 
-→ 你回:
+- **阶段 4**: 评审对象 = 设计文档
+- **阶段 7**: 评审对象 = 代码改动 (diff)
+- **交叉**: Claude Code 自己评 + Codex 独立评 (`rule-codex-review`), 两份结果合并呈现, 避免单一视角盲区
+- **用户始终在 loop 中拍板**: fix 哪些 / 是否再评审, agent 不自行决定
 
-> "这是单步重命名任务, 直接做即可, 无需流程编排。建议: 跨文件 grep + Edit。"
+---
 
-退出。
+## 阶段跳转规则
 
-### 例 2: 复杂任务 (走 Step 2-4)
+- **顺序前进**: 默认按 1→2→…→9 线性推进
+- **跳过**: 用户显式说「跳过阶段 N」才跳, agent 不自行判断; 跳过时回复点名「按你要求跳过阶段 N」
+- **回退**: 用户说「回到阶段 N」可回退重做
+- **中途进入**: 用户说「从阶段 N 开始」可从中间进入 (已有 worktree / 设计文档等); agent 检查前置 Gate 状态并报告
 
-用户: `/dev-workflow 我要给插件加个新 skill 叫 X`
+---
 
-→ 你回:
+## 例子
 
-> **当前在 0 理解/设计 阶段** (依据: 还没设计 spec, X 的用途/触发不明)
-> **建议下一步**: `superpowers:brainstorming` 走清楚 X 的用途/触发, 然后 `nocode-evolve:design-doc-writing` 出 spec; 然后进 1 隔离环境 (worktree) → 2 实现 + TDD → 3 review → 4 finishing-branch
-> **备选**: 如果 X 是琐碎 skill (单一动作, 无 trade-off), 可跳过 brainstorming 直接进 1 隔离 + 2 实现
+### 例 1: 简单任务 (Step 1 放行)
 
-然后停下, 等用户拍板。
+用户: "把 utils.ts 里的 formatDate 改成 snake_case"
+→ "这是单步任务, 直接做即可, 无需流程编排。" → 退出
+
+### 例 2: 复杂任务 (从头走)
+
+用户: "给插件加个新 skill"
+→ 判断: 跨文件 + 多步 → 进流程
+
+> **当前在阶段 1: Brainstorming** (依据: 新任务, 未开始)
+> **建议下一步**: 调用 `superpowers:brainstorming` 探索需求
+>   → 进入前 Read: `rule-superpowers-brainstorming`
+>   → Gate: 需求 / 设计意图明确后进阶段 2
+> **备选**: 如果需求已清晰, 说「跳过」直接到阶段 2
+
+→ 等用户拍板
+
+### 例 3: 中途进入
+
+用户: "我已经有设计文档了, 帮我写实现计划"
+→ 判断: 阶段 3 已完成 (有文档)
+
+> **当前在阶段 3 之后** (依据: 设计文档已有)
+> **建议下一步**: 先走阶段 4 设计评审 (交叉评审 loop), 确认设计无问题再进阶段 5
+> **备选**: 说「跳过评审」直接到阶段 5 写计划
+
+→ 等用户拍板
 
 ---
 
 ## 不要
 
-- **只在复杂多步任务触发**: 简单单步别调起 (Step 1 必判); 用户也可主动 `/调`。
-- **简单任务别强加流程**: Step 1 必判, 简单就放行。
-- **不替用户执行**: 给建议后停下, 等用户拍板。
-- **不重复规则细节**: 路由表在常驻 catalog 分片, 这里只给阶段/建议, 不抄 rule 内容。
+- **简单任务别强加流程** — Step 1 必判, 简单就放行
+- **不替用户执行** — 给建议后停下, 等用户拍板
+- **不自行跳过阶段** — 跳过需用户显式授权 (「跳过 / 不要 X」), 模糊信号不算
+- **不重复规则细节** — 路由表在常驻 catalog 分片, 这里只给阶段 / 建议, 不抄 rule 内容
+- **不在 dev-workflow 内跑评审 / 写文档** — 调对应 skill / rule, 它们有各自的流程
