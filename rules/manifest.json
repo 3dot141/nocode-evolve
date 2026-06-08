@@ -143,7 +143,10 @@
       "depends_on": ["git-worktree"],
       "severity": "warn",
       "lifecycle_stage": "cross",
-      "pretooluse": []
+      "pretooluse": [
+        { "pattern": "\\b(grep\\s+(-[a-zA-Z]*r|-[a-zA-Z]*\\s+-r|--recursive)|rg\\s+)\\b", "action": "inject", "note": "代码搜索 (grep -r / rg) 前先跑 freshness-check.mjs 确认分支不过时" },
+        { "pattern": "\\bfind\\s+.*\\.(tsx?|jsx?|mjs|cjs|py|go|rs|java|rb|vue|svelte)\\b", "action": "inject", "note": "find 搜代码文件前先跑 freshness-check.mjs 确认分支不过时" }
+      ]
     },
     {
       "id": "personal-deletion-guard",

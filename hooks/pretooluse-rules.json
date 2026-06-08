@@ -48,6 +48,18 @@
     "reason": "原则: 每个分支都要 worktree。别在主仓裸开 branch, 先 Read rule-git-worktree.md 走 git worktree add 落 <project>-<branch>/. branch 段 [^-\\s|] 排除 -flag 和 pipe 查询, 只命中新建 git branch <name>"
   },
   {
+    "rule": "git-freshness",
+    "pattern": "\\b(grep\\s+(-[a-zA-Z]*r|-[a-zA-Z]*\\s+-r|--recursive)|rg\\s+)\\b",
+    "decision": "inject",
+    "reason": "代码搜索 (grep -r / rg) 前先跑 freshness-check.mjs 确认分支不过时"
+  },
+  {
+    "rule": "git-freshness",
+    "pattern": "\\bfind\\s+.*\\.(tsx?|jsx?|mjs|cjs|py|go|rs|java|rb|vue|svelte)\\b",
+    "decision": "inject",
+    "reason": "find 搜代码文件前先跑 freshness-check.mjs 确认分支不过时"
+  },
+  {
     "rule": "personal-deletion-guard",
     "pattern": "\\b(rm|mv)\\s+.*(\\.agents-personal/|\\$USER_VAULT_PATH/|\\$\\{USER_VAULT_PATH\\})",
     "decision": "inject",
