@@ -19,7 +19,7 @@
 # 新增 rules/rule-*.md: 必须被任一 model/agent-catalog-*.md 引用 (改 manifest 重新生成), 否则 sanity 警告触发不到.
 set -euo pipefail
 
-PLUGIN_ROOT="${CLAUDE_PLUGIN_ROOT:-}"
+PLUGIN_ROOT="${CLAUDE_PLUGIN_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}"
 PROJECT_DIR="${CLAUDE_PROJECT_DIR:-$PWD}"
 SEG="${1:-}"
 
