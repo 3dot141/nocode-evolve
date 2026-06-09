@@ -45,6 +45,13 @@ file="$(seg_file "$SEG")" || {
   exit 1
 }
 
+# 导出 CLAUDE_PLUGIN_ROOT 到 Bash 环境 (只在第一个 segment 写一次):
+# CLAUDE_PLUGIN_ROOT 在 hook 进程内有, 但 Bash tool 拿不到.
+# 写入 CLAUDE_ENV_FILE 后, 后续所有 Bash 调用都能用 ${CLAUDE_PLUGIN_ROOT}.
+if [ "$SEG" = "model-about" ] && [ -n "${CLAUDE_ENV_FILE:-}" ]; then
+  echo "CLAUDE_PLUGIN_ROOT=${PLUGIN_ROOT}" >> "$CLAUDE_ENV_FILE"
+fi
+
 # Sanity check 只在第一个 model segment 跑一次 (避免每 command 重复):
 #   - 生成物与 manifest 漂移 → warn
 #   - model/*.md (排除 catalog 自动分片) 没对应 segment → warn (孤儿)
