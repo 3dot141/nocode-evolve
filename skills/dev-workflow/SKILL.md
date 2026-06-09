@@ -34,7 +34,12 @@ description: 工程任务流程领航. 可被 model 主动调起, 也可用户 /
 TaskCreate("阶段 1: Brainstorming")
 TaskCreate("阶段 2: Create Worktree")
 TaskCreate("阶段 3: Writing Design")
-...
+TaskCreate("阶段 4: Review Design (双路交叉评审)")
+TaskCreate("阶段 5: Writing Plan")
+TaskCreate("阶段 6: Executing")
+TaskCreate("阶段 7: Code Review (双路交叉评审)")
+TaskCreate("阶段 8: Create PR")
+TaskCreate("阶段 9: Add Reviewers")
 TaskCreate("阶段 10: Finish Worktree")
 ```
 
@@ -72,10 +77,10 @@ TaskCreate("阶段 10: Finish Worktree")
 | 1 | **Brainstorming** | `superpowers:brainstorming` | `rule-superpowers-brainstorming` | 需求 / 设计意图明确, 用户确认 |
 | 2 | **Create Worktree** | `superpowers:using-git-worktrees` → EnterWorktree | `rule-git-worktree` | worktree 已建并进入 (pwd 在 worktree 内) |
 | 3 | **Writing Design** | `nocode-evolve:design-doc-writing` | (skill 内含流程) | 设计文档已产出 |
-| 4 | **Review Design** | 交叉评审 loop (见下方) | `rule-codex-review` | 用户 approve |
+| 4 | **Review Design** | 双路交叉评审 loop (见下方) | `rule-codex-review` | 用户 approve |
 | 5 | **Writing Plan** | `superpowers:writing-plans` | (无专属 rule) | 实现计划已产出 |
 | 6 | **Executing** | `superpowers:executing-plans` / `superpowers:test-driven-development` / `superpowers:subagent-driven-development` | (无专属 rule) | 代码完成 + 测试通过 |
-| 7 | **Code Review** | 交叉评审 loop (同阶段 4 机制) | `rule-codex-review` | 用户 approve |
+| 7 | **Code Review** | 双路交叉评审 loop (同阶段 4 机制) | `rule-codex-review` | 用户 approve |
 | 8 | **Create PR** | `rule-finishing-branch` option 2 | `rule-finishing-branch` | Gate TB (title/body) + push 成功 + PR 已创建 (不含 reviewer) |
 | 9 | **Add Reviewers** | `rule-finishing-branch` pr-flow-bkt-appendix Step 7 | (同 rule-finishing-branch) | reviewer 已添加 (或用户说跳过) |
 | 10 | **Finish Worktree** | `rule-finishing-branch` Gate WC → ExitWorktree | (同 rule-finishing-branch) | worktree 清理完成 |
@@ -90,9 +95,9 @@ TaskCreate("阶段 10: Finish Worktree")
 
 ---
 
-## 阶段 4 / 7: 交叉评审 Loop
+## 阶段 4 / 7: 双路交叉评审 Loop
 
-阶段 4 (设计评审) 和阶段 7 (代码评审) 共用同一个 loop 机制, 区别仅在评审对象:
+阶段 4 (设计评审) 和阶段 7 (代码评审) 共用同一个**双路交叉评审** loop 机制, 区别仅在评审对象:
 
 ```
 ┌─→ Claude Code 评审 + Codex 交叉评审 (rule-codex-review)
