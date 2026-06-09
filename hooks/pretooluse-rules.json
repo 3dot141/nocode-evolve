@@ -3,7 +3,13 @@
     "rule": "finishing-branch",
     "pattern": "gh\\s+pr\\s+create",
     "decision": "inject",
-    "reason": "提 PR 前先 Read rule-finishing-branch.md 走 Gate TB/PR"
+    "reason": "Gate TB: create PR 前先把 title + body 展示给用户确认。用户本轮已明确 OK/确认 → 继续; 否则停下展示草稿等用户拍板, 不直接执行"
+  },
+  {
+    "rule": "finishing-branch",
+    "pattern": "bkt\\s+pr\\s+create",
+    "decision": "inject",
+    "reason": "Gate TB: create PR 前先把 title + body 展示给用户确认。用户本轮已明确 OK/确认 → 继续; 否则停下展示草稿等用户拍板, 不直接执行"
   },
   {
     "rule": "finishing-branch",
