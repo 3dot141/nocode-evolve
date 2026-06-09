@@ -42,6 +42,7 @@ node scripts/freshness-check.mjs --max-behind=5 --ttl=7200
 脚本内部逻辑 (agent 无需手动跑这些, 脚本封装):
 
 1. **base 分支推断** (优先级):
+   - `git config branch.<branch>.nocode-evolve-base` (worktree 创建时写入, 记录真实分叉基线; 不随 `push -u` 漂移到 `origin/<feature-branch>`)
    - `git rev-parse --abbrev-ref --symbolic-full-name HEAD@{u}` (当前分支 upstream, eg. `origin/release/x` 或 `origin/main`)
    - 无 upstream / detached → `git rev-parse --abbrev-ref origin/HEAD` (远端 default branch, 通常 `origin/main`)
    - 兜底 `origin/main`

@@ -49,6 +49,12 @@ if [ -n "$upstream" ]; then
 fi
 
 git worktree add "$worktree_path" -b "$BRANCH_NAME" $start_point   # start_point 空则基于当前 HEAD
+
+# 记录 freshness base (freshness-check.mjs 最高优先级读此 config, 不随 push -u 漂移)
+freshness_base="${upstream:-$(git rev-parse --abbrev-ref origin/HEAD 2>/dev/null)}"
+freshness_base="${freshness_base:-origin/main}"
+git -C "$worktree_path" config branch."$BRANCH_NAME".nocode-evolve-base "$freshness_base"
+
 # 切 cwd 不在此处用 cd——见下文「Worktree 创建后: 切到 worktree 工作目录」:
 # harness 有 EnterWorktree 必用 EnterWorktree(path=) 持久化; 仅 harness 无此工具时才退每次 cd
 ```

@@ -13,11 +13,12 @@
 //   离线冷启动 (无 entry + fetch 失败) 不写 entry, 仍反复拦, 直到联网成功建立基线.
 //
 // base 推断优先级:
-//   1) git rev-parse --abbrev-ref --symbolic-full-name HEAD@{u}  (当前分支 upstream)
+//   1) git config branch.<branch>.nocode-evolve-base             (worktree 创建时写入, 不随 push -u 漂移)
+//   2) git rev-parse --abbrev-ref --symbolic-full-name HEAD@{u}  (当前分支 upstream)
 //      → eg. "origin/release/x" 或 "origin/main"
-//   2) git rev-parse --abbrev-ref origin/HEAD                    (远端 default branch)
+//   3) git rev-parse --abbrev-ref origin/HEAD                    (远端 default branch)
 //      → eg. "origin/main"
-//   3) 兜底 "origin/main"
+//   4) 兜底 "origin/main"
 //
 // cache 结构 (v2): { entries: { "<branch>\0<base>": { last_fetch_ms, behind, ahead } } }
 //   旧 v1 格式 (顶层 branch/base) 读到即作废 → 视为无记录, 触发一次冷启动后写入新格式.
@@ -43,7 +44,9 @@ function git(cmd, allowFail = false) {
   }
 }
 
-function pickBase() {
+function pickBase(branch) {
+  const configured = git(`config branch.${branch}.nocode-evolve-base`, true);
+  if (configured) return configured;
   const upstream = git('rev-parse --abbrev-ref --symbolic-full-name HEAD@{u}', true);
   if (upstream) return upstream;
   const head = git('rev-parse --abbrev-ref origin/HEAD', true);
@@ -73,7 +76,7 @@ function writeCache(cp, store) {
 }
 
 const branch = git('rev-parse --abbrev-ref HEAD', true) || 'HEAD';
-const base = pickBase();
+const base = pickBase(branch);
 const cp = cachePath();
 const now = Date.now();
 const store = readCache(cp);
