@@ -67,39 +67,35 @@ AI 按 intent + 会话浓度判 layer ──三档启发式 (见下方判层 exa
 - **写 summary**：≤30 字概括「围绕意图做了什么 + 得出什么结论」，非"会话主题概述"
 - **写 body**：按 layer 走对应骨架（见下方「body 三套骨架」）
 
-### 3. 单候选 + NL 确认 loop
+### 3. 单候选 + 编号确认
 
-把 candidate 用如下格式 propose 给用户:
+把 candidate propose 给用户，用 `AskUserQuestion` 单选组件：
 
 ```
-建议层: <inbox/inputs/outputs>  [若有降层, 加: "原想 X 因 veto 降到 Y"]
-Path:    Memory/<layer-dir>/<yymm>/<yymmdd>-<title>.md  (相对 vault)
-Title:   <反推 + 清洗后 title>
-Summary: <≤30 字 summary>
+沉淀到: Memory/<layer-dir>/<yymm>/<yymmdd>-<title>.md
+层: <inbox/inputs/outputs>  [若有降层: "原想 X 因 veto 降到 Y"]
+标题: <反推 + 清洗后 title>
+摘要: <≤30 字 summary>
 
 Body 预览:
 <前 200 字>
 ---
-回复:
-  go              按当前 candidate 写入
-  换 inbox / 换 inputs / 换 outputs    改层 (跑 veto, 不过自动降级)
-  title 改成 <新 title>                改 title (path 一并重算)
-  cancel                             不写, 退出
-注: summary / body 不支持 NL 内修改, 想改 cancel 后用更具体 intent 重跑 /sow.
+
+请选择:
+1. 确认写入
+2. 改成 inbox 层
+3. 改成 inputs 层
+4. 改成 outputs 层
+5. 取消
 ```
 
-读用户回复 → AI 解析 NL → 改 candidate → re-propose. loop 到 `go` 或 `cancel`.
+用户选编号后：
+- **1** → 写入，进 step 4
+- **2/3/4** → 改层 → 跑 veto（不过自动降级，注明"你选 X 因 veto 降到 Y"）→ 重生 body 骨架 → re-propose
+- **5** → 不写，报"取消"，退出
+- 用户选 **Other** 输入自由文本 → 若含 "title" / "标题" 关键词则改 title 后 re-propose；否则提示"只支持选编号或改标题，想改内容请取消后用更具体 intent 重跑 /sow"
 
-#### NL 解析协议
-
-| 用户输入 | 解析为 | 动作 |
-|---|---|---|
-| `go` / `好` / `就这样` | confirm | 退 loop, 走落盘 |
-| `cancel` / `算了` / `不写了` | abort | 不写, 报"取消", 退 loop |
-| `换 inbox` / `改成 inputs` / `走 outputs` | layer=X | 改层 → 跑 veto → 重生 body 骨架 → re-propose |
-| `title 改成 X` / `叫 Y 吧` | title=X | 改 title → re-propose (path 重算) |
-| `summary 改成 X` / `重写 body` / `body 加一段 Y` | 越界请求 | 回 "sow 只支持改 layer/title; summary/body 是 AI 浓缩产物, 想改请 cancel 后用更具体 intent 重跑". 不退 loop |
-| 其它无法稳定解析 | 解析失败 | 回 "没听懂, 请用 go / 换<层> / 改 title <X> / cancel". 不退 loop |
+loop 到用户选 1 或 5。
 
 ### 4. 调脚本
 
@@ -253,9 +249,8 @@ N 个决策点，每个含「是什么 + 为什么」。
 | `<yymm>/` 子目录不存在 | 脚本 `os.makedirs(exist_ok=True)` 自动创建; 失败 (权限/磁盘) → exit 3 子类型 `mkdir failed` |
 | AI 想判 outputs 但 veto 不过 | 自动降到 inputs, propose 注明 "原想 outputs 因 veto 降到 inputs" |
 | AI 想判 inputs 但 veto 不过 (0 实质讨论) | 自动降到 inbox; inbox 无 veto 兜底 |
-| 用户在 NL loop 改层但新层 veto 不过 | propose 注明 "你选 X 但 veto 不过, 自动降到 Y"; **不开 force 口子** (veto 是防胡写的核心护栏) |
-| 用户回 NL 想改 summary / body | 回 "sow 只支持改 layer/title; summary/body 想改请 cancel 后用更具体 intent 重跑". 不退 loop |
-| 用户回 NL 无法识别 | 回 "没听懂, 请用 go / 换<层> / 改 title <X> / cancel". 不退 loop |
+| 用户选改层但新层 veto 不过 | propose 注明 "你选 X 但 veto 不过, 自动降到 Y"; **不开 force 口子** (veto 是防胡写的核心护栏) |
+| 用户 Other 输入想改 summary / body | 回 "只支持改层/标题; 内容想改请取消后用更具体 intent 重跑". re-propose |
 | Inbox 同日同 title 重跑 | AI 先尝试自动加序号 (`<title>-2.md` / `-3.md`) ≤3 次; 仍冲突进 exit 1 让用户改 title |
 | outputs / inputs 同日同 title 重跑 | 直接 exit 1 (长文档/素材冲突极少, 应让用户改 title) |
 | `python3` 不在 PATH | Bash 调用报 `command not found`, AI 转告用户安装 python3 |
@@ -267,7 +262,7 @@ N 个决策点，每个含「是什么 + 为什么」。
 - ❌ **AI 引入第三条 veto 信号**: 判据清单固定 2 条 OR (实质讨论 / 决策被采纳), 超出范围 = 越权
 - ❌ **paraphrase intent**: body 头部 blockquote 必须逐字保留 intent 原话
 - ❌ **title 复述意图**: title 反映会话**实际**抽到的内容, 不是意图本身
-- ❌ **跳过 NL loop 直接写**: AI 必须 propose 单候选给用户确认, 不能跳过让用户没机会改层 / 改 title
+- ❌ **跳过确认直接写**: AI 必须 propose 单候选给用户确认 (编号选择), 不能跳过让用户没机会改层 / 改 title
 - ❌ **强行落 Inputs 当会话无外部资料**: Inputs「原始材料」节是真材料不是 AI 编, 没材料就该判 Inbox
 - ❌ **报告里建议下一步 promote / 切片**: 命令做完即停, 人在回路
 - ❌ **AI 自己手编 frontmatter 绕过脚本**: permalink hash 算法、字段顺序、时间格式都靠脚本保证一致——AI 手编必偏差

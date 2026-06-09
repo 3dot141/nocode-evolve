@@ -89,34 +89,42 @@ argument-hint: [optional-topic]
 **0 候选**：报"本次无可沉淀内容"，停。
 **全 skip**：报"识别 N 项均建议跳过 + 原因"，停。
 
-### 2. 表格呈现 + 短码交互
+### 2. 表格呈现 + 编号选择
 
-输出 Markdown 表格（列固定：`# / 摘要 / 标签 / 路径`），下方附短码提示：
+输出 Markdown 表格（列固定：`# / 摘要 / 存到 / 操作`），标签是 AI 内部路由，不暴露给用户：
 
 ```
-| #  | 主题摘要                       | 建议标签         | 落地路径（disposition）                       |
-|----|--------------------------------|------------------|-----------------------------------------------|
-| 1  | distill 命令分流机制设计      | wiki:project     | 新建 wiki/pages/260519-sediment-...md         |
-| 2  | fork-PR / cross-fork 教训      | rules:plugin     | 融合→ rule-references/.../pr-flow-bkt-...md   |
-| 3  | rules 沉淀的 catalog 联动启发式 | rules:plugin     | 新建 rules/rule-...md + catalog + 版本        |
-| 4  | 一次性 bug 修复进度            | skip             | —                                             |
-
-短码：
-  go              全按建议执行（同 done）
-  - 2,5           跳过 #2 #5 后执行其他
-  2 plug          第 2 升 plugin 层（rules:proj → rules:plug 或 wiki:proj → wiki:cross）
-  2 wiki          第 2 切到 wiki 轴（保持 scope）
-  2 rules         第 2 切到 rules 轴
-  2 /foo-bar      改第 2 的 slug
-  2 new           第 2 强制新建（覆盖 AI 的融合判断）
-  2 fuse <path>   第 2 强制融进指定现有文件（覆盖 AI 的新建判断；<path> 相对仓库根）
+| #  | 主题摘要                       | 存到           | 操作                                          |
+|----|--------------------------------|----------------|-----------------------------------------------|
+| 1  | distill 命令分流机制设计      | 项目 wiki      | 新建 wiki/pages/260519-sediment-...md         |
+| 2  | fork-PR / cross-fork 教训      | 插件 rule      | 融进 pr-flow-bkt-appendix.md                  |
+| 3  | rules 沉淀的 catalog 联动启发式 | 插件 rule      | 新建 rule-...md + catalog + 版本              |
+| 4  | 一次性 bug 修复进度            | —              | 跳过                                          |
 ```
 
-读用户回复 → 解析短码 → in-place 改 candidates → 重绘表格 → loop until `go` 或 `done`。
+「存到」列的中文映射（AI 内部 label → 用户看到的）：
 
-**不接受自然语言**——短码不识别就报错"语法不识别，请用短码：go / -N / N plug / N wiki / N rules / N /slug / N new / N fuse <path>"，等用户重打。理由：AI 解析 NL 的失败模式不是"懂/不懂" binary，而是"懂错"，容错收益远低于误执行风险。
+| AI 内部 label | 用户看到 |
+|---|---|
+| `wiki:project` | 项目 wiki |
+| `wiki:cross-project` | 用户 vault (建议 /sow) |
+| `rules:project` | 项目 rule |
+| `rules:plugin` | 插件 rule |
+| `skip` | — |
 
-**全 skip 后用户仍 `go`**：提示"全 skip 等价 0 候选，确认继续？(yes/no)"，no 退出。
+表格下方用 `AskUserQuestion` 多选组件让用户勾选要执行的编号：
+
+```
+选要执行的编号（可多选）:
+□ 1. distill 分流设计 → 项目 wiki (新建)
+□ 2. fork-PR 教训 → 插件 rule (融进)
+□ 3. catalog 联动 → 插件 rule (新建)
+□ 4. bug 进度 → 跳过
+```
+
+用户勾选后直接执行选中项。未选 = 跳过。
+
+**全 skip**：报"识别 N 项均建议跳过 + 原因"，停。
 
 ### 3. 跨仓写入二次确认（仅当 rules:plugin 且 cwd ≠ nocode-evolve 仓时）
 
@@ -442,17 +450,13 @@ manifest+generate: rules/manifest.json 已加条目, node hooks/generate.mjs 重
 | `optionalTopicArg` 在会话里无对应内容 | 报"未找到 topic 相关内容"，停 |
 | context 已被压缩到只剩 summary | 仍按可见内容尽力生成候选；表格脚注加 "⚠ context 部分被压缩，沉淀可能不完整" |
 | `<proj>/.agents-personal/AGENTS.md` 不存在 | 三选一：(1)创建骨架 (2)跳过本项 (3)终止 distill |
-| `rules:project` / `rules:plugin` slug 冲突 | **转整合判断**（疑似融合目标）：提示 `N fuse <path>` 融进 或 `N /<new-slug>` 改名建新 |
-| `wiki:project` slug 冲突 | 走整合判断 |
-| 用户 `N fuse <path>` 指的文件不存在 | 报"`<path>` 不存在，无法融合；用 `N new` 建新或 `N fuse <正确 path>`" |
+| slug 冲突 (rules / wiki) | **转整合判断**（疑似融合目标）：在 AskUserQuestion 里加选项"融进已有 <path>" 和 "改名新建" |
 | 融合目标是 `rule-references/` 子文件 | catalog 不动（门面已路由）；仅升版本 |
-| `$NOCODE_EVOLVE_REPO` 路径不存在 | `rules:plugin` 标签在表格里降级 disabled + 标灰 |
-| Step 1 写文件后 Step 2 改 manifest / generate 失败 | 不回滚 Step 1，报"写入了 rule 文件但 manifest 未登记 / catalog 分片未重生成，请手动改 manifest 后跑 generate" |
+| `$NOCODE_EVOLVE_REPO` 路径不存在 | 插件 rule 项在表格里标灰 + 不可选 |
+| Step 1 写文件后 Step 2 改 manifest / generate 失败 | 不回滚 Step 1，报"写入了 rule 文件但 manifest 未登记，请手动改 manifest 后跑 generate" |
 | Step 2 后 Step 3 改 plugin.json 失败 | 不回滚前两步，报"前两步完成但版本未升，请手动改 plugin.json" |
 | nocode-evolve 仓有未提交改动 | 不阻断，报告里加一行"两边都要 commit" |
-| `nocode-evolve/rules/` 下有未被 catalog 引用的孤儿文件 | 不主动补路由；报告末尾仅提示 |
-| 用户给的 # 越界（短码） | 报"#7 不存在，当前候选 1-5"，不动 candidates |
-| 短码无法识别 | 报"语法不识别，请用短码"，等用户重打——不接受自然语言 |
+| `nocode-evolve/rules/` 下有孤儿文件 | 不主动补路由；报告末尾仅提示 |
 
 ---
 

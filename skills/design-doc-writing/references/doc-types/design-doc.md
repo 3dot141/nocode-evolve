@@ -247,8 +247,11 @@ function AgentLoop.callLlmForTurn(messages, ctx):        // 完成一轮 LLM 对
 颗粒度准则:
 
 - **必须覆盖**: 每条 BF 的主路径 + 每个异常分支 (异常表里出现的每行)
+- **边界 case 重点**: 不只是 happy path 反面——要覆盖状态交叉 (配置组合)、降级路径 (故障后 fallback 的结果质量)、数据边界 (空/大/特殊字符)、并发时序、反馈环
 - **可省**: 内部分支细节 (private 方法的 if/else)
 - **不写代码**: 不写 `@Test` / mock 工具具体 API / assertion 语法 — TDD 步骤化清单 (先写哪个 test 再写哪段实现) 留给 plan
+
+**与 dev-workflow 阶段 1.5 TDD 沟通的关系**: 如果走了 dev-workflow，阶段 1.5 已与用户对齐的边界 case 清单应直接体现在本节。本节是 TDD 沟通产出的落地位置——不是独立重新想，而是把已确认的测试策略写进设计文档。
 
 ### 方案选型
 

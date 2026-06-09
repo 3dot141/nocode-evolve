@@ -32,6 +32,7 @@ description: 工程任务流程领航. 可被 model 主动调起, 也可用户 /
 示例 (从阶段 1 开始):
 ```
 TaskCreate("阶段 1: Brainstorming")
+TaskCreate("阶段 1.5: TDD 沟通")
 TaskCreate("阶段 2: Create Worktree")
 TaskCreate("阶段 3: Writing Design")
 TaskCreate("阶段 4: Review Design (双路交叉评审)")
@@ -75,6 +76,7 @@ TaskCreate("阶段 10: Finish Worktree")
 | # | 阶段 | 调用 | 进入前 Read | Gate (过了才进下一阶段) |
 |---|---|---|---|---|
 | 1 | **Brainstorming** | `superpowers:brainstorming` | `rule-superpowers-brainstorming` | 需求 / 设计意图明确, 用户确认 |
+| 1.5 | **TDD 沟通** | 与用户对齐测试策略 (见下方) | (无专属 rule) | 测试范围 + 边界 case + 验收标准明确, 用户确认 |
 | 2 | **Create Worktree** | `superpowers:using-git-worktrees` → EnterWorktree | `rule-git-worktree` | worktree 已建并进入 (pwd 在 worktree 内) |
 | 3 | **Writing Design** | `nocode-evolve:design-doc-writing` | (skill 内含流程) | 设计文档已产出 |
 | 4 | **Review Design** | 双路交叉评审 loop (见下方) | `rule-codex-review` | 用户 approve |
@@ -92,6 +94,57 @@ TaskCreate("阶段 10: Finish Worktree")
 | 评估 / 拍板 | `nocode-evolve:red-blue-deep` | 需要判断 / 权衡时随时调 |
 | Git freshness | `rule-git-freshness` | 设计 / 搜索 / 多文件 Read 前自动触发 (常驻 behavior) |
 | Git 只读合并 | `rule-git-inspection` | ≥2 git 只读命令 && 串 (常驻 behavior) |
+
+---
+
+## 阶段 1.5: TDD 沟通（Brainstorming 之后、设计文档之前）
+
+Brainstorming 确认需求后，**在写设计文档之前**先与用户对齐测试策略。目的：让测试设计驱动架构决策，而非写完代码再补测试。
+
+### 沟通内容（agent 输出 → 用户确认）
+
+agent 输出一份结构化的测试策略提案，包含三部分：
+
+**1. 测试范围**：按模块/功能列清楚哪些要测、哪些不测
+```
+要测:
+- wiki/search.py: IndexSearch 关键词匹配 + grep fallback + 空结果
+- wiki/ingest.py: 新建页 / 已有页更新 / 层级路由 / 拒绝规则
+- clip/intent.py: QUERY 意图识别（与 CLIP/TASK 不冲突）
+
+不测 (理由):
+- GBrainSearch/GraphRAGDiscovery: 外部服务 mock 即可, 真实集成留真机验证
+- Docker 构建: CI 覆盖, 不在单测范围
+```
+
+**2. 边界 case 清单**：不只是 happy path，重点关注：
+- **状态交叉**：多个配置组合（有 key 无 url / 有 url 无 key / 全有 / 全无）
+- **降级路径**：每个 Provider 故障时是否正确 fallback（不是"降级了"就完，要验降级后的结果质量）
+- **数据边界**：空文件 / 超大文件 / 特殊字符文件名 / 中文路径 / 嵌套路径
+- **并发/时序**：写队列竞争 / 索引间隔判断的时间边界
+- **反馈环**：如 auto_ingest + radar 简报 = 噪声放大（要验 type:radar-report 排除生效）
+
+**3. 验收标准**：每个模块的"测绿就算过"具体含义
+```
+wiki/lint: 扫真实 vault 结构能检出已知的 5 类问题, 且不误报 README.md/_index.md
+wiki/query: 零配置下 _index.md 匹配返回正确结果; 有 LLM key 时综合回答含引用来源
+```
+
+### Gate
+
+用户确认测试策略后才进阶段 2。确认方式：用户说"OK / 测试方案没问题 / 同意"。
+
+### 产出流向
+
+TDD 沟通的产出会被后续两个阶段消费：
+- **阶段 3 Writing Design**：设计文档的「实现.单测设计」节直接引用本阶段确认的边界 case 清单
+- **阶段 5 Writing Plan**：实现计划的 TDD 步骤（先写哪个 test → 再写哪段实现）基于本阶段确认的测试范围
+
+### 不要
+
+- **不写代码** — 这是沟通阶段，只对齐策略，不写 test 文件
+- **不只列 happy path** — happy path 谁都会写，价值在边界 case
+- **不把测试策略当 checklist 念** — 要讲清楚"为什么测这个、不测那个"的判断依据
 
 ---
 
