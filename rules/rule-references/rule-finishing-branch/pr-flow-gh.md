@@ -28,21 +28,47 @@ git log "$(git merge-base HEAD $base_branch)..HEAD" --oneline
 
 range 内 N 个 sha, 基础内容就要有 N 行.
 
-## Gate TB: title/body 用户确认
+## Step 2: 收集影响文件
 
-agent 输出生成的 title + body markdown 给用户审, 等响应:
+Gate TB 展示前, 先拿本次 PR 涉及的全部变更文件:
 
-- "OK / 好 / 没问题 / 通过" → 进 Step 3
-- 任何修改意见 (e.g. "标题太长", "body 第二段删掉", "亮点加一条"...) → agent **重生成** 整段 title + body, 再次输出, 再次 askGate
+```bash
+git diff --name-only "$(git merge-base HEAD $base_branch)..HEAD" | sort
+```
+
+按目录层级组织成 **tree 格式** 输出 (用 `├──` `└──` `│` 字符画), 同目录下的文件聚拢:
 
 ```
-[Gate TB] 候选 title + body 如下, 确认 OK 还是给修改意见?
+.claude-plugin/
+└── plugin.json
+rules/
+├── manifest.json
+├── rule-git-freshness.md
+└── rule-git-worktree.md
+scripts/
+└── freshness-check.mjs
+```
+
+根目录文件直接列 (不加前缀目录), 目录按字母序排.
+
+## Gate TB: title/body + 影响文件 用户确认
+
+agent 输出生成的 title + body + 影响文件 tree 给用户审, 等响应:
+
+- "OK / 好 / 没问题 / 通过" → 进 Step 3
+- 任何修改意见 (e.g. "标题太长", "body 第二段删掉", "亮点加一条"...) → agent **重生成** 整段 title + body, 再次输出, 再次 askGate (影响文件 tree 不变, 除非有新 commit)
+
+```
+[Gate TB] 候选 title + body + 影响文件如下, 确认 OK 还是给修改意见?
 
 # title
 <标题>
 
 # body
 <完整 body markdown>
+
+# 影响文件
+<tree 格式的文件路径, 按目录聚拢>
 
 (回 OK / 或给修改意见)
 ```
