@@ -34,7 +34,7 @@
 机械逻辑封装到 `scripts/freshness-check.mjs`, agent 一句调:
 
 ```bash
-node scripts/freshness-check.mjs --max-behind=5 --ttl=7200
+node "${CLAUDE_PLUGIN_ROOT}/scripts/freshness-check.mjs" --max-behind=5 --ttl=7200
 ```
 
 输出 stdout JSON: `{ branch, base, behind, ahead, age_seconds, cache_hit, gate, message }`. exit code `0`=ok / `2`=gate.

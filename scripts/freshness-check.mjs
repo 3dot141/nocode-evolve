@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // 检查当前分支与 base 分支 (upstream / origin/HEAD) 的 freshness, 输出 JSON + exit code.
-// 用法: node scripts/freshness-check.mjs [--max-behind=5] [--ttl=7200]
+// 用法: node "${CLAUDE_PLUGIN_ROOT}/scripts/freshness-check.mjs" [--max-behind=5] [--ttl=7200]
 //   --max-behind: behind 阈值 >= 此值 gate (默认 5)
 //   --ttl:       cache TTL 秒数 (默认 7200 = 2h)
 // 输出 stdout JSON: { branch, base, behind, ahead, age_seconds, cache_hit, cold_start, gate, message }
