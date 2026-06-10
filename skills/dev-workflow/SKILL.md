@@ -77,7 +77,7 @@ TaskCreate("阶段 10: Finish Worktree")
 |---|---|---|---|---|
 | 1 | **Brainstorming** | `superpowers:brainstorming` | `rule-superpowers-brainstorming` | 需求 / 设计意图明确, 用户确认 |
 | 1.5 | **TDD 沟通** | 与用户对齐测试策略 (见下方) | (无专属 rule) | 测试范围 + 边界 case + 验收标准明确, 用户确认 |
-| 2 | **Create Worktree** | `superpowers:using-git-worktrees` → EnterWorktree | `rule-git-worktree` | worktree 已建并进入 (pwd 在 worktree 内) |
+| 2 | **Create Worktree** | Gate B (base 确认, 见下方) → `superpowers:using-git-worktrees` → EnterWorktree | `rule-git-worktree` | Gate B 用户确认 base + worktree 已建并进入 (pwd 在 worktree 内) |
 | 3 | **Writing Design** | `nocode-evolve:design-doc-writing` | (skill 内含流程) | 设计文档已产出 |
 | 4 | **Review Design** | 双路交叉评审 loop (见下方) | `rule-codex-review` | 用户 approve |
 | 5 | **Writing Plan** | `superpowers:writing-plans` | (无专属 rule) | 实现计划已产出 |
@@ -145,6 +145,28 @@ TDD 沟通的产出会被后续两个阶段消费：
 - **不写代码** — 这是沟通阶段，只对齐策略，不写 test 文件
 - **不只列 happy path** — happy path 谁都会写，价值在边界 case
 - **不把测试策略当 checklist 念** — 要讲清楚"为什么测这个、不测那个"的判断依据
+
+---
+
+## 阶段 2: Gate B — Base 确认（worktree add 之前）
+
+`git worktree add` 之前, agent 把 base 推断结果一次性呈现给用户确认——「base 选哪个」和「是否基于最新基准」合成一个 gate, 不连环弹问:
+
+1. **base 选哪个 ref**: 按 `rule-git-worktree` 推断优先级 (存在 `upstream` remote → `upstream/HEAD`; 否则 `@{u}` → `origin/HEAD` → `origin/main`) 给出推断值 + 推断依据 + 候选 (fork 的 origin/main、release/develop 等长期分支)
+2. **是否基于最新基准**: fetch base 所在 remote 后展示 behind/ahead 状态; 本地有独有 commit (ahead > 0) 时列出 commits, 三选同 `rule-git-worktree` (基于远程最新 / 基于本地 HEAD / 指定其他 start-point)
+
+```
+[Gate B] 即将创建 worktree:
+  branch: feature/foo
+  base:   upstream/main   (推断: upstream remote 存在; 候选: origin/main / release-1.2)
+  基准状态: 已 fetch, upstream/main 领先本地 3 commits → 将基于最新 upstream/main 建
+
+(回 OK / 或改 base, 如 "base 用 release-1.2")
+```
+
+- **用户 OK** → `git worktree add` 基于确认的 base; 确认值写 `git config branch.<name>.nocode-evolve-base`——后续 freshness-check 与阶段 8 的 PR target 默认值都读它, 一次确认全程闭环
+- **用户改 base** → 更新后再次展示, 循环到 OK
+- **范围**: Gate B 只在 dev-workflow 流程内强制; 非流程零散建 worktree 仍按 `rule-git-worktree` 静默默认 (ahead == 0 不弹问)
 
 ---
 

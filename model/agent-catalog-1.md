@@ -53,7 +53,7 @@ agent 视角: 用户任务命中以下任一条件时, **主动调起 dev-workfl
 #### git-worktree
 **触发**: 即将执行 superpowers:using-git-worktrees skill, 或用户要求创建 worktree, 或用户要新建分支 (原则: 所有分支都走 worktree, 不在主仓裸开 branch), 或在 worktree 内跑命令报「env var missing / config 不存在」需从主仓 cp gitignored 文件, 或 agent 在 worktree 找不到项目本地 .agents-personal/ 路由, 或从当前仓库进入另一个物理 git repo 去修改文件 (该 repo 即「关联仓库」, 需用与当前工作分支【相同的分支名】建 worktree, 已有同名分支则复用)
 **读**: `${CLAUDE_PLUGIN_ROOT}/rules/rule-git-worktree.md`
-**摘要**: 原则: 每个分支都要 worktree, 不在主仓裸开 branch (新建分支即走 worktree); worktree 落项目同级 <project>-<branch_flat>/; 建前静默 fetch + 基于 upstream 最新; 建后调 worktree-setup.mjs setup 补齐(cp env/IDE/node_modules + symlink .agents-personal, 看 needsAttention[]) + git config 记录 freshness base (不随 push -u 漂移); 销毁走 teardown verb (先 ExitWorktree); 跨物理分仓: 进入「关联仓库」改文件用与当前【相同的分支名】建 worktree (各落 <repo>-<branch>/, 前缀各自 repo basename, 已有同名则复用)
+**摘要**: 原则: 每个分支都要 worktree, 不在主仓裸开 branch (新建分支即走 worktree); worktree 落项目同级 <project>-<branch_flat>/; 建前静默 fetch + 基于 base_ref 最新 (推断优先级: upstream remote → @{u} → origin/HEAD → origin/main, fork 场景 origin/main 只做镜像不参与推断; dev-workflow 阶段 2 升级为 Gate B 显式确认 base + 基准状态); 建后调 worktree-setup.mjs setup 补齐(cp env/IDE/node_modules + symlink .agents-personal, 看 needsAttention[]) + git config 记录 freshness base (不随 push -u 漂移); 销毁走 teardown verb (先 ExitWorktree); 跨物理分仓: 进入「关联仓库」改文件用与当前【相同的分支名】建 worktree (各落 <repo>-<branch>/, 前缀各自 repo basename, 已有同名则复用)
 **生命周期**: 1 隔离
 
 #### git-inspection
@@ -121,21 +121,4 @@ agent 视角: 用户任务命中以下任一条件时, **主动调起 dev-workfl
 **读**: `${CLAUDE_PLUGIN_ROOT}/rules/rule-git-freshness.md`
 **摘要**: 设计/方案动作 + 代码搜索/多文件 Read 前用 scripts/freshness-check.mjs 检查当前分支与 base 的 behind 差距; base 推断优先级: git config nocode-evolve-base (worktree 创建时写入, 不随 push -u 漂移) → upstream → origin/HEAD → origin/main; behind ≥ 5 commits 或 branch+base 首次冷启动 gate 三选 (pull --rebase / 接受 / 跳过); cache 2h TTL 不 fetch 不打扰; 离线 fetch 失败 warn 不阻塞. 主仓 + worktree 内长期工作都管 (worktree-add 那刻仍由 rule-git-worktree 覆盖)
 **主桶**: git-lifecycle (完整定义见该桶)
-
-### 桶: 记忆与沉淀 (memory)
-**粗触发**: 总结 / 沉淀 / 归档会话产出 / push 内容 / 项目本地资源 (.agents-personal/) 操作
-**不含 (负例)**: 一次性事实查询
-
-#### push-summary
-**触发**: 用户 push 后说「总结 push 内容 / 给标题描述 / PR description / 沉淀这个 / 这次 push 包含什么」
-**读**: `${CLAUDE_PLUGIN_ROOT}/rules/rule-push-summary.md`
-**摘要**: 输出 标题 + 描述, 描述 ≤200字, 含基础内容(覆盖 push range 全 commit) + 重点评测(亮点 / 风险 / 未验证项)
-**也属**: git-lifecycle
-**生命周期**: 4 收尾
-
-#### personal-deletion-guard
-**触发**: 即将 rm / mv / find -delete / Write 覆盖 / Edit 大段删 在 .agents-personal/ 或 $USER_VAULT_PATH/ 下任何文件或子目录 (subagent 同理); 删除护栏规则文本常驻 model/agent-personal.md, 本 rule 提供 PreToolUse 硬兜底
-**读**: `${CLAUDE_PLUGIN_ROOT}/model/agent-personal.md`
-**摘要**: .agents-personal/ + $USER_VAULT_PATH 内容是用户沉淀的项目历史 + 当前指令, gitignored 不可恢复, 删除前必须二次确认 (rm/mv/find-delete 均视为删除等价物). PreToolUse 在命令层兜底拦 (inject 提醒, 不 block 留余地给用户授权)
-**生命周期**: cross
 

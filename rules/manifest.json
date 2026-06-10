@@ -72,7 +72,7 @@
       "triggers": ["(创建|建|新建|开|搞).{0,3}worktree", "worktree.{0,3}(创建|新建)", "(新建|建|开|切|起).{0,2}分支", "分支.{0,3}(创建|新建)", "关联仓库", "(另一个|其它|其他|别的).{0,2}(仓库|repo)"],
       "action": "Read rules/rule-git-worktree.md",
       "read": "${CLAUDE_PLUGIN_ROOT}/rules/rule-git-worktree.md",
-      "summary": "原则: 每个分支都要 worktree, 不在主仓裸开 branch (新建分支即走 worktree); worktree 落项目同级 <project>-<branch_flat>/; 建前静默 fetch + 基于 upstream 最新; 建后调 worktree-setup.mjs setup 补齐(cp env/IDE/node_modules + symlink .agents-personal, 看 needsAttention[]) + git config 记录 freshness base (不随 push -u 漂移); 销毁走 teardown verb (先 ExitWorktree); 跨物理分仓: 进入「关联仓库」改文件用与当前【相同的分支名】建 worktree (各落 <repo>-<branch>/, 前缀各自 repo basename, 已有同名则复用)",
+      "summary": "原则: 每个分支都要 worktree, 不在主仓裸开 branch (新建分支即走 worktree); worktree 落项目同级 <project>-<branch_flat>/; 建前静默 fetch + 基于 base_ref 最新 (推断优先级: upstream remote → @{u} → origin/HEAD → origin/main, fork 场景 origin/main 只做镜像不参与推断; dev-workflow 阶段 2 升级为 Gate B 显式确认 base + 基准状态); 建后调 worktree-setup.mjs setup 补齐(cp env/IDE/node_modules + symlink .agents-personal, 看 needsAttention[]) + git config 记录 freshness base (不随 push -u 漂移); 销毁走 teardown verb (先 ExitWorktree); 跨物理分仓: 进入「关联仓库」改文件用与当前【相同的分支名】建 worktree (各落 <repo>-<branch>/, 前缀各自 repo basename, 已有同名则复用)",
       "guard": "",
       "depends_on": [],
       "severity": "block",

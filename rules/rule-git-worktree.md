@@ -37,23 +37,31 @@ project_parent="$(dirname "$project_root")"
 branch_flat="${BRANCH_NAME//\//_}"     # feature/foo → feature_foo
 worktree_path="${project_parent}/${project_name}-${branch_flat}"
 
-# 建分支前：默认静默 fetch + 基于 upstream 最新（防 base 滞后远程导致返工）
-upstream="$(git rev-parse --abbrev-ref --symbolic-full-name @{u} 2>/dev/null)"   # 如 origin/main；无 upstream / detached 则空
+# base ref 推断 (优先级: upstream remote → @{u} → origin/HEAD → origin/main)
+if git remote get-url upstream >/dev/null 2>&1; then
+    base_ref="$(git rev-parse --abbrev-ref upstream/HEAD 2>/dev/null)"   # 空则先 git remote set-head upstream -a 再取
+    base_ref="${base_ref:-upstream/main}"
+else
+    base_ref="$(git rev-parse --abbrev-ref --symbolic-full-name @{u} 2>/dev/null)"   # 如 origin/main；无 tracking / detached 则空
+    base_ref="${base_ref:-$(git rev-parse --abbrev-ref origin/HEAD 2>/dev/null)}"
+    base_ref="${base_ref:-origin/main}"
+fi
+git rev-parse --verify "$base_ref" >/dev/null 2>&1 || base_ref=""   # 纯本地仓库解析不出 → base 回落本地 HEAD
+
+# 建分支前：默认静默 fetch + 基于 base_ref 最新（防 base 滞后远程导致返工）
 start_point=""
-if [ -n "$upstream" ]; then
-    git fetch "${upstream%%/*}" 2>/dev/null \
+if [ -n "$base_ref" ]; then
+    git fetch "${base_ref%%/*}" 2>/dev/null \
         || echo "WARN: fetch 失败（离线？）—— 未拉最新，base 回落本地 HEAD"
-    ahead="$(git rev-list --count "@{u}..HEAD" 2>/dev/null || echo 0)"   # 本地独有（未 push）commit 数
-    [ "$ahead" -eq 0 ] && start_point="$upstream"   # 本地无独有 commit → 静默基于远程最新（纯落后/已最新都无损失）
+    ahead="$(git rev-list --count "$base_ref..HEAD" 2>/dev/null || echo 0)"   # 本地独有（未进 base）commit 数
+    [ "$ahead" -eq 0 ] && start_point="$base_ref"   # 本地无独有 commit → 静默基于远程最新（纯落后/已最新都无损失）
     # ahead>0（本地有独有 commit）→ start_point 留空, 走「何时弹问 base」, 不要在此静默基于远程
 fi
 
 git worktree add "$worktree_path" -b "$BRANCH_NAME" $start_point   # start_point 空则基于当前 HEAD
 
 # 记录 freshness base (freshness-check.mjs 最高优先级读此 config, 不随 push -u 漂移)
-freshness_base="${upstream:-$(git rev-parse --abbrev-ref origin/HEAD 2>/dev/null)}"
-freshness_base="${freshness_base:-origin/main}"
-git -C "$worktree_path" config branch."$BRANCH_NAME".nocode-evolve-base "$freshness_base"
+[ -n "$base_ref" ] && git -C "$worktree_path" config branch."$BRANCH_NAME".nocode-evolve-base "$base_ref"
 
 # 切 cwd 不在此处用 cd——见下文「Worktree 创建后: 切到 worktree 工作目录」:
 # harness 有 EnterWorktree 必用 EnterWorktree(path=) 持久化; 仅 harness 无此工具时才退每次 cd
@@ -65,13 +73,18 @@ git -C "$worktree_path" config branch."$BRANCH_NAME".nocode-evolve-base "$freshn
 
 worktree 的新分支 base 应跟上远程，避免长在过时代码上、与已合并改动撞车返工。`git worktree add -b <branch>` 不指定 start-point 时默认基于主仓**当前 HEAD**——本地 HEAD 一旦滞后远程，整个 worktree 就长在旧代码上。规则：
 
-- **默认静默**：建分支前 `git fetch`，基于 upstream（`@{u}`，如 `origin/main`）最新 commit 建——不弹问，零摩擦。
-- **判弹问只看 `ahead`（本地独有 commit 数 = `git rev-list --count @{u}..HEAD`）**，不看 behind：
+- **base ref 推断优先级**：`upstream` remote 存在 → `upstream/HEAD`（fork 场景）；否则 `@{u}` → `origin/HEAD` → `origin/main`。fetch 也 fetch base 所在的 remote。
+- **默认静默**：建分支前 `git fetch`，基于 `base_ref` 最新 commit 建——不弹问，零摩擦。
+- **判弹问只看 `ahead`（本地独有 commit 数 = `git rev-list --count $base_ref..HEAD`）**，不看 behind：
   - `ahead == 0`（纯落后 / 已最新）→ **静默基于远程最新**。本地没有独有 commit，基于远程零损失，不打扰。
-  - `ahead > 0`（本地有未 push 的领先 commit）→ **弹问**。基于远程最新会让这些本地 commit 不在 base 里，必须让用户三选：① 基于远程 upstream 最新（放弃本地领先作为 base）② 基于当前本地 HEAD（保留本地领先）③ 指定其他 start-point。
-- **fetch 失败 / 无 upstream / detached HEAD**：不阻塞，warn + 回落本地 HEAD 继续，回复里明确告知"未拉最新，base=本地 HEAD"。
+  - `ahead > 0`（本地有未进 base 的领先 commit）→ **弹问**。基于远程最新会让这些本地 commit 不在 base 里，必须让用户三选：① 基于远程 base_ref 最新（放弃本地领先作为 base）② 基于当前本地 HEAD（保留本地领先）③ 指定其他 start-point。
+- **fetch 失败 / base_ref 解析不出（纯本地仓库）/ detached HEAD**：不阻塞，warn + 回落本地 HEAD 继续，回复里明确告知"未拉最新，base=本地 HEAD"。
+
+> 为什么 upstream remote 优先于 `@{u}`：fork 工作流里 `@{u}` 通常指向 origin（你的 fork），fork 的 main 常滞后真正的上游——基准应取 upstream remote 的默认分支，否则静默 fetch origin 拉不到真正的最新。fork 的 origin/main 只做 upstream 的 fast-forward 镜像、push 中转，不参与 base 推断。
 
 > 为什么用 `ahead` 而非"behind 很多"：纯落后时基于远程最新永远无损（你没有独有 commit 会被丢），不必拿模糊阈值打扰用户；真正需要拍板的只有"本地有独有 commit 时 base 选谁"这一种分歧。
+
+> **dev-workflow 流程内（阶段 2）**：本节静默逻辑升级为 **Gate B 显式确认**——base 选择 + 基准状态一次呈现、用户拍板后才 `git worktree add`，确认值写 `nocode-evolve-base` config（见 dev-workflow skill「阶段 2: Gate B」）。非流程零散建 worktree 维持本节静默默认。
 
 ### 示例
 

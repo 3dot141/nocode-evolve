@@ -3,28 +3,32 @@ import assert from 'node:assert/strict';
 import path from 'node:path';
 import { loadManifest, genPretooluse, genCatalogSharded, renderBucketBody, check, renderAll, SHARD_LIMIT } from './generate.mjs';
 
-test('genCatalogSharded: 当前 manifest 出 1 片 (4 桶完整路由 < SHARD_LIMIT)', () => {
+test('genCatalogSharded: 当前 manifest 分片 — 每片在阈值内, 文件名按序号', () => {
   const shards = genCatalogSharded(loadManifest());
-  assert.equal(shards.length, 1, '当前总长 < SHARD_LIMIT, 应单片');
-  assert.equal(path.basename(shards[0].file), 'agent-catalog-1.md');
-  assert.ok(shards[0].text.length < SHARD_LIMIT, '单片应在阈值内');
+  assert.ok(shards.length >= 1);
+  shards.forEach((s, i) => {
+    assert.equal(path.basename(s.file), `agent-catalog-${i + 1}.md`);
+    assert.ok(s.text.length < SHARD_LIMIT, `片 ${i + 1} 应在阈值内 (桶过大需拆桶)`);
+  });
 });
 
-test('genCatalogSharded: 首片含头部 + 4 桶 + 每条 rule + 触发/读', () => {
+test('genCatalogSharded: 首片含头部指令, 分片合集含 4 桶 + 每条 rule + 触发/读', () => {
   const m = loadManifest();
-  const [first] = genCatalogSharded(m);
+  const shards = genCatalogSharded(m);
+  const [first] = shards;
   assert.match(first.text, /禁手改/);
   assert.match(first.text, /触发协议/, '应有触发协议 / Step 0 扫桶硬指令段');
   assert.match(first.text, /Step 0/, '应有 Step 0 扫桶硬指令');
   assert.match(first.text, /\/dev-workflow/, '应提示 dev-workflow 入口');
+  const full = shards.map((s) => s.text).join('\n');
   for (const b of m.buckets) {
-    assert.match(first.text, new RegExp(`### 桶: ${b.title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`));
+    assert.match(full, new RegExp(`### 桶: ${b.title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`));
   }
   for (const r of m.rules) {
-    assert.ok(first.text.includes(r.id), `缺 rule ${r.id}`);
+    assert.ok(full.includes(r.id), `缺 rule ${r.id}`);
   }
-  assert.match(first.text, /\*\*触发\*\*/);
-  assert.match(first.text, /\*\*读\*\*/);
+  assert.match(full, /\*\*触发\*\*/);
+  assert.match(full, /\*\*读\*\*/);
 });
 
 test('genCatalogSharded: 构造超长 manifest 切多片, 桶不被切断 (在 MAX 内)', () => {
