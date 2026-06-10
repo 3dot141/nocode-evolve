@@ -25,28 +25,28 @@ description: 工程任务流程领航. 可被 model 主动调起, 也可用户 /
 
 扫下方阶段地图, 看会话情境 (已经做了什么、哪些 Gate 已过), 判 agent 当前处于哪个阶段。
 
-### Step 3: 用 TaskCreate 创建 todo 列表
+### Step 3: 用 TaskCreate 创建 todo 列表 (task 自带三要素)
 
-**首次进入 workflow 时**, 用 `TaskCreate` 为**当前阶段及后续所有阶段**各创建一条 task。已完成的阶段不建。每条 task 的 subject 格式: `阶段 N: <阶段名>`。
+**首次进入 workflow 时**, 用 `TaskCreate` 为**当前阶段及后续所有阶段**各创建一条 task。已完成的阶段不建。每条 task:
 
-示例 (从阶段 1 开始):
+- **subject**: `阶段 N: <阶段名>`
+- **description**: 从阶段总览表逐行抄该阶段三要素——`调用: <skill/rule>` / `进入前 Read: <rule 文件>` / `Gate: <过关条件>`。目的: 标 in_progress 那刻看到的就是操作指令, 不依赖回本 SKILL.md 翻表——信息附着在 task 流转这个必经动作上, 防长会话遗忘。
+
+示例 (从阶段 1 开始, 其余阶段同构, 三要素逐行抄阶段总览表):
 ```
-TaskCreate("阶段 1: Brainstorming")
-TaskCreate("阶段 1.5: TDD 沟通")
-TaskCreate("阶段 2: Create Worktree")
-TaskCreate("阶段 3: Writing Design")
-TaskCreate("阶段 4: Review Design (双路交叉评审)")
-TaskCreate("阶段 5: Writing Plan")
-TaskCreate("阶段 6: Executing")
-TaskCreate("阶段 7: Code Review (双路交叉评审)")
-TaskCreate("阶段 8: Create PR")
-TaskCreate("阶段 9: Add Reviewers")
-TaskCreate("阶段 10: Finish Worktree")
+TaskCreate(subject: "阶段 1: Brainstorming",
+           description: "调用: superpowers:brainstorming / 进入前 Read: rule-superpowers-brainstorming / Gate: 需求与设计意图明确, 用户确认")
+TaskCreate(subject: "阶段 2: Create Worktree",
+           description: "调用: Gate B (base 确认) → superpowers:using-git-worktrees → EnterWorktree / 进入前 Read: rule-git-worktree / Gate: Gate B 用户确认 base + worktree 已建并进入")
+... (阶段 1.5 / 3-10 同构)
 ```
 
 **中途进入** (如用户说「从阶段 5 开始」): 只建阶段 5 及之后的 task, 之前的视为已完成。
 
-**阶段推进时**: 当前阶段 Gate 过了 → `TaskUpdate(status: completed)` 标完成 → `TaskUpdate(status: in_progress)` 标下一阶段开始。用户能随时看到整体进度。
+**阶段推进时 (gate 证据强制)**:
+
+1. 标 `TaskUpdate(status: completed)` **前**, 必须在回复里点名该阶段的 **Gate 证据**——引用 Gate 条件 + 满足它的具体事实 (如「Gate B 已过: 用户回复 OK, base=upstream/main」「阶段 4 Gate 已过: 用户 approve 于上一轮」)。拿不出证据 = 不标 completed = 不进下一阶段。这是工序, 不是自觉——「大概过了 / 应该没问题」不算证据。
+2. 证据点名后 → `TaskUpdate(status: completed)` → 下一阶段 `TaskUpdate(status: in_progress)`, 并按其 description 的「进入前 Read」先 Read 再动手。用户能随时看到整体进度。
 
 ### Step 4: 输出建议 (含 rule/gate 检查)
 
@@ -275,3 +275,4 @@ PR 创建和添加 reviewer 拆成两个独立阶段, 原因:
 - **不在 dev-workflow 内跑评审 / 写文档** — 调对应 skill / rule, 它们有各自的流程
 - **不把 Create PR 和 Add Reviewers 合并** — 解耦是刻意设计, 避免 reviewer 失败拖垮 PR 创建
 - **不跳过 TaskCreate** — 进入 workflow 必须建 todo 列表, 让用户看到整体进度
+- **不无证据标 completed** — gate 证据点名是 task 流转的前置工序, 不是事后补写; 没证据就停在当前阶段
