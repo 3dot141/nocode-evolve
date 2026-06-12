@@ -306,6 +306,14 @@ lsof -ti tcp:8070,10001 | xargs -r kill -9   # 清残留端口占用
 cd ../fx-data-server && docker compose down
 ```
 
+### docker 中间件: 单独重启 sync 容器必须连带重启 sync-polars-localhost
+
+`sync-polars-localhost` 是共享 sync 网络栈的 socat sidecar (`network_mode: "service:sync"`, 见 fx-data-server `docker-compose.template.yml`). 主容器 `<IMAGE_PREFIX>-sync` (如 `test-sync`) 重启 / 重建后, sidecar 还挂在旧网络命名空间上, socat 转发绑定失效——**Excel 导入会静默写出空表, 表还标 valid, 无任何报错, 极具迷惑性**.
+
+- 重启 sync 时两个一起重启: `docker restart <IMAGE_PREFIX>-sync sync-polars-localhost` (sidecar 在后)
+- launcher 自身的 docker 步骤是 `compose down → up -d` 全量重建, sidecar 一起重建, **不受此坑影响**; 只有单独重启 sync 容器才踩
+- compose 已有 `depends_on: - sync`, 但短语法只管启动顺序**不传播 restart**; 长期修法是在 fx-data-server compose 改 depends_on 长语法加 `restart: true` (compose 命令重建 sync 时连带重启 sidecar; 裸 `docker restart` 不经过 compose, 仍需手动两个一起)
+
 ## 必踩坑速查
 
 1. `nc -z` 健康检查别加 `2>&1` — stderr 污染 break 变量, 循环跑满超时
@@ -318,6 +326,7 @@ cd ../fx-data-server && docker compose down
 8. worktree `reset` / `git pull` 后, Step 1.5 改的 `package.json` packageManager 改动会被冲掉, **需要重做**
 9. 关键决策点 (cp / 改 .env.local / reset / 重启已在跑 / 升档全栈 / 替换主仓 agents) **必须 askUser**, 不擅自动
 10. launcher 在插件目录不在 fx 仓 → `FX_*_DIR` 主仓 / worktree 启动都强制, 漏了必报 validateRepos 错; `${CLAUDE_PLUGIN_ROOT}` Bash 不展开, 先换绝对路径
+11. 单独重启 sync 容器 (如 `test-sync`) 必须连带重启 `sync-polars-localhost` — socat sidecar 共享 sync 网络栈, 主容器重启后绑定失效, Excel 导入静默写空表 (表还标 valid, 无报错)
 
 ## 不要做
 
@@ -343,5 +352,6 @@ cd ../fx-data-server && docker compose down
 | "在 worktree 内起 dev 测后端改动" | Step 1 → Step 2 → Step 3 (Gate 3.2 替换主仓 agents 成 worktree agents) |
 | "停服" | `TaskStop <已知 task ID>`; 未知则 fallback `pkill -f telemetry/preload.ts` + `lsof -ti tcp:... \| xargs kill -9` |
 | "重启 docker" | **不进 skill** — 是 docker compose 的事 |
+| "重启 test-sync / sync 容器" | `docker restart <IMAGE_PREFIX>-sync sync-polars-localhost` — sidecar 必须连带重启, 见「docker 中间件」节 |
 | "看 agents 日志" | **不进 skill** — Read 后台 task 的 output 文件 |
 | "重启 mac" | **不进 skill** |
