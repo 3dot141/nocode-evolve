@@ -6,6 +6,8 @@ description: 把确认的目标拆成可执行的任务序列。Use when you hav
 # nocode-evolve:plan — 把目标拆成任务序列
 
 > 输入：Define 确认的 restate。产出：用户确认的任务序列，每个任务 ≤ M、可独立执行、可独立回滚。
+>
+> 融合来源：superpowers `writing-plans`（硬约束底子：每步贴代码/禁占位符/HARD-GATE）+ agent-skills `planning-and-task-breakdown`（垂直切片/sizing/checkpoint/依赖图）。完整映射见 `references/skill-integration-map.md`。
 
 ## 为什么这个 skill 存在
 
