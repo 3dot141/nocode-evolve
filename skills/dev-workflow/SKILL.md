@@ -38,7 +38,7 @@ TaskCreate(subject: "阶段 1: Brainstorming",
            description: "调用: superpowers:brainstorming / 进入前 Read: rule-superpowers-brainstorming / Gate: 需求与设计意图明确, 用户确认")
 TaskCreate(subject: "阶段 2: Create Worktree",
            description: "调用: Gate B (base 确认) → superpowers:using-git-worktrees → EnterWorktree / 进入前 Read: rule-git-worktree / Gate: Gate B 用户确认 base + worktree 已建并进入")
-... (阶段 1.5 / 3-10 同构)
+... (阶段 1.5 / 3-12 同构)
 ```
 
 **中途进入** (如用户说「从阶段 5 开始」): 只建阶段 5 及之后的 task, 之前的视为已完成。
@@ -67,7 +67,7 @@ TaskCreate(subject: "阶段 2: Create Worktree",
 
 ---
 
-## 10 阶段生命周期地图
+## 12 阶段生命周期地图
 
 每阶段必须过 Gate 才进入下一阶段。Gate 是软卡——agent 检查并报告状态, 用户显式说「跳过」可放行, agent 不自行判断跳过。
 
@@ -85,7 +85,9 @@ TaskCreate(subject: "阶段 2: Create Worktree",
 | 7 | **Code Review** | 双路交叉评审 loop (同阶段 4 机制) | `rule-codex-review` | 用户 approve |
 | 8 | **Create PR** | `rule-finishing-branch` option 2 | `rule-finishing-branch` | Gate TB (title/body) + push 成功 + PR 已创建 (不含 reviewer) |
 | 9 | **Add Reviewers** | `rule-finishing-branch` pr-flow-bkt-appendix Step 7 | (同 rule-finishing-branch) | reviewer 已添加 (或用户说跳过) |
-| 10 | **Finish Worktree** | `rule-finishing-branch` Gate WC → ExitWorktree | (同 rule-finishing-branch) | worktree 清理完成 |
+| 10 | **Poll & Merge PR** | ScheduleWakeup 轮询 PR 审批状态 → `bkt pr merge` | (无专属 rule) | canMerge=true + merge 成功 |
+| 11 | **Task Transition** | `rule-feishu-transition` | `rule-feishu-transition` | 飞书 issue 流转到「研发已改待BUILD」(或用户说跳过) |
+| 12 | **Finish Worktree** | `rule-finishing-branch` Gate WC → ExitWorktree | (同 rule-finishing-branch) | worktree 清理完成 |
 
 ### 横切 (任意阶段可调)
 
@@ -224,9 +226,56 @@ PR 创建和添加 reviewer 拆成两个独立阶段, 原因:
 
 ---
 
+## 阶段 10: Poll & Merge PR
+
+PR 创建 + reviewer 添加后, 等待审批通过再 merge。**用户可指定轮询间隔**(默认 3 分钟)或说「直接 merge」跳过等待。
+
+### 流程
+
+1. 检查 PR 是否可 merge: `bkt api GET .../pull-requests/<id>/merge` → `canMerge`
+   - 若 toolchain == gh: `gh pr checks <id>` + `gh pr view <id> --json reviewDecision`
+2. `canMerge == false` → 用 `ScheduleWakeup(delaySeconds=180)` 设 3 分钟后再查
+3. `canMerge == true` → 执行 merge:
+   - bkt: `bkt pr merge <id> --project <target> --repo <repo>`
+   - gh: `gh pr merge <id> --merge`
+4. merge 失败 (冲突 / 权限) → 报错等用户介入
+5. Gate: merge 成功
+
+### 用户可选行为
+
+- 「直接 merge」→ 跳过轮询, 立即执行 step 3
+- 「不 merge, 等人工」→ 跳过整个阶段 10
+- 「每 5 分钟检查」→ 调整 ScheduleWakeup 间隔
+
+---
+
+## 阶段 11: Task Transition (飞书项目流转)
+
+PR merge 后把飞书 issue 从「组员开发」流转到「研发已改待BUILD」。
+
+### 流程
+
+1. 进入前 Read `rule-feishu-transition`
+2. 从 push range commit messages 提取任务号 (`#f-xxx` / `#g-xxx` / `#m-xxx`)
+3. 逐个任务走 rule 流程:
+   - `get_workitem_brief` → 确认当前状态 = 组员开发
+   - `update_field(field_ecff7b)` → 填「缺陷来源于缺陷」(默认自关联, 用户可指定)
+   - `get_transition_required(mode=unfinished)` → 确认必填项已完成
+   - `transition_state(transition_id=20862226)` → 执行流转
+4. 一个失败不阻塞其他; 必填项无法自动填充时报告用户手动补
+5. Gate: 全部任务流转成功 (或用户说跳过)
+
+### 用户可选行为
+
+- 「跳过流转」→ 整段跳过
+- 「只流转 #f-xxx」→ 部分流转
+- 指定源缺陷 id → 覆盖默认自关联
+
+---
+
 ## 阶段跳转规则
 
-- **顺序前进**: 默认按 1→2→…→9 线性推进
+- **顺序前进**: 默认按 1→2→…→12 线性推进
 - **跳过**: 用户显式说「跳过阶段 N」才跳, agent 不自行判断; 跳过时回复点名「按你要求跳过阶段 N」
 - **回退**: 用户说「回到阶段 N」可回退重做
 - **中途进入**: 用户说「从阶段 N 开始」可从中间进入 (已有 worktree / 设计文档等); agent 检查前置 Gate 状态并报告

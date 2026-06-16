@@ -76,6 +76,12 @@ agent 视角: 用户任务命中以下任一条件时, **主动调起 dev-workfl
 **摘要**: 输出 标题 + 描述, 描述 ≤200字, 含基础内容(覆盖 push range 全 commit) + 重点评测(亮点 / 风险 / 未验证项)
 **主桶**: memory (完整定义见该桶)
 
+#### feishu-transition (跨桶)
+**触发**: PR merge 后流转飞书 issue 状态 (组员开发 → 研发已改待BUILD); 或用户说「流转任务 / 改状态 / 标完成」; 或 dev-workflow 阶段 11 Task Transition
+**读**: `${CLAUDE_PLUGIN_ROOT}/rules/rule-feishu-transition.md`
+**摘要**: PR merge 后把飞书 issue 从组员开发流转到研发已改待BUILD; 先 update_field 填缺陷来源于缺陷(field_ecff7b, 默认自关联), 再 get_transition_required 确认必填项完成, 最后 transition_state; 多任务逐个独立流转
+**主桶**: feishu (完整定义见该桶)
+
 ### 桶: 评审 (review)
 **粗触发**: 对已有改动或设计求评审 / 挑错 / 独立验证 / 第二实现
 **不含 (负例)**: 纯执行: 直接改代码而未求评审
