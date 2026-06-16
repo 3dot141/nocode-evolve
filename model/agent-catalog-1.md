@@ -116,6 +116,13 @@ agent 视角: 用户任务命中以下任一条件时, **主动调起 dev-workfl
 **摘要**: 写设计文档统一 worktree → write → review → render 四步, 落 docs/superpowers/specs/{username}/ (按 doc-type 分 specs/plans/sketches); 两条入口 (brainstorming step5 / 用户直接要求) 一致
 **生命周期**: 0 设计
 
+#### design
+**触发**: 用户要求写设计文档 / PRD / RFC / Design Doc / ADR / 重构方案 / 技术 spec / API 设计, 或 devflow 路由到 Design 阶段
+**读**: `${CLAUDE_PLUGIN_ROOT}/rules/rule-design.md`
+**摘要**: Design 阶段增强: adversarial review + 设计五轴(可行性/清晰度/一致性/安全/可扩展性) + 统一 Findings Schema + source-driven 前置检查 + 轻量 threat model + API 契约指南 + HTML 渲染输出
+**也属**: workflow
+**生命周期**: 0 设计
+
 #### codex-review (跨桶)
 **触发**: red-blue-deep 判重档走到红军环节; 或完成分支 / 显式 review 请求; 或我卡住 / 想要第二实现 / 独立诊断 / 委派; 或 design-doc-writing 走到 review 环节
 **读**: `${CLAUDE_PLUGIN_ROOT}/rules/rule-codex-review.md`

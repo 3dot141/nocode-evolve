@@ -5,7 +5,8 @@
     { "id": "review", "title": "评审", "trigger_summary": "对已有改动或设计求评审 / 挑错 / 独立验证 / 第二实现", "negatives": ["纯执行: 直接改代码而未求评审"] },
     { "id": "design", "title": "设计与文档", "trigger_summary": "写设计文档 / PRD / RFC / ADR / 重构方案 / 技术 spec", "negatives": ["写代码注释 / commit message / README / changelog"] },
     { "id": "memory", "title": "记忆与沉淀", "trigger_summary": "总结 / 沉淀 / 归档会话产出 / push 内容 / 项目本地资源 (.agents-personal/) 操作", "negatives": ["一次性事实查询"] },
-    { "id": "feishu", "title": "飞书项目读取", "trigger_summary": "读取飞书项目 (project.feishu.cn / Meego) 工作项内容 / 附件 / 评论 (需求 / 缺陷 / 任务)", "negatives": ["飞书云文档 docx / wiki (走 lark-doc / lark-wiki)"] }
+    { "id": "feishu", "title": "飞书项目读取", "trigger_summary": "读取飞书项目 (project.feishu.cn / Meego) 工作项内容 / 附件 / 评论 (需求 / 缺陷 / 任务)", "negatives": ["飞书云文档 docx / wiki (走 lark-doc / lark-wiki)"] },
+    { "id": "workflow", "title": "工程流程", "trigger_summary": "需求澄清 / 目标定义 / 任务拆分 / 实现执行 / 端到端验证 / devflow 流程导航", "negatives": ["纯查询 / 已在某个 skill 内部执行中"] }
   ],
   "rules": [
     {
@@ -199,6 +200,86 @@
       "depends_on": ["finishing-branch", "feishu-project-workitem-read"],
       "severity": "advisory",
       "lifecycle_stage": "4 收尾",
+      "pretooluse": []
+    },
+    {
+      "id": "define",
+      "bucket": "workflow",
+      "also_buckets": [],
+      "trigger_type": "regex+skill",
+      "trigger_desc": "用户说「澄清需求 / 做什么 / 目标是什么 / interview me / 定义目标 / 需求不清楚」, 或 devflow 路由到 Define 阶段",
+      "triggers": ["澄清.{0,2}需求", "做什么", "目标.{0,2}(是|定义)", "interview\\s*me", "需求.{0,2}(不清|不明|模糊)", "定义.{0,2}(目标|需求)"],
+      "action": "Skill(nocode-evolve:define)",
+      "read": "${CLAUDE_PLUGIN_ROOT}/rules/rule-define.md",
+      "summary": "从模糊任务到明确目标+方案的收敛循环; 融合 interview-me 一次一问+置信度 + spec-driven 可量化成功标准 + brainstorming 方案探索; 产出结构化 restate + 场景分类(Full/Standard/Fix/Mini)",
+      "guard": "",
+      "depends_on": [],
+      "severity": "advisory",
+      "lifecycle_stage": "0 设计",
+      "pretooluse": []
+    },
+    {
+      "id": "design",
+      "bucket": "design",
+      "also_buckets": ["workflow"],
+      "trigger_type": "regex+skill",
+      "trigger_desc": "用户要求写设计文档 / PRD / RFC / Design Doc / ADR / 重构方案 / 技术 spec / API 设计, 或 devflow 路由到 Design 阶段",
+      "triggers": ["设计文档", "design\\s*doc", "\\bprd\\b", "\\brfc\\b", "\\badr\\b", "重构方案", "技术\\s*spec", "技术方案", "api\\s*设计", "系统设计"],
+      "action": "Read rules/rule-design.md, 走 Skill(nocode-evolve:design-doc-writing)",
+      "read": "${CLAUDE_PLUGIN_ROOT}/rules/rule-design.md",
+      "summary": "Design 阶段增强: adversarial review + 设计五轴(可行性/清晰度/一致性/安全/可扩展性) + 统一 Findings Schema + source-driven 前置检查 + 轻量 threat model + API 契约指南 + HTML 渲染输出",
+      "guard": "",
+      "depends_on": ["define"],
+      "severity": "warn",
+      "lifecycle_stage": "0 设计",
+      "pretooluse": []
+    },
+    {
+      "id": "plan",
+      "bucket": "workflow",
+      "also_buckets": [],
+      "trigger_type": "regex+skill",
+      "trigger_desc": "用户说「写计划 / 拆任务 / 怎么实现 / plan it out / 拆解一下 / 实现方案」, 或 devflow 路由到 Plan 阶段",
+      "triggers": ["写.{0,2}计划", "拆.{0,2}(任务|task)", "怎么.{0,2}实现", "plan\\s*it", "拆解", "实现方案", "实现计划"],
+      "action": "Skill(nocode-evolve:plan)",
+      "read": "${CLAUDE_PLUGIN_ROOT}/rules/rule-plan.md",
+      "summary": "融合 writing-plans 硬约束(每步贴代码/禁占位符/HARD-GATE) + planning-and-task-breakdown 方法论(垂直切片/sizing ≤5文件/checkpoint/依赖图); 产出可执行任务列表",
+      "guard": "",
+      "depends_on": ["define"],
+      "severity": "advisory",
+      "lifecycle_stage": "2 实现",
+      "pretooluse": []
+    },
+    {
+      "id": "build",
+      "bucket": "workflow",
+      "also_buckets": [],
+      "trigger_type": "regex+skill",
+      "trigger_desc": "用户说「开始实现 / 写代码 / 执行计划 / build it / 动手」, 或 devflow 路由到 Build 阶段",
+      "triggers": ["开始.{0,2}(实现|写|做)", "写代码", "执行.{0,2}计划", "build\\s*it", "动手", "开始.{0,2}build"],
+      "action": "Skill(nocode-evolve:build)",
+      "read": "${CLAUDE_PLUGIN_ROOT}/rules/rule-build.md",
+      "summary": "双底子: superpowers TDD Iron Law + incremental-implementation slice 循环; 每 slice: Scope Lock(≤5文件) → Test First → Implement → Verify → Commit; source-driven 来源标注; 3次失败→Debug横切",
+      "guard": "",
+      "depends_on": ["plan"],
+      "severity": "advisory",
+      "lifecycle_stage": "2 实现",
+      "pretooluse": []
+    },
+    {
+      "id": "verify",
+      "bucket": "workflow",
+      "also_buckets": [],
+      "trigger_type": "regex+skill",
+      "trigger_desc": "用户说「验证一下 / 跑一下看看 / 确认能用 / verify」, 或 Build 完成后 devflow 路由到 Verify 阶段",
+      "triggers": ["验证.{0,2}(一下|功能|整体)", "跑一下", "确认.{0,2}(能用|没问题)", "\\bverify\\b", "端到端.{0,2}(测试|验证)"],
+      "action": "Skill(nocode-evolve:verify)",
+      "read": "${CLAUDE_PLUGIN_ROOT}/rules/rule-verify.md",
+      "summary": "证明功能真的能用: 证据收集(Iron Law 无证据不宣称完成) + 集成测试 + E2E/Browser + 性能检查 + 验收标准逐条核对; 失败→Debug横切或回Build",
+      "guard": "",
+      "depends_on": ["build"],
+      "severity": "advisory",
+      "lifecycle_stage": "3 评审",
       "pretooluse": []
     }
   ]
