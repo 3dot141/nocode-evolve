@@ -83,7 +83,7 @@ TaskCreate(subject: "阶段 2: Create Worktree",
 | 5 | **Writing Plan** | `superpowers:writing-plans` | (无专属 rule) | 实现计划已产出 |
 | 6 | **Executing** | `superpowers:executing-plans` / `superpowers:test-driven-development` / `superpowers:subagent-driven-development` | (无专属 rule) | 代码完成 + 测试通过 |
 | 7 | **Code Review** | 双路交叉评审 loop (同阶段 4 机制) | `rule-codex-review` | 用户 approve |
-| 8 | **Create PR** | `rule-finishing-branch` option 2 | `rule-finishing-branch` | Gate TB (title/body) + push 成功 + PR 已创建 (不含 reviewer) |
+| 8 | **Create PR** | `rule-finishing-branch` option 2 | `rule-finishing-branch` | Gate Title-Body (title/body) + push 成功 + PR 已创建 (不含 reviewer) |
 | 9 | **Add Reviewers** | `rule-finishing-branch` pr-flow-bkt-appendix Step 7 | (同 rule-finishing-branch) | reviewer 已添加 (或用户说跳过) |
 | 10 | **Poll & Merge PR** | ScheduleWakeup 轮询 PR 审批状态 → `bkt pr merge` | (无专属 rule) | canMerge=true + merge 成功 |
 | 11 | **Task Transition** | `rule-feishu-transition` | `rule-feishu-transition` | 飞书 issue 流转到「研发已改待BUILD」(或用户说跳过) |
@@ -207,7 +207,7 @@ PR 创建和添加 reviewer 拆成两个独立阶段, 原因:
 ### 阶段 8: Create PR
 
 1. Read `rule-finishing-branch` + 工具栈检测 (gh / bkt)
-2. Gate TB: 生成 title + body, 用户确认
+2. Gate Title-Body: 生成 title + body, 用户确认
 3. Push 分支到 remote
 4. 创建 PR (**不带 reviewer**——避免单 user 错导致整个 create 失败)
 5. Gate: PR 已创建, 拿到 PR URL + id

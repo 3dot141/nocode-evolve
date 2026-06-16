@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { matchRules, decide } from './pretooluse-guard.mjs';
 
 const RULES = [
-  { rule: 'finishing-branch', pattern: 'gh\\s+pr\\s+create', decision: 'inject', reason: '提 PR 前先 Read rule-finishing-branch.md 走 Gate TB/PR' },
+  { rule: 'finishing-branch', pattern: 'gh\\s+pr\\s+create', decision: 'inject', reason: '提 PR 前先 Read rule-finishing-branch.md 走 Gate Title-Body/PR' },
   { rule: 'finishing-branch', pattern: 'bkt\\s+api\\s+.*--method\\s+PUT', decision: 'block', reason: '禁 bkt api PUT 改 PR 元数据, 用 bkt pr edit' },
 ];
 

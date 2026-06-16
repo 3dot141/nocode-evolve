@@ -1,8 +1,8 @@
 # Option 2: push + 建 PR (GitHub gh 主流程)
 
-option 2 在 `toolchain == "gh"` 时的全流程: title/body 生成 → Gate TB → PR 计划 → Gate PR → push → `gh pr create` → reviewer add.
+option 2 在 `toolchain == "gh"` 时的全流程: title/body 生成 → Gate Title-Body → PR 计划 → Gate PR → push → `gh pr create` → reviewer add.
 
-含 **Gate 体系中的 Gate TB + Gate PR** (Gate M 在门面 option 1, Gate D 在 sp skill 自带 option 4, Gate RD 在 option 1/4 删 branch 后).
+含 **Gate 体系中的 Gate Title-Body + Gate PR** (Gate M 在门面 option 1, Gate D 在 sp skill 自带 option 4, Gate RD 在 option 1/4 删 branch 后).
 
 ## 前置条件
 
@@ -30,7 +30,7 @@ range 内 N 个 sha, 基础内容就要有 N 行.
 
 ## Step 2: 收集影响文件
 
-Gate TB 展示前, 先拿本次 PR 涉及的全部变更文件:
+Gate Title-Body 展示前, 先拿本次 PR 涉及的全部变更文件:
 
 ```bash
 git diff --name-only "$(git merge-base HEAD $base_branch)..HEAD" | sort
@@ -51,7 +51,7 @@ scripts/
 
 根目录文件直接列 (不加前缀目录), 目录按字母序排.
 
-## Gate TB: title/body + 影响文件 用户确认
+## Gate Title-Body: title/body + 影响文件 用户确认
 
 agent 输出生成的 title + body + 影响文件 tree 给用户审, 等响应:
 
@@ -59,7 +59,7 @@ agent 输出生成的 title + body + 影响文件 tree 给用户审, 等响应:
 - 任何修改意见 (e.g. "标题太长", "body 第二段删掉", "亮点加一条"...) → agent **重生成** 整段 title + body, 再次输出, 再次 askGate (影响文件 tree 不变, 除非有新 commit)
 
 ```
-[Gate TB] 候选 title + body + 影响文件如下, 确认 OK 还是给修改意见?
+[Gate Title-Body] 候选 title + body + 影响文件如下, 确认 OK 还是给修改意见?
 
 # title
 <标题>
@@ -117,7 +117,7 @@ test -f .github/CODEOWNERS && cat .github/CODEOWNERS
 (回 OK / 或给 "去掉 bob 加 charlie" / "target 改成 develop" 等)
 ```
 
-改 reviewer / target 时**局部更新 plan**, **不重生成 title/body** (Gate TB 已通过, body 不动). 再次 askGate 直到用户 OK.
+改 reviewer / target 时**局部更新 plan**, **不重生成 title/body** (Gate Title-Body 已通过, body 不动). 再次 askGate 直到用户 OK.
 
 ## Step 5: push (永不自动 force)
 
@@ -153,7 +153,7 @@ git push -u origin HEAD
 
 ```bash
 gh pr create \
-  --title "<title from Gate TB>" \
+  --title "<title from Gate Title-Body>" \
   --base "<target_branch from Gate PR>" \
   --body "$(cat <<'EOF'
 <完整 body markdown>
@@ -249,4 +249,4 @@ PR 合并后清理远程分支:
 
 若 BF0 检测 `toolchain == "bkt"`, **额外** Read `pr-flow-bkt-appendix.md`, 它覆盖本文件 Step 6 (建 PR) + Step 7 (加 reviewer) + Step 8 远程分支清理提示段, 用 `bkt` 命令 + Bitbucket 提示替换.
 
-主流程 (Step 1-5 + Gate TB + Gate PR + Step 8 worktree 清理) 不变.
+主流程 (Step 1-5 + Gate Title-Body + Gate PR + Step 8 worktree 清理) 不变.

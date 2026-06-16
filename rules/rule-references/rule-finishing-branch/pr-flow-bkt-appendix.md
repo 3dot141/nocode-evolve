@@ -1,6 +1,6 @@
 # Option 2: Bitbucket DC bkt 附录 (覆盖 pr-flow-gh Step 6 + 7)
 
-`toolchain == "bkt"` 时, 本附录覆盖 `pr-flow-gh.md` 的 **Step 6 建 PR** + **Step 7 加 reviewer** 段, 用 `bkt` CLI + `bkt api` REST passthrough 替换. 主流程 (Step 1 生成 title/body + Gate TB + Step 3 PR 计划 + Gate PR + Step 5 push) **不变**.
+`toolchain == "bkt"` 时, 本附录覆盖 `pr-flow-gh.md` 的 **Step 6 建 PR** + **Step 7 加 reviewer** 段, 用 `bkt` CLI + `bkt api` REST passthrough 替换. 主流程 (Step 1 生成 title/body + Gate Title-Body + Step 3 PR 计划 + Gate PR + Step 5 push) **不变**.
 
 沉淀 fx-data-agents 项目实战教训 (来源: `fx-data-agents/.agents-personal/rules/personal-repo-pr.md`). 项目本地特异内容 (reviewer 名单 / slug 历史) 仍在项目本地 rule, 本附录只承担通用 Bitbucket DC + bkt 模式.
 
@@ -8,7 +8,7 @@
 
 ## 前置条件
 
-- 已读 `pr-flow-gh.md` (主流程 Step 1-5 + Gate TB + Gate PR 都走完)
+- 已读 `pr-flow-gh.md` (主流程 Step 1-5 + Gate Title-Body + Gate PR 都走完)
 - 工具栈 = `bkt` (BF0 检测 `remote_url` 含 `"bitbucket."` 子串, 或私域 askUser 选 bkt)
 - `bkt` CLI 可用: `bkt --version` 验; subcommand (`bkt pr create` / `bkt pr edit`) + `bkt api` REST passthrough 任一即可, **subcommand 优先**
 
@@ -40,7 +40,7 @@ if [ "$source_project" = "$target_project" ]; then workflow="A"; else workflow="
 bkt pr create \
   --project "$source_project" --repo "$repo_slug" \
   --source "$source_branch" --target "$target_branch" \
-  --title "<title from Gate TB>" \
+  --title "<title from Gate Title-Body>" \
   --description "$(cat <<'EOF'
 <完整 body markdown>
 EOF
@@ -57,7 +57,7 @@ EOF
 # Step 6.B.1: 写 JSON body 到临时文件 (避免 shell quote 地狱; 嵌套 JSON 必须 --input)
 cat > /tmp/pr-body.json <<EOF
 {
-  "title": "<title from Gate TB>",
+  "title": "<title from Gate Title-Body>",
   "description": "<body markdown, \\n 转义换行>",
   "state": "OPEN",
   "open": true,
@@ -95,7 +95,7 @@ rm /tmp/pr-body.json
 ### 创建失败处理
 
 - rate limit (429) → 报错 + 等用户 retry
-- JSON body parse error (description 含未转义 quote / control char) → 报错 + 让用户改 title/body 重跑 Gate TB
+- JSON body parse error (description 含未转义 quote / control char) → 报错 + 让用户改 title/body 重跑 Gate Title-Body
 - fork 关系错配 (`fromRef.repository` slug / project 与 remote 实际不一致) → 报错, 走 Gate PR 重审 source 字段
 - **绝不带 `reviewers` 字段** — Bitbucket POST 若 reviewers 数组某个 user 大小写错 / 无 read 权限, 整个 PR 都建不出来 (`409 Conflict`). 拆 "create 不带 reviewer + edit 单独加" 更稳
 

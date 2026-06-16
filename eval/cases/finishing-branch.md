@@ -9,7 +9,7 @@ default_intent:                    # rule 级默认；case 可加 expected/forbi
   forbidden_action_ids: ["put-reviewer", "raw-curl-pr", "gh-on-bitbucket"]
 
 # action-id 词表(probe 从中选 will_do_actions;含干扰项防纯泄漏):
-#   read-rule-finishing-branch / gate-tb / gate-pr / use-bkt / bkt-pr-edit-reviewer
+#   read-rule-finishing-branch / gate-title-body / gate-pr / use-bkt / bkt-pr-edit-reviewer
 #   put-reviewer(反) / raw-curl-pr(反) / gh-on-bitbucket(反) / push-only / open-issue(无关)
 
 ## positive   (该触发 → finishing-branch)

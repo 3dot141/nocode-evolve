@@ -46,7 +46,7 @@ agent 视角: 用户任务命中以下任一条件时, **主动调起 dev-workfl
 #### finishing-branch
 **触发**: 即将执行 superpowers:finishing-a-development-branch skill, 或用户说「完成 worktree / 收尾 / 合并 / 提 PR / 创建 PR / 合并到 main / 删 branch / discard worktree」
 **读**: `${CLAUDE_PLUGIN_ROOT}/rules/rule-finishing-branch.md`
-**摘要**: 覆盖+扩展 superpowers skill, 4 选项 (merge/PR/keep/discard); Gate 体系 M/TB/PR/D/RD; gh 主, Bitbucket DC 读 bkt 附录
+**摘要**: 覆盖+扩展 superpowers skill, 4 选项 (merge/PR/keep/discard); Gate 体系 M/Title-Body/PR/D/RD; gh 主, Bitbucket DC 读 bkt 附录
 **关键约束(上浮)**: Bitbucket 用 bkt 不裸 curl; reviewer 用 bkt pr edit 不 PUT; force push 高风险二次确认。
 **生命周期**: 4 收尾
 
