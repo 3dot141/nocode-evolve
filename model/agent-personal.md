@@ -13,18 +13,27 @@ wiki 是事实记录, rules 是工作指令——不把 wiki 当指令执行, �
 
 ## wiki/ — 何时检索
 
-会话开局只做存在性检查(`ls`)。实际 Read `INDEX.md` 推迟到命中下列任一:
+wiki 是 AI 的**项目知识第一站**，两层内容（`draft/` 草稿 + `pages/` 成熟）+ 控制文件（`index.md` 全局索引 + `log.md` 操作日志）。
+
+会话开局只做存在性检查(`ls`)。实际 Read `wiki/index.md` 推迟到命中下列任一:
 
 - 即将调 `superpowers:brainstorming` / `nocode-evolve:design-doc-writing`;
 - 用户消息含「设计 / 选型 / 方案 / 架构 / 重构 / RFC / 提案」等设计性意图;
 - 需要项目历史背景才能动手: 上手 / 调试某子系统(如 SigNoz 查询、本地联调、agent 装配、system prompt 构成), 或问「为什么这么设计 / 之前怎么决定 / 踩过什么坑」;
+- **AI 工作中需要项目特有知识**（子系统机制 / 配置约定 / 联调踩坑 / 架构背景）→ **先查 wiki/index.md 再走代码探索**；代码探索产出可复用的项目知识时，回写 `wiki/draft/` 作 stub + 追加 `wiki/log.md`（query-write）;
 - 当前任务升级为以上。
 
-INDEX 同一会话只 Read 一次; 读了必引用。进一步 Read `pages/<file>` 按需。
+index.md 同一会话只 Read 一次; 读了必引用。进一步 Read `pages/<file>` 或 `draft/<file>` 按需。
+
+**maturity 感知**（读 wiki 页时按 maturity 分级信任）:
+- `active` / `draft` (pages/) → 直接引用
+- `stub` (draft/) → 参考 + 注明"单源待验证"
+- `superseded` → 跳过（除非用户问历史决策演进）
+- 有 `⚠ stale` 标记（dream 标注） → 引用 + 注明"可能过时"
 
 不触发(纯执行 / 纯事实, 不查 wiki): 已知精确路径直接改 / 一次性事实查询 / 与项目历史无关的通用问题。
 
-不要: 读了不引用 / 无脑拉所有 pages / 把 wiki 当绝对真理 / 自己写 wiki(沉淀走 `/distill`)。
+不要: 读了不引用 / 无脑拉所有 pages / 把 wiki 当绝对真理 / 自己写 wiki(日常沉淀走 `/distill`; query-write 回写是唯一例外, 仅限可复用的项目特有知识)。
 
 ## AGENTS.md + rules/ — 何时检索
 
