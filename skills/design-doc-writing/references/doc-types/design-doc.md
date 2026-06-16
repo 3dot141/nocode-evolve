@@ -251,7 +251,7 @@ function AgentLoop.callLlmForTurn(messages, ctx):        // 完成一轮 LLM 对
 - **可省**: 内部分支细节 (private 方法的 if/else)
 - **不写代码**: 不写 `@Test` / mock 工具具体 API / assertion 语法 — TDD 步骤化清单 (先写哪个 test 再写哪段实现) 留给 plan
 
-**与 dev-workflow 阶段 1.5 TDD 沟通的关系**: 如果走了 dev-workflow，阶段 1.5 已与用户对齐的边界 case 清单应直接体现在本节。本节是 TDD 沟通产出的落地位置——不是独立重新想，而是把已确认的测试策略写进设计文档。
+**与 dev-workflow 阶段 2 Goal 的关系**: 如果走了 dev-workflow，阶段 2 已与用户对齐的成果定义和验收标准应直接体现在本节。本节是 Goal 阶段产出的落地位置——不是独立重新想，而是把已确认的验收标准（含边界 case）写进设计文档。
 
 ### 方案选型
 

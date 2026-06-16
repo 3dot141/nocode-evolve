@@ -190,7 +190,7 @@
       "bucket": "feishu",
       "also_buckets": ["git-lifecycle"],
       "trigger_type": "regex",
-      "trigger_desc": "PR merge 后流转飞书 issue 状态 (组员开发 → 研发已改待BUILD); 或用户说「流转任务 / 改状态 / 标完成」; 或 dev-workflow 阶段 11 Task Transition",
+      "trigger_desc": "PR merge 后流转飞书 issue 状态 (组员开发 → 研发已改待BUILD); 或用户说「流转任务 / 改状态 / 标完成」; 或 dev-workflow 阶段 12 Task Transition",
       "triggers": ["流转.{0,4}(任务|状态|工作项)", "(改|转).{0,2}状态", "标.{0,2}(完成|已改)", "研发已改", "待\\s*build"],
       "action": "Read rules/rule-feishu-transition.md, 走 ToolSearch 加载 FeishuProjectMcp → update_field(field_ecff7b) → transition_state",
       "read": "${CLAUDE_PLUGIN_ROOT}/rules/rule-feishu-transition.md",
