@@ -84,7 +84,7 @@ worktree 的新分支 base 应跟上远程，避免长在过时代码上、与�
 
 > 为什么用 `ahead` 而非"behind 很多"：纯落后时基于远程最新永远无损（你没有独有 commit 会被丢），不必拿模糊阈值打扰用户；真正需要拍板的只有"本地有独有 commit 时 base 选谁"这一种分歧。
 
-> **dev-workflow 流程内（阶段 2）**：本节静默逻辑升级为 **Gate B 显式确认**——base 选择 + 基准状态一次呈现、用户拍板后才 `git worktree add`，确认值写 `nocode-evolve-base` config（见 dev-workflow skill「阶段 2: Gate B」）。非流程零散建 worktree 维持本节静默默认。
+> **dev-workflow 流程内（阶段 2）**：本节静默逻辑升级为 **Gate Base 显式确认**——base 选择 + 基准状态一次呈现、用户拍板后才 `git worktree add`，确认值写 `nocode-evolve-base` config（见 dev-workflow skill「阶段 2: Gate Base」）。非流程零散建 worktree 维持本节静默默认。
 
 ### 示例
 
@@ -349,7 +349,7 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/worktree-setup.mjs" teardown \
 # remove 被拒绝(有其他 untracked)→ 进 needsAttention, 不自动 --force; 人工判后再处理
 ```
 
-> **不要在销毁 worktree 时顺手清理远程分支.** worktree 移除只删工作目录、**保留 branch** (本节「目录名冲突怎么办」重建复用、通用销毁皆如此). 远程分支清理是**删 branch** 的附属动作, 归 `rule-finishing-branch.md` 的 **Gate RD** (option 1 Merge / option 4 Discard 删本地 branch 后触发), 不归 worktree 移除——在保留 branch 的场景删远程会误删正要继续的分支.
+> **不要在销毁 worktree 时顺手清理远程分支.** worktree 移除只删工作目录、**保留 branch** (本节「目录名冲突怎么办」重建复用、通用销毁皆如此). 远程分支清理是**删 branch** 的附属动作, 归 `rule-finishing-branch.md` 的 **Gate Remote-Delete** (option 1 Merge / option 4 Discard 删本地 branch 后触发), 不归 worktree 移除——在保留 branch 的场景删远程会误删正要继续的分支.
 
 ### 想要分支化 personal 配置时
 

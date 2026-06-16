@@ -55,10 +55,10 @@ Implementation complete. What would you like to do?
 
 | Option | 主要动作 | 涉及 Gate | Read 子文件 (按需) |
 |---|---|---|---|
-| **1. Merge 回 base** | commit 整理 → 显示 merge 计划 → Gate M → 本地 merge → tests → cleanup worktree → (删 branch **前**捕获远程坐标) 删 branch → remote 分支清理 (Gate RD) | Gate M + Gate RD | `commit-tidy.md`, `remote-branch-cleanup.md` |
-| **2. Push + 建 PR** | commit 整理 → 生成 title/body → Gate Title-Body → PR 计划 → Gate PR → push (含 non-ff fallback) → 建 PR → reviewer add → Gate WC (worktree 清理提示) | Gate Title-Body + Gate PR + Gate WC | `commit-tidy.md`, `pr-flow-gh.md`; 若 `toolchain == "bkt"` **额外** `pr-flow-bkt-appendix.md` |
+| **1. Merge 回 base** | commit 整理 → 显示 merge 计划 → Gate Merge → 本地 merge → tests → cleanup worktree → (删 branch **前**捕获远程坐标) 删 branch → remote 分支清理 (Gate Remote-Delete) | Gate Merge + Gate Remote-Delete | `commit-tidy.md`, `remote-branch-cleanup.md` |
+| **2. Push + 建 PR** | commit 整理 → 生成 title/body → Gate Title-Body → PR 计划 → Gate PR → push (含 non-ff fallback) → 建 PR → reviewer add → Gate Worktree-Cleanup (worktree 清理提示) | Gate Title-Body + Gate PR + Gate Worktree-Cleanup | `commit-tidy.md`, `pr-flow-gh.md`; 若 `toolchain == "bkt"` **额外** `pr-flow-bkt-appendix.md` |
 | **3. Keep as-is** | 一行报告 worktree 路径; **不动**任何文件; 不删 branch | (无) | (无) |
-| **4. Discard** | 显示将删 (branch / commits / worktree path) → typed `discard` 字面确认 → cleanup worktree → (force delete branch **前**捕获远程坐标) force delete branch → remote 分支清理 (Gate RD) | Gate D + Gate RD | `remote-branch-cleanup.md` (Gate D 在 sp skill 自带) |
+| **4. Discard** | 显示将删 (branch / commits / worktree path) → typed `discard` 字面确认 → cleanup worktree → (force delete branch **前**捕获远程坐标) force delete branch → remote 分支清理 (Gate Remote-Delete) | Gate Discard + Gate Remote-Delete | `remote-branch-cleanup.md` (Gate Discard 在 sp skill 自带) |
 
 按用户选项 Read 对应子文件, 由子文件接管细节.
 
@@ -70,12 +70,12 @@ Implementation complete. What would you like to do?
 
 | Gate | 位置 | 内容 | 用户响应 |
 |---|---|---|---|
-| **Gate M** (Merge Plan) | option 1, commit 整理后 | "将 merge `<branch>` → `<base>`, 删 worktree `<path>`, 删 branch `<name>`" | OK → 执行; 改主意 → 回 4 选项菜单 |
+| **Gate Merge** (Merge Plan) | option 1, commit 整理后 | "将 merge `<branch>` → `<base>`, 删 worktree `<path>`, 删 branch `<name>`" | OK → 执行; 改主意 → 回 4 选项菜单 |
 | **Gate Title-Body** (Title/Body) | option 2, commit 整理后 | 草稿 title (≤50 字) + 完整 body markdown (引用 `rule-push-summary.md` 输出契约: ≤200 字, 基础内容 + 重点评测) | OK → 进 Gate PR; 改 → agent 重生成 → 再 Gate Title-Body (循环) |
 | **Gate PR** (PR Plan) | option 2, Gate Title-Body 后 | `push: origin/<branch>` + `source: <owner>:<source-branch>` + `target: <owner>:<target-branch>` + `reviewer: <list>` | OK → 执行 push+create+reviewer; 改任一字段 → 局部更新 → 再 Gate PR (不重生成 title/body) |
-| **Gate D** (Discard) | option 4 | "将删 branch `<name>` + commits `<list>` + worktree `<path>`" | typed `discard` **字面**才执行; 任何其他响应 (含 'yes' / 'y' / 'OK' / 'confirm') 都算否定, 回菜单 |
-| **Gate WC** (Worktree Cleanup) | option 2, PR 创建 + reviewer 加完后, 仅当前在 worktree (非主仓) 时弹出 | "PR 已创建, 当前在 worktree `<path>`. ① 保留 worktree(默认) ② 清理 worktree (附 PR 合并后删远程分支的提示)" | ① 保留; ② 清理 worktree + 输出合并后删远程的工具栈相关提示 (细节见 `pr-flow-gh.md` / `pr-flow-bkt-appendix.md` Step 8) |
-| **Gate RD** (Remote Delete) | option 1/4, 删本地 branch 后、远程有对应分支时 (无分支/检查失败则不弹) | "删本地 branch 后远程仍有 `<remote>/<remote-branch>`, 删除远程分支? ① 保留(默认) ② 删除 (附远程独有 commit 警示/提示, 见 `remote-branch-cleanup.md`)" | 选 ② 才 `git push --delete`; ① 或任何其它响应一律保留 |
+| **Gate Discard** (Discard) | option 4 | "将删 branch `<name>` + commits `<list>` + worktree `<path>`" | typed `discard` **字面**才执行; 任何其他响应 (含 'yes' / 'y' / 'OK' / 'confirm') 都算否定, 回菜单 |
+| **Gate Worktree-Cleanup** (Worktree Cleanup) | option 2, PR 创建 + reviewer 加完后, 仅当前在 worktree (非主仓) 时弹出 | "PR 已创建, 当前在 worktree `<path>`. ① 保留 worktree(默认) ② 清理 worktree (附 PR 合并后删远程分支的提示)" | ① 保留; ② 清理 worktree + 输出合并后删远程的工具栈相关提示 (细节见 `pr-flow-gh.md` / `pr-flow-bkt-appendix.md` Step 8) |
+| **Gate Remote-Delete** (Remote Delete) | option 1/4, 删本地 branch 后、远程有对应分支时 (无分支/检查失败则不弹) | "删本地 branch 后远程仍有 `<remote>/<remote-branch>`, 删除远程分支? ① 保留(默认) ② 删除 (附远程独有 commit 警示/提示, 见 `remote-branch-cleanup.md`)" | 选 ② 才 `git push --delete`; ① 或任何其它响应一律保留 |
 
 ## 不要
 
@@ -85,4 +85,4 @@ Implementation complete. What would you like to do?
 - 不要 `gh pr create` / `bkt api POST pull-requests` 时塞 `--reviewer` / `reviewers` 字段 — 单 user 错会让 PR 都建不出来. 拆"create 不带 reviewer + 单独 edit 加"
 - 不要 `bkt api --method PUT` 改 PR 元数据 — PUT 全量替换会清 reviewer 数组. 一律 `bkt pr edit`
 - 不要在 option 2 完成后立刻 merge — 终态是 PR 提交并加 reviewer, merge 走 review 流程或另一轮 finishing-branch (这次选 option 1)
-- 不要在 option 2 **自动**清理 worktree — 必须经 Gate WC 用户选择; 默认保留 (用户需要 iterate on PR feedback); 选 ② / ③ 才清理
+- 不要在 option 2 **自动**清理 worktree — 必须经 Gate Worktree-Cleanup 用户选择; 默认保留 (用户需要 iterate on PR feedback); 选 ② / ③ 才清理

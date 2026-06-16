@@ -4,7 +4,7 @@ PR / merge 前给用户列 commit 整理建议 + 完整命令, 用户**自跑或
 
 ## 触发
 
-被门面 `rule-finishing-branch.md` 在 option 1 (merge) 或 option 2 (push+PR) 流程内调用. 进入 Gate M / Gate Title-Body 前.
+被门面 `rule-finishing-branch.md` 在 option 1 (merge) 或 option 2 (push+PR) 流程内调用. 进入 Gate Merge / Gate Title-Body 前.
 
 ## 主流程
 
@@ -13,7 +13,7 @@ PR / merge 前给用户列 commit 整理建议 + 完整命令, 用户**自跑或
 2. 按判定规则给建议             agent 判定 + 列建议
 3. 给完整命令                   agent 输出 (用户复制运行)
 4. 等用户响应                   "已整理" / "跳过"
-5. 进 Gate M / Gate Title-Body         门面流程接管
+5. 进 Gate Merge / Gate Title-Body         门面流程接管
 ```
 
 ## Step 1: 列 push range commit
@@ -98,7 +98,7 @@ agent 输出格式:
   git rebase -i HEAD~3
   (编辑器内把 def456/ghi789 的 pick 改成 squash, 保存)
 
-完成后回我 "好了" / "跳过", 进 [Gate M / Gate Title-Body].
+完成后回我 "好了" / "跳过", 进 [Gate Merge / Gate Title-Body].
 ```
 
 等用户响应 "已整理 / 整理完成 / OK / 跳过 / 不动" 之一, 再进下一步.

@@ -276,7 +276,7 @@ function teardown(worktreePath, opts):                        // 销毁主入口
     return buildReport({cmds}, {})                            // remove 失败(有其他 untracked)→ needsAttention
 ```
 
-> teardown **只删工作目录, 保留 branch**。远程分支清理归 `rule-finishing-branch` 的 Gate RD，不在本脚本——保留 branch 的场景删远程会误删正要继续的分支。
+> teardown **只删工作目录, 保留 branch**。远程分支清理归 `rule-finishing-branch` 的 Gate Remote-Delete，不在本脚本——保留 branch 的场景删远程会误删正要继续的分支。
 
 ### 异常与失败模式
 

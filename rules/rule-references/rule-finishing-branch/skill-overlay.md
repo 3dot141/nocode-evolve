@@ -22,7 +22,7 @@ skill `SKILL.md` 中下列默认行为**全部失效**, 按本文执行:
 - **Step 4 Present Options** 4 选项菜单文案 (`1. Merge back / 2. Push and create PR / 3. Keep / 4. Discard`) — **不改文案不改顺序**
 - **Step 5.Option 1 Merge Locally** 的 `cd MAIN_ROOT → git checkout base → git pull → git merge <feature> → 跑 tests → 失败不 cleanup` 主流程 (含 commit 整理步, 由 `commit-tidy.md` 扩展)
 - **Step 5.Option 3 Keep As-Is** 全部 (一行报告, 不动 worktree)
-- **Step 5.Option 4 Discard** 的 typed `discard` 字面确认 Gate (Gate D — sp skill 自带, 本 overlay 不改)
+- **Step 5.Option 4 Discard** 的 typed `discard` 字面确认 Gate (Gate Discard — sp skill 自带, 本 overlay 不改)
 - **Step 6 Cleanup** 的命令链 (`cd MAIN_ROOT → git worktree remove → git worktree prune`) — 仅 provenance 段被推翻段扩展
 - **Common Mistakes** 大部分约束 (含 "Cleaning up worktree for Option 2" — 永远不删 PR 路径的 worktree)
 - **Red Flags** 全部 (含 "Never force-push without explicit request" — Option 2 push non-ff 时遵守, 见 `pr-flow-gh.md` Step 5 异常)

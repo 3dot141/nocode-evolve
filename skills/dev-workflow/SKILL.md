@@ -37,7 +37,7 @@ description: 工程任务流程领航. 可被 model 主动调起, 也可用户 /
 TaskCreate(subject: "阶段 1: Brainstorming",
            description: "调用: superpowers:brainstorming / 进入前 Read: rule-superpowers-brainstorming / Gate: 需求与设计意图明确, 用户确认")
 TaskCreate(subject: "阶段 2: Create Worktree",
-           description: "调用: Gate B (base 确认) → superpowers:using-git-worktrees → EnterWorktree / 进入前 Read: rule-git-worktree / Gate: Gate B 用户确认 base + worktree 已建并进入")
+           description: "调用: Gate Base (base 确认) → superpowers:using-git-worktrees → EnterWorktree / 进入前 Read: rule-git-worktree / Gate: Gate Base 用户确认 base + worktree 已建并进入")
 ... (阶段 1.5 / 3-12 同构)
 ```
 
@@ -45,7 +45,7 @@ TaskCreate(subject: "阶段 2: Create Worktree",
 
 **阶段推进时 (gate 证据强制)**:
 
-1. 标 `TaskUpdate(status: completed)` **前**, 必须在回复里点名该阶段的 **Gate 证据**——引用 Gate 条件 + 满足它的具体事实 (如「Gate B 已过: 用户回复 OK, base=upstream/main」「阶段 4 Gate 已过: 用户 approve 于上一轮」)。拿不出证据 = 不标 completed = 不进下一阶段。这是工序, 不是自觉——「大概过了 / 应该没问题」不算证据。
+1. 标 `TaskUpdate(status: completed)` **前**, 必须在回复里点名该阶段的 **Gate 证据**——引用 Gate 条件 + 满足它的具体事实 (如「Gate Base 已过: 用户回复 OK, base=upstream/main」「阶段 4 Gate 已过: 用户 approve 于上一轮」)。拿不出证据 = 不标 completed = 不进下一阶段。这是工序, 不是自觉——「大概过了 / 应该没问题」不算证据。
 2. 证据点名后 → `TaskUpdate(status: completed)` → 下一阶段 `TaskUpdate(status: in_progress)`, 并按其 description 的「进入前 Read」先 Read 再动手。用户能随时看到整体进度。
 
 ### Step 4: 输出建议 (含 rule/gate 检查)
@@ -77,7 +77,7 @@ TaskCreate(subject: "阶段 2: Create Worktree",
 |---|---|---|---|---|
 | 1 | **Brainstorming** | `superpowers:brainstorming` | `rule-superpowers-brainstorming` | 需求 / 设计意图明确, 用户确认 |
 | 1.5 | **TDD 沟通** | 与用户对齐测试策略 (见下方) | (无专属 rule) | 测试范围 + 边界 case + 验收标准明确, 用户确认 |
-| 2 | **Create Worktree** | Gate B (base 确认, 见下方) → `superpowers:using-git-worktrees` → EnterWorktree | `rule-git-worktree` | Gate B 用户确认 base + worktree 已建并进入 (pwd 在 worktree 内) |
+| 2 | **Create Worktree** | Gate Base (base 确认, 见下方) → `superpowers:using-git-worktrees` → EnterWorktree | `rule-git-worktree` | Gate Base 用户确认 base + worktree 已建并进入 (pwd 在 worktree 内) |
 | 3 | **Writing Design** | `nocode-evolve:design-doc-writing` | (skill 内含流程) | 设计文档已产出 |
 | 4 | **Review Design** | 双路交叉评审 loop (见下方) | `rule-codex-review` | 用户 approve |
 | 5 | **Writing Plan** | `superpowers:writing-plans` | (无专属 rule) | 实现计划已产出 |
@@ -87,7 +87,7 @@ TaskCreate(subject: "阶段 2: Create Worktree",
 | 9 | **Add Reviewers** | `rule-finishing-branch` pr-flow-bkt-appendix Step 7 | (同 rule-finishing-branch) | reviewer 已添加 (或用户说跳过) |
 | 10 | **Poll & Merge PR** | ScheduleWakeup 轮询 PR 审批状态 → `bkt pr merge` | (无专属 rule) | canMerge=true + merge 成功 |
 | 11 | **Task Transition** | `rule-feishu-transition` | `rule-feishu-transition` | 飞书 issue 流转到「研发已改待BUILD」(或用户说跳过) |
-| 12 | **Finish Worktree** | `rule-finishing-branch` Gate WC → ExitWorktree | (同 rule-finishing-branch) | worktree 清理完成 |
+| 12 | **Finish Worktree** | `rule-finishing-branch` Gate Worktree-Cleanup → ExitWorktree | (同 rule-finishing-branch) | worktree 清理完成 |
 
 ### 横切 (任意阶段可调)
 
@@ -150,7 +150,7 @@ TDD 沟通的产出会被后续两个阶段消费：
 
 ---
 
-## 阶段 2: Gate B — Base 确认（worktree add 之前）
+## 阶段 2: Gate Base — Base 确认（worktree add 之前）
 
 `git worktree add` 之前, agent 把 base 推断结果一次性呈现给用户确认——「base 选哪个」和「是否基于最新基准」合成一个 gate, 不连环弹问:
 
@@ -158,7 +158,7 @@ TDD 沟通的产出会被后续两个阶段消费：
 2. **是否基于最新基准**: fetch base 所在 remote 后展示 behind/ahead 状态; 本地有独有 commit (ahead > 0) 时列出 commits, 三选同 `rule-git-worktree` (基于远程最新 / 基于本地 HEAD / 指定其他 start-point)
 
 ```
-[Gate B] 即将创建 worktree:
+[Gate Base] 即将创建 worktree:
   branch: feature/foo
   base:   upstream/main   (推断: upstream remote 存在; 候选: origin/main / release-1.2)
   基准状态: 已 fetch, upstream/main 领先本地 3 commits → 将基于最新 upstream/main 建
@@ -168,7 +168,7 @@ TDD 沟通的产出会被后续两个阶段消费：
 
 - **用户 OK** → `git worktree add` 基于确认的 base; 确认值写 `git config branch.<name>.nocode-evolve-base`——后续 freshness-check 与阶段 8 的 PR target 默认值都读它, 一次确认全程闭环
 - **用户改 base** → 更新后再次展示, 循环到 OK
-- **范围**: Gate B 只在 dev-workflow 流程内强制; 非流程零散建 worktree 仍按 `rule-git-worktree` 静默默认 (ahead == 0 不弹问)
+- **范围**: Gate Base 只在 dev-workflow 流程内强制; 非流程零散建 worktree 仍按 `rule-git-worktree` 静默默认 (ahead == 0 不弹问)
 
 ---
 

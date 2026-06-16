@@ -2,7 +2,7 @@
 
 option 2 在 `toolchain == "gh"` 时的全流程: title/body 生成 → Gate Title-Body → PR 计划 → Gate PR → push → `gh pr create` → reviewer add.
 
-含 **Gate 体系中的 Gate Title-Body + Gate PR** (Gate M 在门面 option 1, Gate D 在 sp skill 自带 option 4, Gate RD 在 option 1/4 删 branch 后).
+含 **Gate 体系中的 Gate Title-Body + Gate PR** (Gate Merge 在门面 option 1, Gate Discard 在 sp skill 自带 option 4, Gate Remote-Delete 在 option 1/4 删 branch 后).
 
 ## 前置条件
 
@@ -87,7 +87,7 @@ agent 输出生成的 title + body + 影响文件 tree 给用户审, 等响应:
   reviewer: <list, 含 default reviewer>
 ```
 
-**`base_branch` 来源**: 优先读 `git config branch.<branch>.nocode-evolve-base` (worktree 创建 / dev-workflow Gate B 确认时写入)——去 remote 前缀取分支名作 target branch; remote 段是 `upstream` (fork 场景) 时 target repo 即 upstream, PR 形态为 `origin/<branch>` → `upstream/<base>`, **不**先合并回本地 base 再从 fork base 发 PR (会污染 fork 镜像 + 并行 PR 归零)。无 config 再按 `origin/HEAD` → `main` 推断。
+**`base_branch` 来源**: 优先读 `git config branch.<branch>.nocode-evolve-base` (worktree 创建 / dev-workflow Gate Base 确认时写入)——去 remote 前缀取分支名作 target branch; remote 段是 `upstream` (fork 场景) 时 target repo 即 upstream, PR 形态为 `origin/<branch>` → `upstream/<base>`, **不**先合并回本地 base 再从 fork base 发 PR (会污染 fork 镜像 + 并行 PR 归零)。无 config 再按 `origin/HEAD` → `main` 推断。
 
 **项目本地 override**: 先**仅**读 `.agents-personal/rules/personal-repo-pr.md` (reviewer 名单 / target 约定的唯一项目本地来源)。该文件不存在 = 无项目本地约定 → **直接**走下面默认优先级, **不在其他位置搜索** (不扫项目根 / docs / 其他 rule, 不"找实际位置")。
 
@@ -184,7 +184,7 @@ gh pr edit <pr-number> --add-reviewer "alice,bob,charlie"
   - 单个 fail = 用户无 read 权限 / 用户不存在 → 跳过该 reviewer, 不阻断
   - 最后报告 "PR <url> 创建成功, reviewer X 添加失败已跳过"
 
-## Step 8: Gate WC — worktree 清理 (gh)
+## Step 8: Gate Worktree-Cleanup — worktree 清理 (gh)
 
 PR 创建 + reviewer 加完后, 检测当前是否在 worktree 中. 非 worktree 则跳过.
 
@@ -198,10 +198,10 @@ common_dir=$(git rev-parse --git-common-dir)
 
 `is_worktree == false` → 跳过, 报告 PR URL 结束.
 
-### Gate WC 文案
+### Gate Worktree-Cleanup 文案
 
 ```
-[Gate WC] PR 已创建: <pr_url>
+[Gate Worktree-Cleanup] PR 已创建: <pr_url>
 当前在 worktree: <worktree_path>
 
 ① 保留 worktree (默认) — 继续在此 iterate PR feedback

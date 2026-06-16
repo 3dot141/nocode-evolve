@@ -206,9 +206,9 @@ fi
 - **不要对 fork PR (Workflow B) 用 `bkt pr edit --with-default-reviewers`** — 报 `400 The source repository with id '0' does not exist` (bkt 拿不到 fork 的 source repo id). Workflow B 的 reviewer 必须 `--reviewer` 显式加 (见 Step 7.B); default reviewer 名单从 `bkt api '/rest/default-reviewers/1.0/projects/<target>/repos/<repo>/conditions'` 查, 排除作者本人
 - **不要用 `bkt pr view` 验证跨仓 (Workflow B) PR** — 它对 cross-repo PR 解析 `author` / `reviewers` 会显示 None / 空 (不可靠). 验证走 raw GET: `bkt api '/rest/api/1.0/projects/<target>/repos/<repo>/pull-requests/<id>' --json`, 看 `reviewers[].user.name` / `.status` / `author.user.name`
 
-## Step 8: Gate WC — worktree 清理 (bkt)
+## Step 8: Gate Worktree-Cleanup — worktree 清理 (bkt)
 
-前置检测 + Gate WC 文案 + worktree 清理步骤与 `pr-flow-gh.md` Step 8 一致, 此处不重复.
+前置检测 + Gate Worktree-Cleanup 文案 + worktree 清理步骤与 `pr-flow-gh.md` Step 8 一致, 此处不重复.
 
 远程分支清理提示 (Bitbucket):
 

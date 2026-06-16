@@ -1,4 +1,4 @@
-# 删本地 branch 后清理远程分支 (Gate RD, option 1 + 4 共用)
+# 删本地 branch 后清理远程分支 (Gate Remote-Delete, option 1 + 4 共用)
 
 删本地 branch 后, 远程若留 stale 分支没人管. 本子过程探测并询问清理.
 
@@ -63,14 +63,14 @@ fi
 
 - **Merge**: base 已含本次合并工作, 这些独有 commit 是 base 没覆盖的, 删远程后从远程消失 → **警示**
 - **Discard**: 用户已 typed `discard` 表"整支丢弃", 这些是被丢弃分支的远程残留, 删除符合意图 → **仅信息提示**, 不阻塞、默认仍保留
-- 两 mode 算法相同, 差异只在 Gate RD 文案语气
+- 两 mode 算法相同, 差异只在 Gate Remote-Delete 文案语气
 
-### Step 3: Gate RD — 询问是否删远程
+### Step 3: Gate Remote-Delete — 询问是否删远程
 
 AskUserQuestion, **默认保留** (列首):
 
 ```
-[Gate RD] 删本地 branch 后, 远程仍有 <remote>/<remote_branch>. 删除远程分支?
+[Gate Remote-Delete] 删本地 branch 后, 远程仍有 <remote>/<remote_branch>. 删除远程分支?
   ① 保留远程分支 (默认)
   ② 删除远程分支 <commit 文案>
 ```
