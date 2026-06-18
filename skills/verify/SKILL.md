@@ -5,7 +5,9 @@ description: Use when Build is complete and you need to verify the implementatio
 
 # verify — 证明它真的能用
 
-Build 完成后的 **evidence** 门。无新鲜证据，不得宣称完成。"看起来对"不是证据，跑一下才是。跳任一步 = 把未验证的东西伪装成已验证——这是 dishonesty，不是低效。
+**Iron Law: 无新鲜证据，不得宣称完成。跳任一步 = dishonesty，不是低效。**
+
+Build 完成后的 **evidence** 门。"看起来对"不是证据，跑一下才是。
 
 > Leading word: **evidence**。每一项断言背后都要有一条可贴出来的命令 + 输出。没有输出 = 没有断言。
 
