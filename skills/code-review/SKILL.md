@@ -59,7 +59,7 @@ description: Use before merging any change, after completing a feature, or when 
 | 安全 | 信任边界守住了吗？ | OWASP Top 10 / 注入 / 密钥硬编码 |
 | 性能 | 不必要的开销？ | N+1 / unbounded fetch / 缺分页 |
 
-安全详见 `references/security-checklist.md`。性能详见 `references/performance-checklist.md`。
+安全详见 `references/security-guide.md`。性能详见 `references/performance-guide.md`。
 
 ### 7b. Simplification Pass
 
