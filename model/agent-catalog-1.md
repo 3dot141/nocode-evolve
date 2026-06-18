@@ -95,39 +95,10 @@ agent 视角: 用户任务命中以下任一条件时, **主动调起 dev-workfl
 **生命周期**: 3 评审
 
 #### red-blue-deep
-**触发**: 用户问「X 怎么样 / 行不行 / 合适吗 / 值得吗 / 选 A 还是 B / 哪个更好」等评估 / 拍板类, 或显式说红蓝军 / 第一性原理
+**触发**: 用户问「X 怎么样 / 行不行 / 合适吗 / 值得吗 / 选 A 还是 B / 哪个更好」等评估 / 拍板类, 或显式说红蓝军 / 第一性原理. 不含: 话术含「选型 / 设计 / 架构」的设计阶段动作(走 design rule, 不走 red-blue-deep)
 **读**: `(skill, 无 rule 文件)`
 **摘要**: 评估 / 拍板类提问的红蓝军框架; skill 内判轻档 (一句表态) / 重档 (第一性原理→蓝军→红军→结论, 重档红军默认交 Codex)
 **生命周期**: cross
-
-#### git-freshness (跨桶)
-**触发**: 即将做设计性动作 (设计文档/PRD/RFC/ADR/方案对比/技术选型/重构方案/架构设计), 或即将做代码搜索 (Agent semble-search / Bash grep -r/rg/find / Explore), 或多文件 Read (≥3 文件) 探源做方案分析 — 不论主仓 or worktree (worktree 内长期工作仍可能 stale, 不被 rule-git-worktree 覆盖). 一句 node "${CLAUDE_PLUGIN_ROOT}/scripts/freshness-check.mjs" 调脚本拿 base/behind/ahead, gate=gate (behind ≥ 5, 或 branch+base 首次冷启动) 时停手三选, 否则继续. cache TTL 2h 内毫秒返回不 fetch
-**读**: `${CLAUDE_PLUGIN_ROOT}/rules/rule-git-freshness.md`
-**摘要**: 设计/方案动作 + 代码搜索/多文件 Read 前用 scripts/freshness-check.mjs 检查当前分支与 base 的 behind 差距; base 推断优先级: git config nocode-evolve-base (worktree 创建时写入, 不随 push -u 漂移) → upstream → origin/HEAD → origin/main; behind ≥ 5 commits 或 branch+base 首次冷启动 gate 三选 (pull --rebase / 接受 / 跳过); cache 2h TTL 不 fetch 不打扰; 离线 fetch 失败 warn 不阻塞. 主仓 + worktree 内长期工作都管 (worktree-add 那刻仍由 rule-git-worktree 覆盖)
-**主桶**: git-lifecycle (完整定义见该桶)
-
-### 桶: 设计与文档 (design)
-**粗触发**: 写设计文档 / PRD / RFC / ADR / 重构方案 / 技术 spec
-**不含 (负例)**: 写代码注释 / commit message / README / changelog
-
-#### superpowers-brainstorming
-**触发**: 即将执行 superpowers:brainstorming skill, 或用户要求写设计文档 / PRD / RFC / Design Doc / ADR / 重构方案 / 技术 spec, 或 brainstorming 走到 step 5
-**读**: `${CLAUDE_PLUGIN_ROOT}/rules/rule-superpowers-brainstorming.md`
-**摘要**: 写设计文档统一 worktree → write → review → render 四步, 落 docs/superpowers/specs/{username}/ (按 doc-type 分 specs/plans/sketches); 两条入口 (brainstorming step5 / 用户直接要求) 一致
-**生命周期**: 0 设计
-
-#### design
-**触发**: 用户要求写设计文档 / PRD / RFC / Design Doc / ADR / 重构方案 / 技术 spec / API 设计, 或 devflow 路由到 Design 阶段
-**读**: `${CLAUDE_PLUGIN_ROOT}/rules/rule-design.md`
-**摘要**: Design 阶段增强: adversarial review + 设计五轴(可行性/清晰度/一致性/安全/可扩展性) + 统一 Findings Schema + source-driven 前置检查 + 轻量 threat model + API 契约指南 + HTML 渲染输出
-**也属**: workflow
-**生命周期**: 0 设计
-
-#### codex-review (跨桶)
-**触发**: red-blue-deep 判重档走到红军环节; 或完成分支 / 显式 review 请求; 或我卡住 / 想要第二实现 / 独立诊断 / 委派; 或 design-doc-writing 走到 review 环节
-**读**: `${CLAUDE_PLUGIN_ROOT}/rules/rule-codex-review.md`
-**摘要**: 本机 Codex 当独立模型接四场景 (红蓝红军 / 代码 review 收尾 / 委派救援 / 设计文档审稿); 直接 Bash 调 codex-companion.mjs; 先 setup --json 探, 不可用降级自做 + 明说; 禁改 vendored 文件
-**主桶**: review (完整定义见该桶)
 
 #### git-freshness (跨桶)
 **触发**: 即将做设计性动作 (设计文档/PRD/RFC/ADR/方案对比/技术选型/重构方案/架构设计), 或即将做代码搜索 (Agent semble-search / Bash grep -r/rg/find / Explore), 或多文件 Read (≥3 文件) 探源做方案分析 — 不论主仓 or worktree (worktree 内长期工作仍可能 stale, 不被 rule-git-worktree 覆盖). 一句 node "${CLAUDE_PLUGIN_ROOT}/scripts/freshness-check.mjs" 调脚本拿 base/behind/ahead, gate=gate (behind ≥ 5, 或 branch+base 首次冷启动) 时停手三选, 否则继续. cache TTL 2h 内毫秒返回不 fetch

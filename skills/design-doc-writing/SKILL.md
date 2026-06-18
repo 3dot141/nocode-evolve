@@ -5,7 +5,7 @@ description: 写设计文档时使用。按业界主流 4 类 doc-type 主轴（
 
 # 设计文档写作
 
-把"已经讨论清楚的设计"落地成结构化的 markdown 文档。不负责讨论（brainstorming 的事），不负责实施（writing-plans / executing-plans 的事）——只负责**写**。
+把确认的设计方案落地成结构化的 markdown 文档。方案探索和选型由 `nocode-evolve:design` 完成，本 skill 接收选定方案后负责**写文档**。不负责实施（writing-plans / executing-plans 的事）。
 
 工作流：write → review → 用户逐条确认 → 修订 → 追加 Review Log。reviewer 只列问题，**不自动循环修订**——是否修、修哪些由用户决定。
 
@@ -20,7 +20,7 @@ description: 写设计文档时使用。按业界主流 4 类 doc-type 主轴（
 **不要用：**
 
 - 写代码注释、PR 描述、commit message、README、changelog
-- 用户只是问「X 应该怎么做」——这是讨论阶段，先用 brainstorming
+- 用户只是问「X 应该怎么做」——这是方案探索阶段，先用 `nocode-evolve:design`
 - 简单 bug 修复（用 superpowers:debugging）
 
 ## 选 doc-type

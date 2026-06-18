@@ -8,6 +8,16 @@ description: 按计划增量实现，每个 slice 闭环。Use when executing im
 > 双底子拼接：superpowers TDD（test-first 硬约束）+ incremental-implementation（slice 循环外壳）。
 > 产出：计划中每个 task 都以「失败测试 → 最小实现 → 绿 → commit」的闭环交付。
 
+## Checklist（强制 TaskCreate）
+
+进入 Build 后，你必须为以下步骤各建一条 task，按顺序完成：
+
+1. **加载计划** — 读 Plan 的任务序列 + Design 的测试目标
+2. **逐 task 执行 slice 循环** — 每个 plan task 对应一个 slice（5a→5d），每个 slice 完成后标 task completed
+3. **Gate 检查** — 所有 task 完成 + 全部测试通过 + build 通过
+
+slice 内部的 4 步（Scope Lock → Test First → Implement → Verify & Commit）不需要单独建 task——它们是单个 slice 的内部流程，粒度太细。但 slice 的测试用例要从 Design 测试目标推导。
+
 ## 核心：slice 循环
 
 Build 的骨架是一个循环——逐个 task 推进，每个 task 是一个完整 slice，全程不积累未测代码：

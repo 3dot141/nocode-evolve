@@ -9,6 +9,17 @@ description: 多维度代码评审 + 简化 + 安全 + 统一 findings 分级。
 >
 > 产出：一份分级 findings 报告（Critical / Warning / Suggestion），用户逐条拍板 fix / skip / defer。Critical 类不可 override。
 
+## Checklist（强制 TaskCreate）
+
+进入 Review 后，你必须为以下步骤各建一条 task，按顺序完成：
+
+1. **Change sizing** — 判断 diff 大小，>1000 行先建议 split
+2. **Five-Axis Self-Review** — 正确性 → 可读性 → 架构 → 安全 → 性能
+3. **Simplification Pass** — Chesterton's Fence + dead code
+4. **Codex Cross-Review** — 独立交叉评（不可用则降级并明说）
+5. **Findings Triage** — 统一 schema 分级，呈现给用户
+6. **用户 approve** — Gate：所有 Critical 已 fix + 用户逐条拍板 Warning
+
 ## 适用判断
 
 - **本次变更涉及的代码**才评——不评历史遗留、不评未改动文件（除非它们被本次变更直接影响）。

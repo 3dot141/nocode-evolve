@@ -1,16 +1,25 @@
 # Design 阶段触发
 
-design-doc-writing skill 的独立触发 + 增强约束。
+design skill 的独立触发 + 增强约束。
 
 ## 触发条件
 
-用户要求写设计文档 / PRD / RFC / Design Doc / ADR / 重构方案 / 技术 spec / API 设计 / 系统设计，或 devflow 路由到 Design 阶段。
+用户要求设计方案 / 方案对比 / 架构设计 / 写设计文档 / PRD / RFC / Design Doc / ADR / 重构方案 / 技术 spec / API 设计，或 devflow 路由到 Design 阶段。
 
 ## 做法
 
-1. `Skill(nocode-evolve:design-doc-writing)` — 走设计文档写作流程
-2. Review 使用统一 Findings Schema（参考 `references/findings-schema.md`）
-3. Review 提示词使用 adversarial framing（"find issues" 不是 "evaluate"）
+1. `Skill(nocode-evolve:design)` — 方案探索 + 测试目标 + 用户选方案
+2. Design 内部调 `Skill(nocode-evolve:design-doc-writing)` 写设计文档
+3. Review 使用统一 Findings Schema（参考 `references/findings-schema.md`）
+4. Review 提示词使用 adversarial framing（"find issues" 不是 "evaluate"）
+
+## 阶段职责边界
+
+| 阶段 | 职责 | brainstorming 用途 |
+|---|---|---|
+| Define | 问题边界、验收标准、场景分类 | 发散问题空间（真问题是什么） |
+| **Design** | **方案探索、测试目标、设计文档** | **发散解法空间（怎么做）** |
+| Plan | 任务拆分、实现顺序 | — |
 
 ## 增强约束（v2 — 融合 agent-skills）
 
@@ -46,6 +55,8 @@ design-doc-writing skill 的独立触发 + 增强约束。
 
 ## 不要
 
+- 不跳过方案探索直接写文档——方案未经对比的设计文档是假设不是设计
 - 不跳过 review 直接进 Plan——设计文档必须评审通过
 - 不让 review 走"验证"模式——必须 adversarial（"find issues"）
 - 不引用没有 Read 过的代码——先看再写
+- 不在 Define 未完成时进 Design——问题都没定义清楚，方案对比无基准

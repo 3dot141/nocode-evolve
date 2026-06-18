@@ -7,6 +7,16 @@ description: 证明功能真的能用，不只是测试通过。Use when Build s
 
 > Build 完成后的证据门。底子是 superpowers verification-before-completion——证据门最硬的一道。
 
+## Checklist（强制 TaskCreate）
+
+进入 Verify 后，你必须为以下步骤各建一条 task，按顺序完成：
+
+1. **证据收集** — 跑完整测试套件 + build，记录三元组
+2. **集成测试** — 跨模块契约 + 数据流端到端
+3. **E2E / Browser** — 有 UI 变更时：golden path + 边界 case + 截图（无 UI 标注跳过）
+4. **性能检查** — 有性能需求时：Lighthouse / benchmark（无需求标注跳过）
+5. **验收逐条核对** — 从 Define 验收标准 + Design 测试目标逐条核对，每条 ✅/❌ 附证据
+
 ## Iron Law（铁律）
 
 **无新鲜证据，不得宣称完成。**

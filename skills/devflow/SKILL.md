@@ -39,7 +39,7 @@ Define 返回后，拿到确认的 restate + 场景分类，进 Step 2。
 
 ```
 示例 (Standard 场景):
-TaskCreate(subject: "阶段 1: Define", description: "调用: nocode-evolve:define / Gate: 目标+方案收敛，用户确认")
+TaskCreate(subject: "阶段 1: Define", description: "调用: nocode-evolve:define / Gate: 问题边界收敛+场景分类，用户确认")
 TaskCreate(subject: "阶段 2: Env", description: "调用: superpowers:using-git-worktrees / Read: rule-git-worktree / Gate: worktree 已建")
 TaskCreate(subject: "阶段 3: Plan", description: "调用: nocode-evolve:plan / Gate: 计划已产出 + 所有 task ≤ M + 用户确认")
 TaskCreate(subject: "阶段 4: Build", description: "调用: nocode-evolve:build / Gate: 所有 task 完成 + 测试通过 + build 通过")
@@ -77,9 +77,9 @@ TaskCreate(subject: "阶段 7: Land", description: "调用: rule-finishing-branc
 
 | # | 阶段 | 调用 | 进入前 Read | Gate |
 |---|---|---|---|---|
-| 1 | **Define** | `nocode-evolve:define` | — | 目标+方案收敛 + 场景分类 + 用户确认 |
-| 2 | **Env** | Gate Base → `superpowers:using-git-worktrees` → EnterWorktree | `rule-git-worktree` | worktree 已建并进入 |
-| 3 | **Design** | `nocode-evolve:design-doc-writing` | `rule-design` | 评审通过 + 用户 approve |
+| 1 | **Define** | `nocode-evolve:define` | — | 问题边界收敛 + 场景分类 + 用户确认 |
+| 2 | **Env** | Gate Base → `superpowers:using-git-worktrees` → EnterWorktree | `rule-git-worktree` | worktree 已建并进入（注：Env 不需要独立 nocode-evolve skill，逻辑完全由 superpowers skill + rule-git-worktree 覆盖） |
+| 3 | **Design** | `nocode-evolve:design` | `rule-design` | 方案确认 + 测试目标 + 设计文档评审通过 + 用户 approve |
 | 4 | **Plan** | `nocode-evolve:plan` | — | 计划已产出 + 所有 task ≤ M + 用户确认 |
 | 5 | **Build** | `nocode-evolve:build` | — | 所有 task 完成 + 测试通过 + build 通过 |
 | 6 | **Verify** | `nocode-evolve:verify` | — | 验收标准逐条通过 + 证据收集 |

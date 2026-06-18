@@ -1,11 +1,25 @@
 ---
 name: define
-description: 从模糊任务到明确目标+方案的收敛门。Use when starting any non-trivial task, when requirements are unclear or underspecified ("build me X" without "for whom" or "why now"), when the user explicitly says "澄清需求 / 做什么 / 目标是什么 / interview me / 定义目标", or when devflow routes to Define stage. Also triggers on task descriptions missing at least one of: who the user is, why they want it, what success looks like, what the binding constraint is. Even for seemingly clear tasks, use this skill if you catch yourself silently filling in ambiguous requirements.
+description: 从模糊任务到明确问题边界的收敛门。Use when starting any non-trivial task, when requirements are unclear or underspecified ("build me X" without "for whom" or "why now"), when the user explicitly says "澄清需求 / 做什么 / 目标是什么 / interview me / 定义目标", or when devflow routes to Define stage. Also triggers on task descriptions missing at least one of: who the user is, why they want it, what success looks like, what the binding constraint is. Even for seemingly clear tasks, use this skill if you catch yourself silently filling in ambiguous requirements.
 ---
 
 # nocode-evolve:define — 从模糊到明确
 
-> Goal ⇄ Brainstorm 收敛循环。产出：用户显式确认的结构化 restate + 场景分类。
+> 定义问题边界，不选解法。产出：用户显式确认的结构化 restate + 场景分类。
+>
+> Define 回答"做什么 + 为什么做 + 怎么算做成了"。"怎么做"是 Design 的事。
+>
+> Brainstorming 是 Define 的工作方式之一——用来发散问题空间（真问题是什么？有没有隐藏的约束？用户以为的问题和真正的问题是同一个吗？）。但 Define 里的 brainstorming 止步于问题本身，不延伸到解法选择。
+
+## Checklist（强制 TaskCreate）
+
+进入 Define 后，你必须为以下步骤各建一条 task，按顺序完成：
+
+1. **场景分类** — 判断 Mini/Fix/Standard/Full
+2. **假设先行** — 写出 HYPOTHESIS + CONFIDENCE
+3. **一次一问澄清** — 逐个问题 + 猜测，直到置信度 ≥ 95%
+4. **产出 restate** — 结构化 restate（含 Quality Bar + Collaboration Pact）
+5. **用户显式确认** — Gate：用户确认 restate
 
 ## 协议
 
@@ -20,6 +34,8 @@ description: 从模糊任务到明确目标+方案的收敛门。Use when starti
 | 跨文件 + 实现路径明确 | **Standard** | 完整 Define → Env → Plan → Build → Verify → Review → Land |
 | 跨文件 + 需要架构/选型/设计 | **Full** | 完整 Define → Env → Design → Plan → Build → Verify → Review → Land |
 | 用户说"整个/整体/全流程" | **Full** | 同上 |
+
+**场景分类是对问题性质的判断，不是对解法的判断**。判断依据是问题本身的复杂度——"这个问题涉不涉及架构决策"——而不是"方案是什么"。比如"加个搜索接口"是 Standard（问题清晰，不需要架构探索），"建分布式缓存层"是 Full（问题本身蕴含架构决策）。拿不准时偏向 Full——多走一步 Design 的成本远低于跳过 Design 后返工。
 
 **Mini 场景**：输出 3 行 mini-goal（做什么 + 验收标准 + 不做什么），用户确认后退出 Define，进 Build-lite。不走后续完整流程。
 
@@ -129,35 +145,16 @@ Gate 是**显式确认**。以下不算确认：
 - "可以"/"行" → 模糊。追问"有没有要修改的？"
 - 沉默然后"那开始吧" → 用户放弃了讨论，不是收敛了。停下问是否遗漏了什么
 
-### Step 3: 方案路径判断
-
-Goal 确认后，判断实现路径：
-
-- 实现路径显而易见 → 跳 Brainstorm，Define 收敛，退出
-- 需要设计探索（多条可行路径 / 架构决策 / 技术选型）→ 进 Step 4
-
-### Step 4: Brainstorm — 方案探索
-
-调用 `Skill(superpowers:brainstorming)`，输入为 Step 2 确认的 restate。
-
-**降级**（brainstorming skill 不可用时）：
-agent 自行列出 2-3 方案 + 权衡矩阵（维度 × 方案得分），明说"brainstorming skill 不可用，自行探索"。
-
-### Step 5: Confirm — 方案是否改变目标？
-
-方案探索常常发现新约束，改变 Goal 的边界。
-
-- 方案没有改变 Goal → Define 收敛，退出循环
-- 方案改变了 Goal（新约束 / 范围调整 / 不可行导致缩减）→ 回 Step 2，带上新发现修正 restate
-- 最多循环 3 次。第 3 次仍不收敛 → 停下告诉用户："3 轮后目标和方案仍不稳定，可能有更根本的问题需要先解决"
-
 ### 产出
 
-Define 的产出被后续所有阶段消费：
-- **Design**：设计文档引用 restate 的验收标准和约束
+Define 只产出问题定义，不产出解法。后续阶段各取所需：
+
+- **Design**（Full 场景）：基于 restate 的约束和验收标准探索方案、写设计文档
 - **Plan**：任务拆分基于 restate 的成果物和验收标准
 - **Build**：TDD 测试用例从验收标准推导
 - **Verify**：验收标准逐条核对
+
+Define 不判断"实现路径是否显而易见"——那是 Design 的职责。场景分类（Full/Standard/Fix/Mini）决定后续是否经过 Design 阶段。
 
 ## Common Rationalizations
 
@@ -172,8 +169,8 @@ Define 的产出被后续所有阶段消费：
 | "聊得够多了，我懂了" | 测试：你能预测用户对下三个问题的反应吗？不能 = 还不懂 |
 | "质量标准不用问，我知道什么是好的" | 你的"好"和用户的"好"经常不同。显式问出来的标准省下返工的时间 |
 | "协作方式不需要协商，直接干就行" | 直接干 = agent 单方面决定节奏和深度。中间没有检查点，偏了发现不了 |
-| "试了三次够了" | 次数不是停止条件，方法穷尽才是。还有未探索的方向就继续 |
 | "应该没问题" | "应该"是假设。列出可能漏洞，逐个排除，在事实层面确认 |
+| "方案很明显，不用 Design" | 场景分类决定是否走 Design，不由 Define 跳过 |
 
 ## Red Flags
 
