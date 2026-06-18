@@ -25,7 +25,7 @@ description: 从模糊任务到明确问题边界的收敛门。Use when startin
 
 ### Step 1: 任务分类（场景路由入口）
 
-判断任务规模，决定 devflow 场景：
+判断任务规模，决定 devflow 场景。**用 AskUserQuestion 让用户确认你的判断**：
 
 | 信号 | 场景 | 后续路径 |
 |---|---|---|
@@ -34,6 +34,23 @@ description: 从模糊任务到明确问题边界的收敛门。Use when startin
 | 跨文件 + 实现路径明确 | **Standard** | 完整 Define → Env → Plan → Build → Verify → Review → Land |
 | 跨文件 + 需要架构/选型/设计 | **Full** | 完整 Define → Env → Design → Plan → Build → Verify → Review → Land |
 | 用户说"整个/整体/全流程" | **Full** | 同上 |
+
+先写出你的判断和理由，然后用 AskUserQuestion 确认：
+```
+AskUserQuestion({
+  questions: [{
+    question: "我判断这是 <场景> 场景，因为 <理由>。对吗？",
+    header: "场景分类",
+    options: [
+      { label: "<推荐场景> (推荐)", description: "<理由>" },
+      { label: "Mini", description: "单文件/单步小改" },
+      { label: "Standard", description: "跨文件，实现路径明确" },
+      { label: "Full", description: "需要架构/选型/设计探索" }
+    ],
+    multiSelect: false
+  }]
+})
+```
 
 **场景分类是对问题性质的判断，不是对解法的判断**。判断依据是问题本身的复杂度——"这个问题涉不涉及架构决策"——而不是"方案是什么"。比如"加个搜索接口"是 Standard（问题清晰，不需要架构探索），"建分布式缓存层"是 Full（问题本身蕴含架构决策）。拿不准时偏向 Full——多走一步 Design 的成本远低于跳过 Design 后返工。
 
@@ -56,16 +73,30 @@ CONFIDENCE: 0-100%（< 70% 附理由——什么还不确定）
 
 这迫使你诚实。如果你写了高置信度但答不出用户接下来三个问题的反应，置信度是假的。
 
-**2b. 一次一问，附带猜测**
+**2b. 一次一问，附带猜测（优先用 AskUserQuestion）**
+
+**能给选项就给选项**——用 AskUserQuestion 工具代替纯文字提问。用户点选比手打回答快得多，也更不容易被礼貌性同意。
 
 ```
-Q: 一个聚焦问题
-GUESS: 你对答案的假设 + 产出假设的理由
+AskUserQuestion({
+  questions: [{
+    question: "用户群是哪类？",
+    header: "用户",
+    options: [
+      { label: "内部开发者 (推荐)", description: "你的猜测 + 猜测理由" },
+      { label: "外部终端用户", description: "面向 C 端" },
+      { label: "运维/SRE", description: "运维场景" }
+    ],
+    multiSelect: false
+  }]
+})
 ```
+
+**什么时候用纯文字**：问题太开放、选项无法穷举（"你的核心痛点是什么"）。这时仍然一次一问 + 附猜测。
 
 等用户回答后再问下一个。不批量提问——批量鼓励泛泛作答，而且第三个问题常常取决于第一个的答案。
 
-附猜测的目的：用户纠正一个错误猜测比从零生成答案更快。风险是用户礼貌性同意——偶尔故意猜一个你预期会被推翻的方向来缓解。
+附猜测的目的：用户纠正一个错误猜测比从零生成答案更快。风险是用户礼貌性同意——偶尔故意猜一个你预期会被推翻的方向来缓解。AskUserQuestion 天然缓解这个风险，因为用户看到多个选项时更容易选真实想法。
 
 **2c. 识别 "want vs should want"**
 
@@ -138,9 +169,26 @@ agent 提出协作计划：自己做什么、需要用户提供什么信息、�
 
 > 不启用任何指令也完全合法——简单任务不需要重型协作约定。
 
-**2g. 用户确认**
+**2g. 用户确认（用 AskUserQuestion）**
 
-Gate 是**显式确认**。以下不算确认：
+Gate 是**显式确认**。用 AskUserQuestion 让用户明确拍板：
+
+```
+AskUserQuestion({
+  questions: [{
+    question: "Restate 确认：以上目标、验收标准、约束是否准确？",
+    header: "确认",
+    options: [
+      { label: "确认，开始下一步", description: "restate 准确，进入后续阶段" },
+      { label: "要修改", description: "我会告诉你哪里需要改" },
+      { label: "重新来", description: "方向不对，重新澄清" }
+    ],
+    multiSelect: false
+  }]
+})
+```
+
+以下不算确认（即使用户在 AskUserQuestion 之外说了）：
 - "随你"/"都行" → 用户在委托。重新提两个具体选项让用户选
 - "可以"/"行" → 模糊。追问"有没有要修改的？"
 - 沉默然后"那开始吧" → 用户放弃了讨论，不是收敛了。停下问是否遗漏了什么

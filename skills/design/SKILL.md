@@ -67,11 +67,26 @@ description: 从确认的问题定义到具体解法。Use when Define stage is 
 
 方案 ≥ 3 个或维度 ≥ 3 个时，用表格对比。不要用长段文字并列描述。
 
-### Step 4: 用户选方案
+### Step 4: 用户选方案（用 AskUserQuestion）
 
-Gate：用户显式选择。
+Gate：用户显式选择。用 AskUserQuestion 让用户直接点选：
 
-- "都行"/"随你" → 不算确认。重新提两个具体选项，说清各自的核心取舍
+```
+AskUserQuestion({
+  questions: [{
+    question: "选哪个方案？",
+    header: "方案选择",
+    options: [
+      { label: "方案 A (推荐)", description: "核心思路 + 推荐理由" },
+      { label: "方案 B", description: "核心思路 + 适用条件" },
+      { label: "方案 C", description: "核心思路 + 适用条件" }
+    ],
+    multiSelect: false
+  }]
+})
+```
+
+- 用户选 Other → 听用户说完，记录修改，确认最终方案
 - 用户选了但附带修改（"选 A 但把 X 换成 Y"）→ 记录修改，确认最终方案
 - 用户全部否决 → 回 Step 3 重新探索，问用户否决的原因
 

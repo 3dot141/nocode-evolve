@@ -87,7 +87,23 @@ DependencyGraph:
 
 Gate 是显式确认，不是沉默。"随你"是委托不是确认——重新提具体问题。
 
-确认后退出 Plan，进 Build（或 executing-plans）。
+确认后，用 AskUserQuestion 提供执行模式选择：
+
+```
+AskUserQuestion({
+  questions: [{
+    question: "计划确认了，怎么执行？",
+    header: "执行模式",
+    options: [
+      { label: "Subagent 并行 (推荐)", description: "每个 task 派独立 subagent，task 间 review，快速迭代" },
+      { label: "当前会话顺序执行", description: "在本会话逐个 task 执行，适合需要紧密交互的场景" }
+    ],
+    multiSelect: false
+  }]
+})
+```
+
+选 Subagent → 调 `Skill(superpowers:subagent-driven-development)`。选当前会话 → 进 Build 的 slice 循环。
 
 ## Gate
 
