@@ -33,7 +33,12 @@ description: Use when you have defined goals and need to break work into tasks. 
 
 ### Step 1: 只读模式
 
-读，不写。读 restate（成果物/验收标准/约束/Out of Scope）→ 读设计文档（含测试目标）→ 读相关代码（现在长什么样，依赖谁，谁依赖它）。
+读，不写。按以下顺序加载上下文：
+1. restate（成果物/验收标准/约束/Out of Scope）
+2. 设计文档（含测试目标）
+3. 要改的文件 + 它们的测试
+4. 找一个已存在的类似 pattern 做参照
+5. 涉及的类型/接口定义
 
 发现自己开始改文件 → 停——你在跳过 Plan 直接 Build。
 
@@ -47,6 +52,12 @@ description: Use when you have defined goals and need to break work into tasks. 
 
 **Risk-first**：最不确定的切片先做。可能不可行的路径早点撞墙。
 
+**Slicing 形态**（怎么切）：
+- **Vertical**（默认）：端到端穿透所有层，做完可验证
+- **Contract-First**：前后端并行时先定 API 契约 + mock，各自独立开发
+
+**排序原则**（先做哪个 slice）：**Risk-first**——最不确定的 slice 排最前。
+
 测试目标分配到对应 slice——每个 slice 知道自己要验证什么。
 
 ### Step 4: 写 task
@@ -55,7 +66,8 @@ description: Use when you have defined goals and need to break work into tasks. 
 
 - **贴真实代码/命令/预期输出**——不是伪代码，不是"类似这样"
 - **禁占位符**——`<your code here>`/`TODO`/`...` 不允许出现。写不出真实代码说明没想清楚，回 Step 1
-- **task 描述 durable 化**——用行为意图描述（"用户创建记录时验证必填字段"），不用易腐的行号/文件路径/代码片段。行号会漂移、函数名会改，但行为意图扛重构。代码贴在 step 内部，不贴在 task 描述里
+- **task 描述 durable 化**——用行为意图描述（"用户创建记录时验证必填字段"），不用易腐的行号/文件路径/代码片段
+- **Rollback-friendly**：每个 task 独立可回滚。添加与删除分两个 commit，DB 迁移配回滚迁移。目标：任何一个 task revert 不牵连其他 task
 - **Sizing ≤ M**（≤ 5 文件）。L/XL 必须再拆——大任务藏着没想清楚的判断
 - **标 HITL/AFK**：
   - `HITL`（Human-in-the-loop）：需人决策的 task（API 设计确认/数据迁移策略/安全敏感）→ Build 时停下等用户
@@ -76,6 +88,8 @@ AskUserQuestion: "计划确认了，怎么执行？"
 ```
 
 Subagent → `Skill(superpowers:subagent-driven-development)`。当前会话 → Build slice 循环。
+
+**Inline planning**：AFK task 连续推进前发轻量计划（"1.X 2.Y 3.Z → 除非你纠正否则执行"），30 秒成本换一个方向校验点。HITL task 本身就有停点，不需要。
 
 ### Plan Document Header
 
@@ -108,6 +122,15 @@ Subagent → `Skill(superpowers:subagent-driven-development)`。当前会话 →
 - **When** 你想把简单的排前面、难的留后面 → **risk-first**：最不确定的先撞墙，不确定性留到投入最大时才暴露更贵
 - **When** 某 task 涉及 > 5 文件 → **必须再拆**。L 任务把多个设计决策压成一句话
 - **When** task 标题里出现 "and" → 大概率该拆成两个 task
+
+## Common Rationalizations
+
+| 借口 | 现实 |
+|---|---|
+| "先写框架，代码执行时再填" | 写不出真实代码 = 没想清楚。占位符藏的是设计决策 |
+| "横着按层做更整齐" | 整齐但不可验证。垂直每片做完都能跑能回滚 |
+| "简单的先做，难的留后面" | risk-first：不确定性留到投入最大时暴露更贵 |
+| "checkpoint 太频繁拖节奏" | checkpoint 是 rollback 边界。省掉它出问题只能回退整个计划 |
 
 ## Red Flags
 

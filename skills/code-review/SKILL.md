@@ -61,21 +61,32 @@ description: Use before merging any change, after completing a feature, or when 
 
 安全详见 `references/security-guide.md`。性能详见 `references/performance-guide.md`。
 
+**Review 中测试评估**：测试是否会在重构中存活？重命名内部函数测试就挂 = 测的是实现不是行为——这是测试质量问题不是代码质量问题。
+
 ### 7b. Simplification Pass
 
 只针对本次变更，不改行为（详见 `references/simplification-guide.md`）。
 - **Chesterton's Fence**：删代码前先 `git blame` 理解它为什么存在。不懂就不删
 - **Rule of 500**：函数 > 50 行拆，文件 > 500 行拆。拆职责不拆行数
 - **Dead code**：识别 → 列出 → 问用户 → 确认后再删
+- **Testability**：接受依赖不创建依赖（`processOrder(order, gateway)` 而非内部 `new`）；返回结果不副作用；接口面积小。可测的形状 = 好的形状
 
 ### 7c. Codex Cross-Review
 
-自评有盲区。先探 codex 可用性（`rule-codex-review` 的 `setup --json`），不可用则降级自评 + 明说。
+自评有盲区——单模型 reviewer 与原作者共享同源盲点，不同架构的模型才能抓出来。先探 codex 可用性（`rule-codex-review` 的 `setup --json`），不可用则降级自评 + 明说（不静默跳过）。
 合并两路 findings：交集 = 高置信，对称差 = 各自盲点。
+
+**Doubt theater 检测**：连续 2+ 轮 reviewer 有实质发现但 0 条被分类为 actionable = 在验证不是在评审，停下升级。
 
 ### 7d. Findings Triage
 
 每条 finding 统一结构：`id`（C1/W1/S1）+ `axis` + `evidence`（file:line + 代码）+ `fix`（可操作的修法）+ `action`（Critical/Warning/Suggestion）。
+
+**Finding 分类优先级**（分歧时先排序再讨论）：
+1. **Contract misread** — reviewer 误读了需求描述 → 先修需求再说
+2. **Valid + actionable** — 真问题且修得动
+3. **Valid trade-off** — 真问题但修复成本 > 接受成本 → 显式记录后接受
+4. **Noise** — reviewer 缺上下文误报 → 标注来源消除
 
 | 级别 | 含义 | 谁拍板 |
 |---|---|---|
@@ -98,15 +109,22 @@ description: Use before merging any change, after completing a feature, or when 
 - [ ] 用户对 Warning 逐条显式拍板
 - [ ] fix 改了代码 → 已回 Build → Verify → 再 Review（回流规则）
 
-## 核心反模式
+## 核心规则（when X → do Y）
 
-| 反模式 | 正确做法 |
+- **When** 你觉得"自己写的不用 review" → 自评盲区最大，调 codex 或 subagent
+- **When** 你想把 Critical 降级成 Warning → **不可 override**。没有"这次特殊"
+- **When** 你要删代码但不知道它为什么存在 → **先 git blame**。不懂就别删
+- **When** reviewer 的建议你觉得不对 → 先重读自查，仍确信 → push-back 并给证据
+- **When** fix 改了代码 → **必须回 Build → Verify → 再 Review**
+
+## Common Rationalizations
+
+| 借口 | 现实 |
 |---|---|
-- **When** 你觉得"自己写的不用 review" → 自评盲区最大，这正是交叉评存在的理由。调 codex 或 subagent
-- **When** 你想把 Critical 降级成 Warning → **不可 override**。安全漏洞/数据丢失没有"这次特殊"
-- **When** 你要删代码但不知道它为什么存在 → **先 git blame**。Chesterton's Fence：不懂为何有它就别删
-- **When** reviewer 的建议你觉得不对 → **push-back 并给证据**。技术正确 > 社交舒适。但先验证自己确实对
-- **When** fix 改了代码 → **必须回 Build → Verify → 再 Review**。fix 本身可能引入新缺陷
+| "改动小，扫一眼就行" | off-by-one / 越权常藏在小改动里。小改动也过五轴 |
+| "reviewer 说的肯定对" | external 反馈先验证再实现。错的要 push-back |
+| "简化顺手就删了" | Chesterton's Fence——先 git blame 查来历 |
+| "这次 Critical 特殊" | Critical 不可 override 就是为了挡这句话 |
 
 ## Red Flags
 

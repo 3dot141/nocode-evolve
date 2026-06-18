@@ -43,11 +43,16 @@ Build 完成后的 **evidence** 门。"看起来对"不是证据，跑一下才�
 - Build/编译成功，输出干净（无 error/warning/stack trace）
 - 每项证据：**命令 + 输出 + 通过/失败**（模板见 `references/evidence-template.md`）
 - 证据必须新鲜——这次改动后重新跑出来的，不是记忆里的
+- **Gate Function**：宣称任何状态前走 5 步——IDENTIFY(用什么命令证明) → RUN(完整跑) → READ(全输出查 exit code) → VERIFY(输出是否支持断言) → ONLY THEN 宣称。说"Great/Done/完成了"前若没在本条消息跑过验证命令——STOP
 
 ### 6b. 集成测试
 
 跨模块契约 + 数据流端到端 + API 契约验证（请求/响应 schema、状态码、错误路径）。
 单测全绿 ≠ 功能能用。单测验"你以为的逻辑"，集成验"真实的系统"。
+
+**Correct seam**：回归测试要在能复现**真实 bug pattern** 的 seam 上写。多调用方 bug 用单调用方测试锁不住——如果找不到正确 seam，这本身就是 finding（架构在阻止 bug 被锁定）。
+
+**Requirements 逐行核对**：重读 restate/plan → 建逐条 checklist → 逐条验证 → 报 gap 或完成。不是"测试过了阶段就完成"——要证明每一条需求都有对应的证据。
 
 ### 6c. E2E / Browser（有 UI 变更时）
 
@@ -65,12 +70,17 @@ Build 完成后的 **evidence** 门。"看起来对"不是证据，跑一下才�
 ### 6d. 性能检查（有性能需求时）
 
 Core Web Vitals：LCP ≤ 2.5s、INP ≤ 200ms、CLS ≤ 0.1。详见 `references/performance-guide.md`。
+
+**Perf branch**：性能回归不靠 log——先建 baseline 测量（timing harness / profiler / query plan），再 bisect 定位。Measure first, fix second。
+
 **无性能需求 → 标注跳过**。
 
 ### 6e. 验收逐条核对
 
 从 Define 验收标准 + Design 测试目标**逐条**核对，每条 ✅ 附证据 / ❌ 附原因。
 任一条未通过 → 回 Build 修复，不许"差不多了先过"。
+
+**Subagent 验证规则**：如果用了 subagent 执行 Build，subagent 报 success 不可信——独立查 VCS diff 确认真有改动、独立跑测试确认真通过。不信 agent 自报状态。
 
 ## Exit Gate
 
@@ -86,8 +96,18 @@ Core Web Vitals：LCP ≤ 2.5s、INP ≤ 200ms、CLS ≤ 0.1。详见 `reference
 - **When** 你想引用上次跑的结果 → **重新跑**。"没动那块"是假设，依赖/配置/环境都可能漂移
 - **When** 你想先报完成回头补验证 → **STOP**。"回头补"永远不来。未验证就报完成 = dishonesty
 
+## Common Failures
+
+| 宣称 | 需要的证据 | 不够的 |
+|---|---|---|
+| "测试通过" | 测试命令输出 0 失败 | "上次跑过" / "应该通过" |
+| "bug 修好了" | 原始症状测试 + 跑通 | "改了代码假设修好" |
+| "性能达标" | benchmark 数字对比 SLO | "感觉快了" |
+| "无回归" | 完整套件绿 | "只跑了相关测试" |
+
 ## Red Flags
 
+- 说出"Great/Perfect/Done/完成了"但本条消息没跑过验证命令——情绪性措辞是未验证的早期信号
 - 写了"完成/修好了/通过了"但贴不出命令+输出
 - 只跑了 slice 单测，没跑完整套件
 - 有 UI 变更但没截图

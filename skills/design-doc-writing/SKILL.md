@@ -23,6 +23,9 @@ description: Use when the design skill delegates document writing, or when the u
 - 用户只是问「X 应该怎么做」——这是方案探索阶段，先用 `nocode-evolve:design`
 - 简单 bug 修复（用 superpowers:debugging）
 
+**注：简单任务也要验收标准，只是 spec 更短。** 两行 spec 也是 spec——不要因"太简单"完全跳过。区别在规模不在有无。
+- 简单 bug 修复（用 superpowers:debugging）
+
 ## 选 doc-type
 
 设计文档分 4 类，按**这份文档主要回答什么问题**选：

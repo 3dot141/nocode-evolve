@@ -113,12 +113,14 @@ Define → Design → Plan 保持在**同一个不 compact 的上下文窗口**�
 4. 任务未过验证不算完成——"seems right"永远不够
 5. 发现自己在猜 → 停下问用户或查代码
 6. 每个 slice 闭环后才进下一个——不积累未验证的产出
+7. 上下文冲突（spec 说 X 但代码是 Y）→ 不静默选一个，显式列出冲突 + 选项让用户拍板
+8. 需求缺失 → 查先例（代码里有没有类似实现），无先例则停下问，不发明需求
 
 ### 横切能力（任意阶段可调）
 
 | 能力 | 调用 | 触发时机 | 优先级（冲突时） |
 |---|---|---|---|
-| **Debug** | `superpowers:systematic-debugging` + `references/debug-protocol.md` | Build/Verify 遇阻（测试失败/卡住） | bug/失败 → 优先 Debug |
+| **Debug** | `references/debug-protocol.md`。**第一步是建 tight 反馈回路，不是猜根因** | Build/Verify 遇阻（测试失败/卡住） | bug/失败 → 优先 Debug |
 | **Red-Blue-Deep** | `nocode-evolve:red-blue-deep` | 决策分歧（选 A 还是 B？） | 决策前 → 优先 Red-Blue |
 | **Doubt-Driven** | spawn 独立 reviewer（偏向证伪不是批准） | 非平凡决策（跨模块/不可逆/安全敏感） | 决策后验证 → 优先 Doubt。**Doubt theater 检测**：连续 2+ 轮有发现但 0 条 actionable = 在验证不是在怀疑 |
 | **Context Engineering** | 主动建议 `/distill` + 新会话 | 长会话（多轮工具调用/跨子任务） | 上下文风险 → 建议收尾 |
@@ -133,6 +135,10 @@ Define → Design → Plan 保持在**同一个不 compact 的上下文窗口**�
 | Verify | Build | 验收标准未满足 → 补实现 |
 | Build | Build (Debug) | 测试失败 3 次 → Debug 横切 |
 | Build | Design → Plan | 发现设计有问题 → 需要回溯 |
+
+### Post-mortem 钩子
+
+Fix 类任务的 Review 通过后，问一句：**"什么能预防这个 bug？"** 如果答案涉及架构（没有好的测试 seam / 调用方纠缠 / 隐藏耦合），建议后续开一个 Design 改进任务。把单次修复转成架构改进的回路。
 
 ### Land composite sub-flow
 

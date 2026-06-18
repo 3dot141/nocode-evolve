@@ -5,11 +5,13 @@ description: Use when executing implementation tasks from a plan, writing new co
 
 # build — 增量实现，slice 闭环
 
+**Iron Law: 没有失败测试就没有产品代码。先写了代码？删掉，从测试开始。**
+
 每个 task 走一个 **red-green** 循环闭环：失败测试(red) → 最小实现(green) → 重构 → commit。一次只推一个 slice，不积累未测代码。
 
 > Leading word: **red-green**。没见过红就不知道绿是不是真的。
 
-**头号反模式：horizontal slicing**——"先写所有 model，再写所有 service，再写所有 handler"。每层做完都不可验证，集成风险堆到最后才爆。用 tracer bullet 垂直切。
+**头号反模式：horizontal slicing**——"先写所有 model，再写所有 service，再写所有 handler"。每层做完都不可验证，集成风险堆到最后才爆。同理"先写所有测试再写所有实现"也是 horizontal——批量写的测试测的是想象行为不是真实行为，会测 shape 不测 user-facing behavior。用 tracer bullet 垂直切：一个 slice = 一个失败测试 + 它的最小实现 + commit。
 
 ## Entry Gate
 
@@ -51,7 +53,7 @@ for each task in plan:
 - **HITL task**：停下等用户决策再继续。**AFK task**：连续推进
 - **Source check**：Read 所有涉及代码/文档，标注 `[Read path:line]` / `[Doc URL]` / `[推断]`
 - 框架 API 查官方文档确认。文档不可达 → 标 `UNVERIFIED` + 退回本地源码
-- 只碰本 task 声明的文件。计划外发现用 **NOTICED BUT NOT TOUCHING** 模式：显式记录发现 + 位置 + 原因，问用户是否建 task。既防 scope creep 又不丢信息
+- 只碰本 task 声明的文件。计划外发现用 **NOTICED BUT NOT TOUCHING** 模式：显式记录发现 + 位置 + 原因，问用户是否建 task。具体：不顺手清理相邻代码、不重构只读文件的 import、不删不懂的注释、不加 spec 外"看起来有用"的功能、不现代化只读文件语法
 
 ### 5b. Test First (Iron Law)
 
@@ -61,13 +63,17 @@ for each task in plan:
 2. **Green** — 写刚好够过绿的代码
 3. **Refactor** — 行为不变降复杂度
 
-已经写了产品代码再补测试？**删掉代码，从测试开始。** 没例外。
+已经写了产品代码再补测试？**删掉代码，从测试开始。** 没例外。不是"留着参考"——直接删，重新从测试出发。
+
+**回归测试有效性验证**：写完回归测试后走一遍完整红绿循环证明它真能抓 bug——写 → 跑(过) → 还原 fix → 跑(必须红) → 恢复 → 跑(过)。"写了个回归测试"不算，亲眼看它在没有 fix 时失败才算。
+
 测试层级默认 unit，涉及外部依赖才升 integration，端到端才升 e2e。
 
 **测试原则**：
 - **DAMP over DRY**：测试代码宁可重复也要可读。DRY 的测试共享 setup 一改全断、出错时看不懂哪个在测什么
 - **测试替身偏好序**：real > fake > stub > mock。能用真实对象就用，mock 是最后手段
 - **测试行为不测交互**：assert 输出状态，不 assert 调用了哪个内部方法
+- **测试难写 = 设计难**：不知怎么测 → 先写期望 API / 先写断言；测试太复杂 → 设计太复杂，简化接口；必须 mock 一切 → 耦合太重，用依赖注入；setup 巨大 → 抽 helper 或简化设计
 
 ### 5c. Implement + Green
 
@@ -78,13 +84,14 @@ Feature flags 包裹未完成功能。新功能默认关闭。
 
 test pass + build pass + 无回归，三项没全绿不许 commit。
 commit message 说清 what + why。
+**同一命令成功后不重复跑**——成功跑过的验证命令在代码未变前不要再跑，只在后续编辑后重跑。重复跑无信息增量。
 
 ## 异常路径
 
 | 触发 | 处理 |
 |---|---|
-| 同一测试修 3 次仍失败 | Debug 横切：先列 3-5 排序假设再逐个验证（见 `references/debug-protocol.md`） |
-| 卡住/方向不确定 | Doubt-Driven：停下写出不确定点+假设，找用户或文档确认 |
+| 同一测试修 3 次仍失败 | Debug 横切（见 `references/debug-protocol.md`）。**第一步不是列假设，是建 tight 反馈回路**：一条已跑过、能因此 bug 变红、确定性、秒级的命令。没有这条命令，禁止进假设阶段——读代码猜根因正是这个纪律要防的 |
+| 卡住/方向不确定 | Doubt-Driven：停下写出不确定点+假设，找用户或文档确认。上下文冲突（spec 说 X 但代码是 Y）→ 不静默选一个，显式列选项让用户拍板 |
 
 ## Exit Gate
 
@@ -99,7 +106,18 @@ commit message 说清 what + why。
 - **When** 你想一口气推进多个 task → **STOP**，一次只推一个 slice。批量未测代码出问题时无法二分定位哪个 task 引入的
 - **When** 你发现计划外的问题想顺手改 → **NOTICED BUT NOT TOUCHING**：记录位置+原因，问用户是否建 task。不碰
 - **When** 你"记得"某个框架 API 的行为 → **不信记忆**。查官方文档标 `[Doc URL]`，或读本地源码标 `[Read path:line]`
-- **When** 同一个测试修了 3 次还不过 → **进 Debug 横切**，先列 3-5 排序假设，不再盲改
+- **When** 同一个测试修了 3 次还不过 → **进 Debug 横切**，先建 tight 反馈回路再列假设
+- **When** bug 不稳定复现 → 目标不是干净 repro，是**更高复现率**。循环 100×、并行、加压、收窄时序。50% flake 可调试，1% 不可调——先拉高再 debug
+
+## Common Rationalizations
+
+| 借口 | 现实 |
+|---|---|
+| "太简单不用测" | 简单改动写测试只要一分钟。"简单"的改动出回归才最隐蔽 |
+| "先把代码写出来，测试后面补" | 后补的测试为已有代码背书，不是在驱动设计。删掉重来 |
+| "我先验证下思路，测试稍后" | "稍后"= 永不。验证思路本身就该用测试表达 |
+| "事后测试达到同样目的" | tests-after 回答"代码做什么"，tests-first 回答"代码应该做什么"。前者被实现带偏 |
+| "一次多做几个 task 更快" | 批量的速度是假的——出问题时无法二分定位 |
 
 ## Red Flags
 
@@ -107,3 +125,6 @@ commit message 说清 what + why。
 - 一个 slice 改了 > 5 文件
 - commit 前没跑 build / 回归测试
 - commit message 是 "fix" / "update" / "wip"
+- 顺手改了计划外代码（NOTICED BUT NOT TOUCHING 缺失）
+- 测试一上来就绿（没经历 Red 阶段）
+- 框架 API 引用没有来源标注

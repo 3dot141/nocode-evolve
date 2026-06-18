@@ -7,7 +7,9 @@ description: Use when the session is getting long, context is approaching limits
 
 把当前会话压缩成一段结构化文字，用户粘贴到新会话就能续接。不写文件，直接输出给用户。
 
-和 /distill 的区别：distill 是永久归档（写 wiki/rules），handoff 是临时传递（给下一会话开局用）。
+和 /distill 的区别：distill 是永久归档（写 wiki/rules），handoff 是临时传递（给下一会话开局用）。和 /compact 的区别：compact 在**同一会话**内摘要（continue），handoff **fork 到新会话**（fork）。
+
+**何时 handoff**：逼近 smart zone 上限（~120k token），或会话质量开始退化（重复问题 / 忘记之前决策 / 推理变浅）。不要在退化状态硬撑——handoff 的成本远低于在退化上下文里犯错。
 
 ## Checklist (TaskCreate)
 
@@ -57,11 +59,11 @@ description: Use when the session is getting long, context is approaching limits
 - [下一会话应该用什么 skill 继续，如 nocode-evolve:build / nocode-evolve:verify]
 ```
 
-**压缩原则**：
-- **引用而非复制**：不重复已有文档（restate/设计文档/计划）的内容，写路径让下游 agent 自己 Read
+**压缩原则（按 context hierarchy 取舍）**：
+- **引用而非复制**：高持久层内容（restate/设计文档/计划）写路径让下游 Read，不复制全文。只 inline 低持久层内容（当前进度/卡点/临时决策）
 - 关键决策只写结论，不写推导过程
 - 敏感信息（token / 密码 / 内部 URL）不放
-- **写 OS temp dir，不写 repo**——handoff 是临时传递物，不需要入版本控制
+- **默认直接输出文本**，用户复制到新会话。超长时可落 OS temp dir，但不写 repo——handoff 是临时传递物
 - 目标：下一个 agent 读完 30 秒内知道从哪里续接
 
 ### Step 3: 交给用户
