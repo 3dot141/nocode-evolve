@@ -1,250 +1,110 @@
 ---
 name: define
-description: 从模糊任务到明确问题边界的收敛门。Use when starting any non-trivial task, when requirements are unclear or underspecified ("build me X" without "for whom" or "why now"), when the user explicitly says "澄清需求 / 做什么 / 目标是什么 / interview me / 定义目标", or when devflow routes to Define stage. Also triggers on task descriptions missing at least one of: who the user is, why they want it, what success looks like, what the binding constraint is. Even for seemingly clear tasks, use this skill if you catch yourself silently filling in ambiguous requirements.
+description: 从模糊任务到明确问题边界的收敛门。Use when starting any non-trivial task, when requirements are unclear or underspecified ("build me X" without "for whom" or "why now"), when the user explicitly says "澄清需求 / 做什么 / 目标是什么 / interview me / 定义目标", or when devflow routes to Define stage. Also triggers on task descriptions missing at least one of: who the user is, why they want it, what success looks like, what the binding constraint is.
 ---
 
-# nocode-evolve:define — 从模糊到明确
+# define — 从模糊到明确
 
-> 定义问题边界，不选解法。产出：用户显式确认的结构化 restate + 场景分类。
->
-> Define 回答"做什么 + 为什么做 + 怎么算做成了"。"怎么做"是 Design 的事。
->
-> Brainstorming 是 Define 的工作方式之一——用来发散问题空间（真问题是什么？有没有隐藏的约束？用户以为的问题和真正的问题是同一个吗？）。但 Define 里的 brainstorming 止步于问题本身，不延伸到解法选择。
+定义问题边界，不选解法。brainstorming 用于发散问题空间（真问题是什么？隐藏约束？），不延伸到解法选择。Define 回答"做什么 + 为什么做 + 怎么算做成了"。"怎么做"是 Design 的事。
 
-## Checklist（强制 TaskCreate）
+## Entry Gate
 
-进入 Define 后，你必须为以下步骤各建一条 task，按顺序完成：
+- [ ] 用户有任务描述或意图
 
-1. **场景分类** — 判断 Mini/Fix/Standard/Full
-2. **假设先行** — 写出 HYPOTHESIS + CONFIDENCE
-3. **一次一问澄清** — 逐个问题 + 猜测，直到置信度 ≥ 95%
-4. **产出 restate** — 结构化 restate（含 Quality Bar + Collaboration Pact）
-5. **用户显式确认** — Gate：用户确认 restate
+## Checklist (TaskCreate)
+
+进入 Define 后，为以下步骤各建一条 task，按顺序完成：
+
+1. **场景分类** — AskUserQuestion 确认 Mini/Fix/Standard/Full
+2. **假设先行** — HYPOTHESIS + CONFIDENCE，≥ 95% 可走快速路径
+3. **一次一问澄清** — 代码能自答的不问用户；用 AskUserQuestion 给选项
+4. **产出 restate** — 含 Quality Bar + Collaboration Pact
+5. **用户确认** — AskUserQuestion 三选：确认/修改/重来
 
 ## 协议
 
-### Step 1: 任务分类（场景路由入口）
+### Step 1: 场景分类
 
-判断任务规模，决定 devflow 场景。**用 AskUserQuestion 让用户确认你的判断**：
+判断**问题性质**（不是解法），用 AskUserQuestion 确认：
 
 | 信号 | 场景 | 后续路径 |
 |---|---|---|
 | 单文件/单步/改变量名/修文案 | **Mini** | mini-goal → Build-lite → Verify-lite → Land-lite |
 | 用户报 bug/测试失败/行为异常 | **Fix** | 复现定义 → Env → Debug → Build → Verify → Review → Land |
-| 跨文件 + 实现路径明确 | **Standard** | 完整 Define → Env → Plan → Build → Verify → Review → Land |
-| 跨文件 + 需要架构/选型/设计 | **Full** | 完整 Define → Env → Design → Plan → Build → Verify → Review → Land |
-| 用户说"整个/整体/全流程" | **Full** | 同上 |
+| 跨文件 + 实现路径明确 | **Standard** | Define → Env → Plan → Build → Verify → Review → Land |
+| 跨文件 + 需要架构/选型/设计 | **Full** | Define → Env → Design → Plan → Build → Verify → Review → Land |
 
-先写出你的判断和理由，然后用 AskUserQuestion 确认：
-```
-AskUserQuestion({
-  questions: [{
-    question: "我判断这是 <场景> 场景，因为 <理由>。对吗？",
-    header: "场景分类",
-    options: [
-      { label: "<推荐场景> (推荐)", description: "<理由>" },
-      { label: "Mini", description: "单文件/单步小改" },
-      { label: "Standard", description: "跨文件，实现路径明确" },
-      { label: "Full", description: "需要架构/选型/设计探索" }
-    ],
-    multiSelect: false
-  }]
-})
-```
+AskUserQuestion 把你的判断 + 理由放推荐选项，其余场景放备选。拿不准偏向 Full。
 
-**场景分类是对问题性质的判断，不是对解法的判断**。判断依据是问题本身的复杂度——"这个问题涉不涉及架构决策"——而不是"方案是什么"。比如"加个搜索接口"是 Standard（问题清晰，不需要架构探索），"建分布式缓存层"是 Full（问题本身蕴含架构决策）。拿不准时偏向 Full——多走一步 Design 的成本远低于跳过 Design 后返工。
+Mini → 输出 3 行 mini-goal（做什么 + 验收标准 + 不做什么），用户确认后退出。
+Fix → 侧重复现：重现步骤 + 预期 vs 实际 + 影响范围。
+Standard/Full → 进 Step 2。
 
-**Mini 场景**：输出 3 行 mini-goal（做什么 + 验收标准 + 不做什么），用户确认后退出 Define，进 Build-lite。不走后续完整流程。
+### Step 2: 假设先行
 
-**Fix 场景**：Define 侧重复现——写出重现步骤 + 预期 vs 实际行为 + 影响范围。
-
-**Standard/Full**：进 Step 2 完整 Define 循环。
-
-### Step 2: Goal — 需求澄清 + 目标定义
-
-**2a. 假设先行**
-
-动手问问题之前，先写下你当前的判断：
+先写出判断再提问：
 
 ```
 HYPOTHESIS: 一句话，你认为用户想要什么
-CONFIDENCE: 0-100%（< 70% 附理由——什么还不确定）
+CONFIDENCE: 0-100%（< 70% 附理由）
 ```
 
-这迫使你诚实。如果你写了高置信度但答不出用户接下来三个问题的反应，置信度是假的。
+**快速路径**：如果之前会话已充分讨论，置信度已 ≥ 95% → 跳过 Step 3 面试，直接出 restate 给用户确认。不是每个任务都需要 4-6 轮提问。
 
-**2b. 一次一问，附带猜测（优先用 AskUserQuestion）**
+### Step 3: 一次一问澄清
 
-**能给选项就给选项**——用 AskUserQuestion 工具代替纯文字提问。用户点选比手打回答快得多，也更不容易被礼貌性同意。
+**提问前自查：这个问题的答案在代码里吗？**
+- 能通过 Read / grep 确认的事实（什么框架、有没有类似实现、现有接口长什么样）→ 先自答，不问用户
+- 只有用户才能回答的问题（意图、优先级、约束、business context）→ 用 AskUserQuestion
 
-```
-AskUserQuestion({
-  questions: [{
-    question: "用户群是哪类？",
-    header: "用户",
-    options: [
-      { label: "内部开发者 (推荐)", description: "你的猜测 + 猜测理由" },
-      { label: "外部终端用户", description: "面向 C 端" },
-      { label: "运维/SRE", description: "运维场景" }
-    ],
-    multiSelect: false
-  }]
-})
-```
+**能给选项就给选项**。用户点选比手打快，也更不容易礼貌性同意。开放式问题仍可纯文字，但附猜测——用户纠正错误猜测比从零生成答案快。
 
-**什么时候用纯文字**：问题太开放、选项无法穷举（"你的核心痛点是什么"）。这时仍然一次一问 + 附猜测。
+一次只问一个。第三个问题常常取决于第一个的答案。
 
-等用户回答后再问下一个。不批量提问——批量鼓励泛泛作答，而且第三个问题常常取决于第一个的答案。
+**识别 "want vs should want"**：用户说"最佳实践是..."、用 buzzword 当目标（"可扩展"/"现代"）→ 追问"如果不需要向任何人解释，你真正想要的是什么？"
 
-附猜测的目的：用户纠正一个错误猜测比从零生成答案更快。风险是用户礼貌性同意——偶尔故意猜一个你预期会被推翻的方向来缓解。AskUserQuestion 天然缓解这个风险，因为用户看到多个选项时更容易选真实想法。
+### Step 4: 产出 restate
 
-**2c. 识别 "want vs should want"**
+置信度 ≥ 95% 时产出（完整模板见 `references/restate-template.md`）：
 
-危险答案：用户说的是"聪明答案听起来像什么"而不是真正想要什么。
-
-信号：
-- "我应该..."、"最佳实践是..."、"标准做法是..."
-- 用架构/工程 buzzword 当目标（"可扩展"、"现代"、"robust"）
-- "大多数应用都这么做"
-
-一个问题常常比前五个更有用：
-
-> "如果不需要向任何人解释，你真正想要的是什么？"
-
-**2d. 产出结构化 restate**
-
-当置信度 ≥ 95%（可检验测试：你能预测用户对下三个问题的反应）：
-
-```
-RESTATE:
-- Outcome:      一句话——最终产出什么
-- User:         一句话——谁受益
-- Why Now:      一句话——什么变了导致现在要做
-- Success:      一句话——怎么知道做成了（可量化）
-- Constraint:   一句话——约束条件
-- Out of Scope: 一句话——明确不做什么
-- Assumptions:  列出所有假设
-
-Boundaries (Always / Ask First / Never):
-- Always: ...
-- Ask First: ...
-- Never: ...
-```
-
-> 参考完整模板见 `references/restate-template.md`
+**必填字段**：Outcome / User / Why Now / Success Criteria / Constraint / Out of Scope / Assumptions / Boundaries (Always/Ask First/Never)
 
 **Out of Scope 不可省略**——一半的对齐偏差来自对"不做什么"的沉默分歧。
 
-**2e. Quality Bar — 质量对齐**
+**Quality Bar**：主动问"怎样算高质量？"。agent 先提 2-4 条可检验标准，用户确认/修改。"代码质量高"不行，"无 lint warning + 关键路径测试覆盖"可以。
 
-restate 写完后，**主动问用户**：
+**Collaboration Pact**：主动问"我们怎么协作？"。agent 提出：自己做什么、需要用户提供什么、中间检查点。可选引用协作指令（穷尽探索 / 信心验证循环），用户拍板。
 
-> "这个任务的输出，怎样才算高质量？"
+### Step 5: 用户确认
 
-目的：校准双方对评价标准的理解。agent 不猜测用户的质量期望——显式问出来。
+用 AskUserQuestion 三选：确认 / 要修改 / 重新来。
 
-流程：
-1. agent 基于 restate 先提出质量标准草案（2-4 条，具体可检验，不用 buzzword）
-2. 用户确认 / 修改 / 补充
-3. 最终质量标准写入 restate 的 `Quality Bar` 字段
+以下不算确认：
+- "随你"/"都行" → 用户在委托，重新提具体选项
+- "可以"/"行" → 追问"有没有要修改的？"
+- 沉默后"那开始吧" → 用户放弃了讨论，停下问是否遗漏
 
-质量标准必须**可检验**——"代码质量高"不行，"无 lint warning + 测试覆盖关键路径 + 无硬编码"可以。
+## Exit Gate
 
-**2f. Collaboration Pact — 协作契约**
+- [ ] restate 已产出，用户显式确认（AskUserQuestion 选了"确认"）
+- [ ] 场景分类已标注
+- [ ] 后续阶段输入齐全：Full → Design 可用 restate，Standard → Plan 可用 restate
 
-质量标准对齐后，**主动问用户**：
+## 核心反模式
 
-> "我们如何协作，才能确保输出质量？"
-
-agent 提出协作计划：自己做什么、需要用户提供什么信息、中间有几个检查点。用户确认 / 调整后写入 restate 的 `Collaboration Pact` 字段。
-
-协作契约可引用以下**协作指令**（用户可选择启用）：
-
-| 指令 | 适用场景 | 含义 |
-|---|---|---|
-| **穷尽探索** | 多条可行路径的设计 / 调试 / 选型 | 尽可能多用不同方法尝试，不人为设限。该尝试的方法都试完才停；还有未探索的方法就继续，即便已尝试多次 |
-| **信心验证循环** | 策略决策 / 方案定稿 / 关键路径 | 每个决策点显式检查：对这个策略 100% 有信心吗？没有 → 列出所有可能漏洞 + 修复方案，循环执行直到在事实层面确信 |
-
-指令不是必选。agent 根据任务特征建议合适的指令组合，用户拍板。
-
-> 不启用任何指令也完全合法——简单任务不需要重型协作约定。
-
-**2g. 用户确认（用 AskUserQuestion）**
-
-Gate 是**显式确认**。用 AskUserQuestion 让用户明确拍板：
-
-```
-AskUserQuestion({
-  questions: [{
-    question: "Restate 确认：以上目标、验收标准、约束是否准确？",
-    header: "确认",
-    options: [
-      { label: "确认，开始下一步", description: "restate 准确，进入后续阶段" },
-      { label: "要修改", description: "我会告诉你哪里需要改" },
-      { label: "重新来", description: "方向不对，重新澄清" }
-    ],
-    multiSelect: false
-  }]
-})
-```
-
-以下不算确认（即使用户在 AskUserQuestion 之外说了）：
-- "随你"/"都行" → 用户在委托。重新提两个具体选项让用户选
-- "可以"/"行" → 模糊。追问"有没有要修改的？"
-- 沉默然后"那开始吧" → 用户放弃了讨论，不是收敛了。停下问是否遗漏了什么
-
-### 产出
-
-Define 只产出问题定义，不产出解法。后续阶段各取所需：
-
-- **Design**（Full 场景）：基于 restate 的约束和验收标准探索方案、写设计文档
-- **Plan**：任务拆分基于 restate 的成果物和验收标准
-- **Build**：TDD 测试用例从验收标准推导
-- **Verify**：验收标准逐条核对
-
-Define 不判断"实现路径是否显而易见"——那是 Design 的职责。场景分类（Full/Standard/Fix/Mini）决定后续是否经过 Design 阶段。
-
-## Common Rationalizations
-
-| 借口 | 反驳 |
+| 反模式 | 正确做法 |
 |---|---|
-| "需求很清楚，不用澄清" | 你写不出用户期望结果的一句话 = 不清楚。跑 Step 2a | 
-| "问太多问题浪费时间" | 4-6 个问题用几分钟。建错东西用几小时，而且是用户承担代价 |
-| "做着做着就明白了" | 做完切换的代价是现在澄清的 10 倍。实现中的发现是返工，不是发现 |
-| "用户说'随你'，那就我定" | "随你"是委托不是决定。提两个具体选项让用户选 |
-| "先给几个选项让用户挑" | 用户还不知道自己要什么，列选项是扩大搜索空间。提问是缩小搜索空间 |
-| "附上猜测会引导用户" | 引导正是目的——纠正错误猜测比凭空生成答案快。风险是阿谀式同意，用偶尔故意猜错来缓解 |
-| "聊得够多了，我懂了" | 测试：你能预测用户对下三个问题的反应吗？不能 = 还不懂 |
-| "质量标准不用问，我知道什么是好的" | 你的"好"和用户的"好"经常不同。显式问出来的标准省下返工的时间 |
-| "协作方式不需要协商，直接干就行" | 直接干 = agent 单方面决定节奏和深度。中间没有检查点，偏了发现不了 |
-| "应该没问题" | "应该"是假设。列出可能漏洞，逐个排除，在事实层面确认 |
-| "方案很明显，不用 Design" | 场景分类决定是否走 Design，不由 Define 跳过 |
+| 批量提问（≥ 3 个一条消息） | 一次一问 |
+| 可以自答的事实去问用户 | 先读代码，只问用户才能答的 |
+| 接受"随你"作为确认 | 那是委托，重新提具体选项 |
+| restate 确认前就写 spec/plan/代码 | 问题没定义清就动手 = 赌 |
+| 在 Define 里做方案选型 | 那是 Design 的事 |
+| 用户给 buzzword 不追问 | "可扩展"→ 追问真正想要什么 |
 
 ## Red Flags
 
-- 在同一条消息里问 ≥ 3 个问题（在批量提问，不是在面试）
-- 问问题不附猜测（在做问卷，不是在承诺假设）
-- 接受"随你"/"都行"作为最终答案
-- restate 没有 Out of Scope 行
-- 置信度 < 70% 但不附理由
-- 在用户确认 restate 之前就写 spec / plan / 代码
-- 用户给了 buzzword 答案（"可扩展"/"现代"），没有追问实际需求
-- 3 轮后置信度仍没有明显上升——在问错误的问题，需要换方向
-- restate 没有 Quality Bar（质量标准缺失，后续无法验收"好不好"）
-- restate 没有 Collaboration Pact（协作方式未协商，agent 单方面决定节奏）
-- 启用了"穷尽探索"指令但只尝试了 1-2 种方法就停下
-- 启用了"信心验证循环"但在决策点没有显式检查漏洞
-
-## Verification Checklist
-
-- [ ] Step 1 场景分类已输出，用户知道走哪个场景
-- [ ] 每轮置信度 < 70% 附有理由
-- [ ] 问题一次一个，每个附猜测
-- [ ] 至少一次 "want vs should want" 探测（当用户给 buzzword 答案时）
-- [ ] 结构化 restate 已输出（Outcome / User / Why Now / Success / Constraint / Out of Scope / Assumptions / Boundaries）
-- [ ] Quality Bar 已输出，用户确认质量标准（可检验，非 buzzword）
-- [ ] Collaboration Pact 已输出，用户确认协作方式（含检查点）
-- [ ] 如适用，协作指令（穷尽探索 / 信心验证循环）已协商
-- [ ] 用户显式确认 restate（不是"随你"，不是沉默）
-- [ ] 如果进了 Brainstorm，Confirm 步骤检查了方案是否改变 Goal
-- [ ] 产出明确标注场景分类，供 devflow 路由
+- 置信度 < 70% 不附理由
+- restate 缺 Out of Scope 或 Quality Bar
+- 3 轮后置信度没明显上升——在问错误的问题
+- 用户 buzzword 答案没追问
+- 启用了"穷尽探索"但只试 1-2 种方法
