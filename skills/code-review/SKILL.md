@@ -55,7 +55,7 @@ description: Use before merging any change, after completing a feature, or when 
 
 只针对本次变更，不改行为（详见 `references/simplification-guide.md`）。
 - **Chesterton's Fence**：删代码前先 `git blame` 理解它为什么存在。不懂就不删
-- **Rule of 500**：函数 > 50 行考虑拆，文件 > 500 行考虑拆。拆职责不拆行数
+- **Rule of 500**：函数 > 50 行拆，文件 > 500 行拆。拆职责不拆行数
 - **Dead code**：识别 → 列出 → 问用户 → 确认后再删
 
 ### 7c. Codex Cross-Review

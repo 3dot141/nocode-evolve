@@ -1,11 +1,13 @@
 ---
 name: dev-workflow
-description: 工程任务流程领航. 可被 model 主动调起, 也可用户 /调 进入, 给"当前阶段判断 + 下一步建议 + 备选", 用户拍板, 不替用户执行. agent 视角: 复杂 / 多步 / 跨阶段任务 (跨文件 + 状态未知 / 需要 commit / PR / 设计文档 / 评审 / 用户说"整个/整体/全流程") 时, 主动调起本 skill 给流程建议并停下等用户拍板. 不用于简单单步任务.
+description: "⚠️ DEPRECATED — 请使用 nocode-evolve:devflow 代替。本 skill 是旧版，不再维护。"
 ---
 
-# nocode-evolve:dev-workflow — 工程任务流程领航
+# ⚠️ DEPRECATED — 使用 nocode-evolve:devflow
 
-> 工程任务驾驶舱。**model 命中复杂多步任务时主动调起**, 用户也可 **`/调`** 进入。给建议不替执行。
+本 skill 已被 `nocode-evolve:devflow` 替代（8 阶段 · 4 场景路由 · 含 Entry/Exit Gate + 共享词汇表 + 横切能力）。
+
+调用 `Skill(nocode-evolve:devflow)` 进入新版。
 > 
 > 规则依赖: SessionStart 已注入 `model/agent-catalog-*.md` 完整路由到 context。每个阶段对应的 rule 触发条件 / 摘要 / guard 已常驻, 需要完整指令时按需 Read `rules/rule-*.md`。
 
