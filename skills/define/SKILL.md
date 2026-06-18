@@ -73,7 +73,7 @@ CONFIDENCE: 0-100%（< 70% 附理由）
 
 **必填字段**：Outcome / User / Why Now / Success Criteria / Constraint / Out of Scope / Assumptions / Boundaries (Always/Ask First/Never)
 
-**Out of Scope 不可省略**——一半的对齐偏差来自对"不做什么"的沉默分歧。
+**Out of Scope 不可省略**——这是 restate 里最有价值的一行。一半的对齐偏差来自对"不做什么"的沉默分歧。用户确认 Out of Scope 比确认 Outcome 更能防止后续返工。
 
 **Quality Bar**：主动问"怎样算高质量？"。agent 先提 2-4 条可检验标准，用户确认/修改。"代码质量高"不行，"无 lint warning + 关键路径测试覆盖"可以。
 

@@ -55,6 +55,7 @@ description: Use when you have defined goals and need to break work into tasks. 
 
 - **贴真实代码/命令/预期输出**——不是伪代码，不是"类似这样"
 - **禁占位符**——`<your code here>`/`TODO`/`...` 不允许出现。写不出真实代码说明没想清楚，回 Step 1
+- **task 描述 durable 化**——用行为意图描述（"用户创建记录时验证必填字段"），不用易腐的行号/文件路径/代码片段。行号会漂移、函数名会改，但行为意图扛重构。代码贴在 step 内部，不贴在 task 描述里
 - **Sizing ≤ M**（≤ 5 文件）。L/XL 必须再拆——大任务藏着没想清楚的判断
 - **标 HITL/AFK**：
   - `HITL`（Human-in-the-loop）：需人决策的 task（API 设计确认/数据迁移策略/安全敏感）→ Build 时停下等用户

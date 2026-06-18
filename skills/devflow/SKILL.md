@@ -88,7 +88,9 @@ TaskCreate(subject: "阶段 7: Land", description: "调用: rule-finishing-branc
 
 ### Context Hygiene
 
-Define → Design → Plan 保持在**同一个不 compact 的上下文窗口**——设计讨论的推理链会在 compact 中丢失。每个 Build task 开始新 subagent 时才切上下文。如果会话逼近 smart zone 上限（~120k token），用 `/handoff` 传递再开新会话，不要硬撑。
+Define → Design → Plan 保持在**同一个不 compact 的上下文窗口**——设计讨论的推理链会在 compact 中丢失。每个 Build task 开始新 subagent 时才切上下文。
+
+**上下文预算**：< 2000 行非任务上下文 = 聚焦；> 5000 行 = 失焦。逼近 smart zone 上限（~120k token）时用 `/handoff` 传递再开新会话，不要硬撑。
 
 ### 非协商行为（跨所有阶段生效）
 
@@ -105,7 +107,7 @@ Define → Design → Plan 保持在**同一个不 compact 的上下文窗口**�
 |---|---|---|---|
 | **Debug** | `superpowers:systematic-debugging` + `references/debug-protocol.md` | Build/Verify 遇阻（测试失败/卡住） | bug/失败 → 优先 Debug |
 | **Red-Blue-Deep** | `nocode-evolve:red-blue-deep` | 决策分歧（选 A 还是 B？） | 决策前 → 优先 Red-Blue |
-| **Doubt-Driven** | spawn 独立 reviewer | 非平凡实现完成后验证 | 决策后验证 → 优先 Doubt |
+| **Doubt-Driven** | spawn 独立 reviewer（偏向证伪不是批准） | 非平凡决策（跨模块/不可逆/安全敏感） | 决策后验证 → 优先 Doubt。**Doubt theater 检测**：连续 2+ 轮有发现但 0 条 actionable = 在验证不是在怀疑 |
 | **Context Engineering** | 主动建议 `/distill` + 新会话 | 长会话（多轮工具调用/跨子任务） | 上下文风险 → 建议收尾 |
 | **Git Freshness** | `rule-git-freshness` | 设计/搜索/多文件 Read 前 | 自动触发 |
 | **Git Inspection** | `rule-git-inspection` | ≥2 git 只读命令 | 自动合并 |

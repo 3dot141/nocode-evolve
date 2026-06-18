@@ -15,6 +15,12 @@ description: Use before merging any change, after completing a feature, or when 
 
 **Review 顺序：先读测试，再读实现。** 测试告诉你代码该做什么，实现告诉你代码怎么做。先看意图再看手段。
 
+**双轴意识**：Review 隐含两个正交维度——
+- **Standards 轴**：代码标准合规（五轴 review 覆盖的就是这个）
+- **Spec 轴**：实现与需求/PRD/restate 是否对齐（过建了？欠建了？偏了？）
+
+一个改动可能一轴过一轴挂。五轴 review 做完后，回 Define 的 restate / Design 的设计文档核对 Spec 轴。两轴分别报 findings，不合并——合并会让一轴掩盖另一轴。
+
 ## Entry Gate
 
 - [ ] Verify Gate 已过（验收标准逐条通过 + 证据齐全）
