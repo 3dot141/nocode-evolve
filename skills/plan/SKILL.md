@@ -1,11 +1,15 @@
 ---
 name: plan
-description: 把确认的目标拆成可执行的任务序列。Use when you have defined goals and need to break work into implementable tasks. Use when devflow routes to Plan stage, or when the user says "写计划/拆任务/怎么实现/plan it out". Use when a task feels too large to start, when you need to estimate scope, or when parallel work is possible.
+description: Use when you have defined goals and need to break work into tasks. Use when devflow routes to Plan stage, or when the user says "写计划/拆任务/怎么实现/plan it out". Use when a task feels too large to start or when parallel work is possible.
 ---
 
 # plan — 把目标拆成任务序列
 
-计划的价值不在"列出步骤"，在让执行变成机械动作。好计划拿到就能照做，不需要边做边想"这里该怎么写"。核心要求一条：**计划里贴的是真实代码和命令，不是占位符**。
+**Iron Law: 计划里贴的是真实代码和命令，不是占位符。写不出真实代码 = 还没想清楚。**
+
+计划的价值不在"列出步骤"，在让执行变成机械动作。每个任务是一根 **tracer bullet**——穿透所有层的端到端垂直切片。好计划拿到就能照做，不需要边做边想"这里该怎么写"。
+
+> Leading word: **tracer bullet**。每个 task 切一条窄但完整的端到端路径，不按层横切。
 
 输入：Define 的 restate + Design 的设计文档和测试目标（Full 场景）。
 输出：用户确认的任务序列 + 执行模式选择。

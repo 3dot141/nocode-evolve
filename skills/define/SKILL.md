@@ -1,11 +1,15 @@
 ---
 name: define
-description: 从模糊任务到明确问题边界的收敛门。Use when starting any non-trivial task, when requirements are unclear or underspecified ("build me X" without "for whom" or "why now"), when the user explicitly says "澄清需求 / 做什么 / 目标是什么 / interview me / 定义目标", or when devflow routes to Define stage. Also triggers on task descriptions missing at least one of: who the user is, why they want it, what success looks like, what the binding constraint is.
+description: Use when starting any non-trivial task, when requirements are unclear ("build me X" without "for whom" or "why now"), when the user says "澄清需求 / 做什么 / 目标是什么 / interview me / 定义目标", or when devflow routes to Define stage. Also use when a task description is missing who/why/what-success-looks-like.
 ---
 
 # define — 从模糊到明确
 
-定义问题边界，不选解法。brainstorming 用于发散问题空间（真问题是什么？隐藏约束？），不延伸到解法选择。Define 回答"做什么 + 为什么做 + 怎么算做成了"。"怎么做"是 Design 的事。
+**Iron Law: 问题没定义清就动手 = 赌。建错东西的代价是澄清的 10 倍，而且由用户承担。**
+
+定义问题边界，不选解法。产出一份 **restate**——用户显式确认的结构化目标。brainstorming 用于发散问题空间，不延伸到解法选择。Define 回答"做什么 + 为什么做 + 怎么算做成了"。"怎么做"是 Design 的事。
+
+> Leading word: **restate**。所有对话收敛到这份产出物。没有确认的 restate 就没有 Define 的产出。
 
 ## Entry Gate
 

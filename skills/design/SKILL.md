@@ -1,11 +1,15 @@
 ---
 name: design
-description: 从确认的问题定义到具体解法。Use when Define stage is complete and the task needs architecture/approach decisions before implementation. Use when devflow routes to Design stage, or when the user says "设计方案/怎么做/选什么技术/架构设计/方案对比". Takes Define's restate as input, explores approaches via brainstorming, selects solution, then delegates to design-doc-writing for documentation. For Full-scene tasks only.
+description: Use when Define is complete and the task needs architecture or approach decisions. Use when devflow routes to Design stage, or when the user says "设计方案/怎么做/选什么技术/架构设计/方案对比". For Full-scene tasks.
 ---
 
 # design — 从问题到解法
 
-Define 回答"做什么"，Design 回答"怎么做"。brainstorming 在这里用于发散解法空间。
+**Iron Law: 方案未对比的设计是假设不是设计。只提一个方案就让用户确认 = 假共识。**
+
+Define 回答"做什么"，Design 回答"怎么做"。核心动作是探索 **approach**——多个差异化方案对比后选一个。brainstorming 在这里用于发散解法空间。
+
+> Leading word: **approach**。没有对比过的 approach 就没有设计，只有假设。
 
 输入：Define 的 restate（问题边界 + 验收标准）。
 输出：确认方案 + 测试目标 + 设计文档。

@@ -1,6 +1,6 @@
 ---
 name: design-doc-writing
-description: 写设计文档时使用。按业界主流 4 类 doc-type 主轴（PRD / RFC / Design Doc / ADR）选合适类型，每个 doc-type 有自己的"背景→...→后果"线性骨架。工作流含 write → review 循环（spawn design-doc-reviewer subagent，用户逐条确认）。当 superpowers:brainstorming 走到「写设计文档」环节时调用本 skill；当用户要求「写设计文档 / PRD / RFC / ADR / 重构方案 / 系统设计 / 技术 spec / API 或数据库设计 / migration 方案 / 提案 / 架构记录」时也用。即使用户没说"用模板"，只要要做的事是产出一份正式的设计性文档（不是代码 / 实施步骤），就该用本 skill。不要用本 skill 写代码注释 / PR 描述 / commit message / README / changelog。
+description: Use when the design skill delegates document writing, or when the user asks to write a PRD / RFC / Design Doc / ADR / 重构方案 / 系统设计 / 技术 spec. Not for code comments, PR descriptions, commit messages, or READMEs.
 ---
 
 # 设计文档写作

@@ -1,11 +1,13 @@
 ---
 name: verify
-description: 证明功能真的能用，不只是测试通过。Use when Build stage is complete and you need to verify the implementation actually works end-to-end. Use when devflow routes to Verify stage, or when the user says "验证一下/跑一下看看/确认能用/verify". Enforces evidence-based verification — "seems right" is never sufficient.
+description: Use when Build is complete and you need to verify the implementation works end-to-end. Use when devflow routes to Verify stage, or when the user says "验证一下/跑一下看看/确认能用/verify".
 ---
 
 # verify — 证明它真的能用
 
-Build 完成后的证据门。**无新鲜证据，不得宣称完成。** "看起来对"不是证据，跑一下才是。跳任一步 = 把未验证的东西伪装成已验证。
+Build 完成后的 **evidence** 门。无新鲜证据，不得宣称完成。"看起来对"不是证据，跑一下才是。跳任一步 = 把未验证的东西伪装成已验证——这是 dishonesty，不是低效。
+
+> Leading word: **evidence**。每一项断言背后都要有一条可贴出来的命令 + 输出。没有输出 = 没有断言。
 
 ## Entry Gate
 

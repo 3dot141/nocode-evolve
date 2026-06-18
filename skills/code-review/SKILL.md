@@ -1,13 +1,19 @@
 ---
 name: code-review
-description: 多维度代码评审 + 简化 + 安全 + 统一 findings 分级。Use before merging any change, after completing a feature, or when reviewing code written by yourself, another agent, or a human. Use when devflow routes to Review stage, or when the user says "review 一下/看看代码/评审/check the code". Covers five axes (correctness, readability, architecture, security, performance), code simplification, and feedback discipline.
+description: Use before merging any change, after completing a feature, or when reviewing code. Use when devflow routes to Review stage, or when the user says "review 一下/看看代码/评审/check the code".
 ---
 
 # code-review — 多维度代码评审
 
-自评 + 独立交叉评 + 统一 findings 分级。对自己写的、另一个 agent 写的、人写的代码都适用。
+**Iron Law: Critical 不可 override。fix 改了代码必须回 Build → Verify → 再 Review。没有"这次特殊"。**
+
+自评 + 独立交叉评 + 统一 **findings** 分级。对自己写的、另一个 agent 写的、人写的代码都适用。
+
+> Leading word: **findings**。每条 finding 有 id + axis + evidence + fix + action。没有 evidence 的 finding 是直觉不是评审。
 
 产出：分级 findings 报告（Critical / Warning / Suggestion），用户逐条拍板。Critical 不可 override。
+
+**Review 顺序：先读测试，再读实现。** 测试告诉你代码该做什么，实现告诉你代码怎么做。先看意图再看手段。
 
 ## Entry Gate
 

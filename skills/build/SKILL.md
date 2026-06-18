@@ -1,11 +1,15 @@
 ---
 name: build
-description: 按计划增量实现，每个 slice 闭环。Use when executing implementation tasks from a plan, writing new code, or implementing features. Use when devflow routes to Build stage, or when the user says "开始实现/写代码/执行计划/build it". Enforces test-first discipline and incremental delivery — no large batches of untested code.
+description: Use when executing implementation tasks from a plan, writing new code, or implementing features. Use when devflow routes to Build stage, or when the user says "开始实现/写代码/执行计划/build it".
 ---
 
 # build — 增量实现，slice 闭环
 
-双底子：superpowers TDD（test-first 硬约束）+ incremental-implementation（slice 循环外壳）。每个 task 以「失败测试 → 最小实现 → 绿 → commit」闭环交付。
+每个 task 走一个 **red-green** 循环闭环：失败测试(red) → 最小实现(green) → 重构 → commit。一次只推一个 slice，不积累未测代码。
+
+> Leading word: **red-green**。没见过红就不知道绿是不是真的。
+
+**头号反模式：horizontal slicing**——"先写所有 model，再写所有 service，再写所有 handler"。每层做完都不可验证，集成风险堆到最后才爆。用 tracer bullet 垂直切。
 
 ## Entry Gate
 
@@ -37,7 +41,7 @@ for each task in plan:
 - **HITL task**：停下等用户决策再继续。**AFK task**：连续推进
 - **Source check**：Read 所有涉及代码/文档，标注 `[Read path:line]` / `[Doc URL]` / `[推断]`
 - 框架 API 查官方文档确认。文档不可达 → 标 `UNVERIFIED` + 退回本地源码
-- 只碰本 task 声明的文件。计划外问题记下来，不顺手改
+- 只碰本 task 声明的文件。计划外发现用 **NOTICED BUT NOT TOUCHING** 模式：显式记录发现 + 位置 + 原因，问用户是否建 task。既防 scope creep 又不丢信息
 
 ### 5b. Test First (Iron Law)
 
