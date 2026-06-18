@@ -54,6 +54,11 @@ for each task in plan:
 已经写了产品代码再补测试？**删掉代码，从测试开始。** 没例外。
 测试层级默认 unit，涉及外部依赖才升 integration，端到端才升 e2e。
 
+**测试原则**：
+- **DAMP over DRY**：测试代码宁可重复也要可读。DRY 的测试共享 setup 一改全断、出错时看不懂哪个在测什么
+- **测试替身偏好序**：real > fake > stub > mock。能用真实对象就用，mock 是最后手段
+- **测试行为不测交互**：assert 输出状态，不 assert 调用了哪个内部方法
+
 ### 5c. Implement + Green
 
 最少代码让测试变绿。不多写一行未被测试覆盖的逻辑。

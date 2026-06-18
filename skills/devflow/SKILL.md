@@ -86,6 +86,19 @@ TaskCreate(subject: "阶段 7: Land", description: "调用: rule-finishing-branc
 | 7 | **Review** | `nocode-evolve:code-review` | `rule-codex-review` | Critical 全 fix + 用户 approve |
 | 8 | **Land** | `rule-finishing-branch` composite | `rule-finishing-branch` | PR merged + 任务流转 + worktree 清理 |
 
+### Context Hygiene
+
+Define → Design → Plan 保持在**同一个不 compact 的上下文窗口**——设计讨论的推理链会在 compact 中丢失。每个 Build task 开始新 subagent 时才切上下文。如果会话逼近 smart zone 上限（~120k token），用 `/handoff` 传递再开新会话，不要硬撑。
+
+### 非协商行为（跨所有阶段生效）
+
+1. 遇到不一致 → **STOP**，不带猜测推进
+2. 不当 yes-machine——技术上站不住的建议要 push-back
+3. 范围外的代码/注释不碰、不删不懂的东西
+4. 任务未过验证不算完成——"seems right"永远不够
+5. 发现自己在猜 → 停下问用户或查代码
+6. 每个 slice 闭环后才进下一个——不积累未验证的产出
+
 ### 横切能力（任意阶段可调）
 
 | 能力 | 调用 | 触发时机 | 优先级（冲突时） |
