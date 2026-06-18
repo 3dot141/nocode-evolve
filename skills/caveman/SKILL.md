@@ -1,6 +1,6 @@
 ---
 name: caveman
-description: Token 压缩模式，去填充词保技术实质，输出量降 ~75%。Use when the user says "caveman / 简洁模式 / 省 token / 精简回复" or when token budget is tight. Persists until the user says "正常模式 / normal mode / 恢复".
+description: Use when the user says "caveman / 简洁模式 / 省 token / 精简回复" or when token budget is tight. Persists until "正常模式 / normal mode".
 ---
 
 # caveman — 精简模式

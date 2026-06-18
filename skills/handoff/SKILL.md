@@ -1,6 +1,6 @@
 ---
 name: handoff
-description: 压缩当前会话状态，生成 handoff 文档给下一会话续接。Use when the session is getting long, context is approaching limits, or the user wants to continue work in a new session. Also use when the user says "handoff / 交接 / 传递给下一个会话 / 续接". Produces a compact summary — not a permanent archive (that's /distill).
+description: Use when the session is getting long, context is approaching limits, or the user wants to continue in a new session. Use when the user says "handoff / 交接 / 传递给下一个会话 / 续接". Not for permanent archiving (that's /distill).
 ---
 
 # handoff — 会话续接

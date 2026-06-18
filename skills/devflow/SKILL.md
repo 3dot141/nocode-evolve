@@ -86,6 +86,19 @@ TaskCreate(subject: "阶段 7: Land", description: "调用: rule-finishing-branc
 | 7 | **Review** | `nocode-evolve:code-review` | `rule-codex-review` | Critical 全 fix + 用户 approve |
 | 8 | **Land** | `rule-finishing-branch` composite | `rule-finishing-branch` | PR merged + 任务流转 + worktree 清理 |
 
+### 共享词汇（跨 skill leading words）
+
+| Leading Word | 所属 skill | 含义 |
+|---|---|---|
+| **restate** | Define | 用户确认的结构化目标——没有 restate 就没有 Define 的产出 |
+| **approach** | Design | 差异化方案对比——没有对比过的 approach 就没有设计 |
+| **tracer bullet** | Plan | 穿透所有层的端到端垂直切片——窄但完整的交付单元 |
+| **red-green** | Build | 失败测试(red)→最小实现(green)的 TDD 循环 |
+| **evidence** | Verify | 可贴出的命令+输出——没有 evidence 的断言不成立 |
+| **findings** | Code-Review | 带 id/axis/evidence/fix/action 的结构化评审发现 |
+
+这些词在各 skill 内已定义。跨 skill 沟通时用这些词锚定——说"restate 还没确认"比"Define 的产出还没让用户点头"更精确。
+
 ### Context Hygiene
 
 Define → Design → Plan 保持在**同一个不 compact 的上下文窗口**——设计讨论的推理链会在 compact 中丢失。每个 Build task 开始新 subagent 时才切上下文。

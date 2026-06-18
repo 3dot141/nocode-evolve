@@ -92,11 +92,11 @@ description: Use before merging any change, after completing a feature, or when 
 
 | 反模式 | 正确做法 |
 |---|---|
-| "自己写的不用 review" | 自评盲区最大，这正是交叉评的理由 |
-| Critical 降级成 Warning | Critical 不可 override |
-| 删代码没查 git blame | Chesterton's Fence |
-| reviewer 说啥照改 | 先验证再实现，错的要 push-back |
-| fix 完直接合不再测 | 回流：改了代码必须回 Verify |
+- **When** 你觉得"自己写的不用 review" → 自评盲区最大，这正是交叉评存在的理由。调 codex 或 subagent
+- **When** 你想把 Critical 降级成 Warning → **不可 override**。安全漏洞/数据丢失没有"这次特殊"
+- **When** 你要删代码但不知道它为什么存在 → **先 git blame**。Chesterton's Fence：不懂为何有它就别删
+- **When** reviewer 的建议你觉得不对 → **push-back 并给证据**。技术正确 > 社交舒适。但先验证自己确实对
+- **When** fix 改了代码 → **必须回 Build → Verify → 再 Review**。fix 本身可能引入新缺陷
 
 ## Red Flags
 
