@@ -97,7 +97,9 @@ Subagent → `Skill(superpowers:subagent-driven-development)`。当前会话 →
 - [ ] 所有 task ≤ M，零占位符
 - [ ] 每个 task 标了 HITL/AFK
 - [ ] 测试目标已分配到 slice
-- [ ] 用户显式确认 + 选了执行模式
+- [ ] 用户显式确认计划（AskUserQuestion）
+- [ ] 执行模式已选（subagent 并行 / 当前会话顺序）
+- [ ] 后续 Build 输入齐全：任务序列 + 测试目标 + 执行模式
 
 ## 核心规则（when X → do Y）
 
