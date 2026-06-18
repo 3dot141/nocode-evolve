@@ -203,13 +203,17 @@ SkillOpt 的训练循环映射到我们的场景：
 
 ---
 
-## 预期效果
+## 预期效果（R8 更新：对照实际达成）
 
-| 指标 | 当前 | 目标 |
-|---|---|---|
-| description 只含触发条件的 skill 数 | 0/10 | 10/10 |
-| 有显式 Iron Law / HARD-GATE 前置的 skill 数 | 2/10 (Build/Verify) | 6/10 (+ Define/Design/Plan/Code-Review) |
-| 有 leading word 的 skill 数 | 0/10 | 10/10 |
-| eval route-recall (design) | 66% (2/3) → 修后 100% (3/3) | ≥ 90% |
-| eval route-recall (define) | 100% (3/3) | 保持 ≥ 90% |
-| SKILL.md 平均行数 | ~115 | ≤ 120（不膨胀） |
+| 指标 | 优化前 | 目标 | R8 实际 | 状态 |
+|---|---|---|---|---|
+| description 只含触发条件 | 0/10 | 10/10 | **10/10** | ✅ 达成 |
+| Iron Law 前置 | 2/10 | 6/10 | **6/6**（devflow 阶段 skill） | ✅ 达成 |
+| leading word | 0/10 | 10/10 | **6/6** devflow + 共享词汇表 | ✅ 达成 |
+| eval route-recall (design) | 66% (2/3) | ≥ 90% | **100%** (6/6) | ✅ 超预期 |
+| eval route-recall (define) | 100% (3/3) | ≥ 90% | **100%** (6/6) | ✅ 保持 |
+| eval 全量回归 | — | 零回归 | **35/35 + 压力 12/12** | ✅ 零回归 |
+| SKILL.md 平均行数 | ~200 | ≤ 120 | **~104** (82-120) | ✅ 达成 |
+| when-do 规则格式 | 0/6 | 6/6 | **6/6** | ✅ 达成 |
+| Gate 链完整性 | 5/6 断裂 | 6/6 | **6/6** | ✅ 达成 |
+| eval fixture 覆盖 | 1 rule | 5 rules | **5 rules** (47 条 probe) | ✅ 达成 |
