@@ -17,6 +17,16 @@ Build 完成后的 **evidence** 门。"看起来对"不是证据，跑一下才�
 - [ ] Design 测试目标可用（Full 场景）
 - [ ] Define 验收标准可用
 
+## 领域指南（验证时按需 Read）
+
+| 领域 | 何时 Read | 用来做什么 |
+|---|---|---|
+| `references/testing-guide.md` | 决定该验什么时 | 测试金字塔 / Prove-It / 浏览器安全边界 |
+| `references/performance-guide.md` | 有性能需求时 | 度量方法 / Core Web Vitals / 基线对比 |
+| `references/security-guide.md` | 涉及安全功能时 | 安全检查清单 / 渗透验证 |
+| `references/observability-guide.md` | 验证生产可观测时 | 埋点是否到位 / 告警是否 actionable |
+| `references/frontend-guide.md` | 有 UI 变更时 | 无障碍检查 / 响应式验证 |
+
 ## Checklist (TaskCreate)
 
 1. **证据收集** — 跑完整测试套件 + build，记录命令+输出+通过/失败三元组

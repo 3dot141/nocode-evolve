@@ -27,6 +27,16 @@ description: Use before merging any change, after completing a feature, or when 
 - [ ] Change sizing 已判断（~100 行好；~300 行可接受；~1000 行先建议 split）
 - [ ] 评审范围 = 本次变更涉及的代码（不评历史遗留）
 
+## 领域指南（评审时按需 Read）
+
+| 领域 | 何时 Read | 用来做什么 |
+|---|---|---|
+| `references/security-guide.md` | 过安全轴时 | OWASP 逐条 / 三层边界 / AI/LLM 安全 |
+| `references/performance-guide.md` | 过性能轴时 | N+1 / 重渲染 / bundle 反模式 |
+| `references/architecture-principles.md` | 过架构轴时 | Deep/Shallow / Seam 纪律 / Hyrum's Law |
+| `references/testing-guide.md` | 审测试质量时 | DAMP / 替身偏好序 / 金字塔 |
+| `references/frontend-guide.md` | 审 UI 代码时 | 组件模式 / Avoid AI Aesthetic / WCAG |
+
 ## Checklist (TaskCreate)
 
 1. **Five-Axis Self-Review** — 正确性 → 可读性 → 架构 → 安全 → 性能

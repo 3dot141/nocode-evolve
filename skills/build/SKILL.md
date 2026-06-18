@@ -17,6 +17,16 @@ description: Use when executing implementation tasks from a plan, writing new co
 - [ ] Full 场景：Design 测试目标可用（指导 TDD 写什么测试）
 - [ ] 执行模式已选（subagent 并行 / 当前会话顺序）
 
+## 领域指南（实现时按需 Read）
+
+| 领域 | 何时 Read | 用来做什么 |
+|---|---|---|
+| `references/testing-guide.md` | 写测试时 | TDD 循环 / 替身选择 / DAMP 原则 |
+| `references/security-guide.md` | 碰用户输入/认证/数据时 | 防注入写法 / 输入校验 / 密钥管理 |
+| `references/performance-guide.md` | 碰数据库查询/前端渲染时 | N+1 / 缓存 / 懒加载模式 |
+| `references/frontend-guide.md` | 碰 UI 组件时 | 组件模式 / 无障碍 / 设计系统 |
+| `references/architecture-principles.md` | 拿不准模块边界时 | Deep Module / Seam / 依赖分类 |
+
 ## Checklist (TaskCreate)
 
 1. **加载计划** — 读 Plan 任务序列 + Design 测试目标
