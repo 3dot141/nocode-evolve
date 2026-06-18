@@ -1,0 +1,243 @@
+[
+  {
+    "case_id": "design-001",
+    "skill": "design",
+    "category": "happy_path",
+    "input": "需求已定义：要给团队做一个 PR 自动 review 机器人，目标是降低 reviewer 负担。",
+    "context": {
+      "define_restate": "who=后端团队 reviewer；why=人工首轮 review 占用大量时间；success=减少 50% 人工首轮 review 时间，误报率 < 15%",
+      "scene": "Full"
+    },
+    "expected_signals": [
+      "提出 ≥2 个核心思路不同的方案（如 规则引擎 / LLM review / 混合分层）",
+      "每个方案列出优势 + 代价，方案≥3 时用表格对比",
+      "推荐扣回 success criteria（50% 时间 / 误报率约束）",
+      "用 AskUserQuestion 把最终决策交还用户，推荐项放第一",
+      "方案颗粒度到可进入 plan"
+    ],
+    "anti_signals": [
+      "只给单一方案就让用户确认",
+      "两个方案数据流图相同只是组件换实现",
+      "直接拍板就用某方案不给选择",
+      "脱离 success criteria 自由发挥"
+    ],
+    "primary_dimensions": ["DS1", "DS2"],
+    "difficulty": "easy"
+  },
+  {
+    "case_id": "design-002",
+    "skill": "design",
+    "category": "happy_path",
+    "input": "需求定好了：给现有单体后端的订单模块做缓存，缓解数据库高峰压力。设计一下。",
+    "context": {
+      "define_restate": "who=大促期间下单用户；why=高峰 DB CPU 打满导致下单超时；success=高峰期订单查询 P99 < 100ms，DB 读负载下降 ≥ 40%",
+      "scene": "Full",
+      "existing_stack": "Spring Boot + MySQL，无现有缓存层"
+    },
+    "expected_signals": [
+      "提出 ≥2 差异化方案（如 本地缓存 / Redis 集中缓存 / 读写分离+缓存）",
+      "维度化对比（成本/复杂度/一致性/可维护性）",
+      "推荐映射回 P99 与负载下降目标",
+      "标注缓存一致性/失效作为权衡点",
+      "把决策权交还用户"
+    ],
+    "anti_signals": [
+      "直接给一个 Redis 方案当唯一解",
+      "无 trade-off 对比",
+      "忽略缓存一致性风险"
+    ],
+    "primary_dimensions": ["DS2", "DS3"],
+    "difficulty": "easy"
+  },
+  {
+    "case_id": "design-003",
+    "skill": "design",
+    "category": "happy_path",
+    "input": "需求已确认：要把现有 REST API 的认证从 session 改成 token。给我设计方案。",
+    "context": {
+      "define_restate": "who=移动端 + Web 端用户；why=session 无法支撑多端与无状态横向扩容；success=支持多端登录，服务无状态可水平扩展，旧 session 用户平滑过渡不强制重登",
+      "scene": "Full"
+    },
+    "expected_signals": [
+      "提出 ≥2 方案（如 JWT 无状态 / opaque token + 集中存储 / 混合）",
+      "显式 trade-off（无状态 vs 可吊销、存储成本、安全面）",
+      "扣住平滑过渡约束给迁移/兼容策略",
+      "涉及认证应触发轻量威胁模型考量",
+      "推荐 + 交还决策"
+    ],
+    "anti_signals": [
+      "只给 JWT 一个方案",
+      "忽略旧 session 平滑过渡约束",
+      "完全不提 token 吊销/安全风险"
+    ],
+    "primary_dimensions": ["DS3", "DS4"],
+    "difficulty": "medium"
+  },
+  {
+    "case_id": "design-004",
+    "skill": "design",
+    "category": "happy_path",
+    "input": "需求定了：给一个 Node CLI 加插件系统，让第三方能扩展命令。设计架构。",
+    "context": {
+      "define_restate": "who=第三方开发者 + CLI 维护者；why=核心命令无法满足所有场景，需开放扩展；success=第三方可发布独立 npm 包注册命令，核心升级不破坏已有插件",
+      "scene": "Full"
+    },
+    "expected_signals": [
+      "提出 ≥2 差异化插件机制（如 约定式目录扫描 / 显式 registry API / 基于 hook 生命周期）",
+      "trade-off 覆盖 兼容稳定性/隔离性/DX",
+      "推荐扣住向后兼容 success criteria",
+      "方案具体到可拆 plan（接口契约层级）",
+      "把方案选择交还用户"
+    ],
+    "anti_signals": [
+      "停在概念口号无法进入 plan",
+      "单一方案",
+      "忽略核心升级不破坏插件的约束"
+    ],
+    "primary_dimensions": ["DS1", "DS5"],
+    "difficulty": "medium"
+  },
+  {
+    "case_id": "design-005",
+    "skill": "design",
+    "category": "happy_path",
+    "input": "已经定义清楚了：做一个跨服务的幂等下单接口，防止重复扣款。给设计。",
+    "context": {
+      "define_restate": "who=支付链路调用方；why=网络重试导致重复下单/重复扣款；success=同一业务请求多次提交只产生一笔订单，并发下零重复，接口幂等键 24h 内有效",
+      "scene": "Full"
+    },
+    "expected_signals": [
+      "提出 ≥2 方案（如 唯一约束去重 / 幂等键+状态机 / 分布式锁）",
+      "维度化对比并发安全/存储/性能",
+      "推荐映射并发零重复与 24h 有效期约束",
+      "产出测试目标覆盖每条 success criteria（含并发场景）",
+      "推荐 + 交还决策"
+    ],
+    "anti_signals": [
+      "只给分布式锁一个方案",
+      "缺少测试目标/验收依据",
+      "忽略并发竞态场景"
+    ],
+    "primary_dimensions": ["DS3", "DS5"],
+    "difficulty": "hard"
+  },
+  {
+    "case_id": "design-006",
+    "skill": "design",
+    "category": "edge",
+    "input": "需求确认了：在 config loader 里把环境变量优先级调到高于配置文件。设计一下怎么做。",
+    "context": {
+      "define_restate": "who=运维；why=容器环境需用 env 覆盖镜像内配置；success=env 存在时覆盖同名配置项，缺失时回退文件值，行为有测试覆盖",
+      "scene": "Full",
+      "note": "实际改动很小，单一合理路径"
+    },
+    "expected_signals": [
+      "诚实指出此处只有一条合理路径，不硬凑第二个方案",
+      "按 Iron Law 说明为什么其他路径（如配置中心)不适用",
+      "给出落地颗粒度（合并优先级逻辑 + 测试目标）",
+      "把是否需要更复杂方案的判断交还用户"
+    ],
+    "anti_signals": [
+      "硬凑两个数据流图相同的伪方案充数",
+      "为凑方案过度设计引入配置中心",
+      "完全不解释为何单方案合理"
+    ],
+    "primary_dimensions": ["DS1", "DS5"],
+    "difficulty": "medium"
+  },
+  {
+    "case_id": "design-007",
+    "skill": "design",
+    "category": "edge",
+    "input": "重新设计消息推送架构。注意：我们之前在 ADR-012 里定过统一走 Kafka，wiki 里也记了不要再引入第二套 MQ。",
+    "context": {
+      "define_restate": "who=多个业务方；why=现有同步推送耦合高、扩展难；success=推送解耦异步化，支持多订阅方，不引入新的运维负担",
+      "scene": "Full",
+      "existing_decisions": "ADR-012: 消息中间件统一 Kafka；wiki: 禁止引入第二套 MQ"
+    },
+    "expected_signals": [
+      "先探索/引用已有 ADR-012 与 wiki 决策并标注来源",
+      "方案对齐既有 Kafka 决策，不擅自引入 RabbitMQ/Pulsar",
+      "若某方案需推翻 ADR，显式说明为什么推翻",
+      "提出基于 Kafka 的 ≥2 差异化方案（如 topic 设计 / 消费分组策略差异）",
+      "推荐 + 交还决策"
+    ],
+    "anti_signals": [
+      "新方案与 ADR-012 冲突但不说明",
+      "引用代码/决策但未实际 Read 凭记忆编造",
+      "无视 wiki 约束引入第二套 MQ"
+    ],
+    "primary_dimensions": ["DS3", "DS1"],
+    "difficulty": "hard"
+  },
+  {
+    "case_id": "design-008",
+    "skill": "design",
+    "category": "edge",
+    "input": "帮我设计实时协作编辑的冲突解决方案。两个方案我都不确定能不能跑通：OT 还是 CRDT。",
+    "context": {
+      "define_restate": "who=多人同时编辑文档的用户；why=并发编辑产生冲突丢字；success=N 人并发编辑最终一致无丢失，离线编辑可合并",
+      "scene": "Full",
+      "note": "高不确定性方案，适合 prototype"
+    },
+    "expected_signals": [
+      "提出 OT vs CRDT 两个核心思路不同的方案",
+      "trade-off 覆盖 实现复杂度/离线支持/服务端依赖",
+      "对高不确定性方案建议先做 logic-branch 原型验证再选",
+      "把最终选择交还用户，原型结论带入决策",
+      "扣住最终一致+离线合并 success criteria"
+    ],
+    "anti_signals": [
+      "直接拍板选 CRDT 不验证",
+      "把 OT/CRDT 当成同一方案的变体",
+      "略过不确定性直接出文档"
+    ],
+    "primary_dimensions": ["DS1", "DS4"],
+    "difficulty": "hard"
+  },
+  {
+    "case_id": "design-009",
+    "skill": "design",
+    "category": "negative",
+    "input": "帮我把 README 里的安装步骤从 npm 改成 pnpm。",
+    "context": {
+      "scene": "Mini",
+      "note": "单步文档修改，不该触发 design 的多方案探索流程"
+    },
+    "expected_signals": [
+      "识别这是 Mini 单步任务，不进入 design 多方案流程",
+      "直接给出改法或交回 define/devflow 走 Mini 通道",
+      "不为单行改动硬造 2-3 个架构方案"
+    ],
+    "anti_signals": [
+      "对换包管理器这种小改动启动 2-3 方案对比 + AskUserQuestion",
+      "套用完整 design 七步协议",
+      "产出设计文档"
+    ],
+    "primary_dimensions": ["DS1", "DS5"],
+    "difficulty": "medium"
+  },
+  {
+    "case_id": "design-010",
+    "skill": "design",
+    "category": "negative",
+    "input": "做一个内部用的报销系统。先设计架构吧。",
+    "context": {
+      "scene": "unknown",
+      "note": "Define 尚未完成：who/why/success 全缺，Entry Gate 未过",
+      "define_restate": null
+    },
+    "expected_signals": [
+      "识别 Entry Gate 未过（Define restate 不存在/未确认）",
+      "拒绝直接出架构，建议先回 Define 澄清 who/why/success",
+      "不在需求边界未知时凭空给方案"
+    ],
+    "anti_signals": [
+      "Define 未完成就直接给 2-3 个架构方案",
+      "脱离不存在的 success criteria 自由发挥",
+      "跳过 Entry Gate 进入方案探索"
+    ],
+    "primary_dimensions": ["DS3", "DS1"],
+    "difficulty": "medium"
+  }
+]

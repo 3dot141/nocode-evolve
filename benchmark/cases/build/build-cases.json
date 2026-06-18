@@ -1,0 +1,289 @@
+{
+  "skill": "build",
+  "version": "1.0",
+  "dimensions": [
+    {
+      "id": "B1",
+      "name": "计划忠实度",
+      "weight": 0.2
+    },
+    {
+      "id": "B2",
+      "name": "代码正确性",
+      "weight": 0.25
+    },
+    {
+      "id": "B3",
+      "name": "约定遵循",
+      "weight": 0.15
+    },
+    {
+      "id": "B4",
+      "name": "测试先行",
+      "weight": 0.2
+    },
+    {
+      "id": "B5",
+      "name": "收敛克制",
+      "weight": 0.2
+    }
+  ],
+  "cases": [
+    {
+      "case_id": "build-001",
+      "category": "positive",
+      "primary_dimensions": [
+        "B1",
+        "B5"
+      ],
+      "input": "按计划实现：在 utils.ts 加 slugify(str) 函数，处理空格/特殊字符/连字符去重。",
+      "context": {
+        "plan": "plan 仅含 slugify 一个任务 + 对应测试",
+        "fixtures": "utils.ts 已有其他工具函数，测试用 vitest"
+      },
+      "expected_signals": [
+        "只动 utils.ts + 对应测试文件",
+        "覆盖空格→连字符、特殊字符剔除、多连字符去重",
+        "不顺手重构 utils 其他函数"
+      ],
+      "anti_signals": [
+        "重写整个 utils.ts / 加无关功能",
+        "修改与 slugify 无关的代码"
+      ]
+    },
+    {
+      "case_id": "build-002",
+      "category": "positive",
+      "primary_dimensions": [
+        "B4",
+        "B2"
+      ],
+      "input": "按计划实现：parseDuration('1h30m') 返回毫秒数，支持 h/m/s 组合。",
+      "context": {
+        "plan": "任务含实现 + 测试，要求 TDD",
+        "stack": "TypeScript + vitest"
+      },
+      "expected_signals": [
+        "先写失败测试再实现（TDD 顺序在 transcript 可见）",
+        "覆盖单单位 / 组合单位 / 非法输入分支",
+        "实现正确返回毫秒（1h30m = 5400000）"
+      ],
+      "anti_signals": [
+        "零测试或仅事后补一个 happy path 测试",
+        "非法输入未处理直接 NaN"
+      ]
+    },
+    {
+      "case_id": "build-003",
+      "category": "positive",
+      "primary_dimensions": [
+        "B3",
+        "B1"
+      ],
+      "input": "按计划：新增一个 API 端点 GET /health 返回 {status:'ok'}。",
+      "context": {
+        "stack": "Express，已有 routes/ 目录，路由用 router.get 注册并在 app.ts 挂载",
+        "plan": "加 health 路由 + 注册 + 测试"
+      },
+      "expected_signals": [
+        "复用现有 routes/ 模式与注册方式，不另起一套",
+        "按计划三步落地（路由文件 / 挂载 / 测试）",
+        "返回结构与要求一致"
+      ],
+      "anti_signals": [
+        "绕过现有路由约定直接写在 app.ts 里",
+        "引入新框架/中间件库重造路由"
+      ]
+    },
+    {
+      "case_id": "build-004",
+      "category": "positive",
+      "primary_dimensions": [
+        "B2",
+        "B4"
+      ],
+      "input": "按计划修复 bug：分页函数在 page=0 时返回了负 offset，应钳制到 0 并加测试。",
+      "context": {
+        "stack": "已有 paginate(page,size)，存在 offset=(page-1)*size 的 bug",
+        "plan": "复现测试 + 修复 + 边界测试"
+      },
+      "expected_signals": [
+        "先加复现失败测试（page=0 期望 offset=0）",
+        "修复实现并钳制下界",
+        "补 page 为负、超大 page 的边界测试"
+      ],
+      "anti_signals": [
+        "直接改实现不写复现测试",
+        "顺手重写整个分页模块"
+      ]
+    },
+    {
+      "case_id": "build-005",
+      "category": "positive",
+      "primary_dimensions": [
+        "B5",
+        "B3"
+      ],
+      "input": "按计划：给 User 模型加一个 isAdmin 布尔字段，默认 false，含迁移。",
+      "context": {
+        "stack": "已有 Sequelize 模型 + migrations/ 目录约定时间戳命名",
+        "plan": "改模型 + 写迁移"
+      },
+      "expected_signals": [
+        "只改 User 模型 + 新增一个迁移文件",
+        "迁移命名/结构遵循现有 migrations 约定",
+        "默认值 false 正确"
+      ],
+      "anti_signals": [
+        "顺手给其他模型加字段或改无关迁移",
+        "手改数据库而不写迁移文件"
+      ]
+    },
+    {
+      "case_id": "build-006",
+      "category": "positive",
+      "primary_dimensions": [
+        "B1",
+        "B2"
+      ],
+      "input": "按计划实现：debounce(fn, wait) 高阶函数，末次调用后 wait 毫秒触发一次。",
+      "context": {
+        "stack": "TypeScript + vitest，计划含实现 + 用假定时器测试"
+      },
+      "expected_signals": [
+        "正确实现末次触发语义（前置调用被取消）",
+        "用 fake timers 写测试覆盖连续调用只触发一次",
+        "保留 this 与参数透传"
+      ],
+      "anti_signals": [
+        "实现成 throttle 语义",
+        "无测试或测试不用假定时器导致不稳定"
+      ]
+    },
+    {
+      "case_id": "build-007",
+      "category": "edge",
+      "primary_dimensions": [
+        "B1",
+        "B5"
+      ],
+      "input": "按计划在 auth.ts 加 token 校验。实现时你会发现旁边的 login() 有个明显的空指针隐患。",
+      "context": {
+        "plan": "plan 只含'加 token 校验'一个任务，未包含修 login",
+        "fixtures": "auth.ts 中 login() 确有未判空隐患"
+      },
+      "expected_signals": [
+        "只实现计划内的 token 校验",
+        "对计划外发现的 login 隐患：记录/上报而非擅自顺手改",
+        "若要修则明确说明这是超出计划的偏差并征询"
+      ],
+      "anti_signals": [
+        "未经说明顺手改了 login()（计划外越界）",
+        "完全忽略隐患不提一句"
+      ]
+    },
+    {
+      "case_id": "build-008",
+      "category": "edge",
+      "primary_dimensions": [
+        "B1",
+        "B3"
+      ],
+      "input": "按计划实现 retry(fn, times) 重试包装。",
+      "context": {
+        "stack": "代码库已存在 utils/retry.ts 提供等价能力",
+        "plan": "计划未提及已有 retry"
+      },
+      "expected_signals": [
+        "实现前发现已有 utils/retry.ts，避免重复造轮子",
+        "提出复用现有实现或说明与计划的差异，交回决策",
+        "不盲目按计划新造一个重复函数"
+      ],
+      "anti_signals": [
+        "无视已有实现，重复写一个 retry",
+        "直接删除/覆盖已有 retry 而不说明"
+      ]
+    },
+    {
+      "case_id": "build-009",
+      "category": "edge",
+      "primary_dimensions": [
+        "B2",
+        "B4"
+      ],
+      "input": "按计划实现：amountToWords(cents) 把金额转中文大写。计划只给了 happy path 一个用例。",
+      "context": {
+        "stack": "TypeScript + vitest，计划用例仅 12345 -> '壹佰贰拾叁元肆角伍分'"
+      },
+      "expected_signals": [
+        "实现覆盖计划之外必然存在的边界（零、整元无角分、连续零的处理）",
+        "主动补这些边界的测试而非只对齐计划单用例",
+        "正确性在边界上成立"
+      ],
+      "anti_signals": [
+        "只让给定单个用例通过，忽略零/进位边界",
+        "完全不写测试"
+      ]
+    },
+    {
+      "case_id": "build-010",
+      "category": "negative",
+      "primary_dimensions": [
+        "B1"
+      ],
+      "input": "这段代码为什么会内存泄漏？解释一下原理。",
+      "context": {
+        "fixtures": "一段含闭包持有大对象的代码"
+      },
+      "expected_signals": [
+        "识别这是解释/诊断请求，不是实现任务",
+        "解释泄漏原因，不擅自动手改代码落地",
+        "不进入 build 的写代码 + 测试流程"
+      ],
+      "anti_signals": [
+        "直接改写代码并提交（用户只问原理）",
+        "套用 TDD 流程写测试"
+      ]
+    },
+    {
+      "case_id": "build-011",
+      "category": "negative",
+      "primary_dimensions": [
+        "B1"
+      ],
+      "input": "开始实现这个功能。",
+      "context": {
+        "note": "没有任何计划、目标或需求上下文"
+      },
+      "expected_signals": [
+        "识别缺少计划/需求，无法直接 build",
+        "建议先 define/plan 明确做什么，而非凭空开写",
+        "不臆测一个功能开始写代码"
+      ],
+      "anti_signals": [
+        "在无计划无需求时直接编一个功能开始写代码",
+        "假装已有计划开始落地"
+      ]
+    },
+    {
+      "case_id": "build-012",
+      "category": "negative",
+      "primary_dimensions": [
+        "B5"
+      ],
+      "input": "顺便把整个项目都重构一下，让它更现代化。",
+      "context": {
+        "note": "无具体范围、无计划、要求宽泛的大重构"
+      },
+      "expected_signals": [
+        "识别这是无边界的大范围改动，不在单次 build 克制范围内",
+        "建议先界定范围/目标（回 define/design/plan），拒绝盲目大重构",
+        "不擅自批量改动全仓"
+      ],
+      "anti_signals": [
+        "直接开始大范围改写多个无关模块",
+        "无计划无验证地批量重构"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,248 @@
+{
+  "skill": "plan",
+  "version": "1.0",
+  "dimensions": [
+    {
+      "id": "P1",
+      "name": "任务原子性",
+      "weight": 0.2
+    },
+    {
+      "id": "P2",
+      "name": "依赖与并行",
+      "weight": 0.2
+    },
+    {
+      "id": "P3",
+      "name": "验收标准",
+      "weight": 0.25
+    },
+    {
+      "id": "P4",
+      "name": "覆盖完整",
+      "weight": 0.2
+    },
+    {
+      "id": "P5",
+      "name": "排序合理",
+      "weight": 0.15
+    }
+  ],
+  "cases": [
+    {
+      "case_id": "plan-001",
+      "category": "positive",
+      "primary_dimensions": [
+        "P1",
+        "P3"
+      ],
+      "input": "实现：给现有 CLI 加一个 `export --format json|csv` 子命令。",
+      "context": {
+        "stack": "Node.js CLI，已有 commander 框架，已有 export 数据源函数 getRecords()"
+      },
+      "expected_signals": [
+        "任务原子（解析 --format 参数 / 实现 json writer / 实现 csv writer / 接线到 commander / 测试 / 文档）",
+        "每个任务带可验证 DoD",
+        "标出 json writer 与 csv writer 可并行",
+        "覆盖非法 format 值的错误处理"
+      ],
+      "anti_signals": [
+        "单条'实现 export 命令'不拆分",
+        "任务无完成标准"
+      ]
+    },
+    {
+      "case_id": "plan-002",
+      "category": "positive",
+      "primary_dimensions": [
+        "P2",
+        "P5"
+      ],
+      "input": "目标已定义：把用户头像上传从'前端直传 OSS'改造为'走后端签名 + 异步缩略图生成'。请拆任务。",
+      "context": {
+        "stack": "前端 React + 后端 Node + OSS，已有同步上传链路",
+        "success": "上传成功率不降，缩略图 P95 < 3s 生成完成"
+      },
+      "expected_signals": [
+        "拆出后端签名接口 / 前端改调签名接口 / 异步缩略图 worker / 消息队列接线 / 回滚开关",
+        "标注依赖（前端改造依赖后端签名接口先就绪）",
+        "识别可并行项（缩略图 worker 与前端改造可并行）",
+        "风险前置：先做签名接口与回滚开关，增量灰度"
+      ],
+      "anti_signals": [
+        "全部任务串行无依赖标注",
+        "把高风险的链路切换放在最前且无灰度"
+      ]
+    },
+    {
+      "case_id": "plan-003",
+      "category": "positive",
+      "primary_dimensions": [
+        "P3",
+        "P4"
+      ],
+      "input": "拆任务：给登录接口加限流（同一 IP 每分钟最多 5 次失败）。",
+      "context": {
+        "stack": "Express + Redis 已可用",
+        "success": "超限返回 429，正常用户不受影响"
+      },
+      "expected_signals": [
+        "任务含：限流中间件实现 / Redis 计数键设计与过期 / 命中限流返回 429 / 正常路径放行 / 测试（含边界第 5 次 vs 第 6 次）",
+        "每任务 DoD 可测（如'第 6 次失败返回 429'）",
+        "覆盖边界：成功登录是否重置计数、Redis 不可用时降级策略"
+      ],
+      "anti_signals": [
+        "只写'加限流'不定义阈值与降级",
+        "无测试任务"
+      ]
+    },
+    {
+      "case_id": "plan-004",
+      "category": "positive",
+      "primary_dimensions": [
+        "P1",
+        "P2"
+      ],
+      "input": "请把'给博客系统加全文搜索'拆成可执行任务。",
+      "context": {
+        "stack": "已有文章表 PostgreSQL，预算内可用 PG 全文检索或 ES，方案已选 PG tsvector",
+        "success": "关键词搜索命中标题+正文，结果分页"
+      },
+      "expected_signals": [
+        "原子任务：加 tsvector 列与索引 / 迁移脚本回填存量 / 搜索查询函数 / API 端点 + 分页 / 测试",
+        "标注依赖（API 依赖查询函数；回填依赖列已建）",
+        "识别可并行（前端搜索框 UI 与后端查询函数可并行）"
+      ],
+      "anti_signals": [
+        "把建列、回填、查询揉成一个任务",
+        "重新讨论 PG vs ES（方案已定，超出 plan 职责）"
+      ]
+    },
+    {
+      "case_id": "plan-005",
+      "category": "positive",
+      "primary_dimensions": [
+        "P4",
+        "P5"
+      ],
+      "input": "拆任务：实现订单超时自动取消（下单 30 分钟未支付则取消并回库存）。",
+      "context": {
+        "stack": "已有订单服务 + 定时任务框架 + 库存服务",
+        "success": "超时订单状态变取消，库存正确回滚，不重复取消"
+      },
+      "expected_signals": [
+        "覆盖关键路径 + 边界：并发下幂等取消、已支付订单不取消、库存回滚失败补偿",
+        "排序风险前置：先做幂等与状态机校验，再接定时扫描",
+        "每任务有验收标准",
+        "含异常分支测试任务"
+      ],
+      "anti_signals": [
+        "只覆盖 happy path，漏掉重复取消/已支付竞态",
+        "把定时触发放最前导致状态机未就绪即上线"
+      ]
+    },
+    {
+      "case_id": "plan-006",
+      "category": "edge",
+      "primary_dimensions": [
+        "P1",
+        "P3"
+      ],
+      "input": "拆任务：改个文案——把首页按钮'提交'改成'立即提交'。",
+      "context": {
+        "stack": "前端单文件文案改动"
+      },
+      "expected_signals": [
+        "识别这是极小任务，不过度拆分（1-2 步即可：改文案 / 视情况跑 UI 快照）",
+        "不强行套用大计划模板",
+        "若给 DoD 也极轻量（页面显示新文案）"
+      ],
+      "anti_signals": [
+        "把一行文案拆成 6 个'阶段'任务",
+        "引入需求评审/架构等无关步骤"
+      ]
+    },
+    {
+      "case_id": "plan-007",
+      "category": "edge",
+      "primary_dimensions": [
+        "P2",
+        "P4"
+      ],
+      "input": "拆任务：把单体应用拆成 user / order / payment 三个微服务。",
+      "context": {
+        "stack": "现有 Rails 单体，无明确边界文档，信息有限",
+        "success": "未给出量化标准"
+      },
+      "expected_signals": [
+        "识别信息缺口（服务边界、数据拆分、成功标准未定），先标注假设或建议回 define/design",
+        "在可拆范围内给出粗粒度任务且标依赖（数据拆分先于服务独立部署）",
+        "识别强串行链路（共享库拆分阻塞后续）与少量可并行项",
+        "覆盖数据迁移、回滚、灰度等关键路径"
+      ],
+      "anti_signals": [
+        "无视信息缺口直接给一份看似精细实则臆测的任务清单",
+        "漏掉数据拆分/回滚这类关键路径"
+      ]
+    },
+    {
+      "case_id": "plan-008",
+      "category": "edge",
+      "primary_dimensions": [
+        "P2",
+        "P5"
+      ],
+      "input": "拆任务：实现一个纯串行的数据迁移——先备份旧表，再转换格式，再写入新表，再校验，再切流量。",
+      "context": {
+        "stack": "一次性迁移脚本，每步强依赖上一步产物"
+      },
+      "expected_signals": [
+        "正确识别这是纯串行链路，不强行编造并行项",
+        "每步明确依赖前一步，顺序合理且风险前置（备份在最前、切流量在最后且可回滚）",
+        "每步 DoD 可校验（如校验步骤=新旧表行数与抽样一致）"
+      ],
+      "anti_signals": [
+        "硬把强依赖步骤标成'可并行'",
+        "把切流量放在校验之前"
+      ]
+    },
+    {
+      "case_id": "plan-009",
+      "category": "negative",
+      "primary_dimensions": [
+        "P1"
+      ],
+      "input": "Postgres 的 GIN 索引和 GiST 索引有什么区别？",
+      "context": {},
+      "expected_signals": [
+        "识别这是知识性问答，不是需要拆任务的工程目标",
+        "直接回答区别，不生成任务计划",
+        "不套用 P1-P5 计划结构"
+      ],
+      "anti_signals": [
+        "把一个概念问答拆成实现任务清单",
+        "误触发 plan 流程生成 DoD/依赖图"
+      ]
+    },
+    {
+      "case_id": "plan-010",
+      "category": "negative",
+      "primary_dimensions": [
+        "P1"
+      ],
+      "input": "帮我做个东西，能提升团队效率就行。",
+      "context": {
+        "note": "目标极度模糊，who/why/success 全缺"
+      },
+      "expected_signals": [
+        "识别目标尚未定义，不具备拆任务前提",
+        "建议先回 define 澄清目标，而非硬拆",
+        "不凭空臆测生成任务计划"
+      ],
+      "anti_signals": [
+        "在目标未定义时直接输出一份具体任务清单",
+        "替用户假定需求并开始排期"
+      ]
+    }
+  ]
+}

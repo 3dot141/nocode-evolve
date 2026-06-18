@@ -1,0 +1,227 @@
+[
+  {
+    "case_id": "devflow-001",
+    "category": "positive",
+    "primary_dimensions": [
+      "DF1",
+      "DF5"
+    ],
+    "input": "我已经写完代码了，接下来该干嘛？",
+    "context": "已有未测试的实现，无测试无 review。",
+    "expected_signals": [
+      "判定阶段=Build 完成、应进 Verify",
+      "建议 verify→review，给备选",
+      "不替用户去跑测试/改代码"
+    ],
+    "anti_signals": [
+      "判成「已完成」",
+      "直接动手执行（自己跑测试/改代码）"
+    ]
+  },
+  {
+    "case_id": "devflow-002",
+    "category": "positive",
+    "primary_dimensions": [
+      "DF1",
+      "DF3"
+    ],
+    "input": "老板说下周要给客户演示一个新功能，我现在啥都还没动，这事儿该怎么推进？",
+    "context": "全新功能，无需求文档、无设计、无代码。任务复杂度中高。",
+    "expected_signals": [
+      "判定阶段=最前端（尚未 Define）",
+      "建议先 Define 澄清 who/why/success，再 Design",
+      "给出阶段全景或下一两步备选"
+    ],
+    "anti_signals": [
+      "跳过 Define 直接建议写代码",
+      "替用户去澄清需求/写设计文档"
+    ]
+  },
+  {
+    "case_id": "devflow-003",
+    "category": "positive",
+    "primary_dimensions": [
+      "DF2",
+      "DF3"
+    ],
+    "input": "需求和设计都定了，是个跨 5 个文件的重构，怎么往下走？",
+    "context": "Define + Design 已完成产物在手；改动跨多文件，有返工风险。",
+    "expected_signals": [
+      "判定阶段=应进 Plan（拆任务）",
+      "路由=Standard 或 Full（非 Mini）",
+      "建议先 plan 拆原子任务+标依赖，再 Build"
+    ],
+    "anti_signals": [
+      "判成应直接 Build 不经 Plan",
+      "路由成 Mini"
+    ]
+  },
+  {
+    "case_id": "devflow-004",
+    "category": "positive",
+    "primary_dimensions": [
+      "DF3",
+      "DF4"
+    ],
+    "input": "计划写好了，10 个任务，我想快点开始，先做哪个？",
+    "context": "plan 产物含 10 个任务，部分有依赖部分可并行。",
+    "expected_signals": [
+      "判定阶段=进入 Build",
+      "建议从无依赖/风险前置的任务起手",
+      "给主建议+备选+把顺序决定权交还用户"
+    ],
+    "anti_signals": [
+      "无视依赖随便指一个",
+      "替用户直接开始写第一个任务的代码"
+    ]
+  },
+  {
+    "case_id": "devflow-005",
+    "category": "positive",
+    "primary_dimensions": [
+      "DF1",
+      "DF2"
+    ],
+    "input": "线上报错，用户登录偶发 500，我得赶紧修。",
+    "context": "生产 bug，需要定位+修复，时间紧。",
+    "expected_signals": [
+      "路由=Fix 场景（非全流程）",
+      "判定阶段=先 Verify/复现+定位 → 修 → 验证",
+      "建议系统化 debug 而非乱改"
+    ],
+    "anti_signals": [
+      "给登录功能套完整 Define→Design→Plan 全流程",
+      "直接替用户改代码"
+    ]
+  },
+  {
+    "case_id": "devflow-006",
+    "category": "positive",
+    "primary_dimensions": [
+      "DF1",
+      "DF4"
+    ],
+    "input": "功能做完测过了，review 也过了，现在呢？",
+    "context": "Build/Verify/Review 三阶段均已完成，在 feature 分支。",
+    "expected_signals": [
+      "判定阶段=收尾（finishing branch）",
+      "建议 commit / merge / PR 备选",
+      "把集成方式选择交还用户"
+    ],
+    "anti_signals": [
+      "判成还要回去写代码",
+      "替用户直接 merge/push"
+    ]
+  },
+  {
+    "case_id": "devflow-007",
+    "category": "edge",
+    "primary_dimensions": [
+      "DF1",
+      "DF3"
+    ],
+    "input": "我也不知道做到哪了，反正代码改了一半，测试有些过有些没过，需求好像又变了。",
+    "context": "状态混乱：实现部分完成、测试部分失败、需求中途变更。跨阶段衔接模糊。",
+    "expected_signals": [
+      "先收敛现状（盘点已完成/进行中/阻塞）再判阶段",
+      "识别需求变更需回 Define/Design 重新对齐",
+      "给出优先级化的下一步（先稳住需求再继续 Build）"
+    ],
+    "anti_signals": [
+      "强行套一个阶段不顾混乱现状",
+      "无视需求变更直接建议继续写代码"
+    ]
+  },
+  {
+    "case_id": "devflow-008",
+    "category": "edge",
+    "primary_dimensions": [
+      "DF2",
+      "DF4"
+    ],
+    "input": "就改个文案错别字，要走你那套流程吗？",
+    "context": "极轻量单步改动，临界于 Mini 场景。",
+    "expected_signals": [
+      "路由=Mini（不套全流程）",
+      "建议直接改+最小验证即可",
+      "明确告知此类任务不必启动重流程"
+    ],
+    "anti_signals": [
+      "强推 Define→Design→Plan→Build→Verify→Review 全流程",
+      "判成需要完整领航"
+    ]
+  },
+  {
+    "case_id": "devflow-009",
+    "category": "edge",
+    "primary_dimensions": [
+      "DF1",
+      "DF2"
+    ],
+    "input": "整个项目从零搭起来，给我领个全程。",
+    "context": "绿地大型项目，跨多模块多阶段，用户明确要「整体/全流程」。",
+    "expected_signals": [
+      "路由=Full 场景",
+      "给出 8 阶段全景路线图并指明当前在最前端",
+      "建议从 Define 起逐阶段推进，给阶段级备选"
+    ],
+    "anti_signals": [
+      "路由成 Mini/Standard 低估复杂度",
+      "一次性替用户把所有阶段都做了"
+    ]
+  },
+  {
+    "case_id": "devflow-010",
+    "category": "negative",
+    "primary_dimensions": [
+      "DF2",
+      "DF5"
+    ],
+    "input": "JavaScript 里 == 和 === 有啥区别？",
+    "context": "纯知识问答，单步，不涉及工程流程。",
+    "expected_signals": [
+      "直接回答问题，不启动 devflow 领航",
+      "不强行套阶段/场景路由"
+    ],
+    "anti_signals": [
+      "对纯问答启动 8 阶段流程领航",
+      "追问 who/why/success 之类流程化问题"
+    ]
+  },
+  {
+    "case_id": "devflow-011",
+    "category": "negative",
+    "primary_dimensions": [
+      "DF5",
+      "DF3"
+    ],
+    "input": "把这个变量名 cnt 改成 count。",
+    "context": "明确的单步执行指令，用户要的是直接动手，不是领航。",
+    "expected_signals": [
+      "识别为单步执行任务，不启动流程领航",
+      "直接执行或给出最直接路径"
+    ],
+    "anti_signals": [
+      "对单步任务套流程/给阶段建议",
+      "反问一堆流程问题拖慢"
+    ]
+  },
+  {
+    "case_id": "devflow-012",
+    "category": "negative",
+    "primary_dimensions": [
+      "DF1",
+      "DF5"
+    ],
+    "input": "帮我看看这段报错日志是什么意思。",
+    "context": "纯解读/诊断请求，无明确工程推进诉求；基线对照：无 skill 也能答。",
+    "expected_signals": [
+      "直接解读日志，给出含义",
+      "不误判为某工程阶段而启动领航"
+    ],
+    "anti_signals": [
+      "把日志解读包装成 Verify/Fix 阶段领航",
+      "替用户去改代码修 bug"
+    ]
+  }
+]

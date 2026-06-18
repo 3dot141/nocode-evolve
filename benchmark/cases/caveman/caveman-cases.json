@@ -1,0 +1,115 @@
+[
+  {
+    "case_id": "caveman-001",
+    "category": "positive",
+    "primary_dimensions": [
+      "CV1",
+      "CV2"
+    ],
+    "input": "caveman。解释一下什么是闭包。",
+    "context": "首次触发精简模式 + 一个知识问题。",
+    "expected_signals": [
+      "极简（如 1-3 句/要点）",
+      "仍准确说明闭包=函数+其捕获的词法环境",
+      "确认已进入精简模式"
+    ],
+    "anti_signals": [
+      "长篇大论",
+      "精简到错误或不可懂"
+    ]
+  },
+  {
+    "case_id": "caveman-002",
+    "category": "positive",
+    "primary_dimensions": [
+      "CV3",
+      "CV1"
+    ],
+    "input": "[turn1] 精简模式。[turn2] Python list 和 tuple 区别？[turn3] 那 set 呢？",
+    "context": "多轮：第 1 轮触发，第 2、3 轮为后续提问，用户未说取消。",
+    "expected_signals": [
+      "三轮均保持极简风格",
+      "第 2、3 轮无需重新触发即维持精简",
+      "list/tuple/set 关键差异点准确（可变性/有序/去重）"
+    ],
+    "anti_signals": [
+      "第 2 或 3 轮退回正常长篇模式",
+      "丢失核心区别信息"
+    ]
+  },
+  {
+    "case_id": "caveman-003",
+    "category": "positive",
+    "primary_dimensions": [
+      "CV2",
+      "CV1"
+    ],
+    "input": "省 token。这段代码 for i in range(len(a)): print(a[i]) 怎么写更 pythonic？",
+    "context": "触发精简 + 需要给出具体可用答案。",
+    "expected_signals": [
+      "极简给出 `for x in a: print(x)`",
+      "信息无损（直接给可用代码）",
+      "不展开冗长解释"
+    ],
+    "anti_signals": [
+      "长篇讲 range/len 原理",
+      "精简到没给出实际改写"
+    ]
+  },
+  {
+    "case_id": "caveman-004",
+    "category": "edge",
+    "primary_dimensions": [
+      "CV3",
+      "CV4"
+    ],
+    "input": "[turn1] caveman。[turn2] 解释下 HTTP 状态码 401 和 403。[turn3] 好了正常模式。[turn4] 详细讲讲 OAuth2 授权码流程。",
+    "context": "多轮：触发→提问→显式取消→再提问。考退出后恢复正常详尽模式。",
+    "expected_signals": [
+      "turn2 极简（401=未认证 / 403=已认证无权限）",
+      "turn3 后退出精简模式",
+      "turn4 恢复正常详尽回复"
+    ],
+    "anti_signals": [
+      "turn3 取消后仍保持精简",
+      "turn4 仍极简不肯展开"
+    ]
+  },
+  {
+    "case_id": "caveman-005",
+    "category": "edge",
+    "primary_dimensions": [
+      "CV2",
+      "CV1"
+    ],
+    "input": "caveman。帮我梳理一下这个微服务拆分方案的利弊，涉及服务边界、数据一致性、运维成本。",
+    "context": "精简模式 + 高信息密度复杂问题，考「压得狠但不丢关键维度」。",
+    "expected_signals": [
+      "用要点/极短句覆盖三个维度（边界/一致性/运维）各自利弊",
+      "显著短于正常模式但每维度关键结论都在",
+      "不因复杂就退回长篇"
+    ],
+    "anti_signals": [
+      "为图短只答一两个维度漏掉其余",
+      "借口复杂写成长文"
+    ]
+  },
+  {
+    "case_id": "caveman-006",
+    "category": "negative",
+    "primary_dimensions": [
+      "CV4"
+    ],
+    "input": "帮我把这个函数重构得简洁一点。",
+    "context": "用户说的是「代码简洁」不是「回复精简」；未触发 caveman。基线对照：不应进入精简回复模式。",
+    "expected_signals": [
+      "正常详尽地完成重构并解释",
+      "不进入 caveman 精简回复模式",
+      "正确区分「简化代码」与「精简回复」"
+    ],
+    "anti_signals": [
+      "误把「简洁」当作 caveman 触发词进入极简模式",
+      "因误触发而省略必要的重构说明"
+    ]
+  }
+]

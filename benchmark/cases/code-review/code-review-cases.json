@@ -1,0 +1,334 @@
+{
+  "skill": "code-review",
+  "version": "1.0",
+  "dimensions": [
+    {
+      "id": "CR1",
+      "name": "正确性捕获",
+      "weight": 0.3
+    },
+    {
+      "id": "CR2",
+      "name": "误报控制",
+      "weight": 0.2
+    },
+    {
+      "id": "CR3",
+      "name": "严重度分级",
+      "weight": 0.2
+    },
+    {
+      "id": "CR4",
+      "name": "可操作性",
+      "weight": 0.15
+    },
+    {
+      "id": "CR5",
+      "name": "范围克制",
+      "weight": 0.15
+    }
+  ],
+  "cases": [
+    {
+      "case_id": "code-review-001",
+      "category": "positive",
+      "primary_dimensions": [
+        "CR1",
+        "CR2"
+      ],
+      "input": "review 这个 diff。",
+      "context": {
+        "injected": "1 个 off-by-one bug（循环 i<=arr.length）+ 1 处可简化（手写 for 累加可用 reduce）；其余代码正确",
+        "fixtures": "diff 见 fixtures/code-review/cr-001.diff"
+      },
+      "expected_signals": [
+        "命中 off-by-one 越界并标阻断",
+        "命中 reduce 简化点并标建议",
+        "不对正确代码报假问题"
+      ],
+      "anti_signals": [
+        "漏掉 off-by-one",
+        "对正确代码报误报"
+      ]
+    },
+    {
+      "case_id": "code-review-002",
+      "category": "positive",
+      "primary_dimensions": [
+        "CR1",
+        "CR3"
+      ],
+      "input": "合并前 review 一下。",
+      "context": {
+        "injected": "空指针：对可能为 null 的 user.profile 直接取 .name；另有一处 magic number。其余正确",
+        "fixtures": "fixtures/code-review/cr-002.diff"
+      },
+      "expected_signals": [
+        "命中空指针解引用并标阻断",
+        "magic number 标为建议/吹毛级",
+        "分级清晰区分阻断与建议"
+      ],
+      "anti_signals": [
+        "漏掉空指针",
+        "把 magic number 和空指针混为同级"
+      ]
+    },
+    {
+      "case_id": "code-review-003",
+      "category": "positive",
+      "primary_dimensions": [
+        "CR1",
+        "CR4"
+      ],
+      "input": "review 这段并发代码的改动。",
+      "context": {
+        "injected": "竞态：check-then-act 读余额后再扣减无锁/无事务，可超卖。其余正确",
+        "fixtures": "fixtures/code-review/cr-003.diff"
+      },
+      "expected_signals": [
+        "命中 check-then-act 竞态并标阻断",
+        "给出可操作修法（原子扣减 / 加锁 / 乐观锁版本号）",
+        "解释为何会超卖"
+      ],
+      "anti_signals": [
+        "漏掉竞态",
+        "只说'有并发问题'不给修法方向"
+      ]
+    },
+    {
+      "case_id": "code-review-004",
+      "category": "positive",
+      "primary_dimensions": [
+        "CR1",
+        "CR3"
+      ],
+      "input": "review 这个鉴权改动。",
+      "context": {
+        "injected": "安全 bug：SQL 拼接用户输入导致注入；另有日志打印明文密码。其余正确",
+        "fixtures": "fixtures/code-review/cr-004.diff"
+      },
+      "expected_signals": [
+        "命中 SQL 注入并标最高阻断级",
+        "命中明文密码日志并标阻断/安全级",
+        "给参数化查询 + 脱敏的具体修法"
+      ],
+      "anti_signals": [
+        "漏掉 SQL 注入这类高危项",
+        "把安全问题降级为吹毛"
+      ]
+    },
+    {
+      "case_id": "code-review-005",
+      "category": "positive",
+      "primary_dimensions": [
+        "CR1",
+        "CR2"
+      ],
+      "input": "review。",
+      "context": {
+        "injected": "资源泄漏：打开文件/连接后异常路径未关闭（无 try-finally / using）。其余正确",
+        "fixtures": "fixtures/code-review/cr-005.diff"
+      },
+      "expected_signals": [
+        "命中异常路径资源未释放",
+        "给出 try-finally / context manager 修法",
+        "不误报正常 happy path 的关闭逻辑"
+      ],
+      "anti_signals": [
+        "漏掉异常路径泄漏",
+        "对已正确关闭的分支报误报"
+      ]
+    },
+    {
+      "case_id": "code-review-006",
+      "category": "positive",
+      "primary_dimensions": [
+        "CR2",
+        "CR3"
+      ],
+      "input": "review 这个改动，主要看有没有问题。",
+      "context": {
+        "injected": "纯简化/复用类：3 处可简化（重复的 null 判断可抽函数、深嵌套可早返回、可用现有 helper）。无正确性 bug",
+        "fixtures": "fixtures/code-review/cr-006.diff"
+      },
+      "expected_signals": [
+        "识别无正确性 bug，不硬编造阻断问题",
+        "给出可简化/复用建议且标为建议级",
+        "诚实说明这是质量优化非阻断"
+      ],
+      "anti_signals": [
+        "为凑数把简化点报成阻断 bug",
+        "无中生有正确性问题"
+      ]
+    },
+    {
+      "case_id": "code-review-007",
+      "category": "positive",
+      "primary_dimensions": [
+        "CR1",
+        "CR3"
+      ],
+      "input": "合并前最后 review 一下，含多个文件。",
+      "context": {
+        "injected": "混合：1 阻断（异步未 await 导致竞态）+ 1 建议（命名误导）+ 1 吹毛（多余空行）。其余正确",
+        "fixtures": "fixtures/code-review/cr-007.diff"
+      },
+      "expected_signals": [
+        "命中漏 await 的真实 bug 并标阻断",
+        "三类问题分级正确（阻断/建议/吹毛）",
+        "聚焦高价值，吹毛项明确弱化"
+      ],
+      "anti_signals": [
+        "漏掉漏 await",
+        "把空行吹毛和竞态 bug 平级陈列"
+      ]
+    },
+    {
+      "case_id": "code-review-008",
+      "category": "edge",
+      "primary_dimensions": [
+        "CR2",
+        "CR1"
+      ],
+      "input": "review 这个 diff，看看能不能合。",
+      "context": {
+        "injected": "无 bug 对照组：代码完全正确，无可简化点",
+        "fixtures": "fixtures/code-review/cr-008.diff"
+      },
+      "expected_signals": [
+        "诚实给出'未发现阻断问题，可合并'",
+        "不为了显得勤奋而编造问题",
+        "至多给极轻量可选建议或直接放行"
+      ],
+      "anti_signals": [
+        "无中生有报 bug 以示存在感",
+        "把正确写法说成问题"
+      ]
+    },
+    {
+      "case_id": "code-review-009",
+      "category": "edge",
+      "primary_dimensions": [
+        "CR1",
+        "CR5"
+      ],
+      "input": "review 这个超大 diff（800 行，跨 12 文件）。",
+      "context": {
+        "injected": "在大 diff 中藏 2 个真实 bug（一个边角文件的整数溢出 + 一个公共函数的边界错误）",
+        "fixtures": "fixtures/code-review/cr-009.diff"
+      },
+      "expected_signals": [
+        "在大 diff 中仍捕获两个真实 bug 含边角项",
+        "保持聚焦 diff 改动行，不顺带审未改的旧代码",
+        "对低价值噪声做取舍，突出高价值发现"
+      ],
+      "anti_signals": [
+        "因 diff 大而漏掉边角文件的 bug",
+        "跑去审 diff 之外的全仓代码"
+      ]
+    },
+    {
+      "case_id": "code-review-010",
+      "category": "edge",
+      "primary_dimensions": [
+        "CR1",
+        "CR2"
+      ],
+      "input": "review 一下。这是个看起来很可疑但其实正确的写法。",
+      "context": {
+        "injected": "迷惑项：位运算/短路求值等看似有 bug 实则正确的写法 + 1 个真实的 use-after-free",
+        "fixtures": "fixtures/code-review/cr-010.diff"
+      },
+      "expected_signals": [
+        "不被迷惑写法骗到报误报（验证后判其正确）",
+        "命中真实的 use-after-free",
+        "对存疑项标注'需确认'而非武断定性"
+      ],
+      "anti_signals": [
+        "把正确的迷惑写法报成 bug（误报）",
+        "漏掉真实 use-after-free"
+      ]
+    },
+    {
+      "case_id": "code-review-011",
+      "category": "edge",
+      "primary_dimensions": [
+        "CR5",
+        "CR4"
+      ],
+      "input": "review 这个改动，但我只在意我改的这两行。",
+      "context": {
+        "injected": "diff 仅 2 行改动且正确；周围未改代码存在历史遗留问题",
+        "fixtures": "fixtures/code-review/cr-011.diff"
+      },
+      "expected_signals": [
+        "严格聚焦改动的两行",
+        "可以一句话提示周边历史问题但明确标为范围外、不展开",
+        "对改动本身给出明确放行/建议"
+      ],
+      "anti_signals": [
+        "大篇幅审改动外的历史代码",
+        "把范围外问题当本次阻断项"
+      ]
+    },
+    {
+      "case_id": "code-review-012",
+      "category": "negative",
+      "primary_dimensions": [
+        "CR5"
+      ],
+      "input": "帮我写一个快速排序。",
+      "context": {},
+      "expected_signals": [
+        "识别这是写代码请求，不是 review 现有 diff",
+        "不触发评审流程对不存在的 diff 找 bug",
+        "按写代码请求正常响应（或指出无 diff 可审）"
+      ],
+      "anti_signals": [
+        "对一个尚未存在的 diff 强行套 CR1-CR5 评审",
+        "误触发 review 模式"
+      ]
+    },
+    {
+      "case_id": "code-review-013",
+      "category": "negative",
+      "primary_dimensions": [
+        "CR5"
+      ],
+      "input": "解释一下这个函数是干嘛的。",
+      "context": {
+        "fixtures": "一段正确的工具函数代码"
+      },
+      "expected_signals": [
+        "识别这是阅读理解/解释请求，不是评审",
+        "解释功能，不主动罗列 bug/建议清单",
+        "不进入分级评审流程"
+      ],
+      "anti_signals": [
+        "把解释请求转成一份 review 报告挑刺",
+        "对正确代码强行找问题"
+      ]
+    },
+    {
+      "case_id": "code-review-014",
+      "category": "negative",
+      "primary_dimensions": [
+        "CR2",
+        "CR5"
+      ],
+      "input": "这个 PR 的产品需求合理吗？应该做这个功能吗？",
+      "context": {
+        "note": "问的是产品决策，不是代码质量"
+      },
+      "expected_signals": [
+        "识别这是产品/需求层面问题，超出代码评审职责",
+        "不对代码 diff 强行做技术挑刺来回避问题",
+        "建议走需求评审/决策框架，而非 code-review"
+      ],
+      "anti_signals": [
+        "把产品问题硬转成代码 bug 列表",
+        "误以为是 code-review 任务并发散审代码"
+      ]
+    }
+  ]
+}

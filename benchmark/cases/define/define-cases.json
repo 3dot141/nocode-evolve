@@ -1,0 +1,263 @@
+[
+  {
+    "case_id": "define-001",
+    "skill": "define",
+    "category": "happy_path",
+    "input": "帮我做个数据看板",
+    "context": {
+      "note": "用户只给了一句话，无任何对象/目的/成功标准信息"
+    },
+    "expected_signals": [
+      "识别 who/why/success 三要素全部缺失并追问",
+      "判定为 Standard 或 Full 场景（非 Mini）",
+      "一次只问一个问题或用 AskUserQuestion 给选项",
+      "不给技术选型（不提 ECharts/技术栈）"
+    ],
+    "anti_signals": [
+      "直接开始写代码或选 ECharts/技术栈",
+      "判成 Mini 场景直接开干",
+      "一条消息里堆 3 个以上问题"
+    ],
+    "primary_dimensions": ["D1", "D2"],
+    "difficulty": "easy"
+  },
+  {
+    "case_id": "define-002",
+    "skill": "define",
+    "category": "happy_path",
+    "input": "给我们 CMS 加一个内容审核功能，让运营能在发布前过滤违规内容",
+    "context": {
+      "note": "已有 who（运营）和大致 why（发布前过滤违规），但 success 标准模糊，约束未知"
+    },
+    "expected_signals": [
+      "识别出 who/why 已有、success 量化标准缺失，聚焦追问成功标准与约束",
+      "不重复追问已经给出的对象与目的",
+      "产出含 Success Criteria 与 Out of Scope 的 restate",
+      "最后用 AskUserQuestion 让用户确认 restate"
+    ],
+    "anti_signals": [
+      "重复追问用户已经说明的对象（谁用）和目的",
+      "restate 缺 Out of Scope 或 Success Criteria",
+      "在确认前直接写实现方案"
+    ],
+    "primary_dimensions": ["D1", "D3"],
+    "difficulty": "medium"
+  },
+  {
+    "case_id": "define-003",
+    "skill": "define",
+    "category": "happy_path",
+    "input": "把登录页那个按钮的文案从『登陆』改成『登录』",
+    "context": {
+      "note": "典型单文件/改文案的 Mini 场景"
+    },
+    "expected_signals": [
+      "判定为 Mini 场景",
+      "输出 3 行 mini-goal（做什么 + 验收标准 + 不做什么）",
+      "不发起多轮面试式追问",
+      "用户确认后即可退出"
+    ],
+    "anti_signals": [
+      "给单行改文案任务套完整 Define→Design→Plan 全流程",
+      "追问 who/why/success 三要素",
+      "判成 Standard 或 Full"
+    ],
+    "primary_dimensions": ["D2", "D4"],
+    "difficulty": "easy"
+  },
+  {
+    "case_id": "define-004",
+    "skill": "define",
+    "category": "happy_path",
+    "input": "我想给团队做一个能自动总结每日 Slack 讨论的工具，老板要看，希望省掉手动写日报的时间",
+    "context": {
+      "note": "who（老板/团队）、why（省手动日报时间）较清晰，success 待量化，技术路径需设计"
+    },
+    "expected_signals": [
+      "识别 who/why 已基本到位，聚焦把 success 量化（如省多少时间/总结质量怎么算）",
+      "判定为 Full 场景（需要选型/设计）并说明依据",
+      "一到两轮收敛出清晰 success criteria",
+      "输出口语化、像同事对话而非 spec 腔"
+    ],
+    "anti_signals": [
+      "直接推荐用某 LLM/某 API 做技术选型",
+      "判成 Mini 或 Standard 而忽略需要设计",
+      "满纸术语黑话"
+    ],
+    "primary_dimensions": ["D2", "D5"],
+    "difficulty": "medium"
+  },
+  {
+    "case_id": "define-005",
+    "skill": "define",
+    "category": "happy_path",
+    "input": "帮我把这个 React 项目重构得更现代、更可扩展一点",
+    "context": {
+      "note": "用户用 buzzword（现代/可扩展）当目标，真实意图不明"
+    },
+    "expected_signals": [
+      "识别 buzzword 并追问『如果不需要向任何人解释，你真正想要的是什么』",
+      "把模糊目标收敛到具体可检验的痛点（如某处难维护/某操作慢）",
+      "识别 who/why 缺失并补齐",
+      "不被 buzzword 带着直接给重构方案"
+    ],
+    "anti_signals": [
+      "接受 buzzword 当目标不追问",
+      "直接给出『现代化』技术栈选型或重构方案",
+      "在 restate 确认前写重构计划"
+    ],
+    "primary_dimensions": ["D1", "D3"],
+    "difficulty": "medium"
+  },
+  {
+    "case_id": "define-006",
+    "skill": "define",
+    "category": "happy_path",
+    "input": "继续上次说的那个导出功能。我们已经聊过了：给 report 模块加 PDF 导出，给财务每月对账用，成功标准是一键导出当月报表且格式与现有 Excel 一致，不做批量导出。开始吧。",
+    "context": {
+      "note": "前序会话已充分讨论，who/why/success/out-of-scope 都已明确，置信度应 >= 95%"
+    },
+    "expected_signals": [
+      "识别置信度已 >= 95%，走快速路径跳过多轮面试",
+      "直接产出 restate（含 Success Criteria 与 Out of Scope）给用户确认",
+      "不再重复追问已经明确的要素",
+      "用 AskUserQuestion 让用户确认而非默认开干"
+    ],
+    "anti_signals": [
+      "信息已齐还发起 4-6 轮面试",
+      "把『开始吧』当作 restate 确认直接动手写代码",
+      "丢失用户已给的 Out of Scope（不做批量导出）"
+    ],
+    "primary_dimensions": ["D4", "D1"],
+    "difficulty": "medium"
+  },
+  {
+    "case_id": "define-007",
+    "skill": "define",
+    "category": "edge",
+    "input": "搭一个 SaaS 平台：要有用户聊天、文件存储、计费订阅、数据分析仪表盘，还要支持多租户和权限管理",
+    "context": {
+      "note": "信息极多但涉及多个独立子系统，属于需要先分解的大项目"
+    },
+    "expected_signals": [
+      "触发 Scope check，立即标记这是涉及多个独立子系统的大项目",
+      "建议拆成独立子项目，每个各走 Define→Design→Plan→Build",
+      "不花一堆问题去细化单个子系统",
+      "把分解结果交还用户拍板从哪个子项目开始"
+    ],
+    "anti_signals": [
+      "直接对整个平台开一份大 restate 当单任务处理",
+      "深入追问某一个子系统的细节而忽略需要先分解",
+      "直接给整体架构选型"
+    ],
+    "primary_dimensions": ["D2", "D4"],
+    "difficulty": "hard"
+  },
+  {
+    "case_id": "define-008",
+    "skill": "define",
+    "category": "edge",
+    "input": "随便整个东西出来就行，你看着办",
+    "context": {
+      "note": "用户极度委托、几乎零信息，回答可能也是『随你』"
+    },
+    "expected_signals": [
+      "不把『你看着办/随你』当确认，重新用 AskUserQuestion 提具体选项",
+      "识别 who/why/success 全缺并尝试给出带猜测的方向选项",
+      "在收敛不出目标时停下并明确说明需要用户提供最小信息",
+      "不擅自替用户决定做什么并直接开干"
+    ],
+    "anti_signals": [
+      "把『你看着办』当成授权直接动手实现",
+      "用纯开放式问题轰炸而不给选项/猜测",
+      "假装已澄清直接产出 restate"
+    ],
+    "primary_dimensions": ["D1", "D4"],
+    "difficulty": "hard"
+  },
+  {
+    "case_id": "define-009",
+    "skill": "define",
+    "category": "edge",
+    "input": "用户反馈说点击保存按钮后偶尔数据没存上，帮我看看怎么定义这个问题",
+    "context": {
+      "note": "用户报 bug，属于 Fix 场景而非常规 Define，处于 Define/Fix 档位临界"
+    },
+    "expected_signals": [
+      "判定为 Fix 场景，侧重复现定义",
+      "追问/梳理重现步骤 + 预期 vs 实际 + 影响范围",
+      "不套用标准 Define 的 who/why/success 全套面试",
+      "把可由代码自答的事实（如保存逻辑在哪）留给自查而非问用户"
+    ],
+    "anti_signals": [
+      "判成 Standard/Full 并走完整需求面试",
+      "直接动手改代码修 bug（越过 Define）",
+      "忽略复现步骤只问业务目标"
+    ],
+    "primary_dimensions": ["D2", "D3"],
+    "difficulty": "hard"
+  },
+  {
+    "case_id": "define-010",
+    "skill": "define",
+    "category": "negative",
+    "input": "现在几点了？顺便问下 Python 的列表推导式怎么写",
+    "context": {
+      "note": "纯问答/查询，不是工程任务，不该触发 define 的需求澄清流程"
+    },
+    "expected_signals": [
+      "直接回答问题，不启动 define 需求澄清流程",
+      "不追问 who/why/success",
+      "不做场景分类（Mini/Standard/Full）"
+    ],
+    "anti_signals": [
+      "对一个知识问答发起需求面试",
+      "输出 restate / 场景分类",
+      "用 AskUserQuestion 澄清『你想要什么』"
+    ],
+    "primary_dimensions": ["D2"],
+    "difficulty": "easy"
+  },
+  {
+    "case_id": "define-011",
+    "skill": "define",
+    "category": "negative",
+    "input": "把这个变量名 tmp 改成 userCount",
+    "context": {
+      "note": "极小的单步改名任务，不该套需求澄清面试（过度触发对照）"
+    },
+    "expected_signals": [
+      "识别为琐碎单步任务，不发起多要素需求面试",
+      "至多按 Mini 输出极简 mini-goal 或直接确认动手",
+      "不追问 who/why/success"
+    ],
+    "anti_signals": [
+      "对改一个变量名发起 who/why/success 面试",
+      "判成 Standard/Full 套全流程",
+      "产出冗长 restate"
+    ],
+    "primary_dimensions": ["D2", "D3"],
+    "difficulty": "easy"
+  },
+  {
+    "case_id": "define-012",
+    "skill": "define",
+    "category": "negative",
+    "input": "需求已经定义清楚了，restate 也确认过了。现在帮我设计一下技术方案，对比几个备选。",
+    "context": {
+      "note": "Define 已完成，用户明确要进入 Design，define 不应抢做也不应做方案选型"
+    },
+    "expected_signals": [
+      "识别 Define 已完成，不重新发起需求澄清",
+      "不在 Define 阶段做方案选型/技术对比（那是 Design 的事）",
+      "把控制权交给 Design 阶段（路由/提示进入 Design）"
+    ],
+    "anti_signals": [
+      "重新跑一遍 who/why/success 面试",
+      "在 define 里直接做技术方案选型与备选对比",
+      "重复产出已确认过的 restate"
+    ],
+    "primary_dimensions": ["D2", "D1"],
+    "difficulty": "medium"
+  }
+]
