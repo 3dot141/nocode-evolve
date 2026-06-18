@@ -33,6 +33,17 @@ Define 阶段的标准化产出格式。用户确认此 restate 后 Define 才�
 - Ask First: [需要用户确认才能做的事]
 - Never: [绝对不做的事]
 
+**Quality Bar** (怎样算高质量):
+- [ ] [可检验的质量条件 1]
+- [ ] [可检验的质量条件 2]
+- [ ] [可检验的质量条件 3]
+
+**Collaboration Pact** (如何协作):
+- Agent 做: [agent 负责什么]
+- 用户提供: [需要用户给什么信息/反馈]
+- 检查点: [中间在哪些节点同步]
+- 协作指令: [穷尽探索 / 信心验证循环 / 无]
+
 **Scenario**: Full / Standard / Fix / Mini
 ```
 
