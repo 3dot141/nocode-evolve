@@ -32,21 +32,7 @@ Define 返回后，拿到确认的 restate + 场景分类，进 Step 2。
 
 ### Step 3: TaskCreate
 
-为当前场景的阶段各建一条 task。每条 task 的 description 包含三要素：
-- `调用: <skill/rule>`
-- `进入前 Read: <rule 文件>`
-- `Gate: <过关条件>`
-
-```
-示例 (Standard 场景):
-TaskCreate(subject: "阶段 1: Define", description: "调用: nocode-evolve:define / Gate: 问题边界收敛+场景分类，用户确认")
-TaskCreate(subject: "阶段 2: Env", description: "调用: superpowers:using-git-worktrees / Read: rule-git-worktree / Gate: worktree 已建")
-TaskCreate(subject: "阶段 3: Plan", description: "调用: nocode-evolve:plan / Gate: 计划已产出 + 所有 task ≤ M + 用户确认")
-TaskCreate(subject: "阶段 4: Build", description: "调用: nocode-evolve:build / Gate: 所有 task 完成 + 测试通过 + build 通过")
-TaskCreate(subject: "阶段 5: Verify", description: "调用: nocode-evolve:verify / Gate: 验收标准逐条通过 + 证据收集")
-TaskCreate(subject: "阶段 6: Review", description: "调用: nocode-evolve:code-review / Read: rule-codex-review / Gate: Critical 全 fix + 用户 approve")
-TaskCreate(subject: "阶段 7: Land", description: "调用: rule-finishing-branch / Read: rule-finishing-branch / Gate: PR merged + worktree 清理")
-```
+为当前场景的阶段各建一条 task。每条 task 的 description 含三要素：`调用: <skill/rule>` / `进入前 Read: <rule 文件>` / `Gate: <过关条件>`。各阶段的 调用/Read/Gate 取值见下方「8 阶段总览」表，逐行抄进对应 TaskCreate。
 
 ### Step 4: 推进阶段
 
@@ -120,9 +106,9 @@ Define → Design → Plan 保持在**同一个不 compact 的上下文窗口**�
 
 | 能力 | 调用 | 触发时机 | 优先级（冲突时） |
 |---|---|---|---|
-| **Debug** | `references/debug-protocol.md`。**第一步是建 tight 反馈回路，不是猜根因** | Build/Verify 遇阻（测试失败/卡住） | bug/失败 → 优先 Debug |
+| **Debug** | `references/debug-protocol.md` | Build/Verify 遇阻（测试失败/卡住） | bug/失败 → 优先 Debug |
 | **Red-Blue-Deep** | `nocode-evolve:red-blue-deep` | 决策分歧（选 A 还是 B？） | 决策前 → 优先 Red-Blue |
-| **Doubt-Driven** | spawn 独立 reviewer（偏向证伪不是批准） | 非平凡决策（跨模块/不可逆/安全敏感） | 决策后验证 → 优先 Doubt。**Doubt theater 检测**：连续 2+ 轮有发现但 0 条 actionable = 在验证不是在怀疑 |
+| **Doubt-Driven** | spawn 独立 reviewer（偏向证伪不是批准） | 非平凡决策（跨模块/不可逆/安全敏感） | 决策后验证 → 优先 Doubt |
 | **Context Engineering** | 主动建议 `/distill` + 新会话 | 长会话（多轮工具调用/跨子任务） | 上下文风险 → 建议收尾 |
 | **Git Freshness** | `rule-git-freshness` | 设计/搜索/多文件 Read 前 | 自动触发 |
 | **Git Inspection** | `rule-git-inspection` | ≥2 git 只读命令 | 自动合并 |

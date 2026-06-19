@@ -98,10 +98,7 @@ description: Use before merging any change, after completing a feature, or when 
 
 ### 7e. Feedback Discipline（收到外部 review 时）
 
-- **禁语**：不说 "Great catch" / "Absolutely right"——performative 同意掩盖未验证
-- **unclear → 全部停**：看不懂就停下问清楚，不做部分实现
-- **YAGNI**：reviewer 说"加 X 以备将来" → grep 看现在用没用，没用就 push-back
-- **push-back**：技术正确 > 社交舒适
+禁语 / unclear→全停 / YAGNI grep / push-back 协议 → 见 `references/feedback-discipline.md`，不在此重述。
 
 **新依赖 5 问**（review 发现新增 import/package）：标准库能否解决？包多大？维护活跃？已知 CVE？License 兼容？答不全 = Warning。
 
@@ -110,14 +107,6 @@ description: Use before merging any change, after completing a feature, or when 
 - [ ] 所有 Critical 已 fix
 - [ ] 用户对 Warning 逐条显式拍板
 - [ ] fix 改了代码 → 已回 Build → Verify → 再 Review（回流规则）
-
-## 核心规则（when X → do Y）
-
-- **When** 你觉得"自己写的不用 review" → 自评盲区最大，调 codex 或 subagent
-- **When** 你想把 Critical 降级成 Warning → **不可 override**。没有"这次特殊"
-- **When** 你要删代码但不知道它为什么存在 → **先 git blame**。不懂就别删
-- **When** reviewer 的建议你觉得不对 → 先重读自查，仍确信 → push-back 并给证据
-- **When** fix 改了代码 → **必须回 Build → Verify → 再 Review**
 
 ## Common Rationalizations
 

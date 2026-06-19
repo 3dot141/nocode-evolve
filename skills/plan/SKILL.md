@@ -52,13 +52,11 @@ description: Use when you have defined goals and need to break work into tasks. 
 
 优先**端到端可交付**，不按层横切。每个切片做完有能跑、能 demo、能回滚的东西。
 
-**Risk-first**：最不确定的切片先做。可能不可行的路径早点撞墙。
-
 **Slicing 形态**（怎么切）：
 - **Vertical**（默认）：端到端穿透所有层，做完可验证
 - **Contract-First**：前后端并行时先定 API 契约 + mock，各自独立开发
 
-**排序原则**（先做哪个 slice）：**Risk-first**——最不确定的 slice 排最前。
+**排序原则**：**Risk-first**——最不确定的 slice 排最前，可能不可行的路径早点撞墙。
 
 测试目标分配到对应 slice——每个 slice 知道自己要验证什么。
 
@@ -119,9 +117,6 @@ Subagent → `Skill(superpowers:subagent-driven-development)`。当前会话 →
 
 ## 核心规则（when X → do Y）
 
-- **When** 某步写不出真实代码只能写"类似这样" → **回 Step 1 继续读**，写不出 = 没想清楚。占位符藏的是设计决策
-- **When** 你按层横切（"先建所有 model，再建所有 service"） → 改用 **tracer bullet**——每个 slice 端到端穿透所有层，做完可验证
-- **When** 你想把简单的排前面、难的留后面 → **risk-first**：最不确定的先撞墙，不确定性留到投入最大时才暴露更贵
 - **When** 某 task 涉及 > 5 文件 → **必须再拆**。L 任务把多个设计决策压成一句话
 - **When** task 标题里出现 "and" → 大概率该拆成两个 task
 

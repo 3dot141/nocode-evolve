@@ -67,13 +67,9 @@ for each task in plan:
 
 **回归测试有效性验证**：写完回归测试后走一遍完整红绿循环证明它真能抓 bug——写 → 跑(过) → 还原 fix → 跑(必须红) → 恢复 → 跑(过)。"写了个回归测试"不算，亲眼看它在没有 fix 时失败才算。
 
-测试层级默认 unit，涉及外部依赖才升 integration，端到端才升 e2e。
+测试层级、DAMP/DRY、替身偏好序（real > fake > stub > mock）、测行为不测交互 → 见 `references/testing-guide.md` + `references/test-pyramid-guide.md`，不在此重述。
 
-**测试原则**：
-- **DAMP over DRY**：测试代码宁可重复也要可读。DRY 的测试共享 setup 一改全断、出错时看不懂哪个在测什么
-- **测试替身偏好序**：real > fake > stub > mock。能用真实对象就用，mock 是最后手段
-- **测试行为不测交互**：assert 输出状态，不 assert 调用了哪个内部方法
-- **测试难写 = 设计难**：不知怎么测 → 先写期望 API / 先写断言；测试太复杂 → 设计太复杂，简化接口；必须 mock 一切 → 耦合太重，用依赖注入；setup 巨大 → 抽 helper 或简化设计
+**测试难写 = 设计难**（build 独有的设计反馈）：不知怎么测 → 先写期望 API / 先写断言；测试太复杂 → 设计太复杂，简化接口；必须 mock 一切 → 耦合太重，用依赖注入；setup 巨大 → 抽 helper 或简化设计
 
 ### 5c. Implement + Green
 
@@ -102,11 +98,6 @@ commit message 说清 what + why。
 
 ## 核心规则（when X → do Y）
 
-- **When** 你发现已经写了产品代码但还没有失败测试 → **删掉代码**，从测试开始。不是"保留代码补测试"——那是 tests-after，不是 TDD
-- **When** 你想一口气推进多个 task → **STOP**，一次只推一个 slice。批量未测代码出问题时无法二分定位哪个 task 引入的
-- **When** 你发现计划外的问题想顺手改 → **NOTICED BUT NOT TOUCHING**：记录位置+原因，问用户是否建 task。不碰
-- **When** 你"记得"某个框架 API 的行为 → **不信记忆**。查官方文档标 `[Doc URL]`，或读本地源码标 `[Read path:line]`
-- **When** 同一个测试修了 3 次还不过 → **进 Debug 横切**，先建 tight 反馈回路再列假设
 - **When** bug 不稳定复现 → 目标不是干净 repro，是**更高复现率**。循环 100×、并行、加压、收窄时序。50% flake 可调试，1% 不可调——先拉高再 debug
 
 ## Common Rationalizations

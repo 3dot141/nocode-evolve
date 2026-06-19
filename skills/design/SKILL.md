@@ -134,14 +134,6 @@ design-doc-writing 接管：doc-type 选择 → 写 → review → render。
 - [ ] 设计文档评审通过（五轴 review）
 - [ ] 后续 Plan 输入齐全：restate + 设计文档 + 测试目标
 
-## 核心规则（when X → do Y）
-
-- **When** 你只想到一个方案就要让用户确认 → **STOP**，再想一个核心思路不同的替代方案。实在没有就说明为什么
-- **When** 两个方案的数据流图长得一样 → 那是一个 approach 的变体，不算两个。换核心架构思路
-- **When** 方案选完后你想直接写文档 → **先回检 restate**，确认方案不与目标边界冲突
-- **When** 你引用代码但没有在本次 Read 过 → **STOP**，先 Read 再写。在猜不是在设计
-- **When** 你想跳过方案探索直接出设计文档 → Iron Law：方案未对比的设计是假设
-
 ## Common Rationalizations
 
 | 借口 | 现实 |
