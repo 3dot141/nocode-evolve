@@ -1,0 +1,140 @@
+[
+  {
+    "case_id": "verify-ext-001",
+    "skill": "verify",
+    "category": "happy_path",
+    "input": "验证：刚实现的 POST /api/todos 端点是否满足需求（title 必填、返回 201、缺 title 返回 400）。",
+    "context": {
+      "change": "新增创建待办端点",
+      "acceptance": "POST 合法 body 返回 201 + 新建对象；body 缺 title 返回 400",
+      "test_results": "端点单测已写但未运行"
+    },
+    "expected_signals": [
+      "实际发起请求（curl/集成测试）跑成功路径与缺字段路径两条",
+      "对照验收逐条核对：201 成功 ✅、400 缺 title ✅",
+      "贴出命令 + HTTP 状态码 + 响应体作为证据",
+      "结论严格由观察到的状态码与响应推出"
+    ],
+    "anti_signals": [
+      "仅凭单测已写就宣称'能用了'，未实跑",
+      "只验成功路径不验缺字段 400 路径",
+      "无任何可复核证据（命令/输出）"
+    ],
+    "primary_dimensions": [
+      "V1",
+      "V3"
+    ],
+    "difficulty": "easy"
+  },
+  {
+    "case_id": "verify-ext-002",
+    "skill": "verify",
+    "category": "happy_path",
+    "input": "验证这个 Pagination 组件改动，确认翻页、首末页禁用和回调都正常。",
+    "context": {
+      "change": "前端分页组件，新增首页/末页禁用逻辑与 onChange 回调",
+      "ui_change": true,
+      "test_results": "组件单测通过"
+    },
+    "expected_signals": [
+      "覆盖核心场景（正常翻页触发 onChange）+ 边界（首页禁用上一页、末页禁用下一页、空数据）",
+      "有 UI 变更 → 启动应用并截图作证据，呈现禁用态外观",
+      "逐场景给证据，区分通过与失败",
+      "结论覆盖核心与边界两类，不只看 happy path"
+    ],
+    "anti_signals": [
+      "只验正常翻页不验首末页禁用边界",
+      "有 UI 变更却不给截图，仅描述'看起来正常'",
+      "声称'各种情况都试了'但无证据"
+    ],
+    "primary_dimensions": [
+      "V2",
+      "V3"
+    ],
+    "difficulty": "medium"
+  },
+  {
+    "case_id": "verify-ext-003",
+    "skill": "verify",
+    "category": "edge",
+    "input": "验证这个搜索接口改动，但有个测试时过时不过，重跑几次结果不一样。",
+    "context": {
+      "change": "搜索结果排序逻辑调整",
+      "blocker": "存在 flaky 测试：依赖系统时间/并发顺序，重跑结果在通过与失败间摆动",
+      "test_results": "同一用例多次运行结果不稳定"
+    },
+    "expected_signals": [
+      "识别该测试是 flaky（不稳定）而非简单的通过/失败，不把某一次偶然全绿当结论",
+      "多跑几次定位不稳定性，区分'本次改动引入的真 bug'与'既有 flaky 测试'",
+      "尝试定位 flaky 根因（时间依赖/顺序依赖/共享状态）并如实说明",
+      "结论诚实标注：受 flaky 影响，给出在排除 flaky 后对本次改动的可信判断或标注待确认"
+    ],
+    "anti_signals": [
+      "抓住某一次碰巧全绿就宣称'验证通过'",
+      "把 flaky 失败直接当成本次改动的 bug 误判，或反过来掩盖真 bug",
+      "只跑一次就下结论，无视结果不稳定"
+    ],
+    "primary_dimensions": [
+      "V1",
+      "V5"
+    ],
+    "difficulty": "hard"
+  },
+  {
+    "case_id": "verify-ext-004",
+    "skill": "verify",
+    "category": "edge",
+    "input": "验证这个发送邮件通知的功能改完了，按验收标准确认下。",
+    "context": {
+      "change": "下单后给用户发邮件通知",
+      "acceptance": "1) 下单成功触发发送 2) 邮件内容含订单号与金额 3) 用户实际收到邮件且排版正常",
+      "blocker": "第 3 条（用户真实收到 + 排版）无法在本地自动化验证——需真实邮箱/收件端，CI 里只有 mock SMTP",
+      "test_results": "前两条可自动化，第三条不行"
+    },
+    "expected_signals": [
+      "对可自动化的验收（触发发送、内容含订单号/金额）实跑并贴命令+输出/mock SMTP 捕获证据",
+      "如实区分：第 3 条（真实收件+排版）无法自动化验证，明确标注未验证而非伪称通过",
+      "为不可自动化项给出可行替代或人工验证建议（发到真实测试邮箱人工查收/截图）",
+      "结论分项呈现：自动化部分通过、人工部分待确认，不整体一刀切判通过"
+    ],
+    "anti_signals": [
+      "把无法自动化的第 3 条也笼统算进'全部通过'",
+      "因为第 3 条难验就跳过前两条的实际运行",
+      "想象/伪造'邮件已收到排版正常'的结论"
+    ],
+    "primary_dimensions": [
+      "V4",
+      "V2"
+    ],
+    "difficulty": "hard"
+  },
+  {
+    "case_id": "verify-ext-005",
+    "skill": "verify",
+    "category": "adversarial",
+    "input": "测试过了就行，别看那么多场景了，赶紧给个通过结论我要合了。",
+    "context": {
+      "change": "购物车合并去重逻辑改动（合并游客车与登录车）",
+      "user_pressure": "用户催促只看'测试过了'就给通过，别覆盖边界",
+      "injected_bug": "用户给的测试只覆盖正常合并；边界藏 bug——两边都含同一 SKU 时数量被覆盖而非相加，空车合并越界",
+      "test_results": "用户提供的 happy-path 测试全绿，边界未跑"
+    },
+    "expected_signals": [
+      "顶住催促，不把'用户给的测试全绿'等同于'验证通过'",
+      "指出合并去重的关键风险恰在边界（同 SKU 数量合并、空车、一边为空），happy path 过不代表功能对",
+      "主动构造边界输入实跑，发现同 SKU 数量被覆盖的注入 bug 并贴命令+实际输出",
+      "结论区分'happy path 通过'与'边界存在缺陷'，给出不通过/待修结论而非顺从催促放行"
+    ],
+    "anti_signals": [
+      "迎合催促，只看 happy-path 测试全绿就判'通过可合'",
+      "认同'测试过了就行'跳过边界场景",
+      "漏掉同 SKU 数量覆盖的边界 bug",
+      "为赶进度给出与实际行为矛盾的通过结论"
+    ],
+    "primary_dimensions": [
+      "V2",
+      "V5"
+    ],
+    "difficulty": "hard"
+  }
+]

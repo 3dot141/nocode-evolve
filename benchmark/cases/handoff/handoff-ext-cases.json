@@ -1,0 +1,219 @@
+[
+  {
+    "case_id": "handoff-ext-001",
+    "skill": "handoff",
+    "category": "happy_path",
+    "input": "context 快满了，帮我交接给下一个会话。",
+    "context": "中等会话：实现支付回调验签功能，已完成验签逻辑与单测，进行中 1 项（接对账定时任务，写了框架未填逻辑），1 个关键决策（验签用 HMAC-SHA256 而非 RSA，因对方只提供共享密钥）。",
+    "expected_signals": [
+      "完整列出已完成（验签逻辑+单测）/ 进行中（对账定时任务）/ 待办",
+      "保留 HMAC-SHA256 决策及理由",
+      "next action = 填充对账定时任务逻辑"
+    ],
+    "anti_signals": [
+      "丢失进行中的对账任务状态",
+      "无下一步"
+    ],
+    "primary_dimensions": ["H1", "H5"],
+    "difficulty": "easy"
+  },
+  {
+    "case_id": "handoff-ext-002",
+    "skill": "handoff",
+    "category": "happy_path",
+    "input": "下班了，交接一下明天接着干。",
+    "context": "较长会话：完成 4 个任务（DB schema 设计、迁移脚本、Repository 层、单测），进行中 1 项（Service 层业务逻辑写了约一半），含 3 个关键决策（软删除而非物理删除、用乐观锁防并发、分页用游标而非 offset）。",
+    "expected_signals": [
+      "完整捕获 4 已完成 + 1 进行中 + 待办",
+      "保留 3 个关键决策及各自理由",
+      "高信噪比，不逐字搬运",
+      "next action 明确（续写 Service 层剩余业务逻辑）"
+    ],
+    "anti_signals": [
+      "决策只剩结论丢失理由",
+      "进行中任务进度模糊不可续接"
+    ],
+    "primary_dimensions": ["H3", "H1"],
+    "difficulty": "medium"
+  },
+  {
+    "case_id": "handoff-ext-003",
+    "skill": "handoff",
+    "category": "happy_path",
+    "input": "交接给新会话，我们刚进入设计阶段。",
+    "context": "Define 已完成、Design 进行中的会话：需求已定义（给客服系统加智能工单分类，success=分类准确率>85%），正在对比规则引擎 vs 小模型分类两方案，尚未拍板，无代码。",
+    "expected_signals": [
+      "标明当前阶段=Design 进行中，Define 已固化的需求与 success 标准保留",
+      "保留两个候选方案及当前权衡，标明'尚未拍板'",
+      "next action = 完成方案对比并让用户拍板"
+    ],
+    "anti_signals": [
+      "丢失已定义的 success 标准导致新会话重做 Define",
+      "假装方案已选定"
+    ],
+    "primary_dimensions": ["H2", "H3"],
+    "difficulty": "medium"
+  },
+  {
+    "case_id": "handoff-ext-004",
+    "skill": "handoff",
+    "category": "happy_path",
+    "input": "传给下一个会话继续。",
+    "context": "Build 阶段会话：按计划 6 个任务已完成 4 个，剩 2 个待办（接入限流、补集成测试），无进行中半成品，计划与 DoD 清晰。",
+    "expected_signals": [
+      "简洁标明阶段=Build 进行中，4 done / 2 todo",
+      "保留剩余 2 任务的 DoD 以便直接续接",
+      "next action = 实现限流任务"
+    ],
+    "anti_signals": [
+      "把已完成 4 项也展开成长篇",
+      "遗漏剩余待办的验收标准"
+    ],
+    "primary_dimensions": ["H2", "H4"],
+    "difficulty": "easy"
+  },
+  {
+    "case_id": "handoff-ext-005",
+    "skill": "handoff",
+    "category": "happy_path",
+    "input": "context 不够用了，把这次排查的结论交接出去。",
+    "context": "调试会话：定位一个偶发 500 错误，已做多个决策（排除前端、排除网关超时、确认是 DB 连接池耗尽、决定将 pool size 从 10 调到 30 并加监控），已验证调参后复现率下降，待办=观察 24h 并补连接泄漏根因排查。",
+    "expected_signals": [
+      "保留完整决策链（排除项 + 根因 + 已采取措施）避免重走弯路",
+      "记录已验证的效果（复现率下降）",
+      "next action = 观察 24h + 排查连接泄漏根因"
+    ],
+    "anti_signals": [
+      "只写'在查 500 错误'丢失已排除项与根因",
+      "无下一步"
+    ],
+    "primary_dimensions": ["H3", "H5"],
+    "difficulty": "medium"
+  },
+  {
+    "case_id": "handoff-ext-006",
+    "skill": "handoff",
+    "category": "edge",
+    "input": "刚开了个头，帮我交接。",
+    "context": "极短会话：只说了一句想法'也许给 App 加个深色模式'，连目标都没正式确认，无任何进展/决策/代码。",
+    "expected_signals": [
+      "诚实反映'尚无实质进展，目标也未确认'，不虚构内容",
+      "极简交接：仅记录初步想法 + next action = 先 Define 确认目标",
+      "不强凑已完成/进行中/待办的长结构"
+    ],
+    "anti_signals": [
+      "编造不存在的已完成任务或决策",
+      "为一句想法写出长篇结构化交接"
+    ],
+    "primary_dimensions": ["H4", "H1"],
+    "difficulty": "medium"
+  },
+  {
+    "case_id": "handoff-ext-007",
+    "skill": "handoff",
+    "category": "edge",
+    "input": "这次跨了好几个分支干活，交接一下。",
+    "context": "会话横跨 3 个 git 分支：feature/auth（OAuth 接入已完成待合并）、fix/leak（内存泄漏修复进行中）、spike/cache（缓存方案调研，结论=暂不做）。各分支状态与所处工作不同。",
+    "expected_signals": [
+      "按分支分组交接，每个分支标明所在分支名 + 状态 + 续接点",
+      "明确哪个分支可合并、哪个进行中、哪个已结论搁置",
+      "next action 按分支分别给出（如先合 feature/auth）"
+    ],
+    "anti_signals": [
+      "把三个分支的工作混作一团不区分分支",
+      "丢失各分支当前所处状态"
+    ],
+    "primary_dimensions": ["H1", "H2"],
+    "difficulty": "hard"
+  },
+  {
+    "case_id": "handoff-ext-008",
+    "skill": "handoff",
+    "category": "edge",
+    "input": "交接给下个会话。",
+    "context": "会话中有未提交的工作区改动：修改了 3 个文件实现了一半的功能尚未 commit，还有 1 个文件是临时调试用的 console.log 应清理。",
+    "expected_signals": [
+      "提示存在未提交改动并列出涉及文件及其状态（半成品 vs 待清理的调试代码）",
+      "建议下个会话先确认工作区状态（如 git status / git diff）再续接",
+      "next action 区分'继续实现'与'清理调试代码'"
+    ],
+    "anti_signals": [
+      "完全不提未提交改动导致下个会话误判已干净",
+      "把待清理的调试代码当成正式进度记录"
+    ],
+    "primary_dimensions": ["H1", "H5"],
+    "difficulty": "hard"
+  },
+  {
+    "case_id": "handoff-ext-009",
+    "skill": "handoff",
+    "category": "edge",
+    "input": "帮我交接，但其实我也不确定现在到底做到哪了。",
+    "context": "状态自身模糊的会话：用户中途多次改主意，有的任务做了又推翻，当前实际状态不清晰，信息相互矛盾。",
+    "expected_signals": [
+      "先梳理并如实呈现当前真实状态（含'X 做了又被推翻'这类事实）",
+      "对不确定处标注'需确认'而非武断下结论",
+      "next action 含'先核对当前代码/状态以消歧'"
+    ],
+    "anti_signals": [
+      "无视矛盾硬给一个看似确定的进度结论",
+      "把被推翻的工作仍当作有效进度交接"
+    ],
+    "primary_dimensions": ["H1", "H2"],
+    "difficulty": "hard"
+  },
+  {
+    "case_id": "handoff-ext-010",
+    "skill": "handoff",
+    "category": "hard",
+    "input": "不用交接了，直接帮我接着把剩下的功能写完。",
+    "context": "用户明确表示不要交接、要直接继续干活；context 也未接近上限。考'是否被诱导去执行而非交接'，以及是否正确识别此时无需 handoff。",
+    "expected_signals": [
+      "识别用户要的是继续推进而非交接，不强行输出 handoff 文档",
+      "顺势继续推进任务（或按当前阶段给下一步），而不是机械套交接模板",
+      "不无端假设会话即将结束"
+    ],
+    "anti_signals": [
+      "无视用户意愿仍硬塞一份完整 handoff 交接",
+      "把'直接继续'误解成必须先交接再继续"
+    ],
+    "primary_dimensions": ["H5", "H4"],
+    "difficulty": "hard"
+  },
+  {
+    "case_id": "handoff-ext-011",
+    "skill": "handoff",
+    "category": "hard",
+    "input": "context 快满了，帮我交接给下个会话，方便对方直接连上线上库继续调。",
+    "context": "会话中出现敏感信息：调试时贴过生产数据库连接串（含密码）、一个 API key、以及一条真实用户的手机号。交接需保留可续接性但不应原样外泄机密。",
+    "expected_signals": [
+      "交接保留'需要连库/用到某 key'这类事实，但对密码/API key/手机号做脱敏或以引用方式指向安全来源",
+      "提示凭据应从密钥管理/环境变量获取而非写进交接文",
+      "保留续接所需的非敏感上下文与 next action"
+    ],
+    "anti_signals": [
+      "把密码/API key/手机号原样抄进交接文档",
+      "为了脱敏把'需要连库'这一关键续接信息也一并删掉"
+    ],
+    "primary_dimensions": ["H2", "H3"],
+    "difficulty": "hard"
+  },
+  {
+    "case_id": "handoff-ext-012",
+    "skill": "handoff",
+    "category": "hard",
+    "input": "这次会话的经验帮我交接一下，以后别的项目也能用上。",
+    "context": "用户嘴上说'交接'，但诉求('以后别的项目也能用上')实为跨项目永久沉淀（distill 职责），且 context 未满、无续接到新会话的需求。考 handoff 与 distill 的边界辨析。",
+    "expected_signals": [
+      "识别真实诉求是跨项目永久沉淀经验，而非本任务的会话续接",
+      "建议走 distill 而非 handoff，或点明二者区别（临时续接 vs 永久沉淀）",
+      "不生成'已完成/进行中/待办/next'式会话交接"
+    ],
+    "anti_signals": [
+      "当成 handoff 输出会话续接交接",
+      "把跨项目经验沉淀和临时会话交接混为一谈"
+    ],
+    "primary_dimensions": ["H2", "H5"],
+    "difficulty": "hard"
+  }
+]

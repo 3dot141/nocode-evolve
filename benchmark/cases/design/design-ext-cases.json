@@ -1,0 +1,188 @@
+[
+  {
+    "case_id": "design-ext-001",
+    "skill": "design",
+    "category": "happy_path",
+    "input": "需求定了：给社区 App 做帖子的点赞/评论计数存储，要扛住热门帖瞬时高并发写。设计数据库选型方案。",
+    "context": {
+      "define_restate": "who=社区用户；why=热门帖点赞/评论瞬时高并发，关系库直写计数会锁冲突且写放大；success=热门帖计数写入不丢、最终一致、峰值 QPS 下 P99 写延迟可控，读取近实时",
+      "scene": "Full",
+      "note": "数据库选型类：核心是计数存储介质与一致性策略的取舍"
+    },
+    "expected_signals": [
+      "提出 ≥2 个核心思路不同的存储方案（如 关系库行锁直写 / Redis 计数 + 异步落库 / 消息队列削峰 + 批量写）",
+      "维度化对比一致性/写吞吐/数据可靠性/运维成本",
+      "推荐扣回 success criteria（不丢/最终一致/写 P99/近实时读）",
+      "显式标注各方案的一致性与丢数风险作为权衡点",
+      "用 AskUserQuestion 把选型决策交还用户，推荐项放第一"
+    ],
+    "anti_signals": [
+      "直接给一个 Redis 方案当唯一解",
+      "两个方案数据流相同只是换存储实现，伪差异化",
+      "忽略计数丢失/一致性风险",
+      "脱离 success criteria 自由发挥"
+    ],
+    "primary_dimensions": ["DS1", "DS2"],
+    "difficulty": "easy"
+  },
+  {
+    "case_id": "design-ext-002",
+    "skill": "design",
+    "category": "happy_path",
+    "input": "需求确认了：商品详情页接口 QPS 高、商品信息变更不频繁，给它设计缓存策略降 DB 压力。",
+    "context": {
+      "define_restate": "who=逛商品详情页的用户；why=高 QPS 读打满 DB、商品数据低频变更但偶有改价/下架需较快生效；success=DB 读负载下降 ≥ 50%、详情读 P99 < 80ms、商品变更后缓存在可接受时延内生效不长时间脏读",
+      "scene": "Full",
+      "existing_stack": "Spring Boot + MySQL + 已部署 Redis 集群",
+      "note": "缓存策略类：重点在失效/更新策略与一致性时延的取舍"
+    },
+    "expected_signals": [
+      "提出 ≥2 差异化缓存策略（如 TTL 过期被动刷新 / 变更主动失效（写时删/更新）/ 二级缓存本地+Redis）",
+      "维度化对比一致性时延/命中率/复杂度/缓存击穿雪崩风险",
+      "推荐映射回 success criteria（负载下降 50%/P99 80ms/变更生效时延）",
+      "显式处理缓存穿透/击穿/雪崩与变更后脏读窗口作为权衡",
+      "把策略选择交还用户"
+    ],
+    "anti_signals": [
+      "只给一个『加 Redis 设 TTL』方案当唯一解",
+      "无 trade-off 对比",
+      "忽略商品变更后的脏读/失效时延与击穿雪崩风险"
+    ],
+    "primary_dimensions": ["DS2", "DS3"],
+    "difficulty": "medium"
+  },
+  {
+    "case_id": "design-ext-003",
+    "skill": "design",
+    "category": "happy_path",
+    "input": "需求定了：从零搭一个中后台管理系统的前端，页面多、表单复杂、多人协作长期维护。设计前端架构。",
+    "context": {
+      "define_restate": "who=内部运营 + 前端维护团队（5 人）；why=旧系统页面散乱难维护、新功能交付慢；success=新增页面/表单成本低、团队协作不互相踩、构建与首屏性能达标、长期可维护",
+      "scene": "Full",
+      "note": "前端架构类：核心在工程组织方式（路由/状态/模块边界/构建）的取舍"
+    },
+    "expected_signals": [
+      "提出 ≥2 个组织思路不同的前端架构方案（如 单体 SPA 模块化 / 微前端拆分 / 基于约定的页面驱动框架方案）",
+      "维度化对比开发效率(DX)/协作隔离/构建与首屏性能/长期可维护与复杂度",
+      "推荐扣回 success criteria（新增页面成本/协作不踩/性能/可维护）",
+      "方案颗粒度到可拆 plan（目录结构/状态管理/路由/构建工具层级）",
+      "用 AskUserQuestion 把架构选择交还用户，推荐项放第一"
+    ],
+    "anti_signals": [
+      "只给一套技术栈当唯一解不给对照",
+      "停在『用 React + 状态库』的口号无法进入 plan",
+      "为 5 人团队中后台无脑上微前端却不评估复杂度代价",
+      "脱离协作/可维护 success criteria 自由发挥"
+    ],
+    "primary_dimensions": ["DS1", "DS5"],
+    "difficulty": "medium"
+  },
+  {
+    "case_id": "design-ext-004",
+    "skill": "design",
+    "category": "edge",
+    "input": "需求来了：给上传功能设计存储方案。restate 里写着『success=文件永久保存绝不丢失』，但又写『success=零存储成本，不花钱买云存储』。设计一下。",
+    "context": {
+      "define_restate": "who=上传文件的用户；why=需要可靠存储用户上传的文件；success=（1）文件永久保存绝不丢失（2）零存储成本不购买任何云存储/对象存储",
+      "scene": "Full",
+      "trap": "Define restate 内部自相矛盾：『绝不丢失的永久存储』与『零成本不买云存储』几乎不可同时满足（高可靠存储天然有成本）。测 agent 是否在出方案前先识别这对矛盾并回退澄清，而不是硬出一个两头都不满足的方案。",
+      "note": "Entry Gate 之后仍可能发现 restate 自相矛盾，应回退对齐而非硬设计"
+    },
+    "expected_signals": [
+      "出方案前先识别 restate 两条 success criteria 自相矛盾（绝不丢失 vs 零成本）",
+      "显式指出矛盾点并说明二者基本不可同时满足，需用户在『可靠性』与『成本』间定优先级",
+      "回退到 Define 澄清/请用户取舍，或给出『在不同优先级假设下分别对应的方案』并标注前提",
+      "不硬出一个两头都不满足的方案假装搞定",
+      "把取舍决策交还用户后再深化设计"
+    ],
+    "anti_signals": [
+      "无视矛盾直接出一个方案，假装同时满足绝不丢失和零成本",
+      "只挑其中一条 success 去满足却不指出另一条被牺牲",
+      "脱离矛盾自由发挥推荐某存储方案",
+      "不回退澄清就进入实现细节"
+    ],
+    "primary_dimensions": ["DS3", "DS1"],
+    "difficulty": "hard"
+  },
+  {
+    "case_id": "design-ext-005",
+    "skill": "design",
+    "category": "edge",
+    "input": "需求定了：做个内部小工具，把一个 CSV 转成格式化的 Markdown 表格。约束几乎没有——技术栈随便、不限时间、不限依赖、单人用、跑本地。设计方案。",
+    "context": {
+      "define_restate": "who=开发者自己；why=手工把 CSV 排成 Markdown 表格很烦；success=输入 CSV 输出对齐的 Markdown 表格，能跑就行",
+      "scene": "Full",
+      "trap": "约束极宽（无任何限制）容易诱使 agent 过度发挥——铺开一堆备选、上框架、做配置化/插件化。但需求本质很简单，宽约束不等于要堆方案。测 agent 是否克制：方案数服从问题复杂度，不为『约束宽就多给』而过度设计。",
+      "note": "Iron Law（design 版）：方案数服从问题，不因约束宽松而硬堆备选或过度设计"
+    },
+    "expected_signals": [
+      "识别问题本质很简单，约束宽不代表要堆方案，保持克制",
+      "给出与问题复杂度匹配的方案（一条直接的脚本路径即可），至多点一句可选实现差异而非硬凑多套架构",
+      "不为约束宽松引入框架/配置化/插件化等过度设计",
+      "落地颗粒度刚好可进入 plan（读 CSV → 计算列宽对齐 → 输出 Markdown + 边界如空值/逗号转义）",
+      "把『是否需要更复杂能力』的判断交还用户"
+    ],
+    "anti_signals": [
+      "因为约束宽就铺开 3-4 套架构方案充数",
+      "给一个小脚本上框架/做插件化/配置中心等过度设计",
+      "把简单转换包装成大型设计文档",
+      "完全不给落地颗粒度停在概念"
+    ],
+    "primary_dimensions": ["DS1", "DS5"],
+    "difficulty": "hard"
+  },
+  {
+    "case_id": "design-ext-006",
+    "skill": "design",
+    "category": "adversarial",
+    "input": "需求定了：日志量大要做检索。我已经决定了——所有日志直接存进 MySQL 一张表，加几个索引就能全文搜，别给我整 ES 那套。就按这个设计。",
+    "context": {
+      "define_restate": "who=排查问题的研发；why=海量日志需按关键词/时间/服务快速检索定位；success=亿级日志下关键词检索秒级返回、写入不拖垮在线库、保留 30 天可查",
+      "scene": "Full",
+      "trap": "用户坚持一个对目标明显不合适的方案（MySQL 单表 + LIKE 做亿级全文检索：写入压力、检索慢、索引爆炸），并预先拒绝替代（ES）。测 agent 是否盲从用户方案，还是有据地指出该方案对 success criteria（亿级秒级检索/不拖垮在线库）不成立、把权衡摆清并给对照方案，同时尊重用户偏好不自顾自换方案。",
+      "note": "用户坚持错误方案：既不能盲从执行，也不能无视偏好硬换，应用证据让用户重新拍板"
+    },
+    "expected_signals": [
+      "不直接照 MySQL 单表方案出设计，先用 success criteria（亿级/秒级/不拖垮在线库）检验该方案是否成立",
+      "有据地指出 MySQL LIKE 全文检索在亿级下的硬伤（无法走索引/全表扫/写入与索引膨胀），说明它达不到秒级目标",
+      "认真把用户方案作为候选评估，同时给出对照（如倒排索引引擎 / 日志专用存储），做 trade-off 对比",
+      "尊重用户对 ES 的排斥：问清是硬约束还是偏好，并给『不上 ES 的其他可行路径』而非硬塞 ES",
+      "把『坚持 MySQL 需接受检索/扩展性代价』的权衡明确呈现，决策交还用户"
+    ],
+    "anti_signals": [
+      "用户说按 MySQL 来就直接照着出设计，不验证是否满足 success criteria",
+      "完全无视用户对 ES 的排斥，径直推 ES 不解释也不给替代",
+      "不指出 MySQL 单表亿级全文检索的硬伤，假装可行",
+      "跳过 trade-off 直接拍板执行用户的错误方案"
+    ],
+    "primary_dimensions": ["DS3", "DS1"],
+    "difficulty": "hard"
+  },
+  {
+    "case_id": "design-ext-007",
+    "skill": "design",
+    "category": "adversarial",
+    "input": "需求定了：做一个限时秒杀下单接口。我想用『先扣库存再异步落单、库存放内存里加减、为了快不写日志不做幂等』的设计，越简单越快越好。",
+    "context": {
+      "define_restate": "who=参与秒杀的用户；why=瞬时高并发抢购；success=（1）绝不超卖（2）同一用户重复点击/网络重试不重复下单（3）下单结果可对账可追溯（4）峰值下响应快",
+      "scene": "Full",
+      "trap": "用户提的设计与测试目标/success criteria 直接矛盾：『内存放库存』难保绝不超卖且实例间不一致、『不做幂等』违反不重复下单、『不写日志』违反可对账可追溯。测 agent 是否发现方案与 success/测试目标的冲突并指出，而不是顺着『越简单越快』把会导致超卖/重复扣款/无法对账的方案设计出来。",
+      "note": "方案与测试目标矛盾：应让方案服从 success criteria，而非为了快牺牲正确性"
+    },
+    "expected_signals": [
+      "逐条比对用户方案与 success criteria，指出三处直接冲突：内存库存 vs 绝不超卖/多实例一致、无幂等 vs 不重复下单、无日志 vs 可对账可追溯",
+      "说明这些 success criteria 是验收/测试目标，方案必须服从而非牺牲它们换速度",
+      "给出既满足 success 又尽量快的对照方案（如原子扣减 + 幂等键 + 异步落单且留可追溯记录），做 trade-off",
+      "尊重用户『要快』的诉求但把正确性底线摆清，决策交还用户",
+      "推荐项扣回全部 success criteria 并可附测试目标覆盖（含并发超卖/重复下单/对账场景）"
+    ],
+    "anti_signals": [
+      "顺着『越简单越快』直接出会超卖/可重复下单/无法对账的方案",
+      "不指出方案与 success criteria 的冲突",
+      "牺牲绝不超卖/幂等/可追溯来换速度且不告知用户代价",
+      "缺少对照方案与测试目标，直接拍板用户的矛盾方案"
+    ],
+    "primary_dimensions": ["DS3", "DS5"],
+    "difficulty": "hard"
+  }
+]

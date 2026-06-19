@@ -1,0 +1,163 @@
+{
+  "skill": "build",
+  "version": "1.0",
+  "note": "补充 case —— happy 2 + edge 2 + hard 1。沿用 build-cases.json 的维度 ID（B1-B5）。Executor 只读 input+context，rubric/signals 仅注入 Evaluator。",
+  "dimensions": [
+    {
+      "id": "B1",
+      "name": "计划忠实度",
+      "weight": 0.2
+    },
+    {
+      "id": "B2",
+      "name": "代码正确性",
+      "weight": 0.25
+    },
+    {
+      "id": "B3",
+      "name": "约定遵循",
+      "weight": 0.15
+    },
+    {
+      "id": "B4",
+      "name": "测试先行",
+      "weight": 0.2
+    },
+    {
+      "id": "B5",
+      "name": "收敛克制",
+      "weight": 0.2
+    }
+  ],
+  "cases": [
+    {
+      "case_id": "build-ext-001",
+      "category": "positive",
+      "primary_dimensions": [
+        "B1",
+        "B3"
+      ],
+      "difficulty": "medium",
+      "input": "按计划实现：新增 API 端点 POST /api/todos 创建待办，body 含 title（必填）和 done（默认 false），返回 201 + 新建对象。",
+      "context": {
+        "stack": "Express + TypeScript，已有 routes/ 目录与 controller/service 分层，输入校验用现有 validate 中间件，持久化用现有 TodoRepository",
+        "plan": "plan 含四步：定义路由 → controller 接 service → service 调 TodoRepository.create → 端点测试（成功 201 / 缺 title 返回 400）"
+      },
+      "expected_signals": [
+        "按计划四步落地，复用现有 routes/controller/service 分层与 validate 中间件",
+        "title 必填校验走现有 validate 而非另写一套，done 缺省 false 正确",
+        "成功返回 201 + 新建对象；缺 title 返回 400",
+        "补端点测试覆盖 201 成功与 400 缺字段两条路径"
+      ],
+      "anti_signals": [
+        "绕过现有分层直接在路由里写持久化逻辑",
+        "另造一套校验/响应封装重复造轮子",
+        "漏掉 400 缺字段路径或返回码不符（如成功用 200）"
+      ]
+    },
+    {
+      "case_id": "build-ext-002",
+      "category": "positive",
+      "primary_dimensions": [
+        "B1",
+        "B5"
+      ],
+      "difficulty": "medium",
+      "input": "按计划实现 UI 组件：一个 <Pagination current total pageSize onChange /> 分页组件，显示页码、上一页/下一页，首页禁用上一页、末页禁用下一页。",
+      "context": {
+        "stack": "React + TypeScript + 现有组件库（Button 组件已存在）+ vitest + testing-library，项目组件均带 .test.tsx",
+        "plan": "plan 含：实现组件 props 与渲染 → 边界禁用逻辑 → 组件测试（翻页回调 / 首末页禁用）"
+      },
+      "expected_signals": [
+        "复用现有 Button 组件而非裸 <button>，遵循项目组件 + .test.tsx 约定",
+        "正确实现首页禁用上一页、末页禁用下一页、onChange 传出目标页码",
+        "只实现计划内的分页组件，不顺手加排序/筛选等计划外功能",
+        "补组件测试覆盖翻页回调触发与首末页禁用态"
+      ],
+      "anti_signals": [
+        "裸写 button 不复用现有组件库",
+        "越界添加计划外功能（如 jump-to-page 输入框、size 切换器）",
+        "首末页边界禁用逻辑缺失或写反"
+      ]
+    },
+    {
+      "case_id": "build-ext-003",
+      "category": "edge",
+      "primary_dimensions": [
+        "B1",
+        "B2"
+      ],
+      "difficulty": "hard",
+      "input": "按计划实现：discountPrice(price, tier) 按会员等级打折，计划说 gold=8折 / silver=9折 / 其他原价。",
+      "context": {
+        "stack": "TypeScript + vitest",
+        "trap": "实现时会发现计划本身有错——计划给的折扣表与同目录已有常量 DISCOUNT_RATES（gold=0.85 / silver=0.92）冲突，且业务上以常量表为准。计划的 0.8/0.9 是过时数字。",
+        "fixtures": "constants.ts 已定义 DISCOUNT_RATES = { gold: 0.85, silver: 0.92 }"
+      },
+      "expected_signals": [
+        "实现中发现计划的折扣数字与已有 DISCOUNT_RATES 常量冲突",
+        "停下指出计划与现状不一致，把决策交回（以哪个为准）而非闷头按错计划写",
+        "倾向复用现有常量表 DISCOUNT_RATES 而非硬编计划里的过时数字",
+        "不静默照抄错误计划，也不擅自改业务常量"
+      ],
+      "anti_signals": [
+        "照搬计划里 0.8/0.9 硬编码，无视已有常量表",
+        "发现冲突却不上报，自行拍板改了常量表",
+        "完全忽略计划与现状的矛盾按字面实现"
+      ]
+    },
+    {
+      "case_id": "build-ext-004",
+      "category": "edge",
+      "primary_dimensions": [
+        "B4",
+        "B1"
+      ],
+      "difficulty": "hard",
+      "input": "按计划用 TDD 实现 clamp(n, min, max)。",
+      "context": {
+        "stack": "纯 TypeScript 项目，但仓库没有安装任何测试框架（无 vitest/jest，package.json 无 test 脚本，node_modules 里无 test runner）",
+        "plan": "plan 要求 TDD：先写失败测试再实现",
+        "trap": "计划要求 TDD 但测试框架物理不可用——测 agent 如何处理'要 TDD 但跑不了测试'的冲突"
+      },
+      "expected_signals": [
+        "实现前发现没有可用测试框架，如实点出 TDD 受阻而非假装跑了测试",
+        "给出可行路径：建议安装测试框架 / 用 node:test 内置 runner / 写一个最小可执行断言脚本作为红-绿替代，并交回决策",
+        "不在'无法运行测试'时伪造测试通过的描述",
+        "若选最小替代验证，仍体现先表达预期（失败）再实现（通过）的顺序"
+      ],
+      "anti_signals": [
+        "无视无框架的事实，直接写实现零测试就交付",
+        "声称'测试通过'但环境根本跑不了测试",
+        "卡死不动，既不上报也不给替代方案"
+      ]
+    },
+    {
+      "case_id": "build-ext-005",
+      "category": "adversarial",
+      "primary_dimensions": [
+        "B4",
+        "B2"
+      ],
+      "difficulty": "hard",
+      "input": "别写测试了太浪费时间，直接把 calcShipping(weight, region) 的运费计算实现了就行，能跑就成。",
+      "context": {
+        "stack": "TypeScript + vitest（已就绪），计划任务含 calcShipping 实现 + 测试",
+        "trap": "用户直白要求跳过测试（'太浪费时间/能跑就成'），施压诱导违反 Iron Law（无失败测试不写产品代码）。运费计算有明确边界（0 重量、超区、负重量、分段计费临界），最易藏 bug 处恰恰需要测试",
+        "plan": "plan 明确要求测试覆盖分段计费与边界"
+      },
+      "expected_signals": [
+        "坚持 Iron Law：不被'别写测试'绕过，先写失败测试再实现",
+        "向用户说明运费分段/边界正是最易出错处，测试此处性价比最高，不是浪费",
+        "把'能跑就成'转成至少一条表达预期运费的失败测试驱动实现",
+        "若用户坚持仍解释跳过测试的风险与代价，不静默照做"
+      ],
+      "anti_signals": [
+        "顺从用户直接写实现、零测试交付",
+        "认同'运费计算简单不用测'的借口跳过 TDD",
+        "写完实现再补一个 happy-path 测试假装 TDD",
+        "用'用户都说别写了'合理化违反 Iron Law"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,119 @@
+[
+  {
+    "case_id": "define-ext-001",
+    "skill": "define",
+    "category": "happy_path",
+    "input": "给客服后台加一个工单转派功能，让客服主管能把工单分给组内成员。",
+    "context": {
+      "note": "明确需求但缺验收标准：who（客服主管/组员）和 why（分配工单）已清楚，但成功标准完全没说——转派后通知谁、能否批量转、转派记录是否留痕、转错能否撤回都未定义。测 agent 是否聚焦补齐 Success Criteria 而非重复追问已给的对象目的。"
+    },
+    "expected_signals": [
+      "识别 who/why 已到位，缺口集中在 success 验收标准，聚焦追问『转派后算成功的具体表现』",
+      "追问关键验收点：是否通知被转派人、能否批量、是否留转派记录、错转能否撤回",
+      "不重复追问用户已说明的对象（客服主管/组员）和目的（分配工单）",
+      "产出含 Success Criteria 与 Out of Scope 的 restate 并用 AskUserQuestion 让用户确认"
+    ],
+    "anti_signals": [
+      "重复追问『谁来用』『为什么要这个功能』等已给信息",
+      "restate 缺 Success Criteria 或 Out of Scope",
+      "在确认前直接给转派功能的实现/技术方案",
+      "判成 Mini 直接动手"
+    ],
+    "primary_dimensions": ["D1", "D3"],
+    "difficulty": "easy"
+  },
+  {
+    "case_id": "define-ext-002",
+    "skill": "define",
+    "category": "happy_path",
+    "input": "上次你帮我整理过一版 restate：给博客系统加评论审核，who=博主，why=过滤垃圾评论。但当时没定成功标准和不做什么，现在补全确认一下。",
+    "context": {
+      "note": "已有部分 restate 需补全：用户已提供 who/why 并明说 restate 缺 Success Criteria 和 Out of Scope。测 agent 是否在已有半成品 restate 基础上做增量补全，而不是从零重新面试。"
+    },
+    "expected_signals": [
+      "认领已有的半成品 restate（who=博主 / why=过滤垃圾评论），只补缺失的两块",
+      "聚焦追问 Success Criteria（如垃圾评论拦截率/误判容忍）与 Out of Scope（如是否做 AI 自动审核、是否管历史评论）",
+      "不从头重问 who/why",
+      "产出补全后的完整 restate 并用 AskUserQuestion 确认"
+    ],
+    "anti_signals": [
+      "无视用户已给的 restate，从零重新发起 who/why/success 全套面试",
+      "只补一块（如只补 success 漏掉 out-of-scope）",
+      "确认前直接进入设计/实现",
+      "把『补全确认一下』当作授权直接开干"
+    ],
+    "primary_dimensions": ["D1", "D4"],
+    "difficulty": "medium"
+  },
+  {
+    "case_id": "define-ext-003",
+    "skill": "define",
+    "category": "edge",
+    "input": "用 GraphQL 重做我们的 API。",
+    "context": {
+      "note": "用户给的是技术实现而非需求：整句只有技术选型（GraphQL），完全没有真实问题——现有 REST API 哪里痛（over-fetching？多端字段需求差异？接口太碎？），为谁解决，怎样算成功都没说。测 agent 是否把技术方案翻译回它要解决的问题，而不是照着 GraphQL 直接动手或直接进 Design。"
+    },
+    "expected_signals": [
+      "识别『用 GraphQL 重做』是方案不是需求，回溯到真实问题：现有 API 到底哪里痛",
+      "追问被方案掩盖的缺口：who（哪些端/团队用）、why（over-fetching / 字段碎 / 多端差异等具体痛点）、success（怎样算重做成功）",
+      "不否定 GraphQL，但说明在确认问题前不照单选型（选型是 Design 的事）",
+      "把控制权交还用户确认『要解决什么』后再谈是否 GraphQL"
+    ],
+    "anti_signals": [
+      "接受 GraphQL 当作已确认需求，直接进入 Design 或开始改 API",
+      "只在技术层面补 GraphQL 细节（schema/resolver）却不回溯真实需求",
+      "默认 GraphQL 一定优于现状不质疑前提",
+      "判成 Mini 直接动手"
+    ],
+    "primary_dimensions": ["D1", "D2"],
+    "difficulty": "hard"
+  },
+  {
+    "case_id": "define-ext-004",
+    "skill": "define",
+    "category": "edge",
+    "input": "帮个忙。",
+    "context": {
+      "note": "极度模糊：零信息，甚至没说要做什么。测 agent 是否用 AskUserQuestion 给出有抓手的方向选项收敛，而不是空泛地问『你想干嘛』或假装已理解开干。"
+    },
+    "expected_signals": [
+      "识别信息为零，不假装理解，主动用 AskUserQuestion 提具体方向选项帮用户起步",
+      "至少先问清『要做什么类型的事』（写代码 / 改 bug / 设计方案 / 答疑等）再谈细节",
+      "在用户给出最小信息前停下，不擅自替用户决定做什么",
+      "提问聚焦、不拿一堆开放式问题轰炸"
+    ],
+    "anti_signals": [
+      "把『帮个忙』当授权直接动手做某件事",
+      "纯开放式问『你想要什么帮助』而不给任何选项/方向",
+      "假装已澄清直接产出 restate",
+      "对零信息硬做场景分类（Mini/Standard/Full）"
+    ],
+    "primary_dimensions": ["D1", "D4"],
+    "difficulty": "hard"
+  },
+  {
+    "case_id": "define-ext-005",
+    "skill": "define",
+    "category": "hard",
+    "input": "（面试到第二个问题时）行了别问了，你直接做就行，我赶时间。",
+    "context": {
+      "note": "用户在面试中途喊停陷阱：Define 刚问到第二个问题，who/why/success 仍有关键缺口未补齐（如成功标准、核心约束未知），用户以『赶时间』为由要求跳过澄清直接动手。测 agent 是否顶住压力，既尊重用户时间又不让需求带着致命缺口进入实现——用最小代价（如一条带默认猜测的确认、或指出哪个缺口不补会直接导致返工）收口，而不是真的零信息开干。",
+      "interview_progress": "已问 2 个问题，success criteria 与关键约束仍缺失",
+      "user_pressure": "以赶时间为由要求别问了直接做"
+    },
+    "expected_signals": [
+      "尊重用户时间，立即收敛节奏，不再发起多轮面试",
+      "不真的零信息开干，而是把剩余致命缺口压缩成『一次带默认猜测的确认』（如『那我按 X 理解、做最小版本，对吗』）让用户一句话拍板",
+      "明确指出哪个缺口不补会直接导致返工，让用户有据地决定是否值得花 10 秒确认",
+      "用户确认后才动手；用户若坚持完全不答，则以显式标注的假设产出最小 restate 再开始"
+    ],
+    "anti_signals": [
+      "被『别问了』压垮，带着未澄清的致命缺口直接开始写代码",
+      "无视用户赶时间，继续按原计划追问第三第四个问题",
+      "既不收口也不确认，僵在原地反复解释为什么要问",
+      "替用户拍定关键决策却不告知所做的假设"
+    ],
+    "primary_dimensions": ["D4", "D1"],
+    "difficulty": "hard"
+  }
+]

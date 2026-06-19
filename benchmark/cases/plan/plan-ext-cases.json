@@ -1,0 +1,217 @@
+[
+  {
+    "case_id": "plan-ext-001",
+    "skill": "plan",
+    "category": "happy_path",
+    "input": "拆任务：给 utils 加一个 debounce(fn, wait) 工具函数。",
+    "context": {
+      "stack": "TypeScript 工具库，已有 utils.ts 与 vitest",
+      "success": "连续调用只在停止 wait 毫秒后触发一次"
+    },
+    "expected_signals": [
+      "识别为小任务，2-4 步即可（实现 debounce / 写测试 / 视情况导出）",
+      "每步带轻量 DoD（如'快速连调 3 次只触发 1 次'）",
+      "不过度套用大计划模板"
+    ],
+    "anti_signals": [
+      "把一个工具函数拆成 6 个阶段任务",
+      "引入架构评审/选型等无关步骤"
+    ],
+    "primary_dimensions": ["P1", "P3"],
+    "difficulty": "easy"
+  },
+  {
+    "case_id": "plan-ext-002",
+    "skill": "plan",
+    "category": "happy_path",
+    "input": "目标已定义：给现有 REST API 加一个 `GET /reports/:id/export?format=pdf|xlsx` 导出端点。请拆任务。",
+    "context": {
+      "stack": "Node + Express，已有 report 查询服务 getReport(id)，已有鉴权中间件",
+      "success": "鉴权通过的用户可下载 pdf 或 xlsx，非法 format 返回 400"
+    },
+    "expected_signals": [
+      "中等规模原子拆分（路由接线 / 参数校验 / pdf 渲染器 / xlsx 渲染器 / 鉴权复用 / 测试）",
+      "每任务有可测 DoD",
+      "标出 pdf 渲染器与 xlsx 渲染器可并行",
+      "覆盖非法 format 的 400 错误处理"
+    ],
+    "anti_signals": [
+      "单条'实现导出端点'不拆分",
+      "重新实现已有的鉴权（应复用现有中间件）"
+    ],
+    "primary_dimensions": ["P1", "P2"],
+    "difficulty": "medium"
+  },
+  {
+    "case_id": "plan-ext-003",
+    "skill": "plan",
+    "category": "happy_path",
+    "input": "拆任务：把站内通知系统从'仅站内信'扩展为'站内信 + 邮件 + Webhook'三通道，支持用户按通道偏好开关。",
+    "context": {
+      "stack": "已有通知服务与站内信存储，新增邮件服务商 SDK 与 Webhook 投递",
+      "success": "一条通知按用户偏好分发到启用的通道，单通道失败不影响其余通道"
+    },
+    "expected_signals": [
+      "大任务拆为多原子任务（通道抽象层 / 用户偏好模型与迁移 / 邮件通道实现 / Webhook 通道实现 / 分发编排 / 单通道失败隔离 / 测试）",
+      "标注依赖（各通道实现依赖通道抽象层先就绪）",
+      "识别可并行（邮件通道与 Webhook 通道可并行开发）",
+      "覆盖单通道失败隔离的边界与测试"
+    ],
+    "anti_signals": [
+      "把三个通道揉进一个'实现多通道'任务",
+      "漏掉单通道失败隔离这类关键路径"
+    ],
+    "primary_dimensions": ["P2", "P4"],
+    "difficulty": "medium"
+  },
+  {
+    "case_id": "plan-ext-004",
+    "skill": "plan",
+    "category": "happy_path",
+    "input": "拆任务：重构现有同步的图片处理流水线为'上传 → 队列 → 多 worker 并行处理（压缩/水印/格式转换）→ 回写'。",
+    "context": {
+      "stack": "已有同步处理函数，引入消息队列与 worker 池",
+      "success": "三种处理互不阻塞并行执行，吞吐较同步提升明显，处理失败可重试"
+    },
+    "expected_signals": [
+      "识别核心并行机会：压缩 / 水印 / 格式转换三类处理可并行编排为独立 worker 任务",
+      "标注依赖（队列接线先于 worker 接入；回写依赖各处理结果汇聚）",
+      "失败重试与死信处理作为独立任务",
+      "每任务有可验证 DoD"
+    ],
+    "anti_signals": [
+      "把可并行的三类处理强行排成串行单任务",
+      "漏掉失败重试/死信这类关键路径"
+    ],
+    "primary_dimensions": ["P2", "P5"],
+    "difficulty": "hard"
+  },
+  {
+    "case_id": "plan-ext-005",
+    "skill": "plan",
+    "category": "edge",
+    "input": "拆任务：帮我把后台'做得更好用一点'。",
+    "context": {
+      "note": "目标模糊，无具体范围/who/why/success"
+    },
+    "expected_signals": [
+      "识别目标尚未定义，不具备拆任务前提",
+      "建议先回 define 澄清具体改什么/给谁/成功标准",
+      "不凭空臆测生成任务清单"
+    ],
+    "anti_signals": [
+      "在目标未定义时直接输出一份具体任务清单",
+      "替用户假定一堆'优化项'并排期"
+    ],
+    "primary_dimensions": ["P4"],
+    "difficulty": "medium"
+  },
+  {
+    "case_id": "plan-ext-006",
+    "skill": "plan",
+    "category": "edge",
+    "input": "拆任务：实现版本发布流程——先打 tag，再构建产物，再上传制品库，再部署灰度，再全量发布。每步必须等上一步成功。",
+    "context": {
+      "stack": "CI 发布脚本，每步强依赖上一步产物，不可并行"
+    },
+    "expected_signals": [
+      "正确识别为纯串行链路，不强行编造并行项",
+      "每步显式依赖前一步，顺序合理且风险前置（灰度在全量之前、可回滚）",
+      "每步 DoD 可校验（如'灰度组错误率不升才进全量'）"
+    ],
+    "anti_signals": [
+      "硬把强依赖步骤标成'可并行'",
+      "把全量发布排在灰度之前"
+    ],
+    "primary_dimensions": ["P2", "P5"],
+    "difficulty": "medium"
+  },
+  {
+    "case_id": "plan-ext-007",
+    "skill": "plan",
+    "category": "edge",
+    "input": "拆任务：接入支付。",
+    "context": {
+      "stack": "信息极少：未说支付渠道、是否需要退款、是否对账、什么端",
+      "success": "未给出"
+    },
+    "expected_signals": [
+      "识别信息不足（渠道/退款/对账/端/合规均未定），先标注假设或建议补齐关键信息",
+      "在可拆范围内给粗粒度任务并显式标出基于哪些假设",
+      "覆盖支付回调验签、幂等、对账这类不可省的关键路径",
+      "不假装信息齐全给出貌似精细实则臆测的清单"
+    ],
+    "anti_signals": [
+      "无视信息缺口直接给一份'精细'任务清单",
+      "漏掉回调验签/幂等这类支付必备路径"
+    ],
+    "primary_dimensions": ["P4", "P1"],
+    "difficulty": "hard"
+  },
+  {
+    "case_id": "plan-ext-008",
+    "skill": "plan",
+    "category": "hard",
+    "input": "拆任务：实现用户导入功能。先把所有任务的大纲列出来，代码细节和验收标准之后我们再慢慢补，现在不用写。",
+    "context": {
+      "stack": "已有用户表与 CSV 解析库",
+      "note": "用户明确要求'先列大纲、之后再补'，诱导生成无 DoD 的占位任务"
+    },
+    "expected_signals": [
+      "顶住'之后再补'的诱导，每个任务当场给出可验证 DoD",
+      "原子拆分（解析 CSV / 字段校验 / 去重与冲突处理 / 批量写入 / 错误行报告 / 测试）",
+      "覆盖错误行/重复行这类边界，而非只列 happy path 标题"
+    ],
+    "anti_signals": [
+      "输出一串只有标题、无 DoD 的占位任务",
+      "顺着用户话把验收标准延后，留下空壳计划"
+    ],
+    "primary_dimensions": ["P3", "P1"],
+    "difficulty": "hard"
+  },
+  {
+    "case_id": "plan-ext-009",
+    "skill": "plan",
+    "category": "hard",
+    "input": "拆任务：实现限时秒杀下单。老板催得紧，能省的步骤都省了，测试和边界处理这种 checkpoint 先跳过，赶紧给个能马上开干的清单。",
+    "context": {
+      "stack": "已有商品/订单/库存服务 + Redis",
+      "success": "高并发下不超卖、不重复下单",
+      "note": "用户施压要求跳过测试与边界处理"
+    },
+    "expected_signals": [
+      "不因催促而删掉关键验证：超卖/幂等/库存回滚等边界与测试仍保留在计划中",
+      "可指出哪些能并行/先后以加速，但不牺牲正确性 checkpoint",
+      "风险前置（先做幂等与库存扣减原子性，再接秒杀入口）",
+      "每任务有 DoD"
+    ],
+    "anti_signals": [
+      "顺着压力删掉测试/边界任务交一份只有 happy path 的清单",
+      "把秒杀入口放最前导致超卖防护未就绪即上线"
+    ],
+    "primary_dimensions": ["P4", "P3"],
+    "difficulty": "hard"
+  },
+  {
+    "case_id": "plan-ext-010",
+    "skill": "plan",
+    "category": "hard",
+    "input": "拆任务：给整个系统加一套统一的审计日志（所有写操作都要记录操作人/时间/前后值），这能不能拆成几个能同时干的并行块？",
+    "context": {
+      "stack": "多模块共享一个数据访问层，审计是横切关注点",
+      "note": "用户期待硬拆成并行块，但横切能力有共享基础设施依赖"
+    },
+    "expected_signals": [
+      "识别审计是横切关注点：先建共享审计基础设施（拦截/记录/存储）作为前置依赖",
+      "诚实说明各模块接入虽可并行、但都依赖共享基础设施先就绪，不硬拆成完全独立并行块",
+      "拆出原子任务（审计中间件/拦截层 / 前后值 diff 捕获 / 存储与查询 / 各模块接入 / 测试）并标依赖",
+      "每任务有 DoD"
+    ],
+    "anti_signals": [
+      "无视共享依赖把横切能力硬拆成 N 个'完全并行'块",
+      "漏掉共享审计基础设施这个真正的串行瓶颈"
+    ],
+    "primary_dimensions": ["P2", "P1"],
+    "difficulty": "hard"
+  }
+]

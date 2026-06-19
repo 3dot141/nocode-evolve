@@ -1,0 +1,254 @@
+[
+  {
+    "case_id": "caveman-ext-001",
+    "skill": "caveman",
+    "category": "happy_path",
+    "input": "caveman。写一个判断字符串是否回文的 Python 函数。",
+    "context": "首次触发精简 + 代码类问题。",
+    "expected_signals": [
+      "极简直接给出可用函数（如 def is_palindrome(s): return s == s[::-1]）",
+      "代码正确",
+      "不附冗长解释"
+    ],
+    "anti_signals": [
+      "长篇讲回文概念与多种实现对比",
+      "精简到代码错误或不可用"
+    ],
+    "primary_dimensions": ["CV1", "CV2"],
+    "difficulty": "easy"
+  },
+  {
+    "case_id": "caveman-ext-002",
+    "skill": "caveman",
+    "category": "happy_path",
+    "input": "精简模式。什么是幂等性？",
+    "context": "触发精简 + 概念类问题。",
+    "expected_signals": [
+      "极简（1-2 句）准确说明幂等=同一操作执行一次与多次效果相同",
+      "确认已进入精简模式",
+      "无冗词"
+    ],
+    "anti_signals": [
+      "长篇举多例展开",
+      "精简到表述错误"
+    ],
+    "primary_dimensions": ["CV1", "CV2"],
+    "difficulty": "easy"
+  },
+  {
+    "case_id": "caveman-ext-003",
+    "skill": "caveman",
+    "category": "happy_path",
+    "input": "省 token。我的 npm install 报错 EACCES permission denied，怎么修？",
+    "context": "触发精简 + 调试类问题（已知典型原因）。",
+    "expected_signals": [
+      "极简给出可操作修法（如别用 sudo、修复 npm 全局目录权限或改 prefix / 用 nvm）",
+      "信息无损直击修复路径",
+      "不展开权限模型长篇"
+    ],
+    "anti_signals": [
+      "长篇讲 Unix 权限原理",
+      "精简到没给出实际可执行的修法"
+    ],
+    "primary_dimensions": ["CV1", "CV2"],
+    "difficulty": "medium"
+  },
+  {
+    "case_id": "caveman-ext-004",
+    "skill": "caveman",
+    "category": "happy_path",
+    "input": "caveman。REST 和 GraphQL 选哪个？",
+    "context": "触发精简 + 比较类问题。",
+    "expected_signals": [
+      "极简给出对比要点与选择依据（如固定资源/缓存友好选 REST；灵活字段/聚合多源选 GraphQL）",
+      "覆盖关键差异不漏维度",
+      "短而不缺核心结论"
+    ],
+    "anti_signals": [
+      "为图短只夸一边漏掉对比",
+      "借口要权衡写成长文"
+    ],
+    "primary_dimensions": ["CV2", "CV1"],
+    "difficulty": "medium"
+  },
+  {
+    "case_id": "caveman-ext-005",
+    "skill": "caveman",
+    "category": "happy_path",
+    "input": "精简点。Python 里有哪些常用的内置数据结构？",
+    "context": "触发精简 + 列表类问题。",
+    "expected_signals": [
+      "极简以列表/短句给出 list / tuple / dict / set / str 等",
+      "无信息丢失（覆盖主要内置结构）",
+      "每项最多一句标注不展开"
+    ],
+    "anti_signals": [
+      "每个结构展开成段落",
+      "精简到漏掉常用结构"
+    ],
+    "primary_dimensions": ["CV1", "CV2"],
+    "difficulty": "easy"
+  },
+  {
+    "case_id": "caveman-ext-006",
+    "skill": "caveman",
+    "category": "edge",
+    "input": "[turn1] caveman。[turn2] git rebase 和 merge 区别？[turn3] 正常模式。[turn4] 再问下 git rebase 和 merge 区别，这次详细讲。",
+    "context": "多轮：触发→提问→显式退出→同一问题求详尽。考退出后是否真正恢复详尽模式。",
+    "expected_signals": [
+      "turn2 极简（rebase 改写历史成线性 / merge 保留分叉留 merge commit）",
+      "turn3 后退出精简模式",
+      "turn4 恢复正常详尽回复（展开场景、风险、用法）"
+    ],
+    "anti_signals": [
+      "turn3 取消后仍保持精简",
+      "turn4 仍极简不肯展开"
+    ],
+    "primary_dimensions": ["CV3", "CV4"],
+    "difficulty": "medium"
+  },
+  {
+    "case_id": "caveman-ext-007",
+    "skill": "caveman",
+    "category": "edge",
+    "input": "caveman。给我一个 Express 最小可运行的 hello world 服务端代码。",
+    "context": "精简模式 + 必须给完整代码块的场景。考'压缩散文但不压缩必要代码'。",
+    "expected_signals": [
+      "去掉所有铺垫散文，仅给完整可运行的代码块",
+      "代码完整正确（含 require、app、监听端口），不为求短而残缺",
+      "至多一句安装/运行提示"
+    ],
+    "anti_signals": [
+      "把代码也'精简'成片段导致不可运行",
+      "在代码外加大段解释抵消精简"
+    ],
+    "primary_dimensions": ["CV2", "CV1"],
+    "difficulty": "hard"
+  },
+  {
+    "case_id": "caveman-ext-008",
+    "skill": "caveman",
+    "category": "edge",
+    "input": "caveman mode. explain event loop briefly, 中文回答可以。",
+    "context": "中英混合触发与提问。考能否正确识别触发并按语言要求精简作答。",
+    "expected_signals": [
+      "正确识别 caveman 触发",
+      "极简中文说明事件循环（单线程 + 任务队列 + 非阻塞轮询执行回调）",
+      "信息准确无损"
+    ],
+    "anti_signals": [
+      "因中英混合漏识别触发仍正常长篇",
+      "精简到表述错误"
+    ],
+    "primary_dimensions": ["CV4", "CV1"],
+    "difficulty": "medium"
+  },
+  {
+    "case_id": "caveman-ext-009",
+    "skill": "caveman",
+    "category": "edge",
+    "input": "[turn1] 精简模式。[turn2] 解释下什么是 race condition。[turn3] 帮我看看这段代码哪里有 bug：counter += 1 在多线程下。",
+    "context": "多轮精简：第 3 轮是需要简短诊断的代码问题。考持久维持精简且诊断仍准确。",
+    "expected_signals": [
+      "turn2 极简准确（多操作并发交错导致结果不确定）",
+      "turn3 维持精简不重新触发",
+      "turn3 准确指出 += 非原子、需加锁/原子操作"
+    ],
+    "anti_signals": [
+      "turn3 退回正常长篇",
+      "诊断错误或漏指出非原子问题"
+    ],
+    "primary_dimensions": ["CV3", "CV2"],
+    "difficulty": "medium"
+  },
+  {
+    "case_id": "caveman-ext-010",
+    "skill": "caveman",
+    "category": "edge",
+    "input": "caveman。把这段日志精简一下重点是什么：[一大段含 5 行 ERROR、20 行 INFO 噪声的日志]。",
+    "context": "精简模式 + 输入本身需要抽取的高噪声内容。考从噪声中抽关键而非整体复读。",
+    "expected_signals": [
+      "极简只点出关键 ERROR 与根因线索",
+      "滤掉 INFO 噪声不复读原文",
+      "结论准确（指向真正的报错原因）"
+    ],
+    "anti_signals": [
+      "把日志大段搬回不做抽取",
+      "为图短漏掉关键 ERROR"
+    ],
+    "primary_dimensions": ["CV1", "CV2"],
+    "difficulty": "medium"
+  },
+  {
+    "case_id": "caveman-ext-011",
+    "skill": "caveman",
+    "category": "hard",
+    "input": "caveman。我的分布式锁偶尔会失效，帮我一步步推理可能的原因。",
+    "context": "精简模式 + 显式要求推理链的调试问题。考'该展开的推理链不该被压成结论'——CV1 与 CV2 张力。",
+    "expected_signals": [
+      "保留必要的逐步推理链（如锁超时早于业务完成 → 时钟漂移 → 续约失败 → 主从切换丢锁）",
+      "措辞精简但推理步骤不被压成一个无依据结论",
+      "在'省 token'与'保留推理价值'之间偏向保留诊断价值"
+    ],
+    "anti_signals": [
+      "为求极简只甩一个结论'是超时问题'丢掉推理链",
+      "把多步因果压成无法复核的一句话"
+    ],
+    "primary_dimensions": ["CV2", "CV1"],
+    "difficulty": "hard"
+  },
+  {
+    "case_id": "caveman-ext-012",
+    "skill": "caveman",
+    "category": "hard",
+    "input": "caveman。我说一下需求你帮我复述确认：要做一个支持多租户、按用量计费、带审计日志的 SaaS 后台，复述一遍我们的共识。",
+    "context": "精简模式 + restate/复述确认场景。考'复述确认不该被压缩掉关键约束'。",
+    "expected_signals": [
+      "完整复述三个关键约束（多租户 / 按用量计费 / 审计日志）一个不漏",
+      "可去寒暄铺垫，但确认内容本身保真",
+      "以精炼形式呈现而非删减需求点"
+    ],
+    "anti_signals": [
+      "为图短只复述一两个约束漏掉其余",
+      "把复述压成'收到，明白了'式无内容确认"
+    ],
+    "primary_dimensions": ["CV2", "CV1"],
+    "difficulty": "hard"
+  },
+  {
+    "case_id": "caveman-ext-013",
+    "skill": "caveman",
+    "category": "hard",
+    "input": "caveman。帮我写一个带错误处理和输入校验的转账函数 transfer(from, to, amount)。",
+    "context": "精简模式 + 实质代码任务。考'精简的是话不是代码质量'——边界/错误处理不能因省 token 被砍。",
+    "expected_signals": [
+      "代码本身完整保留校验与错误处理（金额>0、余额充足、账户存在、原子性/事务）",
+      "去掉解释散文但不削减代码的健壮性",
+      "至多一两句关键说明"
+    ],
+    "anti_signals": [
+      "借精简之名砍掉校验/错误处理给出脆弱实现",
+      "在代码外补大段解释抵消精简"
+    ],
+    "primary_dimensions": ["CV2", "CV1"],
+    "difficulty": "hard"
+  },
+  {
+    "case_id": "caveman-ext-014",
+    "skill": "caveman",
+    "category": "hard",
+    "input": "把这段回复写简洁一点，别那么啰嗦。",
+    "context": "用户说的是'让产出文风简洁'，不是触发持久 caveman 精简模式；属易混淆触发边界。基线对照：可以更简洁，但不应宣布进入并持久维持 caveman 模式。",
+    "expected_signals": [
+      "理解为针对当前产出的文风诉求，给更简洁的版本",
+      "不宣布进入持久 caveman 模式、不要求'正常模式'才退出",
+      "正确区分'这次写简洁'与'持久精简模式'"
+    ],
+    "anti_signals": [
+      "误把'简洁一点'当 caveman 触发并持久维持后续所有回复",
+      "因误进入模式而开始机械极简化无关回复"
+    ],
+    "primary_dimensions": ["CV4"],
+    "difficulty": "hard"
+  }
+]

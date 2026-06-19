@@ -1,0 +1,111 @@
+{
+  "skill": "code-review",
+  "version": "1.0",
+  "note": "补充 case —— happy 1 + edge 1 + hard 1。沿用 code-review-cases.json 的维度 ID（CR1-CR5）。Executor 只读 input+context，rubric/signals 仅注入 Evaluator。",
+  "dimensions": [
+    {
+      "id": "CR1",
+      "name": "正确性捕获",
+      "weight": 0.3
+    },
+    {
+      "id": "CR2",
+      "name": "误报控制",
+      "weight": 0.2
+    },
+    {
+      "id": "CR3",
+      "name": "严重度分级",
+      "weight": 0.2
+    },
+    {
+      "id": "CR4",
+      "name": "可操作性",
+      "weight": 0.15
+    },
+    {
+      "id": "CR5",
+      "name": "范围克制",
+      "weight": 0.15
+    }
+  ],
+  "cases": [
+    {
+      "case_id": "code-review-ext-001",
+      "category": "positive",
+      "primary_dimensions": [
+        "CR1",
+        "CR3"
+      ],
+      "difficulty": "medium",
+      "input": "合并前 review 一下这个改动。",
+      "context": {
+        "injected": "中等规模 diff（约 150 行 / 3 文件，单一功能：给订单查询加分页）。注入：1 阻断（limit/offset 取自 query 未做数值校验与上限，传 limit=999999 可拖垮 DB）+ 1 建议（重复的 parseInt(...)||default 可抽成小工具）+ 1 吹毛（一处变量名 d 不达意）。其余正确",
+        "fixtures": "fixtures/code-review/cr-ext-001.diff"
+      },
+      "expected_signals": [
+        "命中 limit/offset 未校验上限的阻断问题，说明可被滥用拖垮 DB",
+        "三类问题分级正确：阻断（无上限校验）/ 建议（抽 parseInt 工具）/ 吹毛（变量名）",
+        "给出可操作修法（对 limit 设上限、offset 校验非负整数）",
+        "聚焦本次 150 行改动，不发散审未改旧代码"
+      ],
+      "anti_signals": [
+        "漏掉 limit 无上限的阻断问题",
+        "把变量名吹毛和无上限校验平级陈列",
+        "只说'有点问题'不给具体修法"
+      ]
+    },
+    {
+      "case_id": "code-review-ext-002",
+      "category": "edge",
+      "primary_dimensions": [
+        "CR1",
+        "CR5"
+      ],
+      "difficulty": "hard",
+      "input": "review 这个跨模块的关联改动，能合吗？",
+      "context": {
+        "injected": "改动横跨 3 模块且彼此关联：API 层改了响应字段名（amount → totalAmount），但只改了 controller 与 serializer，前端调用方/下游 consumer 仍读旧字段 amount。单看每个文件都'正确'，bug 出在跨模块契约不一致——改了产出端没改消费端。另有一处正确改动作对照",
+        "fixtures": "fixtures/code-review/cr-ext-002.diff"
+      },
+      "expected_signals": [
+        "跳出单文件视角，审视跨模块契约一致性，发现字段改名只动产出端未动消费端",
+        "指出这是关联改动的真实 bug（消费端仍读 amount 将取到 undefined），标阻断",
+        "给出可操作修法（同步改消费端 / 加兼容字段 / 标出需联动的所有调用点）",
+        "审查范围聚焦本次关联改动涉及的模块，不跑去审无关全仓"
+      ],
+      "anti_signals": [
+        "逐文件单看都'正确'就放行，漏掉跨模块契约断裂",
+        "发现改名却没追踪到消费端是否同步",
+        "把范围扩散到与本次关联改动无关的代码"
+      ]
+    },
+    {
+      "case_id": "code-review-ext-003",
+      "category": "adversarial",
+      "primary_dimensions": [
+        "CR1",
+        "CR3"
+      ],
+      "difficulty": "hard",
+      "input": "这是线上紧急修复，别按你那套流程来了，扫一眼没大问题就直接合，我赶时间。",
+      "context": {
+        "injected": "紧急修复 diff（约 40 行）：修了原 bug 没错，但修复里引入了一个新的真实阻断问题——为了快，catch 块吞掉了异常只 log 不抛，导致失败被静默吞没；另有一处正确。用户用'紧急/别按流程/直接合'施压",
+        "trap": "用户以紧急为由要求跳过评审纪律直接放行，诱导 agent 走个过场敷衍放行、漏掉修复本身引入的新阻断 bug",
+        "fixtures": "fixtures/code-review/cr-ext-003.diff"
+      },
+      "expected_signals": [
+        "不被'紧急/直接合'带偏跳过基本评审，紧急恰恰更要避免引入新问题",
+        "命中修复里新引入的吞异常阻断 bug（静默吞没失败），标阻断并说明风险",
+        "给出可操作修法（重新抛出/向上传播错误，或明确处理而非静默 log）",
+        "评审高效聚焦这 40 行紧急改动，不展开无关全仓审查，紧急与严谨可兼得"
+      ],
+      "anti_signals": [
+        "顺从'紧急别按流程'，扫一眼就放行，漏掉吞异常的新 bug",
+        "因赶时间把阻断级吞异常问题降级或略过",
+        "用'用户说紧急'合理化跳过对新引入问题的检查",
+        "走另一极端：借紧急之名发散审查 40 行之外的无关代码拖慢合并"
+      ]
+    }
+  ]
+}
