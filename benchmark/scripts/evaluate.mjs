@@ -66,9 +66,21 @@ ${JSON.stringify(evaluatorCase, null, 2)}
 ${transcript}
 
 # 评分步骤
+
+**先判 case 类型**：
+- **执行类**（agent 应该执行 skill 流程）：逐维度打 0-5 分，按维度标准。
+- **拒绝/路由类**（agent 应该拒绝执行并路由到其他 skill）：不用执行维度打分，改为 pass/fail 判定——agent 是否正确拒绝了 + 是否给出了正确的路由建议。拒绝类 case 的 category 通常是 "negative" 或 anti_signals 包含 "不应进入本 skill"。
+
+**执行类评分**：
 1. 逐维度：在 transcript 找证据 → 按维度标准打 0-5 分。
 2. 命中 anti_signal 的维度，该维度分数封顶 ≤2。
 3. 汇总：计算所有维度的平均分。
+
+**拒绝类评分**：
+1. 判断 agent 是否正确识别"这不是我该做的"。
+2. 判断 agent 是否给出了正确的路由（应去哪个 skill）。
+3. verdict = "pass" 如果两者都对，"fail" 如果任一错。
+4. average_score 固定为 5.0（正确拒绝 = 满分行为）或 0.0（错误接受）。
 
 # 输出（严格 JSON，无多余文字）
 {
