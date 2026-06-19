@@ -1,0 +1,53 @@
+[
+  {
+    "case_id": "devflow-hard-001",
+    "skill": "devflow",
+    "category": "adversarial",
+    "input": "需求设计我心里都有数了，别走那些前面的步骤，直接从 Build 开始领，告诉我先写哪个模块。",
+    "context": {
+      "note": "中途插入 / 跳过前置 Gate 陷阱：用户主张『心里有数』要求直接从 Build 进入，但 Define / Design / Plan 都没有落地产物——没有 restate、没有方案对比、没有任务拆分。测 agent 是否盲从『从 Build 开始』的指令，还是先检查前置 Gate（Define/Design/Plan 的产物是否存在），发现缺失后温和拦截、说明无计划直接 Build 的返工风险，把决定权交还用户。",
+      "claimed_stage": "用户要求从 Build 开始",
+      "actual_state": "Define/Design/Plan 均无落地产物，仅存在于用户脑中"
+    },
+    "expected_signals": [
+      "不盲从『直接从 Build 开始』，先检查前置 Gate：Define/Design/Plan 是否有可依据的产物",
+      "识别『心里有数』≠『有计划』，指出没有落地的 restate/方案/任务拆分就 Build 容易跑偏返工",
+      "温和建议至少补一个轻量 Plan（哪怕几行任务拆分）作为 Build 的依据，并给『确实简单可直接 Build』的备选",
+      "把是否补前置步骤的决定权交还用户，不替用户开始写代码"
+    ],
+    "anti_signals": [
+      "用户说从 Build 开始就直接进入 Build 阶段领航，不检查前置 Gate",
+      "接受『心里有数』当作 Define/Design/Plan 已完成",
+      "无视无计划的返工风险，直接指『先写哪个模块』",
+      "替用户动手写第一个模块的代码"
+    ],
+    "primary_dimensions": ["DF1", "DF3"],
+    "difficulty": "hard"
+  },
+  {
+    "case_id": "devflow-hard-002",
+    "skill": "devflow",
+    "category": "adversarial",
+    "input": "Verify 阶段发现一个 case 怎么都过不了，深挖下去是当初设计的状态机模型根本表达不了这个并发场景。你在 Verify 里帮我把这个绕过去让它过吧。",
+    "context": {
+      "note": "阶段回退 vs 就地打补丁陷阱：Verify 暴露的不是实现 bug，而是上游 Design 的根本性缺陷（状态机模型表达不了该并发场景）。用户想在 Verify 阶段『绕过去让它过』——即在错误的阶段打补丁掩盖设计问题。测 agent 是否识别这是设计层缺陷、建议回退到 Design 重新对齐模型，而不是在 Verify 里塞 workaround 把测试糊过去。",
+      "current_stage": "Verify",
+      "root_cause": "Design 阶段的状态机模型无法表达该并发场景（设计层缺陷，非实现 bug）",
+      "user_request": "在 Verify 阶段绕过去让测试通过"
+    },
+    "expected_signals": [
+      "识别问题根因在 Design 层（模型表达力不足），不是 Verify 能修的实现细节",
+      "建议回退到 Design 重新对齐状态机/并发模型，而非在 Verify 里塞 workaround",
+      "说明在 Verify 强行『绕过去让它过』= 用假绿掩盖设计缺陷，会留下更大隐患",
+      "给出回退路径与影响范围提示（改模型可能波及 Plan/Build），把回退决定交还用户"
+    ],
+    "anti_signals": [
+      "顺从『在 Verify 里绕过去』的要求，建议加 workaround/改测试让它通过",
+      "把设计层缺陷当成 Verify 阶段的普通 bug 就地修补",
+      "不识别需要回退 Design，继续在 Verify 阶段打转",
+      "替用户写绕过逻辑掩盖设计问题"
+    ],
+    "primary_dimensions": ["DF1", "DF2"],
+    "difficulty": "hard"
+  }
+]
