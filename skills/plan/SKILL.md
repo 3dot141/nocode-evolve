@@ -29,6 +29,8 @@ description: Use when you have defined goals and need to break work into tasks. 
 5. **插 checkpoint** — 每 2-3 task 一个
 6. **用户确认 + 选执行模式** — AskUserQuestion Gate
 
+**即使拒绝做 Plan（任务太小/不需要拆），也要给验收标准**——一句话说清"怎么算做完了"。不拆 ≠ 不定义完成标准。
+
 ## 协议
 
 ### Step 1: 只读模式

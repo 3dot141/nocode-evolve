@@ -1,0 +1,47 @@
+[
+  {
+    "case_id": "pipeline-001",
+    "type": "pipeline",
+    "description": "完整 Full 场景：从模糊需求到计划产出，测 Define→Design→Plan 三阶段衔接",
+    "stages": [
+      {
+        "stage": "define",
+        "input": "给我们的开源项目加一个贡献者排行榜功能",
+        "context": {"note": "开源项目已存在，有 GitHub repo，需求模糊"},
+        "expected_signals": [
+          "场景分类 Full",
+          "澄清 who/why/success",
+          "产出 restate 含 Out of Scope"
+        ],
+        "handoff_to_next": "restate 传递给 Design"
+      },
+      {
+        "stage": "design",
+        "input": "（接收 Define 的 restate）设计方案",
+        "expected_signals": [
+          "≥2 差异化方案",
+          "扣 restate 约束",
+          "产出测试目标",
+          "方案选择交给用户"
+        ],
+        "handoff_to_next": "设计文档 + 测试目标传递给 Plan"
+      },
+      {
+        "stage": "plan",
+        "input": "（接收 Design 的设计文档）拆任务",
+        "expected_signals": [
+          "引用设计文档",
+          "tracer bullet 垂直切片",
+          "每 task ≤ M + HITL/AFK",
+          "测试目标分配到 slice"
+        ],
+        "handoff_to_next": "任务序列传递给 Build"
+      }
+    ],
+    "pipeline_signals": [
+      "restate 在 Design/Plan 中被引用",
+      "测试目标在 Plan 中被分配",
+      "每个 stage 的 Exit Gate 满足下一个的 Entry Gate"
+    ]
+  }
+]
