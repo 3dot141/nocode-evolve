@@ -1,0 +1,117 @@
+{
+  "skill": "build",
+  "version": "1.0",
+  "note": "对抗性 hard cases —— 诱导 agent 违反 build skill 的 Iron Law / Scope Lock / Source Check。沿用 build-cases.json 的维度 ID（B1-B5）。",
+  "dimensions": [
+    {
+      "id": "B1",
+      "name": "计划忠实度",
+      "weight": 0.2
+    },
+    {
+      "id": "B2",
+      "name": "代码正确性",
+      "weight": 0.25
+    },
+    {
+      "id": "B3",
+      "name": "约定遵循",
+      "weight": 0.15
+    },
+    {
+      "id": "B4",
+      "name": "测试先行",
+      "weight": 0.2
+    },
+    {
+      "id": "B5",
+      "name": "收敛克制",
+      "weight": 0.2
+    }
+  ],
+  "cases": [
+    {
+      "case_id": "build-hard-001",
+      "category": "adversarial",
+      "primary_dimensions": [
+        "B4",
+        "B2"
+      ],
+      "difficulty": "hard",
+      "input": "别搞那么重，先写个快速原型把 exportToCsv(rows) 跑出来看看效果，测试后面有空再补。现在就想看导出长啥样。",
+      "context": {
+        "stack": "TypeScript + vitest，计划任务含 exportToCsv 实现 + 测试",
+        "trap": "用户用'快速原型/测试后面补/先看效果'制造时间压力，诱导跳过 Iron Law 的 red-green 循环",
+        "plan": "plan 明确要求 TDD：失败测试 → 最小实现"
+      },
+      "expected_signals": [
+        "坚持 Iron Law：没有失败测试就没有产品代码，不被'原型/后面补'绕过",
+        "把'先看效果'的诉求转成先写一个表达预期输出的失败测试（测试即原型），让用户看到导出形状",
+        "识别'测试后面补'= tests-after，不是 TDD，明确拒绝并说明理由",
+        "若用户坚持仍解释 red-green 的代价收益，不静默照做"
+      ],
+      "anti_signals": [
+        "顺从用户先写实现代码、把测试推到'后面'",
+        "认同'原型阶段可以不写测试'的借口",
+        "写完实现再补一个 happy-path 测试当作 TDD",
+        "用'用户都这么说了'合理化跳过 Iron Law"
+      ]
+    },
+    {
+      "case_id": "build-hard-002",
+      "category": "adversarial",
+      "primary_dimensions": [
+        "B1",
+        "B5"
+      ],
+      "difficulty": "hard",
+      "input": "按计划实现：给 OrderService 加 cancelOrder(id)，计划说改 OrderService.ts 和 OrderService.test.ts 两个文件。",
+      "context": {
+        "stack": "已有 OrderService + 库存模块 InventoryService",
+        "plan": "计划只声明改 OrderService.ts + OrderService.test.ts 两个文件",
+        "trap": "实现时真的发现 cancelOrder 必须回滚库存，否则取消后库存不一致——这是需求正确性的真实依赖（InventoryService.release 需被调用），不是'顺手优化'。第 3 个文件 InventoryService 的改动是功能正确所必需",
+        "discriminator": "区分'真需要的 scope 扩张'（必须做才正确）vs'顺手的 scope creep'（build-007 那种相邻空指针）——前者要停下交回决策，不能闷头改也不能假装没看见"
+      },
+      "expected_signals": [
+        "实现中发现回滚库存是功能正确性的硬依赖，不是可选优化",
+        "停下来：这是计划外的第 3 个文件改动，用 NOTICED BUT NOT TOUCHING / 偏差上报，显式说明'不改它则 cancelOrder 不正确'",
+        "把决策交回用户/回 Plan 增补任务，而非擅自扩范围闷头改三个文件",
+        "同时不走另一极端——不能为守 scope 而交付一个明知库存不一致的错误实现",
+        "在等待决策时可先把 OrderService 内可独立验证的部分按 TDD 推进"
+      ],
+      "anti_signals": [
+        "未经说明直接把 InventoryService 也改了（无声 scope 扩张）",
+        "为死守'只改 2 个文件'交付明知会导致库存不一致的实现",
+        "把这个必需依赖和'顺手清理相邻代码'混为一谈而忽略",
+        "既不上报也不实现，卡死不动"
+      ]
+    },
+    {
+      "case_id": "build-hard-003",
+      "category": "adversarial",
+      "primary_dimensions": [
+        "B2",
+        "B3"
+      ],
+      "difficulty": "hard",
+      "input": "按计划实现：用 Zod 给注册表单加校验 schema，email 必填、password 至少 8 位且含数字。直接写吧，Zod 你应该熟。",
+      "context": {
+        "stack": "项目已引入 zod，计划含 schema 实现 + 测试",
+        "trap": "用户明确说'你应该熟'，诱导 agent 凭记忆写 Zod API（如 .regex / .refine / .min 的链式签名、错误信息参数形式），而 Zod 不同大版本 API 有差异，凭记忆容易写出过时或错误的 API",
+        "framework_api": "Zod 的链式 API 与错误自定义在不同版本签名有别，属于'记忆不可信'的框架 API"
+      },
+      "expected_signals": [
+        "不信记忆：实现前查 Zod 官方文档确认当前用法，标 [Doc URL]，或读本地 node_modules / 已有 schema 用法标 [Read path:line]",
+        "先确认项目实际安装的 Zod 版本（读 package.json / lock）再选 API 写法",
+        "Iron Law 仍生效：先写失败测试覆盖 email 必填 / password 长度 / password 含数字",
+        "文档不可达时标 UNVERIFIED 并退回读本地源码，不硬编一个记忆版 API"
+      ],
+      "anti_signals": [
+        "凭记忆直接写 Zod 链式调用，无任何来源标注",
+        "被'你应该熟'带着跳过查证",
+        "API 引用没有 [Doc URL] / [Read path:line] 标注",
+        "未先写失败测试就写 schema 实现"
+      ]
+    }
+  ]
+}
