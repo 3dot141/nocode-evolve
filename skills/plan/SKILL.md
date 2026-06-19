@@ -33,7 +33,9 @@ description: Use when you have defined goals and need to break work into tasks. 
 5. **插 checkpoint** — 每 2-3 task 一个
 6. **用户确认 + 选执行模式** — AskUserQuestion Gate
 
-**即使拒绝做 Plan（任务太小/不需要拆），也要给验收标准**——一句话说清"怎么算做完了"。不拆 ≠ 不定义完成标准。
+**Plan 的两种合法产出**：
+- **完整计划**（Standard/Full）：依赖图 + 任务序列 + checkpoint
+- **验收标准只**（Mini/太小不拆）：一句话说清"怎么算做完了" + 指出前置确认项（如 i18n/定位）。不拆 ≠ 不定义完成标准。两者都是 Plan 的正当输出。
 
 ## 协议
 
