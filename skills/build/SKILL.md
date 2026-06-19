@@ -13,6 +13,10 @@ description: Use when executing implementation tasks from a plan, writing new co
 
 **头号反模式：horizontal slicing**——"先写所有 model，再写所有 service，再写所有 handler"。每层做完都不可验证，集成风险堆到最后才爆。同理"先写所有测试再写所有实现"也是 horizontal——批量写的测试测的是想象行为不是真实行为，会测 shape 不测 user-facing behavior。用 tracer bullet 垂直切：一个 slice = 一个失败测试 + 它的最小实现 + commit。
 
+## 非本 skill 请求
+
+解释代码 / 知识问答 → 直接回答不进 Build。无计划无目标（"帮我做个东西"）→ 回 Define。"整个项目重构" → scope 过大回 Plan 拆。
+
 ## Entry Gate
 
 - [ ] Plan 任务序列已产出且用户确认

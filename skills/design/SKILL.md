@@ -14,6 +14,10 @@ Define 回答"做什么"，Design 回答"怎么做"。核心动作是探索 **ap
 输入：Define 的 restate（问题边界 + 验收标准）。
 输出：确认方案 + 测试目标 + 设计文档。
 
+## 非本 skill 请求
+
+改 README / 写 commit message / 纯执行不需设计 / Define 未完成（无 restate）→ 不进 Design。Define 未完成回 Define；Mini/Standard 场景跳 Design 直接进 Plan。
+
 ## Entry Gate
 
 - [ ] Define restate 存在且用户已确认

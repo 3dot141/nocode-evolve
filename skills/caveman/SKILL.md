@@ -21,7 +21,12 @@ description: Use when the user says "caveman / 简洁模式 / 省 token / 精简
 - 工具调用不受影响——该调的照调
 - 代码/命令/commit message/配置文件不压缩——该精确的精确
 
-## 不适用
+## 非触发 + 降级
+
+- "写简洁一点" / "重构得精简" → 代码风格诉求，不是模式切换，不启用 caveman
+- 未在 caveman 模式下收到"精简"类措辞 → 不自动进入，需显式触发词
+
+## 不适用（caveman 模式下这些内容不压缩）
 
 - 代码块内容
 - commit message / PR title

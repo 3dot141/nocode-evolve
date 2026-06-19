@@ -11,6 +11,10 @@ description: Use when starting any non-trivial task, when requirements are uncle
 
 > Leading word: **restate**。所有对话收敛到这份产出物。没有确认的 restate 就没有 Define 的产出。
 
+## 非本 skill 请求
+
+纯事实问答 / 已明确的单步执行 / 已有确认 restate 要设计方案 → 不进 Define，直接回答或路由到对应 skill（Design / Build / Mini 直接做）。
+
 ## Entry Gate
 
 - [ ] 用户有任务描述或意图

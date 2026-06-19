@@ -11,6 +11,10 @@ Build 完成后的 **evidence** 门。"看起来对"不是证据，跑一下才�
 
 > Leading word: **evidence**。每一项断言背后都要有一条可贴出来的命令 + 输出。没有输出 = 没有断言。
 
+## 非本 skill 请求
+
+"读代码确认逻辑对" → 不算 verify（读代码是推断不是 evidence）。用户只是陈述"CI 绿了"未请求验证 → 不主动宣称完成。写代码 → 走 Build。
+
 ## Entry Gate
 
 - [ ] Build Gate 已过（所有 task 完成 + 全测试通过 + build 通过）

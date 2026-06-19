@@ -21,6 +21,10 @@ description: Use before merging any change, after completing a feature, or when 
 
 一个改动可能一轴过一轴挂。五轴 review 做完后，回 Define 的 restate / Design 的设计文档核对 Spec 轴。两轴分别报 findings，不合并——合并会让一轴掩盖另一轴。
 
+## 非本 skill 请求
+
+"写代码" / "解释函数" / "需求合不合理" → 不是 review。没有 diff 就没有 evidence，无法 review。写代码 → Build，解释 → 直接答，需求判断 → Define。
+
 ## Entry Gate
 
 - [ ] Verify Gate 已过（验收标准逐条通过 + 证据齐全）

@@ -14,6 +14,10 @@ description: Use when you have defined goals and need to break work into tasks. 
 输入：Define 的 restate + Design 的设计文档和测试目标（Full 场景）。
 输出：用户确认的任务序列 + 执行模式选择。
 
+## 非本 skill 请求
+
+知识问答 / 目标不明确（缺 restate）→ 回 Define。单步太小不需拆 → 直接给验收标准走 Build，不硬拆。写代码 → 走 Build。
+
 ## Entry Gate
 
 - [ ] Define restate 存在且已确认

@@ -17,6 +17,13 @@ description: Use when the session is getting long, context is approaching limits
 2. **压缩输出** — 按模板生成 handoff 文档
 3. **交给用户** — 输出文本，用户粘贴到新会话
 
+## 非本 skill 请求 + 降级
+
+- "永久存档/以后别的项目也能用" → 引导 `/distill`，不走 handoff
+- "总结一下干了啥" → 会话摘要，不必走 handoff 模板
+- "不用交接直接继续" → 同会话继续，不触发 handoff
+- **内容不足降级**：刚聊两句无实质状态 → 坦白说"几乎没有可交接的内容"，给一句话摘要而非硬凑模板
+
 ## 协议
 
 ### Step 1: 扫描会话状态
