@@ -77,8 +77,16 @@ Core Web Vitals：LCP ≤ 2.5s、INP ≤ 200ms、CLS ≤ 0.1。详见 `reference
 
 ### 6e. 验收逐条核对
 
-从 Define 验收标准 + Design 测试目标**逐条**核对，每条 ✅ 附证据 / ❌ 附原因。
-任一条未通过 → 回 Build 修复，不许"差不多了先过"。
+从 Define 验收标准 + Design 测试目标**逐条**核对。产出格式：
+
+```
+验收核对:
+- [ ] SC1: "搜索响应 < 200ms (p95)" → ✅ benchmark 输出 p95=142ms [命令: ...]
+- [ ] SC2: "无 lint warning" → ✅ eslint 输出 0 warnings [命令: ...]
+- [ ] SC3: "支持中文搜索" → ❌ 中文查询返回空结果 [命令: ... 输出: ...]
+```
+
+每条有编号 + 标准原文 + ✅/❌ + 证据（命令+输出）。任一条 ❌ → 回 Build 修复。
 
 **Subagent 验证规则**：如果用了 subagent 执行 Build，subagent 报 success 不可信——独立查 VCS diff 确认真有改动、独立跑测试确认真通过。不信 agent 自报状态。
 

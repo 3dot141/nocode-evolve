@@ -61,7 +61,9 @@ description: Use before merging any change, after completing a feature, or when 
 
 安全详见 `references/security-guide.md`。性能详见 `references/performance-guide.md`。
 
-**Review 中测试评估**：测试是否会在重构中存活？重命名内部函数测试就挂 = 测的是实现不是行为——这是测试质量问题不是代码质量问题。
+**Review 中测试评估**：测试是否会在重构中存活？重命名内部函数测试就挂 = 测的是实现不是行为。
+
+**五轴必须逐轴过**——不能只过正确性就跳到 simplification。每轴至少检查一个具体点、记一条 finding（即使是"此轴未发现问题"），确保没跳过。
 
 ### 7b. Simplification Pass
 
