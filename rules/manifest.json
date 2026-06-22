@@ -6,6 +6,7 @@
     { "id": "design", "title": "设计与文档", "trigger_summary": "写设计文档 / PRD / RFC / ADR / 重构方案 / 技术 spec / 技术选型 / 方案对比 / 架构设计", "negatives": ["写代码注释 / commit message / README / changelog"] },
     { "id": "memory", "title": "记忆与沉淀", "trigger_summary": "总结 / 沉淀 / 归档会话产出 / push 内容 / 项目本地资源 (.agents-personal/) 操作", "negatives": ["一次性事实查询"] },
     { "id": "feishu", "title": "飞书项目读取", "trigger_summary": "读取飞书项目 (project.feishu.cn / Meego) 工作项内容 / 附件 / 评论 (需求 / 缺陷 / 任务)", "negatives": ["飞书云文档 docx / wiki (走 lark-doc / lark-wiki)"] },
+    { "id": "figma", "title": "Figma 设计稿读取", "trigger_summary": "读取 Figma 设计稿节点属性 (字号 / 颜色 / 间距 / 圆角), 用户给 figma.com 链接要求提取设计值 / 对齐 UI 实现", "negatives": ["只看用户贴的设计稿截图 (不需要 API)", "Figma 原型预览链接 (无 inspect 需求)"] },
     { "id": "workflow", "title": "工程流程", "trigger_summary": "需求澄清 / 目标定义 / 任务拆分 / 实现执行 / 端到端验证 / devflow 流程导航", "negatives": ["纯查询 / 已在某个 skill 内部执行中"] }
   ],
   "rules": [
@@ -280,6 +281,22 @@
       "depends_on": ["build"],
       "severity": "advisory",
       "lifecycle_stage": "3 评审",
+      "pretooluse": []
+    },
+    {
+      "id": "figma-design-read",
+      "bucket": "figma",
+      "also_buckets": [],
+      "trigger_type": "regex",
+      "trigger_desc": "用户给 figma.com/design 或 figma.com/file 链接, 要求读取设计稿、提取设计值（字号/颜色/间距）、对齐 UI 实现、检查样式差异",
+      "triggers": ["figma\\.com/(design|file)/", "figma\\s*(链接|设计稿|token)", "设计稿.{0,4}(字号|颜色|间距|圆角|对齐)", "figma.{0,4}(提取|读取|inspect)"],
+      "action": "Read rules/rule-figma-design-read.md, 解析 URL → 获取 Token → curl Figma REST API → 提取设计值 → 对比代码实现",
+      "read": "${CLAUDE_PLUGIN_ROOT}/rules/rule-figma-design-read.md",
+      "summary": "读 Figma 设计稿用 REST API (curl + $FIGMA_TOKEN 环境变量) 不依赖 MCP/agent-browser 登录; 从 URL 解析 file_key+node_id → GET /v1/files/{key}/nodes?ids={id} → python3 遍历节点树提取 TEXT(fontSize/fontWeight) + FRAME(fills/cornerRadius/padding); 颜色 RGBA 0-1 转 hex",
+      "guard": "凭截图推断精确数值不可靠, 精确值走 API; 用 $FIGMA_TOKEN 不硬编码明文。",
+      "depends_on": [],
+      "severity": "advisory",
+      "lifecycle_stage": "cross",
       "pretooluse": []
     }
   ]
