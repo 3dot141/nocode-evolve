@@ -4,7 +4,7 @@ PR merge 后把飞书 issue 从「组员开发」流转到「研发已改待BUIL
 
 ## 触发
 
-- dev-workflow 阶段 12 (Task Transition); 或
+- devflow Land 阶段 (8d. Task Transition); 或
 - 用户 push/merge 后说「流转任务 / 改状态 / 标完成」; 或
 - commit message 含飞书任务号 (`#f-xxx` / `#g-xxx` / `#m-xxx`) 且用户要求流转
 

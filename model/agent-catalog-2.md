@@ -60,7 +60,7 @@
 **生命周期**: cross
 
 #### feishu-transition
-**触发**: PR merge 后流转飞书 issue 状态 (组员开发 → 研发已改待BUILD); 或用户说「流转任务 / 改状态 / 标完成」; 或 dev-workflow 阶段 12 Task Transition
+**触发**: PR merge 后流转飞书 issue 状态 (组员开发 → 研发已改待BUILD); 或用户说「流转任务 / 改状态 / 标完成」; 或 devflow Land 阶段 (8d. Task Transition)
 **读**: `${CLAUDE_PLUGIN_ROOT}/rules/rule-feishu-transition.md`
 **摘要**: PR merge 后把飞书 issue 从组员开发流转到研发已改待BUILD; 先 update_field 填缺陷来源于缺陷(field_ecff7b, 默认自关联), 再 get_transition_required 确认必填项完成, 最后 transition_state; 多任务逐个独立流转
 **关键约束(上浮)**: 非组员开发状态不强行流转, 报告让用户决定; 不猜测填充未知关联字段。

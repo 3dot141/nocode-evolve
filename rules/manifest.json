@@ -1,5 +1,5 @@
 {
-  "$comment": "单一真值源。改 rule 改这里, 跑 node hooks/generate.mjs 重新生成 catalog 分片 + pretooluse-rules。禁手改生成物。schema 字段说明: depends_on=依赖的其他 rule id (语义关联, 非强制顺序); severity=advisory/warn/block (rule 重要度); lifecycle_stage=0 设计/1 隔离/2 实现/3 评审/4 收尾/cross-cutting (对齐 dev-workflow 生命周期地图)。",
+  "$comment": "单一真值源。改 rule 改这里, 跑 node hooks/generate.mjs 重新生成 catalog 分片 + pretooluse-rules。禁手改生成物。schema 字段说明: depends_on=依赖的其他 rule id (语义关联, 非强制顺序); severity=advisory/warn/block (rule 重要度); lifecycle_stage=0 设计/1 隔离/2 实现/3 评审/4 收尾/cross-cutting (对齐 devflow 生命周期地图)。",
   "buckets": [
     { "id": "git-lifecycle", "title": "Git 生命周期", "trigger_summary": "任何把本地改动推进到分支 / 远端协作状态的请求 (提 PR / push / 合并 / 收尾 / worktree)", "negatives": ["纯只读查询: 列 PR / 看分支 / 看 status / 看 log"] },
     { "id": "review", "title": "评审", "trigger_summary": "对已有改动或设计求评审 / 挑错 / 独立验证 / 第二实现", "negatives": ["纯执行: 直接改代码而未求评审"] },
@@ -74,7 +74,7 @@
       "triggers": ["(创建|建|新建|开|搞).{0,3}worktree", "worktree.{0,3}(创建|新建)", "(新建|建|开|切|起).{0,2}分支", "分支.{0,3}(创建|新建)", "关联仓库", "(另一个|其它|其他|别的).{0,2}(仓库|repo)"],
       "action": "Read rules/rule-git-worktree.md",
       "read": "${CLAUDE_PLUGIN_ROOT}/rules/rule-git-worktree.md",
-      "summary": "原则: 每个分支都要 worktree, 不在主仓裸开 branch (新建分支即走 worktree); worktree 落项目同级 <project>-<branch_flat>/; 建前静默 fetch + 基于 base_ref 最新 (推断优先级: upstream remote → @{u} → origin/HEAD → origin/main, fork 场景 origin/main 只做镜像不参与推断; dev-workflow 阶段 2 升级为 Gate Base 显式确认 base + 基准状态); 建后调 worktree-setup.mjs setup 补齐(cp env/IDE/node_modules + symlink .agents-personal, 看 needsAttention[]) + git config 记录 freshness base (不随 push -u 漂移); 销毁走 teardown verb (先 ExitWorktree); 跨物理分仓: 进入「关联仓库」改文件用与当前【相同的分支名】建 worktree (各落 <repo>-<branch>/, 前缀各自 repo basename, 已有同名则复用)",
+      "summary": "原则: 每个分支都要 worktree, 不在主仓裸开 branch (新建分支即走 worktree); worktree 落项目同级 <project>-<branch_flat>/; 建前静默 fetch + 基于 base_ref 最新 (推断优先级: upstream remote → @{u} → origin/HEAD → origin/main, fork 场景 origin/main 只做镜像不参与推断; devflow Env 阶段升级为 Gate Base 显式确认 base + 基准状态); 建后调 worktree-setup.mjs setup 补齐(cp env/IDE/node_modules + symlink .agents-personal, 看 needsAttention[]) + git config 记录 freshness base (不随 push -u 漂移); 销毁走 teardown verb (先 ExitWorktree); 跨物理分仓: 进入「关联仓库」改文件用与当前【相同的分支名】建 worktree (各落 <repo>-<branch>/, 前缀各自 repo basename, 已有同名则复用)",
       "guard": "",
       "depends_on": [],
       "severity": "block",
@@ -191,7 +191,7 @@
       "bucket": "feishu",
       "also_buckets": ["git-lifecycle"],
       "trigger_type": "regex",
-      "trigger_desc": "PR merge 后流转飞书 issue 状态 (组员开发 → 研发已改待BUILD); 或用户说「流转任务 / 改状态 / 标完成」; 或 dev-workflow 阶段 12 Task Transition",
+      "trigger_desc": "PR merge 后流转飞书 issue 状态 (组员开发 → 研发已改待BUILD); 或用户说「流转任务 / 改状态 / 标完成」; 或 devflow Land 阶段 (8d. Task Transition)",
       "triggers": ["流转.{0,4}(任务|状态|工作项)", "(改|转).{0,2}状态", "标.{0,2}(完成|已改)", "研发已改", "待\\s*build"],
       "action": "Read rules/rule-feishu-transition.md, 走 ToolSearch 加载 FeishuProjectMcp → update_field(field_ecff7b) → transition_state",
       "read": "${CLAUDE_PLUGIN_ROOT}/rules/rule-feishu-transition.md",

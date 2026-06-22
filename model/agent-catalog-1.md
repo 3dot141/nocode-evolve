@@ -13,17 +13,17 @@
 
 **这是工序, 不是自觉**——不论任务大小、context 深度、是否 mid-task, Step 0 都先扫. 跳过 = 软触发漏, 这正是 catalog 常驻设计要解决的.
 
-## 何时主动调用 /dev-workflow
+## 何时主动调用 /devflow
 
-agent 视角: 用户任务命中以下任一条件时, **主动调起 dev-workflow skill** 进入流程导航 (dev-workflow 给阶段判断 + 下一步建议, 用户拍板, 不替执行):
+agent 视角: 用户任务命中以下任一条件时, **主动调起 devflow skill** 进入流程导航 (devflow 给阶段判断 + 下一步建议, 用户拍板, 不替执行):
 
 - 跨文件 + 状态未知 (不知道当前在生命周期哪一步)
 - 需要 commit / PR / 设计文档 / 评审等多阶段动作
 - 用户描述含「整个 / 整体 / 全流程 / 从头 / 完整跑通」等多步信号
 
-不触发 (直接动手, 不建议 /dev-workflow): 单文件修改、纯查询、单步明确动作.
+不触发 (直接动手, 不建议 /devflow): 单文件修改、纯查询、单步明确动作.
 
-> 项目本地资源 (`.agents-personal/`) 检索约定见 `model/agent-personal.md`. /dev-workflow 可被 model 主动调起, 也可用户 `/调`; 命中上述复杂多步条件时直接进 dev-workflow, 由 dev-workflow 给流程建议、用户拍板.
+> 项目本地资源 (`.agents-personal/`) 检索约定见 `model/agent-personal.md`. /devflow 可被 model 主动调起, 也可用户 `/调`; 命中上述复杂多步条件时直接进 devflow, 由 devflow 给流程建议、用户拍板.
 
 ## 何时主动建议 /distill · /sow · /task (用户主动键入 command)
 
@@ -53,7 +53,7 @@ agent 视角: 用户任务命中以下任一条件时, **主动调起 dev-workfl
 #### git-worktree
 **触发**: 即将执行 superpowers:using-git-worktrees skill, 或用户要求创建 worktree, 或用户要新建分支 (原则: 所有分支都走 worktree, 不在主仓裸开 branch), 或在 worktree 内跑命令报「env var missing / config 不存在」需从主仓 cp gitignored 文件, 或 agent 在 worktree 找不到项目本地 .agents-personal/ 路由, 或从当前仓库进入另一个物理 git repo 去修改文件 (该 repo 即「关联仓库」, 需用与当前工作分支【相同的分支名】建 worktree, 已有同名分支则复用)
 **读**: `${CLAUDE_PLUGIN_ROOT}/rules/rule-git-worktree.md`
-**摘要**: 原则: 每个分支都要 worktree, 不在主仓裸开 branch (新建分支即走 worktree); worktree 落项目同级 <project>-<branch_flat>/; 建前静默 fetch + 基于 base_ref 最新 (推断优先级: upstream remote → @{u} → origin/HEAD → origin/main, fork 场景 origin/main 只做镜像不参与推断; dev-workflow 阶段 2 升级为 Gate Base 显式确认 base + 基准状态); 建后调 worktree-setup.mjs setup 补齐(cp env/IDE/node_modules + symlink .agents-personal, 看 needsAttention[]) + git config 记录 freshness base (不随 push -u 漂移); 销毁走 teardown verb (先 ExitWorktree); 跨物理分仓: 进入「关联仓库」改文件用与当前【相同的分支名】建 worktree (各落 <repo>-<branch>/, 前缀各自 repo basename, 已有同名则复用)
+**摘要**: 原则: 每个分支都要 worktree, 不在主仓裸开 branch (新建分支即走 worktree); worktree 落项目同级 <project>-<branch_flat>/; 建前静默 fetch + 基于 base_ref 最新 (推断优先级: upstream remote → @{u} → origin/HEAD → origin/main, fork 场景 origin/main 只做镜像不参与推断; devflow Env 阶段升级为 Gate Base 显式确认 base + 基准状态); 建后调 worktree-setup.mjs setup 补齐(cp env/IDE/node_modules + symlink .agents-personal, 看 needsAttention[]) + git config 记录 freshness base (不随 push -u 漂移); 销毁走 teardown verb (先 ExitWorktree); 跨物理分仓: 进入「关联仓库」改文件用与当前【相同的分支名】建 worktree (各落 <repo>-<branch>/, 前缀各自 repo basename, 已有同名则复用)
 **生命周期**: 1 隔离
 
 #### git-inspection
@@ -77,7 +77,7 @@ agent 视角: 用户任务命中以下任一条件时, **主动调起 dev-workfl
 **主桶**: memory (完整定义见该桶)
 
 #### feishu-transition (跨桶)
-**触发**: PR merge 后流转飞书 issue 状态 (组员开发 → 研发已改待BUILD); 或用户说「流转任务 / 改状态 / 标完成」; 或 dev-workflow 阶段 12 Task Transition
+**触发**: PR merge 后流转飞书 issue 状态 (组员开发 → 研发已改待BUILD); 或用户说「流转任务 / 改状态 / 标完成」; 或 devflow Land 阶段 (8d. Task Transition)
 **读**: `${CLAUDE_PLUGIN_ROOT}/rules/rule-feishu-transition.md`
 **摘要**: PR merge 后把飞书 issue 从组员开发流转到研发已改待BUILD; 先 update_field 填缺陷来源于缺陷(field_ecff7b, 默认自关联), 再 get_transition_required 确认必填项完成, 最后 transition_state; 多任务逐个独立流转
 **主桶**: feishu (完整定义见该桶)

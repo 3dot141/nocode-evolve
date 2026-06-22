@@ -87,7 +87,7 @@ agent 输出生成的 title + body + 影响文件 tree 给用户审, 等响应:
   reviewer: <list, 含 default reviewer>
 ```
 
-**`base_branch` 来源**: 优先读 `git config branch.<branch>.nocode-evolve-base` (worktree 创建 / dev-workflow Gate Base 确认时写入)——去 remote 前缀取分支名作 target branch; remote 段是 `upstream` (fork 场景) 时 target repo 即 upstream, PR 形态为 `origin/<branch>` → `upstream/<base>`, **不**先合并回本地 base 再从 fork base 发 PR (会污染 fork 镜像 + 并行 PR 归零)。无 config 再按 `origin/HEAD` → `main` 推断。
+**`base_branch` 来源**: 优先读 `git config branch.<branch>.nocode-evolve-base` (worktree 创建 / devflow Env 阶段 Gate Base 确认时写入)——去 remote 前缀取分支名作 target branch; remote 段是 `upstream` (fork 场景) 时 target repo 即 upstream, PR 形态为 `origin/<branch>` → `upstream/<base>`, **不**先合并回本地 base 再从 fork base 发 PR (会污染 fork 镜像 + 并行 PR 归零)。无 config 再按 `origin/HEAD` → `main` 推断。
 
 **项目本地 override**: 先**仅**读 `.agents-personal/rules/personal-repo-pr.md` (reviewer 名单 / target 约定的唯一项目本地来源)。该文件不存在 = 无项目本地约定 → **直接**走下面默认优先级, **不在其他位置搜索** (不扫项目根 / docs / 其他 rule, 不"找实际位置")。
 

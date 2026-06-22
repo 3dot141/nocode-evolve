@@ -32,7 +32,19 @@ Define 返回后，拿到确认的 restate + 场景分类，进 Step 2。
 
 ### Step 3: TaskCreate
 
-为当前场景的阶段各建一条 task。每条 task 的 description 含三要素：`调用: <skill/rule>` / `进入前 Read: <rule 文件>` / `Gate: <过关条件>`。各阶段的 调用/Read/Gate 取值见下方「8 阶段总览」表，逐行抄进对应 TaskCreate。
+为当前场景的阶段各建一条 task。每条 task 的 description 含：
+
+1. **三要素**：`调用` / `进入前 Read` / `Gate`（从「8 阶段总览」表抄）
+2. **Sub-steps 序列**：从下方「Phase sub-flows」抄该阶段的子步骤编号链
+
+示例：
+```
+TaskCreate(subject: "阶段 8: Land",
+           description: "调用: rule-finishing-branch composite / Read: rule-finishing-branch / Gate: PR merged + 任务流转 + worktree 清理
+Sub-steps: 8a.Create PR → 8b.Add Reviewers → 8c.Poll & Merge → 8d.Task Transition → 8e.Cleanup")
+```
+
+Sub-steps 写进 description 是为了**进入阶段时一眼看到完整步骤序列**——防止跳步遗漏。
 
 ### Step 4: 推进阶段
 
@@ -47,16 +59,28 @@ Define 返回后，拿到确认的 restate + 场景分类，进 Step 2。
 
 ### Step 5: 输出建议 + 等用户拍板
 
+进入阶段时，**展开该阶段的所有 sub-steps 及每步的关键决策**：
+
 ```
-当前在阶段 N: <阶段名>（依据: 已过 Gate X、Y）
+当前在: <阶段名> 已完成（依据: Gate 证据 X、Y）
+
 建议下一步: 阶段 N+1 <阶段名>
-  → 调用: <skill/rule>
-  → Gate 条件: <需满足什么>
-  → 为什么是这一步: <一句话理由>
+  Sub-steps:
+    Na. <子步骤名> — 决策: <需要用户拍板什么 / 有什么分支>
+    Nb. <子步骤名> — 决策: <...>
+    Nc. <子步骤名> — 决策: <...>
+  Gate: <需满足什么>
+  为什么是这一步: <一句话理由>
 备选: 跳过 / 回退（需用户显式授权）
 ```
 
-**建议要具体**——不是"进下一阶段"，是"进 Verify 跑完整测试套件+验收逐条核对，因为 Build 的 5 个 task 都 commit 了且测试绿了"。理由越具体，用户拍板越快。
+**建议要具体**——列出子步骤让用户看到完整路径，不是一句话糊弄。理由越具体，用户拍板越快。
+
+**反例**（触发本次优化的真实 bug）：
+```
+❌ 建议下一步: Land — push 到远端 + 写任务日志
+```
+Land 有 5 个子步骤（8a Create PR → 8b ... → 8e Cleanup），只说"push"跳过了 Create PR，导致遗漏 PR 流程。正确做法是列出 8a-8e 全部子步骤。
 
 **不自动执行**。等用户说 "OK" 或调整方向。
 
@@ -77,14 +101,14 @@ Define 返回后，拿到确认的 restate + 场景分类，进 Step 2。
 
 ### 共享词汇（跨 skill leading words）
 
-| Leading Word | 所属 skill | 含义 |
-|---|---|---|
-| **restate** | Define | 用户确认的结构化目标——没有 restate 就没有 Define 的产出 |
-| **approach** | Design | 差异化方案对比——没有对比过的 approach 就没有设计 |
-| **tracer bullet** | Plan | 穿透所有层的端到端垂直切片——窄但完整的交付单元 |
-| **red-green** | Build | 失败测试(red)→最小实现(green)的 TDD 循环 |
-| **evidence** | Verify | 可贴出的命令+输出——没有 evidence 的断言不成立 |
-| **findings** | Code-Review | 带 id/axis/evidence/fix/action 的结构化评审发现 |
+| Leading Word | 中文 | 所属 skill | 含义 |
+|---|---|---|---|
+| **restate** | 重述 | Define | 把模糊需求收敛为结构化问题定义（目标 + Quality Bar + Out of Scope）——没有 restate 就没有 Define 的产出 |
+| **approach** | 方案 | Design | 差异化方案对比——没有对比过的 approach 就没有设计 |
+| **tracer bullet** | 穿透切片 | Plan | 穿透所有层的端到端垂直切片——窄但完整的交付单元 |
+| **red-green** | 红绿循环 | Build | 失败测试(red)→最小实现(green)的 TDD 循环 |
+| **evidence** | 证据 | Verify | 可贴出的命令+输出——没有 evidence 的断言不成立 |
+| **findings** | 发现 | Code-Review | 带 id/axis/evidence/fix/action 的结构化评审发现 |
 
 这些词在各 skill 内已定义。跨 skill 沟通时用这些词锚定——说"restate 还没确认"比"Define 的产出还没让用户点头"更精确。
 
@@ -129,14 +153,89 @@ Define → Design → Plan 保持在**同一个不 compact 的上下文窗口**�
 
 Fix 类任务的 Review 通过后，问一句：**"什么能预防这个 bug？"** 如果答案涉及架构（没有好的测试 seam / 调用方纠缠 / 隐藏耦合），建议后续开一个 Design 改进任务。把单次修复转成架构改进的回路。
 
-### Land composite sub-flow
+### Phase sub-flows（全阶段子步骤 + 决策点）
 
-| Sub-step | 调用 | Sub-gate |
+每个阶段的子步骤序列。Step 3 TaskCreate 时抄编号链，Step 5 进入时展开决策点。
+
+#### Define sub-flow
+
+| Sub-step | 做什么 | 决策 |
 |---|---|---|
-| 8a. Create PR | `rule-finishing-branch` option 2 | Gate Title-Body + push + PR 已创建 |
-| 8b. Add Reviewers | `rule-finishing-branch` pr-flow | reviewer 已添加（或跳过） |
-| 8c. Poll & Merge | ScheduleWakeup → merge | canMerge + merge 成功 |
-| 8d. Task Transition | `rule-feishu-transition` | 飞书 issue 流转（或跳过） |
+| 1a. 场景分类 | AskUserQuestion 四选 | Full/Standard/Fix/Mini（拿不准偏 Full） |
+| 1b. 假设先行 | hypothesis + confidence | ≥95% 跳 1c 走快速路径 |
+| 1c. 澄清循环 | 一次一问（代码能答的不问用户） | 95% 停止测试退出循环 |
+| 1d. 产出 restate | 结构化输出 | Quality Bar + Out of Scope 不可省 |
+| 1e. 用户确认 | AskUserQuestion 三选 | 确认/修改/重来（"随你"不算确认） |
+
+#### Env sub-flow
+
+| Sub-step | 做什么 | 决策 |
+|---|---|---|
+| 2a. Base 推断 | 按优先级推断 base ref | upstream→@{u}→origin/HEAD→origin/main |
+| 2b. Gate Base | 展示 base + behind/ahead 状态 | ahead>0 弹问三选；流程内必须用户确认 |
+| 2c. worktree add | `git worktree add -b` + 写 nocode-evolve-base config | 分支名 / 路径自动推导 |
+| 2d. EnterWorktree | 切 cwd 到 worktree | — |
+| 2e. Setup | worktree-setup.mjs 补齐 env/config | envCandidates 哪些 cp（拿不准优先 cp） |
+| 2f. Verify Baseline | 跑测试确认起点干净 | 失败则报告 + 请示 |
+
+#### Design sub-flow
+
+| Sub-step | 做什么 | 决策 |
+|---|---|---|
+| 3a. 探索上下文 | Read 代码 + wiki + 已有 ADR | 标注来源 [Read]/[Doc]/[推断] |
+| 3b. 提出 2-3 方案 | 差异化方案 + trade-off 表 | 推荐哪个 + 理由 |
+| 3c. 用户选方案 | AskUserQuestion | 推荐放第一；全否决回 3b 问原因 |
+| 3d. 方案←→目标对齐 | 回检 restate | 有冲突建议回 Define（最多 2 轮） |
+| 3e. 测试目标 | 每条 SC → ≥1 测试目标 | 标可测性约束 + 层级分布 |
+| 3f. 写设计文档 | design-doc-writing | 五轴 review（可行性/清晰度/一致性/安全/可扩展性） |
+
+#### Plan sub-flow
+
+| Sub-step | 做什么 | 决策 |
+|---|---|---|
+| 4a. 只读加载 | 读 restate→设计文档→代码→pattern | 开始改文件即停（在跳过 Plan） |
+| 4b. 画依赖图 | 列块 + 标依赖方向 | 底层先建 |
+| 4c. 垂直切片 | Slicing + Risk-first 排序 | 形态选择：Vertical / Contract-First |
+| 4d. 写 task | 贴真实代码零占位符 | ≤M（≤5 文件），标 HITL/AFK |
+| 4e. 插 checkpoint | 每 2-3 task 一个 | rollback 边界 |
+| 4f. 用户确认 | AskUserQuestion | 确认计划 + 选执行模式（Subagent 并行/顺序） |
+
+#### Build sub-flow
+
+| Sub-step | 做什么 | 决策 |
+|---|---|---|
+| 5a. 加载计划 | 读 Plan 任务序列 + 测试目标 | — |
+| 5b. 逐 task slice 循环 | 每 task: Scope Lock → Test First → Implement → Verify & Commit | ≤5 文件否则回 Plan；HITL 停等用户 |
+| 5c. Gate 检查 | 全 task 完成 + 测试通过 + build 通过 | 同测试修 3 次失败 → Debug 横切 |
+
+#### Verify sub-flow
+
+| Sub-step | 做什么 | 决策 |
+|---|---|---|
+| 6a. 证据收集 | 跑测试套件 + build，三元组（命令+输出+通过/失败） | 证据须新鲜（本轮跑的） |
+| 6b. 集成测试 | 跨模块契约 + 数据流端到端 | requirements 逐行核对 |
+| 6c. E2E/Browser | golden path + 边界 case + 截图 | 无 UI 变更标注跳过 |
+| 6d. 性能检查 | Core Web Vitals / benchmark | 无性能需求标注跳过 |
+| 6e. 验收逐条核对 | SC + 测试目标逐条 ✅/❌ 附证据 | 任一 ❌ 回 Build |
+
+#### Review sub-flow
+
+| Sub-step | 做什么 | 决策 |
+|---|---|---|
+| 7a. Five-Axis Self-Review | 先读测试再读实现，五轴逐轴过 | 每轴至少一条 finding |
+| 7b. Simplification Pass | Chesterton's Fence（删前 git blame） | Dead code 问用户确认后删 |
+| 7c. Codex Cross-Review | 先探可用性 | 不可用降级自评 + 明说 |
+| 7d. Findings Triage | 统一 schema，分类优先级 | Contract misread 最高优先 |
+| 7e. 用户 approve | Critical 全 fix，Warning 逐条拍板 | fix 改了代码须回 Build→Verify→再 Review |
+
+#### Land sub-flow
+
+| Sub-step | 做什么 | 决策 |
+|---|---|---|
+| 8a. Create PR | `rule-finishing-branch` option 2 | Gate Title-Body（title≤50/body markdown 用户确认） + push + PR 已创建 |
+| 8b. Add Reviewers | `rule-finishing-branch` pr-flow | reviewer 已添加（部分失败报告跳过；或用户说跳过） |
+| 8c. Poll & Merge | ScheduleWakeup → merge | canMerge + merge 成功（用户可选"直接 merge"/"不 merge"） |
+| 8d. Task Transition | `rule-feishu-transition` | 飞书 issue 流转到研发已改待BUILD（或跳过） |
 | 8e. Cleanup | `rule-finishing-branch` Gate Worktree-Cleanup | worktree 清理完成 |
 
 ---
@@ -174,4 +273,4 @@ Fix 类任务的 Review 通过后，问一句：**"什么能预防这个 bug？"
 - **不自行跳过阶段** — 跳过需用户显式授权
 - **不跳过 TaskCreate** — 进入 devflow 必须建 todo
 - **不无证据标 completed** — Gate 证据点名是前置工序
-- **不把 skill 细节抄进 devflow** — devflow 是路由器，调对应 skill 获取详细流程
+- **不把 skill 实现细节抄进 devflow** — devflow 列子步骤序列和决策点（防跳步），不抄 skill 内部的具体做法/模板/格式要求（那些进入 skill 后自然加载）
