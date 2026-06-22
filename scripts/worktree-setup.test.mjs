@@ -8,7 +8,6 @@ import {
   detectPkgManager,
   planEnvCopies,
   planIdeCopies,
-  planNodeModules,
   copyWithFallback,
   setup,
   teardown,
@@ -72,24 +71,6 @@ test('case 1.2 — planIdeCopies 幂等: worktree 已有 .vscode 则不再 cp', 
   const rels = specs.map((s) => s.rel);
   assert.ok(!rels.includes('.vscode'), '.vscode 已存在应跳过');
   assert.ok(rels.includes('.idea'), '.idea 不存在应 cp');
-  f.cleanup();
-});
-
-// ===== BF3 — planNodeModules -prune 不重复嵌套 (case 3.1) =====
-test('case 3.1 — planNodeModules 只列顶层 node_modules, 不下钻嵌套', () => {
-  const f = mkfix();
-  mkdir(path.join(f.project, 'node_modules', 'foo', 'node_modules')); // 顶层内嵌套
-  const specs = planNodeModules(f.project, f.worktree);
-  assert.equal(specs.length, 1, '只一条顶层 node_modules');
-  assert.equal(specs[0].rel, 'node_modules');
-  f.cleanup();
-});
-test('case 3.1b — 子包 node_modules 各列一条', () => {
-  const f = mkfix();
-  mkdir(path.join(f.project, 'node_modules'));
-  mkdir(path.join(f.project, 'packages', 'a', 'node_modules'));
-  const rels = planNodeModules(f.project, f.worktree).map((s) => s.rel).sort();
-  assert.deepEqual(rels, ['node_modules', path.join('packages', 'a', 'node_modules')]);
   f.cleanup();
 });
 
@@ -192,13 +173,12 @@ test('parseArgs — v3.6.2+ 同时支持 --key value (空格) 和 --key=value (=
 test('case 1.1 — setup --dry-run 输出 plannedCommands 且不落地任何文件', () => {
   const f = mkfix();
   mkdir(path.join(f.project, '.vscode'));
-  mkdir(path.join(f.project, 'node_modules'));
   mkdir(path.join(f.project, '.agents-personal'));
   const rec = recorder();
   const report = setup({ projectRoot: f.project, worktreePath: f.worktree, dryRun: true }, { run: rec.run });
   const flat = report.plannedCommands.map((c) => c.join(' ')).join('\n');
   assert.match(flat, /\.vscode/, '计划含 .vscode cp');
-  assert.match(flat, /node_modules/, '计划含 node_modules cp');
+  assert.ok(!flat.includes('node_modules'), 'node_modules 不在 plannedCommands (不再 cp)');
   assert.match(flat, /ln -s.*\.agents-personal/, '计划含 .agents-personal symlink');
   assert.equal(rec.calls.length, 0, 'dry-run 不调 run');
   assert.deepEqual(fs.readdirSync(f.worktree), [], 'worktree 无任何文件落地');
@@ -206,10 +186,11 @@ test('case 1.1 — setup --dry-run 输出 plannedCommands 且不落地任何文�
 });
 
 // ===== BF1 — cp 失败吞而不中断 (case 1.3) =====
-test('case 1.3 — 一条 cp 失败记入 needsAttention, 其余仍执行', () => {
+test('case 1.3 — IDE cp 失败记入 needsAttention, 其余仍执行', () => {
   const f = mkfix();
   mkdir(path.join(f.project, '.vscode'));
-  mkdir(path.join(f.project, 'node_modules'));
+  mkdir(path.join(f.project, '.idea'));
+  mkdir(path.join(f.project, '.agents-personal'));
   const ideDst = path.join(f.worktree, '.vscode');
   const rec = recorder((argv) => argv.includes(ideDst)); // .vscode 的 cp (含回退) 都抛
   const report = setup(
@@ -217,20 +198,29 @@ test('case 1.3 — 一条 cp 失败记入 needsAttention, 其余仍执行', () =
     { run: rec.run },
   );
   assert.ok(report.needsAttention.some((m) => m.includes('.vscode')), '失败项进 needsAttention');
-  const nmDst = path.join(f.worktree, 'node_modules');
-  assert.ok(rec.calls.some((c) => c.includes(nmDst)), 'node_modules cp 仍被执行');
+  assert.ok(report.symlinked.includes('.agents-personal'), '.agents-personal symlink 仍被执行');
   f.cleanup();
 });
 
-// ===== BF1 — 探测不到包管理器跳过 install (case 1.4) =====
-test('case 1.4 — 有 node_modules 但无 lock 且未传 --pkg-manager → install skipped', () => {
+// ===== BF1 — 无 lock 文件 → install skipped (case 1.4) =====
+test('case 1.4 — 无 lock 文件且未传 --pkg-manager → install skipped', () => {
   const f = mkfix();
-  mkdir(path.join(f.project, 'node_modules'));
   const rec = recorder();
   const report = setup({ projectRoot: f.project, worktreePath: f.worktree }, { run: rec.run });
   assert.equal(report.install.status, 'skipped');
-  assert.ok(report.needsAttention.some((m) => m.includes('包管理器')));
   assert.ok(!rec.calls.some((c) => /install/.test(c.join(' '))), '不调任何 install');
+  f.cleanup();
+});
+
+test('case 1.4b — 有 lock 文件 → 从零 install (不从主仓 cp node_modules)', () => {
+  const f = mkfix();
+  touch(path.join(f.worktree, 'pnpm-lock.yaml'));
+  const rec = recorder();
+  const report = setup({ projectRoot: f.project, worktreePath: f.worktree }, { run: rec.run });
+  assert.equal(report.install.status, 'ran');
+  assert.equal(report.install.manager, 'pnpm');
+  assert.ok(rec.calls.some((c) => c[0] === 'pnpm' && c.includes('install')), '调了 pnpm install');
+  assert.ok(!report.copied.nodeModules, 'report 不含 nodeModules 字段');
   f.cleanup();
 });
 

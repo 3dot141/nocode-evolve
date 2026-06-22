@@ -168,7 +168,7 @@ skill `SKILL.md` 中下列默认行为**全部失效**，按本文执行：
 
 **保留**的 skill 内行为：
 
-- 「Run Project Setup」（npm install / cargo build / pip install / go mod download 自动探测）——但 npm 一支先走本文「copy 主仓 `node_modules`」, 此处 install 退化为 copy 后的增量对齐
+- 「Run Project Setup」（npm install / cargo build / pip install / go mod download 自动探测）——JS 项目由本文脚本的从零 install 覆盖，非 JS 项目保留 skill 自动探测
 - 「Verify Clean Baseline」（跑测试确认起点干净，失败则报告 + 请示）
 - 「Report Location」（最终报路径 + 测试状态）
 - 「Common Mistakes」中除「Skipping ignore verification」「Assuming directory location」两条外的其余约束
@@ -244,9 +244,11 @@ cd / EnterWorktree 是后续 cp env / link personal / setup / baseline 链的前
 
 `git worktree add` 出来的是**干净** checkout——只复制 tracked 内容，主仓本地 gitignored 的运行物**不会**带过来。
 
-**人机分工 (v3.6.3+)**：
-- **脚本确定性自动 cp**：IDE (`.vscode` / `.idea`) / `node_modules` + 增量 install / symlink `.agents-personal` / `git status` clean 校验
-- **agent 判断 + 显式 cp**：env / config / 项目本地 local 配置 — 脚本不再写死 keyword 启发式 (避免漏 cp 项目特异命名如 `conf/config.yaml`)，列**全部 gitignored 文件作 candidates** (safety filter 只跳目录/>5MB/明显 deps)，agent 用项目上下文 (config 加载方式 / framework 惯例) 自己判断哪些 cp，显式跑 `cp`
+**人机分工 (v3.32+)**：
+- **脚本确定性自动**：IDE (`.vscode` / `.idea`) cp / 从零 `install` (按 lock 文件探测包管理器) / symlink `.agents-personal` / `git status` clean 校验
+- **agent 判断 + 显式 cp**：env / config / 项目本地 local 配置 — 脚本列**全部 gitignored 文件作 candidates** (safety filter 只跳目录/>5MB/明显 deps)，agent 用项目上下文自己判断哪些 cp，显式跑 `cp`
+
+> **不再从主仓 cp `node_modules`**。跨分支时主仓 node_modules 版本与 worktree 分支的 lock 文件不匹配，且 build tool 预构建缓存（`.vite/deps` 等）不会被 install 刷新，导致难排查的运行时错误。pnpm/yarn 有全局 store，从零 install 主要是建硬链接，速度可接受。
 
 EnterWorktree 之后调一次脚本即可 (变量沿用本文「路径推导」段，支持 `--key=value` 或 `--key value`)：
 
@@ -262,14 +264,12 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/worktree-setup.mjs" setup \
   - **应 cp**：`.env*` / `*.local.*` / `conf/config.yaml` / `secrets.json` 等 local 配置 / 凭证 → 显式 `cp <projectRoot>/<rel> <worktreePath>/<rel>`
   - **不该 cp**：build/cache 残留 / 运行时 data / 临时文件 → skip
   - 拿不准时优先 cp (cp 多一点 ≪ 漏 cp 关键导致 worktree 跑不起来)
-- `copied` / `symlinked`：实际 cp 的 IDE/node_modules 与 symlink 的 `.agents-personal` (env 不再含 — 见 envCandidates)
-- `install.status`：`ran`(增量 install 跑了) / `skipped`(`--skip-install` 或探测不到包管理器) / `no-node-modules`
+- `copied` / `symlinked`：实际 cp 的 IDE 与 symlink 的 `.agents-personal`
+- `install.status`：`ran`(从零 install 跑了) / `skipped`(`--skip-install` 或无 lock 文件) / `failed`(install 报错)
 - `gitStatusClean`：false 时 offenders 也进 `needsAttention`（cp 物意外进 tracking）
 - `needsAttention[]`：cp 失败 / status 不 clean / 未识别包管理器 / **envCandidates 非空时提示 agent 主导判断**——逐条人判
 
-脚本只做**幂等、可逆**的补齐（`[ -e ]` 跳过已存在；遇分歧只报告不擅自决定）。下面四节讲**为什么这么补**——脚本是"怎么做"，规则正文留"为什么"。
-
-> 改造前这几节是逐段教学 bash（grep/cp/find/ln），现已收进脚本；保留各节"为什么 cp 不 symlink / 为什么 clonefile / 为什么增量 install"的设计理由 + "不要"红线。设计见 `docs/superpowers/specs/3dot141/260602-worktree-setup-script-design.md`。
+脚本只做**幂等、可逆**的补齐（`[ -e ]` 跳过已存在；遇分歧只报告不擅自决定）。下面各节讲**为什么这么补**——脚本是"怎么做"，规则正文留"为什么"。
 
 ### env / config — 为什么 cp 独立副本
 
@@ -303,22 +303,18 @@ IDE 的 run/debug 配置目录（VS Code 的 `.vscode/`、JetBrains 的 `.idea/`
 - 不要在**部分 tracked**（如 `.vscode/settings.json` tracked、`launch.json` gitignored）时整目录 cp——整目录守卫会因 tracked 文件使 `.vscode` 已存在而跳过、漏掉 gitignored 的那几个；这种项目按 env/config 那样 cp 单个 gitignored 文件
 - 不要把这些当必须——主仓没有 `.vscode` / `.idea` 就整段跳过
 
-### node_modules — 为什么 clonefile + 增量 install
+### node_modules — 从零 install，不从主仓 cp
 
-`node_modules`（gitignored）不带过来会触发从零 `npm install`（大仓几分钟）。脚本用 **clonefile**（`cp -Rc`，macOS APFS 写时复制：瞬间完成、近零空间、改依赖时才分裂、保留内部 `.bin` symlink；非 APFS 回退 `cp -R`）复用主仓副本，再跑一次**增量** install 对齐本分支 `package.json`/lock——把"从零重装"省成"增量"，**不是跳过 install**。`find ... -prune` 不下钻已命中目录（嵌套 `node_modules` 随父一起 copy）。
+脚本**不 cp 主仓的 `node_modules`**，直接按 lock 文件探测包管理器（pnpm-lock → pnpm / yarn.lock → yarn / package-lock → npm）跑从零 install。
 
-- **触发**：主仓存在至少一个 `node_modules`，准备在 worktree 跑 dev/test/build 前。
-- **与「Run Project Setup」**：本步**前置**于 skill 的「Run Project Setup」——先 copy 复用、再让 install 退化成增量对齐；主仓没有 `node_modules` 时 `install.status="no-node-modules"`，回落原始从零 install。
-- **包管理器**：脚本按 lock 文件 sniff（pnpm-lock/yarn.lock/package-lock）；sniff 不到 → `install.status="skipped"` + `needsAttention`，不擅自 `npm install`。
+- **为什么不 cp**：worktree 的分支通常与主仓不同，`package.json` / lock 版本不一致。cp 过来的 `node_modules` 是"错的起点"——包本体可以靠增量 install 修正，但 build tool 的预构建缓存（`.vite/deps` 等）不会被 install 刷新，导致运行时加载到旧版本预构建产物、报莫名其妙的导出缺失。调试成本远超从零 install 省的时间。
+- **pnpm/yarn 从零 install 并不慢**：有全局 content-addressable store，install 主要是建硬链接，不重新下载。
+- **包管理器**：脚本按 lock 文件 sniff；无 lock 文件 → `install.status="skipped"`（非 JS 项目或无依赖）。
 
-> Linux 等价 CoW：`cp -R --reflink=auto`；脚本以 macOS clonefile 为主、失败回退普通 cp。
+#### node_modules 的不要
 
-#### node_modules copy 的不要
-
-- 不要用 symlink 把 `worktree/node_modules` 指向主仓——worktree 装 / 改依赖会污染主仓、破坏隔离；本子节要的是**独立副本**（clonefile 写时分裂正好两全）
-- 不要 copy 完就当依赖一定对——分支 `package.json` / lock 可能与主仓不同，必须跑增量 install 收口
-- 不要对包管理器想当然——主仓用 pnpm / yarn 就用对应 install，别一律 `npm`（pnpm 的 `node_modules` 结构 copy 后也要 `pnpm install` 对齐）
-- 不要漏 `-prune`——不带它会把 `node_modules` 内部嵌套的 `node_modules` 全列出来重复 copy，又慢又多余
+- 不要从主仓 cp `node_modules` 到 worktree——跨分支版本不匹配 + build cache 过时，省的时间全还给调试
+- 不要对包管理器想当然——主仓用 pnpm / yarn 就用对应 install，别一律 `npm`
 
 ## Worktree 创建后：link `.agents-personal/` 到主仓（symlink 共享）
 

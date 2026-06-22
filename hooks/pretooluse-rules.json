@@ -45,7 +45,7 @@
     "rule": "git-worktree",
     "pattern": "(?:^|[;&|])\\s*git\\s+worktree\\s+add\\b",
     "decision": "inject",
-    "reason": "建 worktree 前先 Read rule-git-worktree.md: 落 <project>-<branch>/, 建后调 worktree-setup.mjs setup 补齐(cp env/IDE/node_modules + symlink). 前置 (?:^|[;&|])\\s* 限定命令位置, 不命中 quote/heredoc 内字面文本"
+    "reason": "建 worktree 前先 Read rule-git-worktree.md: 落 <project>-<branch>/, 建后调 worktree-setup.mjs setup 补齐(cp env/IDE + 从零 install + symlink). 前置 (?:^|[;&|])\\s* 限定命令位置, 不命中 quote/heredoc 内字面文本"
   },
   {
     "rule": "git-worktree",

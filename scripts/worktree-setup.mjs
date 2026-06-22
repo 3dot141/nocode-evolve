@@ -37,12 +37,10 @@ export function detectPkgManager(worktreePath) {
   return null;
 }
 
-// 锚定 pattern: 只命中 .env / .env.* / config.local.* / *secret* 的文件名,
-// 不用裸 /\.env/ 子串 (会误命中 app.environment 之类)。
-// v3.6.3+ 改人机分工: 脚本不再写死 local-config 启发式 (no POSITIVE/NEGATIVE keyword list), 列**全部 gitignored 文件**作 candidates,
-// 由 **agent 用项目上下文 (config 加载方式 / framework 惯例) 判断** 哪些是 local config 需 cp, 显式跑 cp 命令.
+// v3.6.3+ 改人机分工: 脚本不再写死 local-config 启发式, 列**全部 gitignored 文件**作 candidates,
+// 由 **agent 用项目上下文** 判断哪些是 local config 需 cp, 显式跑 cp 命令.
 // 脚本仅做 3 个 safety filter:
-//   1) 跳过明显的依赖/IDE/OS gitignore (node_modules/, .idea/, .vscode/, .DS_Store, Thumbs.db) — 已被 planIdeCopies/planNodeModules 处理或不需 cp
+//   1) 跳过明显的依赖/IDE/OS gitignore (node_modules/, .idea/, .vscode/, .DS_Store, Thumbs.db)
 //   2) 跳过目录 (避免 cp 整个 cache/data 目录)
 //   3) 跳过 >5MB 文件 (本地 dump/snapshot/db, agent 不需要)
 const TOO_LARGE = 5 * 1024 * 1024;
@@ -85,18 +83,6 @@ export function planIdeCopies(projectRoot, worktreePath) {
   return specs;
 }
 
-// 递归找 node_modules, 命中即 prune (不下钻嵌套, 随父目录一起 cp)。
-export function planNodeModules(projectRoot, worktreePath) {
-  const specs = [];
-  for (const src of findNodeModules(projectRoot)) {
-    const rel = path.relative(projectRoot, src);
-    const dst = path.join(worktreePath, rel);
-    if (fs.existsSync(dst)) continue; // 幂等
-    specs.push({ kind: 'dir', rel, src, dst });
-  }
-  return specs;
-}
-
 // .agents-personal: 主仓存在且 worktree 尚无 → symlink (共享主仓, 区别于 cp 的独立副本)。
 export function planSymlink(projectRoot, worktreePath) {
   const target = path.join(projectRoot, '.agents-personal');
@@ -120,13 +106,10 @@ export function setup(opts, deps = {}) {
 
   const envCandidates = planEnvCopies(projectRoot);
   const ide = planIdeCopies(projectRoot, worktreePath);
-  const nm = planNodeModules(projectRoot, worktreePath);
   const link = planSymlink(projectRoot, worktreePath);
 
   const plannedCommands = [];
-  // v3.6.3+ env 候选不入 plannedCommands - 由 agent 看 envCandidates 自己判断 + 显式 cp
   for (const s of ide) plannedCommands.push(['cp', '-Rc', s.src, s.dst]);
-  for (const s of nm) plannedCommands.push(['cp', '-Rc', s.src, s.dst]);
   if (link) plannedCommands.push(['ln', '-s', link.target, link.link]);
 
   const needsAttention = [];
@@ -139,7 +122,7 @@ export function setup(opts, deps = {}) {
   const report = {
     verb: 'setup', worktreePath,
     envCandidates,
-    copied: { ide: [], nodeModules: [] },
+    copied: { ide: [] },
     symlinked: [], install: { status: 'skipped' },
     gitStatusClean: null, needsAttention, plannedCommands,
   };
@@ -149,29 +132,22 @@ export function setup(opts, deps = {}) {
     try { copyWithFallback(s.src, s.dst, run); report.copied.ide.push(s.rel); }
     catch (e) { report.needsAttention.push(`cp IDE 失败 ${s.rel}: ${e.message}`); }
   }
-  for (const s of nm) {
-    try { copyWithFallback(s.src, s.dst, run); report.copied.nodeModules.push(s.rel); }
-    catch (e) { report.needsAttention.push(`cp node_modules 失败 ${s.rel}: ${e.message}`); }
-  }
   if (link) {
     try { run(['ln', '-s', link.target, link.link]); report.symlinked.push('.agents-personal'); }
     catch (e) { report.needsAttention.push(`symlink .agents-personal 失败: ${e.message}`); }
   }
   // v3.6.3+ env 由 agent 判断 + 显式 cp (见 envCandidates 字段 + needsAttention 提示)
 
-  // 增量 install: 有 node_modules 才跑; 探测不到包管理器不擅自 install
+  // install: 按 lock 文件探测包管理器, 有则从零 install (不从主仓 cp node_modules, 避免跨分支版本/缓存不一致)
   if (skipInstall) {
     report.install = { status: 'skipped' };
-  } else if (nm.length === 0) {
-    report.install = { status: 'no-node-modules' };
   } else {
     const mgr = pkgManager || detectPkgManager(worktreePath);
     if (!mgr) {
       report.install = { status: 'skipped' };
-      report.needsAttention.push('未识别包管理器, install 已跳过, 请手动对齐依赖');
     } else {
       try { run([mgr, '--prefix', worktreePath, 'install']); report.install = { status: 'ran', manager: mgr }; }
-      catch (e) { report.install = { status: 'skipped', manager: mgr }; report.needsAttention.push(`install 失败 (${mgr}): ${e.message}`); }
+      catch (e) { report.install = { status: 'failed', manager: mgr }; report.needsAttention.push(`install 失败 (${mgr}): ${e.message}`); }
     }
   }
 
@@ -219,22 +195,6 @@ function findGitignores(root) {
     for (const e of entries) {
       if (e.isFile() && e.name === '.gitignore') found.push(path.join(dir, e.name));
       else if (e.isDirectory() && e.name !== '.git' && e.name !== 'node_modules') walk(path.join(dir, e.name));
-    }
-  })(root);
-  return found;
-}
-
-function findNodeModules(root) {
-  const found = [];
-  (function walk(dir) {
-    let entries;
-    try { entries = fs.readdirSync(dir, { withFileTypes: true }); } catch { return; }
-    for (const e of entries) {
-      if (!e.isDirectory()) continue;
-      if (e.name === '.git') continue;
-      const full = path.join(dir, e.name);
-      if (e.name === 'node_modules') { found.push(full); continue; } // prune: 不下钻
-      walk(full);
     }
   })(root);
   return found;

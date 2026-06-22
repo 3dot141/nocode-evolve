@@ -53,7 +53,7 @@ agent 视角: 用户任务命中以下任一条件时, **主动调起 devflow sk
 #### git-worktree
 **触发**: 即将执行 superpowers:using-git-worktrees skill, 或用户要求创建 worktree, 或用户要新建分支 (原则: 所有分支都走 worktree, 不在主仓裸开 branch), 或在 worktree 内跑命令报「env var missing / config 不存在」需从主仓 cp gitignored 文件, 或 agent 在 worktree 找不到项目本地 .agents-personal/ 路由, 或从当前仓库进入另一个物理 git repo 去修改文件 (该 repo 即「关联仓库」, 需用与当前工作分支【相同的分支名】建 worktree, 已有同名分支则复用)
 **读**: `${CLAUDE_PLUGIN_ROOT}/rules/rule-git-worktree.md`
-**摘要**: 原则: 每个分支都要 worktree, 不在主仓裸开 branch (新建分支即走 worktree); worktree 落项目同级 <project>-<branch_flat>/; 建前静默 fetch + 基于 base_ref 最新 (推断优先级: upstream remote → @{u} → origin/HEAD → origin/main, fork 场景 origin/main 只做镜像不参与推断; devflow Env 阶段升级为 Gate Base 显式确认 base + 基准状态); 建后调 worktree-setup.mjs setup 补齐(cp env/IDE/node_modules + symlink .agents-personal, 看 needsAttention[]) + git config 记录 freshness base (不随 push -u 漂移); 销毁走 teardown verb (先 ExitWorktree); 跨物理分仓: 进入「关联仓库」改文件用与当前【相同的分支名】建 worktree (各落 <repo>-<branch>/, 前缀各自 repo basename, 已有同名则复用)
+**摘要**: 原则: 每个分支都要 worktree, 不在主仓裸开 branch (新建分支即走 worktree); worktree 落项目同级 <project>-<branch_flat>/; 建前静默 fetch + 基于 base_ref 最新 (推断优先级: upstream remote → @{u} → origin/HEAD → origin/main, fork 场景 origin/main 只做镜像不参与推断; devflow Env 阶段升级为 Gate Base 显式确认 base + 基准状态); 建后调 worktree-setup.mjs setup 补齐(cp env/IDE + 从零 install + symlink .agents-personal, 不从主仓 cp node_modules 避免跨分支版本/缓存不一致, 看 needsAttention[]) + git config 记录 freshness base (不随 push -u 漂移); 销毁走 teardown verb (先 ExitWorktree); 跨物理分仓: 进入「关联仓库」改文件用与当前【相同的分支名】建 worktree (各落 <repo>-<branch>/, 前缀各自 repo basename, 已有同名则复用)
 **生命周期**: 1 隔离
 
 #### git-inspection
