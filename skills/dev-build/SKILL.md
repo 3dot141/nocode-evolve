@@ -1,5 +1,5 @@
 ---
-name: build
+name: dev-build
 description: Use when executing implementation tasks from a plan, writing new code, or implementing features. Use when devflow routes to Build stage, or when the user says "开始实现/写代码/执行计划/build it".
 ---
 

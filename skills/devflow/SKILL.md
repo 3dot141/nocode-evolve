@@ -15,16 +15,25 @@ description: 工程任务流程领航（8 阶段 · 4 场景路由）。可被 m
 
 ### Step 1: 调 Define 判断场景
 
-任何任务进入 devflow 的第一步都是调 `nocode-evolve:define`。Define 内部完成：
+任何任务进入 devflow 的第一步都是调 `nocode-evolve:dev-define`。Define 内部完成：
 - 需求澄清 + 目标定义
 - 场景分类（Full / Standard / Fix / Mini）
 
 Define 返回后，拿到确认的 restate + 场景分类，进 Step 2。
 
+**Full 场景产品流前置检查**（Define 返回 Full 场景后、进入 Step 2 前执行）：检查 `docs/nocode/prds/{username}/` 下有没有已有 `.prd.md`：
+- 有 → Define 读它作为输入，正常进 Step 2
+- 没有 → 建议用户先走产品流（`nocode-evolve:pdflow`），用 AskUserQuestion 三选：
+  1. "走产品流 (discoveryflow)" — 调起产品流驾驶舱（Research → PRD），完成后回 devflow
+  2. "只做 research" — 调起 `nocode-evolve:pd-research` 单独调研
+  3. "跳过，直接继续" — 不做产品调研，按用户描述继续
+
+用户选跳过 = 显式授权，按其意愿继续。不反复追问。
+
 ### Step 2: 按场景路由
 
 ```
-┌─ Full:     Env → Design → Plan → Build → Verify → Review → Land
+┌─ Full:     [产品流前置检查] → Env → Design → Plan → Build → Verify → Review → Land
 ├─ Standard: Env → Plan → Build → Verify → Review → Land
 ├─ Fix:      Env → [Debug] → Build → Verify → Review → Land
 └─ Mini:     Build-lite → Verify-lite → Land-lite (不开 worktree)
@@ -90,13 +99,13 @@ Land 有 5 个子步骤（8a Create PR → 8b ... → 8e Cleanup），只说"pus
 
 | # | 阶段 | 调用 | 进入前 Read | Gate |
 |---|---|---|---|---|
-| 1 | **Define** | `nocode-evolve:define` | — | 问题边界收敛 + 场景分类 + 用户确认 |
+| 1 | **Define** | `nocode-evolve:dev-define` | — | 问题边界收敛 + 场景分类 + 用户确认 |
 | 2 | **Env** | Gate Base → `superpowers:using-git-worktrees` → EnterWorktree | `rule-git-worktree` | worktree 已建并进入（注：Env 不需要独立 nocode-evolve skill，逻辑完全由 superpowers skill + rule-git-worktree 覆盖） |
-| 3 | **Design** | `nocode-evolve:design` | `rule-design` | 方案确认 + 测试目标 + 设计文档评审通过 + 用户 approve |
-| 4 | **Plan** | `nocode-evolve:plan` | — | 计划已产出 + 所有 task ≤ M + 用户确认 |
-| 5 | **Build** | `nocode-evolve:build` | — | 所有 task 完成 + 测试通过 + build 通过 |
-| 6 | **Verify** | `nocode-evolve:verify` | — | 验收标准逐条通过 + 证据收集 |
-| 7 | **Review** | `nocode-evolve:code-review` | `rule-codex-review` | Critical 全 fix + 用户 approve |
+| 3 | **Design** | `nocode-evolve:dev-design` | `rule-design` | 方案确认 + 测试目标 + 设计文档评审通过 + 用户 approve |
+| 4 | **Plan** | `nocode-evolve:dev-plan` | — | 计划已产出 + 所有 task ≤ M + 用户确认 |
+| 5 | **Build** | `nocode-evolve:dev-build` | — | 所有 task 完成 + 测试通过 + build 通过 |
+| 6 | **Verify** | `nocode-evolve:dev-verify` | — | 验收标准逐条通过 + 证据收集 |
+| 7 | **Review** | `nocode-evolve:dev-review` | `rule-codex-review` | Critical 全 fix + 用户 approve |
 | 8 | **Land** | `rule-finishing-branch` composite | `rule-finishing-branch` | PR merged + 任务流转 + worktree 清理 |
 
 ### 共享词汇（跨 skill leading words）

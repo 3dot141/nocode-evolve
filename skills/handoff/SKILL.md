@@ -63,7 +63,7 @@ description: Use when the session is getting long, context is approaching limits
 - [踩坑 / 已知风险 / 被搁置的问题]
 
 ### Suggested Skills
-- [下一会话应该用什么 skill 继续，如 nocode-evolve:build / nocode-evolve:verify]
+- [下一会话应该用什么 skill 继续，如 nocode-evolve:dev-build / nocode-evolve:dev-verify]
 ```
 
 **压缩原则（按 context hierarchy 取舍）**：

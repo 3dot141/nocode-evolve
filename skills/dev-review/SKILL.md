@@ -1,5 +1,5 @@
 ---
-name: code-review
+name: dev-review
 description: Use before merging any change, after completing a feature, or when reviewing code. Use when devflow routes to Review stage, or when the user says "review 一下/看看代码/评审/check the code".
 ---
 

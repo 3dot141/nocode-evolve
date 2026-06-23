@@ -1,5 +1,5 @@
 ---
-name: design
+name: dev-design
 description: Use when Define is complete and the task needs architecture or approach decisions. Use when devflow routes to Design stage, or when the user says "设计方案/怎么做/选什么技术/架构设计/方案对比". For Full-scene tasks.
 ---
 

@@ -1,5 +1,5 @@
 ---
-name: verify
+name: dev-verify
 description: Use when Build is complete and you need to verify the implementation works end-to-end. Use when devflow routes to Verify stage, or when the user says "验证一下/跑一下看看/确认能用/verify".
 ---
 

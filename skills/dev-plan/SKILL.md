@@ -1,5 +1,5 @@
 ---
-name: plan
+name: dev-plan
 description: Use when you have defined goals and need to break work into tasks. Use when devflow routes to Plan stage, or when the user says "写计划/拆任务/怎么实现/plan it out". Use when a task feels too large to start or when parallel work is possible.
 ---
 
