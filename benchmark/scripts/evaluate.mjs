@@ -124,7 +124,7 @@ const skill = args[0];
 
 if (!skill) {
   console.log('用法: node benchmark/scripts/evaluate.mjs <skill> [--list]');
-  console.log('skills: define design plan build verify code-review devflow handoff caveman');
+  console.log('skills: define design plan build verify code-review devflow caveman');
   process.exit(0);
 }
 

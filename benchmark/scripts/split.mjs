@@ -12,7 +12,7 @@ import { readFileSync, writeFileSync, readdirSync, existsSync } from 'fs';
 import { join } from 'path';
 
 const ROOT = join(import.meta.dirname, '..');
-const SKILLS = ['define', 'design', 'plan', 'build', 'verify', 'code-review', 'devflow', 'handoff', 'caveman'];
+const SKILLS = ['define', 'design', 'plan', 'build', 'verify', 'code-review', 'devflow', 'caveman'];
 
 function seededShuffle(arr, seed) {
   const a = [...arr];
