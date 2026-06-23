@@ -332,6 +332,22 @@
       "pretooluse": []
     },
     {
+      "id": "dev-land",
+      "bucket": "workflow",
+      "also_buckets": ["git-lifecycle"],
+      "trigger_type": "regex+skill",
+      "trigger_desc": "devflow 路由到 Land 阶段, 或用户说「land / 着陆 / 准备着陆 / 走 land 阶段」(注意: 独立说「提 PR / 收尾 / 合并」不在 devflow 上下文时走 finishing-branch, 不走本 skill)",
+      "triggers": ["\\bland\\b", "着陆", "land\\s*阶段", "走.{0,2}land"],
+      "action": "Skill(nocode-evolve:dev-land)",
+      "read": "${CLAUDE_PLUGIN_ROOT}/rules/rule-dev-land.md",
+      "summary": "Landing 收尾: Pre-flight(Review Gate + 分支状态) → Disposition(4选项 merge/PR/keep/discard) → 执行(rule-finishing-branch) → Task Transition(rule-feishu-transition) → Cleanup; Mini 走 Land-lite(commit only)",
+      "guard": "",
+      "depends_on": ["dev-verify", "finishing-branch", "feishu-transition"],
+      "severity": "advisory",
+      "lifecycle_stage": "4 收尾",
+      "pretooluse": []
+    },
+    {
       "id": "figma-design-read",
       "bucket": "figma",
       "also_buckets": [],

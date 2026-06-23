@@ -82,6 +82,12 @@ agent 视角: 用户任务命中以下任一条件时, **主动调起 devflow sk
 **摘要**: PR merge 后把飞书 issue 从组员开发流转到研发已改待BUILD; 先 update_field 填缺陷来源于缺陷(field_ecff7b, 默认自关联), 再 get_transition_required 确认必填项完成, 最后 transition_state; 多任务逐个独立流转
 **主桶**: feishu (完整定义见该桶)
 
+#### dev-land (跨桶)
+**触发**: devflow 路由到 Land 阶段, 或用户说「land / 着陆 / 准备着陆 / 走 land 阶段」(注意: 独立说「提 PR / 收尾 / 合并」不在 devflow 上下文时走 finishing-branch, 不走本 skill)
+**读**: `${CLAUDE_PLUGIN_ROOT}/rules/rule-dev-land.md`
+**摘要**: Landing 收尾: Pre-flight(Review Gate + 分支状态) → Disposition(4选项 merge/PR/keep/discard) → 执行(rule-finishing-branch) → Task Transition(rule-feishu-transition) → Cleanup; Mini 走 Land-lite(commit only)
+**主桶**: workflow (完整定义见该桶)
+
 ### 桶: 评审 (review)
 **粗触发**: 对已有改动或设计求评审 / 挑错 / 独立验证 / 第二实现
 **不含 (负例)**: 纯执行: 直接改代码而未求评审

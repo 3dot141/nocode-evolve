@@ -106,7 +106,7 @@ Land 有 5 个子步骤（8a Create PR → 8b ... → 8e Cleanup），只说"pus
 | 5 | **Build** | `nocode-evolve:dev-build` | — | 所有 task 完成 + 测试通过 + build 通过 |
 | 6 | **Verify** | `nocode-evolve:dev-verify` | — | 验收标准逐条通过 + 证据收集 |
 | 7 | **Review** | `nocode-evolve:dev-review` | `rule-codex-review` | Critical 全 fix + 用户 approve |
-| 8 | **Land** | `rule-finishing-branch` composite | `rule-finishing-branch` | PR merged + 任务流转 + worktree 清理 |
+| 8 | **Land** | `nocode-evolve:dev-land` | `rule-finishing-branch` | PR merged + 任务流转 + worktree 清理 |
 
 ### 共享词汇（跨 skill leading words）
 
@@ -118,6 +118,7 @@ Land 有 5 个子步骤（8a Create PR → 8b ... → 8e Cleanup），只说"pus
 | **red-green** | 红绿循环 | Build | 失败测试(red)→最小实现(green)的 TDD 循环 |
 | **evidence** | 证据 | Verify | 可贴出的命令+输出——没有 evidence 的断言不成立 |
 | **findings** | 发现 | Code-Review | 带 id/axis/evidence/fix/action 的结构化评审发现 |
+| **disposition** | 处置 | Land | merge/PR/keep/discard 四选一——选了就走完该路径全部 Gate |
 
 这些词在各 skill 内已定义。跨 skill 沟通时用这些词锚定——说"restate 还没确认"比"Define 的产出还没让用户点头"更精确。
 
