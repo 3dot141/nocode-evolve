@@ -63,3 +63,9 @@
 **摘要**: 独立产品流 PRD 阶段: 读 research-memo(可选) + clarify gate + 写结构化 .prd.md 文档(6 核心要素 + 扩展字段); [TBD]/[ASSUMED] 双标注; Go/No-Go 结尾
 **主桶**: design (完整定义见该桶)
 
+#### pd-vis (跨桶)
+**触发**: 用户说「交互设计 / 视觉设计 / 界面设计 / 原型 / wireframe / 线框图 / 设计稿 / 长什么样」, 或 pd-prd 完成后衔接, 或 pdflow 在 PRD 后路由到交互视觉设计阶段
+**读**: `${CLAUDE_PLUGIN_ROOT}/rules/rule-pd-vis.md`
+**摘要**: 独立产品流交互视觉设计阶段: 读 PRD(可选) + 选保真度(默认低保真 wireframe) + 低保真 IA/交互流/wireframe(approve gate) + 2-3 视觉方向发散 + 可选高保真原型 + 对照 PRD 逐条走查; 产出 .design.md; 只做产品交互+视觉不碰技术架构(那是 dev-design)
+**主桶**: design (完整定义见该桶)
+

@@ -153,7 +153,7 @@ description: Use when the user wants to write a product requirements document. U
 
 文档存到 `docs/nocode/prds/{username}/{yymmdd}-{topic-slug}.prd.md`。
 
-完成后提示："PRD 写完了。要继续进 devflow 开发流吗？Define 会以这份 PRD 为输入。"
+完成后提示："PRD 写完了。若需求涉及界面，建议下一步做交互视觉设计（调 `nocode-evolve:pd-vis`），把需求落成界面结构 + 视觉方向；纯后端 / 无界面需求可直接进 devflow 开发流。"
 
 ## 文档质量硬规则
 
