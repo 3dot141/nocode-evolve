@@ -44,27 +44,37 @@ Define 返回后，拿到确认的 restate + 场景分类，进 Step 2。
 为当前场景的阶段各建一条 task。每条 task 的 description 含：
 
 1. **三要素**：`调用` / `进入前 Read` / `Gate`（从「8 阶段总览」表抄）
-2. **Sub-steps 序列**：从下方「Phase sub-flows」抄该阶段的子步骤编号链
+2. **Sub-steps 序列**：从下方「Phase sub-flows」抄该阶段的子步骤编号链，**链首固定是 `⓪ Skill(...)`**——把"加载该阶段 skill"写成显式第 0 步，进入阶段第一眼就看到
 
 示例：
 ```
 TaskCreate(subject: "阶段 8: Land",
-           description: "调用: rule-finishing-branch composite / Read: rule-finishing-branch / Gate: PR merged + 任务流转 + worktree 清理
-Sub-steps: 8a.Create PR → 8b.Add Reviewers → 8c.Poll & Merge → 8d.Task Transition → 8e.Cleanup")
+           description: "调用: nocode-evolve:dev-land / Read: rule-finishing-branch / Gate: PR merged + 任务流转 + worktree 清理
+Sub-steps: ⓪ Skill(nocode-evolve:dev-land) → 8a.Create PR → 8b.Add Reviewers → 8c.Poll & Merge → 8d.Task Transition → 8e.Cleanup")
 ```
 
-Sub-steps 写进 description 是为了**进入阶段时一眼看到完整步骤序列**——防止跳步遗漏。
+Sub-steps 写进 description 是为了**进入阶段时一眼看到完整步骤序列**——防止跳步遗漏。链首的 `⓪ Skill(...)` 是为了把"加载 skill"钉成每个阶段的第一个动作——**sub-steps 是地图，skill 才是详图**，照地图裸跑会丢掉 skill 内的模板 / Iron Law / 格式约束。
 
 ### Step 4: 推进阶段
 
 每个阶段：
 
 1. **进入前** Read 该阶段的 rule（如有）
-2. **调用** 该阶段的 skill
+2. **加载 skill（硬 Gate）**：TaskUpdate 标 in_progress 后的**第一个动作**必须是 `Skill(nocode-evolve:<阶段 skill>)`。没看到 Skill 调用回执，不许执行任何 sub-step。
 3. **Gate 证据点名**：在回复里引用 Gate 条件 + 满足它的具体事实
 4. **TaskUpdate** completed → 下一阶段 in_progress
 
-**Gate 证据是强制工序**——"大概过了 / 应该没问题"不算证据。拿不出证据 = 不标 completed = 不进下一阶段。
+**两条强制工序**：
+
+- **加载 skill 是硬 Gate**——task description 抄了 sub-steps，不等于可以照着裸跑。sub-steps 只列"做什么"，skill 内才有"怎么做"（模板 / Iron Law / 格式约束 / Gate 细节）。跳过 `Skill()` = 丢掉一半指令，这正是本 todo 流程要防的 bug。
+- **Gate 证据是强制工序**——"大概过了 / 应该没问题"不算证据。拿不出证据 = 不标 completed = 不进下一阶段。
+
+**反例**（触发本次强化的 bug）：
+```
+❌ 进入 Build 阶段，看到 task description 里已有 "5a.Scope Lock → 5b.Test First → ..."，
+   直接照着写代码——没调 Skill(nocode-evolve:dev-build)，丢了 TDD Iron Law 和 slice 循环约束。
+```
+正确做法：标 in_progress → 先 `Skill(nocode-evolve:dev-build)` 拿到完整指令 → 再按 sub-steps 推进。
 
 ### Step 5: 输出建议 + 等用户拍板
 
@@ -166,6 +176,8 @@ Fix 类任务的 Review 通过后，问一句：**"什么能预防这个 bug？"
 ### Phase sub-flows（全阶段子步骤 + 决策点）
 
 每个阶段的子步骤序列。Step 3 TaskCreate 时抄编号链，Step 5 进入时展开决策点。
+
+> 下表只列阶段内子步骤。**每条链实际都隐含一个 `⓪ Skill(<阶段 skill>)` 前置步**（见 Step 3 / Step 4）——进入阶段先加载 skill，再走表里的子步骤，表略去 ⓪ 不重复。
 
 #### Define sub-flow
 

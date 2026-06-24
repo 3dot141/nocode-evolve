@@ -37,16 +37,16 @@ description: 产品发现工作流领航（Research → PRD · 2 场景路由）
 
 ### Step 2: TaskCreate
 
-为当前场景的阶段建 task：
+为当前场景的阶段建 task。每个有对应 skill 的阶段（Research / PRD），**task description 的 sub-steps 链首固定写 `⓪ Skill(...)`**——把"加载该阶段 skill"钉成进入阶段的第一个动作。Handoff 是衔接动作，无 skill，不加 ⓪。
 
 **Full 场景**：
 ```
 Task 1: Research — 发散探索（竞品/代码/市场/已有方案）
-  调用: nocode-evolve:pd-research
+  Sub-steps: ⓪ Skill(nocode-evolve:pd-research) → 发散探索 → 产出 research-memo
   Gate: research-memo 产出 + Go/No-Go 用户拍板
 
 Task 2: PRD — 收敛成文档
-  调用: nocode-evolve:pd-prd
+  Sub-steps: ⓪ Skill(nocode-evolve:pd-prd) → 读 memo + clarify → 写 .prd.md
   Gate: .prd.md 产出 + 用户确认
 
 Task 3: Handoff — 衔接开发流
@@ -56,7 +56,7 @@ Task 3: Handoff — 衔接开发流
 **Light 场景**：
 ```
 Task 1: PRD — 收敛成文档
-  调用: nocode-evolve:pd-prd
+  Sub-steps: ⓪ Skill(nocode-evolve:pd-prd) → 读 memo + clarify → 写 .prd.md
   Gate: .prd.md 产出 + 用户确认
 
 Task 2: Handoff — 衔接开发流
@@ -67,7 +67,7 @@ Task 2: Handoff — 衔接开发流
 
 每个阶段：
 
-1. 调用对应的 skill（`nocode-evolve:pd-research` 或 `nocode-evolve:pd-prd`）
+1. **加载 skill（硬 Gate）**：标 in_progress 后的第一个动作必须是 `Skill(nocode-evolve:pd-research)` 或 `Skill(nocode-evolve:pd-prd)`。没看到 Skill 调用回执，不许执行任何 sub-step——task description 里的 sub-steps 是地图，skill 内才有 clarify gate / 文档结构 / 标注约定这些详图。
 2. skill 完成后检查 Gate
 3. Gate 证据点名后标 completed → 下一阶段
 
@@ -129,6 +129,7 @@ PRD 完成后，提示用户下一步选择：
 ## 不要
 
 - **不替用户执行** — 给建议后停下，等用户拍板
+- **不照 todo 裸跑** — 进入 Research / PRD 阶段，标 in_progress 后第一个动作先 `Skill()` 加载该阶段 skill，再走 sub-steps。只跑 todo 不加载 skill = 丢失 skill 内的 clarify gate / 文档结构 / 标注约定
 - **不自行跳 Research** — Full 场景不跳 Research，除非用户显式说"跳过调研"
 - **不在 discoveryflow 内做技术设计** — 技术设计是 devflow Design 的事
 - **不强制进 devflow** — Handoff 给选择，不自动开始开发
