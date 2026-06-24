@@ -71,7 +71,7 @@
 | 集成 Skill | 来源 | 集成方式 |
 |---|---|---|
 | `doubt-driven-development` | agent-skills | **review 提示词**: adversarial framing |
-| `code-review-and-quality` | agent-skills | **五轴适配设计 review**: 可行性/清晰度/一致性/安全/可扩展性 |
+| `code-review-and-quality` | agent-skills | **六轴适配设计 review**: 可行性/清晰度/架构合理性/安全/性能/可扩展性（v3.39: Architecture+Performance 从收窄还原为独立轴） |
 | `source-driven-development` | agent-skills | **前置检查**: 设计文档引用的代码必须 Read 过 |
 | `api-and-interface-design` | agent-skills | **领域 reference**: API 契约设计指南(Hyrum's Law/contract-first/One Version Rule) |
 | `documentation-and-adrs` | agent-skills | **ADR 流程补充**: 每个架构决策记 ADR |

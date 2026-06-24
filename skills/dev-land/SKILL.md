@@ -1,6 +1,6 @@
 ---
 name: dev-land
-description: Use when Review is complete and you need to land the work (merge/PR/keep/discard). Use when devflow routes to Land stage, or when the user says "land/着陆/准备着陆/走 land 阶段".
+description: Use when Review is complete and you need to land the work (merge/PR/keep/discard). Use when devflow routes to Land stage, or when the user says "land/着陆/准备着陆/走 land 阶段/收尾/上线/ship it". Note: standalone "提PR/合并/merge" without devflow context should use finishing-branch rule, not this skill.
 ---
 
 # land — 选路着陆，干净收场
@@ -66,6 +66,11 @@ skill 呈现 4 选项菜单（文案顺序由 sp skill 定义，不改）：
 **Option 2 (PR) 路径**：
 commit 整理 → Gate Title-Body → Gate PR → push → 建 PR → 加 reviewer → Gate Worktree-Cleanup
 
+**PR body 回链**（Gate Title-Body 时）：PR body 除了描述改了什么，还要包含：
+- **Requirements Addressed**：引用 Define 的 restate Success Criteria 编号，逐条说明满足
+- **Verification Evidence**：引用 Verify 阶段的关键证据（测试命令+结果摘要）
+这样 reviewer 看到 PR 就能追溯"为什么做"和"怎么证明做完了"，不用翻会话记录。
+
 **Option 1 (Merge) 路径**：
 commit 整理 → Gate Merge → 本地 merge → tests → cleanup → Gate Remote-Delete
 
@@ -74,6 +79,8 @@ commit 整理 → Gate Merge → 本地 merge → tests → cleanup → Gate Rem
 **Option 4 (Discard)**：Gate Discard (typed `discard`) → cleanup → Gate Remote-Delete。
 
 每个 Gate 停手等用户确认，不跳过。
+
+**完整示例**：走完 Option 2 (PR) 全流程（含 PR body 双回链）见 `references/examples/example-land-pr.md`。
 
 ### 8d. Task Transition
 

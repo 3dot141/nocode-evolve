@@ -209,7 +209,7 @@ Fix 类任务的 Review 通过后，问一句：**"什么能预防这个 bug？"
 | 3c. 用户选方案 | AskUserQuestion | 推荐放第一；全否决回 3b 问原因 |
 | 3d. 方案←→目标对齐 | 回检 restate | 有冲突建议回 Define（最多 2 轮） |
 | 3e. 测试目标 | 每条 SC → ≥1 测试目标 | 标可测性约束 + 层级分布 |
-| 3f. 写设计文档 | design-doc-writing | 五轴 review（可行性/清晰度/一致性/安全/可扩展性） |
+| 3f. 写设计文档 | design-doc-writing | 六轴 review（可行性/清晰度/架构合理性/安全/性能/可扩展性） |
 
 #### Plan sub-flow
 
@@ -220,7 +220,8 @@ Fix 类任务的 Review 通过后，问一句：**"什么能预防这个 bug？"
 | 4c. 垂直切片 | Slicing + Risk-first 排序 | 形态选择：Vertical / Contract-First |
 | 4d. 写 task | 贴真实代码零占位符 | ≤M（≤5 文件），标 HITL/AFK |
 | 4e. 插 checkpoint | 每 2-3 task 一个 | rollback 边界 |
-| 4f. 用户确认 | AskUserQuestion | 确认计划 + 选执行模式（Subagent 并行/顺序） |
+| 4f. Plan Validation | 需求覆盖+任务可验证+依赖无环 | 不过回 4d 补 |
+| 4g. 用户确认 | AskUserQuestion | 确认计划 + 选执行模式（Subagent 并行/顺序） |
 
 #### Build sub-flow
 

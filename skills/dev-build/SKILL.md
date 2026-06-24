@@ -1,6 +1,6 @@
 ---
 name: dev-build
-description: Use when executing implementation tasks from a plan, writing new code, or implementing features. Use when devflow routes to Build stage, or when the user says "开始实现/写代码/执行计划/build it".
+description: Use when executing implementation tasks from a plan, writing new code, or implementing features. Use when devflow routes to Build stage, or when the user says "开始实现/写代码/执行计划/build it/动手/实现这个功能/把X加上/继续写/implement". Also use when resuming implementation work after a break or switching back from debugging.
 ---
 
 # build — 增量实现，slice 闭环
@@ -51,6 +51,8 @@ for each task in plan:
   5d. Verify & Commit  test+build+无回归 → 描述性 commit
 ```
 
+> 端到端示例（一个完整 slice：5a Scope Lock → 5b 失败测试 → 5c 实现 → 5d commit）见 `references/examples/example-build-slice.md`
+
 ### 5a. Scope Lock
 
 - 取 task，确认 ≤ 5 文件 + 验收标准。超过 → 回 Plan 拆
@@ -92,6 +94,29 @@ commit message 说清 what + why。
 |---|---|
 | 同一测试修 3 次仍失败 | Debug 横切（见 `references/debug-protocol.md`）。**第一步不是列假设，是建 tight 反馈回路**：一条已跑过、能因此 bug 变红、确定性、秒级的命令。没有这条命令，禁止进假设阶段——读代码猜根因正是这个纪律要防的 |
 | 卡住/方向不确定 | Doubt-Driven：停下写出不确定点+假设，找用户或文档确认。上下文冲突（spec 说 X 但代码是 Y）→ 不静默选一个，显式列选项让用户拍板 |
+| 实现偏离计划 | **偏差分级处置**（见下） |
+
+### 偏差分级处置
+
+slice 执行中发现实现路径和计划不完全对得上——不是所有偏差都要回 Plan：
+
+| 偏差程度 | 信号 | 处置 |
+|---|---|---|
+| **小** — 路径不同但目标不变 | 换了个等价 API / 文件内位置微调 / 顺序略不同 | 记录偏差理由（commit message 或 NOTICED），继续 |
+| **中** — task scope 需调整 | 发现要多改 1-2 个文件 / 验收标准要补一条 | 暂停，在当前 task 补 scope 说明，不回 Plan。如果超出 ≤5 文件 → 升级为大偏差 |
+| **大** — 设计假设错误 | 依赖的接口不存在 / 架构方向不可行 / 核心数据结构需重新定义 | 停手，走回流路径 Build → Design → Plan |
+
+不要硬做也不要轻易回退——大多数偏差是小偏差，记下就好。
+
+### Subagent 产出验证
+
+用 subagent 并行执行 task 时，不信 subagent 自报的"完成"：
+
+1. **独立查 diff**：Read subagent 改动的文件，确认 scope 未越界
+2. **独立跑测试**：在主 agent 跑完整测试套件，不只依赖 subagent 的测试输出
+3. **spec 核对**：subagent 交付的 vs task 验收标准逐条核对
+
+这是 superpowers 两段评审（spec → quality）的轻量版——先看"做的对不对"再看"做的好不好"。
 
 ## Exit Gate
 

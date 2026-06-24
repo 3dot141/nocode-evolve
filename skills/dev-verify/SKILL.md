@@ -1,6 +1,6 @@
 ---
 name: dev-verify
-description: Use when Build is complete and you need to verify the implementation works end-to-end. Use when devflow routes to Verify stage, or when the user says "验证一下/跑一下看看/确认能用/verify".
+description: Use when Build is complete and you need to verify the implementation works end-to-end. Use when devflow routes to Verify stage, or when the user says "验证一下/跑一下看看/确认能用/verify/测一下/能跑吗/是不是好了/验收/check it works". Also use before claiming any work is done — evidence before assertions.
 ---
 
 # verify — 证明它真的能用
@@ -91,6 +91,8 @@ Core Web Vitals：LCP ≤ 2.5s、INP ≤ 200ms、CLS ≤ 0.1。详见 `reference
 ```
 
 每条有编号 + 标准原文 + ✅/❌ + 证据（命令+输出）。任一条 ❌ → 回 Build 修复。
+
+**完整示例**：一次走完 6a→6b→6e（含一条 SC ❌ 回 Build）见 `references/examples/example-verify-session.md`。
 
 **Subagent 验证规则**：如果用了 subagent 执行 Build，subagent 报 success 不可信——独立查 VCS diff 确认真有改动、独立跑测试确认真通过。不信 agent 自报状态。
 

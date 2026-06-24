@@ -62,6 +62,8 @@ description: Use when the user wants to write a product requirements document. U
 - `[ASSUMED]` — AI 编了个合理值，需用户核验（不是事实，是推断）
 - `[TBD]` — 用户还没决定（不是 AI 不知道，是用户说"还没想好"）
 
+**填好的示例**（对照颗粒度，不照搬措辞）：`references/examples/example-prd-filled.md`
+
 **PRD 文档模板**：
 
 ```markdown

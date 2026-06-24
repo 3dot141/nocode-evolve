@@ -77,7 +77,7 @@ description: Use when the user wants to explore a problem space before committin
 
 ### Step 3: 综合
 
-汇总各切面结论，写成结构化 research-memo：
+汇总各切面结论，写成结构化 research-memo（填好的示例见 `references/examples/example-research-memo.md`，对照颗粒度不照搬）：
 
 ```markdown
 # Research Memo: {topic}

@@ -30,6 +30,8 @@ description: Use when starting any non-trivial task, when requirements are uncle
 5. **产出 restate** — 含 Quality Bar + Collaboration Pact
 6. **用户确认** — AskUserQuestion 三选：确认/修改/重来
 
+> 端到端示例（模糊需求 → 确认 restate）见 `references/examples/example-define-session.md`
+
 ## 协议
 
 ### Step 1: 场景分类

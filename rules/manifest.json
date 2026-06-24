@@ -228,7 +228,7 @@
       "triggers": ["设计文档", "design\\s*doc", "\\bprd\\b", "\\brfc\\b", "\\badr\\b", "重构方案", "技术\\s*spec", "技术方案", "api\\s*设计", "系统设计", "(技术)?\\s*选型", "方案.{0,4}对比", "架构.{0,2}设计", "出.{0,2}方案"],
       "action": "Read rules/rule-dev-design.md, 走 Skill(nocode-evolve:dev-design)",
       "read": "${CLAUDE_PLUGIN_ROOT}/rules/rule-dev-design.md",
-      "summary": "Design 阶段: 方案探索(brainstorming发散解法空间) + 测试目标推导 + 设计文档(design-doc-writing); adversarial review + 设计五轴(可行性/清晰度/一致性/安全/可扩展性) + source-driven 前置检查 + 轻量 threat model",
+      "summary": "Design 阶段: 方案探索(brainstorming发散解法空间) + 测试目标推导 + 设计文档(design-doc-writing); adversarial review + 设计六轴(可行性/清晰度/架构合理性/安全/性能/可扩展性) + source-driven 前置检查 + 轻量 threat model",
       "guard": "",
       "depends_on": ["dev-define"],
       "severity": "warn",

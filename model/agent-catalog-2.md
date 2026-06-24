@@ -15,7 +15,7 @@
 #### dev-design
 **触发**: 用户要求写设计文档 / PRD / RFC / Design Doc / ADR / 重构方案 / 技术 spec / API 设计, 或 devflow 路由到 Design 阶段
 **读**: `${CLAUDE_PLUGIN_ROOT}/rules/rule-dev-design.md`
-**摘要**: Design 阶段: 方案探索(brainstorming发散解法空间) + 测试目标推导 + 设计文档(design-doc-writing); adversarial review + 设计五轴(可行性/清晰度/一致性/安全/可扩展性) + source-driven 前置检查 + 轻量 threat model
+**摘要**: Design 阶段: 方案探索(brainstorming发散解法空间) + 测试目标推导 + 设计文档(design-doc-writing); adversarial review + 设计六轴(可行性/清晰度/架构合理性/安全/性能/可扩展性) + source-driven 前置检查 + 轻量 threat model
 **也属**: workflow
 **生命周期**: 0 设计
 

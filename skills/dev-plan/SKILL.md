@@ -31,11 +31,14 @@ description: Use when you have defined goals and need to break work into tasks. 
 3. **垂直切片** — 端到端可交付，risk-first 排序
 4. **写 task** — 每个 ≤ M，贴真实代码，标 HITL/AFK，零占位符
 5. **插 checkpoint** — 每 2-3 task 一个
-6. **用户确认 + 选执行模式** — AskUserQuestion Gate
+6. **Plan Validation** — 需求覆盖 + 任务可验证 + 依赖无环
+7. **用户确认 + 选执行模式** — AskUserQuestion Gate
 
 **Plan 的两种合法产出**：
 - **完整计划**（Standard/Full）：依赖图 + 任务序列 + checkpoint
 - **验收标准只**（Mini/太小不拆）：一句话说清"怎么算做完了" + 指出前置确认项（如 i18n/定位）。不拆 ≠ 不定义完成标准。两者都是 Plan 的正当输出。
+
+> 端到端示例（header + 依赖图 + task + checkpoint + Plan Validation）见 `references/examples/example-plan-output.md`
 
 ## 协议
 
@@ -83,7 +86,19 @@ description: Use when you have defined goals and need to break work into tasks. 
 
 每 2-3 个 task 一个 checkpoint = 全测试通过 + build 通过 + 用户 review。checkpoint 是 rollback 边界。
 
-### Step 6: 用户确认 + 执行模式
+### Step 6: Plan Validation
+
+用户确认前自检计划质量。三项检查，任一不通过回 Step 4 补：
+
+**6a. 需求覆盖**：restate 的每条 Success Criteria 至少被一个 task 覆盖。逐条核对，缺覆盖的标出来。
+
+**6b. 任务可验证**：每个 task 声明了怎么验证完成（测试命令/预期输出/人工确认项）。"写完就算完"不算验证——验证命令不存在的 task 在 Build 阶段会卡住。
+
+**6c. 依赖无环**：task 间依赖不成环，底层 task 排前面。循环依赖说明切片方式有问题。
+
+三项全过再进 Step 7 让用户确认。
+
+### Step 7: 用户确认 + 执行模式
 
 计划完整呈现后用 AskUserQuestion 确认，再选执行模式：
 

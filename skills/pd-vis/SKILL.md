@@ -119,6 +119,8 @@ description: Use when the user wants to design the interaction and visual direct
 | 可行性 | 这个设计开发能实现？没有依赖不存在的能力？ |
 | PRD 对齐 | 设计没超出 PRD 范围，也没漏 User Story？ |
 
+**填好的低保真示例**（对照颗粒度，不照搬措辞）：`references/examples/example-vis-wireframe.md`
+
 **`.design.md` 模板**：
 
 ```markdown

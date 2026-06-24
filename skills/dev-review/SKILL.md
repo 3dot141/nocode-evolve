@@ -1,6 +1,6 @@
 ---
 name: dev-review
-description: Use before merging any change, after completing a feature, or when reviewing code. Use when devflow routes to Review stage, or when the user says "review 一下/看看代码/评审/check the code".
+description: Use before merging any change, after completing a feature, or when reviewing code. Use when devflow routes to Review stage, or when the user says "review 一下/看看代码/评审/check the code/审一下/有没有问题/帮我review/code review". Also use when the user asks to review a PR or diff.
 ---
 
 # code-review — 多维度代码评审
@@ -69,6 +69,8 @@ description: Use before merging any change, after completing a feature, or when 
 
 **五轴必须逐轴过**——不能只过正确性就跳到 simplification。每轴至少检查一个具体点、记一条 finding（即使是"此轴未发现问题"），确保没跳过。
 
+**完整示例**：一段 diff 走完五轴、产出 C1/W1/S1 分级 findings（含 Structural Remedy）见 `references/examples/example-review-findings.md`。
+
 ### 7b. Simplification Pass
 
 只针对本次变更，不改行为（详见 `references/simplification-guide.md`）。
@@ -87,6 +89,10 @@ description: Use before merging any change, after completing a feature, or when 
 ### 7d. Findings Triage
 
 每条 finding 统一结构：`id`（C1/W1/S1）+ `axis` + `evidence`（file:line + 代码）+ `fix`（可操作的修法）+ `action`（Critical/Warning/Suggestion）。
+
+**Structural Remedies**：fix 字段不只指出问题，要给出具体重构动作——"replace conditionals with typed dispatcher" 比 "consider refactoring" 有用。具体到"把什么移到哪，怎么改调用方"。几条高置信度的 Structural Remedies 胜过一长串 nit。
+
+**排序原则**：correctness + security 优先呈现。少而精好过事无巨细——如果有一个架构问题和十个 nit，那个架构问题才是 review。
 
 **Finding 分类优先级**（分歧时先排序再讨论）：
 1. **Contract misread** — reviewer 误读了需求描述 → 先修需求再说

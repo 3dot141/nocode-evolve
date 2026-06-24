@@ -1,6 +1,6 @@
 ---
 name: dev-design
-description: Use when Define is complete and the task needs architecture or approach decisions. Use when devflow routes to Design stage, or when the user says "设计方案/怎么做/选什么技术/架构设计/方案对比". For Full-scene tasks.
+description: Use when Define is complete and the task needs architecture or approach decisions. Use when devflow routes to Design stage, or when the user says "设计方案/怎么做/选什么技术/架构设计/方案对比/重构方案/技术spec/出方案/怎么实现". For Full-scene tasks. Not for writing code comments, README, or commit messages.
 ---
 
 # design — 从问题到解法
@@ -32,6 +32,8 @@ Define 回答"做什么"，Design 回答"怎么做"。核心动作是探索 **ap
 5. **方案←→目标对齐** — 回检 restate 是否冲突
 6. **测试目标** — 从 restate + 方案推导
 7. **写设计文档** — 调 design-doc-writing
+
+> 端到端示例（restate → 方案对比 → 选定 → 测试目标）见 `references/examples/example-design-session.md`
 
 ## 领域指南（按需 Read）
 
@@ -150,15 +152,16 @@ Define 回答"做什么"，Design 回答"怎么做"。核心动作是探索 **ap
 
 design-doc-writing 接管：doc-type 选择 → 写 → review → render。
 
-**设计 Review 五轴**（design-doc-writing review 时使用）：
+**设计 Review 六轴**（design-doc-writing review 时使用，参考 [agent-skills](https://github.com/addyosmani/agent-skills) 代码五轴在设计层的对应）：
 
 | 维度 | 检查什么 |
 |---|---|
-| 可行性 | 能按描述实现吗？ |
+| 可行性 | 能按描述实现吗？依赖项就位了吗？ |
 | 清晰度 | 读者能看懂吗？歧义/遗漏？ |
-| 一致性 | 与现有架构冲突吗？ |
+| 架构合理性 | 模块边界/职责划分/依赖方向合理吗？与现有 pattern 一致还是有理由偏离？是减少复杂度还是搬运复杂度？ |
 | 安全影响 | 引入新攻击面吗？轻量 STRIDE |
-| 可扩展性 | 会成为瓶颈吗？ |
+| 性能 | 数据量级/响应时间/资源消耗预估合理吗？同步异步、轮询推送、全量增量等选型有性能考量吗？ |
+| 可扩展性 | 10x 规模会成为瓶颈吗？水平/垂直扩展路径清晰吗？ |
 
 涉及外部输入/认证/数据时做轻量 Threat Model（画信任边界 → 命名资产 → 跑 STRIDE 6 问）。
 
@@ -166,7 +169,7 @@ design-doc-writing 接管：doc-type 选择 → 写 → review → render。
 
 - [ ] 方案已选定，用户显式确认
 - [ ] 测试目标已产出，覆盖每条 Success Criteria
-- [ ] 设计文档评审通过（五轴 review）
+- [ ] 设计文档评审通过（六轴 review）
 - [ ] 后续 Plan 输入齐全：restate + 设计文档 + 测试目标
 
 ## Common Rationalizations
