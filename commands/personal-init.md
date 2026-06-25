@@ -49,8 +49,8 @@ argument-hint: (无参数)
 
 <!-- {pd_research_output} = docs/pd/{username}/{yymmdd}-{serial}-{topic}/research-report.md -->
 <!-- {pd_prd_output} = docs/pd/{username}/{yymmdd}-{serial}-{topic}/{topic}.prd.md -->
-<!-- {pd_vis_output} = docs/pd/{username}/{yymmdd}-{serial}-{topic}/{topic}.design.md -->
-<!-- {pd_vis_prototype} = docs/pd/{username}/{yymmdd}-{serial}-{topic}/prototype-{topic}.html -->
+<!-- {pd_vis_output} = docs/pd/{username}/{yymmdd}-{serial}-{topic}/{topic}.ui.md -->
+<!-- {pd_vis_prototype} = docs/pd/{username}/{yymmdd}-{serial}-{topic}/{topic}.ui-prototype.html -->
 <!-- {dev_design_output} = docs/dev/{username}/{yymmdd}-{serial}-{topic}/{topic}-design.md -->
 <!-- {dev_plan_output} = docs/dev/{username}/{yymmdd}-{serial}-{topic}/{topic}-plan.md -->
 <!-- {dev_verify_output} = docs/dev/{username}/{yymmdd}-{serial}-{topic}/verify-report.md -->

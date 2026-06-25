@@ -1,6 +1,6 @@
 ---
 name: pd-vis
-description: Use when the user wants to design the interaction and visual direction of a product after the PRD is defined. Use when the user says "交互设计/视觉设计/界面设计/原型/wireframe/线框图/设计稿/长什么样", or when pdflow routes to the interaction-visual-design stage after PRD. Produces a .design.md (interaction + visual spec), with optional mid/high-fidelity static mockups or a clickable HTML prototype. Not for technical architecture (use nocode-evolve:dev-design) or production component code (use devflow Build).
+description: Use when the user wants to design the interaction and visual direction of a product after the PRD is defined. Use when the user says "交互设计/视觉设计/界面设计/原型/wireframe/线框图/设计稿/长什么样", or when pdflow routes to the interaction-visual-design stage after PRD. Produces a .ui.md (interaction + visual spec), with optional mid/high-fidelity static mockups or a clickable HTML prototype. Not for technical architecture (use nocode-evolve:dev-design) or production component code (use devflow Build).
 ---
 
 # pd-vis — 交互视觉设计
@@ -9,7 +9,7 @@ description: Use when the user wants to design the interaction and visual direct
 
 独立于 devflow 的产品流第三阶段。把 PRD 的需求落成**界面结构 + 交互流 + 视觉方向**。产出物喂给 devflow 的 Define/Design 阶段，和 `.prd.md` 一起作为开发输入。
 
-> Leading word: **design**。所有收敛到一份 `.design.md`，没有文档就没有交互视觉设计的产出。
+> Leading word: **ui**。所有收敛到一份 `.ui.md`，没有文档就没有交互视觉设计的产出。
 
 ## 边界：pd-vis 做什么、不做什么
 
@@ -41,7 +41,7 @@ description: Use when the user wants to design the interaction and visual direct
 2. **低保真：IA + wireframe** — 信息架构 + 关键流程（映射 PRD 路径 ID）+ 线框图，**先批准**
 3. **方向发散** — 2-3 个视觉方向，用户选一个
 4. **高保真产出**（仅中/高保真档）— 静态视觉稿 or 可点击原型
-5. **验证 + 交付** — 对照 PRD 逐条走查 + 写 `.design.md`
+5. **验证 + 交付** — 对照 PRD 逐条走查 + 写 `.ui.md`
 
 ## 协议
 
@@ -90,7 +90,7 @@ description: Use when the user wants to design the interaction and visual direct
 2. 如果是全新产品——扫描代码库的 UI 组件/设计系统（有的话），确认可复用的视觉资产
 3. 产出现状清单：已有什么 + 要新建什么 + 要改什么
 
-**探索完成后再进 Step 1**。竞品参考表和现状清单写进 `.design.md` 的「竞品参考」和「现状」节。
+**探索完成后再进 Step 1**。竞品参考表和现状清单写进 `.ui.md` 的「竞品参考」和「现状」节。
 
 > **Playwright 用法**：`npx playwright install chromium && npx playwright screenshot <url> --full-page -o <output.png>`。无头模式，不需要 GUI。如果 Playwright 不可用，降级到 `agent-browser` skill 或请用户截图。
 
@@ -107,7 +107,7 @@ description: Use when the user wants to design the interaction and visual direct
 
 | 档 | 产出 | 适用 |
 |---|---|---|
-| **低保真 wireframe（默认）** | 文字/ASCII 结构 + 交互流，写进 `.design.md` | 大多数情况，够拍板方向 |
+| **低保真 wireframe（默认）** | 文字/ASCII 结构 + 交互流，写进 `.ui.md` | 大多数情况，够拍板方向 |
 | **中保真静态稿** | + 关键页单屏静态视觉（配色/排版/层级具体值） | 要确认视觉观感 |
 | **高保真可点击原型** | + `prototype.html`（能点、能走流程） | 给 stakeholder 演示 / 验证复杂交互 |
 
@@ -115,7 +115,7 @@ description: Use when the user wants to design the interaction and visual direct
 
 ### Step 3: 低保真——按交互粒度逐个拆解（所有档都做）
 
-无论选哪档，结构先行。**核心方法：按交互粒度逐个拆解，每个交互独立调研+设计+画线框，所有调研落进 `.design.md`。**
+无论选哪档，结构先行。**核心方法：按交互粒度逐个拆解，每个交互独立调研+设计+画线框，所有调研落进 `.ui.md`。**
 
 这一步产出后**先给用户批准，再往下做高保真**（approve gate）——别在没定的骨架上糊视觉。
 
@@ -136,7 +136,7 @@ description: Use when the user wants to design the interaction and visual direct
 
 #### 3b. 逐交互调研+设计+线框
 
-对每个交互，完成四件事并全部写进 `.design.md`：
+对每个交互，完成四件事并全部写进 `.ui.md`：
 
 1. **竞品做法**：竞品怎么做这个交互。从 Step 1 的竞品概览深入到具体交互层——需要的话追加搜索/截图。标 `[SOURCE]`
 2. **设计决策**：我们怎么做、为什么这么做（引用竞品做法 + PRD 约束）
@@ -172,7 +172,7 @@ description: Use when the user wants to design the interaction and visual direct
 
 每个方向给：一句话描述 + 适用场景 + 参考产品类比。
 
-- **低保真档**：方向只用文字描述，不出稿，记进 `.design.md` 的 Visual Direction
+- **低保真档**：方向只用文字描述，不出稿，记进 `.ui.md` 的 Visual Direction
 - **中/高保真档**：基于用户选定的方向出稿（Step 4）
 
 ### Step 5: 高保真产出（仅中 / 高保真档）
@@ -185,7 +185,7 @@ description: Use when the user wants to design the interaction and visual direct
 
 ### Step 6: 验证 + 交付
 
-产出 `.design.md` 前，两道自查：
+产出 `.ui.md` 前，两道自查：
 
 **① PRD 路径逐条走查**（硬约束）：PRD 的每条**使用路径**，在设计里都有对应的交互流吗？逐条点名（按路径 ID），缺的补、PRD 没有的删（脱离 PRD 自由发挥要回头确认）。**系统路径**的用户可见反馈也要核——支付回调、定时同步这类后台行为触发后用户在界面上看到什么，有没有设计对应的状态。
 
@@ -201,7 +201,7 @@ description: Use when the user wants to design the interaction and visual direct
 
 **填好的低保真示例**（对照颗粒度，不照搬措辞）：`references/examples/example-vis-wireframe.md`
 
-**`.design.md` 模板**：
+**`.ui.md` 模板**：
 
 ```markdown
 # 设计: {title}
@@ -267,8 +267,8 @@ description: Use when the user wants to design the interaction and visual direct
 
 ### Step 7: 保存 + Handoff
 
-- `.design.md` 存到 `{pd_vis_output}` 变量指定的路径，和同 topic 的 PRD 同目录
-- 高保真原型存 `{pd_vis_prototype}` 变量指定的路径
+- `.ui.md` 存到 `{pd_vis_output}` 变量指定的路径，和同 topic 的 PRD 同目录
+- 高保真原型存 `{pd_vis_prototype}` 变量指定的路径（`.ui-prototype.html`）
 - 变量定义见 `model/agent-about.md`「文档产出路径变量」
 
 完成后提示："交互视觉设计完成。进 devflow 开发时，Define/Design 会以 PRD + 这份 design 为输入（做什么 + 长什么样）。"
@@ -279,7 +279,7 @@ description: Use when the user wants to design the interaction and visual direct
 
 ## Exit Gate
 
-- [ ] `.design.md` 已产出，含竞品参考 + 现状 + IA + 关键流程 + wireframe（带状态列表）
+- [ ] `.ui.md` 已产出，含竞品参考 + 现状 + IA + 关键流程 + wireframe（带状态列表）
 - [ ] 竞品探索已完成（文字说明/HTML/截图三块）
 - [ ] 低保真结构经用户批准（approve gate 过了）
 - [ ] 给了 2-3 个视觉方向，用户已选
@@ -316,5 +316,5 @@ description: Use when the user wants to design the interaction and visual direct
 - 只给一个视觉方向（没发散）
 - 没对照 PRD 逐条核（可能漏了使用路径对应界面 / 系统路径反馈）
 - 交互流没标 PRD 路径 ID（断了与下游的可追溯链）
-- `.design.md` 出现 PRD 里不存在的功能（脱离 PRD 自由发挥）
+- `.ui.md` 出现 PRD 里不存在的功能（脱离 PRD 自由发挥）
 - 在 pd-vis 里定了技术栈 / API / 数据库（越界到 dev-design）

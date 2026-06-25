@@ -292,7 +292,7 @@
       "triggers": ["交互.{0,2}设计", "视觉.{0,2}设计", "界面.{0,2}设计", "(线框图|wireframe|原型|设计稿)", "长.{0,2}什么样"],
       "action": "Skill(nocode-evolve:pd-vis)",
       "read": "${CLAUDE_PLUGIN_ROOT}/rules/rule-pd-vis.md",
-      "summary": "独立产品流交互视觉设计阶段: 读 PRD(可选) + 选保真度(默认低保真 wireframe) + 低保真 IA/交互流/wireframe(approve gate) + 2-3 视觉方向发散 + 可选高保真原型 + 对照 PRD 逐条走查; 产出 .design.md; 只做产品交互+视觉不碰技术架构(那是 dev-design)",
+      "summary": "独立产品流交互视觉设计阶段: 读 PRD(可选) + 选保真度(默认低保真 wireframe) + 低保真 IA/交互流/wireframe(approve gate) + 2-3 视觉方向发散 + 可选高保真原型 + 对照 PRD 逐条走查; 产出 .ui.md; 只做产品交互+视觉不碰技术架构(那是 dev-design)",
       "guard": "",
       "depends_on": [],
       "severity": "advisory",

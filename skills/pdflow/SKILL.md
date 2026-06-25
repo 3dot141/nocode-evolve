@@ -7,7 +7,7 @@ description: 产品发现工作流领航（Research → PRD · 2 场景路由）
 
 > 产品流驾驶舱。独立于 devflow，专管"开发前"的产品调研和需求定义。
 >
-> 与 devflow 的关系：devflow 管开发（Define → ... → Land），pdflow 管产品（Research → PRD → 交互视觉设计）。两者通过 `.prd.md` + `.design.md` 文档衔接。devflow Full 场景会建议先走 pdflow。
+> 与 devflow 的关系：devflow 管开发（Define → ... → Land），pdflow 管产品（Research → PRD → 交互视觉设计）。两者通过 `.prd.md` + `.ui.md` 文档衔接。devflow Full 场景会建议先走 pdflow。
 
 ## 协议
 
@@ -54,8 +54,8 @@ Task 2: PRD — 收敛成文档
   Gate: .prd.md 产出 + 用户确认
 
 Task 3: 交互视觉设计 — 界面结构 + 视觉方向（无界面需求可跳过）
-  Sub-steps: ⓪ Skill(nocode-evolve:pd-vis) → 读 PRD + 选保真度 → wireframe(批准) → 方向发散 → 产出 .design.md
-  Gate: .design.md 产出 + 用户确认方向
+  Sub-steps: ⓪ Skill(nocode-evolve:pd-vis) → 读 PRD + 选保真度 → wireframe(批准) → 方向发散 → 产出 .ui.md
+  Gate: .ui.md 产出 + 用户确认方向
 
 Task 4: Handoff — 衔接开发流
   Gate: 用户决定是否进 devflow
@@ -68,8 +68,8 @@ Task 1: PRD — 收敛成文档
   Gate: .prd.md 产出 + 用户确认
 
 Task 2: 交互视觉设计 — 界面结构 + 视觉方向（无界面需求可跳过）
-  Sub-steps: ⓪ Skill(nocode-evolve:pd-vis) → 读 PRD + 选保真度 → wireframe(批准) → 方向发散 → 产出 .design.md
-  Gate: .design.md 产出 + 用户确认方向
+  Sub-steps: ⓪ Skill(nocode-evolve:pd-vis) → 读 PRD + 选保真度 → wireframe(批准) → 方向发散 → 产出 .ui.md
+  Gate: .ui.md 产出 + 用户确认方向
 
 Task 3: Handoff — 衔接开发流
   Gate: 用户决定是否进 devflow
@@ -115,7 +115,7 @@ Task 3: Handoff — 衔接开发流
 │  │ (发散)  │   │ (收敛) │   │  (pd-vis)    │   │   │  Review → Land              │
 │  └────────┘   └────────┘   └──────────────┘   │   │                              │
 │                                                │   │                              │
-│  产出: research-report.md  .prd.md  .design.md  │   │  输入: .prd.md + .design.md │
+│  产出: research-report.md  .prd.md  .ui.md  │   │  输入: .prd.md + .ui.md │
 │                                                │   │                              │
 └────────────────────────────────────────────────┘   └──────────────────────────────┘
 ```
