@@ -25,10 +25,11 @@ description: Use when starting any non-trivial task, when requirements are uncle
 
 1. **场景分类** — AskUserQuestion 确认 Mini/Fix/Standard/Full
 2. **探索现状** — 按场景裁剪：代码探索 + 网络探索（Mini 跳过）
-3. **假设先行** — 基于探索结论形成判断 + CONFIDENCE
-4. **澄清循环** — 代码能自答的不问用户；用 AskUserQuestion 给选项
-5. **产出 restate** — 含 Quality Bar + Collaboration Pact
-6. **用户确认** — AskUserQuestion 三选：确认/修改/重来
+3. **路径校验** — 搬入/生成路径清单 + 每条路径绑 SC（Full/Standard）
+4. **假设先行** — 基于探索结论形成判断 + CONFIDENCE
+5. **澄清循环** — 代码能自答的不问用户；用 AskUserQuestion 给选项
+6. **产出 restate** — 含路径清单 + SC 绑定 + Quality Bar + Collaboration Pact
+7. **用户确认** — AskUserQuestion 三选：确认/修改/重来（路径 + SC 一起确认）
 
 > 端到端示例（模糊需求 → 确认 restate）见 `references/examples/example-define-session.md`
 
@@ -83,17 +84,39 @@ Standard/Full → 进 Step 2。
 
 **工具降级**：semble-search 不可用 → 降级 Bash grep + Explore agent。Exa/WebSearch 不可用 → 跳过网络探索，标注"网络不可用"。
 
-**综合**：两路 agent 结果回来后，输出一段简要总结（代码里已有什么 + 网上发现了什么），带入 Step 3 影响假设的置信度。
+**综合**：两路 agent 结果回来后，输出一段简要总结（代码里已有什么 + 网上发现了什么），带入 Step 4 影响假设的置信度。
 
-### Step 3: 假设先行
+### Step 3: 路径校验
+
+把用户使用场景显式建模成路径清单，作为 restate 的完整性骨架。路径格式、ID 体系、状态标注见 `{NOCODE_SKILL_REF}/path-conventions.md`。
+
+**Mini/Fix 跳过本步**——Mini 走 mini-goal，Fix 走复现定义，都不需要路径建模。Standard/Full 必做。
+
+**有 PRD**（`{pd_prd_output}` 所在目录有 `*.prd.md`）：
+- Read PRD 的「业务领域与使用路径 / 跨领域路径 / 系统路径 / 约束」节，搬入 restate 的路径清单
+- 按领域逐个检查完整性：每个领域的路径齐了吗？有没有遗漏的异常路径、恢复路径、角色差异？
+- PRD 标 `[ASSUMED]/[TBD]` 的路径，在这里收敛成 `[CONFIRMED]` 或确认删除
+
+**无 PRD**：
+- 基于 Step 2 探索结论现场生成路径清单，全部标 `[ASSUMED]`，需用户确认
+- 至少覆盖：核心使用路径 + 明显的异常路径 + 涉及的系统路径（回调/定时任务/批处理）
+
+**SC 绑定**（ID 由 Define 独占分配，PRD 不分配 SC 编号）：
+- **每条路径至少绑定一条 SC**
+- 有路径无 SC → 补 SC（这条路径怎么算做成了？）
+- 有 SC 无路径 → 检查是否遗漏路径（这条标准在验哪条使用场景？）
+
+产出路径清单 + 路径↔SC 绑定，带入 Step 6 写进 restate。
+
+### Step 4: 假设先行
 
 基于 Step 2 的探索结论，写出你的判断。**面向用户用白话说**——"代码里已有类似实现 X，所以我猜你想要 Y，大概 80% 把握"，不贴 HYPOTHESIS/CONFIDENCE 标签。
 
-**快速路径**：如果之前会话已充分讨论，置信度已 ≥ 95% → 跳过 Step 4 澄清，直接出 restate 给用户确认。
+**快速路径**：如果之前会话已充分讨论，置信度已 ≥ 95% → 跳过 Step 5 澄清，直接出 restate 给用户确认。
 
 **Surface Assumptions**：把隐含假设全摊开给用户：「我正在假设 1.X 2.Y 3.Z → 纠正我否则按此推进」。假设是最危险的误解——不摊开的假设会在 Build 期变成返工。
 
-### Step 4: 澄清循环
+### Step 5: 澄清循环
 
 **提问前自查：这个问题的答案在代码里或 Step 2 的探索结论里吗？**
 - 已在探索中确认的事实 → 直接引用，不问用户
@@ -107,11 +130,30 @@ Standard/Full → 进 Step 2。
 
 **识别 "want vs should want"**：用户说"最佳实践是..."、用 buzzword 当目标（"可扩展"/"现代"）→ 追问"如果不需要向任何人解释，你真正想要的是什么？"
 
-### Step 5: 产出 restate
+### Step 6: 产出 restate
 
 置信度 ≥ 95% 时产出（完整模板见 `references/restate-template.md`）：
 
 **必填字段**：Outcome / User / Why Now / Success Criteria / Constraint / Out of Scope / Assumptions / Boundaries (Always/Ask First/Never)
+
+**Full/Standard 额外字段**（Step 3 产出，写进 restate）：
+
+```markdown
+## 路径清单
+[从 PRD 搬入，或现场生成；格式见 path-conventions.md]
+- 使用路径: 订单.P1 ... / 订单.P2 ...
+- 跨领域路径: 跨域.1 ...
+- 系统路径: 系统.1 ...
+- 约束: 约束.1 ...
+
+## 路径 ↔ SC 绑定
+| 路径 | 绑定 SC |
+|---|---|
+| 订单.P1 | SC-1, SC-3 |
+| 订单.P2 | SC-2 |
+| 系统.1 | SC-4 |
+| 约束.1 | SC-5 |
+```
 
 **Out of Scope 不可省略**——这是 restate 里最有价值的一行。一半的对齐偏差来自对"不做什么"的沉默分歧。用户确认 Out of Scope 比确认 Outcome 更能防止后续返工。
 
@@ -121,9 +163,9 @@ Standard/Full → 进 Step 2。
 
 **引用探索结论**：restate 里引用 Step 2 发现的关键事实（代码里有什么、网上有什么行业标准），让 restate 有事实基础，不是空中楼阁。
 
-### Step 6: 用户确认
+### Step 7: 用户确认
 
-用 AskUserQuestion 三选：确认 / 要修改 / 重新来。
+用 AskUserQuestion 三选：确认 / 要修改 / 重新来。**路径清单 + SC 绑定和 restate 主体一起确认，不分开问**（合批降低确认疲劳）。
 
 以下不算确认：
 - "随你"/"都行" → 用户在委托，重新提具体选项
@@ -134,7 +176,9 @@ Standard/Full → 进 Step 2。
 
 - [ ] restate 已产出，用户显式确认（AskUserQuestion 选了"确认"）
 - [ ] 场景分类已标注
-- [ ] 后续阶段输入齐全：Full → Design 可用 restate，Standard → Plan 可用 restate
+- [ ] （Full/Standard）路径清单已校验——有 PRD 则搬入并查完整性，无 PRD 则现场生成
+- [ ] （Full/Standard）每条路径至少绑定一条 SC，无裸路径也无裸 SC
+- [ ] 后续阶段输入齐全：Full → Design 可用 restate + 路径清单，Standard → Plan 可用 restate + 路径清单
 
 ## Common Rationalizations
 
@@ -153,3 +197,5 @@ Standard/Full → 进 Step 2。
 - 启用了"穷尽探索"但只试 1-2 种方法
 - 跳过了 Step 2 探索就直接形成假设——凭印象不是凭事实
 - Full/Standard 场景没做代码探索就出 restate——可能遗漏已有实现
+- Full/Standard 场景 restate 没有路径清单——用户使用场景没建模，下游无完整性骨架
+- 路径清单里有路径没绑任何 SC，或有 SC 不对应任何路径——绑定断裂

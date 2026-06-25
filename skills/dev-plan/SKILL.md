@@ -71,8 +71,9 @@ description: Use when you have defined goals and need to break work into tasks. 
 
 ### Step 4: 写 task
 
-每个 task 用 `references/task-template.md` 格式。硬约束：
+每个 task 用 `references/task-template.md` 格式。路径/约束 ID 约定见 `{NOCODE_SKILL_REF}/path-conventions.md`。硬约束：
 
+- **标 `covers`（必填）**——本 task 覆盖 restate 路径清单里的哪些路径/约束 ID。所有 task 的 covers 汇总后必须覆盖每条路径（Step 6 校验）
 - **贴真实代码/命令/预期输出**——不是伪代码，不是"类似这样"
 - **禁占位符**——`<your code here>`/`TODO`/`...` 不允许出现。写不出真实代码说明没想清楚，回 Step 1
 - **task 描述 durable 化**——用行为意图描述（"用户创建记录时验证必填字段"），不用易腐的行号/文件路径/代码片段
@@ -88,15 +89,17 @@ description: Use when you have defined goals and need to break work into tasks. 
 
 ### Step 6: Plan Validation
 
-用户确认前自检计划质量。三项检查，任一不通过回 Step 4 补：
+用户确认前自检计划质量。四项检查，任一不通过回 Step 4 补：
 
 **6a. 需求覆盖**：restate 的每条 Success Criteria 至少被一个 task 覆盖。逐条核对，缺覆盖的标出来。
 
-**6b. 任务可验证**：每个 task 声明了怎么验证完成（测试命令/预期输出/人工确认项）。"写完就算完"不算验证——验证命令不存在的 task 在 Build 阶段会卡住。
+**6b. 路径覆盖**：汇总所有 task 的 `covers` 字段，对照 restate 路径清单——**每条路径/约束至少被一个 task 覆盖**。有路径没被任何 task 覆盖 → 补 task，或显式说明该路径在当前迭代不实现（标注原因）。产出路径→task 映射表。
 
-**6c. 依赖无环**：task 间依赖不成环，底层 task 排前面。循环依赖说明切片方式有问题。
+**6c. 任务可验证**：每个 task 声明了怎么验证完成（测试命令/预期输出/人工确认项）。"写完就算完"不算验证——验证命令不存在的 task 在 Build 阶段会卡住。
 
-三项全过再进 Step 7 让用户确认。
+**6d. 依赖无环**：task 间依赖不成环，底层 task 排前面。循环依赖说明切片方式有问题。
+
+四项全过再进 Step 7 让用户确认。
 
 ### Step 7: 用户确认 + 执行模式
 
@@ -131,6 +134,7 @@ Subagent → `Skill(superpowers:subagent-driven-development)`。当前会话 →
 - [ ] 计划已产出（依赖图 + 任务序列 + checkpoint）
 - [ ] 所有 task ≤ M，零占位符
 - [ ] 每个 task 标了 HITL/AFK
+- [ ] 每个 task 标了 `covers`，所有 task 汇总覆盖 restate 每条路径（路径→task 映射表已产出）
 - [ ] 测试目标已分配到 slice
 - [ ] 用户显式确认计划（AskUserQuestion）
 - [ ] 执行模式已选（subagent 并行 / 当前会话顺序）
@@ -157,3 +161,4 @@ Subagent → `Skill(superpowers:subagent-driven-development)`。当前会话 →
 - 连续 4+ task 没有 checkpoint
 - 最不确定的部分排到了最后
 - 没读相关代码就开始写 task
+- task 缺 `covers` 字段，或汇总后有路径没被任何 task 覆盖（漏实现的早期信号）
