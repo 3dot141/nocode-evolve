@@ -73,6 +73,8 @@ for each task in plan:
 
 **回归测试有效性验证**：写完回归测试后走一遍完整红绿循环证明它真能抓 bug——写 → 跑(过) → 还原 fix → 跑(必须红) → 恢复 → 跑(过)。"写了个回归测试"不算，亲眼看它在没有 fix 时失败才算。
 
+**学派选择（outside-in vs inside-out）**：默认 **outside-in**——先写切片最外层的失败测试，下层用 fake 顶住，逐层向内替换真实现。这和 Plan 的 tracer bullet 同向（从外切到里）。当切片核心是纯领域逻辑（算法/状态机/计算）时切回 **inside-out**（先把 domain 写对再包外层）。按切片形状选，不是信仰。
+
 测试层级、DAMP/DRY、替身偏好序（real > fake > stub > mock）、测行为不测交互 → 见 `{NOCODE_SKILL_REF}/testing-guide.md` + `references/test-pyramid-guide.md`，不在此重述。
 
 **测试难写 = 设计难**（build 独有的设计反馈）：不知怎么测 → 先写期望 API / 先写断言；测试太复杂 → 设计太复杂，简化接口；必须 mock 一切 → 耦合太重，用依赖注入；setup 巨大 → 抽 helper 或简化设计

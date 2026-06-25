@@ -57,6 +57,11 @@ skill 呈现 4 选项菜单（文案顺序由 sp skill 定义，不改）：
 - 未完成但要保留 → option 3 (Keep)
 - 验证失败、方向错误 → option 4 (Discard)
 
+**发布策略**（Option 1/2 选定后、执行前追问——仅对生产改动）：
+> "这次改动的发布策略？全量 / 灰度（canary %）/ dark launch（flag 默认关）"
+>
+> AI 不执行部署，但把这个决策点暴露给用户——merge 和 release 是两个动作，不要混为一谈。用户选了灰度/dark launch → 提醒确认 flag 已就位。纯内部工具/无生产影响 → 跳过。
+
 用户选定后，`rule-finishing-branch` 接管该路径的 Gate 序列。
 
 ### 8c. Execute

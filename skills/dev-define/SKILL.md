@@ -106,6 +106,12 @@ Standard/Full → 进 Step 2。
 - 有路径无 SC → 补 SC（这条路径怎么算做成了？）
 - 有 SC 无路径 → 检查是否遗漏路径（这条标准在验哪条使用场景？）
 
+**关键 SC 补具体例子**：对核心 SC 用 Given/When/Then 锚定一个具体场景，让断言式 SC 有可直接变成测试的骨架：
+> SC-1: "搜索响应 < 200ms (p95)"
+> 例：Given 10 万条记录 / When 搜 'apple' / Then p95 < 200ms
+
+不要求每条 SC 都写——关键路径的 SC 写了即可。这个例子直接喂给 Build 当测试骨架，减少 Define→Build 的语义漂移。
+
 产出路径清单 + 路径↔SC 绑定，带入 Step 6 写进 restate。
 
 ### Step 4: 假设先行
