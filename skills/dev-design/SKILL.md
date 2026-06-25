@@ -223,10 +223,12 @@ TO 传递给后续 Plan（指导切片 + task covers）、Build（驱动 TDD）�
 
 1. **有 pd-ui 产出（`.ui.md`）**→ 读它，把 IA / wireframe / 视觉方向作为 UI 设计输入，设计文档的 `## UI 设计` 节引用并补充技术实现细节（组件拆分 / 状态管理 / 渲染策略）
 2. **无 pd-ui 产出但有 UI 需求** → 在设计文档里补 `## UI 设计` 节，内容包括：
+   - **UI 风格选型**：选定视觉方向（简约/高端/工业/编辑风…），引用对应 design taste skill
+   - **UI 架构**：组件拆分 / 状态管理方案 / 渲染策略（CSR/SSR/RSC）
+   - **UI 技术选型**：CSS 框架（Tailwind/CSS Modules/styled）、组件库（shadcn/Radix/自建）、选型理由
    - **页面/组件清单**：要新建或改哪些页面/组件
    - **布局结构**：关键页的区块划分（文字描述或 ASCII wireframe）
    - **交互行为**：核心操作的状态流转（正常 / loading / error / empty）
-   - **视觉方向引用**：指向具体的 design skill 作为 Build 阶段的设计指南
 
 **Design taste skills 引用**（Build 阶段实现 UI 时 Read）：
 

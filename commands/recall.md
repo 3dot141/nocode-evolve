@@ -41,3 +41,9 @@ argument-hint: <搜索关键词>
 subagent 返回的清单直接展示给用户。
 
 用户可以说"打开第 N 个"或"读一下第 N 个"，主 agent 根据路径 Read 对应文件。
+
+## 和 /personal-recall 的关系
+
+- `/recall` 搜两个源：`.agents-personal/wiki/` + `$USER_VAULT_PATH/Memory/`（通过 recall-search agent）
+- `/personal-recall` 只搜 `.agents-personal/`（wiki + rules + AGENTS.md），是独立入口
+- 两者各自独立，不互相调用——recall 用 recall-search agent 已能覆盖 personal 范围
