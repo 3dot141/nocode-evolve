@@ -11,6 +11,8 @@ description: 产品发现工作流领航（Research → PRD · 2 场景路由）
 
 ## 协议
 
+> **顺序推进纪律（硬约束）**：禁止自动跳步。推进只有一条路：todo 写好流程 → 进入当前节点 → 顺序执行子步骤 → 逐条验证 Gate → 全部通过 → 报告用户 → 等用户拍板 → 才进下一阶段。agent 不得自行跳过、合并、快进任何阶段。"这步简单直接过" / "上一轮做过" 都不是跳步的理由。
+
 ### Step 1: 判断场景
 
 用户的产品意图有两种场景：
@@ -75,11 +77,13 @@ Task 3: Handoff — 衔接开发流
 
 ### Step 3: 推进阶段
 
-每个阶段：
+每个阶段严格按以下 5 步执行，不跳不并行，缺任一步 = 跳步 bug：
 
 1. **加载 skill（硬 Gate）**：标 in_progress 后的第一个动作必须是 `Skill(nocode-evolve:pd-research)` / `Skill(nocode-evolve:pd-prd)` / `Skill(nocode-evolve:pd-vis)`。没看到 Skill 调用回执，不许执行任何 sub-step——task description 里的 sub-steps 是地图，skill 内才有 clarify gate / 文档结构 / 标注约定这些详图。
-2. skill 完成后检查 Gate
-3. Gate 证据点名后标 completed → 下一阶段
+2. **顺序执行 sub-steps**：按 task description 中的子步骤链逐个执行，每个子步骤完成后确认其条件满足再进下一个。
+3. **Gate 证据点名**：所有子步骤完成后，逐条核对 Gate 条件 + 具体证据。任一条不满足 = 不标 completed。
+4. **标 completed + 停下报告**：向用户报告本阶段完成情况 + 建议下一步。**不自动进入下一阶段。**
+5. **等用户拍板**：用户明确说 OK / 继续，才标下一阶段 in_progress 并进入。
 
 **Research → PRD 衔接**：Research 完成（Go）后，自动建议进 PRD：
 > "调研完成，Go 已确认。建议下一步写 PRD，把调研结论收敛成需求文档。"
@@ -144,6 +148,7 @@ Task 3: Handoff — 衔接开发流
 ## 不要
 
 - **不替用户执行** — 给建议后停下，等用户拍板
+- **不自动进入下一阶段** — 标 completed 后停下报告，等用户说"继续"才进下一阶段。"已经做完了直接走下一步" = 自动跳步
 - **不照 todo 裸跑** — 进入 Research / PRD 阶段，标 in_progress 后第一个动作先 `Skill()` 加载该阶段 skill，再走 sub-steps。只跑 todo 不加载 skill = 丢失 skill 内的 clarify gate / 文档结构 / 标注约定
 - **不自行跳 Research** — Full 场景不跳 Research，除非用户显式说"跳过调研"
 - **交互视觉设计按需跳** — 纯后端 / 无界面需求可跳过 pd-vis，但有界面时不省略（界面结构留空 = 开发瞎猜）
