@@ -1,6 +1,6 @@
 # 示例：低保真 wireframe（团队协作邀请流程）
 
-> 这是一份**填好的**低保真设计样例，给 pd-vis 出 wireframe 时对照颗粒度用。不是模板——模板见 SKILL.md Step 5。
+> 这是一份**填好的**低保真设计样例，给 pd-ui 出 wireframe 时对照颗粒度用。不是模板——模板见 SKILL.md Step 5。
 > 场景：Ledgerly 账本所有者邀请成员加入（对应 PRD 的 US-1/US-2/US-3）。Fidelity = 低保真。
 
 ---

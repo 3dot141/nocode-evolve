@@ -1,9 +1,9 @@
 ---
-name: pd-vis
+name: pd-ui
 description: Use when the user wants to design the interaction and visual direction of a product after the PRD is defined. Use when the user says "交互设计/视觉设计/界面设计/原型/wireframe/线框图/设计稿/长什么样", or when pdflow routes to the interaction-visual-design stage after PRD. Produces a .ui.md (interaction + visual spec), with optional mid/high-fidelity static mockups or a clickable HTML prototype. Not for technical architecture (use nocode-evolve:dev-design) or production component code (use devflow Build).
 ---
 
-# pd-vis — 交互视觉设计
+# pd-ui — 交互视觉设计
 
 **Iron Law: PRD 说"做什么"，没说"长什么样、怎么走"。这层空白不填，开发只能边写边猜——猜错就推倒重来。**
 
@@ -11,16 +11,16 @@ description: Use when the user wants to design the interaction and visual direct
 
 > Leading word: **ui**。所有收敛到一份 `.ui.md`，没有文档就没有交互视觉设计的产出。
 
-## 边界：pd-vis 做什么、不做什么
+## 边界：pd-ui 做什么、不做什么
 
-| pd-vis 做（产品交互 + 视觉） | 不做（→ 去哪） |
+| pd-ui 做（产品交互 + 视觉） | 不做（→ 去哪） |
 |---|---|
 | 信息架构、页面/视图清单 | 技术架构、模块划分 → `dev-design` |
 | 关键用户流程、交互态 | 数据流、API 契约、数据库 → `dev-design` |
 | wireframe、视觉方向、配色排版 | 生产级组件代码 → devflow Build |
 | 可点击 HTML 原型（验证用） | 技术栈选型 → `dev-design` |
 
-**pd-vis 回答"用户看到什么、怎么操作"，dev-design 回答"系统怎么实现"。** 不在 pd-vis 里定技术栈 / 数据库 / API。
+**pd-ui 回答"用户看到什么、怎么操作"，dev-design 回答"系统怎么实现"。** 不在 pd-ui 里定技术栈 / 数据库 / API。
 
 ## 非本 skill 请求
 
@@ -267,8 +267,8 @@ description: Use when the user wants to design the interaction and visual direct
 
 ### Step 7: 保存 + Handoff
 
-- `.ui.md` 存到 `{pd_vis_output}` 变量指定的路径，和同 topic 的 PRD 同目录
-- 高保真原型存 `{pd_vis_prototype}` 变量指定的路径（`.ui-prototype.html`）
+- `.ui.md` 存到 `{pd_ui_output}` 变量指定的路径，和同 topic 的 PRD 同目录
+- 高保真原型存 `{pd_ui_prototype}` 变量指定的路径（`.ui-prototype.html`）
 - 变量定义见 `model/agent-about.md`「文档产出路径变量」
 
 完成后提示："交互视觉设计完成。进 devflow 开发时，Define/Design 会以 PRD + 这份 design 为输入（做什么 + 长什么样）。"
@@ -317,4 +317,4 @@ description: Use when the user wants to design the interaction and visual direct
 - 没对照 PRD 逐条核（可能漏了使用路径对应界面 / 系统路径反馈）
 - 交互流没标 PRD 路径 ID（断了与下游的可追溯链）
 - `.ui.md` 出现 PRD 里不存在的功能（脱离 PRD 自由发挥）
-- 在 pd-vis 里定了技术栈 / API / 数据库（越界到 dev-design）
+- 在 pd-ui 里定了技术栈 / API / 数据库（越界到 dev-design）

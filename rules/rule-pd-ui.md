@@ -1,6 +1,6 @@
-# pd-vis 触发
+# pd-ui 触发
 
-详细协议见 `skills/pd-vis/SKILL.md`。本 rule 仅供 catalog 路由引用。
+详细协议见 `skills/pd-ui/SKILL.md`。本 rule 仅供 catalog 路由引用。
 
 ## 触发条件
 
@@ -8,4 +8,4 @@
 
 ## 做法
 
-`Skill(nocode-evolve:pd-vis)`
+`Skill(nocode-evolve:pd-ui)`
