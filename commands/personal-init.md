@@ -93,34 +93,58 @@ argument-hint: (无参数)
 
 ## Phase 3: 仓库扫描 + 变量填充
 
-Phase 2 完成后直接进入扫描，不问用户。wiki 已有内容时冲突项逐条确认。
+Phase 2 完成后直接进入扫描。扫描只读不写，结果呈现给用户确认后再写入。
 
-### Step 3a: 检测现有 docs 布局
+### Step 3a: 检测（只读）
 
 扫描项目 `docs/` 目录（`find docs -maxdepth 3 -type d` + 采样文件名），识别：
 
-| 检测项 | 方法 | 产出 |
-|---|---|---|
-| 目录布局 | 有无 `superpowers/`、`plans/`、`pd/`、`dev/` 等子目录 | 判断是旧布局还是新布局 |
-| username 子目录 | 目录名是否匹配人名/github-id pattern | 填 `{username}` 覆盖 |
-| 日期格式 | 采样文件名提取日期部分（`YYYY-MM-DD` vs `yymmdd`） | 调整路径模板的日期段 |
-| serial 使用 | 是否有 `yymmdd-01-` 格式 | 是否保留 `{serial}` 段 |
-| 文件后缀 | `-design.md` / `-plan.md` / 无后缀 | 调整路径模板的后缀 |
+| 检测项 | 方法 |
+|---|---|
+| 目录布局 | 有无 `superpowers/`、`plans/`、`pd/`、`dev/` 等子目录 |
+| username 子目录 | 目录名是否匹配人名/github-id pattern |
+| 日期格式 | 采样文件名提取日期部分（`YYYY-MM-DD` vs `yymmdd`） |
+| serial 使用 | 是否有 `yymmdd-01-` 格式 |
+| 文件后缀 | `-design.md` / `-plan.md` / 无后缀 |
 
-根据检测结果，**取消注释并填充 AGENTS.md 的变量覆盖**，覆盖为项目实际使用的路径格式。
+同时检测项目根的 `CLAUDE.md` / `AGENTS.md`：
+- 有无已定义的变量（如 `{username}`）
+- 有无 `@./AGENTS.md` 导入关系
 
-### Step 3b: 检测现有 CLAUDE.md / AGENTS.md
+### Step 3b: 呈现 + 确认
 
-如果项目根有 `CLAUDE.md` 或 `AGENTS.md`：
-- 读取内容，检查有没有已定义的变量（如 `{username}`）
-- 有 → `.agents-personal/AGENTS.md` 的覆盖与之保持一致
-- 有 `@./AGENTS.md` 导入关系 → 在报告中提示用户
+把检测结果和推断出的变量覆盖值呈现给用户：
+
+```
+检测到 docs 布局: docs/superpowers/{specs,plans}/3dot141/（旧 superpowers 布局）
+  - 日期格式: yymmdd
+  - 无 serial
+  - design 后缀: -design.md
+  - plan 后缀: 无
+
+推断变量覆盖:
+  {username} = 3dot141
+  {dev_design_output} = docs/superpowers/specs/{username}/{yymmdd}-{topic}-design.md
+  {dev_plan_output} = docs/superpowers/plans/{username}/{yymmdd}-{topic}.md
+  ... (列出全部 8 个)
+
+确认写入 AGENTS.md？可逐条修改。
+```
+
+用 AskUserQuestion 确认：
+1. **确认写入** — 按上述覆盖值写入 AGENTS.md
+2. **修改后写入** — 用户给出修改意见，调整后再写入
+3. **跳过** — 保持 AGENTS.md 为注释模板，不覆盖
+
+### Step 3c: 写入
+
+用户确认后，将变量覆盖写入 `.agents-personal/AGENTS.md`。
 
 ## Phase 4: 仓库深度扫描 + wiki 知识提取
 
-遍历整个仓库，为每个值得记录的子系统/模块生成一条 wiki draft。目标：新人（或新会话的 agent）读完这批 wiki 能理解项目全貌。
+遍历整个仓库，为每个值得记录的子系统/模块识别一条 wiki 候选。探索只读不写，结果呈现给用户确认后再写入。
 
-### Step 4a: 仓库探索
+### Step 4a: 仓库探索（只读）
 
 并行收集信息（用 subagent 或串行均可，视仓库大小定）：
 
@@ -151,17 +175,31 @@ Phase 2 完成后直接进入扫描，不问用户。wiki 已有内容时冲突�
 - 消息/事件：有无 MQ/Event 配置（Kafka、RabbitMQ、Redis pub/sub 等）
 - 部署：Docker/K8s/CI 配置
 
-### Step 4b: 生成 wiki drafts
+### Step 4b: 呈现候选清单 + 确认
 
-基于 4a 的探索结果，生成 N 条 wiki draft。每条一个主题，每条独立成文。
+基于 4a 的探索结果，列出计划生成的 wiki draft 清单（不写文件），呈现给用户：
 
-**必出（至少 1 条）**:
+```
+计划生成 N 条 wiki draft:
+
+| # | 文件名 | 主题 | 内容摘要 |
+|---|---|---|---|
+| 1 | project-overview.md | 项目概览 | Node.js + React 18 + pnpm monorepo |
+| 2 | jsy-core.md | jsy-core 模块 | 核心数据层，导出 SDK client |
+| 3 | data-layer.md | 数据层 | MongoDB + Prisma，12 个 collection |
+| 4 | api-surface.md | API 层 | REST API，3 组路由 |
+| 5 | dev-conventions.md | 开发约定 | ESLint + Prettier + conventional commits |
+
+勾选要生成的编号（默认全选）:
+```
+
+**必出候选（至少 1 条）**:
 
 | draft | 内容 |
 |---|---|
 | `project-overview.md` | 一句话定位 + 技术栈 + 顶层结构 + 构建运行方式 |
 
-**按需生成（每个识别到的子系统/维度 1 条）**:
+**按需候选（每个识别到的子系统/维度 1 条）**:
 
 | draft 命名 | 触发条件 | 内容 |
 |---|---|---|
@@ -171,7 +209,13 @@ Phase 2 完成后直接进入扫描，不问用户。wiki 已有内容时冲突�
 | `infra-deploy.md` | 检测到 Docker/K8s/CI | 部署拓扑 + 环境配置 + CI/CD 流程 |
 | `dev-conventions.md` | 检测到 lint/formatter/commit 规范 | 代码规范 + 提交规范 + 分支策略 |
 
-每条 draft 格式统一：
+冲突提示：如果 `wiki/draft/` 或 `wiki/pages/` 已有同名文件，在清单中标注 `⚠ 已存在`，用户可选覆盖 / 跳过 / 合并。
+
+用 AskUserQuestion 多选让用户勾选要生成的编号（默认全选）。
+
+### Step 4c: 写入
+
+用户确认后，按勾选的清单生成 wiki draft 文件。每条格式统一：
 
 ```markdown
 ---
@@ -194,15 +238,9 @@ related:
 (扫描提取的结构化内容)
 ```
 
-### Step 4c: 冲突处理
-
-如果 `wiki/draft/` 或 `wiki/pages/` 已有同名文件：
-- 用 AskUserQuestion 逐条确认：覆盖 / 跳过 / 合并（读已有内容 + 新扫描结果合成）
-- 不静默覆盖已有 wiki 内容
-
 ### Step 4d: 更新 index.md + log.md
 
-所有 draft 写完后：
+写入完成后：
 - 重建 `wiki/index.md`（扫描 draft/ + pages/ 全部文件的 frontmatter）
 - 追加 `wiki/log.md`（每条新建的 draft 一行记录）
 
