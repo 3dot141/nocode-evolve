@@ -31,6 +31,10 @@
           {
             "type": "command",
             "command": "${CLAUDE_PLUGIN_ROOT}/hooks/inject-rules.sh project"
+          },
+          {
+            "type": "command",
+            "command": "node ${CLAUDE_PLUGIN_ROOT}/scripts/personal-snapshot.mjs"
           }
         ]
       }
