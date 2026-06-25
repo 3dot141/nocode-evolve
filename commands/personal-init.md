@@ -142,38 +142,41 @@ Phase 2 完成后直接进入扫描。扫描只读不写，结果呈现给用户
 
 ## Phase 4: 仓库深度扫描 + wiki 知识提取
 
-遍历整个仓库，为每个值得记录的子系统/模块识别一条 wiki 候选。探索只读不写，结果呈现给用户确认后再写入。
+遍历整个仓库，为每个值得记录的子系统/模块识别一条 wiki 候选。探索阶段用并行 subagent，各自写临时文件，主 agent 只读摘要拼确认清单，用户确认后再写入 wiki。
 
-### Step 4a: 仓库探索（只读）
+### Step 4a: 仓库探索（并行 subagent + 临时文件）
 
-并行收集信息（用 subagent 或串行均可，视仓库大小定）：
+先在主 agent 做一次快速预扫（`ls -d */` + 检测 package.json/pom.xml/go.mod 等），确定项目类型和子系统列表。然后按维度派 subagent **并行**探索，每个 subagent 把结果写到 scratchpad 临时文件，**不回传大段内容到主 context**。
 
-**技术栈识别**:
+**预扫（主 agent，几条 Bash）**:
+- 顶层目录列表
+- 技术栈标志文件（package.json / pom.xml / go.mod / pyproject.toml / Cargo.toml）
+- monorepo 标志（pnpm-workspace.yaml / lerna.json / workspaces）
+- 子系统列表（monorepo packages / src 下模块目录 / Maven modules）
 
-| 文件 | 说明 |
-|---|---|
-| `package.json` | Node.js / 前端 — 读 dependencies 提取框架 |
-| `pom.xml` / `build.gradle` | Java — 读 groupId + 主要依赖 |
-| `go.mod` | Go — 读 module path |
-| `pyproject.toml` / `requirements.txt` | Python |
-| `Cargo.toml` | Rust |
-| monorepo 标志 (`pnpm-workspace.yaml` / `lerna.json` / `workspaces`) | 识别 monorepo + 列出 packages |
+**并行 subagent（每个写 scratchpad/{label}.md）**:
 
-**项目结构**:
-- 顶层目录 + 各目录职责推断（`ls -d */` + 读各目录下的 README 或入口文件）
-- 入口文件（`src/index.*`、`src/main.*`、`src/app.*`、`cmd/`）
-- 关键配置（`*.config.*`、`.env.example`、`docker-compose*`、`Dockerfile*`）
+| subagent | 探索范围 | 产出文件 |
+|---|---|---|
+| `overview` | 技术栈 + 顶层结构 + 入口文件 + 构建方式 | `scratchpad/overview.md` |
+| `module-{name}` (每个子系统 1 个) | 入口文件 + README + 导出接口 + 上下游 | `scratchpad/module-{name}.md` |
+| `data-layer` (有 ORM/DB 才派) | 数据模型 + 存储选型 + 关键 entity | `scratchpad/data-layer.md` |
+| `api-surface` (有路由才派) | 端点分组 + 认证 + 请求响应 | `scratchpad/api-surface.md` |
+| `infra` (有 Docker/K8s/CI 才派) | 部署拓扑 + 环境配置 + CI/CD | `scratchpad/infra.md` |
+| `conventions` (有 lint/formatter 才派) | 代码规范 + 提交规范 + 分支策略 | `scratchpad/conventions.md` |
 
-**子系统识别**:
-- monorepo → 每个 package/module 是一个子系统
-- 非 monorepo → 按顶层目录分（`src/modules/`、`src/services/`、`packages/`、Maven modules 等）
-- 每个子系统：读入口文件 + README + 导出接口，推断职责
+每个 subagent 的 prompt 模板：
+```
+探索 {项目路径} 的 {维度}，产出结构化摘要。
+写到 {scratchpad}/{label}.md，格式：
+  # {主题}
+  ## TL;DR — 一句话
+  ## 详情 — 结构化内容
+  ## related — 关键文件路径列表
+不要回传内容到对话，直接写文件。
+```
 
-**架构线索**:
-- 数据层：有无 ORM/数据库配置（prisma、typeorm、JPA、SQLAlchemy 等）
-- API 层：有无路由定义（Express/Koa/Spring Controller/FastAPI 等）
-- 消息/事件：有无 MQ/Event 配置（Kafka、RabbitMQ、Redis pub/sub 等）
-- 部署：Docker/K8s/CI 配置
+subagent 全部完成后，主 agent 读每个临时文件的前几行（TL;DR）拼候选清单。
 
 ### Step 4b: 呈现候选清单 + 确认
 
