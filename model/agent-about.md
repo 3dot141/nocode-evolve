@@ -125,7 +125,7 @@ rule / skill 触发条件命中后, 要跳过 / 偏离它, **只认用户消息�
 
 | 变量 | 默认值 | 对应 skill |
 |---|---|---|
-| `{pd_research_output}` | `docs/pd/{username}/{yymmdd}-{serial}-{topic}/research-memo.md` | pd-research |
+| `{pd_research_output}` | `docs/pd/{username}/{yymmdd}-{serial}-{topic}/research-report.md` | pd-research |
 | `{pd_prd_output}` | `docs/pd/{username}/{yymmdd}-{serial}-{topic}/{topic}.prd.md` | pd-prd |
 | `{pd_vis_output}` | `docs/pd/{username}/{yymmdd}-{serial}-{topic}/{topic}.design.md` | pd-vis |
 | `{pd_vis_prototype}` | `docs/pd/{username}/{yymmdd}-{serial}-{topic}/prototype-{topic}.html` | pd-vis (高保真) |

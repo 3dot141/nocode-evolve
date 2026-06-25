@@ -10,11 +10,11 @@
 > 状态: 草稿
 > 作者: 3dot141
 > 日期: 260624
-> 调研: docs/nocode/prds/3dot141/research-memo-team-collab.md
+> 调研: docs/nocode/prds/3dot141/research-report-team-collab.md
 
 ## 问题
 
-Ledgerly 现在是纯单人记账。**主因**：付费用户里 38% 在工单里问"能不能和合伙人共享账本" [SOURCE: research-memo 市场信号]，他们目前靠共享账号密码绕过，导致操作无法追溯、改错无法归因。**辅因**：共享账号让多端登录频繁触发风控登出（本 PRD 不直接解决，但协作功能落地后会缓解）。
+Ledgerly 现在是纯单人记账。**主因**：付费用户里 38% 在工单里问"能不能和合伙人共享账本" [SOURCE: research-report 市场信号]，他们目前靠共享账号密码绕过，导致操作无法追溯、改错无法归因。**辅因**：共享账号让多端登录频繁触发风控登出（本 PRD 不直接解决，但协作功能落地后会缓解）。
 
 ## 用户故事
 
@@ -102,7 +102,7 @@ Ledgerly 现在是纯单人记账。**主因**：付费用户里 38% 在工单�
 
 ## 竞品分析
 
-[来自 research-memo Feature Matrix] 竞品 YNAB 无协作、Monarch 有共享但无权限分级、QuickBooks 有完整权限但太重。差异化空间：轻量三档权限。
+[来自 research-report Feature Matrix] 竞品 YNAB 无协作、Monarch 有共享但无权限分级、QuickBooks 有完整权限但太重。差异化空间：轻量三档权限。
 
 ## 成功指标
 
@@ -130,4 +130,4 @@ Ledgerly 现在是纯单人记账。**主因**：付费用户里 38% 在工单�
 
 ## 来源附录
 
-- [SOURCE: docs/nocode/prds/3dot141/research-memo-team-collab.md] 工单痛点统计 + 竞品矩阵
+- [SOURCE: docs/nocode/prds/3dot141/research-report-team-collab.md] 工单痛点统计 + 竞品矩阵

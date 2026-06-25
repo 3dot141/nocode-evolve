@@ -47,7 +47,7 @@ argument-hint: (无参数)
 
 ### 文档产出路径
 
-<!-- {pd_research_output} = docs/pd/{username}/{yymmdd}-{serial}-{topic}/research-memo.md -->
+<!-- {pd_research_output} = docs/pd/{username}/{yymmdd}-{serial}-{topic}/research-report.md -->
 <!-- {pd_prd_output} = docs/pd/{username}/{yymmdd}-{serial}-{topic}/{topic}.prd.md -->
 <!-- {pd_vis_output} = docs/pd/{username}/{yymmdd}-{serial}-{topic}/{topic}.design.md -->
 <!-- {pd_vis_prototype} = docs/pd/{username}/{yymmdd}-{serial}-{topic}/prototype-{topic}.html -->

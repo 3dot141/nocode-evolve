@@ -22,7 +22,7 @@
 #### pd-research
 **触发**: 用户说「调研一下 / 帮我调研 / research / 竞品分析 / 市场调研 / 看看已有方案 / 看看别人怎么做」, 或 devflow Full 场景建议先走产品流
 **读**: `${CLAUDE_PLUGIN_ROOT}/rules/rule-pd-research.md`
-**摘要**: 独立产品流 Research 阶段: 并行多切面探索(竞品/代码/市场/已有方案), 产出 research-memo.md; 可独立调起也可串联 prd skill
+**摘要**: 独立产品流 Research 阶段: 并行五切面探索(竞品/代码/用户信号/市场空间/已有方案) + 逐切面校验(1-3轮), 产出 research-report.md; 可独立调起也可串联 prd skill
 **也属**: design
 **生命周期**: 0 设计
 
@@ -67,7 +67,7 @@
 #### pd-prd (跨桶)
 **触发**: 用户说「写 PRD / 产品需求 / 产品设计 / 产品 brief / 写需求文档」, 或 research 完成后衔接, 或 devflow Full 场景建议
 **读**: `${CLAUDE_PLUGIN_ROOT}/rules/rule-pd-prd.md`
-**摘要**: 独立产品流 PRD 阶段: 读 research-memo(可选) + clarify gate + 写结构化 .prd.md 文档(6 核心要素 + 扩展字段); [TBD]/[ASSUMED] 双标注; Go/No-Go 结尾
+**摘要**: 独立产品流 PRD 阶段: 读 research-report(可选) + clarify gate + 写结构化 .prd.md 文档(6 核心要素 + 扩展字段); [TBD]/[ASSUMED] 双标注; Go/No-Go 结尾
 **主桶**: design (完整定义见该桶)
 
 #### pd-vis (跨桶)

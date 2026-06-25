@@ -1,6 +1,6 @@
-# 示例：填好的 Research Memo（AI 代码评审工具调研）
+# 示例：填好的 Research Report（AI 代码评审工具调研）
 
-> 这是一份**填好的** research-memo 样例，给 pd-research 综合时对照颗粒度用。不是模板——模板见 SKILL.md Step 3。
+> 这是一份**填好的** research-report 样例，给 pd-research 综合时对照颗粒度用。不是模板——模板见 SKILL.md Step 4。
 > 场景：团队想做一个内部 AI 代码评审工具，先调研现状。
 
 ---

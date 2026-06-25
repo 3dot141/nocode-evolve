@@ -30,7 +30,7 @@ description: 产品发现工作流领航（Research → PRD · 2 场景路由）
 |---|---|
 | 用户说"调研/看看竞品/市场调研" | **Full** — 先 Research 再 PRD |
 | 用户说"写 PRD" + 没有已有调研 | **Full** — 建议先 Research |
-| 用户说"写 PRD" + 已有 research-memo 或思路清晰 | **Light** — 直接 PRD |
+| 用户说"写 PRD" + 已有 research-report 或思路清晰 | **Light** — 直接 PRD |
 | devflow 建议走产品流 | **Full** — 默认完整 |
 | 用户给了一句话模糊想法 | **Full** — 需要发散探索 |
 
@@ -46,8 +46,8 @@ description: 产品发现工作流领航（Research → PRD · 2 场景路由）
 **Full 场景**：
 ```
 Task 1: Research — 发散探索（竞品/代码/市场/已有方案）
-  Sub-steps: ⓪ Skill(nocode-evolve:pd-research) → 发散探索 → 产出 research-memo
-  Gate: research-memo 产出 + Go/No-Go 用户拍板
+  Sub-steps: ⓪ Skill(nocode-evolve:pd-research) → 发散探索 → 产出 research-report
+  Gate: research-report 产出 + Go/No-Go 用户拍板
 
 Task 2: PRD — 收敛成文档
   Sub-steps: ⓪ Skill(nocode-evolve:pd-prd) → 读 memo + clarify → 写 .prd.md
@@ -115,7 +115,7 @@ Task 3: Handoff — 衔接开发流
 │  │ (发散)  │   │ (收敛) │   │  (pd-vis)    │   │   │  Review → Land              │
 │  └────────┘   └────────┘   └──────────────┘   │   │                              │
 │                                                │   │                              │
-│  产出: research-memo.md  .prd.md  .design.md  │   │  输入: .prd.md + .design.md │
+│  产出: research-report.md  .prd.md  .design.md  │   │  输入: .prd.md + .design.md │
 │                                                │   │                              │
 └────────────────────────────────────────────────┘   └──────────────────────────────┘
 ```

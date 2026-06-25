@@ -24,7 +24,7 @@ description: Use when the user wants to write a product requirements document. U
 
 ## Checklist (TaskCreate)
 
-1. **加载输入** — Read research-memo（如有）
+1. **加载输入** — Read research-report（如有）
 2. **Clarify Gate** — 逐字段提议默认值 + 用户确认
 3. **起草 PRD** — 按模板写，标注 [CONFIRMED]/[ASSUMED]/[TBD]
 4. **领域与路径建模** — 识别领域 → 展开使用路径 → 跨域 → 系统 → 约束
@@ -37,8 +37,8 @@ description: Use when the user wants to write a product requirements document. U
 
 ### Step 1: 加载输入
 
-检查是否有 research-memo：
-- `{pd_research_output}` 所在目录存在 `research-memo.md` → Read 它，作为依据
+检查是否有 research-report：
+- `{pd_research_output}` 所在目录存在 `research-report.md` → Read 它，作为依据
 - 不存在 → 降级为纯问答模式，明确告知用户"无调研数据，将基于你的描述起草"
 
 多个 memo 文件 → 列出让用户选。
@@ -54,7 +54,9 @@ description: Use when the user wants to write a product requirements document. U
 3. **Appetite** — "建议投入 X 时间。这个封顶可以吗？"
 4. **不做的事** — "建议不做 X、Y、Z。还有要排除的吗？"
 
-有 research-memo 时默认值来自调研结论；没有时 AI 根据用户描述推断，标 `[ASSUMED]`。
+有 research-report 时默认值来自调研结论；没有时 AI 根据用户描述推断，标 `[ASSUMED]`。
+
+**调研依据落盘**：Clarify Gate 过程中做的每个判断（为什么选这个目标用户、为什么不做 X）及其依据，必须写进 PRD 对应字段的标注里，不只活在对话里。例：`[CONFIRMED — 基于 research-report 用户信号: 38% 工单提到共享需求]`。下游的 Define/Design 看不到这段对话，只看 `.prd.md` 文件。
 
 ### Step 3: 起草 PRD
 
@@ -75,7 +77,7 @@ description: Use when the user wants to write a product requirements document. U
 > 状态: 草稿
 > 作者: {username}
 > 日期: {yymmdd}
-> 调研: {research-memo 路径, 无则 "N/A"}
+> 调研: {research-report 路径, 无则 "N/A"}
 
 ## 问题
 [问题描述 + 痛点证据]
@@ -123,8 +125,8 @@ description: Use when the user wants to write a product requirements document. U
 [够说明可行性就行]
 
 ## 竞品分析
-[功能矩阵引用 / 定位图引用, 来自 research-memo]
-[无 research-memo 时标 [TBD] 或基于已知信息简写]
+[功能矩阵引用 / 定位图引用, 来自 research-report]
+[无 research-report 时标 [TBD] 或基于已知信息简写]
 
 ## 成功指标
 - 主要: [核心指标] [CONFIRMED/TBD]
@@ -205,7 +207,7 @@ User Stories 是意图（一句话），使用路径是把意图展开成"谁、
 
 ### Step 8: 保存
 
-文档存到 `{pd_prd_output}` 变量指定的路径（见 `model/agent-about.md`「文档产出路径变量」）。和同 topic 的 research-memo 落同一目录。
+文档存到 `{pd_prd_output}` 变量指定的路径（见 `model/agent-about.md`「文档产出路径变量」）。和同 topic 的 research-report 落同一目录。
 
 完成后提示："PRD 写完了。若需求涉及界面，建议下一步做交互视觉设计（调 `nocode-evolve:pd-vis`），把需求落成界面结构 + 视觉方向；纯后端 / 无界面需求可直接进 devflow 开发流。"
 

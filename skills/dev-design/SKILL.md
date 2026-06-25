@@ -102,6 +102,8 @@ Define 回答"做什么"，Design 回答"怎么做"。核心动作是探索 **ap
 
 这段总结是 Step 2 提方案的事实基础。
 
+**探索结果落盘**：这段总结必须写进设计文档的「前置调研」章节（Step 10 写设计文档时作为固定节），不只活在对话里。下游的 Plan/Build/Review 看不到这段对话，只看设计文档。每条发现保留 `[Read path:line]` 或 `[SOURCE: url]` 来源标注。
+
 ### Step 2: 提出 2-3 方案
 
 **基于 Step 1 的探索结论提方案**——每个方案要能说清"为什么选这条路"，理由来自探索发现的事实，不是凭空想象。
@@ -245,6 +247,8 @@ TO 传递给后续 Plan（指导切片 + task covers）、Build（驱动 TDD）�
 调 `Skill(nocode-evolve:design-doc-writing)`，输入：选定方案 + restate + 测试目标 + verify 策略 + UI 设计方案（如有）。
 
 design-doc-writing 接管：doc-type 选择 → 写 → review → render。
+
+**前置调研作为设计文档固定章节落盘**，章节名 `## 前置调研`，含 Step 1 三路探索结果（代码 pattern / 外部方案 / 已有决策），每条保留 `[Read]` 或 `[SOURCE]` 来源标注。
 
 **verify 策略作为设计文档固定章节落盘**（不只存在于会话文本），章节名 `## 验证策略`，含 TO 表 + 按层级分组的测试方案 + 不测项 + 路径覆盖状态表。Verify 阶段直接从设计文档读取此章节作为执行依据。
 
