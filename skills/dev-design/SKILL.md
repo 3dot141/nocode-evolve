@@ -215,7 +215,7 @@ TO 传递给后续 Plan（指导切片 + task covers）、Build（驱动 TDD）�
 
 任一路径状态非 ✅ → 回补后再进 Step 9。
 
-### Step 8½: UI 设计方案（涉及前端 UI 时）
+### Step 9: UI 设计方案（涉及前端 UI 时）
 
 如果选定方案涉及前端 UI（新页面 / UI 改造 / 交互变更），在写设计文档前明确 UI 怎么做：
 
@@ -240,7 +240,7 @@ TO 传递给后续 Plan（指导切片 + task covers）、Build（驱动 TDD）�
 
 **纯后端 / 无 UI → 跳过此步。**
 
-### Step 9: 写设计文档
+### Step 10: 写设计文档
 
 调 `Skill(nocode-evolve:design-doc-writing)`，输入：选定方案 + restate + 测试目标 + verify 策略 + UI 设计方案（如有）。
 

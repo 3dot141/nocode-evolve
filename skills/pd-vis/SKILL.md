@@ -55,7 +55,7 @@ description: Use when the user wants to design the interaction and visual direct
 
 多个 PRD 文件 → 列出让用户选。
 
-### Step 0½: 竞品与产品探索（两个方向并行）
+### Step 1: 竞品与产品探索（两个方向并行）
 
 在定保真度之前先看看世界上已经有什么——和 pd-research 的 Iron Law 同理，没看过别人怎么做就画 wireframe = 闭门造车。
 
@@ -94,12 +94,12 @@ description: Use when the user wants to design the interaction and visual direct
 
 > **Playwright 用法**：`npx playwright install chromium && npx playwright screenshot <url> --full-page -o <output.png>`。无头模式，不需要 GUI。如果 Playwright 不可用，降级到 `agent-browser` skill 或请用户截图。
 
-### Step 1: 澄清 + 选保真度
+### Step 2: 澄清 + 选保真度
 
 先暴露交互/视觉相关的歧义（提议默认值，改比答快）：
 
 1. **平台** — "目标平台是 Web / 移动 / 桌面？默认 X。"
-2. **调性** — "视觉调性偏专业克制 / 友好活泼 / ？默认 X。"（结合 Step 0½ 的竞品参考给出更有依据的建议）
+2. **调性** — "视觉调性偏专业克制 / 友好活泼 / ？默认 X。"（结合 Step 1 的竞品参考给出更有依据的建议）
 3. **参考** — "竞品探索发现了这些参考（列出），你倾向哪个方向？还有其他想对齐的吗？"
 4. **关键流程数** — "核心要设计几条用户流程？默认从 PRD 的使用路径提（每条使用路径对应一段交互流）。"
 
@@ -113,7 +113,7 @@ description: Use when the user wants to design the interaction and visual direct
 
 **默认轻，按需重。** 不替用户升档——低保真够用就别浪费。
 
-### Step 2: 低保真——IA + 交互流 + wireframe（所有档都做）
+### Step 3: 低保真——IA + 交互流 + wireframe（所有档都做）
 
 无论选哪档，结构先行。这一步产出后**先给用户批准，再往下做高保真**（approve gate）——别在没定的骨架上糊视觉。
 
@@ -126,7 +126,7 @@ description: Use when the user wants to design the interaction and visual direct
 
 展示给用户：**"结构和交互流是这样，确认了我再往视觉/原型走。"** 用户改 → 改完再确认。
 
-### Step 3: 方向发散——2-3 个视觉方向
+### Step 4: 方向发散——2-3 个视觉方向
 
 不赌单一方向。沿这些轴给 2-3 个明显不同的方向，让用户选（可混搭）：
 
@@ -139,7 +139,7 @@ description: Use when the user wants to design the interaction and visual direct
 - **低保真档**：方向只用文字描述，不出稿，记进 `.design.md` 的 Visual Direction
 - **中/高保真档**：基于用户选定的方向出稿（Step 4）
 
-### Step 4: 高保真产出（仅中 / 高保真档）
+### Step 5: 高保真产出（仅中 / 高保真档）
 
 低保真档跳过此步。
 
@@ -147,7 +147,7 @@ description: Use when the user wants to design the interaction and visual direct
 - **高保真**：可点击 `prototype.html`。要求：关键流程能走通、用 design token 不硬编码 hex、交互元素 4 态全给（hover/active/focus-visible/disabled）、带 empty/loading 态。
 - **验证产出**：有 browser/截图工具 → 截图走查关键页；否则结构自查（区块齐全、状态覆盖）。
 
-### Step 5: 验证 + 交付
+### Step 6: 验证 + 交付
 
 产出 `.design.md` 前，两道自查：
 
@@ -213,7 +213,7 @@ description: Use when the user wants to design the interaction and visual direct
 - [TBD] 问题 1
 ```
 
-### Step 6: 保存 + Handoff
+### Step 7: 保存 + Handoff
 
 - `.design.md` 存到 `{pd_vis_output}` 变量指定的路径，和同 topic 的 PRD 同目录
 - 高保真原型存 `{pd_vis_prototype}` 变量指定的路径

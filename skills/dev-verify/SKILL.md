@@ -82,7 +82,7 @@ Core Web Vitals：LCP ≤ 2.5s、INP ≤ 200ms、CLS ≤ 0.1。详见 `reference
 
 **无性能需求 → 标注跳过**。
 
-### 6d½. 韧性检查（有外部依赖时）
+### 6e. 韧性检查（有外部依赖时）
 
 对每条系统路径和跨域路径，问：**依赖超时/失败时，这条路径的降级行为验过吗？**
 
@@ -90,11 +90,11 @@ Core Web Vitals：LCP ≤ 2.5s、INP ≤ 200ms、CLS ≤ 0.1。详见 `reference
 - 数据库连接池耗尽 → 排队还是拒绝？
 - 消息队列消费延迟 → 重试策略是什么？幂等吗？
 
-不要求做完整 chaos engineering（那需要平台基础设施）。要求的是把"happy path 验了，failure path 验了吗"这个问题暴露出来，和 6e 的不测项风险评估对接。
+不要求做完整 chaos engineering（那需要平台基础设施）。要求的是把"happy path 验了，failure path 验了吗"这个问题暴露出来，和 6f 的不测项风险评估对接。
 
 **无外部依赖 → 标注跳过**。
 
-### 6e. 验收逐条核对
+### 6f. 验收逐条核对
 
 从 Define 验收标准 + 路径 + 约束**逐条**核对（不只 SC——路径和约束也逐条附证据）。产出格式：
 
@@ -109,13 +109,13 @@ Core Web Vitals：LCP ≤ 2.5s、INP ≤ 200ms、CLS ≤ 0.1。详见 `reference
 
 每条有编号 + 标准/路径/约束原文 + ✅/❌ + 证据（命令+输出）。任一条 ❌ → 回 Build 修复。
 
-**完整示例**：一次走完 6a→6b→6e（含一条 SC ❌ 回 Build）见 `references/examples/example-verify-session.md`。
+**完整示例**：一次走完 6a→6b→6f（含一条 SC ❌ 回 Build）见 `references/examples/example-verify-session.md`。
 
 **Subagent 验证规则**：如果用了 subagent 执行 Build，subagent 报 success 不可信——独立查 VCS diff 确认真有改动、独立跑测试确认真通过。不信 agent 自报状态。
 
-### 6f. 反向审计（Full 场景）
+### 6g. 反向审计（Full 场景）
 
-6e 是"按 checklist 逐条核"，6f 是"回头查 checklist 本身有没有漏"——拿 **PRD 原始路径清单**（不只 Design 的 TO 表）回扫，确保前面阶段没有集体遗漏。无 PRD（Standard/Fix/Mini）→ 拿 restate 路径清单回扫；无路径清单 → 标注跳过。
+6f 是"按 checklist 逐条核"，6g 是"回头查 checklist 本身有没有漏"——拿 **PRD 原始路径清单**（不只 Design 的 TO 表）回扫，确保前面阶段没有集体遗漏。无 PRD（Standard/Fix/Mini）→ 拿 restate 路径清单回扫；无路径清单 → 标注跳过。
 
 **① 按测试方案逐层检查**（对照设计文档「验证策略」章节）：
 
@@ -174,6 +174,6 @@ Core Web Vitals：LCP ≤ 2.5s、INP ≤ 200ms、CLS ≤ 0.1。详见 `reference
 - 只跑了 slice 单测，没跑完整套件
 - 有 UI 变更但没截图
 - 验收核对出现"大概通过/应该没问题"
-- 只核对了 SC，没核对路径和约束（6e 漏了一半）
+- 只核对了 SC，没核对路径和约束（6f 漏了一半）
 - Full 场景跳过反向审计——前面阶段漏的路径会一路漏到上线
 - 反向审计发现未验项但静默放过（没补测也没标"已知未验+原因+风险"）

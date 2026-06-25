@@ -34,3 +34,9 @@
 - 跑 `node hooks/generate.mjs` 重新生成生成物（catalog 分片 + pretooluse-rules）
 - 一致性由 SessionStart 的 `node hooks/generate.mjs --check` 兜底报警（漂移只 warn 不阻断 session）
 - 测试：`node --test 'hooks/*.test.mjs'`
+
+### 4. Skill 内 Step 编号必须为整数或字母后缀
+
+Skill 的 SKILL.md 里每个步骤的编号用整数（`Step 1` / `Step 2`）或字母后缀（`Step 1a` / `6e`）。禁止用分数编号（`Step 0½` / `6d½`）——分数编号在搜索、引用、排序时都不方便。
+
+新增步骤插入已有序列时，调整后续编号保持连续；或使用字母后缀（`Step 8a`）避免大面积重编号。
