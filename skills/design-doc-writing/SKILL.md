@@ -419,10 +419,4 @@ mini cheat sheet：
 
 ## 输出路径
 
-由 `rules/rule-superpowers-brainstorming.md` 与 `model/agent-about.md` 共同定义，默认（设计规格类）：
-
-```
-docs/superpowers/specs/{username}/yymmdd-<topic>-design.md
-```
-
-写之前确认 rule 当前值（实现计划走 `docs/superpowers/plans/{username}/`、草稿走 `sketches/`）。
+路径由 `{dev_design_output}` 变量定义（见 `model/agent-about.md`「文档产出路径变量」）。同 topic 的 plan 等文档落同一目录。

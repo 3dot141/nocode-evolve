@@ -116,6 +116,23 @@ rule / skill 触发条件命中后, 要跳过 / 偏离它, **只认用户消息�
 |---|---|---|
 | `{username}` | `3dot141` | GitHub username, 用于路径分目录 / 归属标记 |
 
+### 文档产出路径变量
+
+各环节产出路径独立变量, 工程可在 `.agents-personal/AGENTS.md` 或 `CLAUDE.md` 单独覆盖任意条。
+
+路径里的动态段: `{yymmdd}` 当日日期, `{serial}` 两位序号 (`01`/`02`, 同日递增), `{topic}` kebab-case 主题。同 topic 的产品流产出共享一个目录。
+
+| 变量 | 默认值 | 对应 skill |
+|---|---|---|
+| `{pd_research_output}` | `docs/pd/{username}/{yymmdd}-{serial}-{topic}/research-memo.md` | pd-research |
+| `{pd_prd_output}` | `docs/pd/{username}/{yymmdd}-{serial}-{topic}/{topic}.prd.md` | pd-prd |
+| `{pd_vis_output}` | `docs/pd/{username}/{yymmdd}-{serial}-{topic}/{topic}.design.md` | pd-vis |
+| `{pd_vis_prototype}` | `docs/pd/{username}/{yymmdd}-{serial}-{topic}/prototype-{topic}.html` | pd-vis (高保真) |
+| `{dev_design_output}` | `docs/dev/{username}/{yymmdd}-{serial}-{topic}/{topic}-design.md` | dev-design / brainstorming |
+| `{dev_plan_output}` | `docs/dev/{username}/{yymmdd}-{serial}-{topic}/{topic}-plan.md` | dev-plan |
+| `{dev_verify_output}` | `docs/dev/{username}/{yymmdd}-{serial}-{topic}/verify-report.md` | dev-verify |
+| `{dev_review_output}` | `docs/dev/{username}/{yymmdd}-{serial}-{topic}/review-log.md` | dev-review |
+
 ## 变量解析优先级 (先命中即用, 覆盖后续)
 
 1. `<project>/.agents-personal/AGENTS.md`
@@ -127,13 +144,10 @@ rule / skill 触发条件命中后, 要跳过 / 偏离它, **只认用户消息�
 # 全局约定
 
 - 主分支: `main`
-- 文档根 (对齐 `superpowers` README, 按 doc-type 分, 均按 `{username}/` 分组):
-  - 设计规格 (design / PRD / RFC / ADR / 架构 / 研究分析) → `docs/superpowers/specs/{username}/`
-  - 实现计划 (plan / phase / 步骤) → `docs/superpowers/plans/{username}/`
-  - 探索草稿 (sketch) → `docs/superpowers/sketches/{username}/`
+- 文档产出: 按流程 + topic 聚合, 同一 topic 的全部产出落同一目录。各环节产出路径见上方「文档产出路径变量」, 工程可单独覆盖任意条
 - 时间格式: `yymmdd` (例 `260511`)
 
-> 旧默认 `docs/plans/{username}/` (无 `superpowers` 前缀、design/plan 不分) 已废弃——与 superpowers README (specs=设计规格 / plans=实现计划) 不一致。**既有 `docs/plans/` 文档不迁移**, 仅新文档按 doc-type 入对应子目录。项目可在 `.agents-personal/AGENTS.md` 覆盖。
+> 旧路径 `docs/superpowers/specs/` · `docs/superpowers/plans/` · `docs/nocode/prds/` · `docs/plans/` 已废弃。**既有文档不迁移**, 新文档按产出路径变量走。
 
 新增全局约定 / 占位符追加到本文件, 避免散落各 rule.
 

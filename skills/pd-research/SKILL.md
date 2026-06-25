@@ -138,7 +138,7 @@ description: Use when the user wants to explore a problem space before committin
 
 ### Step 5: 保存
 
-research-memo 存到 `docs/nocode/prds/{username}/research-memo-{topic-slug}.md`。
+research-memo 存到 `{pd_research_output}` 变量指定的路径（见 `model/agent-about.md`「文档产出路径变量」）。
 
 完成后提示用户："调研完成。要继续写 PRD 吗？（调 `nocode-evolve:pd-prd`）"
 

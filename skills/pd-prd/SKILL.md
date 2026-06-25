@@ -36,7 +36,7 @@ description: Use when the user wants to write a product requirements document. U
 ### Step 0: 加载输入
 
 检查是否有 research-memo：
-- `docs/nocode/prds/{username}/research-memo-*.md` 存在 → Read 它，作为默认值生成的依据
+- `{pd_research_output}` 所在目录存在 `research-memo.md` → Read 它，作为依据
 - 不存在 → 降级为纯问答模式，明确告知用户"无调研数据，将基于你的描述起草"
 
 多个 memo 文件 → 列出让用户选。
@@ -153,7 +153,7 @@ description: Use when the user wants to write a product requirements document. U
 
 ### Step 6: 保存
 
-文档存到 `docs/nocode/prds/{username}/{yymmdd}-{topic-slug}.prd.md`。
+文档存到 `{pd_prd_output}` 变量指定的路径（见 `model/agent-about.md`「文档产出路径变量」）。和同 topic 的 research-memo 落同一目录。
 
 完成后提示："PRD 写完了。若需求涉及界面，建议下一步做交互视觉设计（调 `nocode-evolve:pd-vis`），把需求落成界面结构 + 视觉方向；纯后端 / 无界面需求可直接进 devflow 开发流。"
 

@@ -59,7 +59,7 @@
       "triggers": [],
       "action": "Read rules/rule-superpowers-brainstorming.md (brainstorming skill 已在执行中, 本 rule 是 overlay)",
       "read": "${CLAUDE_PLUGIN_ROOT}/rules/rule-superpowers-brainstorming.md",
-      "summary": "superpowers:brainstorming 执行时的 overlay: 统一输出路径 docs/superpowers/specs/{username}/ + worktree → write → review → render 四步; 仅在 brainstorming skill 已在执行时生效, 用户直接要求设计文档走 design rule",
+      "summary": "superpowers:brainstorming 执行时的 overlay: 输出路径按 {dev_design_output} 变量 + worktree → write → review → render 四步; 仅在 brainstorming skill 已在执行时生效, 用户直接要求设计文档走 design rule",
       "guard": "",
       "depends_on": [],
       "severity": "warn",

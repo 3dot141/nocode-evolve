@@ -9,7 +9,7 @@
 #### superpowers-brainstorming
 **触发**: 即将执行 superpowers:brainstorming skill (用户直接 /brainstorming 或 agent 主动调该 skill 时的 overlay). 不含: 用户要求写设计文档等设计阶段动作(走 design rule, 不走本 overlay)
 **读**: `${CLAUDE_PLUGIN_ROOT}/rules/rule-superpowers-brainstorming.md`
-**摘要**: superpowers:brainstorming 执行时的 overlay: 统一输出路径 docs/superpowers/specs/{username}/ + worktree → write → review → render 四步; 仅在 brainstorming skill 已在执行时生效, 用户直接要求设计文档走 design rule
+**摘要**: superpowers:brainstorming 执行时的 overlay: 输出路径按 {dev_design_output} 变量 + worktree → write → review → render 四步; 仅在 brainstorming skill 已在执行时生效, 用户直接要求设计文档走 design rule
 **生命周期**: 0 设计
 
 #### dev-design

@@ -48,7 +48,7 @@ description: Use when the user wants to design the interaction and visual direct
 ### Step 0: 读 PRD
 
 检查是否有 PRD：
-- `docs/nocode/prds/{username}/*.prd.md` 存在 → Read 它，拿核心场景 / User Stories / 目标用户 / 功能清单作为设计依据
+- `{pd_prd_output}` 所在目录存在 `*.prd.md` → Read 它，拿核心场景 / User Stories / 目标用户 / 功能清单作为设计依据
 - 不存在 → 降级为基于用户口头描述设计，明确告知"无 PRD，将基于你的描述设计；建议先写 PRD"
 
 多个 PRD 文件 → 列出让用户选。
@@ -158,8 +158,9 @@ description: Use when the user wants to design the interaction and visual direct
 
 ### Step 6: 保存 + Handoff
 
-- `.design.md` 存到 `docs/nocode/prds/{username}/{yymmdd}-{topic-slug}.design.md`（和同 topic 的 PRD 同目录）
-- 高保真原型存 `docs/nocode/prds/{username}/prototype-{topic-slug}.html`
+- `.design.md` 存到 `{pd_vis_output}` 变量指定的路径，和同 topic 的 PRD 同目录
+- 高保真原型存 `{pd_vis_prototype}` 变量指定的路径
+- 变量定义见 `model/agent-about.md`「文档产出路径变量」
 
 完成后提示："交互视觉设计完成。进 devflow 开发时，Define/Design 会以 PRD + 这份 design 为输入（做什么 + 长什么样）。"
 

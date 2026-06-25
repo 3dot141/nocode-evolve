@@ -21,7 +21,7 @@ description: 工程任务流程领航（8 阶段 · 4 场景路由）。可被 m
 
 Define 返回后，拿到确认的 restate + 场景分类，进 Step 2。
 
-**Full 场景产品流前置检查**（Define 返回 Full 场景后、进入 Step 2 前执行）：检查 `docs/nocode/prds/{username}/` 下有没有已有 `.prd.md`：
+**Full 场景产品流前置检查**（Define 返回 Full 场景后、进入 Step 2 前执行）：检查 `{pd_prd_output}` 所在目录下有没有已有 `.prd.md`：
 - 有 → Define 读它作为输入，正常进 Step 2
 - 没有 → 建议用户先走产品流（`nocode-evolve:pdflow`），用 AskUserQuestion 三选：
   1. "走产品流 (discoveryflow)" — 调起产品流驾驶舱（Research → PRD），完成后回 devflow

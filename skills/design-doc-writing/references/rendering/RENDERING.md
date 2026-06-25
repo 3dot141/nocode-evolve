@@ -23,7 +23,7 @@
 
 ## 输入
 
-- 默认：渲染**最近写的**设计文档（路径来自 design-doc-writing 的输出，或 `docs/superpowers/specs/{username}/` 下最新文件）
+- 默认：渲染**最近写的**设计文档（路径来自 design-doc-writing 的输出，或按 `{dev_design_output}` 变量定位目录取最新 `*-design.md`）
 - 显式：用户指定 path（绝对或相对都接受）
 
 ## 输出契约
@@ -541,4 +541,4 @@ document.querySelectorAll('h2, h3').forEach(h => observer.observe(h));
 | markdown 章节过多（>20 个 H2） | 默认全折叠（除 TL;DR 和第一节）；TOC 加层级缩进 |
 | markdown 含未关闭的代码块 | 仍尝试渲染，但在报告里提醒「markdown 第 N 行代码块未闭合，HTML 可能错位」 |
 | HTML 已存在（重 render） | 直接覆盖；不询问 |
-| 用户未指定路径 | 取 `docs/superpowers/specs/{username}/` 下最新（按 mtime）的 `*-design.md` |
+| 用户未指定路径 | 按 `{dev_design_output}` 变量定位目录，取最新（按 mtime，递归搜索）的 `*-design.md` |

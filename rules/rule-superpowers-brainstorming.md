@@ -7,17 +7,7 @@
 
 ### 输出路径
 
-设计文档 (design / PRD / RFC / ADR = 设计规格) 落地路径：
-
-```
-docs/superpowers/specs/{username}/yymmdd-<topic>-design.md
-```
-
-- 路径根见 `model/agent-about.md`「全局约定」按 doc-type 分：设计规格→`specs/`、实现计划→`docs/superpowers/plans/{username}/`、探索草稿→`docs/superpowers/sketches/{username}/`
-- `{username}`、`yymmdd` 占位符见 `model/agent-about.md`
-- `<topic>`：kebab-case 主题，简短可读
-
-> 不再使用 skill 内默认的 `docs/plans/YYYY-MM-DD-<topic>-design.md`，也不再统一落 `docs/plans/`——对齐 superpowers README 按 doc-type 入对应子目录。
+设计文档落地路径由 `{dev_design_output}` 变量定义（见 `model/agent-about.md`「文档产出路径变量」）。
 
 ### 写作工作流
 
@@ -34,7 +24,7 @@ docs/superpowers/specs/{username}/yymmdd-<topic>-design.md
    - 每个 doc-type 一套线性骨架（背景 → 目标 → ... → 后果，无元结构标签）
    - Design Doc 骨架：背景 / 目标 / 架构（架构图 / 流程图 / 时序图 / 文本总结）/ 实现（影响 / 接口设计 / 业务流 BFx / 异常与失败模式 / 单测设计）/ 方案选型（Q→选项→定 三行）/ 其他（部署 …）
    - Read examples + doc-types reference 学习结构
-   - 输出 `docs/superpowers/specs/{username}/yymmdd-<topic>-design.md`（设计规格类；落在 step 1 创建的 worktree 内）
+   - 输出路径按 `{dev_design_output}` 变量（落在 step 1 创建的 worktree 内）
 
 3. **`design-doc-reviewer` subagent**（在 design-doc-writing 工作流内通过 `Task(general-purpose)` + `references/reviewer-template.md` dispatch）
    - 独立 context 审查质量
