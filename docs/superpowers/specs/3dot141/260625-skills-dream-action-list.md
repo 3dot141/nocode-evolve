@@ -110,10 +110,10 @@
 **问题**: integration-map 是 38 个上游 skill 的死快照。
 **建议**: SessionStart 或 generate.mjs 加上游 skill 清单 hash 检测，漂移时 stderr 警告。
 
-### R3. 真实 session 验证闭环
+### R3. 真实 session 验证闭环（流程建议，非代码改动）
 
 **问题**: benchmark 打磨但无端到端验证。
-**建议**: 挑 3-5 个真实开发任务，完整走 devflow 全阶段，记录摩擦点回流进 wiki/eval。
+**建议**: 挑 3-5 个真实开发任务，完整走 devflow 全阶段，记录摩擦点回流进 wiki/eval。这不是代码改动，是下一步的使用验证——在真实场景里跑一遍，把痛点收集回来。
 
 ---
 

@@ -1,6 +1,8 @@
 # Skill Integration Map — 完整映射
 
 > 本文件是 RFC 的附件，列出 agent-skills (24) + superpowers (14) 全部 skill 到 8 阶段的映射。确保无遗漏。
+>
+> **last_verified: 260625** — 上次核验上游 skill 清单的日期。超过 90 天未更新时 sanity check 会 warn"上游可能已漂移"。核验方式：对照 Claude Code 最新 superpowers + agent-skills 列表，确认映射仍准确。
 
 ## agent-skills 24 个 Skill 映射
 

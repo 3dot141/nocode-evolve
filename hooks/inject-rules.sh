@@ -10,7 +10,7 @@
 # catalog 分片 (agent-catalog-1.md / agent-catalog-2.md / agent-catalog-3.md):
 #   完整 rule 路由常驻 context (不再用 skills/route 中转, 常驻 = 必在 + 无软触发漏).
 #   单片若 > SHARD_LIMIT(9000), generate.mjs 自动切多片.
-#   hooks.json 预留 3 片 segment, 后续片若不存在则 [ -f ] 静默退出. 超 3 片由 generate --check 报警.
+#   hooks.json 预留 5 片 segment, 后续片若不存在则 [ -f ] 静默退出. 超 MAX_CATALOG_SHARDS 由 generate 报警.
 #
 # hooks/hooks.json 的 SessionStart 数组按下列 segment 顺序列 command:
 #   model-about / model-personal / model-karpathy / model-catalog-1 / model-catalog-2 / model-catalog-3 / project
@@ -32,13 +32,15 @@ seg_file() {
     model-catalog-1)  printf '%s' "${PLUGIN_ROOT}/model/agent-catalog-1.md" ;;
     model-catalog-2)  printf '%s' "${PLUGIN_ROOT}/model/agent-catalog-2.md" ;;
     model-catalog-3)  printf '%s' "${PLUGIN_ROOT}/model/agent-catalog-3.md" ;;
+    model-catalog-4)  printf '%s' "${PLUGIN_ROOT}/model/agent-catalog-4.md" ;;
+    model-catalog-5)  printf '%s' "${PLUGIN_ROOT}/model/agent-catalog-5.md" ;;
     project)          printf '%s' "${PROJECT_DIR}/.agents-personal/AGENTS.md" ;;
     *) return 1 ;;
   esac
 }
 
 # model segment 列表 (孤儿检查用; 改这里即同步 sanity)
-MODEL_SEGMENTS="model-about model-personal model-karpathy model-catalog-1 model-catalog-2 model-catalog-3"
+MODEL_SEGMENTS="model-about model-personal model-karpathy model-catalog-1 model-catalog-2 model-catalog-3 model-catalog-4 model-catalog-5"
 
 file="$(seg_file "$SEG")" || {
   echo "inject-rules.sh: unknown segment '$SEG' (expected: ${MODEL_SEGMENTS} project)" >&2
@@ -74,6 +76,22 @@ if [ "$SEG" = "model-about" ] && [ -n "$PLUGIN_ROOT" ]; then
         *) echo "inject-rules.sh WARN: ${f#${PLUGIN_ROOT}/} 在 model/ 但没对应 segment, 不会注入 session. 加 seg_file() + hooks.json command." >&2 ;;
       esac
     done
+  fi
+  # upstream drift: skill-integration-map.md 的 last_verified 超 90 天 → warn
+  _MAP="${PLUGIN_ROOT}/references/skill-integration-map.md"
+  if [ -f "$_MAP" ]; then
+    _VERIFIED=$(grep -oP 'last_verified:\s*\K\d{6}' "$_MAP" 2>/dev/null || true)
+    if [ -n "$_VERIFIED" ]; then
+      _TODAY=$(date +%y%m%d)
+      _V_EPOCH=$(date -j -f "%y%m%d" "$_VERIFIED" +%s 2>/dev/null || date -d "20${_VERIFIED:0:2}-${_VERIFIED:2:2}-${_VERIFIED:4:2}" +%s 2>/dev/null || true)
+      _T_EPOCH=$(date +%s)
+      if [ -n "$_V_EPOCH" ]; then
+        _DAYS_AGO=$(( (_T_EPOCH - _V_EPOCH) / 86400 ))
+        if [ "$_DAYS_AGO" -gt 90 ]; then
+          echo "inject-rules.sh WARN: references/skill-integration-map.md 的 last_verified=$_VERIFIED 距今 ${_DAYS_AGO} 天, 上游 superpowers/agent-skills 可能已漂移. 请核验后更新 last_verified." >&2
+        fi
+      fi
+    fi
   fi
   # rules/rule-*.md 必须被任一 catalog 分片引用 (catalog 是完整路由, agent 命中桶后按 rule 名找)
   shopt -s nullglob
