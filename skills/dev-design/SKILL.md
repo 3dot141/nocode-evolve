@@ -41,14 +41,14 @@ Define 回答"做什么"，Design 回答"怎么做"。核心动作是探索 **ap
 
 | 领域 | 何时 Read | 在设计文档里写什么 |
 |---|---|---|
-| `references/architecture-principles.md` | 始终 | 模块边界 / Deep vs Shallow / Seam 位置 |
-| `references/api-design-guide.md` | 涉及 API 或模块接口 | 契约定义 / 错误语义 / 命名约定 |
-| `references/security-guide.md` | 涉及用户输入/认证/数据 | 威胁模型 / 认证方案 / 数据保护决策 |
-| `references/performance-guide.md` | 有性能需求或高负载 | 负载目标 / 缓存策略 / SLO |
-| `references/frontend-guide.md` | 涉及 UI | 渲染策略 / 组件架构 / 状态管理 / 设计系统 |
-| `references/observability-guide.md` | 需要生产可观测 | "正常"定义 / 监控信号 / 告警策略 |
-| `references/testing-guide.md` | 始终（测试目标推导用） | 测试分层 / Seam 选择 / 测试基础设施 |
-| `references/migration-guide.md` | 替换已有系统 | 过渡方案 / 兼容策略 / 灰度计划 |
+| `{NOCODE_SKILL_REF}/architecture-principles.md` | 始终 | 模块边界 / Deep vs Shallow / Seam 位置 |
+| `{NOCODE_SKILL_REF}/api-design-guide.md` | 涉及 API 或模块接口 | 契约定义 / 错误语义 / 命名约定 |
+| `{NOCODE_SKILL_REF}/security-guide.md` | 涉及用户输入/认证/数据 | 威胁模型 / 认证方案 / 数据保护决策 |
+| `{NOCODE_SKILL_REF}/performance-guide.md` | 有性能需求或高负载 | 负载目标 / 缓存策略 / SLO |
+| `{NOCODE_SKILL_REF}/frontend-guide.md` | 涉及 UI | 渲染策略 / 组件架构 / 状态管理 / 设计系统 |
+| `{NOCODE_SKILL_REF}/observability-guide.md` | 需要生产可观测 | "正常"定义 / 监控信号 / 告警策略 |
+| `{NOCODE_SKILL_REF}/testing-guide.md` | 始终（测试目标推导用） | 测试分层 / Seam 选择 / 测试基础设施 |
+| `{NOCODE_SKILL_REF}/migration-guide.md` | 替换已有系统 | 过渡方案 / 兼容策略 / 灰度计划 |
 
 不是每份设计文档都覆盖全部领域——加个 API 字段不需要写可观测性节。但逐项检查"跟我的设计有没有关系"。
 

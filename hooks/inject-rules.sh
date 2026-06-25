@@ -50,6 +50,8 @@ file="$(seg_file "$SEG")" || {
 # 写入 CLAUDE_ENV_FILE 后, 后续所有 Bash 调用都能用 ${CLAUDE_PLUGIN_ROOT}.
 if [ "$SEG" = "model-about" ] && [ -n "${CLAUDE_ENV_FILE:-}" ]; then
   echo "CLAUDE_PLUGIN_ROOT=${PLUGIN_ROOT}" >> "$CLAUDE_ENV_FILE"
+  _REF="${NOCODE_SKILL_REF:-${PLUGIN_ROOT}/skills/references}"
+  echo "NOCODE_SKILL_REF=${_REF}" >> "$CLAUDE_ENV_FILE"
 fi
 
 # Sanity check 只在第一个 model segment 跑一次 (避免每 command 重复):
@@ -97,7 +99,8 @@ if [[ "$file" == "$PLUGIN_ROOT"/* ]]; then
 else
   header="<!-- source: ${file} (project override) -->"
 fi
-content="${header}"$'\n'"$(sed "s|\${CLAUDE_PLUGIN_ROOT}|${PLUGIN_ROOT}|g" "$file")"
+_REF="${NOCODE_SKILL_REF:-${PLUGIN_ROOT}/skills/references}"
+content="${header}"$'\n'"$(sed "s|\${CLAUDE_PLUGIN_ROOT}|${PLUGIN_ROOT}|g; s|\${NOCODE_SKILL_REF}|${_REF}|g" "$file")"
 
 if command -v jq >/dev/null 2>&1; then
   printf '%s' "$content" \

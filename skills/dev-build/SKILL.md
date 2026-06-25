@@ -27,11 +27,11 @@ description: Use when executing implementation tasks from a plan, writing new co
 
 | 领域 | 何时 Read | 用来做什么 |
 |---|---|---|
-| `references/testing-guide.md` | 写测试时 | TDD 循环 / 替身选择 / DAMP 原则 |
-| `references/security-guide.md` | 碰用户输入/认证/数据时 | 防注入写法 / 输入校验 / 密钥管理 |
-| `references/performance-guide.md` | 碰数据库查询/前端渲染时 | N+1 / 缓存 / 懒加载模式 |
-| `references/frontend-guide.md` | 碰 UI 组件时 | 组件模式 / 无障碍 / 设计系统 |
-| `references/architecture-principles.md` | 拿不准模块边界时 | Deep Module / Seam / 依赖分类 |
+| `{NOCODE_SKILL_REF}/testing-guide.md` | 写测试时 | TDD 循环 / 替身选择 / DAMP 原则 |
+| `{NOCODE_SKILL_REF}/security-guide.md` | 碰用户输入/认证/数据时 | 防注入写法 / 输入校验 / 密钥管理 |
+| `{NOCODE_SKILL_REF}/performance-guide.md` | 碰数据库查询/前端渲染时 | N+1 / 缓存 / 懒加载模式 |
+| `{NOCODE_SKILL_REF}/frontend-guide.md` | 碰 UI 组件时 | 组件模式 / 无障碍 / 设计系统 |
+| `{NOCODE_SKILL_REF}/architecture-principles.md` | 拿不准模块边界时 | Deep Module / Seam / 依赖分类 |
 
 ## Checklist (TaskCreate)
 
@@ -73,7 +73,7 @@ for each task in plan:
 
 **回归测试有效性验证**：写完回归测试后走一遍完整红绿循环证明它真能抓 bug——写 → 跑(过) → 还原 fix → 跑(必须红) → 恢复 → 跑(过)。"写了个回归测试"不算，亲眼看它在没有 fix 时失败才算。
 
-测试层级、DAMP/DRY、替身偏好序（real > fake > stub > mock）、测行为不测交互 → 见 `references/testing-guide.md` + `references/test-pyramid-guide.md`，不在此重述。
+测试层级、DAMP/DRY、替身偏好序（real > fake > stub > mock）、测行为不测交互 → 见 `{NOCODE_SKILL_REF}/testing-guide.md` + `references/test-pyramid-guide.md`，不在此重述。
 
 **测试难写 = 设计难**（build 独有的设计反馈）：不知怎么测 → 先写期望 API / 先写断言；测试太复杂 → 设计太复杂，简化接口；必须 mock 一切 → 耦合太重，用依赖注入；setup 巨大 → 抽 helper 或简化设计
 

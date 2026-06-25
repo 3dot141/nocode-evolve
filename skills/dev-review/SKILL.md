@@ -35,11 +35,11 @@ description: Use before merging any change, after completing a feature, or when 
 
 | 领域 | 何时 Read | 用来做什么 |
 |---|---|---|
-| `references/security-guide.md` | 过安全轴时 | OWASP 逐条 / 三层边界 / AI/LLM 安全 |
-| `references/performance-guide.md` | 过性能轴时 | N+1 / 重渲染 / bundle 反模式 |
-| `references/architecture-principles.md` | 过架构轴时 | Deep/Shallow / Seam 纪律 / Hyrum's Law |
-| `references/testing-guide.md` | 审测试质量时 | DAMP / 替身偏好序 / 金字塔 |
-| `references/frontend-guide.md` | 审 UI 代码时 | 组件模式 / Avoid AI Aesthetic / WCAG |
+| `{NOCODE_SKILL_REF}/security-guide.md` | 过安全轴时 | OWASP 逐条 / 三层边界 / AI/LLM 安全 |
+| `{NOCODE_SKILL_REF}/performance-guide.md` | 过性能轴时 | N+1 / 重渲染 / bundle 反模式 |
+| `{NOCODE_SKILL_REF}/architecture-principles.md` | 过架构轴时 | Deep/Shallow / Seam 纪律 / Hyrum's Law |
+| `{NOCODE_SKILL_REF}/testing-guide.md` | 审测试质量时 | DAMP / 替身偏好序 / 金字塔 |
+| `{NOCODE_SKILL_REF}/frontend-guide.md` | 审 UI 代码时 | 组件模式 / Avoid AI Aesthetic / WCAG |
 
 ## Checklist (TaskCreate)
 
@@ -63,7 +63,7 @@ description: Use before merging any change, after completing a feature, or when 
 | 安全 | 信任边界守住了吗？ | OWASP Top 10 / 注入 / 密钥硬编码 |
 | 性能 | 不必要的开销？ | N+1 / unbounded fetch / 缺分页 |
 
-安全详见 `references/security-guide.md`。性能详见 `references/performance-guide.md`。
+安全详见 `{NOCODE_SKILL_REF}/security-guide.md`。性能详见 `{NOCODE_SKILL_REF}/performance-guide.md`。
 
 **Review 中测试评估**：测试是否会在重构中存活？重命名内部函数测试就挂 = 测的是实现不是行为。
 

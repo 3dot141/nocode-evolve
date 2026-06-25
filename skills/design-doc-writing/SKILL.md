@@ -54,12 +54,12 @@ description: Use when the design skill delegates document writing, or when the u
 
 | 领域 | 检查问题 | 参考 |
 |---|---|---|
-| 安全设计 | 有外部输入/认证/敏感数据吗？ | `references/security-guide.md` |
-| 性能设计 | 有高负载/实时性要求吗？ | `references/performance-guide.md` |
-| 可观测性 | 上线后怎么知道它在正常工作？ | `references/observability-guide.md` |
-| 验证策略 | 怎么证明实现是对的？测试分层？ | `references/testing-guide.md` |
-| 迁移计划 | 在替换已有系统吗？ | `references/migration-guide.md` |
-| 前端设计 | 有 UI 吗？渲染策略/组件架构？ | `references/frontend-guide.md` |
+| 安全设计 | 有外部输入/认证/敏感数据吗？ | `{NOCODE_SKILL_REF}/security-guide.md` |
+| 性能设计 | 有高负载/实时性要求吗？ | `{NOCODE_SKILL_REF}/performance-guide.md` |
+| 可观测性 | 上线后怎么知道它在正常工作？ | `{NOCODE_SKILL_REF}/observability-guide.md` |
+| 验证策略 | 怎么证明实现是对的？测试分层？ | `{NOCODE_SKILL_REF}/testing-guide.md` |
+| 迁移计划 | 在替换已有系统吗？ | `{NOCODE_SKILL_REF}/migration-guide.md` |
+| 前端设计 | 有 UI 吗？渲染策略/组件架构？ | `{NOCODE_SKILL_REF}/frontend-guide.md` |
 
 小改动（3 屏内的 design-doc / ADR）不需要全覆盖。大设计（≥ 5 屏）至少检查安全+性能+验证。
 

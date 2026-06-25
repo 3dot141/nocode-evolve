@@ -115,6 +115,7 @@ rule / skill 触发条件命中后, 要跳过 / 偏离它, **只认用户消息�
 | 占位符 | 默认值 | 说明 |
 |---|---|---|
 | `{username}` | `3dot141` | GitHub username, 用于路径分目录 / 归属标记 |
+| `{NOCODE_SKILL_REF}` | `${NOCODE_SKILL_REF}` | 共享领域指南绝对路径 (env `NOCODE_SKILL_REF`, SessionStart 自动写入) |
 
 ### 文档产出路径变量
 

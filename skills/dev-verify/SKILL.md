@@ -25,11 +25,11 @@ Build 完成后的 **evidence** 门。"看起来对"不是证据，跑一下才�
 
 | 领域 | 何时 Read | 用来做什么 |
 |---|---|---|
-| `references/testing-guide.md` | 决定该验什么时 | 测试金字塔 / Prove-It / 浏览器安全边界 |
-| `references/performance-guide.md` | 有性能需求时 | 度量方法 / Core Web Vitals / 基线对比 |
-| `references/security-guide.md` | 涉及安全功能时 | 安全检查清单 / 渗透验证 |
-| `references/observability-guide.md` | 验证生产可观测时 | 埋点是否到位 / 告警是否 actionable |
-| `references/frontend-guide.md` | 有 UI 变更时 | 无障碍检查 / 响应式验证 |
+| `{NOCODE_SKILL_REF}/testing-guide.md` | 决定该验什么时 | 测试金字塔 / Prove-It / 浏览器安全边界 |
+| `{NOCODE_SKILL_REF}/performance-guide.md` | 有性能需求时 | 度量方法 / Core Web Vitals / 基线对比 |
+| `{NOCODE_SKILL_REF}/security-guide.md` | 涉及安全功能时 | 安全检查清单 / 渗透验证 |
+| `{NOCODE_SKILL_REF}/observability-guide.md` | 验证生产可观测时 | 埋点是否到位 / 告警是否 actionable |
+| `{NOCODE_SKILL_REF}/frontend-guide.md` | 有 UI 变更时 | 无障碍检查 / 响应式验证 |
 
 ## Checklist (TaskCreate)
 
