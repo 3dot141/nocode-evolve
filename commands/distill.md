@@ -236,6 +236,7 @@ no → 整次 distill 终止；yes → 进入分发。
 ℹ Wiki 健康检查：0 error / 1 warn / 1 info
   ⚠ 孤立页: draft/260512-local-dev-beta-feature-toggle.md
   ℹ draft/ 有 >30 天 stub，建议跑 /distill --dream
+  → 结论：wiki 基本健康，2 个注意项不阻塞沉淀
 ```
 
 ---
@@ -249,8 +250,10 @@ no → 整次 distill 终止；yes → 进入分发。
 ```
 <project>/.agents-personal/
 ├── wiki/
-│   ├── index.md              全局索引（OKF §6，按 topic 分组，可从 page frontmatter 重建）
-│   ├── log.md                操作日志（OKF §7，按日期分组，新在前）
+│   ├── index.md              主索引（topic 目录 + 页数，轻量；可从子索引重建）
+│   ├── index/                子索引目录（按 topic 分组，按需读取）
+│   │   └── <topic>.md        单 topic 索引（该 topic 下所有页面条目）
+│   ├── log.md                操作日志（按日期分组，新在前）
 │   ├── draft/                草稿层（单次 distill 首产，maturity=stub）
 │   │   └── yymmdd-<slug>.md
 │   └── pages/                发布层（经整合/promote 的成熟知识）
@@ -463,7 +466,7 @@ distill 执行流程 Step 0 静默跑 lint，问题附在候选表格底部。
 
 | 类别 | 检查 | 严重度 |
 |---|---|---|
-| 结构 | index.md 与实际 pages 不一致 | error |
+| 结构 | index.md 与实际文件不一致（多余条目 / 遗漏文件 / 无法从 frontmatter 重建） | error |
 | 结构 | 孤立页（无 Related Pages 引用） | warn |
 | 结构 | 过大页（>800 词） | info（建议 split） |
 | 结构 | 缺 TLDR 或 TLDR ≠ description | warn |
@@ -471,31 +474,69 @@ distill 执行流程 Step 0 静默跑 lint，问题附在候选表格底部。
 | 内容 | pages/ 中 >90 天未 last_updated | info（可能 stale） |
 | 内容 | superseded_by 目标不存在 | error |
 | 引用 | pages/ 页 body 引用 draft/ 页（违规） | warn |
-| 索引 | index.md 可重建性验证 | warn |
+| 索引 | 总页数 ≥30（draft + pages 合计）且仍为平铺模式，建议拆分为两级索引以控制 context 占用；已拆分则降为 info 提醒跑 `--dream` 做 merge/prune | warn |
 
-输出格式（附在候选表格底部）：
+输出格式（附在候选表格底部），**末尾必须输出一行明确结论**：
+
 ```
 ℹ Wiki 健康检查：2 warn / 1 info
   ⚠ INDEX 多余条目: 260511-old-page.md（文件已不存在）
   ⚠ 孤立页: 260512-local-dev-beta-feature-toggle.md
   ℹ 过大页: 260609-storage-backend-architecture.md（1200 词，建议拆分）
+  → 结论：wiki 基本健康，2 个注意项不阻塞沉淀
 ```
 
-### index.md 重建算法（OKF §6）
+**结论判定规则**（三档）：
 
-index.md 可从 draft/ + pages/ 的 frontmatter + TLDR 完全重建：
+| 条件 | 结论措辞 |
+|---|---|
+| 0 error + 0 warn + 0 info | `→ 结论：wiki 状态健康，无需处理 ✓` |
+| 0 error + N warn/info | `→ 结论：wiki 基本健康，N 个注意项不阻塞沉淀` |
+| ≥1 error | `→ 结论：wiki 有 N 个结构性问题，建议先修复再沉淀 ✗`（列出 error 项的一句话修复建议） |
 
+error 不阻断 distill 流程（用户可选择先修复或继续），但结论必须明确指出。
+
+### 索引架构（两级索引）
+
+总页数 <30 时主索引平铺所有条目（向后兼容）；≥30 时自动拆分为两级索引，AI 按需只读命中的 topic 子索引，控制 context 占用。
+
+**拆分阈值**：draft/ + pages/ 合计 ≥30 个文件时，distill 在重建索引阶段自动拆分。已拆分后页数降回 <30 不自动合并（避免反复拆合），用户可手动重建。
+
+#### 主索引 index.md（轻量目录）
+
+只列 topic + 页数 + 一句话描述，不列每个页面的条目。AI 读了主索引就知道该去读哪个 topic 子索引。
+
+```markdown
+# Wiki Index
+
+| Topic | 页数 | 说明 |
+|---|---|---|
+| [storage](index/storage.md) | 5 | 存储层架构、选型、迁移 |
+| [agent-system](index/agent-system.md) | 8 | agent 装配、DSL、system prompt |
+| [uncategorized](index/uncategorized.md) | 3 | 未分组页面 |
+| [superseded](index/superseded.md) | 2 | 已废弃页面 |
+
+<!-- 由 /distill 自动维护，可从 index/*.md 子索引重建 -->
 ```
-1. 扫 pages/*.md + draft/*.md frontmatter
-2. 读 body 首个 **TLDR**: 行 → 作为 description（fallback 到 frontmatter description）
-3. 按 topic 分组（无 topic → "Uncategorized"）
-4. active/draft 页按 topic 分组展示，组内 maturity 降序 → date 降序
-5. superseded 页归底部 "Superseded" 组
-6. draft/ 页作为 pages/ 同名条目的 subordinate 展示
-7. 写 index.md
+
+#### 子索引 index/\<topic\>.md（按 topic 分组）
+
+每个 topic 一个文件，列该 topic 下所有页面条目（和原来平铺模式的格式一样）。
+
+```markdown
+# Topic: <Topic Group>
+
+- [<title>](../pages/<slug>.md) -- <TLDR> [<type>, <maturity>]
+  - Draft: [<title>](../draft/yymmdd-<slug>.md) [<type>, stub]
+
+<!-- 由 /distill 自动维护，可从 draft/ + pages/ frontmatter 重建 -->
 ```
 
-index.md 模板：
+superseded 页归 `index/superseded.md`；无 topic 的页归 `index/uncategorized.md`。
+
+#### 平铺模式（<30 页，向后兼容）
+
+总页数 <30 时，index.md 直接平铺所有条目，不建 index/ 子目录：
 
 ```markdown
 # Wiki Index
@@ -511,6 +552,21 @@ index.md 模板：
 - ~~[<title>](pages/<slug>.md)~~ → `<superseded_by>` [superseded]
 
 <!-- 由 /distill 自动维护，可从 draft/ + pages/ frontmatter 完全重建 -->
+```
+
+#### 重建算法
+
+```
+1. 扫 pages/*.md + draft/*.md frontmatter
+2. 读 body 首个 **TLDR**: 行 → 作为 description（fallback 到 frontmatter description）
+3. 按 topic 分组（无 topic → "Uncategorized"）
+4. 判断总页数：
+   a. <30 且当前无 index/ 目录 → 平铺模式，直接写 index.md
+   b. ≥30 或已有 index/ 目录 → 两级模式：
+      - 每个 topic 写 index/<topic>.md（组内 maturity 降序 → date 降序）
+      - superseded 页写 index/superseded.md
+      - 主 index.md 只写 topic 目录表
+5. draft/ 页作为 pages/ 同名条目的 subordinate 展示
 ```
 
 ### log.md 格式（OKF §7）
@@ -553,7 +609,7 @@ wiki 不只是 distill 的"存放处"，是 AI 的**项目知识第一站**。�
 
 **路径 A: 被动查阅**（现有行为，maturity 感知增强）
 
-触发时机不变（设计/选型/方案/项目历史背景/brainstorming/design-doc-writing）。读 wiki/index.md → 按 topic 定位 → 读 page。maturity 感知：
+触发时机不变（设计/选型/方案/项目历史背景/brainstorming/design-doc-writing）。读 wiki/index.md → 按 topic 定位 → 两级索引时只读命中的 `index/<topic>.md` 子索引（不读全部子索引）→ 读 page。maturity 感知：
 - `active`/`draft` (pages/) → 直接引用
 - `stub` (draft/) → 参考 + 注明"单源待验证"
 - `superseded` → 跳过（除非用户问历史决策演进）
@@ -561,7 +617,7 @@ wiki 不只是 distill 的"存放处"，是 AI 的**项目知识第一站**。�
 
 **路径 B: 主动查询 + 回写**（新增，飞轮机制）
 
-AI 工作中遇到项目特有知识（子系统机制/配置约定/联调/架构）→ **先查 wiki/index.md 再走代码探索**。如果代码探索产出了可复用的项目知识 → 写入 draft/ 作 stub → 追加 log.md（`**query-write**`）。不回写的：一次性事实查询、与项目架构/设计/约定无关。
+AI 工作中遇到项目特有知识（子系统机制/配置约定/联调/架构）→ **先查 wiki/index.md**（两级模式下主索引足够定位 topic）**再走代码探索**。如果代码探索产出了可复用的项目知识 → 写入 draft/ 作 stub → 追加 log.md（`**query-write**`）。不回写的：一次性事实查询、与项目架构/设计/约定无关。
 
 **路径 C: 做梦维护**
 
