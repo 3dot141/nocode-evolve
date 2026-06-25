@@ -93,7 +93,7 @@ agent 视角: 用户任务命中以下任一条件时, **主动调起 devflow sk
 **不含 (负例)**: 纯执行: 直接改代码而未求评审
 
 #### codex-review
-**触发**: red-blue-deep 判重档走到红军环节; 或完成分支 / 显式 review 请求; 或我卡住 / 想要第二实现 / 独立诊断 / 委派; 或 design-doc-writing 走到 review 环节
+**触发**: red-blue-deep 判重档走到红军环节; 或完成分支 / 显式 review 请求; 或我卡住 / 想要第二实现 / 独立诊断 / 委派; 或 design-doc-writing 走到 review 环节. 不含: devflow Review 阶段的五轴评审 (走 dev-review skill, 不走本 rule)
 **读**: `${CLAUDE_PLUGIN_ROOT}/rules/rule-codex-review.md`
 **摘要**: 本机 Codex 当独立模型接四场景 (红蓝红军 / 代码 review 收尾 / 委派救援 / 设计文档审稿); 直接 Bash 调 codex-companion.mjs; 先 setup --json 探, 不可用降级自做 + 明说; 禁改 vendored 文件
 **关键约束(上浮)**: 先 setup --json 探, 不可用降级自做 + 明说; 禁改 vendor/codex/ 文件。
@@ -111,4 +111,10 @@ agent 视角: 用户任务命中以下任一条件时, **主动调起 devflow sk
 **读**: `${CLAUDE_PLUGIN_ROOT}/rules/rule-git-freshness.md`
 **摘要**: 设计/方案动作 + 代码搜索/多文件 Read 前用 scripts/freshness-check.mjs 检查当前分支与 base 的 behind 差距; base 推断优先级: git config nocode-evolve-base (worktree 创建时写入, 不随 push -u 漂移) → upstream → origin/HEAD → origin/main; behind ≥ 5 commits 或 branch+base 首次冷启动 gate 三选 (pull --rebase / 接受 / 跳过); cache 2h TTL 不 fetch 不打扰; 离线 fetch 失败 warn 不阻塞. 主仓 + worktree 内长期工作都管 (worktree-add 那刻仍由 rule-git-worktree 覆盖)
 **主桶**: git-lifecycle (完整定义见该桶)
+
+#### dev-review (跨桶)
+**触发**: devflow 路由到 Review 阶段, 或用户说「review 一下 / 看看代码 / 评审 / check the code / 审一下 / 有没有问题 / 帮我 review / code review」. 不含: 非 devflow 上下文的独立 review 请求（红军/第二实现/委派）走 codex-review
+**读**: ``
+**摘要**: devflow Review 阶段五轴评审 + Spec 轴路径覆盖检查; 产出分级 findings 报告 (Critical/Warning/Suggestion); Critical 不可 override; 与 codex-review 分工: dev-review = devflow 五轴评审, codex-review = 独立红军/第二实现/委派
+**主桶**: workflow (完整定义见该桶)
 

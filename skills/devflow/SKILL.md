@@ -9,7 +9,7 @@ description: 工程任务流程领航（8 阶段 · 4 场景路由）。可被 m
 >
 > 依赖：SessionStart 已注入 `model/agent-catalog-*.md` 完整路由。每阶段 rule 已常驻，需要完整指令时按需 Read。
 >
-> 各阶段集成了哪些 agent-skills / superpowers skill 的完整映射见 `references/skill-integration-map.md`。
+> 各阶段集成了哪些 agent-skills / superpowers skill 的完整映射见 `../../references/skill-integration-map.md`。
 
 ## 协议
 
@@ -24,7 +24,7 @@ Define 返回后，拿到确认的 restate + 场景分类，进 Step 2。
 **Full 场景产品流前置检查**（Define 返回 Full 场景后、进入 Step 2 前执行）：检查 `{pd_prd_output}` 所在目录下有没有已有 `.prd.md`：
 - 有 → Define 读它作为输入，正常进 Step 2
 - 没有 → 建议用户先走产品流（`nocode-evolve:pdflow`），用 AskUserQuestion 三选：
-  1. "走产品流 (discoveryflow)" — 调起产品流驾驶舱（Research → PRD），完成后回 devflow
+  1. "走产品流 (pdflow)" — 调起产品流驾驶舱（Research → PRD），完成后回 devflow
   2. "只做 research" — 调起 `nocode-evolve:pd-research` 单独调研
   3. "跳过，直接继续" — 不做产品调研，按用户描述继续
 
@@ -153,7 +153,7 @@ Define → Design → Plan 保持在**同一个不 compact 的上下文窗口**�
 
 | 能力 | 调用 | 触发时机 | 优先级（冲突时） |
 |---|---|---|---|
-| **Debug** | `references/debug-protocol.md` | Build/Verify 遇阻（测试失败/卡住） | bug/失败 → 优先 Debug |
+| **Debug** | `../../references/debug-protocol.md` | Build/Verify 遇阻（测试失败/卡住） | bug/失败 → 优先 Debug |
 | **Red-Blue-Deep** | `nocode-evolve:red-blue-deep` | 决策分歧（选 A 还是 B？） | 决策前 → 优先 Red-Blue |
 | **Doubt-Driven** | spawn 独立 reviewer（偏向证伪不是批准） | 非平凡决策（跨模块/不可逆/安全敏感） | 决策后验证 → 优先 Doubt |
 | **Context Engineering** | 主动建议 `/distill` + 新会话 | 长会话（多轮工具调用/跨子任务） | 上下文风险 → 建议收尾 |

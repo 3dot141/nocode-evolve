@@ -1,13 +1,13 @@
 ---
 name: pdflow
-description: 产品发现工作流领航（Research → PRD · 2 场景路由）。可被 devflow 主动建议，也可用户 /调 进入。给"当前阶段判断 + 下一步建议"，用户拍板，不替执行。用于产品调研和需求定义阶段，独立于开发流 devflow。触发：用户说"discoveryflow/产品发现/走产品阶段/先调研再写 PRD"，或 devflow Full 场景建议先走产品流。
+description: 产品发现工作流领航（Research → PRD · 2 场景路由）。可被 devflow 主动建议，也可用户 /调 进入。给"当前阶段判断 + 下一步建议"，用户拍板，不替执行。用于产品调研和需求定义阶段，独立于开发流 devflow。触发：用户说"pdflow/产品发现/走产品阶段/先调研再写 PRD"，或 devflow Full 场景建议先走产品流。
 ---
 
 # nocode-evolve:pdflow — 产品阶段工作流领航
 
 > 产品流驾驶舱。独立于 devflow，专管"开发前"的产品调研和需求定义。
 >
-> 与 devflow 的关系：devflow 管开发（Define → ... → Land），discoveryflow 管产品（Research → PRD → 交互视觉设计）。两者通过 `.prd.md` + `.design.md` 文档衔接。devflow Full 场景会建议先走 discoveryflow。
+> 与 devflow 的关系：devflow 管开发（Define → ... → Land），pdflow 管产品（Research → PRD → 交互视觉设计）。两者通过 `.prd.md` + `.design.md` 文档衔接。devflow Full 场景会建议先走 pdflow。
 
 ## 协议
 
@@ -87,8 +87,8 @@ Task 3: Handoff — 衔接开发流
 **PRD → 交互视觉设计 衔接**：PRD 完成后，若需求涉及界面，自动建议进 pd-vis：
 > "PRD 已就绪。建议下一步做交互视觉设计，把需求落成界面结构 + 视觉方向（默认低保真 wireframe，可升档）。纯后端 / 无界面需求可跳过，直接 Handoff。"
 
-**Research No-Go**：用户在 Research 阶段选了 No-Go → discoveryflow 结束，不进 PRD：
-> "调研结论是 No-Go。产品流结束。如果要重新评估，可以再次调起 discoveryflow。"
+**Research No-Go**：用户在 Research 阶段选了 No-Go → pdflow 结束，不进 PRD：
+> "调研结论是 No-Go。产品流结束。如果要重新评估，可以再次调起 pdflow。"
 
 ### Step 4: Handoff — 衔接开发流
 
@@ -103,7 +103,7 @@ Task 3: Handoff — 衔接开发流
 ## 全景图
 
 ```
-                  discoveryflow (产品流)                        devflow (开发流)
+                  pdflow (产品流)                        devflow (开发流)
 ┌────────────────────────────────────────────────┐   ┌──────────────────────────────┐
 │                                                │   │                              │
 │  ┌────────┐   ┌────────┐   ┌──────────────┐   │   │  Define → Env → Design →    │
@@ -127,10 +127,10 @@ Task 3: Handoff — 衔接开发流
 
 ## 与 devflow 的交互
 
-- **devflow → discoveryflow**：devflow Define 判 Full 场景 + 无已有 PRD → 建议"先走 discoveryflow"
-- **discoveryflow → devflow**：PRD 完成后 Handoff 阶段建议"进 devflow"
-- **独立调起**：用户直接 `/discoveryflow` 或说"产品调研"，不经 devflow
-- **不嵌套**：discoveryflow 和 devflow 是平级关系，不是父子。一个结束另一个才开始
+- **devflow → pdflow**：devflow Define 判 Full 场景 + 无已有 PRD → 建议"先走 pdflow"
+- **pdflow → devflow**：PRD 完成后 Handoff 阶段建议"进 devflow"
+- **独立调起**：用户直接 `/pdflow` 或说"产品调研"，不经 devflow
+- **不嵌套**：pdflow 和 devflow 是平级关系，不是父子。一个结束另一个才开始
 
 ## 回流路径
 
@@ -139,7 +139,7 @@ Task 3: Handoff — 衔接开发流
 | PRD | Research | PRD 写作中发现信息不足 → 回 Research 补充 |
 | 交互视觉设计 | PRD | 设计时发现需求有歧义/缺失 → 回 PRD 修订 |
 | Handoff | 交互视觉设计 | 用户看完设计想改 → 回 pd-vis 修订 |
-| devflow Define | discoveryflow | Define 发现需求不清 → 建议回 discoveryflow |
+| devflow Define | pdflow | Define 发现需求不清 → 建议回 pdflow |
 
 ## 不要
 
@@ -147,5 +147,5 @@ Task 3: Handoff — 衔接开发流
 - **不照 todo 裸跑** — 进入 Research / PRD 阶段，标 in_progress 后第一个动作先 `Skill()` 加载该阶段 skill，再走 sub-steps。只跑 todo 不加载 skill = 丢失 skill 内的 clarify gate / 文档结构 / 标注约定
 - **不自行跳 Research** — Full 场景不跳 Research，除非用户显式说"跳过调研"
 - **交互视觉设计按需跳** — 纯后端 / 无界面需求可跳过 pd-vis，但有界面时不省略（界面结构留空 = 开发瞎猜）
-- **不在 discoveryflow 内做技术设计** — 技术设计是 devflow Design 的事（pd-vis 只做界面交互 + 视觉，不碰技术架构 / API）
+- **不在 pdflow 内做技术设计** — 技术设计是 devflow Design 的事（pd-vis 只做界面交互 + 视觉，不碰技术架构 / API）
 - **不强制进 devflow** — Handoff 给选择，不自动开始开发

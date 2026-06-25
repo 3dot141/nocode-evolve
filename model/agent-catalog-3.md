@@ -13,7 +13,7 @@
 **生命周期**: 0 设计
 
 #### pdflow
-**触发**: 用户说「discoveryflow / 产品发现 / 走产品阶段 / 先调研再写 PRD / 产品工作流」, 或 devflow Full 场景建议先走产品流
+**触发**: 用户说「pdflow / 产品发现 / 走产品阶段 / 先调研再写 PRD / 产品工作流」, 或 devflow Full 场景建议先走产品流
 **读**: `${CLAUDE_PLUGIN_ROOT}/rules/rule-pdflow.md`
 **摘要**: 产品发现工作流领航(Research → PRD · 2 场景路由); 独立于 devflow, 通过 .prd.md 文档衔接; Full(Research→PRD) / Light(PRD-only); Handoff 建议进 devflow
 **也属**: design
@@ -51,8 +51,15 @@
 **也属**: git-lifecycle
 **生命周期**: 4 收尾
 
+#### dev-review
+**触发**: devflow 路由到 Review 阶段, 或用户说「review 一下 / 看看代码 / 评审 / check the code / 审一下 / 有没有问题 / 帮我 review / code review」. 不含: 非 devflow 上下文的独立 review 请求（红军/第二实现/委派）走 codex-review
+**读**: ``
+**摘要**: devflow Review 阶段五轴评审 + Spec 轴路径覆盖检查; 产出分级 findings 报告 (Critical/Warning/Suggestion); Critical 不可 override; 与 codex-review 分工: dev-review = devflow 五轴评审, codex-review = 独立红军/第二实现/委派
+**也属**: review
+**生命周期**: 3 评审
+
 #### dev-design (跨桶)
-**触发**: 用户要求写设计文档 / PRD / RFC / Design Doc / ADR / 重构方案 / 技术 spec / API 设计, 或 devflow 路由到 Design 阶段
+**触发**: 用户要求写设计文档 / RFC / Design Doc / ADR / 重构方案 / 技术 spec / API 设计, 或 devflow 路由到 Design 阶段. 不含: 产品 PRD (走 pd-prd skill, 不走本 rule)
 **读**: `${CLAUDE_PLUGIN_ROOT}/rules/rule-dev-design.md`
 **摘要**: Design 阶段: 方案探索(brainstorming发散解法空间) + 测试目标推导 + 设计文档(design-doc-writing); adversarial review + 设计六轴(可行性/清晰度/架构合理性/安全/性能/可扩展性) + source-driven 前置检查 + 轻量 threat model
 **主桶**: design (完整定义见该桶)
