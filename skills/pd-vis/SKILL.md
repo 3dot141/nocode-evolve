@@ -55,13 +55,52 @@ description: Use when the user wants to design the interaction and visual direct
 
 多个 PRD 文件 → 列出让用户选。
 
+### Step 0½: 竞品与产品探索（两个方向并行）
+
+在定保真度之前先看看世界上已经有什么——和 pd-research 的 Iron Law 同理，没看过别人怎么做就画 wireframe = 闭门造车。
+
+两个方向**并行 spawn agent**：
+
+**方向 A: 竞品探索**（外部产品怎么做这件事）
+
+1. 从 PRD 提取核心功能场景（3-5 个关键页/流程）
+2. 搜索 3-5 个竞品——先拿元信息（产品名 / 功能页 URL / 定位描述）
+3. **对每个竞品的每个关键功能，三块并行获取设计信息**：
+
+   | 块 | 获取什么 | 方法 |
+   |---|---|---|
+   | **文字说明** | 产品功能描述、交互模式、设计理念 | WebSearch / Exa 搜产品 blog / changelog / 设计文章 |
+   | **HTML** | 页面真实 HTML 结构（组件/布局/CSS 类名） | Playwright 无头模式 `page.content()` 或 `agent-browser` 获取页面 HTML |
+   | **截图** | 页面视觉截图（布局/配色/间距/层级） | Playwright 无头 `npx playwright screenshot <url> --full-page` 或 `agent-browser` 截图 |
+
+   **降级链**（按可用性依次尝试）：
+   - Playwright 可用 → HTML + 截图同时拿
+   - Playwright 不可用 → `agent-browser` skill
+   - 竞品需要登录/付费墙 → 搜索公开截图（Product Hunt / 官方 blog / review 站配图）
+   - 都拿不到 → 列出产品名 + 具体功能场景，请用户提供截图
+
+4. 产出竞品参考表：
+
+| 竞品 | 关键页/功能 | 文字说明 | HTML 要点 | 截图 | 值得借鉴的 | 不想要的 |
+|---|---|---|---|---|---|---|
+
+**方向 B: 产品功能探索**（我们自己的产品现状）
+
+1. 如果是改造/增强已有产品——用 `agent-browser` 或 Playwright 截取当前产品的相关页面，记录现状
+2. 如果是全新产品——扫描代码库的 UI 组件/设计系统（有的话），确认可复用的视觉资产
+3. 产出现状清单：已有什么 + 要新建什么 + 要改什么
+
+**探索完成后再进 Step 1**。竞品参考表和现状清单写进 `.design.md` 的「竞品参考」和「现状」节。
+
+> **Playwright 用法**：`npx playwright install chromium && npx playwright screenshot <url> --full-page -o <output.png>`。无头模式，不需要 GUI。如果 Playwright 不可用，降级到 `agent-browser` skill 或请用户截图。
+
 ### Step 1: 澄清 + 选保真度
 
 先暴露交互/视觉相关的歧义（提议默认值，改比答快）：
 
 1. **平台** — "目标平台是 Web / 移动 / 桌面？默认 X。"
-2. **调性** — "视觉调性偏专业克制 / 友好活泼 / ？默认 X。"
-3. **参考** — "有想对齐的参考产品吗？（Stripe / Linear / Notion 风格之类）"
+2. **调性** — "视觉调性偏专业克制 / 友好活泼 / ？默认 X。"（结合 Step 0½ 的竞品参考给出更有依据的建议）
+3. **参考** — "竞品探索发现了这些参考（列出），你倾向哪个方向？还有其他想对齐的吗？"
 4. **关键流程数** — "核心要设计几条用户流程？默认从 PRD 的使用路径提（每条使用路径对应一段交互流）。"
 
 然后用 AskUserQuestion 定**保真度档**（默认低保真，提示用户可升档）：
@@ -135,6 +174,13 @@ description: Use when the user wants to design the interaction and visual direct
 > 日期: {yymmdd}
 > PRD: {.prd.md 路径, 无则 "N/A"}
 > 保真度: 低保真 / 中保真 / 高保真
+
+## 竞品参考
+| 竞品 | 关键页/功能 | 文字说明 | HTML 要点 | 截图 | 值得借鉴的 | 不想要的 |
+|---|---|---|---|---|---|---|
+
+## 现状
+[已有产品相关页面截图/描述; 全新产品则列可复用的视觉资产]
 
 ## 信息架构
 [页面/视图清单 + 层级 + 导航结构]

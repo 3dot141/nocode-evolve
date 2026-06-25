@@ -215,13 +215,40 @@ TO 传递给后续 Plan（指导切片 + task covers）、Build（驱动 TDD）�
 
 任一路径状态非 ✅ → 回补后再进 Step 9。
 
+### Step 8½: UI 设计方案（涉及前端 UI 时）
+
+如果选定方案涉及前端 UI（新页面 / UI 改造 / 交互变更），在写设计文档前明确 UI 怎么做：
+
+1. **有 pd-vis 产出（`.design.md`）**→ 读它，把 IA / wireframe / 视觉方向作为 UI 设计输入，设计文档的 `## UI 设计` 节引用并补充技术实现细节（组件拆分 / 状态管理 / 渲染策略）
+2. **无 pd-vis 产出但有 UI 需求** → 在设计文档里补 `## UI 设计` 节，内容包括：
+   - **页面/组件清单**：要新建或改哪些页面/组件
+   - **布局结构**：关键页的区块划分（文字描述或 ASCII wireframe）
+   - **交互行为**：核心操作的状态流转（正常 / loading / error / empty）
+   - **视觉方向引用**：指向具体的 design skill 作为 Build 阶段的设计指南
+
+**Design taste skills 引用**（Build 阶段实现 UI 时 Read）：
+
+| Skill | 适用场景 |
+|---|---|
+| `superpowers:design-taste-frontend` | 落地页 / 作品集 / 改版——防模板化 |
+| `superpowers:high-end-visual-design` | 高端质感（精确字号/间距/阴影/动效） |
+| `superpowers:minimalist-ui` | 干净编辑风，暖单色调，平面网格 |
+| `superpowers:industrial-brutalist-ui` | 数据密集型仪表盘 / 机械美学 |
+| `superpowers:redesign-existing-projects` | 改造已有项目 UI 到高端水准 |
+
+在 `## UI 设计` 节末尾标注推荐的 skill："Build 阶段实现 UI 时，`Skill(<name>)` 加载对应设计指南。" 不替 Build 选——给建议，Build 按实际情况决定。
+
+**纯后端 / 无 UI → 跳过此步。**
+
 ### Step 9: 写设计文档
 
-调 `Skill(nocode-evolve:design-doc-writing)`，输入：选定方案 + restate + 测试目标 + verify 策略。
+调 `Skill(nocode-evolve:design-doc-writing)`，输入：选定方案 + restate + 测试目标 + verify 策略 + UI 设计方案（如有）。
 
 design-doc-writing 接管：doc-type 选择 → 写 → review → render。
 
 **verify 策略作为设计文档固定章节落盘**（不只存在于会话文本），章节名 `## 验证策略`，含 TO 表 + 按层级分组的测试方案 + 不测项 + 路径覆盖状态表。Verify 阶段直接从设计文档读取此章节作为执行依据。
+
+**UI 设计作为设计文档固定章节落盘**（涉及前端时），章节名 `## UI 设计`，含页面/组件清单 + 布局结构 + 交互行为 + 视觉方向引用 + 推荐的 design taste skill。Build 阶段直接从设计文档读取此章节作为 UI 实现依据。
 
 **设计 Review 六轴**（design-doc-writing review 时使用，参考 [agent-skills](https://github.com/addyosmani/agent-skills) 代码五轴在设计层的对应）：
 
