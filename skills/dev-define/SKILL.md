@@ -178,9 +178,14 @@ Standard/Full → 进 Step 2。
 - "可以"/"行" → 追问"有没有要修改的？"
 - 沉默后"那开始吧" → 用户放弃了讨论，停下问是否遗漏
 
+### Step 7a: define-review（交叉审）
+
+用户确认前，按 `{NOCODE_SKILL_REF}/define-review.md` 做 red-blue 双模型交叉评审——Claude 做蓝军、Codex 做红军（CLAIM 剥离不传蓝军结论）。findings 合并报告，Critical 必须修复再让用户确认。
+
 ## Exit Gate
 
 - [ ] restate 已产出，用户显式确认（AskUserQuestion 选了"确认"）
+- [ ] define-review 自审通过（无 Critical findings）
 - [ ] 场景分类已标注
 - [ ] （Full/Standard）路径清单已校验——有 PRD 则搬入并查完整性，无 PRD 则现场生成
 - [ ] （Full/Standard）每条路径至少绑定一条 SC，无裸路径也无裸 SC

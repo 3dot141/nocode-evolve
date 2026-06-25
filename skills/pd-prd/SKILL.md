@@ -226,12 +226,16 @@ research skill 的 Go/No-Go 建议基于以下判据（PRD 里引用）：
 | 技术可行 | 代码现状能支撑，或改造成本可接受 | 技术障碍大且无绕过方案 |
 | 用户需求 | 社区/市场有明确痛点信号 | 找不到痛点证据，需求是假设 |
 
+### Step 6a: prd-review（交叉审）
+
+用户确认前，按 `{NOCODE_SKILL_REF}/prd-review.md` 做 red-blue 双模型交叉评审——Claude 做蓝军、Codex 做红军（CLAIM 剥离不传蓝军结论）。findings 合并报告，Critical 必须修复再让用户确认。
+
 ## Exit Gate
 
 - [ ] PRD 文档已产出，包含所有核心字段
 - [ ] 业务领域 + 使用路径 + 跨域 + 系统路径 + 约束已建模（含 ID + 状态 + US 来源）
 - [ ] 用户故事 + 路径清单已合批确认
-- [ ] 自审通过（含路径完整性维度）
+- [ ] prd-review 自审通过（无 Critical findings）
 - [ ] 用户显式确认（AskUserQuestion 选了"确认"）
 - [ ] 文件已保存到正确路径
 

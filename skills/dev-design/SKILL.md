@@ -263,6 +263,10 @@ design-doc-writing 接管：doc-type 选择 → 写 → review → render。
 
 涉及外部输入/认证/数据时做轻量 Threat Model（画信任边界 → 命名资产 → 跑 STRIDE 6 问）。
 
+### Step 10a: design-review（交叉审）
+
+设计文档写完后，按 `{NOCODE_SKILL_REF}/design-review.md` 做 red-blue 双模型交叉评审——Claude 做蓝军、Codex 做红军（CLAIM 剥离不传蓝军结论）。findings 合并报告，Critical 必须修复。这和六轴 review 互补——六轴是 design-doc-writing 做的文档结构审查，design-review 是方案质量审查。
+
 ## Exit Gate
 
 - [ ] 方案已选定，用户显式确认
@@ -270,7 +274,7 @@ design-doc-writing 接管：doc-type 选择 → 写 → review → render。
 - [ ] verify 策略已产出，5 维自审通过，用户确认
 - [ ] 路径覆盖审核通过（覆盖状态表全 ✅）
 - [ ] verify 策略已落盘到设计文档的「验证策略」章节
-- [ ] 设计文档评审通过（六轴 review）
+- [ ] 设计文档评审通过（六轴 review + design-review，无 Critical findings）
 - [ ] 后续 Plan 输入齐全：restate + 设计文档 + 测试目标
 
 ## Common Rationalizations

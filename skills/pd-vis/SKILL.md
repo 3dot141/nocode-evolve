@@ -221,12 +221,18 @@ description: Use when the user wants to design the interaction and visual direct
 
 完成后提示："交互视觉设计完成。进 devflow 开发时，Define/Design 会以 PRD + 这份 design 为输入（做什么 + 长什么样）。"
 
+### Step 6a: vis-review（交叉审）
+
+交付前，按 `{NOCODE_SKILL_REF}/vis-review.md` 做 red-blue 双模型交叉评审——Claude 做蓝军、Codex 做红军（CLAIM 剥离不传蓝军结论）。findings 合并报告，Critical 必须修复再交付。
+
 ## Exit Gate
 
-- [ ] `.design.md` 已产出，含 IA + 关键流程 + wireframe（带状态列表）
+- [ ] `.design.md` 已产出，含竞品参考 + 现状 + IA + 关键流程 + wireframe（带状态列表）
+- [ ] 竞品探索已完成（文字说明/HTML/截图三块）
 - [ ] 低保真结构经用户批准（approve gate 过了）
 - [ ] 给了 2-3 个视觉方向，用户已选
 - [ ] PRD 路径覆盖逐条核过，无遗漏使用路径 / 系统路径反馈
+- [ ] vis-review 自审通过（无 Critical findings）
 - [ ] 选了中/高保真则原型/静态稿已产出
 - [ ] 文件已保存到正确路径
 
