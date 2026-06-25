@@ -91,15 +91,9 @@ argument-hint: (无参数)
 |---|---|---|---|
 ```
 
-## Phase 3: 仓库扫描 + 预填（可选）
+## Phase 3: 仓库扫描 + 变量填充
 
-结构创建完成后，用 AskUserQuestion 问用户：
-
-> 要不要扫描仓库预填 wiki 和变量？
-> 1. **扫描并预填**（推荐）— 检测现有 docs 布局、技术栈、项目结构，自动填充 AGENTS.md 变量和 wiki 初始内容
-> 2. **跳过** — 保持空壳，后续手动填或靠 /distill 积累
-
-用户选跳过 → 直接到完成报告。选扫描 → 执行以下步骤：
+Phase 2 完成后直接进入扫描，不问用户。wiki 已有内容时冲突项逐条确认。
 
 ### Step 3a: 检测现有 docs 布局
 
@@ -115,88 +109,120 @@ argument-hint: (无参数)
 
 根据检测结果，**取消注释并填充 AGENTS.md 的变量覆盖**，覆盖为项目实际使用的路径格式。
 
-### Step 3b: 检测技术栈
+### Step 3b: 检测现有 CLAUDE.md / AGENTS.md
 
-快速扫描项目根部文件，识别技术栈：
+如果项目根有 `CLAUDE.md` 或 `AGENTS.md`：
+- 读取内容，检查有没有已定义的变量（如 `{username}`）
+- 有 → `.agents-personal/AGENTS.md` 的覆盖与之保持一致
+- 有 `@./AGENTS.md` 导入关系 → 在报告中提示用户
+
+## Phase 4: 仓库深度扫描 + wiki 知识提取
+
+遍历整个仓库，为每个值得记录的子系统/模块生成一条 wiki draft。目标：新人（或新会话的 agent）读完这批 wiki 能理解项目全貌。
+
+### Step 4a: 仓库探索
+
+并行收集信息（用 subagent 或串行均可，视仓库大小定）：
+
+**技术栈识别**:
 
 | 文件 | 说明 |
 |---|---|
-| `package.json` | Node.js / 前端 — 读 dependencies 提取框架（React/Vue/Next.js 等） |
+| `package.json` | Node.js / 前端 — 读 dependencies 提取框架 |
 | `pom.xml` / `build.gradle` | Java — 读 groupId + 主要依赖 |
 | `go.mod` | Go — 读 module path |
-| `pyproject.toml` / `requirements.txt` | Python — 读主要依赖 |
+| `pyproject.toml` / `requirements.txt` | Python |
 | `Cargo.toml` | Rust |
 | monorepo 标志 (`pnpm-workspace.yaml` / `lerna.json` / `workspaces`) | 识别 monorepo + 列出 packages |
 
-### Step 3c: 检测项目结构
+**项目结构**:
+- 顶层目录 + 各目录职责推断（`ls -d */` + 读各目录下的 README 或入口文件）
+- 入口文件（`src/index.*`、`src/main.*`、`src/app.*`、`cmd/`）
+- 关键配置（`*.config.*`、`.env.example`、`docker-compose*`、`Dockerfile*`）
 
-```bash
-# 顶层目录概览
-ls -d */ | head -20
+**子系统识别**:
+- monorepo → 每个 package/module 是一个子系统
+- 非 monorepo → 按顶层目录分（`src/modules/`、`src/services/`、`packages/`、Maven modules 等）
+- 每个子系统：读入口文件 + README + 导出接口，推断职责
 
-# 入口文件
-ls src/index.* src/main.* src/app.* 2>/dev/null
+**架构线索**:
+- 数据层：有无 ORM/数据库配置（prisma、typeorm、JPA、SQLAlchemy 等）
+- API 层：有无路由定义（Express/Koa/Spring Controller/FastAPI 等）
+- 消息/事件：有无 MQ/Event 配置（Kafka、RabbitMQ、Redis pub/sub 等）
+- 部署：Docker/K8s/CI 配置
 
-# 关键配置
-ls *.config.* .env.example docker-compose* Dockerfile* 2>/dev/null
-```
+### Step 4b: 生成 wiki drafts
 
-### Step 3d: 生成 wiki 初始内容
+基于 4a 的探索结果，生成 N 条 wiki draft。每条一个主题，每条独立成文。
 
-基于 3b + 3c 的结果，生成 **1 个 wiki draft stub**：
+**必出（至少 1 条）**:
 
-**`wiki/draft/project-overview.md`**:
+| draft | 内容 |
+|---|---|
+| `project-overview.md` | 一句话定位 + 技术栈 + 顶层结构 + 构建运行方式 |
+
+**按需生成（每个识别到的子系统/维度 1 条）**:
+
+| draft 命名 | 触发条件 | 内容 |
+|---|---|---|
+| `{module-slug}.md` | 每个子系统/package/module | 职责 + 对外接口 + 上下游依赖 + 关键文件 |
+| `data-layer.md` | 检测到 ORM/数据库 | 数据模型概览 + 存储选型 + 关键 entity/table |
+| `api-surface.md` | 检测到 API 路由 | 主要端点分组 + 认证方式 + 请求响应约定 |
+| `infra-deploy.md` | 检测到 Docker/K8s/CI | 部署拓扑 + 环境配置 + CI/CD 流程 |
+| `dev-conventions.md` | 检测到 lint/formatter/commit 规范 | 代码规范 + 提交规范 + 分支策略 |
+
+每条 draft 格式统一：
 
 ```markdown
 ---
 maturity: stub
 created: {yymmdd}
 source: /personal-init scan
+related:
+  - path/to/key/file1
+  - path/to/key/file2
 ---
 
-# 项目概览
+# {主题}
 
-## 技术栈
+## TL;DR
 
-(根据 Step 3b 检测结果填充)
+(一句话总结)
 
-## 项目结构
+## 详情
 
-(根据 Step 3c 检测结果填充：顶层目录 + 各目录职责一句话)
-
-## 构建 & 运行
-
-(根据 package.json scripts / Makefile / README 提取)
+(扫描提取的结构化内容)
 ```
 
-同时更新 `wiki/index.md`：
+### Step 4c: 冲突处理
 
-```markdown
-## Drafts
+如果 `wiki/draft/` 或 `wiki/pages/` 已有同名文件：
+- 用 AskUserQuestion 逐条确认：覆盖 / 跳过 / 合并（读已有内容 + 新扫描结果合成）
+- 不静默覆盖已有 wiki 内容
 
-- [project-overview](draft/project-overview.md) — 项目技术栈与结构概览 (stub, /personal-init 自动生成)
-```
+### Step 4d: 更新 index.md + log.md
 
-### Step 3e: 检测现有 CLAUDE.md / AGENTS.md
-
-如果项目根有 `CLAUDE.md` 或 `AGENTS.md`：
-- 读取内容，检查有没有已定义的变量（如 `{username}`）
-- 有 → `.agents-personal/AGENTS.md` 的覆盖应与之一致，不冲突
-- 有 `@./AGENTS.md` 导入关系 → 在报告中提示用户
+所有 draft 写完后：
+- 重建 `wiki/index.md`（扫描 draft/ + pages/ 全部文件的 frontmatter）
+- 追加 `wiki/log.md`（每条新建的 draft 一行记录）
 
 ## 完成报告
 
-创建完成后输出：
-
 ```
 .agents-personal/ 初始化完成:
-- AGENTS.md: 变量覆盖（注释模板 / 已按扫描结果填充）
-- wiki/: index.md + log.md + draft/ + pages/
-- rules/: 空目录，/distill 会填充
+- AGENTS.md: 变量覆盖已按仓库实际布局填充
 - .gitignore: 已确认包含 .agents-personal/
+- rules/: 空目录，/distill 会填充
 
-[如果做了扫描]:
-- 检测到布局: docs/superpowers/{specs,plans}/（旧布局），已覆盖变量
-- 检测到技术栈: Node.js + React 18 + pnpm monorepo
-- wiki/draft/project-overview.md: 已生成 stub（技术栈 + 项目结构）
+wiki 知识提取:
+- 生成 N 条 draft:
+  ✓ project-overview.md — Node.js + React 18 + pnpm monorepo
+  ✓ jsy-core.md — 核心数据层，导出 SDK client + 数据模型
+  ✓ jsy-web.md — 主站前端，Vite MPA 多入口
+  ✓ data-layer.md — MongoDB + Prisma，12 个核心 collection
+  ✓ api-surface.md — REST API，3 组路由（auth/data/admin）
+  ✓ dev-conventions.md — ESLint + Prettier 160 宽 + conventional commits
+- wiki/index.md 已重建
+- wiki/log.md 已追加 N 条
+[冲突项]: (如有) 跳过 2 条已存在的 wiki
 ```
