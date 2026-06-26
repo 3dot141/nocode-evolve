@@ -50,7 +50,7 @@ Task N+2: 保存 + 渲染
 
 ---
 
-### Step 1: 确定场景 + 加载输入
+### Step 1: 确定场景 + 加载输入 + 读 example
 
 **Enter Gate:**
 - [ ] 能拿到设计输入（dev-design 产出，或用户直接描述）
@@ -65,17 +65,86 @@ Task N+2: 保存 + 渲染
    | 重构 / 重组 / 迁移 | **refactor** | 现状 → 目标 → 迁移 |
    | 预研 / 技术选型 / 调研 | **research** | 问题 → 调研 → 对比 → 结论 |
 
-2. **加载输入**：dev-design 的选定方案、探索结论、UI 设计（`.ui.md`，如有）、测试计划。无 dev-design 产出时，从用户描述提取。
+2. **读对应 example 作为参考**：
+   - feat → Read `references/example-feat-skeleton.md`（多域/单域完整示例）
+   - bug → Read `references/example-bug-skeleton.md`
+   - refactor → Read `references/example-refactor-skeleton.md`
+   - research → Read `references/example-research-skeleton.md`
+   学骨架和颗粒度，不照搬措辞。
+
+3. **加载输入**：dev-design 的选定方案、探索结论、UI 设计（`.ui.md`，如有）、测试计划。无 dev-design 产出时，从用户描述提取。
 
 **Exit Gate:**
 - [ ] 场景类型已定
-- [ ] 设计输入已加载（选定方案 / 探索结论 / UI / 测试计划，或用户描述）
+- [ ] 对应 example 已读
+- [ ] 设计输入已加载
+
+---
+
+### Step 2: 章节大纲 + 用户确认
+
+**Enter Gate:**
+- [ ] Step 1 完成
+
+**Core Actions:**
+
+基于场景类型和设计输入，生成**本次设计文档的章节大纲**，展示给用户确认。不同场景的章节不同（见各模板），但先让用户看"这份文档会有哪些章节"，用户可以加/减/调整顺序。
+
+**feat 章节大纲示例**：
+
+```
+1. 背景
+2. 调研（代码现状 + 竞品分析 + 已有决策）
+3. 方案选择（Q1 格式统一 / Q2 同步策略 / Q3 实时通信 / Q4 冲突处理）
+4. 领域划分 + 总图（资源域 + Agent 域）
+5. 架构设计（技术架构图 + 数据流）
+6. 表现层设计
+   6.1 端到端业务流总图
+   6.2 场景 1: 上传与解析 [资源.P1]
+   6.3 场景 2: 冲突解决 [资源.P2]
+   6.4 场景 3: 同步进度 [Agent.P1]
+7. 领域层设计
+   7.1 资源域（ImportParser / Validator / Deduplicator / Repo）
+   7.2 Agent 域（SyncService / AgentClient）
+8. 文件影响汇总
+9. 验证策略汇总
+10. 部署注意事项
+11. 监控设计（Metrics / Logs / Traces）
+```
+
+**AskUserQuestion**：
+- 确认大纲 → 进入 Step 3 逐章生成
+- 要调整 → 修改后再确认
+- 章节太多 → 去掉不需要的（如小改动不需要监控设计）
+
+**Exit Gate:**
+- [ ] 章节大纲经用户确认
+
+---
+
+### Step 3+: 逐章生成
+
+按确认的章节大纲，逐章做详细设计。每个场景模板的具体步骤见下。
+
+**通用原则**：
+- 先图后文，每章有图的先画图
+- 图标路径 ID / BF / 约束，文本引用 ID，互相跳转
+- 每个域/场景章节自包含（接口+业务流+文件影响+验证+安全/性能）
+
+**发现未明确内容时**：
+详细设计过程中经常发现之前没想清楚的东西。两种处理：
+- **小问题**（接口参数不确定、命名犹豫）→ AskUserQuestion 当场确认，不中断流程
+- **大问题**（方案方向有冲突、缺少关键路径、架构假设不成立）→ 暂停设计，建议回退到 dev-design 重新评估方案，不带着问题硬写下去
 
 ---
 
 ## feat 模板（DDD 全流程，最完整）
 
 > 新功能 / 产品设计。按 DDD 组织：总图（域关系）→ 边（交互场景 / 表现层）→ 节点（域设计 / 领域层）→ 汇总。
+
+**设计思路**：用 DDD 拆分业务域，域间关系图就是产品设计全貌。边（域间关系）= 交互场景（表现层），节点（域）= 领域设计。先画总图让 reviewer 30 秒看清全局，再逐个展开边和节点。每个域自包含——接口、业务流、文件影响、验证都在域章节内，读一个域不用跳来跳去。
+
+> 产出骨架示例见 `references/example-feat-skeleton.md`
 
 ### Step 2: 领域划分 + 总图
 
@@ -180,6 +249,10 @@ Task N+2: 保存 + 渲染
 
 > 根因分析 + 修复方案。形状：现象 → 根因 → 修复 → 影响 → 验证。
 
+**设计思路**：从现象追到根因，用代码追踪链（每步标 `[Read path:line]`）让 reviewer 能跟着走一遍推理过程。修复方案用"修复前 vs 修复后"的伪代码对比——不只说改了什么，要说"改之前是怎么走的、改之后怎么走"。总图画出问题在系统里的位置，reviewer 能判断修复会不会影响其他模块。
+
+> 产出骨架示例见 `references/example-bug-skeleton.md`
+
 ### Step 2: 问题现象 + 复现
 
 **Enter Gate:**
@@ -231,6 +304,33 @@ Task N+2: 保存 + 渲染
 ## refactor 模板
 
 > 从 A 状态到 B 状态。形状：现状 → 目标 → before/after → 迁移。
+
+**refactor 产出骨架示例**：
+
+```
+# Refactor: 资源同步从轮询改为事件驱动
+
+## 现状分析
+  现状结构图 + DDD 问题诊断
+  问题：SyncService 轮询所有 Agent，耦合重、延迟高
+
+## 目标设计
+  Before                          After
+  ┌─────────────┐                ┌─────────────┐
+  │ SyncService │                │ SyncService │
+  │ poll(all)   │     →          │ onEvent()   │
+  │ 轮询全部     │                │ 事件驱动     │
+  └─────────────┘                └─────────────┘
+  变更理由 + 每个变更点说明
+
+## 迁移策略
+  Step 1: 加事件基础设施（可回滚）
+  Step 2: 双写（轮询 + 事件并行）
+  Step 3: 关闭轮询（一键回退到 Step 2）
+  每步文件影响 + 验证 + 回滚方案
+
+## 汇总
+```
 
 ### Step 2: 现状分析
 
@@ -293,6 +393,29 @@ Task N+2: 保存 + 渲染
 ## research 模板
 
 > 预研 / 技术选型。形状：问题 → 调研 → 对比 → 结论。**预研文档不含实现设计，产出是决策建议。**
+
+**research 产出骨架示例**：
+
+```
+# Research: Agent 同步方案选型
+
+## 问题定义
+  要研究什么 + 边界 + 评估维度（延迟/可靠性/成本）
+
+## 调研
+  研究发现（每条带 [SOURCE]）
+
+## 选项对比
+  | 维度 | WebSocket | SSE | 轮询 |
+  |---|---|---|---|
+  | 延迟 | 实时 | 实时 | 秒级 |
+  | 可靠性 | 需重连 | 自动重连 | 高 |
+  | 成本 | 高(长连接) | 中 | 低 |
+
+## 结论
+  推荐 SSE + 理由
+  后续：进 dev-design 做详细方案
+```
 
 ### Step 2: 问题定义
 
@@ -384,14 +507,17 @@ Task N+2: 保存 + 渲染
 - [ ] 用户逐条确认 fix / skip
 - [ ] 修订完成 + Review Log 已追加
 
-### 保存
+### 保存 + 渲染确认
 
 **Core Actions:**
 1. 保存到 `{dev_design_output}`（见 `model/agent-about.md`「文档产出路径变量」）
-2. (by overlay) 按 `references/rendering/RENDERING.md` 渲染 HTML
+2. **AskUserQuestion：是否渲染成 HTML？**
+   - 是 → 调 `Skill(nocode-evolve:dev-design-render)` 把设计文档转成可浏览的 HTML（架构图/流程图/时序图渲染为 SVG，表格可交互）
+   - 否 → 设计文档（markdown）即最终交付
 
 **Exit Gate:**
 - [ ] 文档已保存到正确路径
+- [ ] 渲染确认已完成（渲染 / 跳过）
 - [ ] 全部 Task 状态已更新
 
 ---
@@ -526,4 +652,4 @@ src/services/
 - `references/examples/example-<type>-{dogfood,business}.md` — 填好的示例
 - `references/reviewer-template.md` — reviewer 审查准则
 - `references/cards/{quick-view,prerequisites}.md` — 骨架驱动型内容的可选锚点节
-- `references/rendering/RENDERING.md` — HTML 渲染流程
+- `Skill(nocode-evolve:dev-design-render)` — 设计文档 → HTML 可视化
