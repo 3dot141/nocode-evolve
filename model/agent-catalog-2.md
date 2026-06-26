@@ -29,7 +29,7 @@
 #### pd-ui
 **触发**: 用户说「交互设计 / 视觉设计 / 界面设计 / 原型 / wireframe / 线框图 / 设计稿 / 长什么样」, 或 pd-prd 完成后衔接, 或 pdflow 在 PRD 后路由到交互视觉设计阶段
 **读**: ``
-**摘要**: 独立产品流交互视觉设计阶段: 读 PRD(可选) + 选保真度(默认低保真 wireframe) + 低保真 IA/交互流/wireframe(approve gate) + 2-3 视觉方向发散 + 可选高保真原型 + 对照 PRD 逐条走查; 产出 .ui.md; 只做产品交互+视觉不碰技术架构(那是 dev-design)
+**摘要**: 独立产品流交互视觉设计阶段(9步 Entry/Exit Gate 驱动): Step 0 读 PRD+解析设计源 → Step 1 竞品与产品探索(并行) → Step 2 澄清+选保真度 → Step 3 逐交互拆解+IA(approve gate) → Step 4 视觉方向发散(2-3个) → Step 5 设计系统补齐(DesignSync时 foundations→components→patterns 自下而上) → Step 6 高保真产出(按设计源分路) → Step 7 验证+交付(PRD走查+五维+vis-review) → Step 8 保存+Handoff; 产出 .ui.md; 只做产品交互+视觉不碰技术架构(那是 dev-design)
 **也属**: workflow
 **生命周期**: 0 设计
 
