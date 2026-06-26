@@ -3,13 +3,13 @@ description: Lark/飞书工具集聚合入口，按 URL 或意图分发到子 sk
 argument-hint: <sub-action|URL> [args]
 ---
 
-# /lark-hub：飞书工具集聚合入口
+# /larkhub：飞书工具集聚合入口
 
 统一入口，按 URL pattern 或意图关键词分发到对应的 Lark 子 skill。
 
 ## 用法
 
-`/lark-hub <sub-action|URL>`
+`/larkhub <sub-action|URL>`
 
 ## URL 自动路由
 
@@ -56,7 +56,7 @@ argument-hint: <sub-action|URL> [args]
 输出用法表格：
 
 ```
-/lark-hub <sub-action|URL>
+/larkhub <sub-action|URL>
 
   read       完整读取飞书文档（含图片）
   project    飞书项目管理（MCP）

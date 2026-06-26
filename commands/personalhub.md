@@ -1,26 +1,26 @@
 ---
-description: .agents-personal/ 统一管理入口（hub），分发到 7 个子动作（init/write/search/check/tidy/snap/status）
+description: .agents-personal/ 聚合入口（hub），分发到 7 个子动作（init/write/search/check/tidy/snap/status）
 argument-hint: <sub-action> [args]
 ---
 
-# /personal-hub：.agents-personal/ 管理入口
+# /personalhub：.agents-personal/ 管理入口
 
 统一入口，分发到 7 个子动作。每个子动作也可以直接用独立命令调用。
 
 ## 用法
 
-`/personal-hub <sub-action> [args]`
+`/personalhub <sub-action> [args]`
 
 ## 子动作路由
 
 | 子动作 | 做什么 | 转发到 | 独立命令 |
 |---|---|---|---|
-| `init` | 初始化 .agents-personal/ 结构 | `Skill(nocode-evolve:personal-init)` | `/personal-hub-init` |
-| `write` | 写入 wiki + rules + AGENTS.md | `Skill(nocode-evolve:personal-distill)` | `/personal-hub-distill` |
-| `search` | 检索 .agents-personal/ 内容 | `Skill(nocode-evolve:personal-recall)` | `/personal-hub-recall` |
-| `check` | 健康检查 | `Skill(nocode-evolve:personal-lint)` | `/personal-hub-lint` |
-| `tidy` | 自主维护（stale/prune/merge/promote） | `Skill(nocode-evolve:personal-dream)` | `/personal-hub-dream` |
-| `snap` | 手动触发备份快照 | `node "${CLAUDE_PLUGIN_ROOT}/scripts/personal-hub-snapshot.mjs" --json` | — |
+| `init` | 初始化 .agents-personal/ 结构 | `Skill(nocode-evolve:personal-init)` | `/personalhub-init` |
+| `write` | 写入 wiki + rules + AGENTS.md | `Skill(nocode-evolve:personal-distill)` | `/personalhub-distill` |
+| `search` | 检索 .agents-personal/ 内容 | `Skill(nocode-evolve:personal-recall)` | `/personalhub-recall` |
+| `check` | 健康检查 | `Skill(nocode-evolve:personal-lint)` | `/personalhub-lint` |
+| `tidy` | 自主维护（stale/prune/merge/promote） | `Skill(nocode-evolve:personal-dream)` | `/personalhub-dream` |
+| `snap` | 手动触发备份快照 | `node "${CLAUDE_PLUGIN_ROOT}/scripts/personalhub-snapshot.mjs" --json` | — |
 | `status` | 概览当前状态 | 内联执行（见下方） | — |
 
 ## 执行
@@ -32,7 +32,7 @@ argument-hint: <sub-action> [args]
 无参数或不识别的子动作 → 输出用法表格：
 
 ```
-/personal-hub <sub-action>
+/personalhub <sub-action>
 
   init     初始化 .agents-personal/
   write    写入 wiki/rules/AGENTS.md
@@ -52,7 +52,7 @@ argument-hint: <sub-action> [args]
 直接跑脚本：
 
 ```bash
-node "${CLAUDE_PLUGIN_ROOT}/scripts/personal-hub-snapshot.mjs" --json
+node "${CLAUDE_PLUGIN_ROOT}/scripts/personalhub-snapshot.mjs" --json
 ```
 
 输出快照结果（committed / no_changes / error）。
@@ -61,7 +61,7 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/personal-hub-snapshot.mjs" --json
 
 内联执行，输出 .agents-personal/ 的当前状态概览：
 
-1. 检查 `.agents-personal/` 是否存在 → 不存在报 "未初始化，跑 `/personal-hub init`"
+1. 检查 `.agents-personal/` 是否存在 → 不存在报 "未初始化，跑 `/personalhub init`"
 2. 统计：
    - wiki: draft/ 页数 + pages/ 页数 + 最近更新时间
    - rules: 文件数 + AGENTS.md 触发条目数
