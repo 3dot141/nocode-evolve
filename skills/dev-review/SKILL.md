@@ -21,7 +21,7 @@ description: Use before merging any change, after completing a feature, or when 
 
 一个改动可能一轴过一轴挂。五轴 review 做完后，回 Define 的 restate / Design 的设计文档核对 Spec 轴。两轴分别报 findings，不合并——合并会让一轴掩盖另一轴。
 
-**Spec 轴含路径覆盖检查**（详见 `7f`）。核对对象不止文档整体，要到**路径级粒度**——拿 **PRD 原始路径清单**（不只 Design 的 TO 表）逐条比对代码。这道检查能兜住 Design 阶段的漏项：Design 漏了某条路径 → TO 表里没有 → 但 PRD 清单有 → Review 在这里拦住，不用等 Verify。
+**Spec 轴含路径覆盖检查**（详见 Step 6）。核对对象不止文档整体，要到**路径级粒度**——拿 **PRD 原始路径清单**（不只 Design 的 TO 表）逐条比对代码。这道检查能兜住 Design 阶段的漏项：Design 漏了某条路径 → TO 表里没有 → 但 PRD 清单有 → Review 在这里拦住，不用等 Verify。
 
 ## 非本 skill 请求
 
@@ -79,7 +79,7 @@ Task 6: 用户 approve
 
 每完成一个标 done。
 
-### 7a. Five-Axis Self-Review
+### Step 1: Five-Axis Self-Review
 
 按五轴逐一过 diff（详细检查点见 `references/five-axis-guide.md`）：
 
@@ -99,7 +99,7 @@ Task 6: 用户 approve
 
 **完整示例**：一段 diff 走完五轴、产出 C1/W1/S1 分级 findings（含 Structural Remedy）见 `references/examples/example-review-findings.md`。
 
-### 7b. Simplification Pass
+### Step 2: Simplification Pass
 
 只针对本次变更，不改行为（详见 `references/simplification-guide.md`）。
 - **Chesterton's Fence**：删代码前先 `git blame` 理解它为什么存在。不懂就不删
@@ -107,14 +107,14 @@ Task 6: 用户 approve
 - **Dead code**：识别 → 列出 → 问用户 → 确认后再删
 - **Testability**：接受依赖不创建依赖（`processOrder(order, gateway)` 而非内部 `new`）；返回结果不副作用；接口面积小。可测的形状 = 好的形状
 
-### 7c. Codex Cross-Review
+### Step 3: Codex Cross-Review
 
 自评有盲区——单模型 reviewer 与原作者共享同源盲点，不同架构的模型才能抓出来。先探 codex 可用性（`rule-codex-review` 的 `setup --json`），不可用则降级自评 + 明说（不静默跳过）。
 合并两路 findings：交集 = 高置信，对称差 = 各自盲点。
 
 **Doubt theater 检测**：连续 2+ 轮 reviewer 有实质发现但 0 条被分类为 actionable = 在验证不是在评审，停下升级。
 
-### 7d. Findings Triage
+### Step 4: Findings Triage
 
 每条 finding 统一结构：`id`（C1/W1/S1）+ `axis` + `evidence`（file:line + 代码）+ `fix`（可操作的修法）+ `action`（Critical/Warning/Suggestion）。
 
@@ -134,13 +134,13 @@ Task 6: 用户 approve
 | Warning | 应修非致命 | 用户决定 fix/skip/defer |
 | Suggestion | 改进/风格 | 记录不阻塞 |
 
-### 7e. Feedback Discipline（收到外部 review 时）
+### Step 5: Feedback Discipline（收到外部 review 时）
 
 禁语 / unclear→全停 / YAGNI grep / push-back 协议 → 见 `references/feedback-discipline.md`，不在此重述。
 
 **新依赖 5 问**（review 发现新增 import/package）：标准库能否解决？包多大？维护活跃？已知 CVE？License 兼容？答不全 = Warning。
 
-### 7f. Path Coverage Check（Spec 轴路径级核对）
+### Step 6: Path Coverage Check（Spec 轴路径级核对）
 
 五轴（Standards 轴）查"代码写得对不对"，这一步（Spec 轴）查"该做的路径有没有做"。两件事，分开报 findings。
 
