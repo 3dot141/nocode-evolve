@@ -115,6 +115,7 @@ description: Use when [specific triggering conditions] — no workflow summary
 
 - Keep SKILL.md under 500 lines; overflow goes to references/
 - Only address failures observed in baseline — no speculative additions
+- **SKILL.md for agents, README.md for humans** — SKILL.md contains only what the agent needs to execute. Attribution, changelogs, design rationale, and methodology context go in the skill's README.md for human readers
 - For Anthropic's official skill authoring best practices, read `writing-skills/anthropic-best-practices.md`
 
 ## Phase 5: Eval — Run & Review
@@ -233,3 +234,4 @@ Run `skill-creator/scripts/package_skill.py` to create a `.skill` file. Requires
 - Large rewrites per iteration → uncontrolled regression, no rollback point
 - Showing validation set in viewer → contaminates held-out gate
 - Forcing assertions on subjective output → noise in benchmark
+- Putting human-facing context (attribution, changelog, design rationale) in SKILL.md → noise in agent context; put in README.md

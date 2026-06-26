@@ -261,7 +261,7 @@ design-doc-writing 接管：doc-type 选择 → 写 → review → render。
 
 **UI 设计作为设计文档固定章节落盘**（涉及前端时），章节名 `## UI 设计`，含设计源标识 `[design-source: ...]` + 页面/组件清单 + 布局结构 + 交互行为。Build 阶段直接从设计文档读取此章节，按设计源消费（有设计稿照写，没有按 taste skill 发挥）。
 
-**设计 Review 六轴**（design-doc-writing review 时使用，参考 [agent-skills](https://github.com/addyosmani/agent-skills) 代码五轴在设计层的对应）：
+**设计 Review 六轴**：
 
 | 维度 | 检查什么 |
 |---|---|
