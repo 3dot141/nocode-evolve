@@ -179,8 +179,20 @@ description: Use when the user wants to design the interaction and visual direct
 
 低保真档跳过此步。
 
-- **中保真**：选定方向的关键页单屏静态视觉（1-2 个核心页）。给具体值——配色 token、字号/字重、间距尺度、圆角。可用 HTML/CSS 或结构化描述。
-- **高保真**：可点击 `prototype.html`。要求：关键流程能走通、用 design token 不硬编码 hex、交互元素 4 态全给（hover/active/focus-visible/disabled）、带 empty/loading 态。
+**加载 design taste skill**：根据 Step 4 选定的视觉方向，`Skill()` 加载对应规范后再出稿：
+
+| 视觉方向 | 加载的 skill |
+|---|---|
+| 简约编辑风 / 暖单色 / 平面网格 | `superpowers:minimalist-ui` |
+| 高端质感 / 精确字号间距阴影 | `superpowers:high-end-visual-design` |
+| 机械工业风 / 数据密集仪表盘 | `superpowers:industrial-brutalist-ui` |
+| 防模板化 / 落地页改版 | `superpowers:design-taste-frontend` |
+| 改造已有项目 UI | `superpowers:redesign-existing-projects` |
+
+没有完全匹配的方向 → 选最接近的 skill 加载，不硬套。
+
+- **中保真**：选定方向的关键页单屏静态视觉（1-2 个核心页）。给具体值——配色 token、字号/字重、间距尺度、圆角。按加载的 taste skill 规范执行，不用 AI 默认审美。
+- **高保真**：可点击 `.ui-prototype.html`。要求：关键流程能走通、用 design token 不硬编码 hex、交互元素 4 态全给（hover/active/focus-visible/disabled）、带 empty/loading 态。按 taste skill 的组件/间距/阴影规范。
 - **验证产出**：有 browser/截图工具 → 截图走查关键页；否则结构自查（区块齐全、状态覆盖）。
 
 ### Step 6: 验证 + 交付
