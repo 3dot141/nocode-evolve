@@ -31,6 +31,7 @@ description: Use when executing implementation tasks from a plan, writing new co
 | `{NOCODE_SKILL_REF}/security-guide.md` | 碰用户输入/认证/数据时 | 防注入写法 / 输入校验 / 密钥管理 |
 | `{NOCODE_SKILL_REF}/performance-guide.md` | 碰数据库查询/前端渲染时 | N+1 / 缓存 / 懒加载模式 |
 | `{NOCODE_SKILL_REF}/frontend-guide.md` | 碰 UI 组件时 | 组件模式 / 无障碍 / 设计系统 |
+| `{NOCODE_SKILL_REF}/ui-taste-skills.md` | 实现 UI 视觉层时 | 按设计文档推荐（或 plan task 的 `[taste-skill: ...]` 标注）`Skill()` 加载对应 taste skill，按其规范写具体视觉代码 |
 | `{NOCODE_SKILL_REF}/architecture-principles.md` | 拿不准模块边界时 | Deep Module / Seam / 依赖分类 |
 
 **技术栈配方**：当项目技术栈命中以下场景时，Read 对应 reference 拿可粘贴代码样例：

@@ -247,15 +247,7 @@ TO 传递给后续 Plan（指导切片 + task covers）、Build（驱动 TDD）�
    - **布局结构**：关键页的区块划分（文字描述或 ASCII wireframe）
    - **交互行为**：核心操作的状态流转（正常 / loading / error / empty）
 
-**Design taste skills 引用**（Build 阶段实现 UI 时 Read）：
-
-| Skill | 适用场景 |
-|---|---|
-| `nocode-evolve:design-taste-frontend` | 落地页 / 作品集 / 改版——防模板化 |
-| `nocode-evolve:high-end-visual-design` | 高端质感（精确字号/间距/阴影/动效） |
-| `nocode-evolve:minimalist-ui` | 干净编辑风，暖单色调，平面网格 |
-| `nocode-evolve:industrial-brutalist-ui` | 数据密集型仪表盘 / 机械美学 |
-| `nocode-evolve:redesign-existing-projects` | 改造已有项目 UI 到高端水准 |
+**Design taste skills 引用**（Build 阶段实现 UI 时 Read）：查 `{NOCODE_SKILL_REF}/ui-taste-skills.md` 选型表，按视觉方向选对应 skill。
 
 在 `## UI 设计` 节末尾标注推荐的 skill："Build 阶段实现 UI 时，`Skill(<name>)` 加载对应设计指南。" 不替 Build 选——给建议，Build 按实际情况决定。
 
