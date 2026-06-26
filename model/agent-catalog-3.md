@@ -47,7 +47,7 @@
 #### dev-land
 **触发**: devflow 路由到 Land 阶段, 或用户说「land / 着陆 / 准备着陆 / 走 land 阶段」(注意: 独立说「提 PR / 收尾 / 合并」不在 devflow 上下文时走 finishing-branch, 不走本 skill)
 **读**: `${CLAUDE_PLUGIN_ROOT}/rules/rule-dev-land.md`
-**摘要**: Landing 收尾: Pre-flight(Review Gate + 分支状态) → Disposition(4选项 merge/PR/keep/discard) → 执行(rule-finishing-branch) → Task Transition(rule-feishu-transition) → Cleanup; Mini 走 Land-lite(commit only)
+**摘要**: Landing 收尾: Pre-flight(Review Gate + 分支状态) → Disposition(4选项 merge/PR/keep/discard) → 执行(rule-finishing-branch) → Task Transition(lark-project) → Cleanup; Mini 走 Land-lite(commit only)
 **也属**: git-lifecycle
 **生命周期**: 4 收尾
 

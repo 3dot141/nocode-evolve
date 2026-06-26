@@ -74,24 +74,24 @@
 **摘要**: .agents-personal/ + $USER_VAULT_PATH 内容是用户沉淀的项目历史 + 当前指令, gitignored 不可恢复, 删除前必须二次确认 (rm/mv/find-delete 均视为删除等价物). PreToolUse 在命令层兜底拦 (inject 提醒, 不 block 留余地给用户授权)
 **生命周期**: cross
 
-### 桶: 飞书项目读取 (feishu)
-**粗触发**: 读取飞书项目 (project.feishu.cn / Meego) 工作项内容 / 附件 / 评论 (需求 / 缺陷 / 任务)
-**不含 (负例)**: 飞书云文档 docx / wiki (走 lark-doc / lark-wiki)
+### 桶: 飞书/Lark (lark)
+**粗触发**: 完整读取飞书文档（含图片）/ 飞书项目管理 (project.feishu.cn / Meego 工作项读取 / 流转 / 搜索)
+**不含 (负例)**: 飞书云文档低层 API 操作 (走外部 lark-doc skill); 知识空间管理 (走外部 lark-wiki skill); 飞书任务管理 (走外部 lark-task skill)
 
-#### feishu-project-workitem-read
-**触发**: 用户给 project.feishu.cn 链接 (或 Meego 工作项 id) 要求读取 / 总结 / 看附件 / 分析需求或缺陷内容. URL 形如 https://project.feishu.cn/<simple_name>/issue/detail/<id>
-**读**: `${CLAUDE_PLUGIN_ROOT}/rules/rule-feishu-project-workitem-read.md`
-**摘要**: 读飞书项目工作项用 FeishuProjectMcp 不用 WebFetch; get_workitem_brief 传 url + fields:["_all"] 拿全字段 (description 富文本 + multi_attachment); project_key 撞多空间改传真实 24 位 hex key; 评论另调 list_workitem_comments; 附件 get_download_url 拿 sign + curl -H X-Meego-File-Sign 下载再 Read
-**关键约束(上浮)**: 下载附件必须带 X-Meego-File-Sign header, 漏了拿不到图片; 别用 WebFetch 抓 SPA 链接。
+#### lark-read
+**触发**: 用户给飞书文档 URL 要求完整读取（含图片），或说「读一下这个文档 / 看看这篇文章 / 把文档内容拉下来 / 读取飞书文档」。不含: 低层 API 操作（走外部 lark-doc skill）
+**读**: ``
+**摘要**: 完整读取飞书文档(text + images + scope 引导 + 嵌入资源路由); 与 lark-doc 的区别: lark-doc 是底层 API skill, lark-read 是上层阅读流程; scope 未授权先试 curl 兜底再引导配置 docs:document.media:download
+**关键约束(上浮)**: 不要用 WebFetch 抓飞书文档(SPA); scope 未授权先试 curl 直链兜底。
 **生命周期**: cross
 
-#### feishu-transition
-**触发**: PR merge 后流转飞书 issue 状态 (组员开发 → 研发已改待BUILD); 或用户说「流转任务 / 改状态 / 标完成」; 或 devflow Land 阶段 (8d. Task Transition)
-**读**: `${CLAUDE_PLUGIN_ROOT}/rules/rule-feishu-transition.md`
-**摘要**: PR merge 后把飞书 issue 从组员开发流转到研发已改待BUILD; 先 update_field 填缺陷来源于缺陷(field_ecff7b, 默认自关联), 再 get_transition_required 确认必填项完成, 最后 transition_state; 多任务逐个独立流转
-**关键约束(上浮)**: 非组员开发状态不强行流转, 报告让用户决定; 不猜测填充未知关联字段。
+#### lark-project
+**触发**: 用户给 project.feishu.cn 链接（或 Meego 工作项 id）要求读取/总结/看附件/分析需求或缺陷内容; 或 PR merge 后流转飞书 issue 状态; 或用户说「流转任务/改状态/标完成/飞书项目/工作项」; 或 devflow Land 阶段 (8d. Task Transition)
+**读**: ``
+**摘要**: 飞书项目管理(FeishuProjectMcp): 工作项读取(含附件 X-Meego-File-Sign) + 状态流转(组员开发→研发已改待BUILD) + 搜索(search_by_mql) + 创建更新; project_key 撞多空间改传真实 24 位 hex key; 详细流程见 skill 内 references/
+**关键约束(上浮)**: 下载附件必须带 X-Meego-File-Sign header; 非组员开发状态不强行流转; 别用 WebFetch 抓 SPA 链接。
 **也属**: git-lifecycle
-**生命周期**: 4 收尾
+**生命周期**: cross
 
 ### 桶: Figma 设计稿读取 (figma)
 **粗触发**: 读取 Figma 设计稿节点属性 (字号 / 颜色 / 间距 / 圆角), 用户给 figma.com 链接要求提取设计值 / 对齐 UI 实现
