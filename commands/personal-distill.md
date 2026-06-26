@@ -7,7 +7,7 @@ argument-hint: [wiki|rules|agents] [optional-content-description]
 
 统一管理 `.agents-personal/` 的所有写入操作——wiki 知识沉淀、rules 指令写入、AGENTS.md 变量/分节更新。
 
-**被 `/distill` 调用**（distill 路由 wiki:project / rules:project 时 `Skill(nocode-evolve:personal-distill)` 传入候选）。也可用户直接 `/personal-distill` 独立写入。
+**被 `/distill` 调用**（distill 路由 wiki:project / rules:project / agents:project 时 `Skill(nocode-evolve:personal-distill)` 传入候选）。也可用户直接 `/personal-distill` 独立写入。
 
 ## 入参
 
@@ -15,9 +15,10 @@ argument-hint: [wiki|rules|agents] [optional-content-description]
 
 distill 传入结构化候选列表，每个候选含：
 ```
-{ summary, disposition, target_layer, path, body, target }
-  target ∈ {wiki, rules}
+{ summary, disposition, target_layer, path, body, target, section_type }
+  target ∈ {wiki, rules, agents}
   disposition ∈ {新建, 融合→<路径>, supersede→<路径>, promote→<路径>}
+  section_type ∈ {var, style, naming, convention, rules-trigger}  # 仅 target=agents
 ```
 
 ### 独立调用时
@@ -198,22 +199,63 @@ AGENTS.md 不存在时 → 询问用户：创建骨架 / 跳过 / 终止。
 
 ### Step 3: AGENTS.md 写入
 
-三种写入类型：
+被 distill `agents:project` 出口调用时，接收候选列表（含 `section_type` / `body`）。独立调用 `/personal-distill agents <描述>` 时 AI 自行判断 `section_type`。
 
-**变量覆盖更新**（如产出路径变了）：
-- Read AGENTS.md → 找 `{var_name} = ...` 行 → Edit 更新值
-- 变量不存在 → 在 `### 文档产出路径` 节下追加
+AGENTS.md 不存在时 → 询问用户：创建骨架 / 跳过 / 终止。
 
-**触发条目**（rules 写入联动，见 Step 2）。
+#### 分节类型（section_type）
 
-**新分节**（项目约定、协作偏好等）：
-- Read AGENTS.md → 在 `## Rules` 之前插入新节
-- 格式：`## <节标题>\n\n<内容>`
+| section_type | 写入位置 | 说明 | 示例 |
+|---|---|---|---|
+| `var` | `## 变量覆盖` 或 `### 文档产出路径` 下 | 变量覆盖值 `{name} = value` | `{api_base_url} = https://...` |
+| `style` | `## 语气风格` 分节（不存在则新建） | 输出语气/风格偏好 | 回复风格偏简洁、禁用某些表达 |
+| `naming` | `## 命名惯例` 分节 | 命名约定（变量/文件/分支/skill 等） | 分支命名 `feat/<topic>` |
+| `convention` | `## 协作约定` 分节（不存在则新建） | 项目级协作约定 | PR 必须 squash merge |
+| `rules-trigger` | `## Rules` 分节下 | rules 写入联动的触发条目（见 Step 2） | `**触发**：... **读**：rules/...` |
+
+#### 写入流程
+
+1. **Read AGENTS.md** 全文，扫各分节标题
+2. 按 `section_type` 路由：
+
+**var（变量覆盖）**：
+- 找 `{var_name} = ...` 行 → Edit 更新值
+- 变量不存在 → 追加到 `## 变量覆盖` 节末尾（产出路径变量追加到 `### 文档产出路径` 下）
+- 已有同名变量且值不同 → 展示新旧值对比，用户选保留哪个
+
+**style（语气风格）**：
+- `## 语气风格` 节已存在 → 融合进该节（不末尾 paste，按语义插入合适位置）
+- 不存在 → 在 `## Rules` 之前新建 `## 语气风格` 节
+
+**naming（命名惯例）**：
+- `## 命名惯例` 节已存在 → 融合进该节
+- 不存在 → 在 `## Rules` 之前新建 `## 命名惯例` 节
+
+**convention（协作约定）**：
+- `## 协作约定` 节已存在 → 融合进该节
+- 不存在 → 在 `## Rules` 之前新建 `## 协作约定` 节
+
+**rules-trigger（触发条目）**：联动 Step 2，不在此重复。
+
+3. 报告每条写入操作："写入 AGENTS.md `## <节名>` [新增分节 / 融合 / 变量更新 {name}: old → new]"
+
+#### 分节顺序约定
+
+AGENTS.md 各节按以下顺序排列（新建分节插入对应位置）：
+
+```
+## 变量覆盖
+### 文档产出路径
+## 命名惯例
+## 语气风格
+## 协作约定
+## Rules
+```
 
 ### Step 4: 收尾
 
 1. **index 重建**：扫 draft/ + pages/ 全部文件的 frontmatter，重建 index.md（≥30 页时拆分为两级索引）
-2. **log 追加**：每条写入操作追加一行到 log.md
+2. **log 追加**：每条写入操作追加一行到 log.md（含 agents 写入：`agents | AGENTS.md ## <节名> | <摘要>`）
 3. **报告**：列出本次所有操作 + personal-lint 结果
 
 ```
@@ -221,6 +263,8 @@ personal-distill 完成：
   ✓ 新建 wiki draft: draft/260626-xxx.md (stub)
   ✓ 融合 wiki pages: pages/xxx.md (+新内容)
   ✓ 新建 rules: rules/xxx.md + AGENTS.md 触发条目
+  ✓ 写入 AGENTS.md ## 语气风格 (新增分节)
+  ✓ 写入 AGENTS.md {api_base_url} = https://... (变量新增)
   📋 index.md 已更新, log.md 已追加 N 条
 
 ℹ 健康检查：0 error / 1 warn

@@ -1,11 +1,11 @@
 ---
-description: 把当前会话沉淀分流到 wiki/rules 五个出口（项目 wiki / 跨项目 advisor / 项目 rules / 插件 rules / skip）
+description: 把当前会话沉淀分流到 wiki/rules/agents 六个出口（项目 wiki / 跨项目 advisor / 项目 rules / 项目配置 / 插件 rules / skip）
 argument-hint: [optional-topic]
 ---
 
 # /distill：会话沉淀分流命令
 
-把当前会话里值得跨会话保留的内容沉淀到合适出口——AI 识别候选 + 自动贴分类标签 → 用户表格短码勾选/调整 → 五出口分发。
+把当前会话里值得跨会话保留的内容沉淀到合适出口——AI 识别候选 + 自动贴分类标签 → 用户表格短码勾选/调整 → 六出口分发。
 
 **设计文档**：`docs/plans/3dot141/260519-sediment-design.md`
 
@@ -21,13 +21,14 @@ argument-hint: [optional-topic]
 
 ---
 
-## 五个出口
+## 六个出口
 
 | 出口标签 | 落地路径 | 动作 |
 |---|---|---|
 | `wiki:project` | `<proj>/.agents-personal/wiki/draft/` 或 `wiki/pages/` | 项目知识（架构/决策/调试/约定），两层目录 + 控制文件；走整合判断 |
 | `wiki:cross-project` | （不写文件）| **advisor**：输出"建议跑 `/sow <intent>`" |
 | `rules:project` | 融进现有 rule，或新建 `<proj>/.agents-personal/rules/<slug>.md` + 改 `AGENTS.md` 触发条件 | 当前指令，项目专属；**先整合判断**（融合优先），否则双写新建 |
+| `agents:project` | `<proj>/.agents-personal/AGENTS.md` 对应分节 | 项目级偏好——变量覆盖 / 语气风格 / 命名惯例 / 协作约定等；直接写入 AGENTS.md，融合已有分节或新增分节 |
 | `rules:plugin` | 融进现有 rule（含 `rule-references/` 子文件），或新建 `$NOCODE_EVOLVE_REPO/rules/rule-<slug>.md` + 改 `rules/manifest.json` 后 `node hooks/generate.mjs` 重新生成 catalog 分片 + 升 `plugin.json` | 当前指令，跨项目通用；**先整合判断**（融合优先），否则三步联动建新 |
 | `skip` | （不写）| 列出原因供用户最后反悔 |
 
@@ -57,20 +58,22 @@ argument-hint: [optional-topic]
 ```
 候选 = { summary, label, slug, disposition, target_layer, path, body }
   summary      ≤40 字摘要
-  label        ∈ {wiki:project, wiki:cross-project, rules:project, rules:plugin, skip}
+  label        ∈ {wiki:project, wiki:cross-project, rules:project, agents:project, rules:plugin, skip}
   slug         kebab-case 3-5 词
-  disposition  新建 | 融合→<现有文件路径> | supersede→<现有文件路径> | promote→<draft 文件路径>（仅 wiki:project / rules:* 有意义；见下「整合判断」）
+  disposition  新建 | 融合→<现有文件路径> | supersede→<现有文件路径> | promote→<draft 文件路径>（仅 wiki:project / rules:* 有意义；见下「整合判断」）；agents:project 固定为 融合→AGENTS.md 或 新增分节
   target_layer draft | pages（仅 wiki:project；首次出现→draft, 与 pages/ 强相关→pages, 与 draft/ 强相关→draft）
-  path         disposition=新建 时按 label+target_layer 算落盘路径；融合/supersede 时=目标现有文件路径
+  section_type var | style | naming | convention | rules-trigger（仅 agents:project；标识写入 AGENTS.md 的哪种分节）
+  path         disposition=新建 时按 label+target_layer 算落盘路径；融合/supersede 时=目标现有文件路径；agents:project 固定为 AGENTS.md
   body         disposition=新建 时=完整文件正文（分发直接 write）；融合 时=要融进目标的内容片段
 ```
 
-**整合判断（候选阶段就做，让表格诚实）**：对 `wiki:project` / `rules:project` / `rules:plugin` 候选，先读对应索引判与现有内容关系，设 `disposition`：
+**整合判断（候选阶段就做，让表格诚实）**：对 `wiki:project` / `rules:project` / `agents:project` / `rules:plugin` 候选，先读对应索引判与现有内容关系，设 `disposition`：
 
 | 出口 | 读的索引 | 强相关 → 融合目标 |
 |---|---|---|
 | `wiki:project` | `wiki/index.md`（全局索引） | 现有 `pages/<x>.md` 或 `draft/<x>.md` |
 | `rules:project` | `AGENTS.md` 触发表 | 现有 `rules/<x>.md` |
+| `agents:project` | `AGENTS.md` 各分节标题 | 已有分节（融合）或新增分节 |
 | `rules:plugin` | `rules/manifest.json` 规则清单（单源） | 现有 `rules/rule-<x>.md`，**或其 `rule-references/<x>/<子文件>.md`** |
 
 ```
@@ -89,6 +92,7 @@ argument-hint: [optional-topic]
 |---|---|
 | 决策回溯 / 演进 / 术语定义 / 踩坑 | `wiki:*` |
 | 命令模板 / 触发条件 / 工作流约定 | `rules:*` |
+| 变量覆盖 / 语气风格偏好 / 命名惯例 / 协作约定 / 输出格式偏好 | `agents:project` |
 | 项目特有业务术语 / 具体代码路径 | `*:project` |
 | 跨项目通用 AI 行为 / skill 覆盖 | `*:plugin` (cwd 是 nocode-evolve 仓) 或 `wiki:cross-project` (cwd 不是) |
 | 一次性进度 / 通用 best practice | `skip` |
@@ -119,6 +123,7 @@ argument-hint: [optional-topic]
 | `wiki:project` | 项目 wiki |
 | `wiki:cross-project` | 用户 vault (建议 /sow) |
 | `rules:project` | 项目 rule |
+| `agents:project` | 项目配置 (AGENTS.md) |
 | `rules:plugin` | 插件 rule |
 | `skip` | — |
 
@@ -169,6 +174,10 @@ no → 整次 distill 终止；yes → 进入分发。
 
 调 `Skill(nocode-evolve:personal-distill)`，传入本出口的候选列表（含 disposition / body / slug）。personal-distill 负责 rules 文件写入 + AGENTS.md 触发条目管理。
 
+#### `agents:project` 出口
+
+调 `Skill(nocode-evolve:personal-distill)`，传入本出口的候选列表（含 section_type / body）。personal-distill 负责 AGENTS.md 分节写入——融合已有分节或新增分节。
+
 #### `rules:plugin` 出口（融合优先，否则三步联动）
 
 按 `disposition` 走下方「rules:plugin 分发：融合路径 + 三步联动」节。
@@ -185,6 +194,8 @@ no → 整次 distill 终止；yes → 进入分发。
   ✓ 整合 wiki pages: pages/storage-backend-architecture.md (active, +交互卡片段)
   ✓ supersede wiki: pages/old-onboarding.md → pages/new-model-onboarding-checklist.md
   ✓ 改 rules:project: .agents-personal/rules/distill-shortcode.md + AGENTS.md
+  ✓ 写 agents:project: AGENTS.md ## 语气风格 (新增分节)
+  ✓ 写 agents:project: AGENTS.md {api_base_url} (融合进 ### 变量覆盖)
   ✓ advisor: /sow 沉淀今天讨论的 prompt 优化经验
   ✓ skip: 一次性 bug 修复（原因：无沉淀价值）
   📋 wiki/index.md 已更新, wiki/log.md 已追加 3 条
@@ -316,6 +327,7 @@ manifest+generate: rules/manifest.json 已加条目, node hooks/generate.mjs 重
 - ❌ **写 plugin rule 但忘了登记进 rules/manifest.json 并 generate 重新生成**——sanity check 警告等于白沉淀
 - ❌ **写 plugin rule 但忘升 version**——CLAUDE.md 硬约束
 - ❌ **AGENTS.md 加触发条件含糊**："需要时读 rules/foo.md" 等于没触发
+- ❌ **agents:project 和 rules:project 混淆**：变量/语气/命名惯例/协作约定 → `agents:project`（写 AGENTS.md 分节）；触发条件/工作流指令 → `rules:project`（写 rules/ 文件 + AGENTS.md 触发条目）。区分标准：前者是偏好/配置，后者是 agent 行为指令
 - ❌ **rules 文件名带日期**：rules 是当前指令不是历史记录，文件名只用 slug
 - ❌ **在 distill 内部 commit / push**：只写文件，commit/push 由用户在主交互流程里处理
 - ❌ **替 /sow 校验 env**：cross-project advisor 不检查 `$USER_VAULT_PATH`——是 /sow 自己的责任
@@ -331,6 +343,8 @@ manifest+generate: rules/manifest.json 已加条目, node hooks/generate.mjs 重
 | `optionalTopicArg` 在会话里无对应内容 | 报"未找到 topic 相关内容"，停 |
 | context 已被压缩到只剩 summary | 仍按可见内容尽力生成候选；表格脚注加 "⚠ context 部分被压缩，沉淀可能不完整" |
 | `<proj>/.agents-personal/AGENTS.md` 不存在 | 三选一：(1)创建骨架 (2)跳过本项 (3)终止 distill |
+| `agents:project` 候选写入的分节在 AGENTS.md 已存在 | 融合进已有分节（不新建重复分节） |
+| `agents:project` 候选的变量名与已有变量冲突 | 展示新旧值对比，用户选保留哪个 |
 | slug 冲突 (rules / wiki) | **转整合判断**（疑似融合目标）：在 AskUserQuestion 里加选项"融进已有 <path>" 和 "改名新建" |
 | 融合目标是 `rule-references/` 子文件 | catalog 不动（门面已路由）；仅升版本 |
 | `$NOCODE_EVOLVE_REPO` 路径不存在 | 插件 rule 项在表格里标灰 + 不可选 |

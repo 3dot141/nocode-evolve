@@ -16,8 +16,8 @@ argument-hint: <sub-action> [args]
 | 子动作 | 做什么 | 转发到 | 独立命令 |
 |---|---|---|---|
 | `init` | 初始化 .agents-personal/ 结构 | `Skill(nocode-evolve:personal-init)` | `/personalhub-init` |
-| `write` | 写入 wiki + rules + AGENTS.md | `Skill(nocode-evolve:personal-distill)` | `/personalhub-distill` |
-| `search` | 检索 .agents-personal/ 内容 | `Skill(nocode-evolve:personal-recall)` | `/personalhub-recall` |
+| `write` | 写入 wiki / rules / AGENTS.md（变量·语气·命名·约定） | `Skill(nocode-evolve:personal-distill)` | `/personalhub-distill` |
+| `search` | 检索 .agents-personal/ 内容（wiki + rules + AGENTS.md 各分节） | `Skill(nocode-evolve:personal-recall)` | `/personalhub-recall` |
 | `check` | 健康检查 | `Skill(nocode-evolve:personal-lint)` | `/personalhub-lint` |
 | `tidy` | 自主维护（stale/prune/merge/promote） | `Skill(nocode-evolve:personal-dream)` | `/personalhub-dream` |
 | `snap` | 手动触发备份快照 | `node "${CLAUDE_PLUGIN_ROOT}/scripts/personalhub-snapshot.mjs" --json` | — |
@@ -35,8 +35,8 @@ argument-hint: <sub-action> [args]
 /personalhub <sub-action>
 
   init     初始化 .agents-personal/
-  write    写入 wiki/rules/AGENTS.md
-  search   检索已沉淀内容
+  write    写入 wiki/rules/AGENTS.md（变量·语气·命名·约定）
+  search   检索已沉淀内容（wiki + rules + AGENTS.md 各分节）
   check    健康检查
   tidy     自主维护
   snap     手动备份快照
@@ -65,7 +65,7 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/personalhub-snapshot.mjs" --json
 2. 统计：
    - wiki: draft/ 页数 + pages/ 页数 + 最近更新时间
    - rules: 文件数 + AGENTS.md 触发条目数
-   - AGENTS.md: 变量覆盖数
+   - AGENTS.md: 变量覆盖数 + 自定义分节列表（语气风格 / 命名惯例 / 协作约定等）
 3. 快速健康检查（调 personal-lint 的核心检查，只报 error/warn 数量不展开）
 4. 最近 5 条 log.md 记录
 
@@ -76,7 +76,7 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/personalhub-snapshot.mjs" --json
 
   wiki:    3 draft + 8 pages    最近更新: 260625
   rules:   2 文件 / 2 触发条目
-  变量:    8 个覆盖
+  AGENTS:  8 变量 / 3 分节 (命名惯例, 语气风格, 协作约定)
   健康:    0 error / 1 warn ✓
   
   最近操作:

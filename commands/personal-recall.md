@@ -42,7 +42,7 @@ rg -il --glob '*.md' '<variant>' .agents-personal/
 对每个候选 `Read(file, limit=40)` 提取：
 - **wiki 页**：title（frontmatter title → slug → 文件名）、summary（description → TLDR）、tags、maturity
 - **rules 文件**：title（H1）、summary（第一段）
-- **AGENTS.md**：匹配的节标题 + 上下文行
+- **AGENTS.md**：按分节结构化提取——命中的分节标题 + 分节类型（变量覆盖 / 命名惯例 / 语气风格 / 协作约定 / Rules 触发条目）+ 上下文行。变量命中时展示 `{name} = value` 全行
 
 ### 4. 打分 + 排序
 
@@ -56,7 +56,11 @@ rg -il --glob '*.md' '<variant>' .agents-personal/
 |---|------|---------|------|--------|
 | 1 | ... | ≤30字 | wiki/pages/... | 0.95 |
 | 2 | ... | ≤30字 | rules/... | 0.78 |
+| 3 | 语气风格 | ≤30字 | AGENTS.md ## 语气风格 | 0.72 |
+| 4 | {api_base_url} | https://... | AGENTS.md ## 变量覆盖 | 0.65 |
 ```
+
+AGENTS.md 命中时，路径列显示 `AGENTS.md ## <分节名>` 方便定位。
 
 0 结果时："未找到与 '<keyword>' 相关的内容。"
 
