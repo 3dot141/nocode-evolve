@@ -84,54 +84,21 @@ Task 6: 保存
 
 ### Step 2: 并行探索（委派 research-workflow）
 
-每个选中的切面委派 `research-workflow` skill（调用方式见 `skills/research-workflow/SKILL.md`），传入：
-- `question`: `<调研对象> 的 <切面名> 方面`
-- `depth`: 用户选的深度
-- `systemPrompt`: 切面专属 prompt（见下表）
+每个选中的切面委派 `research-workflow` skill（调用方式见 `skills/research-workflow/SKILL.md`），传入 `question` + `type` + `depth` + 切面关注点（`systemPrompt` 追加）。`type` 决定工具链和降级链，切面关注点只补充"关注什么"。
 
 多个切面可并行（spawn fork agent 各自调 Workflow）。
 
-**各切面的 systemPrompt 模板**：
+| 切面 | type | depth | systemPrompt（追加关注点） |
+|---|---|---|---|
+| 竞品分析 | web | 用户选 | 搜 5-7 个竞品，关注功能差异、定价策略、市场定位。产出含 Feature Matrix + Positioning Map 素材 |
+| 代码现状 | code | 用户选 | 找已有模块、可复用代码、架构 pattern、接口定义。验证查 caller/test/导出 |
+| 用户信号 | web | 用户选 | 搜 Reddit/HN/知乎/GitHub Issues/G2 评价，提取痛点、需求信号、用户原话 |
+| 市场空间 | web | 用户选 | 搜 TAM/SAM 数据（公开优先，缺则标 [ASSUMED]）、增长趋势、商业模式、市场空白 |
+| 已有方案 | mixed | 用户选 | 搜开源库/框架/最佳实践/架构模式，遇开源库查文档，评估成熟度和适用性 |
 
-**竞品分析**：
-```
-你在做产品竞品调研。搜索用 WebSearch 或 Exa。
-搜 5-7 个相关竞品/产品，关注功能差异、用户体验、定价策略、市场定位。
-产出应包含 Feature Matrix（功能对比表）和 Positioning Map（两轴定位图）素材。
-引用格式: [SOURCE: url]。
-```
+**内部审计模式**：自定义切面用 `type: 'custom'` + 按审计维度写 systemPrompt（代码用 semble-search，文档用 Read，外部对标用 WebSearch）。
 
-**代码现状**：
-```
-你在搜索代码库的现有实现和 pattern。搜索用 semble-search agent（Agent subagent_type: "nocode-evolve:semble-search"）。
-找已有的相关模块、可复用代码、架构 pattern、接口定义。
-引用格式: [Read path:line]。验证时查 caller、test、实际导出。
-```
-
-**用户信号**：
-```
-你在搜集用户反馈和社区讨论。搜索用 WebSearch 或 Exa。
-重点搜 Reddit、HN、知乎、GitHub Issues、论坛、G2/ProductHunt/App Store 评价。
-提取痛点、需求信号、用户原话。引用格式: [SOURCE: url]。
-```
-
-**市场空间**：
-```
-你在做市场空间分析。搜索用 WebSearch 或 Exa。
-搜市场规模数据（TAM/SAM/SOM，公开数据优先，找不到标 [ASSUMED]）、行业增长趋势、市场报告摘要。
-分析竞品商业模式（定价策略、营收模式）。识别市场空白。引用格式: [SOURCE: url]。
-```
-
-**已有方案**：
-```
-你在搜索已有的技术方案和最佳实践。搜索用 WebSearch 或 Exa，遇到开源库用 deepwiki 查文档。
-搜开源项目/库/框架、最佳实践文章、架构模式。评估成熟度和适用性。
-引用格式: [SOURCE: url]。
-```
-
-**内部审计模式**：自定义切面的 systemPrompt 按审计维度写，工具按需选（代码用 semble-search，文档用 Read，外部对标用 WebSearch）。
-
-**research-workflow 返回值**中的 `findings` 即该切面的结构化发现，`sources` 含所有检索到的源，`stats` 含验证统计。agent 把返回值暂存，进 Step 3 逐切面展示。
+返回值的 `findings`/`sources`/`stats` 含义见 research-workflow SKILL.md。agent 把返回值暂存，进 Step 3 逐切面展示。
 
 ### Step 3: 逐切面校验（1-3 轮）
 

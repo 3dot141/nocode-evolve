@@ -1,9 +1,9 @@
 export const meta = {
-  name: 'research-engine',
-  description: 'Generic research engine — multi-angle search, claim extraction, adversarial verification, synthesis. Configurable via systemPrompt for any domain (web, code, mixed).',
+  name: 'research-workflow',
+  description: 'Generic research workflow — multi-angle search with iterative refinement, claim extraction, adversarial verification, synthesis. Preset types (web/code/mixed/custom) bundle tool chains; configurable via type + systemPrompt.',
   phases: [
     { title: 'Scope', detail: 'Decompose question into search angles (skip if pre-set)' },
-    { title: 'Search', detail: 'Parallel search per angle, using tools guided by systemPrompt' },
+    { title: 'Search', detail: 'Per-angle iterative search (search → evaluate → refine, up to N rounds)' },
     { title: 'Extract', detail: 'Deep only: fetch sources, extract falsifiable claims' },
     { title: 'Verify', detail: 'Deep only: 3-vote adversarial verification per claim' },
     { title: 'Synthesize', detail: 'Merge dupes, rank by confidence, cite sources' },
@@ -12,22 +12,62 @@ export const meta = {
 
 // ─── Args ───
 // {
-//   question: string           — required, the research question
-//   depth: 'shallow' | 'deep'  — default 'deep'
-//   systemPrompt: string       — domain context + tool preferences
-//   angles: [{label, query, rationale?}]  — optional, skip Scope if provided
+//   question: string                       — required, the research question
+//   type: 'web'|'code'|'mixed'|'custom'    — preset; bundles tool chain + iterate default
+//   depth: 'shallow' | 'deep'              — default 'deep'
+//   iterate: number                        — max search rounds per angle; default per-type
+//   systemPrompt: string                   — appended after the type's tool chain (required for 'custom')
+//   angles: [{label, query, rationale?}]   — optional, skip Scope if provided
 // }
+
+// ─── Type presets: tool chains + defaults ───
+const TOOL_CHAINS = {
+  web: `搜索用 WebSearch 或 Exa。
+抓取网页用 WebFetch；WebFetch 失败（403/timeout）时降级到 ScraplingServer：
+  mcp__ScraplingServer__fetch（常规）
+  mcp__ScraplingServer__stealthy_fetch（反爬严的站）
+遇到开源库用 deepwiki 查文档。
+引用格式: [SOURCE: url]。`,
+
+  code: `搜索用 semble-search agent（Agent subagent_type: "nocode-evolve:semble-search"）。
+semble-search 不可用时降级：Bash grep -r 或 rg → Explore agent。
+引用格式: [Read path:line]。`,
+
+  mixed: `代码搜索用 semble-search agent，网络搜索用 WebSearch 或 Exa。
+抓取网页用 WebFetch，失败时降级到 ScraplingServer。
+遇到开源库用 deepwiki 查文档。
+按问题性质自选工具——代码相关走 semble-search，外部方案走 WebSearch。
+引用格式: 代码 [Read path:line]，网络 [SOURCE: url]。`,
+
+  custom: '',
+}
+
+const TYPE_DEFAULTS = {
+  web:    { iterate: 1 },
+  code:   { iterate: 3 },
+  mixed:  { iterate: 2 },
+  custom: { iterate: 1 },
+}
 
 const raw = typeof args === 'string' ? { question: args } : (args || {})
 const QUESTION = raw.question || ''
 if (!QUESTION) {
-  return { error: 'No research question. Pass args: { question, depth?, systemPrompt?, angles? }' }
+  return { error: 'No research question. Pass args: { question, type?, depth?, iterate?, systemPrompt?, angles? }' }
 }
 
+const TYPE = TOOL_CHAINS[raw.type] !== undefined ? raw.type : 'mixed'
 const DEPTH = raw.depth || 'deep'
 const IS_DEEP = DEPTH === 'deep'
-const SYSTEM_PROMPT = raw.systemPrompt || '通用研究模式。网络搜索用 WebSearch，代码搜索用 semble-search agent。按问题领域自选工具。'
 const PRE_ANGLES = Array.isArray(raw.angles) && raw.angles.length > 0 ? raw.angles : null
+
+// Max search rounds per angle: explicit arg > type default > 1
+const MAX_ROUNDS = Math.max(1, Number.isInteger(raw.iterate) ? raw.iterate : TYPE_DEFAULTS[TYPE].iterate)
+
+// systemPrompt = type's tool chain + caller's domain context
+const TOOL_CHAIN = TOOL_CHAINS[TYPE]
+const USER_PROMPT = raw.systemPrompt || ''
+const SYSTEM_PROMPT = [TOOL_CHAIN, USER_PROMPT].filter(Boolean).join('\n\n') ||
+  '通用研究模式。网络搜索用 WebSearch，代码搜索用 semble-search agent。按问题领域自选工具。'
 
 const VOTES_PER_CLAIM = 3
 const REFUTATIONS_REQUIRED = 2
@@ -35,6 +75,7 @@ const MAX_SOURCES = IS_DEEP ? 15 : 8
 const MAX_VERIFY_CLAIMS = 25
 const ANGLE_COUNT_SHALLOW = '2-3'
 const ANGLE_COUNT_DEEP = '4-6'
+const CONVERGE_HIGH_RELEVANCE = 3
 
 // ─── Schemas ───
 const SCOPE_SCHEMA = {
@@ -68,6 +109,18 @@ const SEARCH_SCHEMA = {
           sourceType: { type: 'string', description: 'web-page, code-file, doc, forum, etc.' },
         },
       },
+    },
+  },
+}
+
+const EVALUATE_SCHEMA = {
+  type: 'object', required: ['highRelevance', 'gaps', 'refinedQueries'],
+  properties: {
+    highRelevance: { type: 'integer', description: '高相关结果数（relevance=high）' },
+    gaps: { type: 'string', description: '还缺什么上下文 / 哪个方向没覆盖到' },
+    refinedQueries: {
+      type: 'array', items: { type: 'string' }, maxItems: 3,
+      description: '调整后的查询：补上从已有结果里发现的新术语、排掉确认无关的方向、针对 gaps 开新查询',
     },
   },
 }
@@ -127,18 +180,32 @@ const scopePrompt = () =>
   'Question: "' + QUESTION + '"\n\n' +
   'Generate ' + (IS_DEEP ? ANGLE_COUNT_DEEP : ANGLE_COUNT_SHALLOW) + ' distinct search angles that together cover the question.\n' +
   'Each angle should use a different search strategy or tool.\n' +
-  'The systemPrompt above tells you which tools are available and what domain you\'re in — pick angles that make sense for that domain.\n' +
+  'The context above tells you which tools are available and what domain you\'re in — pick angles that make sense for that domain.\n' +
   'Make queries specific enough to surface high-signal results. Avoid redundancy.\n\nStructured output only.'
 
-const searchPrompt = (angle) =>
+const searchPrompt = (angle, queries, round) =>
   '## Context\n' + SYSTEM_PROMPT + '\n\n' +
-  '## Task: Search\n\n' +
+  '## Task: Search' + (round > 0 ? ' (refined round ' + (round + 1) + ')' : '') + '\n\n' +
   'Research question: "' + QUESTION + '"\n' +
   'Your angle: **' + angle.label + '**' + (angle.rationale ? ' — ' + angle.rationale : '') + '\n' +
-  'Search query: `' + angle.query + '`\n\n' +
+  'Search ' + (queries.length > 1 ? 'queries' : 'query') + ': ' + queries.map(q => '`' + q + '`').join(', ') + '\n\n' +
   'Use the tools described in the context to search. Return the top 4-6 most relevant results.\n' +
   'For each result, provide a ref (URL for web, file:line for code), title, snippet, and relevance rating.\n' +
   'Skip obvious spam or irrelevant results.\n\nStructured output only.'
+
+const evaluatePrompt = (angle, results) =>
+  '## Context\n' + SYSTEM_PROMPT + '\n\n' +
+  '## Task: Evaluate Search Coverage\n\n' +
+  'Research question: "' + QUESTION + '"\n' +
+  'Angle: **' + angle.label + '**\n\n' +
+  'Results so far (' + results.length + '):\n' +
+  results.map((r, i) => (i + 1) + '. [' + r.relevance + '] ' + r.title + ' (' + r.ref + ')').join('\n') + '\n\n' +
+  'Assess coverage for THIS angle:\n' +
+  '1. Count results that directly hit the target (relevance=high).\n' +
+  '2. What context is still missing? Which sub-direction has no good hit yet?\n' +
+  '3. Propose up to 3 refined queries: add domain terms you just learned from the high-relevance results ' +
+  '(the codebase/domain may name things differently than the original query), drop confirmed-irrelevant directions, ' +
+  'open new queries for the gaps. If coverage is already good, return the same queries.\n\nStructured output only.'
 
 const extractPrompt = (source, angleLabel) =>
   '## Context\n' + SYSTEM_PROMPT + '\n\n' +
@@ -168,6 +235,50 @@ const verifyPrompt = (claim, v) =>
   'refuted=false ONLY if: well-supported, current, and source quality matches claim strength.\n' +
   'Default to refuted=true if uncertain.\n\nStructured output only.'
 
+// ─── Iterative search: search → evaluate → refine, up to MAX_ROUNDS per angle ───
+const iterativeSearch = async (angle) => {
+  const all = []
+  const seenRefs = new Set()
+  let queries = [angle.query]
+
+  for (let round = 0; round < MAX_ROUNDS; round++) {
+    const found = await agent(searchPrompt(angle, queries, round), {
+      label: 'search:' + angle.label + (MAX_ROUNDS > 1 ? ':r' + (round + 1) : ''),
+      phase: 'Search', schema: SEARCH_SCHEMA,
+    })
+    if (!found) break
+
+    // Accumulate, de-duping within this angle by ref
+    for (const r of found.results) {
+      if (seenRefs.has(r.ref)) continue
+      seenRefs.add(r.ref)
+      all.push(r)
+    }
+
+    // No more rounds, or last round → stop without evaluating
+    if (MAX_ROUNDS <= 1 || round === MAX_ROUNDS - 1) break
+
+    // Evaluate coverage; converge or refine
+    const evaluation = await agent(evaluatePrompt(angle, all), {
+      label: 'eval:' + angle.label + ':r' + (round + 1),
+      phase: 'Search', schema: EVALUATE_SCHEMA,
+    })
+    if (!evaluation) break
+
+    if (evaluation.highRelevance >= CONVERGE_HIGH_RELEVANCE) {
+      log(angle.label + ': converged at round ' + (round + 1) + ' (' + evaluation.highRelevance + ' high-relevance)')
+      break
+    }
+
+    const refined = (evaluation.refinedQueries || []).filter(Boolean)
+    if (refined.length === 0) break
+    queries = refined
+    log(angle.label + ': r' + (round + 1) + ' → refining: ' + queries.join(' / '))
+  }
+
+  return { angle: angle.label, results: all }
+}
+
 // ─── Phase 0: Scope ───
 phase('Scope')
 
@@ -184,17 +295,16 @@ if (PRE_ANGLES) {
   log('Decomposed into ' + angles.length + ' angles: ' + angles.map(a => a.label).join(', '))
 }
 
+log('type=' + TYPE + ' depth=' + DEPTH + ' iterate=' + MAX_ROUNDS)
+
 // ─── Shallow path: Search → Synthesize (no extract, no verify) ───
 if (!IS_DEEP) {
   phase('Search')
   const searchResults = await parallel(
     angles.map(angle => () =>
-      agent(searchPrompt(angle), {
-        label: 'search:' + angle.label, phase: 'Search', schema: SEARCH_SCHEMA,
-      }).then(r => {
-        if (!r) return null
+      iterativeSearch(angle).then(r => {
         log(angle.label + ': ' + r.results.length + ' results')
-        return { angle: angle.label, results: r.results }
+        return r
       })
     )
   )
@@ -205,7 +315,7 @@ if (!IS_DEEP) {
 
   if (totalCount === 0) {
     return {
-      question: QUESTION, depth: DEPTH,
+      question: QUESTION, depth: DEPTH, type: TYPE,
       summary: 'No results found across ' + angles.length + ' angles.',
       findings: [], sources: [],
     }
@@ -232,10 +342,10 @@ if (!IS_DEEP) {
   )
 
   return {
-    question: QUESTION, depth: DEPTH,
+    question: QUESTION, depth: DEPTH, type: TYPE,
     ...(report || { summary: 'Synthesis skipped.', findings: [], caveats: 'Shallow mode, unverified.' }),
     sources: allResults.flatMap(r => r.results.map(s => ({ ref: s.ref, title: s.title, angle: r.angle }))),
-    stats: { angles: angles.length, results: totalCount, verified: false },
+    stats: { angles: angles.length, results: totalCount, iterate: MAX_ROUNDS, verified: false },
   }
 }
 
@@ -256,17 +366,14 @@ const budgetDropped = []
 const relRank = { high: 0, medium: 1, low: 2 }
 let fetchSlots = MAX_SOURCES
 
-// Pipeline: search → dedup → extract (no barrier between angles)
+// Pipeline: iterative-search → dedup → extract (no barrier between angles)
 const searchResults = await pipeline(
   angles,
 
-  // Stage 1: Search
-  angle => agent(searchPrompt(angle), {
-    label: 'search:' + angle.label, phase: 'Search', schema: SEARCH_SCHEMA,
-  }).then(r => {
-    if (!r) return null
+  // Stage 1: Iterative search
+  angle => iterativeSearch(angle).then(r => {
     log(angle.label + ': ' + r.results.length + ' results')
-    return { angle: angle.label, results: r.results }
+    return r
   }),
 
   // Stage 2: Dedup + Extract
@@ -325,10 +432,10 @@ log('Extracted ' + allClaims.length + ' claims from ' + allSources.length + ' so
 
 if (rankedClaims.length === 0) {
   return {
-    question: QUESTION, depth: DEPTH,
+    question: QUESTION, depth: DEPTH, type: TYPE,
     summary: 'No claims extracted. ' + allSources.length + ' sources fetched, all empty/failed.',
     findings: [], sources: allSources.map(s => ({ ref: s.ref, quality: s.sourceQuality })),
-    stats: { angles: angles.length, sources: allSources.length, claims: 0, dupes: dupes.length },
+    stats: { angles: angles.length, sources: allSources.length, claims: 0, iterate: MAX_ROUNDS, dupes: dupes.length },
   }
 }
 
@@ -361,12 +468,12 @@ log('Verify done: ' + confirmed.length + ' confirmed, ' + killed.length + ' kill
 
 if (confirmed.length === 0) {
   return {
-    question: QUESTION, depth: DEPTH,
+    question: QUESTION, depth: DEPTH, type: TYPE,
     summary: 'All ' + voted.length + ' claims refuted. Sources may be low-quality or claims overstated.',
     findings: [],
     refuted: killed.map(c => ({ claim: c.claim, vote: (c.verdicts.length - c.refutedVotes) + '-' + c.refutedVotes, source: c.sourceRef })),
     sources: allSources.map(s => ({ ref: s.ref, quality: s.sourceQuality })),
-    stats: { angles: angles.length, sources: allSources.length, claims: allClaims.length, verified: voted.length, confirmed: 0, killed: killed.length },
+    stats: { angles: angles.length, sources: allSources.length, claims: allClaims.length, iterate: MAX_ROUNDS, verified: voted.length, confirmed: 0, killed: killed.length },
   }
 }
 
@@ -403,22 +510,23 @@ const report = await agent(
 
 if (!report) {
   return {
-    question: QUESTION, depth: DEPTH,
+    question: QUESTION, depth: DEPTH, type: TYPE,
     summary: 'Synthesis skipped — returning ' + confirmed.length + ' verified claims unmerged.',
     confirmed: confirmed.map(c => ({ claim: c.claim, source: c.sourceRef, evidence: c.evidence, vote: (c.verdicts.length - c.refutedVotes) + '-' + c.refutedVotes })),
     refuted: killed.map(c => ({ claim: c.claim, source: c.sourceRef, vote: (c.verdicts.length - c.refutedVotes) + '-' + c.refutedVotes })),
     sources: allSources.map(s => ({ ref: s.ref, quality: s.sourceQuality })),
-    stats: { angles: angles.length, sources: allSources.length, claims: allClaims.length, verified: voted.length, confirmed: confirmed.length, killed: killed.length },
+    stats: { angles: angles.length, sources: allSources.length, claims: allClaims.length, iterate: MAX_ROUNDS, verified: voted.length, confirmed: confirmed.length, killed: killed.length },
   }
 }
 
 return {
-  question: QUESTION, depth: DEPTH,
+  question: QUESTION, depth: DEPTH, type: TYPE,
   ...report,
   refuted: killed.map(c => ({ claim: c.claim, vote: (c.verdicts.length - c.refutedVotes) + '-' + c.refutedVotes, source: c.sourceRef })),
   sources: allSources.map(s => ({ ref: s.ref, quality: s.sourceQuality, angle: s.angle, claimCount: s.claims.length })),
   stats: {
     angles: angles.length,
+    iterate: MAX_ROUNDS,
     sourcesFetched: allSources.length,
     claimsExtracted: allClaims.length,
     claimsVerified: voted.length,

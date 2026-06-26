@@ -86,34 +86,27 @@ Standard/Full → 进 Step 2。
 
 | 场景 | 代码探索 | 网络探索 |
 |---|---|---|
-| **Full** | semble-search 扫代码库：已有相关实现、pattern、可复用模块 | Exa/WebSearch 搜：类似问题别人怎么定义的、行业标准/规范 |
-| **Standard** | semble-search 扫代码库：已有相关实现 | 轻量搜一两个查询（有没有现成问题框架） |
-| **Fix** | 探索 bug 所在模块 + 上下游调用链 | 不搜 |
+| **Full** | 已有相关实现、pattern、可复用模块 | 类似问题别人怎么定义的、行业标准/规范 |
+| **Standard** | 已有相关实现 | 轻量搜（有没有现成问题框架） |
+| **Fix** | bug 所在模块 + 上下游调用链 | 不搜 |
 | **Mini** | 跳过 | 跳过 |
 
-**并行执行**：代码探索和网络探索互不依赖，**用并行 subagent 同时跑**（在一条消息里同时发出多个 Agent 调用）。两路结果回来后再综合。
+**两路都委派 `research-workflow` skill**（调用方式见 `skills/research-workflow/SKILL.md`），用不同 `type` 区分方向，并行执行：
 
-**代码探索 agent**（Full / Standard / Fix）：
-- `Agent(subagent_type: "nocode-evolve:semble-search")`，prompt 说明要找什么
-- 找已有的相关实现、可复用模块、相似 pattern
-- 标注 `[Read path:line]` 来源
-- 目的：不重复造轮子，理解当前系统的约束和边界
-
-**网络探索**（Full 完整 / Standard 轻量）：
-
-Full 场景委派 `research-workflow` skill（调用方式见 `skills/research-workflow/SKILL.md`），传入：
-- `question`: `<任务描述> 在业界怎么定义、有没有行业标准/规范`
+**代码探索**（Full / Standard / Fix）：
+- `question`: `<任务描述> 在当前代码库的已有实现和 pattern`
+- `type`: `code`
 - `depth`: `shallow`
-- `systemPrompt`: `你在做需求定义阶段的问题空间探索。搜索用 WebSearch 或 Exa。只搜问题定义层面的参考（行业标准/规范/问题框架），不搜解法——解法是 Design 的事。引用格式: [SOURCE: url]。`
 
-Standard 场景直接 `Agent(subagent_type: "fork")`，prompt 用 Exa/WebSearch 轻量搜一两个查询（有没有现成问题框架），不需要走 research-workflow。
+**网络探索**（Full / Standard）：
+- `question`: `<任务描述> 在业界怎么定义、有没有行业标准/规范`
+- `type`: `web`
+- `depth`: `shallow`
+- `systemPrompt`（追加）: `只搜问题定义层面的参考（行业标准/规范/问题框架），不搜解法——解法是 Design 的事。`
 
-- 标注 `[SOURCE: url]` 来源
-- 目的：避免重新发明已有的问题框架
+Standard 场景网络探索可简化为 `Agent(fork)` 轻量搜一两个查询，不走 research-workflow。
 
-**工具降级**：semble-search 不可用 → 降级 Bash grep + Explore agent。research-workflow 内部处理网络工具不可用的降级。
-
-**综合**：两路 agent 结果回来后，输出一段简要总结（代码里已有什么 + 网上发现了什么），带入 Step 4 影响假设的置信度。
+**综合**：两路结果回来后，输出一段简要总结（代码里已有什么 + 网上发现了什么），带入 Step 4 影响假设的置信度。
 
 ### Step 3: 路径校验
 

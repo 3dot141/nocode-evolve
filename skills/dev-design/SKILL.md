@@ -109,21 +109,26 @@ Task 10: 写设计文档
 
 **三层并行执行**：1a、1b、1c 互不依赖，**在一条消息里同时发出三个 Agent 调用**，结果全部回来后再综合。
 
-#### 1a. 代码 pattern 深度分析（subagent）
+#### 1a. 代码 pattern 深度分析
 
-`Agent(subagent_type: "nocode-evolve:semble-search")`，prompt 包含 restate 关键词 + 要找什么：
+委派 `research-workflow` skill（调用方式见 `skills/research-workflow/SKILL.md`），传入：
+- `question`: `<restate 关键词> 在当前代码库的已有实现、可复用 pattern、影响面`
+- `type`: `code`
+- `depth`: `shallow`
+- `systemPrompt`（追加）: `不只找"有没有"，要理解"怎么做的、为什么这么做"，并标出影响面（触及哪些模块/调用链/contract）。`
 
-- **已有实现**：找当前代码库里解决过类似问题的实现。不只是找"有没有"，要理解"怎么做的、为什么这么做"
-- **可复用 pattern**：现有代码的架构 pattern、抽象层次、模块边界。新方案应跟随已有 pattern，除非有充分理由偏离
-- **影响面**：这次改动会触及哪些模块、哪些调用链、哪些 contract
-- 标注 `[Read path:line]` 来源
+从返回值的 `findings` 提取：
+- **已有实现**：解决过类似问题的代码，怎么做的、为什么
+- **可复用 pattern**：现有架构 pattern、抽象层次、模块边界
+- **影响面**：这次改动触及哪些模块、调用链、contract
 
 #### 1b. 外部技术方案搜索（research-workflow）
 
 委派 `research-workflow` skill（调用方式见 `skills/research-workflow/SKILL.md`），传入：
 - `question`: `<restate 关键词 + 要解决的技术问题>`
+- `type`: `mixed`
 - `depth`: `shallow`（探索阶段默认；用户说"深入调研"时改 `deep`）
-- `systemPrompt`: `你在做技术方案探索。搜索用 WebSearch 或 Exa，遇到开源库用 deepwiki 查文档。关注：开源库/框架的成熟度和维护状态、业界架构模式和最佳实践、技术博客和案例中的经验教训。不把搜索结果当事实——需对照本项目实际情况评估适用性。引用格式: [SOURCE: url]。`
+- `systemPrompt`（追加）: `关注开源库/框架的成熟度和维护状态、业界架构模式和最佳实践、与现有架构的兼容性。不把搜索结果当事实——需对照本项目实际情况评估适用性。`
 
 从返回值的 `findings` 提取：
 - **开源库/框架**：成熟度、维护状态、社区活跃度
