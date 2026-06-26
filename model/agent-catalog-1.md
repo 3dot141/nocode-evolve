@@ -76,16 +76,16 @@ agent 视角: 用户任务命中以下任一条件时, **主动调起 devflow sk
 **摘要**: 输出 标题 + 描述, 描述 ≤200字, 含基础内容(覆盖 push range 全 commit) + 重点评测(亮点 / 风险 / 未验证项)
 **主桶**: memory (完整定义见该桶)
 
-#### feishu-transition (跨桶)
-**触发**: PR merge 后流转飞书 issue 状态 (组员开发 → 研发已改待BUILD); 或用户说「流转任务 / 改状态 / 标完成」; 或 devflow Land 阶段 (8d. Task Transition)
-**读**: `${CLAUDE_PLUGIN_ROOT}/rules/rule-feishu-transition.md`
-**摘要**: PR merge 后把飞书 issue 从组员开发流转到研发已改待BUILD; 先 update_field 填缺陷来源于缺陷(field_ecff7b, 默认自关联), 再 get_transition_required 确认必填项完成, 最后 transition_state; 多任务逐个独立流转
-**主桶**: feishu (完整定义见该桶)
+#### lark-project (跨桶)
+**触发**: 用户给 project.feishu.cn 链接（或 Meego 工作项 id）要求读取/总结/看附件/分析需求或缺陷内容; 或 PR merge 后流转飞书 issue 状态; 或用户说「流转任务/改状态/标完成/飞书项目/工作项」; 或 devflow Land 阶段 (8d. Task Transition)
+**读**: ``
+**摘要**: 飞书项目管理(FeishuProjectMcp): 工作项读取(含附件 X-Meego-File-Sign) + 状态流转(组员开发→研发已改待BUILD) + 搜索(search_by_mql) + 创建更新; project_key 撞多空间改传真实 24 位 hex key; 详细流程见 skill 内 references/
+**主桶**: lark (完整定义见该桶)
 
 #### dev-land (跨桶)
 **触发**: devflow 路由到 Land 阶段, 或用户说「land / 着陆 / 准备着陆 / 走 land 阶段」(注意: 独立说「提 PR / 收尾 / 合并」不在 devflow 上下文时走 finishing-branch, 不走本 skill)
 **读**: `${CLAUDE_PLUGIN_ROOT}/rules/rule-dev-land.md`
-**摘要**: Landing 收尾: Pre-flight(Review Gate + 分支状态) → Disposition(4选项 merge/PR/keep/discard) → 执行(rule-finishing-branch) → Task Transition(rule-feishu-transition) → Cleanup; Mini 走 Land-lite(commit only)
+**摘要**: Landing 收尾: Pre-flight(Review Gate + 分支状态) → Disposition(4选项 merge/PR/keep/discard) → 执行(rule-finishing-branch) → Task Transition(lark-project) → Cleanup; Mini 走 Land-lite(commit only)
 **主桶**: workflow (完整定义见该桶)
 
 ### 桶: 评审 (review)

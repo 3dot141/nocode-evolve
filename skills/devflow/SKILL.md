@@ -262,7 +262,7 @@ Fix 类任务的 Review 通过后，问一句：**"什么能预防这个 bug？"
 | 8a. Create PR | `rule-finishing-branch` option 2 | Gate Title-Body（title≤50/body markdown 用户确认） + push + PR 已创建 |
 | 8b. Add Reviewers | `rule-finishing-branch` pr-flow | reviewer 已添加（部分失败报告跳过；或用户说跳过） |
 | 8c. Poll & Merge | ScheduleWakeup → merge | canMerge + merge 成功（用户可选"直接 merge"/"不 merge"） |
-| 8d. Task Transition | `rule-feishu-transition` | 飞书 issue 流转到研发已改待BUILD（或跳过） |
+| 8d. Task Transition | `lark-project` (references/transition.md) | 飞书 issue 流转到研发已改待BUILD（或跳过） |
 | 8e. Cleanup | `rule-finishing-branch` Gate Worktree-Cleanup | worktree 清理完成 |
 
 ---

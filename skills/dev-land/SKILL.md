@@ -26,7 +26,7 @@ Review 通过后的 **disposition** 门。4 条路（merge / PR / keep / discard
 1. **Pre-flight** — 确认 Entry Gate + 分支状态
 2. **Disposition** — 呈现 4 选项，用户选路径
 3. **Execute** — 按选定路径执行（rule-finishing-branch）
-4. **Task Transition** — 飞书 issue 状态流转（rule-feishu-transition）
+4. **Task Transition** — 飞书 issue 状态流转（lark-project references/transition.md）
 5. **Cleanup** — worktree 清理 + 确认终态
 
 ## 协议
@@ -92,7 +92,7 @@ commit 整理 → Gate Merge → 本地 merge → tests → cleanup → Gate Rem
 PR 合并后（option 2 等合并；option 1 合并后立即）：
 
 - 从 commit messages 提取飞书任务号（`#f-xxx` / `#g-xxx` / `#m-xxx`）
-- 按 `rule-feishu-transition` 流转状态（组员开发 → 研发已改待BUILD）
+- 按 `lark-project` (references/transition.md) 流转状态（组员开发 → 研发已改待BUILD）
 - 没有任务号 / 非飞书项目 → 跳过，不报错
 
 **Option 3/4 不走 Task Transition**。

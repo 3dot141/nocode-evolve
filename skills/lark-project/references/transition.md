@@ -8,7 +8,7 @@ PR merge 后把飞书 issue 从「组员开发」流转到「研发已改待BUIL
 - 用户 push/merge 后说「流转任务 / 改状态 / 标完成」; 或
 - commit message 含飞书任务号 (`#f-xxx` / `#g-xxx` / `#m-xxx`) 且用户要求流转
 
-**不触发**: 纯查看工作项 (走 `rule-feishu-project-workitem-read`); 纯讨论不执行流转。
+**不触发**: 纯查看工作项 (走 `lark-project` SKILL.md 的工作项读取流程); 纯讨论不执行流转。
 
 ## 前置: 加载 MCP 工具
 
