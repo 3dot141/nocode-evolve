@@ -238,9 +238,12 @@ TO 传递给后续 Plan（指导切片 + task covers）、Build（驱动 TDD）�
 
 如果选定方案涉及前端 UI（新页面 / UI 改造 / 交互变更），在写设计文档前明确 UI 怎么做：
 
-1. **有 pd-ui 产出（`.ui.md`）**→ 读它，把 IA / wireframe / 视觉方向作为 UI 设计输入，设计文档的 `## UI 设计` 节引用并补充技术实现细节（组件拆分 / 状态管理 / 渲染策略）
-2. **无 pd-ui 产出但有 UI 需求** → 按 `{NOCODE_SKILL_REF}/ui-taste-skills.md`「设计源解析」共享流程确定设计源（DesignSync / 截图参考 / Figma / taste skill），然后在设计文档里补 `## UI 设计` 节，内容包括：
-   - **设计源**：标注 `[design-source: ...]`，Build 阶段按此消费
+1. **有 pd-ui 产出（`.ui.md`）**→ 读它，把 IA / wireframe / 视觉方向作为 UI 设计输入，设计文档的 `## UI 设计` 节引用并补充技术实现细节（组件拆分 / 状态管理 / 渲染策略）。设计源标识从 `.ui.md` 继承（`claude-design` / `prototype`）
+2. **无 pd-ui 产出但有 UI 需求** → AskUserQuestion 让用户选：
+   - **跑 pd-ui**（推荐）→ 调 `Skill(nocode-evolve:pd-ui)` 走完整交互视觉设计，产出 `.ui.md` 后回来继续
+   - **直接选视觉方向** → 按 `{NOCODE_SKILL_REF}/ui-taste-model.md` 选一个 taste model，直接在设计文档里做视觉决策（不产出单独标识——taste model 被消化成具体值写进文档）
+   
+   选定后在设计文档里补 `## UI 设计` 节，内容包括：
    - **UI 架构**：组件拆分 / 状态管理方案 / 渲染策略（CSR/SSR/RSC）
    - **UI 技术选型**：CSS 框架（Tailwind/CSS Modules/styled）、组件库（shadcn/Radix/自建）、选型理由
    - **页面/组件清单**：要新建或改哪些页面/组件
@@ -259,7 +262,7 @@ design-doc-writing 接管：doc-type 选择 → 写 → review → render。
 
 **verify 策略作为设计文档固定章节落盘**（不只存在于会话文本），章节名 `## 验证策略`，含 TO 表 + 按层级分组的测试方案 + 不测项 + 路径覆盖状态表。Verify 阶段直接从设计文档读取此章节作为执行依据。
 
-**UI 设计作为设计文档固定章节落盘**（涉及前端时），章节名 `## UI 设计`，含设计源标识 `[design-source: ...]` + 页面/组件清单 + 布局结构 + 交互行为。Build 阶段直接从设计文档读取此章节，按设计源消费（有设计稿照写，没有按 taste skill 发挥）。
+**UI 设计作为设计文档固定章节落盘**（涉及前端时），章节名 `## UI 设计`，含页面/组件清单 + 布局结构 + 交互行为。有 pd-ui 产出时附设计源标识 `[design-source: claude-design <projectId>]` 或 `[design-source: prototype <路径>]`，Build 去外部产物照做；无外部产物时设计文档本身就是全部视觉依据。
 
 **设计 Review 六轴**：
 

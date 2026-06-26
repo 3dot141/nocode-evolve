@@ -292,7 +292,7 @@
       "triggers": ["交互.{0,2}设计", "视觉.{0,2}设计", "界面.{0,2}设计", "(线框图|wireframe|原型|设计稿)", "长.{0,2}什么样"],
       "action": "Skill(nocode-evolve:pd-ui)",
       "read": "",
-      "summary": "独立产品流交互视觉设计阶段(9步 Entry/Exit Gate 驱动): Step 0 读 PRD+解析设计源 → Step 1 竞品与产品探索(并行) → Step 2 澄清+选保真度 → Step 3 逐交互拆解+IA(approve gate) → Step 4 视觉方向发散(2-3个) → Step 5 设计系统补齐(DesignSync时 foundations→components→patterns 自下而上) → Step 6 高保真产出(按设计源分路) → Step 7 验证+交付(PRD走查+五维+vis-review) → Step 8 保存+Handoff; 产出 .ui.md; 只做产品交互+视觉不碰技术架构(那是 dev-design)",
+      "summary": "独立产品流交互视觉设计阶段(渐进式披露: ASCII→低保真→高保真, 每层可交付不推翻): 交互阶段 Step 0 确定起点(查.ui.md) → Step 1 竞品+逐交互拆解 → Step 2 IA汇总+批准; 视觉阶段 Step 3 视觉探索(竞品截图+Template) → Step 4 保真度+交付方式(Claude Design/HTML双线)+视觉方向 → Step 5 Design System决策(小项目跳过, 三步走可并行) → Step 6 生成原型(/design或本地HTML) → Step 7 验证 → Step 8 保存+Handoff; 产出 .ui.md; 不绑死工具每步有备选",
       "guard": "",
       "depends_on": [],
       "severity": "advisory",
