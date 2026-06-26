@@ -21,7 +21,7 @@ argument-hint: <搜索关键词>
 
 用 Agent 工具 spawn recall-search subagent：
 
-- **subagent_type**: `recall-search`
+- **subagent_type**: `nocode-evolve:recall-search`
 - **prompt**:
 
 ```

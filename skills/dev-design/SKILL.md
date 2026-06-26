@@ -66,7 +66,7 @@ Define 回答"做什么"，Design 回答"怎么做"。核心动作是探索 **ap
 
 #### 1a. 代码 pattern 深度分析（subagent）
 
-`Agent(subagent_type: "semble-search")`，prompt 包含 restate 关键词 + 要找什么：
+`Agent(subagent_type: "nocode-evolve:semble-search")`，prompt 包含 restate 关键词 + 要找什么：
 
 - **已有实现**：找当前代码库里解决过类似问题的实现。不只是找"有没有"，要理解"怎么做的、为什么这么做"
 - **可复用 pattern**：现有代码的架构 pattern、抽象层次、模块边界。新方案应跟随已有 pattern，除非有充分理由偏离

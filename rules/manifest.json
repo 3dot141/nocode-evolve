@@ -138,7 +138,7 @@
       "bucket": "git-lifecycle",
       "also_buckets": ["design", "review"],
       "trigger_type": "behavior",
-      "trigger_desc": "即将做设计性动作 (设计文档/PRD/RFC/ADR/方案对比/技术选型/重构方案/架构设计), 或即将做代码搜索 (Agent semble-search / Bash grep -r/rg/find / Explore), 或多文件 Read (≥3 文件) 探源做方案分析 — 不论主仓 or worktree (worktree 内长期工作仍可能 stale, 不被 rule-git-worktree 覆盖). 一句 node \"${CLAUDE_PLUGIN_ROOT}/scripts/freshness-check.mjs\" 调脚本拿 base/behind/ahead, gate=gate (behind ≥ 5, 或 branch+base 首次冷启动) 时停手三选, 否则继续. cache TTL 2h 内毫秒返回不 fetch",
+      "trigger_desc": "即将做设计性动作 (设计文档/PRD/RFC/ADR/方案对比/技术选型/重构方案/架构设计), 或即将做代码搜索 (Agent nocode-evolve:semble-search / Bash grep -r/rg/find / Explore), 或多文件 Read (≥3 文件) 探源做方案分析 — 不论主仓 or worktree (worktree 内长期工作仍可能 stale, 不被 rule-git-worktree 覆盖). 一句 node \"${CLAUDE_PLUGIN_ROOT}/scripts/freshness-check.mjs\" 调脚本拿 base/behind/ahead, gate=gate (behind ≥ 5, 或 branch+base 首次冷启动) 时停手三选, 否则继续. cache TTL 2h 内毫秒返回不 fetch",
       "triggers": [],
       "action": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/freshness-check.mjs\" --max-behind=5 --ttl=7200; exit 2 时 Read rules/rule-git-freshness.md 走 gate 三选",
       "read": "${CLAUDE_PLUGIN_ROOT}/rules/rule-git-freshness.md",

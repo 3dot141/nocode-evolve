@@ -70,7 +70,7 @@ Standard/Full → 进 Step 2。
 **并行执行**：代码探索和网络探索互不依赖，**用并行 subagent 同时跑**（在一条消息里同时发出多个 Agent 调用）。两路结果回来后再综合。
 
 **代码探索 agent**（Full / Standard / Fix）：
-- `Agent(subagent_type: "semble-search")`，prompt 说明要找什么
+- `Agent(subagent_type: "nocode-evolve:semble-search")`，prompt 说明要找什么
 - 找已有的相关实现、可复用模块、相似 pattern
 - 标注 `[Read path:line]` 来源
 - 目的：不重复造轮子，理解当前系统的约束和边界
