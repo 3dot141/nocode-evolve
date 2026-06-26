@@ -51,7 +51,7 @@ Task 5: Cleanup
 
 每完成一个标 done。
 
-### 8a. Pre-flight
+### Step 1: Pre-flight
 
 Enter Gate 三项逐条检查：
 
@@ -59,9 +59,14 @@ Enter Gate 三项逐条检查：
 - [ ] **工作目录**：`git status` 干净。有未 commit 改动 → 停手告知，不替用户 commit
 - [ ] **分支新鲜度**：调 `rule-git-freshness` 检查 behind 差距。behind 大 → 建议先 rebase，但用户决定
 
-三项全过 → 进 8b。任一不满足 → 报告具体状态 + 建议动作，不自行修复。
+三项全过 → 进 Step 2。任一不满足 → 报告具体状态 + 建议动作，不自行修复。
 
-### 8b. Disposition
+**Exit Gate:**
+- [ ] Review 状态确认
+- [ ] 工作目录干净
+- [ ] 分支新鲜度确认
+
+### Step 2: Disposition
 
 调 `nocode-evolve:finishing-a-development-branch`，由 `rule-finishing-branch` overlay 覆盖行为。
 
@@ -84,7 +89,11 @@ skill 呈现 4 选项菜单（文案顺序由 sp skill 定义，不改）：
 
 用户选定后，`rule-finishing-branch` 接管该路径的 Gate 序列。
 
-### 8c. Execute
+**Exit Gate:**
+- [ ] 用户已选定 Disposition（Merge / PR / Keep / Discard）
+- [ ] 发布策略已确认（生产改动时）或已跳过
+
+### Step 3: Execute
 
 按 `rule-finishing-branch` 的选项分发执行。关键 Gate 序列：
 
@@ -107,7 +116,11 @@ commit 整理 → Gate Merge → 本地 merge → tests → cleanup → Gate Rem
 
 **完整示例**：走完 Option 2 (PR) 全流程（含 PR body 双回链）见 `references/examples/example-land-pr.md`。
 
-### 8d. Task Transition
+**Exit Gate:**
+- [ ] 选定路径执行完毕（PR 已创建 / 已合并 / 已 discard / 保留）
+- [ ] 所有路径内 Gate 已通过
+
+### Step 4: Task Transition
 
 PR 合并后（option 2 等合并；option 1 合并后立即）：
 
@@ -117,7 +130,10 @@ PR 合并后（option 2 等合并；option 1 合并后立即）：
 
 **Option 3/4 不走 Task Transition**。
 
-### 8e. Cleanup
+**Exit Gate:**
+- [ ] 飞书任务已流转（有任务号时）或已标注跳过
+
+### Step 5: Cleanup
 
 - **Option 1/4**：worktree 已在该路径中清理
 - **Option 2**：按 Gate Worktree-Cleanup 用户选择（保留 / 清理）
@@ -125,7 +141,11 @@ PR 合并后（option 2 等合并；option 1 合并后立即）：
 
 清理后 `ExitWorktree` 回主仓。确认 `git worktree list` 不再包含已清理路径。
 
-## Exit Gate
+**Exit Gate:**
+- [ ] worktree 状态与用户选择一致（清理 / 保留）
+- [ ] 已 ExitWorktree 回主仓（清理时）
+
+## Exit Gate（全局）
 
 - [ ] 选定路径的所有 Gate 已通过
 - [ ] PR 已创建（option 2）或已合并（option 1）或已 discard（option 4）
@@ -141,7 +161,7 @@ PR 合并后（option 2 等合并；option 1 合并后立即）：
 | Task Transition | 按需 | 跳过 |
 | Cleanup | 按路径 | 无 worktree 可清理 |
 
-Mini 场景的 Land-lite：确认 commit 已完成即可，不进完整 8a-8e。
+Mini 场景的 Land-lite：确认 commit 已完成即可，不进完整 Step 1-5。
 
 ## Common Rationalizations
 
@@ -159,4 +179,4 @@ Mini 场景的 Land-lite：确认 commit 已完成即可，不进完整 8a-8e。
 - 跳过 Gate Title-Body 直接 `gh pr create`——Gate 存在就是为了拦这个
 - PR 创建后立刻 merge 不等 review——option 2 终态是 PR 提交，不是合并
 - 清理 worktree 但没 ExitWorktree——先退出再清理
-- Option 2 选了 PR 路径又说"还是本地 merge 吧"——回 8b 重选，不混搭
+- Option 2 选了 PR 路径又说"还是本地 merge 吧"——回 Step 2 重选，不混搭
