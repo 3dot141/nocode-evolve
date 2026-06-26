@@ -73,15 +73,25 @@ Define 回答"做什么"，Design 回答"怎么做"。核心动作是探索 **ap
 - **影响面**：这次改动会触及哪些模块、哪些调用链、哪些 contract
 - 标注 `[Read path:line]` 来源
 
-#### 1b. 外部技术方案搜索（subagent）
+#### 1b. 外部技术方案搜索（research-engine）
 
-`Agent(subagent_type: "fork")`，prompt 用 Exa/WebSearch + deepwiki 搜索：
+调用 `research-engine` workflow 搜索外部方案：
 
-- **开源库/框架**：有没有现成的库可以用？成熟度、维护状态、社区活跃度
-- **最佳实践**：业界怎么解决这类问题？有没有公认的架构模式？
-- **技术博客/案例**：别人踩过什么坑、有什么经验教训
-- 标注 `[SOURCE: url]` 来源
-- **不把搜索结果当事实**：网上方案需要对照本项目实际情况评估适用性
+```js
+Workflow({
+  scriptPath: '$CLAUDE_PLUGIN_ROOT/workflows/research-engine.js',
+  args: {
+    question: '<restate 关键词 + 要解决的技术问题>',
+    depth: 'shallow',  // 探索阶段默认 shallow；用户说"深入调研"时改 deep
+    systemPrompt: '你在做技术方案探索。搜索用 WebSearch 或 Exa，遇到开源库用 deepwiki 查文档。关注：开源库/框架的成熟度和维护状态、业界架构模式和最佳实践、技术博客和案例中的经验教训。不把搜索结果当事实——需对照本项目实际情况评估适用性。引用格式: [SOURCE: url]。',
+  }
+})
+```
+
+从返回值的 `findings` 提取：
+- **开源库/框架**：成熟度、维护状态、社区活跃度
+- **最佳实践**：架构模式、公认做法
+- **经验教训**：别人踩过的坑
 
 #### 1c. 对齐已有决策（subagent 或内联）
 
@@ -91,7 +101,7 @@ Define 回答"做什么"，Design 回答"怎么做"。核心动作是探索 **ap
 - 新方案与旧决策冲突不是不能做，但要在设计文档里说明为什么推翻
 - **Domain 词汇对齐**：方案里的术语必须和项目的 domain 语言一致
 
-**工具降级**：semble-search 不可用 → 降级 Bash grep + Explore agent。Exa/WebSearch 不可用 → 跳过外部搜索，标注"网络不可用，方案基于代码内部分析"。
+**工具降级**：semble-search 不可用 → 降级 Bash grep + Explore agent。research-engine 内部处理网络工具不可用的降级（跳过 + 标注）。
 
 #### 探索综合
 

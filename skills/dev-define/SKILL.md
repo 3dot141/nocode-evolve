@@ -75,14 +75,27 @@ Standard/Full → 进 Step 2。
 - 标注 `[Read path:line]` 来源
 - 目的：不重复造轮子，理解当前系统的约束和边界
 
-**网络探索 agent**（Full 完整 / Standard 轻量）：
-- `Agent(subagent_type: "fork")`，prompt 用 Exa/WebSearch 搜索
-- 搜类似问题在业界怎么定义的、有没有行业标准/规范
-- **只搜问题定义层面的参考，不搜解法**——解法是 Design 的事
+**网络探索**（Full 完整 / Standard 轻量）：
+
+Full 场景调 `research-engine` workflow：
+
+```js
+Workflow({
+  scriptPath: '$CLAUDE_PLUGIN_ROOT/workflows/research-engine.js',
+  args: {
+    question: '<任务描述> 在业界怎么定义、有没有行业标准/规范',
+    depth: 'shallow',
+    systemPrompt: '你在做需求定义阶段的问题空间探索。搜索用 WebSearch 或 Exa。只搜问题定义层面的参考（行业标准/规范/问题框架），不搜解法——解法是 Design 的事。引用格式: [SOURCE: url]。',
+  }
+})
+```
+
+Standard 场景直接 `Agent(subagent_type: "fork")`，prompt 用 Exa/WebSearch 轻量搜一两个查询（有没有现成问题框架），不需要走 research-engine。
+
 - 标注 `[SOURCE: url]` 来源
 - 目的：避免重新发明已有的问题框架
 
-**工具降级**：semble-search 不可用 → 降级 Bash grep + Explore agent。Exa/WebSearch 不可用 → 跳过网络探索，标注"网络不可用"。
+**工具降级**：semble-search 不可用 → 降级 Bash grep + Explore agent。research-engine 内部处理网络工具不可用的降级。
 
 **综合**：两路 agent 结果回来后，输出一段简要总结（代码里已有什么 + 网上发现了什么），带入 Step 4 影响假设的置信度。
 

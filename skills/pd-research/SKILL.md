@@ -36,57 +36,85 @@ description: Use when the user wants to explore a problem space before committin
 
 用户给出调研对象（一句话即可）。AI 提议调研切面，用 AskUserQuestion 让用户勾选：
 
-| 切面 | 做什么 | 工具 |
-|---|---|---|
-| **竞品分析** | 搜 5-7 个竞品，Feature Matrix + Positioning Map | Exa/WebSearch |
-| **代码现状** | 扫描当前代码库已有的相关实现/pattern/模块 | semble-search |
-| **用户信号** | 搜社区讨论、用户反馈、评价、痛点 | Exa/WebSearch |
-| **市场空间** | 市场规模估算、增长趋势、商业模式、竞争格局、空白机会 | Exa/WebSearch |
-| **已有方案** | 搜开源库/工具/最佳实践/架构模式 | Exa/WebSearch + deepwiki |
+| 切面 | 做什么 |
+|---|---|
+| **竞品分析** | 搜 5-7 个竞品，Feature Matrix + Positioning Map |
+| **代码现状** | 扫描当前代码库已有的相关实现/pattern/模块 |
+| **用户信号** | 搜社区讨论、用户反馈、评价、痛点 |
+| **市场空间** | 市场规模估算、增长趋势、商业模式、竞争格局、空白机会 |
+| **已有方案** | 搜开源库/工具/最佳实践/架构模式 |
 
 默认全选。用户可取消不需要的切面。至少选一个。
 
+**选完切面后，用 AskUserQuestion 让用户选研究深度**：
+
+| 深度 | 行为 | 适用场景 |
+|---|---|---|
+| **浅研究**（shallow） | 2-3 角度搜索 → 直接综合，不做验证 | 快速了解、发散阶段 |
+| **深度研究**（deep） | 4-6 角度搜索 → 提取声明 → 3 票对抗验证 → 综合 | 正式调研、需引用的报告 |
+
+默认浅研究。用户说"仔细看看"/"深入调研"时建议深度。
+
 **内部审计模式**：调研对象是内部产物（代码/skill/流程/架构）而非外部产品时，切面按审计维度自定义（如结构一致性 / 路由对齐 / 边界分析 / 内容质量 / 方法论对标），不拘泥于标准五切面。
 
-**裁剪**：轻量调研可只选 1-2 个切面（用户说"快速看看"/"简单调研一下"时建议精简）。
+**裁剪**：轻量调研可只选 1-2 个切面（用户说"快速看看"/"简单调研一下"时建议精简 + 浅研究）。
 
-### Step 2: 并行探索
+### Step 2: 并行探索（委派 research-engine）
 
-每个选中的切面 spawn 一个专职 agent（fork），各自独立探索。
+每个选中的切面调用 `research-engine` workflow，传入切面专属的 systemPrompt。多个切面可并行（spawn fork agent 各自调 Workflow）。
 
-**竞品分析 agent**：
-- 搜索 5-7 个相关竞品/产品
-- 产出 Feature Matrix（功能对比表）
-- 产出 Positioning Map（两轴定位图，选用户真在意的轴）
-- 每条发现带 `[SOURCE: url]` 引用
+```js
+Workflow({
+  scriptPath: '$CLAUDE_PLUGIN_ROOT/workflows/research-engine.js',
+  args: {
+    question: '<调研对象> 的 <切面名> 方面',
+    depth: '<用户选的深度>',
+    systemPrompt: '<切面专属 prompt，见下表>',
+  }
+})
+```
 
-**代码现状 agent**：
-- 用 semble-search 扫描代码库
-- 找已有的相关实现、可复用模块、pattern
-- 标注 `[Read path:line]` 来源
+**各切面的 systemPrompt 模板**：
 
-**用户信号 agent**：
-- 搜社区（Reddit / HN / 知乎 / GitHub Issues / 论坛）
-- 搜用户评价（G2 / ProductHunt / App Store）
-- 提取痛点、需求信号、用户反馈
-- 每条带 `[SOURCE: url]` 引用
+**竞品分析**：
+```
+你在做产品竞品调研。搜索用 WebSearch 或 Exa。
+搜 5-7 个相关竞品/产品，关注功能差异、用户体验、定价策略、市场定位。
+产出应包含 Feature Matrix（功能对比表）和 Positioning Map（两轴定位图）素材。
+引用格式: [SOURCE: url]。
+```
 
-**市场空间 agent**：
-- 搜市场规模数据（TAM/SAM/SOM 估算，能找到公开数据就用，找不到标 `[ASSUMED]`）
-- 搜行业增长趋势、市场报告摘要
-- 分析竞品商业模式（定价策略、营收模式）
-- 识别市场空白（哪块需求没人做好）
-- 每条带 `[SOURCE: url]` 引用
+**代码现状**：
+```
+你在搜索代码库的现有实现和 pattern。搜索用 semble-search agent（Agent subagent_type: "nocode-evolve:semble-search"）。
+找已有的相关模块、可复用代码、架构 pattern、接口定义。
+引用格式: [Read path:line]。验证时查 caller、test、实际导出。
+```
 
-**已有方案 agent**：
-- 搜开源项目 / 库 / 框架
-- 搜最佳实践文章、架构模式
-- 用 deepwiki 查相关库文档
-- 评估成熟度和适用性
+**用户信号**：
+```
+你在搜集用户反馈和社区讨论。搜索用 WebSearch 或 Exa。
+重点搜 Reddit、HN、知乎、GitHub Issues、论坛、G2/ProductHunt/App Store 评价。
+提取痛点、需求信号、用户原话。引用格式: [SOURCE: url]。
+```
 
-**深度网络搜索委派**：竞品分析、用户信号、市场空间、已有方案切面需要多路搜索 + 交叉验证时，优先委派 `deep-research` skill 执行（它做并行搜索、抓取源、事实校验），pd-research 管切面框架和用户校验流程。轻量搜索（单次 Exa/WebSearch 能覆盖）不必委派。
+**市场空间**：
+```
+你在做市场空间分析。搜索用 WebSearch 或 Exa。
+搜市场规模数据（TAM/SAM/SOM，公开数据优先，找不到标 [ASSUMED]）、行业增长趋势、市场报告摘要。
+分析竞品商业模式（定价策略、营收模式）。识别市场空白。引用格式: [SOURCE: url]。
+```
 
-**工具降级**：Exa/WebSearch 不可用 → 跳过该切面，标注 `[网络不可用, 跳过]`。semble-search 不可用 → 降级 Bash grep，标注 fallback。
+**已有方案**：
+```
+你在搜索已有的技术方案和最佳实践。搜索用 WebSearch 或 Exa，遇到开源库用 deepwiki 查文档。
+搜开源项目/库/框架、最佳实践文章、架构模式。评估成熟度和适用性。
+引用格式: [SOURCE: url]。
+```
+
+**内部审计模式**：自定义切面的 systemPrompt 按审计维度写，工具按需选（代码用 semble-search，文档用 Read，外部对标用 WebSearch）。
+
+**research-engine 返回值**中的 `findings` 即该切面的结构化发现，`sources` 含所有检索到的源，`stats` 含验证统计。agent 把返回值暂存，进 Step 3 逐切面展示。
 
 ### Step 3: 逐切面校验（1-3 轮）
 
