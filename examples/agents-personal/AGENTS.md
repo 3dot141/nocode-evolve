@@ -34,6 +34,16 @@
 
 <!-- 按需补充更多占位符。可用占位符清单见插件 agent-about.md。 -->
 
+# 命令/skill 命名惯例
+
+> 参考: model/agent-about.md「命令/skill 命名惯例」
+
+| 模式 | 命名 | 含义 | 例子 |
+|---|---|---|---|
+| `*hub` | 领域名 + hub (无连字符) | 聚合入口: flat 意图分发 | `larkhub`, `personalhub` |
+| `*flow` | 领域名 + flow (无连字符) | 工作流: 阶段制 sequential | `devflow`, `pdflow` |
+| `xx-yy` | 连字符 | 子 skill | `lark-read`, `dev-build` |
+
 # 项目指令
 
 > 触发表 —— 按场景路由到 `rules/<topic>.md`。AGENTS.md 只放触发条件，不写细节。

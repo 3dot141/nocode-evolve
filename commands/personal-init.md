@@ -56,6 +56,16 @@ argument-hint: (无参数)
 <!-- {dev_verify_output} = docs/dev/{username}/{yymmdd}-{serial}-{topic}/verify-report.md -->
 <!-- {dev_review_output} = docs/dev/{username}/{yymmdd}-{serial}-{topic}/review-log.md -->
 
+## 命令/skill 命名惯例
+
+> 参考: model/agent-about.md「命令/skill 命名惯例」
+
+| 模式 | 命名 | 含义 | 例子 |
+|---|---|---|---|
+| `*hub` | 领域名 + hub (无连字符) | 聚合入口: flat 意图分发 | `larkhub`, `personalhub` |
+| `*flow` | 领域名 + flow (无连字符) | 工作流: 阶段制 sequential | `devflow`, `pdflow` |
+| `xx-yy` | 连字符 | 子 skill | `lark-read`, `dev-build` |
+
 ## Rules
 
 <!-- /distill 沉淀时自动填充。格式: -->
