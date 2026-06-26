@@ -110,7 +110,7 @@
       "triggers": ["review\\s*一下", "帮我?\\s*审", "审一遍", "看.{0,6}(改动|代码|实现).{0,4}(问题|有没有|对不对)", "codex\\s*review", "adversarial"],
       "action": "Read rules/rule-codex-review.md",
       "read": "${CLAUDE_PLUGIN_ROOT}/rules/rule-codex-review.md",
-      "summary": "本机 Codex 当独立模型接四场景 (红蓝红军 / 代码 review 收尾 / 委派救援 / 设计文档审稿); 直接 Bash 调 codex-companion.mjs; 先 setup --json 探, 不可用降级自做 + 明说; 禁改 vendored 文件",
+      "summary": "本机 Codex 当独立模型接四场景 (红蓝红军 / 代码 review 收尾 / 委派救援 / 设计文档审稿); 直接 Bash 调 vendor/codex/scripts/codex-companion.mjs (入口 ${CLAUDE_PLUGIN_ROOT}/vendor/codex/scripts/codex-companion.mjs); 先 setup --json 探, 不可用降级自做 + 明说; 禁改 vendored 文件",
       "guard": "先 setup --json 探, 不可用降级自做 + 明说; 禁改 vendor/codex/ 文件。",
       "depends_on": [],
       "severity": "warn",

@@ -1,0 +1,1 @@
+../vendor/codex/scripts/codex-companion.mjs

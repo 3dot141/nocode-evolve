@@ -36,7 +36,7 @@
 #### codex-review (跨桶)
 **触发**: red-blue-deep 判重档走到红军环节; 或完成分支 / 显式 review 请求; 或我卡住 / 想要第二实现 / 独立诊断 / 委派; 或 design-doc-writing 走到 review 环节. 不含: devflow Review 阶段的五轴评审 (走 dev-review skill, 不走本 rule)
 **读**: `${CLAUDE_PLUGIN_ROOT}/rules/rule-codex-review.md`
-**摘要**: 本机 Codex 当独立模型接四场景 (红蓝红军 / 代码 review 收尾 / 委派救援 / 设计文档审稿); 直接 Bash 调 codex-companion.mjs; 先 setup --json 探, 不可用降级自做 + 明说; 禁改 vendored 文件
+**摘要**: 本机 Codex 当独立模型接四场景 (红蓝红军 / 代码 review 收尾 / 委派救援 / 设计文档审稿); 直接 Bash 调 vendor/codex/scripts/codex-companion.mjs (入口 ${CLAUDE_PLUGIN_ROOT}/vendor/codex/scripts/codex-companion.mjs); 先 setup --json 探, 不可用降级自做 + 明说; 禁改 vendored 文件
 **主桶**: review (完整定义见该桶)
 
 #### git-freshness (跨桶)
