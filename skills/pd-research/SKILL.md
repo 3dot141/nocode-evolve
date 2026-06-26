@@ -84,6 +84,8 @@ description: Use when the user wants to explore a problem space before committin
 - 用 deepwiki 查相关库文档
 - 评估成熟度和适用性
 
+**深度网络搜索委派**：竞品分析、用户信号、市场空间、已有方案切面需要多路搜索 + 交叉验证时，优先委派 `deep-research` skill 执行（它做并行搜索、抓取源、事实校验），pd-research 管切面框架和用户校验流程。轻量搜索（单次 Exa/WebSearch 能覆盖）不必委派。
+
 **工具降级**：Exa/WebSearch 不可用 → 跳过该切面，标注 `[网络不可用, 跳过]`。semble-search 不可用 → 降级 Bash grep，标注 fallback。
 
 ### Step 3: 逐切面校验（1-3 轮）
