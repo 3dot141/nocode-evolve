@@ -14,21 +14,21 @@
 
 #### dev-design
 **触发**: 用户要求写设计文档 / RFC / Design Doc / ADR / 重构方案 / 技术 spec / API 设计, 或 devflow 路由到 Design 阶段. 不含: 产品 PRD (走 pd-prd skill, 不走本 rule)
-**读**: `${CLAUDE_PLUGIN_ROOT}/rules/rule-dev-design.md`
+**读**: ``
 **摘要**: Design 阶段: 方案探索(brainstorming发散解法空间) + 测试目标推导 + 设计文档(design-doc-writing); adversarial review + 设计六轴(可行性/清晰度/架构合理性/安全/性能/可扩展性) + source-driven 前置检查 + 轻量 threat model
 **也属**: workflow
 **生命周期**: 0 设计
 
 #### pd-prd
 **触发**: 用户说「写 PRD / 产品需求 / 产品设计 / 产品 brief / 写需求文档」, 或 research 完成后衔接, 或 devflow Full 场景建议
-**读**: `${CLAUDE_PLUGIN_ROOT}/rules/rule-pd-prd.md`
+**读**: ``
 **摘要**: 独立产品流 PRD 阶段: 读 research-report(可选) + clarify gate + 写结构化 .prd.md 文档(6 核心要素 + 扩展字段); [TBD]/[ASSUMED] 双标注; Go/No-Go 结尾
 **也属**: workflow
 **生命周期**: 0 设计
 
 #### pd-ui
 **触发**: 用户说「交互设计 / 视觉设计 / 界面设计 / 原型 / wireframe / 线框图 / 设计稿 / 长什么样」, 或 pd-prd 完成后衔接, 或 pdflow 在 PRD 后路由到交互视觉设计阶段
-**读**: `${CLAUDE_PLUGIN_ROOT}/rules/rule-pd-ui.md`
+**读**: ``
 **摘要**: 独立产品流交互视觉设计阶段: 读 PRD(可选) + 选保真度(默认低保真 wireframe) + 低保真 IA/交互流/wireframe(approve gate) + 2-3 视觉方向发散 + 可选高保真原型 + 对照 PRD 逐条走查; 产出 .ui.md; 只做产品交互+视觉不碰技术架构(那是 dev-design)
 **也属**: workflow
 **生命周期**: 0 设计
@@ -47,13 +47,13 @@
 
 #### pdflow (跨桶)
 **触发**: 用户说「pdflow / 产品发现 / 走产品阶段 / 先调研再写 PRD / 产品工作流」, 或 devflow Full 场景建议先走产品流
-**读**: `${CLAUDE_PLUGIN_ROOT}/rules/rule-pdflow.md`
+**读**: ``
 **摘要**: 产品发现工作流领航(Research → PRD · 2 场景路由); 独立于 devflow, 通过 .prd.md 文档衔接; Full(Research→PRD) / Light(PRD-only); Handoff 建议进 devflow
 **主桶**: workflow (完整定义见该桶)
 
 #### pd-research (跨桶)
 **触发**: 用户说「调研一下 / 帮我调研 / research / 竞品分析 / 市场调研 / 看看已有方案 / 看看别人怎么做」, 或 devflow Full 场景建议先走产品流
-**读**: `${CLAUDE_PLUGIN_ROOT}/rules/rule-pd-research.md`
+**读**: ``
 **摘要**: 独立产品流 Research 阶段: 并行五切面探索(竞品/代码/用户信号/市场空间/已有方案) + 逐切面校验(1-3轮), 产出 research-report.md; 可独立调起也可串联 prd skill
 **主桶**: workflow (完整定义见该桶)
 
