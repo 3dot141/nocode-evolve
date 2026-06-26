@@ -49,7 +49,7 @@ test('genCatalogSharded: 构造超长 manifest 切多片, 桶不被切断 (在 M
       trigger_desc: 'x'.repeat(200),
       triggers: [],
       action: '',
-      read: '',
+      read: 'rules/rule-test.md',
       summary: big,
       guard: '',
       pretooluse: [],
@@ -90,6 +90,21 @@ test('renderBucketBody: 复用同一渲染逻辑', () => {
   for (const r of m.rules) assert.ok(body.includes(r.id));
 });
 
+test('renderBucketBody: skill 类条目 (read 为空) 不输出摘要行', () => {
+  const m = {
+    buckets: [{ id: 'b1', title: 'B1', trigger_summary: 't', negatives: ['n'] }],
+    rules: [
+      { id: 'rule-with-file', bucket: 'b1', trigger_type: 'regex', trigger_desc: 'td', triggers: [], action: '', read: 'rules/rule-x.md', summary: 'RULE_SUMMARY', guard: '', pretooluse: [], also_buckets: [] },
+      { id: 'skill-no-file', bucket: 'b1', trigger_type: 'skill', trigger_desc: 'td', triggers: [], action: '', read: '', summary: 'SKILL_SUMMARY', guard: '', pretooluse: [], also_buckets: [] },
+      { id: 'skill-marker', bucket: 'b1', trigger_type: 'skill', trigger_desc: 'td', triggers: [], action: '', read: '(skill, 无 rule 文件)', summary: 'MARKER_SUMMARY', guard: '', pretooluse: [], also_buckets: [] },
+    ],
+  };
+  const body = renderBucketBody(m);
+  assert.ok(body.includes('RULE_SUMMARY'), 'rule 类条目应有摘要');
+  assert.ok(!body.includes('SKILL_SUMMARY'), 'skill 类条目 (read="") 不应有摘要');
+  assert.ok(!body.includes('MARKER_SUMMARY'), 'skill 类条目 (read="(...)") 不应有摘要');
+});
+
 test('genPretooluse: 扁平化 pretooluse 靶 (不变)', () => {
   const p = genPretooluse(loadManifest());
   const block = p.find((x) => x.decision === 'block' && /PUT/.test(x.pattern));
@@ -128,7 +143,7 @@ test('genCatalogSharded: 超 MAX_CATALOG_SHARDS 时 throw (防静默漏注入)',
       trigger_desc: 'x'.repeat(200),
       triggers: [],
       action: '',
-      read: '',
+      read: 'rules/rule-test.md',
       summary: 'x'.repeat(5500),
       guard: '',
       pretooluse: [],

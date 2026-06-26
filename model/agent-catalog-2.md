@@ -15,21 +15,18 @@
 #### dev-design
 **触发**: 用户要求写设计文档 / RFC / Design Doc / ADR / 重构方案 / 技术 spec / API 设计, 或 devflow 路由到 Design 阶段. 不含: 产品 PRD (走 pd-prd skill, 不走本 rule)
 **读**: ``
-**摘要**: Design 阶段: 方案探索(brainstorming发散解法空间) + 测试目标推导 + 设计文档(design-doc-writing); adversarial review + 设计六轴(可行性/清晰度/架构合理性/安全/性能/可扩展性) + source-driven 前置检查 + 轻量 threat model
 **也属**: workflow
 **生命周期**: 0 设计
 
 #### pd-prd
 **触发**: 用户说「写 PRD / 产品需求 / 产品设计 / 产品 brief / 写需求文档」, 或 research 完成后衔接, 或 devflow Full 场景建议
 **读**: ``
-**摘要**: 独立产品流 PRD 阶段: 读 research-report(可选) + clarify gate + 写结构化 .prd.md 文档(6 核心要素 + 扩展字段); [TBD]/[ASSUMED] 双标注; Go/No-Go 结尾
 **也属**: workflow
 **生命周期**: 0 设计
 
 #### pd-ui
 **触发**: 用户说「交互设计 / 视觉设计 / 界面设计 / 原型 / wireframe / 线框图 / 设计稿 / 长什么样」, 或 pd-prd 完成后衔接, 或 pdflow 在 PRD 后路由到交互视觉设计阶段
 **读**: ``
-**摘要**: 独立产品流交互视觉设计阶段(9步 Entry/Exit Gate 驱动): Step 0 读 PRD+解析设计源 → Step 1 竞品与产品探索(并行) → Step 2 澄清+选保真度 → Step 3 逐交互拆解+IA(approve gate) → Step 4 视觉方向发散(2-3个) → Step 5 设计系统补齐(DesignSync时 foundations→components→patterns 自下而上) → Step 6 高保真产出(按设计源分路) → Step 7 验证+交付(PRD走查+五维+vis-review) → Step 8 保存+Handoff; 产出 .ui.md; 只做产品交互+视觉不碰技术架构(那是 dev-design)
 **也属**: workflow
 **生命周期**: 0 设计
 
@@ -48,13 +45,11 @@
 #### pdflow (跨桶)
 **触发**: 用户说「pdflow / 产品发现 / 走产品阶段 / 先调研再写 PRD / 产品工作流」, 或 devflow Full 场景建议先走产品流
 **读**: ``
-**摘要**: 产品发现工作流领航(Research → PRD · 2 场景路由); 独立于 devflow, 通过 .prd.md 文档衔接; Full(Research→PRD) / Light(PRD-only); Handoff 建议进 devflow
 **主桶**: workflow (完整定义见该桶)
 
 #### pd-research (跨桶)
 **触发**: 用户说「调研一下 / 帮我调研 / research / 竞品分析 / 市场调研 / 看看已有方案 / 看看别人怎么做」, 或 devflow Full 场景建议先走产品流
 **读**: ``
-**摘要**: 独立产品流 Research 阶段: 并行五切面探索(竞品/代码/用户信号/市场空间/已有方案) + 逐切面校验(1-3轮), 产出 research-report.md; 可独立调起也可串联 prd skill
 **主桶**: workflow (完整定义见该桶)
 
 ### 桶: 记忆与沉淀 (memory)
@@ -81,14 +76,12 @@
 #### lark-read
 **触发**: 用户给飞书文档 URL 要求完整读取（含图片），或说「读一下这个文档 / 看看这篇文章 / 把文档内容拉下来 / 读取飞书文档」。不含: 低层 API 操作（走外部 lark-doc skill）
 **读**: ``
-**摘要**: 完整读取飞书文档(text + images + scope 引导 + 嵌入资源路由); 与 lark-doc 的区别: lark-doc 是底层 API skill, lark-read 是上层阅读流程; scope 未授权先试 curl 兜底再引导配置 docs:document.media:download
 **关键约束(上浮)**: 不要用 WebFetch 抓飞书文档(SPA); scope 未授权先试 curl 直链兜底。
 **生命周期**: cross
 
 #### lark-project
 **触发**: 用户给 project.feishu.cn 链接（或 Meego 工作项 id）要求读取/总结/看附件/分析需求或缺陷内容; 或 PR merge 后流转飞书 issue 状态; 或用户说「流转任务/改状态/标完成/飞书项目/工作项」; 或 devflow Land 阶段 (8d. Task Transition)
 **读**: ``
-**摘要**: 飞书项目管理(FeishuProjectMcp): 工作项读取(含附件 X-Meego-File-Sign) + 状态流转(组员开发→研发已改待BUILD) + 搜索(search_by_mql) + 创建更新; project_key 撞多空间改传真实 24 位 hex key; 详细流程见 skill 内 references/
 **关键约束(上浮)**: 下载附件必须带 X-Meego-File-Sign header; 非组员开发状态不强行流转; 别用 WebFetch 抓 SPA 链接。
 **也属**: git-lifecycle
 **生命周期**: cross
@@ -103,4 +96,67 @@
 **摘要**: 读 Figma 设计稿用 REST API (curl + $FIGMA_TOKEN 环境变量) 不依赖 MCP/agent-browser 登录; 从 URL 解析 file_key+node_id → GET /v1/files/{key}/nodes?ids={id} → python3 遍历节点树提取 TEXT(fontSize/fontWeight) + FRAME(fills/cornerRadius/padding); 颜色 RGBA 0-1 转 hex
 **关键约束(上浮)**: 凭截图推断精确数值不可靠, 精确值走 API; 用 $FIGMA_TOKEN 不硬编码明文。
 **生命周期**: cross
+
+### 桶: 工程流程 (workflow)
+**粗触发**: 需求澄清 / 目标定义 / 任务拆分 / 实现执行 / 端到端验证 / devflow 流程导航
+**不含 (负例)**: 纯查询 / 已在某个 skill 内部执行中
+
+#### dev-define
+**触发**: 用户说「澄清需求 / 做什么 / 目标是什么 / interview me / 定义目标 / 需求不清楚」, 或 devflow 路由到 Define 阶段
+**读**: ``
+**生命周期**: 0 设计
+
+#### pdflow
+**触发**: 用户说「pdflow / 产品发现 / 走产品阶段 / 先调研再写 PRD / 产品工作流」, 或 devflow Full 场景建议先走产品流
+**读**: ``
+**也属**: design
+**生命周期**: 0 设计
+
+#### pd-research
+**触发**: 用户说「调研一下 / 帮我调研 / research / 竞品分析 / 市场调研 / 看看已有方案 / 看看别人怎么做」, 或 devflow Full 场景建议先走产品流
+**读**: ``
+**也属**: design
+**生命周期**: 0 设计
+
+#### dev-plan
+**触发**: 用户说「写计划 / 拆任务 / 怎么实现 / plan it out / 拆解一下 / 实现方案」, 或 devflow 路由到 Plan 阶段
+**读**: ``
+**生命周期**: 2 实现
+
+#### dev-build
+**触发**: 用户说「开始实现 / 写代码 / 执行计划 / build it / 动手」, 或 devflow 路由到 Build 阶段
+**读**: ``
+**生命周期**: 2 实现
+
+#### dev-verify
+**触发**: 用户说「验证一下 / 跑一下看看 / 确认能用 / verify」, 或 Build 完成后 devflow 路由到 Verify 阶段
+**读**: ``
+**生命周期**: 3 评审
+
+#### dev-land
+**触发**: devflow 路由到 Land 阶段, 或用户说「land / 着陆 / 准备着陆 / 走 land 阶段」(注意: 独立说「提 PR / 收尾 / 合并」不在 devflow 上下文时走 finishing-branch, 不走本 skill)
+**读**: ``
+**也属**: git-lifecycle
+**生命周期**: 4 收尾
+
+#### dev-review
+**触发**: devflow 路由到 Review 阶段, 或用户说「review 一下 / 看看代码 / 评审 / check the code / 审一下 / 有没有问题 / 帮我 review / code review」. 不含: 非 devflow 上下文的独立 review 请求（红军/第二实现/委派）走 codex-review
+**读**: ``
+**也属**: review
+**生命周期**: 3 评审
+
+#### dev-design (跨桶)
+**触发**: 用户要求写设计文档 / RFC / Design Doc / ADR / 重构方案 / 技术 spec / API 设计, 或 devflow 路由到 Design 阶段. 不含: 产品 PRD (走 pd-prd skill, 不走本 rule)
+**读**: ``
+**主桶**: design (完整定义见该桶)
+
+#### pd-prd (跨桶)
+**触发**: 用户说「写 PRD / 产品需求 / 产品设计 / 产品 brief / 写需求文档」, 或 research 完成后衔接, 或 devflow Full 场景建议
+**读**: ``
+**主桶**: design (完整定义见该桶)
+
+#### pd-ui (跨桶)
+**触发**: 用户说「交互设计 / 视觉设计 / 界面设计 / 原型 / wireframe / 线框图 / 设计稿 / 长什么样」, 或 pd-prd 完成后衔接, 或 pdflow 在 PRD 后路由到交互视觉设计阶段
+**读**: ``
+**主桶**: design (完整定义见该桶)
 

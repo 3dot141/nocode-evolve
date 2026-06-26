@@ -79,13 +79,11 @@ agent 视角: 用户任务命中以下任一条件时, **主动调起 devflow sk
 #### lark-project (跨桶)
 **触发**: 用户给 project.feishu.cn 链接（或 Meego 工作项 id）要求读取/总结/看附件/分析需求或缺陷内容; 或 PR merge 后流转飞书 issue 状态; 或用户说「流转任务/改状态/标完成/飞书项目/工作项」; 或 devflow Land 阶段 (8d. Task Transition)
 **读**: ``
-**摘要**: 飞书项目管理(FeishuProjectMcp): 工作项读取(含附件 X-Meego-File-Sign) + 状态流转(组员开发→研发已改待BUILD) + 搜索(search_by_mql) + 创建更新; project_key 撞多空间改传真实 24 位 hex key; 详细流程见 skill 内 references/
 **主桶**: lark (完整定义见该桶)
 
 #### dev-land (跨桶)
 **触发**: devflow 路由到 Land 阶段, 或用户说「land / 着陆 / 准备着陆 / 走 land 阶段」(注意: 独立说「提 PR / 收尾 / 合并」不在 devflow 上下文时走 finishing-branch, 不走本 skill)
 **读**: ``
-**摘要**: Landing 收尾: Pre-flight(Review Gate + 分支状态) → Disposition(4选项 merge/PR/keep/discard) → 执行(rule-finishing-branch) → Task Transition(lark-project) → Cleanup; Mini 走 Land-lite(commit only)
 **主桶**: workflow (完整定义见该桶)
 
 ### 桶: 评审 (review)
@@ -103,7 +101,6 @@ agent 视角: 用户任务命中以下任一条件时, **主动调起 devflow sk
 #### red-blue-deep
 **触发**: 用户问「X 怎么样 / 行不行 / 合适吗 / 值得吗 / 选 A 还是 B / 哪个更好」等评估 / 拍板类, 或显式说红蓝军 / 第一性原理. 不含: 话术含「选型 / 设计 / 架构」的设计阶段动作(走 design rule, 不走 red-blue-deep)
 **读**: `(skill, 无 rule 文件)`
-**摘要**: 评估 / 拍板类提问的红蓝军框架; skill 内判轻档 (一句表态) / 重档 (第一性原理→蓝军→红军→结论, 重档红军默认交 Codex)
 **生命周期**: cross
 
 #### git-freshness (跨桶)
@@ -115,6 +112,5 @@ agent 视角: 用户任务命中以下任一条件时, **主动调起 devflow sk
 #### dev-review (跨桶)
 **触发**: devflow 路由到 Review 阶段, 或用户说「review 一下 / 看看代码 / 评审 / check the code / 审一下 / 有没有问题 / 帮我 review / code review」. 不含: 非 devflow 上下文的独立 review 请求（红军/第二实现/委派）走 codex-review
 **读**: ``
-**摘要**: devflow Review 阶段五轴评审 + Spec 轴路径覆盖检查; 产出分级 findings 报告 (Critical/Warning/Suggestion); Critical 不可 override; 与 codex-review 分工: dev-review = devflow 五轴评审, codex-review = 独立红军/第二实现/委派
 **主桶**: workflow (完整定义见该桶)
 

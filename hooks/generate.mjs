@@ -40,7 +40,7 @@ export function renderBucketBody(m) {
       out += `#### ${r.id}\n`;
       out += `**触发**: ${r.trigger_desc}\n`;
       out += `**读**: \`${r.read}\`\n`;
-      out += `**摘要**: ${r.summary}\n`;
+      if (r.read && !r.read.startsWith('(')) out += `**摘要**: ${r.summary}\n`;
       if (r.guard) out += `**关键约束(上浮)**: ${r.guard}\n`;
       if ((r.also_buckets || []).length) out += `**也属**: ${r.also_buckets.join(', ')}\n`;
       if (r.lifecycle_stage) out += `**生命周期**: ${r.lifecycle_stage}\n`;
@@ -51,7 +51,7 @@ export function renderBucketBody(m) {
       out += `#### ${r.id} (跨桶)\n`;
       out += `**触发**: ${r.trigger_desc}\n`;
       out += `**读**: \`${r.read}\`\n`;
-      out += `**摘要**: ${r.summary}\n`;
+      if (r.read && !r.read.startsWith('(')) out += `**摘要**: ${r.summary}\n`;
       out += `**主桶**: ${r.bucket} (完整定义见该桶)\n\n`;
     }
   }
