@@ -33,6 +33,14 @@ description: Use when executing implementation tasks from a plan, writing new co
 | `{NOCODE_SKILL_REF}/frontend-guide.md` | 碰 UI 组件时 | 组件模式 / 无障碍 / 设计系统 |
 | `{NOCODE_SKILL_REF}/architecture-principles.md` | 拿不准模块边界时 | Deep Module / Seam / 依赖分类 |
 
+**技术栈配方**：当项目技术栈命中以下场景时，Read 对应 reference 拿可粘贴代码样例：
+
+| 场景 | 触发特征 | Read |
+|---|---|---|
+| TS/JS 测试 | package.json 含 jest/vitest/@playwright | `references/ts-test-patterns.md` |
+| Go 开发 | 有 go.mod | `references/go-patterns.md`（惯用法/测试/审查/构建排错） |
+| TS 构建排错 | tsconfig.json 且 tsc/build 失败 | `references/ts-build-fix.md` |
+
 ## Checklist (TaskCreate)
 
 1. **加载计划** — 读 Plan 任务序列 + Design 测试目标

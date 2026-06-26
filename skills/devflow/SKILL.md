@@ -114,7 +114,7 @@ Land 有 5 个子步骤（8a Create PR → 8b ... → 8e Cleanup），只说"pus
 | # | 阶段 | 调用 | 进入前 Read | Gate |
 |---|---|---|---|---|
 | 1 | **Define** | `nocode-evolve:dev-define` | — | 问题边界收敛 + 场景分类 + 用户确认 |
-| 2 | **Env** | Gate Base → `superpowers:using-git-worktrees` → EnterWorktree | `rule-git-worktree` | worktree 已建并进入（注：Env 不需要独立 nocode-evolve skill，逻辑完全由 superpowers skill + rule-git-worktree 覆盖） |
+| 2 | **Env** | Gate Base → `nocode-evolve:using-git-worktrees` → EnterWorktree | `rule-git-worktree` | worktree 已建并进入（注：Env 不需要独立 nocode-evolve skill，逻辑完全由 superpowers skill + rule-git-worktree 覆盖） |
 | 3 | **Design** | `nocode-evolve:dev-design` | `rule-design` | 方案确认 + 测试目标 + 设计文档评审通过 + 用户 approve |
 | 4 | **Plan** | `nocode-evolve:dev-plan` | — | 计划已产出 + 所有 task ≤ M + 用户确认 |
 | 5 | **Build** | `nocode-evolve:dev-build` | — | 所有 task 完成 + 测试通过 + build 通过 |

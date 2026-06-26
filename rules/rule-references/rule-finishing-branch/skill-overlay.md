@@ -1,6 +1,6 @@
-# superpowers:finishing-a-development-branch skill 行为覆盖
+# nocode-evolve:finishing-a-development-branch skill 行为覆盖
 
-执行 `superpowers:finishing-a-development-branch` skill 时, 本文规则覆盖 skill 内默认值. 若与 skill 内文冲突, **以本规则为准**.
+执行 `nocode-evolve:finishing-a-development-branch` skill 时, 本文规则覆盖 skill 内默认值. 若与 skill 内文冲突, **以本规则为准**.
 
 被门面 `rules/rule-finishing-branch.md` 在 Step 0 加载. 单独触发: 当 agent 走偏 sp skill 默认 (worktree provenance 不识别 / PR title-body 用占位符 / option 2 直跑 gh) 时, Read 本文档对齐.
 

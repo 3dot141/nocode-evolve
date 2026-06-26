@@ -1,12 +1,12 @@
-# superpowers:finishing-a-development-branch 行为覆盖 + 扩展
+# nocode-evolve:finishing-a-development-branch 行为覆盖 + 扩展
 
-执行 `superpowers:finishing-a-development-branch` skill 时, 本文规则覆盖 + 扩展 skill 内默认值. 若与 skill 内文冲突, **以本规则为准**.
+执行 `nocode-evolve:finishing-a-development-branch` skill 时, 本文规则覆盖 + 扩展 skill 内默认值. 若与 skill 内文冲突, **以本规则为准**.
 
 本文件是**门面** (~80 行): 触发 + 4 选项菜单 + 子文件路由表 + 工具栈检测. 真实指令在 `rule-references/rule-finishing-branch/` 子目录, agent 按 disposition 按需 Read.
 
 ## 触发
 
-- **即将执行** `superpowers:finishing-a-development-branch` skill (sp skill 内的自动调用 / `Skill` tool 显式 invoke)
+- **即将执行** `nocode-evolve:finishing-a-development-branch` skill (sp skill 内的自动调用 / `Skill` tool 显式 invoke)
 - **或用户说**「完成 worktree / 收尾 / 合并 worktree / 提 PR / 创建 PR / 合并到 main / 合并到 release / 删 branch / discard worktree」, 中英文同义等价 (containing "finish branch" / "create PR" / "submit PR" / "merge worktree" / "discard branch" 等)
 
 **不触发**:

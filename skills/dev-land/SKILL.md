@@ -43,7 +43,7 @@ Entry Gate 三项逐条检查：
 
 ### 8b. Disposition
 
-调 `superpowers:finishing-a-development-branch`，由 `rule-finishing-branch` overlay 覆盖行为。
+调 `nocode-evolve:finishing-a-development-branch`，由 `rule-finishing-branch` overlay 覆盖行为。
 
 skill 呈现 4 选项菜单（文案顺序由 sp skill 定义，不改）：
 1. **Merge 回 base** — 本地合并 + 清理

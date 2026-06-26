@@ -35,7 +35,22 @@
 - 一致性由 SessionStart 的 `node hooks/generate.mjs --check` 兜底报警（漂移只 warn 不阻断 session）
 - 测试：`node --test 'hooks/*.test.mjs'`
 
-### 4. Skill 内 Step 编号必须为整数或字母后缀
+### 4. vendor 同步（commit 前）
+
+`vendor/superpowers/` 存放上游 superpowers plugin 原版，`vendor-integration.json` 定义每个 skill 的分发规则（keep-as-skill / extract-references / skip）。
+
+commit 前跑一次确保一致：
+
+```bash
+node scripts/vendor-sync.mjs --check   # 检查是否一致，不一致 exit 1
+node scripts/vendor-sync.mjs           # 执行同步（copy/extract/remove）
+```
+
+- 上游更新时：替换 `vendor/superpowers/` 内容 → 更新 `vendor-integration.json` 的 upstream 字段 → 跑 `vendor-sync.mjs`
+- 新增/调整分发规则时：改 `vendor-integration.json` → 跑 `vendor-sync.mjs`
+- **不要手动 cp/rm vendor skill 到 skills/ 或 references/**——走脚本，保持单源
+
+### 5. Skill 内 Step 编号必须为整数或字母后缀
 
 Skill 的 SKILL.md 里每个步骤的编号用整数（`Step 1` / `Step 2`）或字母后缀（`Step 1a` / `6e`）。禁止用分数编号（`Step 0½` / `6d½`）——分数编号在搜索、引用、排序时都不方便。
 

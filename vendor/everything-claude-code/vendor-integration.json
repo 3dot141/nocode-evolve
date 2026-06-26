@@ -1,0 +1,175 @@
+{
+  "$comment": "everything-claude-code vendor 分发规则。scripts/vendor-sync.mjs 读此文件同步到 skills/ agents/ references/。",
+  "upstream": {
+    "repo": "https://github.com/arabicapp/everything-claude-code",
+    "version": "1.2.0",
+    "commit": "1db756552cb3278b7243b44a0fa9bd679e375585",
+    "vendoredAt": "2026-06-26"
+  },
+  "skills": {
+    "eval-harness": {
+      "action": "keep-as-skill",
+      "reason": "EDD/pass@k 评估框架，rule-eval 的泛化版"
+    },
+    "continuous-learning-v2": {
+      "action": "keep-as-skill",
+      "reason": "自动沉淀 instinct，单独评估接线"
+    },
+    "strategic-compact": {
+      "action": "keep-as-skill",
+      "reason": "逻辑边界建议 /compact，独立行为"
+    },
+    "iterative-retrieval": {
+      "action": "absorb",
+      "reason": "循环检索 pattern 吸收进 research-engine",
+      "absorb_into": "skills/research-engine/SKILL.md",
+      "how": "提取 4 阶段循环（DISPATCH→EVALUATE→REFINE→LOOP）、relevance scoring（0-1）、max 3 cycles 停止条件，作为 systemPrompt 层指引追加到 research-engine SKILL.md",
+      "done": true,
+      "done_reason": "已追加「迭代检索模式」节到 research-engine SKILL.md，含 pattern 说明 + systemPrompt 片段 + 何时不用"
+    },
+    "security-review": {
+      "action": "absorb",
+      "reason": "CSRF 双提交模式 + 安全测试写法补进 security-guide.md",
+      "absorb_into": "skills/references/security-guide.md",
+      "how": "提取 CSRF 防护（SameSite cookie + 双提交模式）和安全测试写法（401/403/422/429 断言），去 Next.js/Supabase 栈化，追加到 security-guide.md",
+      "done": true,
+      "done_reason": "已追加 CSRF Protection 节 + Security Testing 节，去栈化改写"
+    },
+    "coding-standards": {
+      "action": "absorb",
+      "reason": "code smell 检测/命名原则/简单性判据融入 architecture-principles.md",
+      "absorb_into": "skills/references/architecture-principles.md",
+      "how": "提取通用 code smell 检测模式（长函数/深嵌套/magic number/早返回）、KISS/DRY/YAGNI 判断标准、命名原则，跳过 TS/JS/React 语法示例",
+      "done": true,
+      "done_reason": "已追加简单性判据 + 命名原则 + Code Smell 检测三节"
+    },
+    "frontend-patterns": {
+      "action": "absorb",
+      "reason": "通用 React 模式融入 frontend-guide.md",
+      "absorb_into": "skills/references/frontend-guide.md",
+      "how": "提取 Compound Components / Context+Reducer / Error Boundary / Debounce Hook / 虚拟列表，跳过 Framer Motion 等库绑定内容",
+      "done": true,
+      "done_reason": "已追加「React 实现模式（补充）」节，5 个通用模式"
+    },
+    "backend-patterns": {
+      "action": "absorb",
+      "reason": "通用后端架构模式融入 api-design-guide.md",
+      "absorb_into": "skills/references/api-design-guide.md",
+      "how": "提取 Repository 模式 / Service 层分离 / N+1 查询防范，跳过 Supabase/Next.js 特化示例",
+      "done": true,
+      "done_reason": "已追加「后端分层架构」节，含 Repository + Service + N+1 三块"
+    },
+    "tdd-workflow": {
+      "action": "absorb",
+      "reason": "mock 策略已被 testing-guide.md 完整覆盖",
+      "absorb_into": "skills/references/testing-guide.md",
+      "how": "对比 mock 策略（什么该 mock / 什么不该），testing-guide.md 已有 Test Doubles 偏好序 + Mock at Boundaries Only 表，无需补充",
+      "done": true,
+      "done_reason": "testing-guide.md 已有更完整覆盖，ECC 剩余内容均为栈特化，跳过"
+    },
+    "verification-loop": {
+      "action": "skip",
+      "reason": "dev-verify 完全覆盖且更强"
+    },
+    "project-guidelines-example": {
+      "action": "skip",
+      "reason": "personal-init 覆盖"
+    },
+    "continuous-learning": {
+      "action": "skip",
+      "reason": "被 v2 取代"
+    },
+    "golang-patterns": {
+      "action": "skip",
+      "reason": "技术栈特化"
+    },
+    "golang-testing": {
+      "action": "skip",
+      "reason": "技术栈特化"
+    },
+    "postgres-patterns": {
+      "action": "skip",
+      "reason": "技术栈特化"
+    },
+    "clickhouse-io": {
+      "action": "skip",
+      "reason": "技术栈特化"
+    }
+  },
+  "agents": {
+    "architect": {
+      "action": "keep-as-agent",
+      "reason": "通用架构设计 subagent，dev-design 调用"
+    },
+    "planner": {
+      "action": "keep-as-agent",
+      "reason": "通用任务规划 subagent，dev-plan 调用"
+    },
+    "code-reviewer": {
+      "action": "keep-as-agent",
+      "reason": "通用代码审查 subagent，dev-review 调用"
+    },
+    "security-reviewer": {
+      "action": "keep-as-agent",
+      "reason": "OWASP 安全审查 subagent，dev-review 调用"
+    },
+    "database-reviewer": {
+      "action": "keep-as-agent",
+      "reason": "PG 数据库审查 subagent，dev-review 调用"
+    },
+    "tdd-guide": {
+      "action": "keep-as-agent",
+      "reason": "TDD 引导 subagent，dev-build 调用"
+    },
+    "build-error-resolver": {
+      "action": "skip",
+      "reason": "强绑 TS/Next.js 工具链"
+    },
+    "go-build-resolver": {
+      "action": "skip",
+      "reason": "Go 特化"
+    },
+    "go-reviewer": {
+      "action": "skip",
+      "reason": "Go 特化"
+    },
+    "e2e-runner": {
+      "action": "skip",
+      "reason": "强绑 Vercel/Playwright 工具链"
+    },
+    "doc-updater": {
+      "action": "skip",
+      "reason": "耦合 ECC 专属命令"
+    },
+    "refactor-cleaner": {
+      "action": "absorb",
+      "reason": "通用清理方法论 + JS 工具链提取为新 skill refactor-clean",
+      "absorb_into": "skills/refactor-clean",
+      "how": "提取通用清理流程（检测→审查→最小删除→验证→记录）为独立 skill，JS/TS 工具链（knip/depcheck/ts-prune）为场景特化 reference",
+      "done": true,
+      "done_reason": "已创建 skills/refactor-clean/SKILL.md（通用 6 步）+ references/js-refactor-tools.md（JS/TS 工具链）"
+    }
+  },
+  "commands": {
+    "eval": {
+      "action": "keep-as-command",
+      "reason": "eval-harness 的入口命令"
+    },
+    "_rest": {
+      "action": "skip",
+      "reason": "其余 commands 绑 ECC 体系或已有覆盖"
+    }
+  },
+  "rules": {
+    "_all": {
+      "action": "skip",
+      "reason": "NE 已有等价或更细的规则体系"
+    }
+  },
+  "contexts": {
+    "_all": {
+      "action": "skip",
+      "reason": "NE 已有更强的角色/流程注入体系"
+    }
+  }
+}

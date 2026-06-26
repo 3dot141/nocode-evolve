@@ -250,3 +250,74 @@ interface CreateTaskInput {
 - **Depth as ratio of implementation-lines to interface-lines**（Ousterhout 的"深度=实现行数/接口行数"）：这会奖励往实现里灌水。我们改用 depth-as-leverage（深度即杠杆）。
 - **"Interface" as the TypeScript `interface` keyword or a class's public methods**：太窄——这里的 interface 包括调用方必须知道的每一个事实。
 - **"Boundary"**：与 DDD 的 bounded context 重载冲突。说 **seam** 或 **interface**。
+
+## 简单性判据（KISS / DRY / YAGNI）
+
+> 吸收自 everything-claude-code v1.2.0 coding-standards skill (MIT)
+
+上面的 deep module 讲的是接口形状，这一节讲的是日常写代码时**何时停手**——三条原则各自有可操作的判断标准，不是口号。
+
+- **KISS（Keep It Simple）**：选能работать的最简方案。判据——能不能不引入这个抽象/这层间接/这个配置项就把问题解决？能就不引入。聪明但难懂的代码输给直白但啰嗦的代码。
+- **DRY（Don't Repeat Yourself）**：同一段逻辑出现第三次时才抽取（两次是巧合，三次是模式）。判据——抽取后调用方是否真的更容易理解？为了消除重复而造出的错误抽象，比重复本身更贵。
+- **YAGNI（You Aren't Gonna Need It）**：不为假想的未来需求构建能力。判据——这个扩展点/泛化/配置，当前有没有真实调用方？没有就删掉，等需要时再加。投机式的通用化（speculative generality）是负债。
+
+这三条与 **Code Is a Liability** 同源：每一个未被当前需求驱动的抽象，都是要后人阅读和维护的负债。
+
+## 命名原则（Naming）
+
+名字是最廉价的文档。两条可操作的规则：
+
+- **变量名描述"是什么"**：`isUserAuthenticated`、`totalRevenue`、`marketSearchQuery`，不是 `flag`、`x`、`q`。读到名字就知道它装的是什么、单位是什么、布尔语义是哪个方向。
+- **函数名用动词-名词**：`fetchMarketData`、`calculateSimilarity`、`isValidEmail`，不是只有名词的 `market`、`similarity`。动词说明它做什么动作，`is/has/should` 前缀说明返回布尔。
+
+## Code Smell 检测（重构信号）
+
+以下模式出现时，是"该重构"的信号——不是错误，是负债在累积：
+
+### 1. 长函数（Long Functions）
+
+函数超过约 50 行时，通常它在做多件事。拆成命名清晰的小函数，让主函数读起来像一份步骤清单：
+
+```
+// 信号：一个函数 100 行，混了校验/转换/存储
+function processData() { /* 100 行 */ }
+
+// 重构：每步一个有名字的函数
+function processData() {
+  const validated = validate(raw)
+  const transformed = transform(validated)
+  return save(transformed)
+}
+```
+
+### 2. 深嵌套（Deep Nesting）→ 早返回（Early Return）
+
+嵌套超过 3 层时，用 guard clause 早返回把"前置条件不满足"的分支提前甩掉，主逻辑回到最外层：
+
+```
+// 信号：5 层 if 嵌套，主逻辑藏在最深处
+if (user) { if (user.isAdmin) { if (resource) { if (resource.active) { doWork() } } } }
+
+// 重构：守卫子句早返回，主逻辑不缩进
+if (!user) return
+if (!user.isAdmin) return
+if (!resource) return
+if (!resource.active) return
+doWork()
+```
+
+### 3. Magic Number（魔法数字）
+
+代码里出现没有名字的数字/字符串常量时，它的含义只活在写代码人的脑子里。提成命名常量：
+
+```
+// 信号：3 和 500 是什么？
+if (retryCount > 3) {}
+setTimeout(cb, 500)
+
+// 重构：名字即文档
+const MAX_RETRIES = 3
+const DEBOUNCE_DELAY_MS = 500
+if (retryCount > MAX_RETRIES) {}
+setTimeout(cb, DEBOUNCE_DELAY_MS)
+```

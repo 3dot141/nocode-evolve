@@ -14,7 +14,7 @@ description: Use when you have defined goals and need to break work into tasks. 
 输入：Define 的 restate + Design 的设计文档和测试目标（Full 场景）。
 输出：用户确认的任务序列 + 执行模式选择。
 
-> **方法论来源**：`superpowers:writing-plans`（plan 硬约束：每步贴真实代码/禁占位符/HARD-GATE）+ [agent-skills](https://github.com/addyosmani/agent-skills) 的 planning-and-task-breakdown 方法论（垂直切片 / sizing ≤5 文件 / checkpoint / 依赖图）。本 skill 融合了两者。
+> **方法论来源**：`nocode-evolve:writing-plans`（plan 硬约束：每步贴真实代码/禁占位符/HARD-GATE）+ [agent-skills](https://github.com/addyosmani/agent-skills) 的 planning-and-task-breakdown 方法论（垂直切片 / sizing ≤5 文件 / checkpoint / 依赖图）。本 skill 融合了两者。
 
 ## 非本 skill 请求
 
@@ -113,7 +113,7 @@ AskUserQuestion: "计划确认了，怎么执行？"
 - 当前会话顺序执行 — 在本会话逐 task 执行
 ```
 
-Subagent → `Skill(superpowers:subagent-driven-development)`。当前会话 → Build slice 循环。
+Subagent → `Skill(nocode-evolve:subagent-driven-development)`。当前会话 → Build slice 循环。
 
 **Inline planning**：AFK task 连续推进前发轻量计划（"1.X 2.Y 3.Z → 除非你纠正否则执行"），30 秒成本换一个方向校验点。HITL task 本身就有停点，不需要。
 

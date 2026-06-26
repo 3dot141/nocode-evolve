@@ -56,6 +56,13 @@ Define 回答"做什么"，Design 回答"怎么做"。核心动作是探索 **ap
 
 不是每份设计文档都覆盖全部领域——加个 API 字段不需要写可观测性节。但逐项检查"跟我的设计有没有关系"。
 
+当方案涉及以下数据库时，Read 对应的场景速查：
+
+| 场景 | 触发特征 | Read |
+|---|---|---|
+| PostgreSQL | 有 `.sql` / migrations，或连 PG / Supabase | `references/postgres-patterns.md` |
+| ClickHouse | 项目用 ClickHouse 做分析 | `references/clickhouse-patterns.md` |
+
 ## 协议
 
 ### Step 1: 探索解法空间
@@ -244,11 +251,11 @@ TO 传递给后续 Plan（指导切片 + task covers）、Build（驱动 TDD）�
 
 | Skill | 适用场景 |
 |---|---|
-| `superpowers:design-taste-frontend` | 落地页 / 作品集 / 改版——防模板化 |
-| `superpowers:high-end-visual-design` | 高端质感（精确字号/间距/阴影/动效） |
-| `superpowers:minimalist-ui` | 干净编辑风，暖单色调，平面网格 |
-| `superpowers:industrial-brutalist-ui` | 数据密集型仪表盘 / 机械美学 |
-| `superpowers:redesign-existing-projects` | 改造已有项目 UI 到高端水准 |
+| `nocode-evolve:design-taste-frontend` | 落地页 / 作品集 / 改版——防模板化 |
+| `nocode-evolve:high-end-visual-design` | 高端质感（精确字号/间距/阴影/动效） |
+| `nocode-evolve:minimalist-ui` | 干净编辑风，暖单色调，平面网格 |
+| `nocode-evolve:industrial-brutalist-ui` | 数据密集型仪表盘 / 机械美学 |
+| `nocode-evolve:redesign-existing-projects` | 改造已有项目 UI 到高端水准 |
 
 在 `## UI 设计` 节末尾标注推荐的 skill："Build 阶段实现 UI 时，`Skill(<name>)` 加载对应设计指南。" 不替 Build 选——给建议，Build 按实际情况决定。
 

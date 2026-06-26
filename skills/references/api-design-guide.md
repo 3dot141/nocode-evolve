@@ -262,3 +262,61 @@ function getStatusLabel(status: TaskStatus): string {
 3. **它符合 One-Version Rule 吗？** 它会不会和你已有的依赖造成菱形依赖（同一库的多个版本）？能不能在你的依赖图里收敛到单一版本？
 4. **它的输出可信吗？** 凡是把外部数据带进系统的依赖（HTTP 客户端、解析器、第三方 SDK），其返回值都要在边界处当作不可信数据校验。
 5. **移除它的代价多大？** 在设计阶段就规划弃用与迁移路径。一个渗透到大量调用点、且其可观测行为被四处依赖的依赖，将极难替换。
+
+## 后端分层架构（Backend Layering）
+
+> 吸收自 everything-claude-code v1.2.0 backend-patterns skill (MIT)
+
+上面讲的是「接口表面」的设计。这一节讲服务端内部怎么分层——把数据访问、业务逻辑、请求处理三件事分开，各自能独立测试和替换。
+
+### Repository 模式（数据访问抽象）
+
+把所有数据访问藏在一个接口背后，业务逻辑只依赖接口，不依赖具体存储：
+
+```typescript
+interface MarketRepository {
+  findAll(filters?: MarketFilters): Promise<Market[]>
+  findById(id: string): Promise<Market | null>
+  create(data: CreateMarketDto): Promise<Market>
+  update(id: string, data: UpdateMarketDto): Promise<Market>
+  delete(id: string): Promise<void>
+}
+```
+
+这正是架构原则里 **deep module** + **port at the seam** 的落地：repository 接口是 seam，生产环境注入真实 DB adapter，测试注入内存 adapter——业务逻辑一份代码，跨两种实现测试。
+
+### Service 层（业务逻辑与数据访问分离）
+
+业务逻辑放在 service，数据访问委托给注入的 repository。service 不知道数据是从 Postgres、内存还是 HTTP 来的：
+
+```typescript
+class MarketService {
+  constructor(private marketRepo: MarketRepository) {}
+
+  async searchMarkets(query: string, limit = 10): Promise<Market[]> {
+    // 业务逻辑：生成向量 → 检索 → 取数据 → 排序
+    const results = await this.vectorSearch(query, limit)
+    return this.marketRepo.findByIds(results.map(r => r.id))
+  }
+}
+```
+
+分层的判断标准：**请求处理层只做协议转换（解析/校验/序列化），业务规则不下沉到 route handler，数据查询不上浮到 service**。三层各管一件事，跨层只通过接口对话。
+
+### N+1 查询防范
+
+循环里逐条查询是最常见的性能陷阱——一次列表查询变成 N+1 次。改成批量取 + 内存关联：
+
+```typescript
+// ❌ N+1：每个 market 单独查 creator
+for (const market of markets) {
+  market.creator = await getUser(market.creator_id)
+}
+
+// ✅ 批量取一次，内存里 map 关联
+const creators = await getUsers(markets.map(m => m.creator_id))
+const creatorMap = new Map(creators.map(c => [c.id, c]))
+markets.forEach(m => { m.creator = creatorMap.get(m.creator_id) })
+```
+
+判断信号：只要在循环体里看到 `await` 一个按 id 查询的调用，就该停下来问「这能不能提到循环外批量做」。

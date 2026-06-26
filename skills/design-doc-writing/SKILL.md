@@ -13,7 +13,7 @@ description: Use when the design skill delegates document writing, or when the u
 
 **应该用：**
 
-- superpowers:brainstorming 走到 step 5（写设计文档）时
+- nocode-evolve:brainstorming 走到 step 5（写设计文档）时
 - 用户说「帮我写个 PRD / RFC / 设计文档 / ADR / 重构方案 / 系统设计 / 架构记录 / 提案」
 - 你即将创建 `*-design.md` / `*-prd.md` / `*-rfc.md` / `*-adr.md` 性质的文件
 
@@ -21,7 +21,7 @@ description: Use when the design skill delegates document writing, or when the u
 
 - 写代码注释、PR 描述、commit message、README、changelog
 - 用户只是问「X 应该怎么做」——这是方案探索阶段，先用 `nocode-evolve:dev-design`
-- 简单 bug 修复（用 superpowers:systematic-debugging）
+- 简单 bug 修复（用 nocode-evolve:systematic-debugging）
 
 **注：简单任务也要验收标准，只是 spec 更短。** 两行 spec 也是 spec——不要因"太简单"完全跳过。区别在规模不在有无。
 

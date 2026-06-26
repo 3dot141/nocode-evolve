@@ -1,0 +1,80 @@
+{
+  "$comment": "superpowers vendor 分发规则。scripts/vendor-sync.mjs 读此文件同步到 skills/ 和 references/。",
+  "upstream": {
+    "repo": "https://github.com/obra/superpowers",
+    "version": "5.1.0",
+    "commit": "e4a2375cb705ca5800f0833528ce36a3faf9017a",
+    "vendoredAt": "2026-06-26"
+  },
+  "skills": {
+    "using-superpowers": {
+      "action": "absorb",
+      "reason": "Red Flags + 调用纪律 + 指令优先级融入 agent-catalog-using.md",
+      "absorb_into": "model/agent-catalog-using.md",
+      "how": "提取 Red Flags 表（12 种跳过 skill 的心理借口）、skill 调用纪律（1% 就调）、指令优先级（用户>skill>默认）、skill 类型（刚性/弹性），融入 catalog-using.md",
+      "done": true,
+      "done_reason": "已创建 model/agent-catalog-using.md，含完整 Red Flags 表 + 调用纪律 + 优先级 + Step 0 工序"
+    },
+    "brainstorming": {
+      "action": "keep-as-skill",
+      "reason": "rule-superpowers-brainstorming overlay 叠在上面"
+    },
+    "finishing-a-development-branch": {
+      "action": "keep-as-skill",
+      "reason": "rule-finishing-branch overlay 叠在上面"
+    },
+    "using-git-worktrees": {
+      "action": "keep-as-skill",
+      "reason": "rule-git-worktree overlay 叠在上面"
+    },
+    "systematic-debugging": {
+      "action": "keep-as-skill",
+      "reason": "调试方法论，nocode-evolve 缺口"
+    },
+    "writing-skills": {
+      "action": "keep-as-skill",
+      "reason": "写 skill 的方法论 + best practices，维护插件要用"
+    },
+    "writing-plans": {
+      "action": "extract-references",
+      "reason": "dev-plan 已吸收核心，审稿 prompt 有独立参考价值",
+      "extract": [
+        { "src": "plan-document-reviewer-prompt.md", "dst": "references/plan-document-reviewer-prompt.md" }
+      ]
+    },
+    "test-driven-development": {
+      "action": "extract-references",
+      "reason": "dev-build 已吸收 TDD Iron Law，反模式清单与 testing-guide.md 互补",
+      "extract": [
+        { "src": "testing-anti-patterns.md", "dst": "references/testing-anti-patterns.md" }
+      ]
+    },
+    "requesting-code-review": {
+      "action": "extract-references",
+      "reason": "dev-review + codex-review 已覆盖，reviewer agent prompt 有参考价值",
+      "extract": [
+        { "src": "code-reviewer.md", "dst": "references/code-reviewer-prompt.md" }
+      ]
+    },
+    "subagent-driven-development": {
+      "action": "keep-as-skill",
+      "reason": "subagent 编排方法论（拆任务/dispatch/review/收敛），与 agents-launcher（启动器）不同"
+    },
+    "receiving-code-review": {
+      "action": "keep-as-skill",
+      "reason": "收到 review 反馈的处理方法论（不盲从/先验证），dev-review 和 codex-review 只管发起不管接收"
+    },
+    "verification-before-completion": {
+      "action": "skip",
+      "reason": "dev-verify 完全覆盖"
+    },
+    "dispatching-parallel-agents": {
+      "action": "keep-as-skill",
+      "reason": "并行任务编排方法论，与 agents-launcher（项目 agent 启动器）不同"
+    },
+    "executing-plans": {
+      "action": "skip",
+      "reason": "dev-build 已覆盖"
+    }
+  }
+}

@@ -1,6 +1,6 @@
-# superpowers:using-git-worktrees 行为覆盖
+# nocode-evolve:using-git-worktrees 行为覆盖
 
-执行 `superpowers:using-git-worktrees` skill 时，本文规则覆盖 skill 内默认值。
+执行 `nocode-evolve:using-git-worktrees` skill 时，本文规则覆盖 skill 内默认值。
 若与 skill 内文冲突，**以本规则为准**。
 
 ## 顶层原则：每个分支都要 worktree——不在主仓裸开 branch

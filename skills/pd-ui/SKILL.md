@@ -183,11 +183,11 @@ description: Use when the user wants to design the interaction and visual direct
 
 | 视觉方向 | 加载的 skill |
 |---|---|
-| 简约编辑风 / 暖单色 / 平面网格 | `superpowers:minimalist-ui` |
-| 高端质感 / 精确字号间距阴影 | `superpowers:high-end-visual-design` |
-| 机械工业风 / 数据密集仪表盘 | `superpowers:industrial-brutalist-ui` |
-| 防模板化 / 落地页改版 | `superpowers:design-taste-frontend` |
-| 改造已有项目 UI | `superpowers:redesign-existing-projects` |
+| 简约编辑风 / 暖单色 / 平面网格 | `nocode-evolve:minimalist-ui` |
+| 高端质感 / 精确字号间距阴影 | `nocode-evolve:high-end-visual-design` |
+| 机械工业风 / 数据密集仪表盘 | `nocode-evolve:industrial-brutalist-ui` |
+| 防模板化 / 落地页改版 | `nocode-evolve:design-taste-frontend` |
+| 改造已有项目 UI | `nocode-evolve:redesign-existing-projects` |
 
 没有完全匹配的方向 → 选最接近的 skill 加载，不硬套。
 

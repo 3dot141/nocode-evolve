@@ -279,6 +279,132 @@ function useToggleTask() {
 }
 ```
 
+## React 实现模式（补充）
+
+> 吸收自 everything-claude-code v1.2.0 frontend-patterns skill (MIT)
+
+上面讲架构与设计原则，这里补几个高频的具体实现模式。库无关，挑能解决问题的最简方案用。
+
+### Compound Components（复合组件）
+
+当一组组件需要共享隐式状态（如 Tabs、Accordion、Select），用 context 把它们绑成一个家族，而不是用一堆 props 把状态层层透传。
+
+```tsx
+const TabsContext = createContext<{ active: string; setActive: (id: string) => void } | undefined>(undefined);
+
+export function Tabs({ children, defaultTab }: { children: React.ReactNode; defaultTab: string }) {
+  const [active, setActive] = useState(defaultTab);
+  return <TabsContext.Provider value={{ active, setActive }}>{children}</TabsContext.Provider>;
+}
+
+export function Tab({ id, children }: { id: string; children: React.ReactNode }) {
+  const ctx = useContext(TabsContext);
+  if (!ctx) throw new Error('Tab must be used within Tabs');  // 越界使用直接报错，而不是静默失败
+  return (
+    <button className={ctx.active === id ? 'active' : ''} onClick={() => ctx.setActive(id)}>
+      {children}
+    </button>
+  );
+}
+
+// <Tabs defaultTab="overview"><Tab id="overview">Overview</Tab><Tab id="details">Details</Tab></Tabs>
+```
+
+要点：子组件用 `useContext` 取状态，缺失 Provider 时抛错——这把"用错地方"变成立刻可见的失败，而不是难查的 bug。
+
+### Context + Reducer（中等复杂度状态）
+
+状态有多个相关字段、转移逻辑复杂时，用 reducer 把"怎么变"集中到一处，比散落的 `useState` setter 更好维护。这是介于 `useState` 和外部 store（Zustand/Redux）之间的中间档。
+
+```tsx
+type Action =
+  | { type: 'SET_ITEMS'; payload: Item[] }
+  | { type: 'SELECT'; payload: Item }
+  | { type: 'SET_LOADING'; payload: boolean };
+
+function reducer(state: State, action: Action): State {
+  switch (action.type) {
+    case 'SET_ITEMS':   return { ...state, items: action.payload };
+    case 'SELECT':      return { ...state, selected: action.payload };
+    case 'SET_LOADING': return { ...state, loading: action.payload };
+    default:            return state;
+  }
+}
+
+const Ctx = createContext<{ state: State; dispatch: Dispatch<Action> } | undefined>(undefined);
+
+export function Provider({ children }: { children: React.ReactNode }) {
+  const [state, dispatch] = useReducer(reducer, { items: [], selected: null, loading: false });
+  return <Ctx.Provider value={{ state, dispatch }}>{children}</Ctx.Provider>;
+}
+```
+
+什么时候升级到外部 store：跨大半个应用共享、写操作频繁、需要中间件（持久化/日志）时。在那之前 Context + Reducer 够用且零依赖。
+
+### Error Boundary（错误边界）
+
+React 组件树里任何一处渲染抛错，默认会让整棵树白屏。用 Error Boundary 把错误圈在局部，给出可恢复的兜底 UI。
+
+```tsx
+export class ErrorBoundary extends React.Component<
+  { children: React.ReactNode; fallback?: React.ReactNode },
+  { hasError: boolean; error: Error | null }
+> {
+  state = { hasError: false, error: null as Error | null };
+
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, info: React.ErrorInfo) {
+    // 上报到错误监控（Sentry 等）
+    console.error('ErrorBoundary caught:', error, info);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return this.props.fallback ?? (
+        <div role="alert">
+          <h2>出错了</h2>
+          <button onClick={() => this.setState({ hasError: false, error: null })}>重试</button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+```
+
+放置策略：包在路由级、或包在"可能失败但不该拖垮全页"的局部（如某个第三方 widget、某个数据面板）。Error Boundary 只能用 class 组件实现——这是少数还必须用 class 的场景。注意它抓不到事件处理器、异步代码、SSR 里的错误。
+
+### Debounce Hook（输入去抖）
+
+搜索框、自动保存等"输入变化频繁但下游操作昂贵"的场景，用去抖把高频变化压成低频触发。
+
+```tsx
+export function useDebounce<T>(value: T, delay: number): T {
+  const [debounced, setDebounced] = useState(value);
+  useEffect(() => {
+    const handler = setTimeout(() => setDebounced(value), delay);
+    return () => clearTimeout(handler);  // 每次 value 变都清掉上一个待触发的 timer
+  }, [value, delay]);
+  return debounced;
+}
+
+// const debouncedQuery = useDebounce(query, 500);
+// useEffect(() => { if (debouncedQuery) search(debouncedQuery); }, [debouncedQuery]);
+```
+
+关键是 cleanup 里 `clearTimeout`——没有它，每次输入都会留下一个迟早触发的 timer，去抖就失效了。
+
+### 长列表虚拟化（Virtualization）
+
+渲染几百上千行时，DOM 节点数会拖垮性能。虚拟化只渲染视口内可见的行 + 少量缓冲，滚动时动态替换。
+
+- 触发条件：列表项 > 数百，且每项有一定渲染成本。几十项不必虚拟化（增加复杂度不划算）。
+- 实现：用成熟库（如 `@tanstack/react-virtual`、`react-window`），不要自己手写——边界情况（动态行高、滚动恢复、a11y）很多。
+- 取舍：虚拟化会牺牲浏览器原生的 Ctrl+F 搜索、锚点跳转。列表需要这些能力时要额外处理。
+
 ## Common Rationalizations（常见自我合理化）
 
 | Rationalization | Reality |

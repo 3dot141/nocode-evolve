@@ -13,7 +13,7 @@
 #   hooks.json 预留 5 片 segment, 后续片若不存在则 [ -f ] 静默退出. 超 MAX_CATALOG_SHARDS 由 generate 报警.
 #
 # hooks/hooks.json 的 SessionStart 数组按下列 segment 顺序列 command:
-#   model-about / model-personal / model-karpathy / model-catalog-1 / model-catalog-2 / model-catalog-3 / project
+#   model-about / model-personal / model-karpathy / model-catalog-using / model-catalog-1 / model-catalog-2 / model-catalog-3 / project
 #
 # 新增 model/*.md (非 catalog 系列): 必须在 seg_file() 加 segment 并在 hooks.json 加对应 command, 否则 sanity 警告孤儿.
 # 新增 rules/rule-*.md: 必须被任一 model/agent-catalog-*.md 引用 (改 manifest 重新生成), 否则 sanity 警告触发不到.
@@ -29,6 +29,7 @@ seg_file() {
     model-about)      printf '%s' "${PLUGIN_ROOT}/model/agent-about.md" ;;
     model-personal)   printf '%s' "${PLUGIN_ROOT}/model/agent-personal.md" ;;
     model-karpathy)   printf '%s' "${PLUGIN_ROOT}/model/agent-karpathy.md" ;;
+    model-catalog-using) printf '%s' "${PLUGIN_ROOT}/model/agent-catalog-using.md" ;;
     model-catalog-1)  printf '%s' "${PLUGIN_ROOT}/model/agent-catalog-1.md" ;;
     model-catalog-2)  printf '%s' "${PLUGIN_ROOT}/model/agent-catalog-2.md" ;;
     model-catalog-3)  printf '%s' "${PLUGIN_ROOT}/model/agent-catalog-3.md" ;;
@@ -40,7 +41,7 @@ seg_file() {
 }
 
 # model segment 列表 (孤儿检查用; 改这里即同步 sanity)
-MODEL_SEGMENTS="model-about model-personal model-karpathy model-catalog-1 model-catalog-2 model-catalog-3 model-catalog-4 model-catalog-5"
+MODEL_SEGMENTS="model-about model-personal model-karpathy model-catalog-using model-catalog-1 model-catalog-2 model-catalog-3 model-catalog-4 model-catalog-5"
 
 file="$(seg_file "$SEG")" || {
   echo "inject-rules.sh: unknown segment '$SEG' (expected: ${MODEL_SEGMENTS} project)" >&2

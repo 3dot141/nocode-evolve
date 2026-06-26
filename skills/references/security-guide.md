@@ -322,6 +322,46 @@ app.use('/api/auth/', rateLimit({
 }));
 ```
 
+## CSRF Protection（跨站请求伪造防护）
+
+> 吸收自 everything-claude-code v1.2.0 security-review skill (MIT)
+
+CSRF 的本质：攻击者诱导已登录用户的浏览器**自动带上 cookie** 去发一个状态变更请求（转账、改密码、删数据）。受害者不知情，浏览器替他干了。两道防线叠加用：
+
+**第一道——SameSite cookie。** 让浏览器在跨站请求里不自动附带会话 cookie，从根上断掉大多数 CSRF。
+
+```typescript
+res.setHeader('Set-Cookie',
+  `session=${sessionId}; HttpOnly; Secure; SameSite=Strict`);
+// SameSite=Strict: 跨站完全不带 cookie（最严，但外链跳转回来也不带）
+// SameSite=Lax:    顶级导航的 GET 带，跨站 POST 不带（平衡，多数场景够用）
+```
+
+**第二道——CSRF token（双提交模式）。** 对所有状态变更操作（POST/PUT/PATCH/DELETE）要求一个攻击者拿不到的 token。攻击者能让浏览器发请求，但读不到你下发的 token。
+
+```typescript
+// 校验：状态变更请求必须带正确的 CSRF token
+export async function POST(request: Request) {
+  const token = request.headers.get('X-CSRF-Token');
+
+  if (!csrf.verify(token)) {
+    return Response.json(
+      { error: { code: 'CSRF_INVALID', message: 'Invalid CSRF token' } },
+      { status: 403 }
+    );
+  }
+  // 处理请求
+}
+```
+
+**双提交（double-submit）原理**：服务端把随机 token 同时放进一个 cookie 和返回给前端（前端塞进请求头 `X-CSRF-Token`）。校验时比对两者是否相等。攻击者的跨站请求虽然能带上 cookie，但无法读取 cookie 值写进请求头（同源策略挡住），两者对不上即拒绝。
+
+#### 校验清单
+- [ ] 所有状态变更操作（非 GET）都校验 CSRF token
+- [ ] 所有 cookie 设 `SameSite=Strict` 或 `Lax`
+- [ ] 实现了 double-submit cookie 模式（或框架等价机制）
+- [ ] 纯 token 认证（Authorization header，不依赖 cookie）的 API 可豁免——CSRF 只攻击 cookie 自动附带
+
 ## Secrets Management（密钥管理）
 
 ```
@@ -439,6 +479,57 @@ container.textContent = await llm.reply(userMessage);
 - 服务端 fetch 用户提供的 URL 而没有允许列表（SSRF）
 - LLM/模型输出被传入查询、DOM、shell 或 `eval`
 - secret、PII 或完整系统提示被放进 LLM 上下文窗口
+
+## Security Testing（安全测试写法）
+
+> 吸收自 everything-claude-code v1.2.0 security-review skill (MIT)
+
+安全控制要有测试守护，否则下次重构就悄悄失效了。把每条安全边界写成一个会失败的测试——用攻击者的视角断言"该被拒绝的确实被拒绝"。核心是断言**状态码**：401（未认证）、403（已认证但无权）、422/400（输入非法）、429（超限流）。
+
+```typescript
+// 认证：未带凭据访问受保护端点 → 401
+test('requires authentication', async () => {
+  const res = await fetch('/api/protected');
+  expect(res.status).toBe(401);
+});
+
+// 授权：已认证但角色不足 → 403
+test('requires admin role', async () => {
+  const res = await fetch('/api/admin', {
+    headers: { Authorization: `Bearer ${normalUserToken}` },
+  });
+  expect(res.status).toBe(403);
+});
+
+// 越权：用户访问他人资源 → 403（IDOR/水平越权回归测试）
+test('cannot access other users resource', async () => {
+  const res = await fetch(`/api/tasks/${otherUsersTaskId}`, {
+    method: 'PATCH',
+    headers: { Authorization: `Bearer ${userToken}` },
+    body: JSON.stringify({ title: 'hijacked' }),
+  });
+  expect(res.status).toBe(403);
+});
+
+// 输入校验：非法输入 → 422/400
+test('rejects invalid input', async () => {
+  const res = await fetch('/api/users', {
+    method: 'POST',
+    body: JSON.stringify({ email: 'not-an-email' }),
+  });
+  expect([400, 422]).toContain(res.status);
+});
+
+// 限流：超过窗口上限 → 部分请求 429
+test('enforces rate limits', async () => {
+  const responses = await Promise.all(
+    Array.from({ length: 101 }, () => fetch('/api/endpoint'))
+  );
+  expect(responses.some(r => r.status === 429)).toBe(true);
+});
+```
+
+把这几类测试当作安全控制的**回归网**——CSRF token 校验、授权检查、限流，每加一处就补一条会失败的测试，确保它真的在拦。
 
 ## Verification（验证）
 
