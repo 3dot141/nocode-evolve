@@ -40,34 +40,38 @@ Build 完成后的 **evidence** 门。"看起来对"不是证据，跑一下才�
 **进入后第一件事**，创建以下全部 task：
 
 ```
-Task 1: 证据收集
+Task 1: 证据收集（Step 1）
   Sub-steps: 跑完整测试套件 + build，记录命令+输出+通过/失败三元组
   Gate: 三元组齐全，证据新鲜
 
-Task 2: 集成测试
+Task 2: 集成测试（Step 2）
   Sub-steps: 跨模块契约 + 数据流端到端
   Gate: 集成路径验过
 
-Task 3: E2E/Browser（有 UI 变更时）
+Task 3: E2E/Browser（Step 3，有 UI 变更时）
   Sub-steps: golden path + 边界 case + 截图
   Gate: UI 变更验过或标注跳过
 
-Task 4: 性能检查（有性能需求时）
+Task 4: 性能检查（Step 4，有性能需求时）
   Sub-steps: Lighthouse / benchmark / Core Web Vitals
   Gate: 性能达标或标注跳过
 
-Task 5: 验收逐条核对
+Task 5: 韧性检查（Step 5，有外部依赖时）
+  Sub-steps: 依赖超时/失败时的降级行为验证
+  Gate: 降级验过或标注跳过
+
+Task 6: 验收逐条核对（Step 6）
   Sub-steps: Define 验收标准 + 路径 + 约束逐条 ✅/❌ 附证据
   Gate: 逐条通过，任一 ❌ 回 Build
 
-Task 6: 反向审计（Full 场景）
+Task 7: 反向审计（Step 7，Full 场景）
   Sub-steps: 拿 PRD 原始路径清单回扫，按测试方案逐层查覆盖
   Gate: 遗漏已补测或标注"已知未验+原因+风险"
 ```
 
 每完成一个标 done。
 
-### 6a. 证据收集
+### Step 1: 证据收集
 
 - 跑**完整**测试套件（不只是本次 slice 的单测）
 - Build/编译成功，输出干净（无 error/warning/stack trace）
@@ -75,7 +79,7 @@ Task 6: 反向审计（Full 场景）
 - 证据必须新鲜——这次改动后重新跑出来的，不是记忆里的
 - **Gate Function**：宣称任何状态前走 5 步——IDENTIFY(用什么命令证明) → RUN(完整跑) → READ(全输出查 exit code) → VERIFY(输出是否支持断言) → ONLY THEN 宣称。说"Great/Done/完成了"前若没在本条消息跑过验证命令——STOP
 
-### 6b. 集成测试
+### Step 2: 集成测试
 
 跨模块契约 + 数据流端到端 + API 契约验证（请求/响应 schema、状态码、错误路径）。
 单测全绿 ≠ 功能能用。单测验"你以为的逻辑"，集成验"真实的系统"。
@@ -84,7 +88,9 @@ Task 6: 反向审计（Full 场景）
 
 **Requirements 逐行核对**：重读 restate/plan → 建逐条 checklist → 逐条验证 → 报 gap 或完成。不是"测试过了阶段就完成"——要证明每一条需求都有对应的证据。
 
-### 6c. E2E / Browser（有 UI 变更时）
+### Step 3: E2E / Browser（有 UI 变更时）
+
+**先读 UI 设计**：Read `.ui.md`（交互流 + IA + 视觉方向）+ prototype（有 `[design-source: claude-design]` 时 `/design import` 拉回，有 `[design-source: prototype]` 时读本地 HTML）。E2E 验证的基准是 UI 设计，不是"看起来能用"。
 
 启动 dev server → golden path + 边界 case → 截图/录屏作证据。
 无障碍检查（键盘可达、对比度、ARIA）。详见 `references/e2e-guide.md`。
@@ -99,7 +105,7 @@ Task 6: 反向审计（Full 场景）
 
 **无 UI 变更 → 标注跳过**。
 
-### 6d. 性能检查（有性能需求时）
+### Step 4: 性能检查（有性能需求时）
 
 Core Web Vitals：LCP ≤ 2.5s、INP ≤ 200ms、CLS ≤ 0.1。详见 `references/performance-guide.md`。
 
@@ -107,7 +113,7 @@ Core Web Vitals：LCP ≤ 2.5s、INP ≤ 200ms、CLS ≤ 0.1。详见 `reference
 
 **无性能需求 → 标注跳过**。
 
-### 6e. 韧性检查（有外部依赖时）
+### Step 5: 韧性检查（有外部依赖时）
 
 对每条系统路径和跨域路径，问：**依赖超时/失败时，这条路径的降级行为验过吗？**
 
@@ -115,11 +121,11 @@ Core Web Vitals：LCP ≤ 2.5s、INP ≤ 200ms、CLS ≤ 0.1。详见 `reference
 - 数据库连接池耗尽 → 排队还是拒绝？
 - 消息队列消费延迟 → 重试策略是什么？幂等吗？
 
-不要求做完整 chaos engineering（那需要平台基础设施）。要求的是把"happy path 验了，failure path 验了吗"这个问题暴露出来，和 6f 的不测项风险评估对接。
+不要求做完整 chaos engineering（那需要平台基础设施）。要求的是把"happy path 验了，failure path 验了吗"这个问题暴露出来，和 Step 6 的不测项风险评估对接。
 
 **无外部依赖 → 标注跳过**。
 
-### 6f. 验收逐条核对
+### Step 6: 验收逐条核对
 
 从 Define 验收标准 + 路径 + 约束**逐条**核对（不只 SC——路径和约束也逐条附证据）。产出格式：
 
@@ -134,13 +140,13 @@ Core Web Vitals：LCP ≤ 2.5s、INP ≤ 200ms、CLS ≤ 0.1。详见 `reference
 
 每条有编号 + 标准/路径/约束原文 + ✅/❌ + 证据（命令+输出）。任一条 ❌ → 回 Build 修复。
 
-**完整示例**：一次走完 6a→6b→6f（含一条 SC ❌ 回 Build）见 `references/examples/example-verify-session.md`。
+**完整示例**：一次走完 Step 1→Step 2→Step 6（含一条 SC ❌ 回 Build）见 `references/examples/example-verify-session.md`。
 
 **Subagent 验证规则**：如果用了 subagent 执行 Build，subagent 报 success 不可信——独立查 VCS diff 确认真有改动、独立跑测试确认真通过。不信 agent 自报状态。
 
-### 6g. 反向审计（Full 场景）
+### Step 7: 反向审计（Full 场景）
 
-6f 是"按 checklist 逐条核"，6g 是"回头查 checklist 本身有没有漏"——拿 **PRD 原始路径清单**（不只 Design 的 TO 表）回扫，确保前面阶段没有集体遗漏。无 PRD（Standard/Fix/Mini）→ 拿 restate 路径清单回扫；无路径清单 → 标注跳过。
+Step 6 是"按 checklist 逐条核"，Step 7 是"回头查 checklist 本身有没有漏"——拿 **PRD 原始路径清单**（不只 Design 的 TO 表）回扫，确保前面阶段没有集体遗漏。无 PRD（Standard/Fix/Mini）→ 拿 restate 路径清单回扫；无路径清单 → 标注跳过。
 
 **① 按测试方案逐层检查**（对照设计文档「验证策略」章节）：
 
@@ -163,7 +169,7 @@ Core Web Vitals：LCP ≤ 2.5s、INP ≤ 200ms、CLS ≤ 0.1。详见 `reference
 - 遗漏处置: 跨域.1 → 回 Build；约束.2 → 补测；系统.1 → 补留证据
 ```
 
-发现遗漏 → **补测，或显式标注"已知未验 + 原因 + 风险"**，不静默放过。把未验项藏起来 = 6f 失效。
+发现遗漏 → **补测，或显式标注"已知未验 + 原因 + 风险"**，不静默放过。把未验项藏起来 = Step 6 失效。
 
 ## Exit Gate
 
@@ -199,6 +205,6 @@ Core Web Vitals：LCP ≤ 2.5s、INP ≤ 200ms、CLS ≤ 0.1。详见 `reference
 - 只跑了 slice 单测，没跑完整套件
 - 有 UI 变更但没截图
 - 验收核对出现"大概通过/应该没问题"
-- 只核对了 SC，没核对路径和约束（6f 漏了一半）
+- 只核对了 SC，没核对路径和约束（Step 6 漏了一半）
 - Full 场景跳过反向审计——前面阶段漏的路径会一路漏到上线
 - 反向审计发现未验项但静默放过（没补测也没标"已知未验+原因+风险"）
