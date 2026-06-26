@@ -55,9 +55,9 @@ Task 5: Cleanup
 
 Enter Gate 三项逐条检查：
 
-1. **Review 状态**：Review task 标完成 + 无未解决 Critical
-2. **工作目录**：`git status` 干净。有未 commit 改动 → 停手告知，不替用户 commit
-3. **分支新鲜度**：调 `rule-git-freshness` 检查 behind 差距。behind 大 → 建议先 rebase，但用户决定
+- [ ] **Review 状态**：Review task 标完成 + 无未解决 Critical
+- [ ] **工作目录**：`git status` 干净。有未 commit 改动 → 停手告知，不替用户 commit
+- [ ] **分支新鲜度**：调 `rule-git-freshness` 检查 behind 差距。behind 大 → 建议先 rebase，但用户决定
 
 三项全过 → 进 8b。任一不满足 → 报告具体状态 + 建议动作，不自行修复。
 
