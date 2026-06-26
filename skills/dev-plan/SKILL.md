@@ -84,7 +84,7 @@ description: Use when you have defined goals and need to break work into tasks. 
 - **标 HITL/AFK**：
   - `HITL`（Human-in-the-loop）：需人决策的 task（API 设计确认/数据迁移策略/安全敏感）→ Build 时停下等用户
   - `AFK`（Away-from-keyboard）：agent 可独立完成的 task → Build 时连续推进
-- **UI task 的视觉值由 Build 填充**：涉及 UI 的 task，写结构代码（组件拆分/状态/props/数据流/布局骨架），视觉样式值（颜色/间距/阴影/字号/圆角）标注 `[taste-skill: <推荐的 skill 名>]`，由 Build 加载对应 design taste skill 后填充具体值。这不是占位符——结构代码是真实的，视觉值是显式的阶段分工。选型表见 `{NOCODE_SKILL_REF}/ui-taste-skills.md`
+- **UI task 标注设计源**：涉及 UI 的 task，继承上游的 `[design-source: ...]` 标识（来自 pd-ui 或 dev-design）。上游未确定 → 按 `{NOCODE_SKILL_REF}/ui-taste-skills.md`「设计源解析」流程确定后标注。task 写结构代码（组件拆分/状态/props/数据流/布局骨架），视觉值不硬编码——有设计稿的由 Build 照着实现，没有的由 Build 按 taste skill 发挥
 
 ### Step 5: 插 checkpoint
 

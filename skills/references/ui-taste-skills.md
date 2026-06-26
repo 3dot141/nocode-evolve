@@ -1,29 +1,81 @@
-# UI Taste Skills 选型表
+# UI 设计源选型与消费
 
 共享 reference，pd-ui / dev-design / dev-plan / dev-build 按需 Read。
 
-## 可用 Skills
+## 设计源解析（共享流程）
 
-| Skill | 视觉方向 | 适用场景 |
-|---|---|---|
-| `nocode-evolve:minimalist-ui` | 简约编辑风，暖单色调，平面网格，无渐变无重阴影 | 内容型产品、编辑器、笔记类、博客 |
-| `nocode-evolve:high-end-visual-design` | 高端质感，精确字号/间距/阴影/动效 | 品牌官网、SaaS 产品、需要"贵"的感觉 |
-| `nocode-evolve:industrial-brutalist-ui` | 机械工业风，瑞士排版，军事终端美学，极端字号对比 | 数据密集型仪表盘、作品集、编辑型网站 |
-| `nocode-evolve:design-taste-frontend` | 防模板化，真实设计系统，反 AI 默认审美 | 落地页、作品集、改版——任何需要"不像 AI 做的" |
-| `nocode-evolve:redesign-existing-projects` | 升级已有 UI 到高端水准，先审计再改 | 改造已有项目，不破坏功能前提下提升视觉 |
+**任何阶段遇到 UI 工作时，先跑这个流程确定设计源。** 上游已确定的设计源直接继承，不重复问。
+
+```
+1. 上游已有设计源？
+   → 有 → 继承使用（DesignSync 项目 / .ui-prototype.html / 截图参考 / Figma）
+   → 没有 → 进 2
+
+2. 问用户（AskUserQuestion）：
+   a. 有 Claude Design 设计系统？    → DesignSync get_file 读
+   b. 有截图/参考产品想仿照？         → 用户贴图或给 URL
+   c. 有 Figma 设计稿？              → figma-design-read 读取
+   d. 都没有                         → 从 taste skills 选一个方向
+
+3. 选定后记录设计源标识，下游继承不重复问
+```
+
+### 设计源标识格式
+
+记录到 `.ui.md` / 设计文档 / plan task 中，供下游识别：
+
+| 设计源 | 标识 |
+|---|---|
+| Claude Design | `[design-source: DesignSync <projectId>]` |
+| 本地原型 | `[design-source: .ui-prototype.html <路径>]` |
+| 截图/参考 | `[design-source: reference <描述或路径>]` |
+| Figma | `[design-source: figma <fileKey>]` |
+| Taste skill（兜底） | `[design-source: taste-skill <skill 名>]` |
 
 ## 各阶段怎么用
 
-| 阶段 | 动作 | 说明 |
+| 阶段 | 上游有设计源 | 上游没有 |
 |---|---|---|
-| **pd-ui** | `Skill()` 加载 | 中/高保真出稿时，按用户选定的视觉方向加载对应 skill，按其规范产出视觉稿/原型 |
-| **dev-design** | 文字推荐 | 设计文档 `## UI 设计` 节末尾标注推荐的 skill，不自己加载，留给 Build |
-| **dev-plan** | 引用不加载 | UI task 写结构代码（组件/状态/props），视觉值标注"Build 按 taste skill 填充"，不硬编码具体样式值 |
-| **dev-build** | `Skill()` 加载 | 实现 UI 时读设计文档推荐，加载对应 skill，按规范写具体视觉代码 |
+| **pd-ui** | 引用它，在此基础上设计 | 跑选择流程，产出设计稿 |
+| **dev-design** | 引用到设计文档 `## UI 设计` 节 | 跑选择流程，记录到设计文档（定方向，不出视觉稿） |
+| **dev-plan** | 继承，标注到 UI task | 跑选择流程，标注到 UI task |
+| **dev-build** | 照着写，不发挥 | 跑选择流程，按选定方向实现 |
 
-## 选型决策树
+### Build 的消费规则
 
-没有完全匹配时选最接近的，不硬套。
+**有设计稿（DesignSync / prototype / 截图 / Figma）→ 严格照着实现，不自主发挥。**
+
+只有设计源是 taste skill（兜底）时，Build 才有视觉上的自由度——加载对应 skill，按规范自行发挥。
+
+优先级链（高→低）：
+
+```
+DesignSync .dc.html  >  .ui-prototype.html / 截图 / Figma  >  taste skill
+```
+
+## Claude.ai Design（DesignSync）
+
+Claude.ai 上的可视化设计工具，通过内置 `DesignSync` 工具与 Claude Code 双向同步。需先 `/design-login` 认证。
+
+**DesignSync 操作：**
+- `list_projects` / `get_project` — 查看设计项目
+- `list_files` / `get_file` — 读取设计文件（`.dc.html` 设计组件）
+- `create_project` — 创建设计系统项目
+- `finalize_plan` → `write_files` — 推送本地组件到设计项目（仅 `PROJECT_TYPE_DESIGN_SYSTEM` 类型）
+
+## Taste Skills（兜底方向）
+
+没有其他设计参考时，从这里选一个视觉方向。
+
+| Skill | 视觉方向 | 适用场景 |
+|---|---|---|
+| `nocode-evolve:minimalist-ui` | 简约编辑风，暖单色调，平面网格 | 内容型产品、编辑器、笔记类 |
+| `nocode-evolve:high-end-visual-design` | 高端质感，精确字号/间距/阴影 | 品牌官网、SaaS、需要精致感 |
+| `nocode-evolve:industrial-brutalist-ui` | 机械工业风，瑞士排版，极端字号对比 | 数据密集仪表盘、作品集 |
+| `nocode-evolve:design-taste-frontend` | 防模板化，反 AI 默认审美 | 落地页、作品集、改版 |
+| `nocode-evolve:redesign-existing-projects` | 升级已有 UI，先审计再改 | 改造已有项目 |
+
+### 选型决策树
 
 ```
 需要什么？

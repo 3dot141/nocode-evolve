@@ -45,15 +45,17 @@ description: Use when the user wants to design the interaction and visual direct
 
 ## 协议
 
-### Step 0: 读 PRD
+### Step 0: 读 PRD + 解析设计源
 
-检查是否有 PRD：
+**读 PRD：**
 - `{pd_prd_output}` 所在目录存在 `*.prd.md` → Read 它，拿核心场景 / 用户故事 / 目标用户 / 功能清单作为设计依据。**额外读取「业务领域与使用路径」节**——使用路径（含路径 ID，如 `订单.P1`）是交互设计的骨架，每条路径对应一段要设计的交互流
 - 不存在 → 降级为基于用户口头描述设计，明确告知"无 PRD，将基于你的描述设计；建议先写 PRD"。**无 PRD 时本会话现场产出的交互流没有稳定路径 ID**——若后续要进 Define，提醒用户路径 ID 将在 Define/PRD 阶段补齐
 
 路径 / ID 格式约定见 `{NOCODE_SKILL_REF}/path-conventions.md`。
 
 多个 PRD 文件 → 列出让用户选。
+
+**解析设计源：** 按 `{NOCODE_SKILL_REF}/ui-taste-skills.md`「设计源解析」共享流程执行——探测 DesignSync / 问用户有没有截图参考或 Figma / 都没有则选 taste skill 方向。选定的设计源决定 Step 5 走哪条产出路径。
 
 ### Step 1: 竞品与产品探索（两个方向并行）
 
@@ -179,11 +181,22 @@ description: Use when the user wants to design the interaction and visual direct
 
 低保真档跳过此步。
 
-**加载 design taste skill**：根据 Step 4 选定的视觉方向，查 `{NOCODE_SKILL_REF}/ui-taste-skills.md` 选型表，`Skill()` 加载对应规范后再出稿。没有完全匹配的方向 → 选最接近的 skill 加载，不硬套。
+**按 Step 0 选定的设计源分路：**
 
-- **中保真**：选定方向的关键页单屏静态视觉（1-2 个核心页）。给具体值——配色 token、字号/字重、间距尺度、圆角。按加载的 taste skill 规范执行，不用 AI 默认审美。
-- **高保真**：可点击 `.ui-prototype.html`。要求：关键流程能走通、用 design token 不硬编码 hex、交互元素 4 态全给（hover/active/focus-visible/disabled）、带 empty/loading 态。按 taste skill 的组件/间距/阴影规范。
-- **验证产出**：有 browser/截图工具 → 截图走查关键页；否则结构自查（区块齐全、状态覆盖）。
+**路径 A: Claude Design（设计源为 DesignSync）**
+- 在 Claude.ai Design 中出稿，即时预览迭代
+- 产出推送到设计系统项目（`DesignSync write_files`），记录 projectId
+- 下游通过 `DesignSync get_file` 消费
+
+**路径 B: 本地原型（设计源为截图参考 / Figma / taste skill）**
+- 截图/Figma 参考 → 照着参考出稿，严格还原
+- Taste skill（兜底）→ `Skill()` 加载对应 skill，按其规范出稿。没有完全匹配的方向 → 选最接近的 skill 加载，不硬套
+- 产出 `.ui-prototype.html`，存到 `{pd_ui_prototype}`
+
+**两条路径共同要求：**
+- **中保真**：关键页单屏静态视觉（1-2 个核心页），给具体值——配色 token、字号/字重、间距尺度、圆角
+- **高保真**：可点击原型，关键流程能走通、用 design token 不硬编码 hex、交互元素 4 态全给（hover/active/focus-visible/disabled）、带 empty/loading 态
+- **验证产出**：有 browser/截图工具 → 截图走查关键页；否则结构自查（区块齐全、状态覆盖）
 
 ### Step 6: 验证 + 交付
 
