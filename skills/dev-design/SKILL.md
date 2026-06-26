@@ -25,19 +25,9 @@ Define 回答"做什么"，Design 回答"怎么做"。核心动作是探索 **ap
 - [ ] Define restate 存在且用户已确认
 - [ ] 场景分类 = Full
 
-## Checklist (TaskCreate)
-
-1. **探索解法空间** — 代码 pattern 分析 + 外部方案搜索 + 已有决策对齐
-2. **提出 2-3 方案** — 核心思路差异化，附推荐 + 权衡
-3. **Prototype 验证**（可选）— 高不确定性方案先跑原型
-4. **用户选方案** — AskUserQuestion Gate
-5. **方案←→目标对齐** — 回检 restate 是否冲突
-6. **测试目标** — 以路径为骨架，每条路径/约束 → 至少一条 TO
-7. **Verify 策略 + 自审** — 按层级分组 + 不测项 + 风险排序 + 5 维自审 + 用户确认
-8. **路径覆盖审核** — 方案/TO/策略三层对齐，产出覆盖状态表
-9. **写设计文档** — 调 design-doc-writing，verify 策略落盘「验证策略」章节
-
 > 端到端示例（restate → 方案对比 → 选定 → 测试目标）见 `references/examples/example-design-session.md`
+
+> Step 0 TaskCreate 见「协议」开头。
 
 ## 领域指南（按需 Read）
 
@@ -65,6 +55,54 @@ Define 回答"做什么"，Design 回答"怎么做"。核心动作是探索 **ap
 
 ## 协议
 
+### Step 0: TaskCreate
+
+**进入后第一件事**，创建以下全部 task：
+
+```
+Task 1: 探索解法空间 — 三层并行
+  Sub-steps: 并行 spawn 代码 pattern(semble-search) + 外部方案(research-workflow) + 已有决策对齐 → 综合
+  Gate: 三路结果回来并综合，探索总结产出
+
+Task 2: 提出 2-3 方案 — 差异化对比
+  Sub-steps: 基于探索提方案 → 逐维度权衡表 → 附推荐
+  Gate: ≥2 个核心思路差异化方案（仅一条路径时说明其他不可行）
+
+Task 3: Prototype 验证（可选）
+  Sub-steps: 高不确定方案先跑原型 → 验证完即扔
+  Gate: 不确定性已验证（方案成熟则 skip）
+
+Task 4: 用户选方案 — AskUserQuestion
+  Sub-steps: 推荐放第一 → 用户选 → 附带修改记录
+  Gate: 用户显式选定（全否决回 Task 2）
+
+Task 5: 方案↔目标对齐 + Pre-mortem
+  Sub-steps: 回检 restate 冲突 → 轻量 pre-mortem（top 3 死因）
+  Gate: 无冲突（有冲突建议回 Define，最多 2 轮）
+
+Task 6: 测试目标 — 以路径为骨架
+  Sub-steps: 每条路径/约束 → ≥1 TO → 标层级
+  Gate: TO 表产出，覆盖每条路径和约束
+
+Task 7: Verify 策略 + 自审
+  Sub-steps: 按层级分组 → 不测项 + 原因 → 5 维自审 → AskUserQuestion 确认
+  Gate: 5 维自审通过 + 用户确认
+
+Task 8: 路径覆盖审核
+  Sub-steps: 方案/TO/策略三层对齐 → 产出覆盖状态表
+  Gate: 覆盖状态表全 ✅
+
+Task 9: UI 设计方案（涉及前端时）
+  Sub-steps: 有 .ui.md 继承 / 无则 AskUserQuestion 选（pd-ui / taste model）
+  Gate: UI 设计已定（纯后端 skip）
+
+Task 10: 写设计文档
+  Sub-steps: 调 design-doc-writing → 六轴 review → design-review 交叉审
+  Gate: 文档评审通过，无 Critical findings
+```
+
+每完成一个标 done。
+
 ### Step 1: 探索解法空间
 
 探索分三层——代码内部、外部方案、已有决策，全部在提方案之前完成。不凭记忆，每个判断标注来源。
@@ -80,20 +118,12 @@ Define 回答"做什么"，Design 回答"怎么做"。核心动作是探索 **ap
 - **影响面**：这次改动会触及哪些模块、哪些调用链、哪些 contract
 - 标注 `[Read path:line]` 来源
 
-#### 1b. 外部技术方案搜索（research-engine）
+#### 1b. 外部技术方案搜索（research-workflow）
 
-调用 `research-engine` workflow 搜索外部方案：
-
-```js
-Workflow({
-  scriptPath: '$CLAUDE_PLUGIN_ROOT/workflows/research-engine.js',
-  args: {
-    question: '<restate 关键词 + 要解决的技术问题>',
-    depth: 'shallow',  // 探索阶段默认 shallow；用户说"深入调研"时改 deep
-    systemPrompt: '你在做技术方案探索。搜索用 WebSearch 或 Exa，遇到开源库用 deepwiki 查文档。关注：开源库/框架的成熟度和维护状态、业界架构模式和最佳实践、技术博客和案例中的经验教训。不把搜索结果当事实——需对照本项目实际情况评估适用性。引用格式: [SOURCE: url]。',
-  }
-})
-```
+委派 `research-workflow` skill（调用方式见 `skills/research-workflow/SKILL.md`），传入：
+- `question`: `<restate 关键词 + 要解决的技术问题>`
+- `depth`: `shallow`（探索阶段默认；用户说"深入调研"时改 `deep`）
+- `systemPrompt`: `你在做技术方案探索。搜索用 WebSearch 或 Exa，遇到开源库用 deepwiki 查文档。关注：开源库/框架的成熟度和维护状态、业界架构模式和最佳实践、技术博客和案例中的经验教训。不把搜索结果当事实——需对照本项目实际情况评估适用性。引用格式: [SOURCE: url]。`
 
 从返回值的 `findings` 提取：
 - **开源库/框架**：成熟度、维护状态、社区活跃度
@@ -108,7 +138,7 @@ Workflow({
 - 新方案与旧决策冲突不是不能做，但要在设计文档里说明为什么推翻
 - **Domain 词汇对齐**：方案里的术语必须和项目的 domain 语言一致
 
-**工具降级**：semble-search 不可用 → 降级 Bash grep + Explore agent。research-engine 内部处理网络工具不可用的降级（跳过 + 标注）。
+**工具降级**：semble-search 不可用 → 降级 Bash grep + Explore agent。research-workflow 内部处理网络工具不可用的降级（跳过 + 标注）。
 
 #### 探索综合
 

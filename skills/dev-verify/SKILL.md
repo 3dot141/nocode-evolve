@@ -33,16 +33,39 @@ Build 完成后的 **evidence** 门。"看起来对"不是证据，跑一下才�
 | `{NOCODE_SKILL_REF}/frontend-guide.md` | 有 UI 变更时 | 无障碍检查 / 响应式验证 |
 | `{NOCODE_SKILL_REF}/path-conventions.md` | 反向审计读路径清单时 | 路径/约束 ID 体系 / 状态标注 / 下游消费协议 |
 
-## Checklist (TaskCreate)
-
-1. **证据收集** — 跑完整测试套件 + build，记录命令+输出+通过/失败三元组
-2. **集成测试** — 跨模块契约 + 数据流端到端
-3. **E2E/Browser**（有 UI 变更时）— golden path + 边界 case + 截图
-4. **性能检查**（有性能需求时）— Lighthouse / benchmark / Core Web Vitals
-5. **验收逐条核对** — Define 验收标准 + 路径 + 约束逐条 ✅/❌ 附证据
-6. **反向审计**（Full 场景）— 拿 PRD 原始路径清单回扫，按测试方案逐层查覆盖，遗漏不静默放过
-
 ## 协议
+
+### Step 0: TaskCreate
+
+**进入后第一件事**，创建以下全部 task：
+
+```
+Task 1: 证据收集
+  Sub-steps: 跑完整测试套件 + build，记录命令+输出+通过/失败三元组
+  Gate: 三元组齐全，证据新鲜
+
+Task 2: 集成测试
+  Sub-steps: 跨模块契约 + 数据流端到端
+  Gate: 集成路径验过
+
+Task 3: E2E/Browser（有 UI 变更时）
+  Sub-steps: golden path + 边界 case + 截图
+  Gate: UI 变更验过或标注跳过
+
+Task 4: 性能检查（有性能需求时）
+  Sub-steps: Lighthouse / benchmark / Core Web Vitals
+  Gate: 性能达标或标注跳过
+
+Task 5: 验收逐条核对
+  Sub-steps: Define 验收标准 + 路径 + 约束逐条 ✅/❌ 附证据
+  Gate: 逐条通过，任一 ❌ 回 Build
+
+Task 6: 反向审计（Full 场景）
+  Sub-steps: 拿 PRD 原始路径清单回扫，按测试方案逐层查覆盖
+  Gate: 遗漏已补测或标注"已知未验+原因+风险"
+```
+
+每完成一个标 done。
 
 ### 6a. 证据收集
 

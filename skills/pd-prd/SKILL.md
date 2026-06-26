@@ -22,19 +22,51 @@ description: Use when the user wants to write a product requirements document. U
 
 - [ ] 用户有写 PRD 的意图，或 research 刚完成建议衔接
 
-## Checklist (TaskCreate)
-
-1. **加载输入** — Read research-report（如有）
-2. **Clarify Gate** — 逐字段提议默认值 + 用户确认
-3. **领域与路径建模** — DDD 域划分 → 展开使用路径 → 跨域 → 系统 → 约束
-4. **核心流程图** — 按场景画流程图，标路径 ID + 异常分支 + 约束引用
-5. **起草 PRD** — 按模板写（§4 场景流程图 + §5 DDD 领域模型），标注状态
-6. **合批确认** — 整份清单（用户故事 + 路径 + 图 + 约束）一次确认
-7. **自审** — 完整性 + 路径覆盖 + 图覆盖
-8. **用户最终确认** — AskUserQuestion 三选
-9. **保存** — 写到产出路径
-
 ## 协议
+
+### Step 0: TaskCreate
+
+**进入 pd-prd 后第一件事**，创建以下全部 task：
+
+```
+Task 1: 加载输入
+  Sub-steps: Read research-report（如有）→ 无则降级纯问答
+  Gate: 输入来源已确定（有 report / 纯问答）
+
+Task 2: Clarify Gate
+  Sub-steps: 逐字段提议默认值（Problem / Target User / Appetite / 不做的事）→ 用户确认
+  Gate: 核心字段已确认，判断依据已记录
+
+Task 3: 领域与路径建模
+  Sub-steps: DDD 域划分 → 展开使用路径 → 跨域 → 系统 → 约束
+  Gate: 路径清单产出，每条标状态 + US 来源
+
+Task 4: 核心流程图
+  Sub-steps: 领域关系总图 → 按场景画图（标路径 ID + 异常 + 约束）
+  Gate: 流程图覆盖所有路径
+
+Task 5: 起草 PRD
+  Sub-steps: 按模板组装 §1-§9，标注状态
+  Gate: PRD 草稿产出
+
+Task 6: 合批确认
+  Sub-steps: 整份清单（用户故事 + 路径 + 图 + 约束）一次展示 → 用户加/减/改
+  Gate: 用户确认（全否决 → 回 Task 2）
+
+Task 7: 自审 + prd-review
+  Sub-steps: 16 维度自审 → prd-review 红蓝交叉审
+  Gate: 自审通过，无 Critical findings
+
+Task 8: 用户最终确认
+  Sub-steps: AskUserQuestion 三选
+  Gate: 用户显式确认
+
+Task 9: 保存
+  Sub-steps: 写文件到 {pd_prd_output}
+  Gate: 文件保存 + 提示下一步
+```
+
+每完成一个标 done。
 
 ### Step 1: 加载输入
 

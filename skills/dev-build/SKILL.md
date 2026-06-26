@@ -42,13 +42,29 @@ description: Use when executing implementation tasks from a plan, writing new co
 | Go 开发 | 有 go.mod | `references/go-patterns.md`（惯用法/测试/审查/构建排错） |
 | TS 构建排错 | tsconfig.json 且 tsc/build 失败 | `references/ts-build-fix.md` |
 
-## Checklist (TaskCreate)
+## 协议
 
-1. **加载计划** — 读 Plan 任务序列 + Design 测试目标
-2. **逐 task 执行 slice** — 每个 plan task 走 5a→5d 闭环，完成后标 completed
-3. **Gate 检查** — 所有 task 完成 + 全部测试通过 + build 通过
+### Step 0: TaskCreate
 
-## 核心：slice 循环
+**进入后第一件事**，创建以下全部 task：
+
+```
+Task 1: 加载计划
+  Sub-steps: 读 Plan 任务序列 + Design 测试目标
+  Gate: 计划 + 测试目标已加载
+
+Task 2: 逐 task 执行 slice
+  Sub-steps: 每个 plan task 走 5a Scope Lock → 5b Test First → 5c Implement → 5d Verify&Commit
+  Gate: 每个 task 完成标 completed
+
+Task 3: Gate 检查
+  Sub-steps: 跑完整测试套件 + build
+  Gate: 所有 task 完成 + 全测试通过 + build 通过
+```
+
+每完成一个标 done。
+
+### Step 1: slice 循环（逐 task）
 
 一次推进一个 task，不积累未测代码：
 
@@ -62,7 +78,7 @@ for each task in plan:
 
 > 端到端示例（一个完整 slice：5a Scope Lock → 5b 失败测试 → 5c 实现 → 5d commit）见 `references/examples/example-build-slice.md`
 
-### 5a. Scope Lock
+#### 5a. Scope Lock
 
 - 取 task，确认 ≤ 5 文件 + 验收标准。超过 → 回 Plan 拆
 - **HITL task**：停下等用户决策再继续。**AFK task**：连续推进
@@ -70,7 +86,7 @@ for each task in plan:
 - 框架 API 查官方文档确认。文档不可达 → 标 `UNVERIFIED` + 退回本地源码
 - 只碰本 task 声明的文件。计划外发现用 **NOTICED BUT NOT TOUCHING** 模式：显式记录发现 + 位置 + 原因，问用户是否建 task。具体：不顺手清理相邻代码、不重构只读文件的 import、不删不懂的注释、不加 spec 外"看起来有用"的功能、不现代化只读文件语法
 
-### 5b. Test First (Iron Law)
+#### 5b. Test First (Iron Law)
 
 **NO PRODUCTION CODE WITHOUT A FAILING TEST FIRST.**
 
@@ -88,12 +104,12 @@ for each task in plan:
 
 **测试难写 = 设计难**（build 独有的设计反馈）：不知怎么测 → 先写期望 API / 先写断言；测试太复杂 → 设计太复杂，简化接口；必须 mock 一切 → 耦合太重，用依赖注入；setup 巨大 → 抽 helper 或简化设计
 
-### 5c. Implement + Green
+#### 5c. Implement + Green
 
 最少代码让测试变绿。不多写一行未被测试覆盖的逻辑。
 Feature flags 包裹未完成功能。新功能默认关闭。
 
-### 5d. Verify & Commit
+#### 5d. Verify & Commit
 
 test pass + build pass + 无回归，三项没全绿不许 commit。
 commit message 说清 what + why。

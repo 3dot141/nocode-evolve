@@ -45,16 +45,39 @@ description: Use before merging any change, after completing a feature, or when 
 | `{NOCODE_SKILL_REF}/frontend-guide.md` | 审 UI 代码时 | 组件模式 / Avoid AI Aesthetic / WCAG |
 | `{NOCODE_SKILL_REF}/path-conventions.md` | 过 Spec 轴路径检查时 | 路径 ID 体系 / 状态标注 / 下游消费协议 |
 
-## Checklist (TaskCreate)
-
-1. **Five-Axis Self-Review** — 正确性 → 可读性 → 架构 → 安全 → 性能
-2. **Simplification Pass** — Chesterton's Fence + dead code
-3. **Codex Cross-Review** — 独立交叉评（不可用则降级并明说）
-4. **Path Coverage Check** — Spec 轴：拿 PRD 原始路径清单逐条比对实现
-5. **Findings Triage** — 统一 schema 分级，呈现给用户
-6. **用户 approve** — Gate：Critical 全 fix + 用户逐条拍板 Warning
-
 ## 协议
+
+### Step 0: TaskCreate
+
+**进入后第一件事**，创建以下全部 task：
+
+```
+Task 1: Five-Axis Self-Review
+  Sub-steps: 正确性 → 可读性 → 架构 → 安全 → 性能逐轴过 diff
+  Gate: 五轴逐轴过，每轴至少一条 finding
+
+Task 2: Simplification Pass
+  Sub-steps: Chesterton's Fence（删前 git blame）+ dead code
+  Gate: 简化项已识别
+
+Task 3: Codex Cross-Review
+  Sub-steps: 独立交叉评（不可用则降级并明说）
+  Gate: 两路 findings 合并或降级标注
+
+Task 4: Path Coverage Check
+  Sub-steps: Spec 轴，拿 PRD 原始路径清单逐条比对实现
+  Gate: 路径覆盖率报告产出
+
+Task 5: Findings Triage
+  Sub-steps: 统一 schema 分级（Critical/Warning/Suggestion）
+  Gate: findings 呈现给用户
+
+Task 6: 用户 approve
+  Sub-steps: Critical 全 fix + 用户逐条拍板 Warning
+  Gate: Critical 清零 + 用户拍板
+```
+
+每完成一个标 done。
 
 ### 7a. Five-Axis Self-Review
 

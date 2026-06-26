@@ -21,15 +21,35 @@ Review 通过后的 **disposition** 门。4 条路（merge / PR / keep / discard
 - [ ] 工作目录干净（无未 commit 的改动）
 - [ ] 分支与 base 无重大冲突（behind ≤ 阈值，或已 rebase）
 
-## Checklist (TaskCreate)
-
-1. **Pre-flight** — 确认 Entry Gate + 分支状态
-2. **Disposition** — 呈现 4 选项，用户选路径
-3. **Execute** — 按选定路径执行（rule-finishing-branch）
-4. **Task Transition** — 飞书 issue 状态流转（lark-project references/transition.md）
-5. **Cleanup** — worktree 清理 + 确认终态
-
 ## 协议
+
+### Step 0: TaskCreate
+
+**进入后第一件事**，创建以下全部 task：
+
+```
+Task 1: Pre-flight
+  Sub-steps: 确认 Entry Gate + 分支状态
+  Gate: Review 状态 + 工作目录干净 + 分支新鲜度三项过
+
+Task 2: Disposition
+  Sub-steps: 呈现 4 选项，用户选路径
+  Gate: 用户选定 merge/PR/keep/discard 之一
+
+Task 3: Execute
+  Sub-steps: 按选定路径执行（rule-finishing-branch）
+  Gate: 选定路径的所有 Gate 通过
+
+Task 4: Task Transition
+  Sub-steps: 飞书 issue 状态流转（lark-project references/transition.md）
+  Gate: 任务流转或标注跳过
+
+Task 5: Cleanup
+  Sub-steps: worktree 清理 + 确认终态
+  Gate: worktree 状态与用户选择一致
+```
+
+每完成一个标 done。
 
 ### 8a. Pre-flight
 

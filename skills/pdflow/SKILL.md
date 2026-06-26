@@ -54,7 +54,7 @@ Task 2: PRD — 收敛成文档
   Gate: .prd.md 产出 + 用户确认
 
 Task 3: 交互视觉设计 — 界面结构 + 视觉方向（无界面需求可跳过）
-  Sub-steps: ⓪ Skill(nocode-evolve:pd-ui) → 读 PRD + 选保真度 → wireframe(批准) → 方向发散 → 产出 .ui.md
+  Sub-steps: ⓪ Skill(nocode-evolve:pd-ui) → 交互阶段(起点→竞品+交互拆解→IA批准) → 视觉阶段(探索→保真度+交付+方向→DS→原型) → 产出 .ui.md
   Gate: .ui.md 产出 + 用户确认方向
 
 Task 4: Handoff — 衔接开发流
@@ -68,7 +68,7 @@ Task 1: PRD — 收敛成文档
   Gate: .prd.md 产出 + 用户确认
 
 Task 2: 交互视觉设计 — 界面结构 + 视觉方向（无界面需求可跳过）
-  Sub-steps: ⓪ Skill(nocode-evolve:pd-ui) → 读 PRD + 选保真度 → wireframe(批准) → 方向发散 → 产出 .ui.md
+  Sub-steps: ⓪ Skill(nocode-evolve:pd-ui) → 交互阶段(起点→竞品+交互拆解→IA批准) → 视觉阶段(探索→保真度+交付+方向→DS→原型) → 产出 .ui.md
   Gate: .ui.md 产出 + 用户确认方向
 
 Task 3: Handoff — 衔接开发流

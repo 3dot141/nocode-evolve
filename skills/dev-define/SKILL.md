@@ -19,21 +19,45 @@ description: Use when starting any non-trivial task, when requirements are uncle
 
 - [ ] 用户有任务描述或意图
 
-## Checklist (TaskCreate)
-
-进入 Define 后，为以下步骤各建一条 task，按顺序完成：
-
-1. **场景分类** — AskUserQuestion 确认 Mini/Fix/Standard/Full
-2. **探索现状** — 按场景裁剪：代码探索 + 网络探索（Mini 跳过）
-3. **路径校验** — 搬入/生成路径清单 + 每条路径绑 SC（Full/Standard）
-4. **假设先行** — 基于探索结论形成判断 + CONFIDENCE
-5. **澄清循环** — 代码能自答的不问用户；用 AskUserQuestion 给选项
-6. **产出 restate** — 含路径清单 + SC 绑定 + Quality Bar + Collaboration Pact
-7. **用户确认** — AskUserQuestion 三选：确认/修改/重来（路径 + SC 一起确认）
-
 > 端到端示例（模糊需求 → 确认 restate）见 `references/examples/example-define-session.md`
 
 ## 协议
+
+### Step 0: TaskCreate
+
+**进入后第一件事**，创建以下全部 task：
+
+```
+Task 1: 场景分类 — Mini/Fix/Standard/Full
+  Sub-steps: AskUserQuestion 判场景 → Scope check（太大先拆）
+  Gate: 场景已确认（Mini 出 mini-goal 退出 / Fix 出复现定义 / Standard·Full 进 Task 2）
+
+Task 2: 探索现状 — 代码 + 网络并行
+  Sub-steps: 并行 spawn 代码探索(semble-search) + 网络探索 → 综合
+  Gate: 两路结果回来并综合（Mini 跳过）
+
+Task 3: 路径校验 — 路径清单 + SC 绑定（Full/Standard）
+  Sub-steps: 有 PRD 搬入 / 无 PRD 现场生成 → 每条路径绑 SC
+  Gate: 路径清单 + 路径↔SC 绑定产出，无裸路径无裸 SC（Mini/Fix 跳过）
+
+Task 4: 假设先行 — 判断 + CONFIDENCE
+  Sub-steps: 基于探索写判断 → 摊开隐含假设
+  Gate: 假设已摊给用户（≥95% 可跳 Task 5）
+
+Task 5: 澄清循环 — AskUserQuestion 给选项
+  Sub-steps: 代码能自答的不问 → 一次问一个 → 收敛到 95%
+  Gate: 置信度 ≥95%（过 95% 停止测试）
+
+Task 6: 产出 restate
+  Sub-steps: 填必填字段 + 路径清单 + SC 绑定 + Quality Bar + Collaboration Pact
+  Gate: restate 完整产出
+
+Task 7: 用户确认 — 三选 + 交叉审
+  Sub-steps: define-review 交叉审 → AskUserQuestion 三选（确认/修改/重来）
+  Gate: 用户显式确认 + 无 Critical findings
+```
+
+每完成一个标 done。
 
 ### Step 1: 场景分类
 
@@ -77,25 +101,17 @@ Standard/Full → 进 Step 2。
 
 **网络探索**（Full 完整 / Standard 轻量）：
 
-Full 场景调 `research-engine` workflow：
+Full 场景委派 `research-workflow` skill（调用方式见 `skills/research-workflow/SKILL.md`），传入：
+- `question`: `<任务描述> 在业界怎么定义、有没有行业标准/规范`
+- `depth`: `shallow`
+- `systemPrompt`: `你在做需求定义阶段的问题空间探索。搜索用 WebSearch 或 Exa。只搜问题定义层面的参考（行业标准/规范/问题框架），不搜解法——解法是 Design 的事。引用格式: [SOURCE: url]。`
 
-```js
-Workflow({
-  scriptPath: '$CLAUDE_PLUGIN_ROOT/workflows/research-engine.js',
-  args: {
-    question: '<任务描述> 在业界怎么定义、有没有行业标准/规范',
-    depth: 'shallow',
-    systemPrompt: '你在做需求定义阶段的问题空间探索。搜索用 WebSearch 或 Exa。只搜问题定义层面的参考（行业标准/规范/问题框架），不搜解法——解法是 Design 的事。引用格式: [SOURCE: url]。',
-  }
-})
-```
-
-Standard 场景直接 `Agent(subagent_type: "fork")`，prompt 用 Exa/WebSearch 轻量搜一两个查询（有没有现成问题框架），不需要走 research-engine。
+Standard 场景直接 `Agent(subagent_type: "fork")`，prompt 用 Exa/WebSearch 轻量搜一两个查询（有没有现成问题框架），不需要走 research-workflow。
 
 - 标注 `[SOURCE: url]` 来源
 - 目的：避免重新发明已有的问题框架
 
-**工具降级**：semble-search 不可用 → 降级 Bash grep + Explore agent。research-engine 内部处理网络工具不可用的降级。
+**工具降级**：semble-search 不可用 → 降级 Bash grep + Explore agent。research-workflow 内部处理网络工具不可用的降级。
 
 **综合**：两路 agent 结果回来后，输出一段简要总结（代码里已有什么 + 网上发现了什么），带入 Step 4 影响假设的置信度。
 

@@ -21,16 +21,39 @@ description: Use when the user wants to explore a problem space before committin
 
 - [ ] 用户有调研意图或 devflow 建议走产品流
 
-## Checklist (TaskCreate)
-
-1. **定范围** — AskUserQuestion 确认调研切面
-2. **并行探索** — 每个切面 spawn 专职 agent
-3. **逐切面校验** — 每个切面结果独立展示，用户校验+补充，1-3 轮
-4. **综合** — 汇总校验后的各切面 → research-report
-5. **Go/No-Go** — 用户拍板
-6. **保存** — report 文件写入输出目录
-
 ## 协议
+
+### Step 0: TaskCreate
+
+**进入 pd-research 后第一件事**，创建以下全部 task：
+
+```
+Task 1: 定范围 — 切面 + 深度
+  Sub-steps: AskUserQuestion 勾切面 → 选深度 → 裁剪
+  Gate: 切面 + 深度已确认
+
+Task 2: 并行探索 — 每切面委派 research-workflow
+  Sub-steps: 每切面 → 委派 research-workflow skill 并行
+  Gate: 所有切面返回结果
+
+Task 3: 逐切面校验 — 用户审核 1-3 轮
+  Sub-steps: 按依赖序展示 → 用户反馈 → 补跑/锁定
+  Gate: 全部切面锁定
+
+Task 4: 综合 → research-report.md
+  Sub-steps: 汇总各切面校验后结论 → 写 report
+  Gate: report 产出，每条带 [SOURCE]
+
+Task 5: Go/No-Go — 用户拍板
+  Sub-steps: 展示建议 → AskUserQuestion 三选
+  Gate: 用户拍板（Go / No-Go / 需更多调研）
+
+Task 6: 保存
+  Sub-steps: 写文件到 {pd_research_output}
+  Gate: 文件保存 + 提示下一步
+```
+
+每完成一个标 done。
 
 ### Step 1: 定范围
 
@@ -59,20 +82,14 @@ description: Use when the user wants to explore a problem space before committin
 
 **裁剪**：轻量调研可只选 1-2 个切面（用户说"快速看看"/"简单调研一下"时建议精简 + 浅研究）。
 
-### Step 2: 并行探索（委派 research-engine）
+### Step 2: 并行探索（委派 research-workflow）
 
-每个选中的切面调用 `research-engine` workflow，传入切面专属的 systemPrompt。多个切面可并行（spawn fork agent 各自调 Workflow）。
+每个选中的切面委派 `research-workflow` skill（调用方式见 `skills/research-workflow/SKILL.md`），传入：
+- `question`: `<调研对象> 的 <切面名> 方面`
+- `depth`: 用户选的深度
+- `systemPrompt`: 切面专属 prompt（见下表）
 
-```js
-Workflow({
-  scriptPath: '$CLAUDE_PLUGIN_ROOT/workflows/research-engine.js',
-  args: {
-    question: '<调研对象> 的 <切面名> 方面',
-    depth: '<用户选的深度>',
-    systemPrompt: '<切面专属 prompt，见下表>',
-  }
-})
-```
+多个切面可并行（spawn fork agent 各自调 Workflow）。
 
 **各切面的 systemPrompt 模板**：
 
@@ -114,7 +131,7 @@ Workflow({
 
 **内部审计模式**：自定义切面的 systemPrompt 按审计维度写，工具按需选（代码用 semble-search，文档用 Read，外部对标用 WebSearch）。
 
-**research-engine 返回值**中的 `findings` 即该切面的结构化发现，`sources` 含所有检索到的源，`stats` 含验证统计。agent 把返回值暂存，进 Step 3 逐切面展示。
+**research-workflow 返回值**中的 `findings` 即该切面的结构化发现，`sources` 含所有检索到的源，`stats` 含验证统计。agent 把返回值暂存，进 Step 3 逐切面展示。
 
 ### Step 3: 逐切面校验（1-3 轮）
 

@@ -24,16 +24,6 @@ description: Use when you have defined goals and need to break work into tasks. 
 - [ ] Full 场景：Design 设计文档 + 测试目标已产出
 - [ ] Standard 场景：restate 足够指导任务拆分
 
-## Checklist (TaskCreate)
-
-1. **只读模式** — 读 restate + 设计文档 + 测试目标 + 相关代码，不碰代码
-2. **画依赖图** — 列块 + 标依赖方向
-3. **垂直切片** — 端到端可交付，risk-first 排序
-4. **写 task** — 每个 ≤ M，贴真实代码，标 HITL/AFK，零占位符
-5. **插 checkpoint** — 每 2-3 task 一个
-6. **Plan Validation** — 需求覆盖 + 任务可验证 + 依赖无环
-7. **用户确认 + 选执行模式** — AskUserQuestion Gate
-
 **Plan 的两种合法产出**：
 - **完整计划**（Standard/Full）：依赖图 + 任务序列 + checkpoint
 - **验收标准只**（Mini/太小不拆）：一句话说清"怎么算做完了" + 指出前置确认项（如 i18n/定位）。不拆 ≠ 不定义完成标准。两者都是 Plan 的正当输出。
@@ -41,6 +31,42 @@ description: Use when you have defined goals and need to break work into tasks. 
 > 端到端示例（header + 依赖图 + task + checkpoint + Plan Validation）见 `references/examples/example-plan-output.md`
 
 ## 协议
+
+### Step 0: TaskCreate
+
+**进入后第一件事**，创建以下全部 task：
+
+```
+Task 1: 只读模式 — 加载上下文
+  Sub-steps: 读 restate + 设计文档 + 测试目标 + 相关代码及测试 + 类似 pattern
+  Gate: 上下文加载完成，未碰任何代码（开始改文件 = 跳过 Plan）
+
+Task 2: 画依赖图
+  Sub-steps: 列所有块 → 标依赖方向 → 底层排前
+  Gate: 依赖图产出，无环
+
+Task 3: 垂直切片 — risk-first
+  Sub-steps: 选 slicing 形态（Vertical/Contract-First）→ risk-first 排序 → TO 分配到 slice
+  Gate: 端到端可交付的切片序列，最不确定的排最前
+
+Task 4: 写 task — 贴真实代码
+  Sub-steps: 每 task ≤M + covers + 真实代码 + HITL/AFK + UI task 标设计源
+  Gate: 零占位符，每 task ≤5 文件
+
+Task 5: 插 checkpoint
+  Sub-steps: 每 2-3 task 一个 checkpoint（全测试通过 + build 通过 + 用户 review）
+  Gate: checkpoint 边界已插
+
+Task 6: Plan Validation — 四项自检
+  Sub-steps: 需求覆盖 + 路径覆盖 + 任务可验证 + 依赖无环
+  Gate: 四项全过（任一不过回 Task 4）
+
+Task 7: 用户确认 + 选执行模式
+  Sub-steps: 完整呈现计划 → AskUserQuestion 确认 → 选执行模式
+  Gate: 用户确认 + 执行模式已选（subagent 并行 / 顺序）
+```
+
+每完成一个标 done。
 
 ### Step 1: 只读模式
 

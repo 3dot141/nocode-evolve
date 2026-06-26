@@ -34,35 +34,69 @@ description: Use when the user wants to design the interaction and visual direct
 
 **非本 skill**：无 PRD → 先 pd-prd。要技术架构 → dev-design。要生产代码 → devflow Build。
 
-## Checklist（进入后立即 TaskCreate）
+## Entry Gate
 
-| # | Task | 对应 Step |
-|---|---|---|
-| 1 | 确定起点 + 读 PRD | Step 0 |
-| 2 | 竞品探索 + 逐交互拆解 | Step 1 |
-| 3 | IA 汇总 + 用户批准 | Step 2 |
-| 4 | 视觉探索 | Step 3 |
-| 5 | 保真度 + 交付方式 + 视觉方向 | Step 4 |
-| 6 | Design System 决策 | Step 5 |
-| 7 | 生成原型 | Step 6 |
-| 8 | 验证 | Step 7 |
-| 9 | 保存 + Handoff | Step 8 |
+- [ ] pd-ui skill 已加载
+- [ ] 有 `.prd.md` 或明确的产品上下文（无 → 建议先 pd-prd）
+
+## Step 0: TaskCreate
+
+**进入 pd-ui 后第一件事**，创建以下全部 task：
+
+```
+Task 1: 确定起点 — 读 PRD + 查 .ui.md
+  Sub-steps: 读 PRD 提取路径 → 查已有 .ui.md → 定起点
+  Gate: 起点已确认（复用/自填/从零）
+
+Task 2: 竞品探索 + 逐交互拆解
+  Sub-steps: 并行竞品+现状 → 提交互清单 → 逐交互四块 → 用户校验
+  Gate: 交互清单覆盖全路径，每个交互锁定
+
+Task 3: IA 汇总 + 用户批准
+  Sub-steps: 汇总 IA → approve gate → 写 .ui.md 交互部分
+  Gate: IA 经批准，.ui.md 交互部分写入
+
+Task 4: 视觉探索
+  Sub-steps: 问竞品截图 → 搜 Template
+  Gate: 视觉参考集整理
+
+Task 5: 保真度 + 交付方式 + 视觉方向
+  Sub-steps: 选保真度 → 选交付方式 → 定视觉方向
+  Gate: 三项已定（ASCII 档跳 Task 6-7）
+
+Task 6: Design System 决策
+  Sub-steps: 判需求 → 搜已有 → 创建（三步走）
+  Gate: skip/复用/创建完成（ASCII 档 skip）
+
+Task 7: 生成原型
+  Sub-steps: 回查交付方式 → Claude Design 或本地 HTML 出稿
+  Gate: 原型产出（ASCII 档 skip）
+
+Task 8: 验证
+  Sub-steps: PRD 路径走查 → 五维自审 → vis-review
+  Gate: 走查 + 自审通过
+
+Task 9: 保存 + Handoff
+  Sub-steps: 写 .ui.md + 保存原型 → 提示 devflow
+  Gate: 文件保存，全部 Task 更新
+```
+
+每完成一个标 done。不适用的标 skip + 原因（如 ASCII 档跳 Task 6-7）。
 
 ---
 
 # 交互阶段
 
-## Step 0: 确定起点
+## Step 1: 确定起点
 
 **Entry Gate:**
-- [ ] pd-ui skill 已加载
-- [ ] 有 `.prd.md` 或明确的产品上下文（无 → 建议先 pd-prd）
+- [ ] Step 0 完成（Task 已创建）
 
 **Core Actions:**
 1. **读 PRD** — 提取使用路径（含路径 ID）+ 目标用户 + 功能清单
 2. **查已有 `.ui.md`** — 在 `{pd_ui_output}` 查：
-   - 有 → 用户确认：沿用（跳 Step 3）/ 重设计（继续 Step 1）
-   - 没有 → 用户自填（跳 Step 3）/ 从零设计（继续 Step 1）
+   - 有 → 用户确认：沿用（跳 Step 4）/ 重设计（继续 Step 2）
+   - 没有 → 用户自填（跳 Step 4）/ 从零设计（继续 Step 2）
 
 **Exit Gate:**
 - [ ] PRD 已读，路径清单已提取
@@ -70,7 +104,7 @@ description: Use when the user wants to design the interaction and visual direct
 
 ---
 
-## Step 1: 竞品探索 + 逐交互拆解
+## Step 2: 竞品探索 + 逐交互拆解
 
 > 先看别人怎么做，再按交互粒度逐个拆。全部锁定后才汇总 IA——不允许反过来。
 
@@ -81,7 +115,7 @@ description: Use when the user wants to design the interaction and visual direct
 1. **竞品与产品探索** — 并行 spawn 两个方向（竞品 + 产品现状）
 2. **提取交互清单** — 从使用路径拆交互点
 3. **逐交互调研 + 设计 + 线框** — 每个交互四块（竞品做法 / 设计决策 / ASCII 线框 / 4 态）
-4. **逐交互用户校验** — 每个交互最多 3 轮，全部锁定才进 Step 2
+4. **逐交互用户校验** — 每个交互最多 3 轮，全部锁定才进 Step 3
 
 **Exit Gate:**
 - [ ] 竞品参考表已产出（≥3 竞品，标 `[SOURCE]`）
@@ -92,7 +126,7 @@ description: Use when the user wants to design the interaction and visual direct
 
 ---
 
-## Step 2: IA 汇总 + 用户批准
+## Step 3: IA 汇总 + 用户批准
 
 **Entry Gate:**
 - [ ] 全部交互已锁定
@@ -112,7 +146,7 @@ description: Use when the user wants to design the interaction and visual direct
 
 # 视觉阶段
 
-## Step 3: 视觉探索
+## Step 4: 视觉探索
 
 > 竞品截图和模板都是"视觉起点"——找到了就不用从空白憋方向。交互阶段的竞品探索看的是"别人怎么做"（功能 + 流程），这一步看的是"别人长什么样"（视觉 + 排版 + 调性）。
 
@@ -123,13 +157,13 @@ description: Use when the user wants to design the interaction and visual direct
 
 1. **问目标竞品** — "有没有想对标 / 参考的产品？"
    - 有 → 定位到对应 IA 关键页的视觉页面，请用户截图整理
-   - 没有 → 按产品类型搜同类视觉参考（可深入 Step 1 竞品的视觉层）
+   - 没有 → 按产品类型搜同类视觉参考（可深入 Step 2 竞品的视觉层）
 
 2. **搜 Template** — Claude Design 可用时查模板库，匹配产品类型（dashboard / landing / app 等）
-   - 有匹配 → 记为起点候选，Step 4 视觉方向可直接用它定调
+   - 有匹配 → 记为起点候选，Step 5 视觉方向可直接用它定调
    - 没匹配 / 不可用 → 跳过
 
-3. **产出视觉参考集** — 竞品截图 + 模板候选（如有），每条标来源，作为 Step 4 定方向的输入
+3. **产出视觉参考集** — 竞品截图 + 模板候选（如有），每条标来源，作为 Step 5 定方向的输入
 
 **视觉参考集示例：**
 
@@ -157,36 +191,36 @@ description: Use when the user wants to design the interaction and visual direct
 
 ---
 
-## Step 4: 确定保真度 + 交付方式 + 视觉方向
+## Step 5: 确定保真度 + 交付方式 + 视觉方向
 
 **Entry Gate:**
-- [ ] Step 3 完成
+- [ ] Step 4 完成
 
 **Core Actions:**
 
-**4a. 保真度**（AskUserQuestion，默认低保真）：
+**5a. 保真度**（AskUserQuestion，默认低保真）：
 
 | 档 | 产出 | 适用 | 后续 |
 |---|---|---|---|
-| **ASCII** | 视觉方向文字描述写入 `.ui.md` | 够拍板结构，不需要看视觉 | 跳 Step 5-6 |
-| **低保真** | 静态 UI（具体配色/排版/间距值） | 确认视觉观感 | 走 Step 5-6 |
-| **高保真** | 可交互、可导航、多屏流程 + 4 态 | 演示 / 验证复杂交互 | 走 Step 5-6 |
+| **ASCII** | 视觉方向文字描述写入 `.ui.md` | 够拍板结构，不需要看视觉 | 跳 Step 6-7 |
+| **低保真** | 静态 UI（具体配色/排版/间距值） | 确认视觉观感 | 走 Step 6-7 |
+| **高保真** | 可交互、可导航、多屏流程 + 4 态 | 演示 / 验证复杂交互 | 走 Step 6-7 |
 
 **低保真 vs 高保真的区别（few-shot）：**
 - 低保真：一张静态截图——"首页长这样，侧边栏蓝底白字，卡片 12px 圆角"
 - 高保真：能点的——"点侧边栏的'资源库'跳到列表页，点一行展开详情抽屉，空状态显示引导"
 
-**4b. 交付方式**（低/高保真时，AskUserQuestion）：
+**5b. 交付方式**（低/高保真时，AskUserQuestion）：
 
 | 方式 | 产物在哪 | 选它当 |
 |---|---|---|
 | **Claude Design** | claude.ai 项目 | 要多屏导航、团队在 canvas 协作、基于组织设计系统生成 |
 | **本地 HTML** | `.ui-prototype.html` 落 repo | 要版本控制、离线、不依赖 claude.ai |
 
-两条线 Step 5-6 步骤相同、实现不同。选定后全程走一条线。
+两条线 Step 6-7 步骤相同、实现不同。选定后全程走一条线。
 
-**4c. 视觉方向**：
-- 有 Step 3 的 template 匹配 → 用它当起点（方向已定），可微调
+**5c. 视觉方向**：
+- 有 Step 4 的 template 匹配 → 用它当起点（方向已定），可微调
 - 没有 → 沿三轴给 2-3 个明显不同的方向，用户选（可混搭）：
   - 布局密度：紧凑 ↔ 宽松
   - 视觉强度：克制 ↔ 表现力
@@ -197,20 +231,20 @@ description: Use when the user wants to design the interaction and visual direct
 - 方向 B「编辑器感」：宽松留白、浅色底、衬线标题、类似 Notion
 - 方向 C「仪表盘感」：卡片网格、数据密集、彩色图表、类似 Grafana
 
-**4d. 渐进式升级**（已有前一档产出时）：
+**5d. 渐进式升级**（已有前一档产出时）：
 - 已有 ASCII → 升级到低保真：**加视觉**（配色/排版），不重新设计交互
 - 已有低保真 → 升级到高保真：**加交互**（导航/4 态），不重画页面
 - 回查 `.ui.md` 确认升级基线，不推翻
 
 **Exit Gate:**
 - [ ] 保真度 + 交付方式 + 视觉方向已定
-- [ ] ASCII 档：视觉描述已写入 `.ui.md`，Step 5-6 标 skip
+- [ ] ASCII 档：视觉描述已写入 `.ui.md`，Step 6-7 标 skip
 
 > 展开：视觉方向三轴定义、渐进式升级判断规则 → `references/visual-direction.md`
 
 ---
 
-## Step 5: Design System 决策
+## Step 6: Design System 决策
 
 > 设计系统 = 品牌渲染层（颜色/字体/组件）。它让多个页面看起来像同一个产品，不是各写各的。**不是每个项目都需要**——3 页以下的小项目直接出稿比建设计系统快，brand-neutral 够用。
 
@@ -219,11 +253,11 @@ description: Use when the user wants to design the interaction and visual direct
 
 **Core Actions:**
 
-**5a. 需不需要？**
+**6a. 需不需要？**
 - 小项目（≤3 页）/ 快速验证 / 无品牌要求 → **跳过**，Task 标 skip
-- 有品牌要求 / 多页一致性 / 长期产品 → 进 5b
+- 有品牌要求 / 多页一致性 / 长期产品 → 进 6b
 
-**5b. 搜已有，能复用就不新建：**
+**6b. 搜已有，能复用就不新建：**
 
 | 来源 | 怎么搜 |
 |---|---|
@@ -231,16 +265,16 @@ description: Use when the user wants to design the interaction and visual direct
 | 本地代码库 | 扫已有 design tokens / 组件库 |
 | Figma | `figma-design-read` |
 
-有匹配 → 复用（记录标识）。无匹配 → 进 5c。
+有匹配 → 复用（记录标识）。无匹配 → 进 6c。
 
-**5c. 创建（三步走，自下而上）** — 为什么这个顺序：patterns 由 components 组装，components 引用 foundations 的 token。跳层 = 在 pattern 里内联本该复用的组件，改一处要改全部。
+**6c. 创建（三步走，自下而上）** — 为什么这个顺序：patterns 由 components 组装，components 引用 foundations 的 token。跳层 = 在 pattern 里内联本该复用的组件，改一处要改全部。
 
 ```
 foundations  颜色 token、字号、间距    → 串行先做，冻结 token
     ↓
 components   按钮、卡片、输入框等      → 可并行（一组件一 subagent）
     ↓
-patterns     页面级布局               → Step 6 组装
+patterns     页面级布局               → Step 7 组装
 ```
 
 **Exit Gate:**
@@ -252,12 +286,12 @@ patterns     页面级布局               → Step 6 组装
 
 ---
 
-## Step 6: 生成原型
+## Step 7: 生成原型
 
-> 把交互结构 + 视觉方向 + 设计系统拼成可看可走的原型。**回查 Step 4 交付方式，不凭记忆判断。**
+> 把交互结构 + 视觉方向 + 设计系统拼成可看可走的原型。**回查 Step 5 交付方式，不凭记忆判断。**
 
 **Entry Gate:**
-- [ ] Step 5 完成（done 或 skip）
+- [ ] Step 6 完成（done 或 skip）
 - [ ] 回查交付方式：Claude Design / 本地 HTML
 
 **Core Actions:**
@@ -297,10 +331,10 @@ patterns     页面级布局               → Step 6 组装
 
 ---
 
-## Step 7: 验证
+## Step 8: 验证
 
 **Entry Gate:**
-- [ ] ASCII 档：Step 4 完成 / 低高保真：Step 6 完成
+- [ ] ASCII 档：Step 5 完成 / 低高保真：Step 7 完成
 
 **Core Actions:**
 1. **PRD 路径逐条走查** — 按路径 ID 点名，缺补多删
@@ -313,7 +347,7 @@ patterns     页面级布局               → Step 6 组装
 
 ---
 
-## Step 8: 保存 + Handoff
+## Step 9: 保存 + Handoff
 
 **Core Actions:**
 1. `.ui.md` → `{pd_ui_output}`
@@ -350,7 +384,7 @@ patterns     页面级布局               → Step 6 组装
 ## Red Flags
 
 - 没建 TaskCreate 就开始做
-- 跳 Step 1 直接出 IA
+- 跳 Step 2 直接出 IA
 - IA 先于交互拆解产出
 - wireframe 缺 empty/loading/error
 - 跳档（没低保真就出高保真）
@@ -358,4 +392,4 @@ patterns     页面级布局               → Step 6 组装
 - 没对照 PRD 逐条核路径
 - 交互流没标路径 ID
 - 升档时推翻前一档（渐进式 = 叠加不是替换）
-- Step 6 没回查交付方式
+- Step 7 没回查交付方式
