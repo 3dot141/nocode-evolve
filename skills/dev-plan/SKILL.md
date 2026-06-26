@@ -11,7 +11,7 @@ description: Use when you have defined goals and need to break work into tasks. 
 
 > Leading word: **tracer bullet**。每个 task 切一条窄但完整的端到端路径，不按层横切。
 
-输入：Define 的 restate + Design 的设计文档和测试目标（Full 场景）。
+输入：Define 的 restate + dev-design-refine 的设计文档（含领域划分、模块设计、接口、业务流、测试目标）（Full 场景）。
 输出：用户确认的任务序列 + 执行模式选择。
 
 ## 非本 skill 请求
@@ -37,8 +37,10 @@ description: Use when you have defined goals and need to break work into tasks. 
 **进入后第一件事**，创建以下全部 task：
 
 ```
+═══ Round 1: 编排（定依赖和顺序）═══
+
 Task 1: 只读模式 — 加载上下文
-  Sub-steps: 读 restate + 设计文档 + 测试目标 + 相关代码及测试 + 类似 pattern
+  Sub-steps: 读 restate + 设计文档（BF 伪代码 + 接口 + 单测设计）+ 测试目标 + 相关代码及测试 + 类似 pattern
   Gate: 上下文加载完成，未碰任何代码（开始改文件 = 跳过 Plan）
 
 Task 2: 画依赖图
@@ -49,19 +51,28 @@ Task 3: 垂直切片 — risk-first
   Sub-steps: 选 slicing 形态（Vertical/Contract-First）→ risk-first 排序 → TO 分配到 slice
   Gate: 端到端可交付的切片序列，最不确定的排最前
 
-Task 4: 写 task — 贴真实代码
-  Sub-steps: 每 task ≤M + covers + 真实代码 + HITL/AFK + UI task 标设计源
-  Gate: 零占位符，每 task ≤5 文件
+Task 4: 写 task 骨架
+  Sub-steps: 每 task 标 Files + covers + HITL/AFK + UI 设计源（代码留空，Round 2 填）
+  Gate: 每 task ≤5 文件，骨架完整
 
 Task 5: 插 checkpoint
-  Sub-steps: 每 2-3 task 一个 checkpoint（全测试通过 + build 通过 + 用户 review）
+  Sub-steps: 每 2-3 task 一个 checkpoint
   Gate: checkpoint 边界已插
 
-Task 6: Plan Validation — 四项自检
-  Sub-steps: 需求覆盖 + 路径覆盖 + 任务可验证 + 依赖无环
-  Gate: 四项全过（任一不过回 Task 4）
+═══ Round 2: 填充代码（读设计文档 + 代码库 → 写真实代码）═══
 
-Task 7: 用户确认 + 选执行模式
+Task 6: 逐 task 填充真实代码
+  Sub-steps: 读设计文档对应 BF 伪代码 + 读最新代码库 → 写测试代码 + 实现代码 + 验证命令
+  Gate: 零占位符，每 task 有真实测试 + 实现 + 命令
+  注: 无依赖的 task 可并行填充
+
+═══ 收尾 ═══
+
+Task 7: Plan Validation — 四项自检
+  Sub-steps: 需求覆盖 + 路径覆盖 + 任务可验证 + 依赖无环
+  Gate: 四项全过（任一不过回 Task 6 补）
+
+Task 8: 用户确认 + 选执行模式
   Sub-steps: 完整呈现计划 → AskUserQuestion 确认 → 选执行模式
   Gate: 用户确认 + 执行模式已选（subagent 并行 / 顺序）
 ```
@@ -72,7 +83,7 @@ Task 7: 用户确认 + 选执行模式
 
 读，不写。按以下顺序加载上下文：
 1. restate（成果物/验收标准/约束/Out of Scope）
-2. 设计文档（含测试目标）
+2. dev-design-refine 产出的设计文档（含领域划分、模块设计、接口、业务流、测试目标）
 3. 要改的文件 + 它们的测试
 4. 找一个已存在的类似 pattern 做参照
 5. 涉及的类型/接口定义
@@ -95,26 +106,69 @@ Task 7: 用户确认 + 选执行模式
 
 测试目标分配到对应 slice——每个 slice 知道自己要验证什么。
 
-### Step 4: 写 task
+### Step 4: 写 task 骨架（Round 1）
 
-每个 task 用 `references/task-template.md` 格式。路径/约束 ID 约定见 `{NOCODE_SKILL_REF}/path-conventions.md`。硬约束：
+每个 task 用 `references/task-template.md` 格式。路径/约束 ID 约定见 `{NOCODE_SKILL_REF}/path-conventions.md`。
 
-- **标 `covers`（必填）**——本 task 覆盖 restate 路径清单里的哪些路径/约束 ID。所有 task 的 covers 汇总后必须覆盖每条路径（Step 6 校验）
-- **贴真实代码/命令/预期输出**——不是伪代码，不是"类似这样"
-- **禁占位符**——`<your code here>`/`TODO`/`...` 不允许出现。写不出真实代码说明没想清楚，回 Step 1
-- **task 描述 durable 化**——用行为意图描述（"用户创建记录时验证必填字段"），不用易腐的行号/文件路径/代码片段
-- **Rollback-friendly**：每个 task 独立可回滚。添加与删除分两个 commit，DB 迁移配回滚迁移。目标：任何一个 task revert 不牵连其他 task
-- **Sizing ≤ M**（≤ 5 文件）。L/XL 必须再拆——大任务藏着没想清楚的判断
-- **标 HITL/AFK**：
-  - `HITL`（Human-in-the-loop）：需人决策的 task（API 设计确认/数据迁移策略/安全敏感）→ Build 时停下等用户
-  - `AFK`（Away-from-keyboard）：agent 可独立完成的 task → Build 时连续推进
-- **UI task 标注设计源**：涉及 UI 的 task，继承上游的 `[design-source: ...]` 标识（来自 pd-ui，`claude-design <projectId>` 或 `prototype <路径>`）。上游无标识 → 不补标识，Build 按设计文档 `## UI 设计` 节照做或按 taste model 方向发挥。task 写结构代码（组件拆分/状态/props/数据流/布局骨架），视觉值不硬编码——有设计稿的由 Build 照着实现
+Round 1 写骨架——定清楚**改什么、覆盖什么、谁做**，代码留空给 Round 2 填：
+
+- **Files**：Create / Modify / Test 精确路径
+- **covers（必填）**：覆盖 restate 哪些路径/约束 ID
+- **设计文档段落**：指向 dev-design-refine 的哪个域/模块/BF（Round 2 读这里写代码）
+- **HITL / AFK**
+- **UI 设计源**（涉及 UI 时）
+- **Sizing ≤ M**（≤5 文件），超了拆
+- **Rollback-friendly**：每 task 独立可回滚
+- **描述 durable 化**：用行为意图（"用户创建记录时验证必填字段"），不用易腐行号
 
 ### Step 5: 插 checkpoint
 
 每 2-3 个 task 一个 checkpoint = 全测试通过 + build 通过 + 用户 review。checkpoint 是 rollback 边界。
 
-### Step 6: Plan Validation
+### Step 6: 填充真实代码（Round 2）
+
+Round 1 的骨架定了"改什么"，Round 2 填"怎么改"——每个 task 补上 TDD steps 真实代码。
+
+**每个 task 完整读 5 份上游文档 + 代码库**：
+1. **PRD**（`.prd.md`）— 业务是什么，这条路径的业务规则
+2. **UI / 原型**（`.ui.md` / prototype）— 界面长什么样，交互怎么走
+3. **restate** — 验收标准（SC），怎么算做完
+4. **设计文档**（dev-design-refine 产出）— BF 伪代码 + 类接口 + 单测设计 Given/When/Then
+5. **Plan Round 1 骨架** — 本 task 改哪些文件、covers 哪些路径
+6. **最新代码库** — 现有代码长什么样、import 怎么写、风格怎么跟
+
+5 份文档提供"做什么 + 长什么样 + 怎么验收 + 怎么做"，代码库提供"代码风格 + 现有 API"。缺任何一份都可能写出不准确的代码。
+
+**每个 task 填充为 TDD steps**：
+
+```
+- [ ] Step 1: 写失败测试
+  （基于设计文档的 Given/When/Then → 翻译成真实测试代码）
+
+- [ ] Step 2: 跑测试确认失败
+  Run: <具体命令>
+  Expected: FAIL with "<原因>"
+
+- [ ] Step 3: 写最小实现
+  （基于设计文档的 BF 伪代码 → 翻译成真实实现代码）
+
+- [ ] Step 4: 跑测试确认通过
+  Run: <具体命令>
+  Expected: PASS
+
+- [ ] Step 5: Commit
+  git add <files> && git commit -m "<message>"
+```
+
+**禁占位符**：`<your code here>` / `TODO` / `...` / "类似这样" / "参考 Task N"（重复写，执行者可能乱序读）。写不出真实代码 = 没想清楚，回 Step 1 重新读代码。
+
+**并行填充**：无依赖的 task 可并行填充（spawn subagent 各自读设计文档 + 代码库 → 写代码）。
+
+### Step 7: Plan Validation
+
+**Enter Gate:**
+- [ ] Round 2 填充完成（每 task 有真实代码）
+- [ ] checkpoint 已插（Step 5）
 
 用户确认前自检计划质量。四项检查，任一不通过回 Step 4 补：
 
@@ -125,6 +179,12 @@ Task 7: 用户确认 + 选执行模式
 **6c. 任务可验证**：每个 task 声明了怎么验证完成（测试命令/预期输出/人工确认项）。"写完就算完"不算验证——验证命令不存在的 task 在 Build 阶段会卡住。
 
 **6d. 依赖无环**：task 间依赖不成环，底层 task 排前面。循环依赖说明切片方式有问题。
+
+**Exit Gate:**
+- [ ] 6a 需求覆盖：每条 SC 被 ≥1 task 覆盖
+- [ ] 6b 路径覆盖：路径→task 映射表产出，无漏路径
+- [ ] 6c 可验证：每 task 有验证命令
+- [ ] 6d 无环：依赖图无环
 
 四项全过再进 Step 7 让用户确认。
 
