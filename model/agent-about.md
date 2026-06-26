@@ -144,23 +144,6 @@ rule / skill 触发条件命中后, 要跳过 / 偏离它, **只认用户消息�
 
 # 全局约定
 
-## 命令/skill 命名惯例
-
-两种高阶编排模式, 命名都是领域名直接拼后缀, 不加连字符:
-
-| 模式 | 命名 | 含义 | 例子 |
-|---|---|---|---|
-| `*hub` | 领域名 + hub | 聚合入口: flat 意图分发, 用户给 URL 或关键词, 路由到子 skill | `larkhub`, `personalhub` |
-| `*flow` | 领域名 + flow | 工作流: 阶段制 sequential 推进, 有 gate 有顺序 | `devflow`, `pdflow` |
-
-子 skill 用连字符 `xx-yy` 区分: `lark-read`, `lark-project`, `dev-build`, `personal-distill`.
-
-区分逻辑: hub 是"你说想干什么, 我帮你找对的工具"; flow 是"你进了流程, 我带你一步一步走". hub 没有阶段概念, flow 有.
-
-新增编排命令时按此惯例命名. 不要用 `lark-hub`(连字符)——那看起来像子 skill 而不是顶层入口.
-
-## 其他约定
-
 - 主分支: `main`
 - 文档产出: 按流程 + topic 聚合, 同一 topic 的全部产出落同一目录。各环节产出路径见上方「文档产出路径变量」, 工程可单独覆盖任意条
 - 时间格式: `yymmdd` (例 `260511`)
