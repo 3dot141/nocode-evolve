@@ -32,8 +32,8 @@
       "reason": "调试方法论，nocode-evolve 缺口"
     },
     "writing-skills": {
-      "action": "keep-as-skill",
-      "reason": "写 skill 的方法论 + best practices，维护插件要用"
+      "action": "skip",
+      "reason": "已融合到 skills/skill-writing/；辅助文档手动复制到 skill-writing/writing-skills/（冻结快照，来源 pin: superpowers v5.1.0 commit e4a2375c）"
     },
     "writing-plans": {
       "action": "extract-references",
