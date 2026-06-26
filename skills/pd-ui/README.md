@@ -18,7 +18,7 @@ pd-ui 是设计源链的最上游产出者（pd-ui → dev-design → dev-plan �
 
 ### 为什么加 Entry/Exit Gate
 
-上一版没有 gate，导致执行时跳步：Step 3（逐交互拆解）整个被跳过，Step 6 没有回查设计源导致 DesignSync 被绕过。Gate 是最低成本的防跳步机制——每步的前置条件和产出条件写成 checklist，进入时扫 Entry Gate，完成时扫 Exit Gate。
+上一版没有 gate，导致执行时跳步：Step 3（逐交互拆解）整个被跳过，Step 6 没有回查设计源导致 DesignSync 被绕过。Gate 是最低成本的防跳步机制——每步的前置条件和产出条件写成 checklist，进入时扫 Enter Gate，完成时扫 Exit Gate。
 
 ### 为什么加 Step 5 设计系统补齐
 
@@ -30,7 +30,7 @@ SKILL.md 保留每步的骨架（目的 + gate + 核心动作），详细的格�
 
 ## 流程概览
 
-| Step | 做什么 | Entry Gate | Exit Gate |
+| Step | 做什么 | Enter Gate | Exit Gate |
 |---|---|---|---|
 | 0 | 读 PRD + 解析设计源 | skill 已加载 + 有 PRD | PRD 路径提取 + 设计源确定 |
 | 1 | 竞品与产品探索 | Step 0 通过 | 竞品表 + 现状清单 |

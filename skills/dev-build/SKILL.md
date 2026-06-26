@@ -17,7 +17,7 @@ description: Use when executing implementation tasks from a plan, writing new co
 
 解释代码 / 知识问答 → 直接回答不进 Build。无计划无目标（"帮我做个东西"）→ 回 Define。"整个项目重构" → scope 过大回 Plan 拆。
 
-## Entry Gate
+## Enter Gate
 
 - [ ] Plan 任务序列已产出且用户确认
 - [ ] Full 场景：Design 测试目标可用（指导 TDD 写什么测试）

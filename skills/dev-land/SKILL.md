@@ -15,7 +15,7 @@ Review 通过后的 **disposition** 门。4 条路（merge / PR / keep / discard
 
 "帮我看看代码" → Review，不是 Land。"写完了" → 先 Verify 再 Review 再 Land。单独说"提个 PR" / "删掉这个 worktree"且不在 devflow 上下文 → 直接走 `rule-finishing-branch`，不需要完整 Land 流程。
 
-## Entry Gate
+## Enter Gate
 
 - [ ] Review Gate 已过（Critical 全 fix + 用户 approve）
 - [ ] 工作目录干净（无未 commit 的改动）
@@ -29,7 +29,7 @@ Review 通过后的 **disposition** 门。4 条路（merge / PR / keep / discard
 
 ```
 Task 1: Pre-flight
-  Sub-steps: 确认 Entry Gate + 分支状态
+  Sub-steps: 确认 Enter Gate + 分支状态
   Gate: Review 状态 + 工作目录干净 + 分支新鲜度三项过
 
 Task 2: Disposition
@@ -53,7 +53,7 @@ Task 5: Cleanup
 
 ### 8a. Pre-flight
 
-Entry Gate 三项逐条检查：
+Enter Gate 三项逐条检查：
 
 1. **Review 状态**：Review task 标完成 + 无未解决 Critical
 2. **工作目录**：`git status` 干净。有未 commit 改动 → 停手告知，不替用户 commit
@@ -136,7 +136,7 @@ PR 合并后（option 2 等合并；option 1 合并后立即）：
 
 | | Full / Standard / Fix | Mini |
 |---|---|---|
-| Pre-flight | 完整 Entry Gate | commit only |
+| Pre-flight | 完整 Enter Gate | commit only |
 | Disposition | 4 选项完整 | 跳过（Mini 不开 worktree） |
 | Task Transition | 按需 | 跳过 |
 | Cleanup | 按路径 | 无 worktree 可清理 |

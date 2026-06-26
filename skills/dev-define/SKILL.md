@@ -15,7 +15,7 @@ description: Use when starting any non-trivial task, when requirements are uncle
 
 纯事实问答 / 已明确的单步执行 / 已有确认 restate 要设计方案 → 不进 Define，直接回答或路由到对应 skill（Design / Build / Mini 直接做）。
 
-## Entry Gate
+## Enter Gate
 
 - [ ] 用户有任务描述或意图
 

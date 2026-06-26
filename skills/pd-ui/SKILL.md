@@ -34,7 +34,7 @@ description: Use when the user wants to design the interaction and visual direct
 
 **非本 skill**：无 PRD → 先 pd-prd。要技术架构 → dev-design。要生产代码 → devflow Build。
 
-## Entry Gate
+## Enter Gate
 
 - [ ] pd-ui skill 已加载
 - [ ] 有 `.prd.md` 或明确的产品上下文（无 → 建议先 pd-prd）
@@ -89,7 +89,7 @@ Task 9: 保存 + Handoff
 
 ## Step 1: 确定起点
 
-**Entry Gate:**
+**Enter Gate:**
 - [ ] Step 0 完成（Task 已创建）
 
 **Core Actions:**
@@ -108,7 +108,7 @@ Task 9: 保存 + Handoff
 
 > 先看别人怎么做，再按交互粒度逐个拆。全部锁定后才汇总 IA——不允许反过来。
 
-**Entry Gate:**
+**Enter Gate:**
 - [ ] 起点为「从零设计」或「重设计」
 
 **Core Actions:**
@@ -128,7 +128,7 @@ Task 9: 保存 + Handoff
 
 ## Step 3: IA 汇总 + 用户批准
 
-**Entry Gate:**
+**Enter Gate:**
 - [ ] 全部交互已锁定
 
 **Core Actions:**
@@ -150,7 +150,7 @@ Task 9: 保存 + Handoff
 
 > 竞品截图和模板都是"视觉起点"——找到了就不用从空白憋方向。交互阶段的竞品探索看的是"别人怎么做"（功能 + 流程），这一步看的是"别人长什么样"（视觉 + 排版 + 调性）。
 
-**Entry Gate:**
+**Enter Gate:**
 - [ ] 交互阶段已完成（IA 已批准）
 
 **Core Actions:**
@@ -193,7 +193,7 @@ Task 9: 保存 + Handoff
 
 ## Step 5: 确定保真度 + 交付方式 + 视觉方向
 
-**Entry Gate:**
+**Enter Gate:**
 - [ ] Step 4 完成
 
 **Core Actions:**
@@ -248,7 +248,7 @@ Task 9: 保存 + Handoff
 
 > 设计系统 = 品牌渲染层（颜色/字体/组件）。它让多个页面看起来像同一个产品，不是各写各的。**不是每个项目都需要**——3 页以下的小项目直接出稿比建设计系统快，brand-neutral 够用。
 
-**Entry Gate:**
+**Enter Gate:**
 - [ ] 保真度为低/高（ASCII → 跳过）
 
 **Core Actions:**
@@ -290,7 +290,7 @@ patterns     页面级布局               → Step 7 组装
 
 > 把交互结构 + 视觉方向 + 设计系统拼成可看可走的原型。**回查 Step 5 交付方式，不凭记忆判断。**
 
-**Entry Gate:**
+**Enter Gate:**
 - [ ] Step 6 完成（done 或 skip）
 - [ ] 回查交付方式：Claude Design / 本地 HTML
 
@@ -333,7 +333,7 @@ patterns     页面级布局               → Step 7 组装
 
 ## Step 8: 验证
 
-**Entry Gate:**
+**Enter Gate:**
 - [ ] ASCII 档：Step 5 完成 / 低高保真：Step 7 完成
 
 **Core Actions:**

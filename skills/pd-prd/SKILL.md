@@ -18,7 +18,7 @@ description: Use when the user wants to write a product requirements document. U
 已有 PRD 直接进开发 → 走 devflow Define。
 改 README / commit message → 不进本 skill。
 
-## Entry Gate
+## Enter Gate
 
 - [ ] 用户有写 PRD 的意图，或 research 刚完成建议衔接
 

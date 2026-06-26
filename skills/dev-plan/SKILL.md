@@ -18,7 +18,7 @@ description: Use when you have defined goals and need to break work into tasks. 
 
 知识问答 / 目标不明确（缺 restate）→ 回 Define。单步太小不需拆 → 直接给验收标准走 Build，不硬拆。写代码 → 走 Build。
 
-## Entry Gate
+## Enter Gate
 
 - [ ] Define restate 存在且已确认
 - [ ] Full 场景：Design 设计文档 + 测试目标已产出

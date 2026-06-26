@@ -17,7 +17,7 @@ description: Use when the user wants to explore a problem space before committin
 已有 PRD 只需写代码 → 直接进 devflow Define。
 只想做技术方案对比（不涉及产品调研）→ 走 `nocode-evolve:dev-design`。
 
-## Entry Gate
+## Enter Gate
 
 - [ ] 用户有调研意图或 devflow 建议走产品流
 

@@ -27,7 +27,7 @@ description: Use before merging any change, after completing a feature, or when 
 
 "写代码" / "解释函数" / "需求合不合理" → 不是 review。没有 diff 就没有 evidence，无法 review。写代码 → Build，解释 → 直接答，需求判断 → Define。
 
-## Entry Gate
+## Enter Gate
 
 - [ ] Verify Gate 已过（验收标准逐条通过 + 证据齐全）
 - [ ] Change sizing 已判断（~100 行好；~300 行可接受；~1000 行先建议 split）
