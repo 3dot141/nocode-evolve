@@ -66,7 +66,7 @@ Task 7: 测试与验证计划
   Gate: 覆盖状态表全 ✅ + 用户确认
 
 Task 8: 写设计文档
-  Sub-steps: 输入清单核对 → 调 design-doc-writing → 六轴 review → design-review 交叉审
+  Sub-steps: 输入清单核对 → 调 dev-design-refine → 六轴 review → design-review 交叉审
   Gate: 输入清单无缺失 + 文档评审通过，无 Critical findings
 ```
 
@@ -354,7 +354,7 @@ TO 传递给后续 Plan（指导切片 + task covers）、Build（驱动 TDD）�
 
 **Core Actions:**
 
-调 `Skill(nocode-evolve:design-doc-writing)`，输入上方清单全部内容。design-doc-writing 接管：doc-type 选择 → 写 → review → render。
+调 `Skill(nocode-evolve:dev-design-refine)`，输入上方清单全部内容。dev-design-refine 接管：doc-type 选择 → 写 → review → render。
 
 各输入作为设计文档固定章节落盘（下游 Plan/Build/Review 看不到本次对话，只看文档）：
 
@@ -362,7 +362,7 @@ TO 传递给后续 Plan（指导切片 + task covers）、Build（驱动 TDD）�
 - **`## UI 设计`**（涉及前端时）：页面/组件清单 + 布局结构 + 交互行为 + UI 架构（组件拆分/状态管理/渲染策略）+ UI 技术选型。有 pd-ui 产出时附设计源标识 `[design-source: claude-design <projectId>]` 或 `[design-source: prototype <路径>]`，Build 去外部产物照做；无外部产物时设计文档本身就是全部视觉依据
 - **`## 验证策略`**：TO 表 + 按层级分组的测试方案 + 不测项 + 路径覆盖状态表。Verify 阶段直接读此章节执行
 
-**设计 Review 六轴**（design-doc-writing 做的文档结构审查）：
+**设计 Review 六轴**（dev-design-refine 做的文档结构审查）：
 
 | 维度 | 检查什么 |
 |---|---|

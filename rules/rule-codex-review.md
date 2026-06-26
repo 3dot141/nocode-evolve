@@ -71,7 +71,7 @@ node "${CLAUDE_PLUGIN_ROOT}/vendor/codex/scripts/codex-companion.mjs" task --wri
 
 ## 场景 4:设计文档独立审稿
 
-**触发**:`design-doc-writing` 工作流走到 review 环节(见 `rule-superpowers-brainstorming.md` step 5 第 3 步)——**默认即触发**(交叉验证已是默认,不再限"重档")。仅琐碎 / 文案改动用户显式降档时才跳过。
+**触发**:`dev-design-refine` 工作流走到 review 环节(见 `rule-superpowers-brainstorming.md` step 5 第 3 步)——**默认即触发**(交叉验证已是默认,不再限"重档")。仅琐碎 / 文案改动用户显式降档时才跳过。
 
 **做法**:Codex 跨模型审稿与 Claude `design-doc-reviewer` (general-purpose) subagent **并行双跑**,合并两路 Report(交集=高置信、对称差=盲点)——
 

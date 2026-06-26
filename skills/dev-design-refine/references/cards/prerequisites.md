@@ -2,7 +2,7 @@
 
 前置假设 reference——把"runner / 基础设施 / 依赖"这种**实施前必须明确的底层假设**集中在一节，避免散落到各业务流（BF1/BF2/...）或方案选型节里反复说。
 
-> 本 reference 是 `design-doc-writing` 的**可选增强**——适合实施依赖外部基础设施 / 待开发能力的 design-doc。与 doc-type 主轴正交（Design Doc / RFC 类型可在「目标」节后加 prerequisites 锚点节）。**不替代 doc-type 选择**。
+> 本 reference 是 `dev-design-refine` 的**可选增强**——适合实施依赖外部基础设施 / 待开发能力的 design-doc。与 doc-type 主轴正交（Design Doc / RFC 类型可在「目标」节后加 prerequisites 锚点节）。**不替代 doc-type 选择**。
 
 ## 何时用这张卡片
 

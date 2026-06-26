@@ -1,4 +1,4 @@
-> **本文件是 `design-doc-writing` skill step 5 的 dispatch template，不是 plugin agent。**
+> **本文件是 `dev-design-refine` skill step 5 的 dispatch template，不是 plugin agent。**
 > 被 SKILL.md 整段 Read 后塞进 `Task(general-purpose)` 的 prompt。
 > 唯一 placeholder：`{DOC_PATH}` —— 在 dispatch 前替换为要 review 的设计文档路径。
 
@@ -296,7 +296,7 @@ Q 档在 step 6 由用户决策：fix / skip / "我来核实并答 Q1"。
 
 ## 关于重复 review
 
-本 agent **不再自循环**。"是否再来一轮"由 caller（design-doc-writing skill）问用户决定。reviewer 单次只输出 Report 就结束。
+本 agent **不再自循环**。"是否再来一轮"由 caller（dev-design-refine skill）问用户决定。reviewer 单次只输出 Report 就结束。
 
 每次被 spawn 时 Read 文档全文（含文档末尾已有的 `## Review Log`，若存在），但**不要**把已经在历史 Report 里提过、用户明确 skip 的问题再提一次——视为已 accepted。新增问题、修订引入的新问题正常列。
 

@@ -213,7 +213,7 @@ Fix 类任务的 Review 通过后，问一句：**"什么能预防这个 bug？"
 | 3c. 用户选方案 | AskUserQuestion | 推荐放第一；全否决回 3b 问原因 |
 | 3d. 方案←→目标对齐 | 回检 restate | 有冲突建议回 Define（最多 2 轮） |
 | 3e. 测试目标 | 每条 SC → ≥1 测试目标 | 标可测性约束 + 层级分布 |
-| 3f. 写设计文档 | design-doc-writing | 六轴 review（可行性/清晰度/架构合理性/安全/性能/可扩展性） |
+| 3f. 写设计文档 | dev-design-refine | 六轴 review（可行性/清晰度/架构合理性/安全/性能/可扩展性） |
 
 #### Plan sub-flow
 
