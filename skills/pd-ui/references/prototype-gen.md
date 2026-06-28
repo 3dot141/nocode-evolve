@@ -8,7 +8,7 @@
 
 | | Claude Design 线 | 本地 HTML 线 |
 |---|---|---|
-| 怎么出 | `/design <brief>` 生成 | 本地写 `.ui-prototype.html` |
+| 怎么出 | `Skill(nocode-evolve:claude-design)` → `claude-design <brief>` | 本地写 `.ui-prototype.html` |
 | 喂什么 | brief = IA + 交互清单 + 视觉方向 + 保真度；挂 template/design system | IA + 交互清单 + 视觉方向 + token/组件；无设计系统则加载 taste skill |
 | 低保真产出 | 静态多屏 UI | 静态页面 HTML |
 | 高保真产出 | 多屏可交互 + 导航逻辑 + 4 态 | 可点击原型，关键流程走得通 |
@@ -19,9 +19,9 @@
 
 ## Claude Design 线
 
-### `/design <brief>` 写法
+### `claude-design <brief>` 写法
 
-`/design` 后面跟自然语言 brief，Claude Design 基于已同步的设计系统生成多屏设计/原型。brief 写得越结构化，产出越贴合。
+先调 `Skill(nocode-evolve:claude-design)` 加载 claude-design skill，然后传 brief。Claude Design 基于已同步的设计系统生成多屏设计/原型。brief 写得越结构化，产出越贴合。
 
 **brief 必含四块：**
 
@@ -48,7 +48,7 @@
 **低保真：**
 
 ```
-/design 用 Nocode Manager 设计系统，生成资源管理应用的低保真静态界面，
+claude-design 用 Nocode Manager 设计系统，生成资源管理应用的低保真静态界面，
 确认视觉观感。
 
 页面结构（IA）：
@@ -63,7 +63,7 @@
 **高保真：**
 
 ```
-/design 用 Nocode Manager 设计系统，生成资源管理应用的高保真可点击原型，
+claude-design 用 Nocode Manager 设计系统，生成资源管理应用的高保真可点击原型，
 覆盖完整流程、屏间可导航。
 
 页面结构（IA）：同上三页 + 导入对话框 + 设置页
@@ -83,7 +83,7 @@
 需要把 Claude Design 产物纳入版本库时：
 
 ```
-/design import
+claude-design read <projectId> <path>
 ```
 
 把指定项目的文件拉进工作目录。Step 8 Handoff 时按需操作，不强制。

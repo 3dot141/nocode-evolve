@@ -261,7 +261,7 @@ Task 9: 保存 + Handoff
 
 | 来源 | 怎么搜 |
 |---|---|
-| Claude Design | `/design status` 或 `DesignSync list_projects` |
+| Claude Design | `Skill(nocode-evolve:claude-design)` → `claude-design systems` / `claude-design list` |
 | 本地代码库 | 扫已有 design tokens / 组件库 |
 | Figma | `figma-design-read` |
 
@@ -298,7 +298,7 @@ patterns     页面级布局               → Step 7 组装
 
 | | Claude Design 线 | 本地 HTML 线 |
 |---|---|---|
-| **怎么出** | `/design <brief>` | 本地写 `.ui-prototype.html` |
+| **怎么出** | `Skill(nocode-evolve:claude-design)` → `claude-design <brief>` | 本地写 `.ui-prototype.html` |
 | **喂什么** | brief = IA + 交互清单 + 视觉方向；挂 template + design system（如有） | IA + 交互清单 + 视觉方向 + token/组件；无设计系统则加载 taste skill |
 | **低保真** | 静态多屏 UI | 静态页面 HTML |
 | **高保真** | 多屏可交互 + 导航逻辑 + 4 态 | 可点击原型，关键流程走得通 |
@@ -327,7 +327,7 @@ patterns     页面级布局               → Step 7 组装
 - [ ] Claude Design 线：projectId 已记录 / HTML 线：文件已保存
 - [ ] 高保真：4 态 + 导航 + empty/loading/error 已覆盖
 
-> 展开：`/design <brief>` 完整写法、HTML 原型规范、两条线详细操作 → `references/prototype-gen.md`
+> 展开：`claude-design <brief>` 完整写法、HTML 原型规范、两条线详细操作 → `references/prototype-gen.md`
 
 ---
 

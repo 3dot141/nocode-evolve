@@ -9,7 +9,7 @@ Step 8 产出 `.ui.md` 时使用此模板。
 > 日期: {yymmdd}
 > PRD: {.prd.md 路径, 无则 "N/A"}
 > 保真度: 低保真 / 中保真 / 高保真
-> 设计源: [design-source: DesignSync <projectId>] / [design-source: taste-skill <skill 名>] / ...
+> 设计源: [design-source: claude-design <projectId>] / [design-source: taste-skill <skill 名>] / ...
 
 ## 竞品参考
 | 竞品 | 关键页/功能 | 文字说明 | HTML 要点 | 截图 | 值得借鉴的 | 不想要的 |
@@ -51,11 +51,11 @@ Step 8 产出 `.ui.md` 时使用此模板。
 ## 视觉方向
 [选定方向描述; 中/高保真填具体值: 配色 token / 字号字重 / 间距 / 圆角]
 
-## 设计系统补齐（DesignSync 时）
+## 设计系统补齐（claude-design 时）
 [缺口清单 + 补齐的组件列表 + projectId]
 
 ## 原型
-[高保真档: prototype.html 路径 / DesignSync patterns 路径 + 截图说明; 否则 "N/A — 低保真，未出原型"]
+[高保真档: prototype.html 路径 / claude-design patterns 路径 + 截图说明; 否则 "N/A — 低保真，未出原型"]
 
 ## PRD 路径覆盖
 [逐条使用路径 + 系统路径 → 对应界面/交互流, 确认无遗漏]
