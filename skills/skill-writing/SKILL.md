@@ -79,8 +79,8 @@ Task 3: RED — Baseline (Phase 3)
   Gate: ≥N scenarios executed, ≥1 reproducible failure identified, failure modes recorded
 
 Task 4: GREEN — Write SKILL.md (Phase 4)
-  Sub-steps: write minimal SKILL.md
-  Gate: SKILL.md produced, covers baseline failures
+  Sub-steps: write minimal SKILL.md + red-blue review
+  Gate: SKILL.md produced, covers baseline failures, red-blue review completed
 
 Task 5: Eval — Run & Review (Phase 5)
   Sub-steps: create eval set + train/validation split + run evaluation
@@ -264,11 +264,28 @@ Mark each task done as it completes.
 - Keep SKILL.md under 500 lines; overflow goes to references/
 - Only address failures observed in baseline — no speculative additions
 - **SKILL.md for agents, README.md for humans** — SKILL.md contains only what the agent needs to execute. Attribution, changelogs, design rationale, and methodology context go in the skill's README.md for human readers
+- **Fallback paths use ASCII decision trees.** When a skill has a preferred path + fallback (CLI vs subagent, API vs scraping, etc.), write it as an ASCII decision tree — not parallel bullet points. Parallel bullets let the agent pick the easy path; a decision tree forces it to try the preferred path first and only fall back on concrete failure. Pattern:
+
+```
+[probe command]
+     │
+     ├─ success ──→ preferred path
+     │
+     └─ fail (specific error) ──→ fallback path + report reason
+```
+
 - For Anthropic's official skill authoring best practices, read `writing-skills/anthropic-best-practices.md`
+
+### Red-Blue Review
+
+After writing SKILL.md, call `Skill(nocode-evolve:red-blue-deep)` to review it. Input: "Review this SKILL.md — does it actually address the baseline failures? Are there loopholes, missing edge cases, or instructions that an agent could misinterpret?" red-blue-deep will determine the appropriate depth (light/heavy) on its own.
+
+Fix any issues found by the review before passing the Exit Gate.
 
 **Exit Gate:**
 - [ ] SKILL.md produced
 - [ ] Covers every failure mode recorded in Phase 3
+- [ ] Red-blue review completed, findings addressed
 - [ ] Workflow skills include Step 0 TaskCreate + Enter/Exit Gate per step
 - [ ] Line count ≤ 500 (overflow moved to references/)
 
@@ -288,9 +305,20 @@ Why ≥3 validation items: with fewer, pass_rate granularity is too coarse (33%/
 
 ### 5b. Run With-Skill + Baseline
 
-**With `claude` CLI:** use `skill-creator/scripts/run_eval.py` for automation.
+```
+claude -p "hello" --output-format json
+         │
+         ├─ success ──→ run_eval.py (skill-creator/scripts/)
+         │
+         └─ fail (command not found / error)
+                  │
+                  └──→ subagent fallback
+                       one with-skill + one without per prompt
+                       save to workspace/iteration-N/eval-ID/
+                       report "CLI unavailable (reason: …), using subagent fallback"
+```
 
-**Without CLI (fallback):** spawn subagents manually — one with-skill, one without, for each eval prompt. Save outputs to `workspace/iteration-N/eval-ID/{with_skill,without_skill}/`. Report "CLI not available, using subagent fallback."
+**Always try CLI first.** Nested `claude -p` inside a Claude Code session is supported. Only fall back to subagents after a concrete failure — "might not work" is not a reason to skip.
 
 ### 5c. Draft Assertions While Runs Are In Progress
 
@@ -399,7 +427,7 @@ Run `skill-creator/scripts/package_skill.py` to create a `.skill` file. Requires
 
 - [ ] Skill intent + type confirmed (Phase 1)
 - [ ] Baseline failure modes recorded with ≥1 reproducible failure (Phase 3)
-- [ ] SKILL.md produced and covers failure modes (Phase 4)
+- [ ] SKILL.md produced, covers failure modes, red-blue reviewed (Phase 4)
 - [ ] Eval benchmark has numeric pass_rate (Phase 5)
 - [ ] Iteration converged, no regression (Phase 6)
 - [ ] Description trigger accuracy meets threshold (Phase 7)
