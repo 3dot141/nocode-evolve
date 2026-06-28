@@ -165,23 +165,7 @@ Task 9: 保存 + Handoff
 
 3. **产出视觉参考集** — 竞品截图 + 模板候选（如有），每条标来源，作为 Step 5 定方向的输入
 
-**视觉参考集示例：**
-
-```
-## 视觉参考集
-
-### 竞品截图
-| 竞品 | 页面 | 截图 | 视觉特征 | 来源 |
-|---|---|---|---|---|
-| Linear | Issue 列表 | [截图] | 深色底、紧凑行高、左侧彩色标签 | [SOURCE] linear.app |
-| Notion | 数据库视图 | [截图] | 浅色底、宽松留白、圆角卡片 | [SOURCE] notion.so |
-| Raycast | 命令面板 | [截图] | 深色底、模糊背景、大圆角 | [SOURCE] raycast.com |
-
-### Template 候选
-| 模板名 | 类型 | 匹配度 | 备注 |
-|---|---|---|---|
-| Dashboard Pro | SaaS Dashboard | 高 | 侧边栏 + 卡片网格，接近我们的 IA |
-```
+> 展开：视觉参考集模板 → `references/visual-exploration.md`
 
 **Exit Gate:**
 - [ ] 视觉参考集已整理（≥3 个竞品视觉参考，标来源）
@@ -239,10 +223,7 @@ Task 9: 保存 + Handoff
   - 视觉强度：克制 ↔ 表现力
   - 调性：专业 ↔ 友好
 
-**方向示例：**
-- 方向 A「工具感」：紧凑行高、深色底、等宽字体标签、类似 Linear
-- 方向 B「编辑器感」：宽松留白、浅色底、衬线标题、类似 Notion
-- 方向 C「仪表盘感」：卡片网格、数据密集、彩色图表、类似 Grafana
+> 展开：方向示例（工具感/编辑器感/仪表盘感）→ `references/visual-direction.md`
 
 **5d. 渐进式升级**（已有前一档产出时）：
 - 已有 ASCII → 升级到低保真：**加视觉**（配色/排版），不重新设计交互
@@ -320,49 +301,11 @@ patterns     页面级布局               → Step 7 组装
 | **产物** | claude.ai 项目（记 projectId） | `{pd_ui_prototype}` 目录 |
 
 **Claude Design 高保真的两层结构：**
-- **独立页面文件**（`home.html`、`library.html`…）：每页的完整视觉 + 该页内的嵌入组件（Modal/Dialog/Drawer），可单独审查
-- **组合文件**（`prototype.html`）：融合所有页面代码，用 tab/section 切换模拟导航 + JS 弹窗/抽屉 + 4 态。跨文件导航在 Claude Design 不支持，所以交互只能在这个组合文件里实现
+- **独立页面文件**：每页的完整视觉 + 该页内的嵌入组件，可单独审查
+- **组合文件**（`prototype.html`）：融合所有页面代码，JS tab 切换/弹窗/抽屉。跨文件导航不支持，所以交互都在这里
 - **代价**：改了独立页面，组合文件要同步改
 
-**brief 示例（Claude Design 线，低保真）：**
-
-```
-用 Nocode Manager 设计系统，创建一个资源管理应用的低保真原型。
-每个独立页面一个文件，嵌入组件（Modal/Drawer）在宿主页面内实现。
-
-独立页面文件（来自 IA）：
-- home.html — 首页：预设卡片 + 统计面板 + 活动流
-- library.html — 资源库：筛选栏 + 数据表格 + 批量操作 + 资源详情抽屉（嵌入） + 导入对话框（嵌入）
-- settings.html — 设置页：偏好设置表单
-
-嵌入组件在宿主页面内以初始隐藏状态呈现（低保真展示布局即可，不需要 JS 交互）。
-
-视觉方向：工具感——深色底、紧凑行高、等宽标签，参考 Linear。
-```
-
-**brief 示例（Claude Design 线，高保真）：**
-
-```
-用 Nocode Manager 设计系统，生成资源管理应用的高保真可交互原型。
-
-第一步：独立页面文件（每个独立页面一个，嵌入组件在宿主页面内实现）
-- home.html — 首页
-- library.html — 资源库 + 资源详情抽屉（嵌入） + 导入对话框（嵌入）
-- settings.html — 设置页
-
-第二步：组合文件 prototype.html
-把所有页面的代码融合到一个文件里，用顶部 tab 切换页面。
-Claude Design 不支持跨文件导航，所以交互统一在这个组合文件实现。
-
-组合文件内交互（必须能点）：
-- 顶部 tab 切换：首页 ↔ 资源库 ↔ 设置
-- 资源库点一行 → 右侧滑出详情面板（JS display toggle）
-- 点"+导入" → 弹出模态对话框 → 确认后关闭
-- 列表区：用按钮切换 empty / loading / 正常 / error 四种状态
-
-交互元素 4 态：hover / active / focus-visible / disabled（CSS 实现）。
-视觉方向：工具感，参考 Linear。
-```
+> 展开：brief 完整写法（低保真/高保真/完整实现）、两条线详细操作 → `references/prototype-gen.md`
 
 **两条线共同要求（按保真度分层）：**
 
@@ -376,35 +319,15 @@ Claude Design 不支持跨文件导航，所以交互统一在这个组合文件
 | **test-id** | 所有可操作元素加 `data-testid` | 同低保真 | 同低保真 |
 | **渐进式** | 在 ASCII 基线上加视觉 | 在低保真上加交互 | 在高保真上加 4 态 + 边界态 + 链路 |
 
-**test-id 约定（所有保真度，两条线通用）：**
-每个可操作元素（按钮、链接、输入框、导航项、状态切换控件、弹窗触发器）加 `data-testid` 属性。Playwright selector 用 `[data-testid="xxx"]` 定位，不依赖脆弱的 CSS class 或文本内容。
+**test-id**：每个可操作元素加 `data-testid`，命名 `<页面>-<组件>[-<变体>]` kebab-case。Playwright 用 `[data-testid="xxx"]` 定位。
 
-命名规则：`<页面>-<组件>[-<变体>]`，kebab-case。例：
-- `library-filter-btn` — 资源库筛选按钮
-- `library-import-trigger` — 导入对话框触发按钮
-- `library-import-dialog` — 导入对话框本体
-- `library-import-cancel` — 导入对话框取消按钮
-- `library-state-empty` — 切换到 empty 态的控件
-- `nav-home` / `nav-library` / `nav-settings` — 导航项
+> 展开：命名规则示例 → `references/playwright-verify.md`
 
 **原型清单（Step 8 验证的输入）：**
 
-Step 7 产出后、进 Step 8 前，列一份原型清单，记录实际产出了什么。Step 8 矩阵基于这份清单核对，不凭记忆。
+Step 7 产出后、进 Step 8 前，列一份原型清单：每个 IA 页面/视图的实现位置 + 交互入口 + 状态切换入口。IA 中每个页面/视图都必须有实现位置，无遗漏。Step 8 矩阵基于这份清单核对。
 
-```
-## 原型清单
-
-| IA 页面/视图 | 类型 | 实现位置 | 交互入口 | 状态切换入口 |
-|---|---|---|---|---|
-| 首页 | 独立页面 | home.html | — | — |
-| 资源库 | 独立页面 | library.html | 筛选/排序/行点击 | empty/loading/error 按钮 |
-| 资源详情 | 嵌入组件 | library.html 内 (Drawer) | 行点击滑出 | — |
-| 导入对话框 | 嵌入组件 | library.html 内 (Dialog) | "+导入"按钮弹出 | — |
-| 设置页 | 独立页面 | settings.html | 表单操作 | — |
-| — | 组合文件 | prototype.html | tab 切换 + 上述全部交互 | 全部状态切换 |
-
-覆盖检查：IA 中每个页面/视图都有实现位置，无遗漏。
-```
+> 展开：原型清单模板 → `references/prototype-gen.md`
 
 **Exit Gate:**
 - [ ] 原型已产出
@@ -435,144 +358,34 @@ PRD 路径覆盖的状态必须由下面两个矩阵聚合得出，不能单独�
 
 ### 8a. 测试方案（先审后跑）
 
-在跑 Playwright 之前，先基于原型清单 + 保真度输出一份测试方案，用户审批后再写脚本执行。不允许跳过方案直接跑。
+基于原型清单 + 保真度输出测试方案，用户审批后才写脚本执行。不允许跳过方案直接跑。
 
-**测试方案内容（按保真度递增）：**
+测试方案按保真度分三层 Phase：
+- **Phase 1**（所有保真度）：每个页面截图，确认渲染正常
+- **Phase 2**（高保真 + 完整实现）：交互场景——点击弹出/滑出/跳转
+- **Phase 3**（仅完整实现）：4 态逐控件 + 边界态切换 + 跨页导航链路
 
-```
-## 测试方案
+**审批 Gate**：用户确认测试方案后才进 8b。
 
-保真度：完整实现
-交付方式：本地 HTML
-
-### Phase 1 — 页面截图
-| 文件 | 对应 IA 页面 | 预期内容 |
-|---|---|---|
-| home.html | 首页 | 卡片网格 + 统计面板 + 活动流 |
-| library.html | 资源库 | 筛选栏 + 数据表格 + 嵌入组件布局可见 |
-| settings.html | 设置页 | 偏好设置表单 |
-
-### Phase 2 — 交互场景（高保真+完整实现）
-| 场景 | 文件 | 操作 | 预期结果 | data-testid |
-|---|---|---|---|---|
-| 打开资源详情 | library.html | 点击行 | Drawer 滑出 | library-detail-trigger → library-detail-drawer |
-| 打开导入对话框 | library.html | 点击"+导入" | Dialog 弹出 | library-import-trigger → library-import-dialog |
-| 关闭导入对话框 | library.html | 点击"取消" | Dialog 关闭 | library-import-cancel |
-
-### Phase 3 — 完整验证（仅完整实现）
-| 维度 | 场景 | 文件 | data-testid | 预期 |
-|---|---|---|---|---|
-| 4 态 | 筛选按钮 hover | library.html | library-filter-btn | 背景色变化 |
-| 4 态 | 筛选按钮 disabled | library.html | library-filter-btn | 灰色 + 不可点 |
-| 边界态 | 列表 empty | library.html | library-state-empty | "暂无数据" + 引导 |
-| 边界态 | 列表 loading | library.html | library-state-loading | 骨架屏 |
-| 边界态 | 列表 error | library.html | library-state-error | 错误提示 + 重试 |
-| 链路 | 首页→资源库→详情→首页 | home.html | nav-library → library-detail-trigger → nav-home | 无断点 |
-```
-
-**审批 Gate**：用户确认测试方案后才进 8b 写 interactions.json 执行。方案有遗漏就补，有多余就删。
+> 展开：测试方案模板、各 Phase 详细内容 → `references/playwright-verify.md`
 
 ### 8b. Playwright 渲染验证（两条线都做）
 
-基于审批通过的测试方案，写 `interactions.json` 并用 `prototype-verify.mjs` 执行。矩阵里的 ✅ 必须能对应到截图证据，不允许只看代码或 summary 就手填。
+基于审批通过的测试方案，写 `interactions.json` 并用 `prototype-verify.mjs` 执行。Claude Design 线先 `claude-design read` 拉到本地再跑。
 
-Claude Design 线先 `claude-design read` 拉到本地再跑，流程一致。
-
-**按保真度分层跑不同 Phase：**
-
-| 保真度 | 跑什么 | 验证什么 |
-|---|---|---|
-| **低保真** | Phase 1 | 每个页面渲染正常（不白屏、不报错）、嵌入组件布局可见 |
-| **高保真** | Phase 1 + Phase 2 | 低保真全部 + 每个交互可操作（点击弹出/滑出/跳转） |
-| **完整实现** | Phase 1 + Phase 2 + Phase 3 | 高保真全部 + 4 态逐控件验证 + 边界态切换 + 跨页导航链路走通 |
-
-**Phase 1 — 基础截图（所有保真度）：**
 ```bash
+# Phase 1：基础截图
 node scripts/prototype-verify.mjs <prototype-dir>
-```
-自动打开每个 HTML 文件、截全页面图、收集页面元数据（链接/按钮/dialog 数量）。
 
-**Phase 2 — 交互场景验证（高保真 + 完整实现）：**
-准备 `interactions.json`，列出每个需要验证的交互场景（嵌入组件触发、状态切换等）：
-```bash
+# Phase 2+3：交互验证（selector 统一用 data-testid）
 node scripts/prototype-verify.mjs <prototype-dir> --interactions interactions.json
 ```
 
-interactions.json 示例（selector 统一用 `data-testid`）：
-```json
-[
-  {
-    "file": "library.html",
-    "label": "资源详情抽屉",
-    "steps": [
-      { "action": "click", "selector": "[data-testid='library-detail-trigger']", "screenshot": "detail-drawer-open" }
-    ]
-  },
-  {
-    "file": "library.html",
-    "label": "导入对话框",
-    "steps": [
-      { "action": "click", "selector": "[data-testid='library-import-trigger']", "screenshot": "import-dialog-open" },
-      { "action": "click", "selector": "[data-testid='library-import-cancel']", "screenshot": "import-dialog-closed" }
-    ]
-  }
-]
-```
-
-**Phase 3 — 完整测试套件（仅完整实现）：**
-在 Phase 2 基础上扩展 interactions.json，覆盖三个维度：
-
-1. **4 态逐控件**：每个可操作控件的 hover / active / focus-visible / disabled
-```json
-{
-  "file": "library.html",
-  "label": "筛选按钮 4 态",
-  "steps": [
-    { "action": "hover", "selector": "[data-testid='library-filter-btn']", "screenshot": "filter-btn-hover" },
-    { "action": "click", "selector": "[data-testid='library-filter-btn']", "screenshot": "filter-btn-active" },
-    { "action": "focus", "selector": "[data-testid='library-filter-btn']", "screenshot": "filter-btn-focus" }
-  ]
-}
-```
-
-2. **边界态切换**：每个数据区的 empty / loading / error
-```json
-{
-  "file": "library.html",
-  "label": "列表边界态",
-  "steps": [
-    { "action": "click", "selector": "[data-testid='library-state-empty']", "screenshot": "library-empty" },
-    { "action": "click", "selector": "[data-testid='library-state-loading']", "screenshot": "library-loading" },
-    { "action": "click", "selector": "[data-testid='library-state-error']", "screenshot": "library-error" }
-  ]
-}
-```
-
-3. **跨页导航链路**：从页面 A 到页面 B 再到 C 再回 A，验证链路无断点
-```json
-{
-  "file": "home.html",
-  "label": "首页→资源库→详情→首页 链路",
-  "steps": [
-    { "action": "click", "selector": "[data-testid='nav-library']", "screenshot": "nav-to-library" },
-    { "action": "click", "selector": "[data-testid='library-detail-trigger']", "screenshot": "nav-to-detail" },
-    { "action": "click", "selector": "[data-testid='nav-home']", "screenshot": "nav-back-home" }
-  ]
-}
-```
-
-**产出：**
-- `verify-output/screenshots/` — 全部截图（每个页面 + 每个交互步骤）
-- `verify-output/verify-report.json` — 结构化报告（文件/状态/截图路径/错误）
-
-**Claude Design 线**：先用 `claude-design read <projectId> <path>` 把产物拉到本地临时目录，然后在拉下来的文件上跑 `prototype-verify.mjs`，流程与本地 HTML 线一致。拉取失败时降级为 `claude-design render` 预览 + 截图。
-
-**验证失败处理**：
-- 截图缺失（文件打不开）→ 修原型后重跑
-- 交互失败（selector 找不到）→ 要么原型里没实现该交互，要么 selector 写错——先确认原型，再调 selector
-- JS 报错 → 修原型代码
+产出：`verify-output/screenshots/` + `verify-report.json`。errors > 0 → 修原型后重跑。
 
 截图完成后，基于截图填写下面的覆盖矩阵。每个 ✅ 旁标注对应的截图文件名。
+
+> 展开：interactions.json 示例、Phase 1/2/3 详细操作、Claude Design 线流程、验证失败处理 → `references/playwright-verify.md`
 
 ### 8c. 页面覆盖矩阵（所有保真度必做）
 
