@@ -71,12 +71,12 @@ Task 1: Capture Intent (Phase 1)
   Gate: intent, trigger conditions, output format, and skill type are all defined
 
 Task 2: Interview & Research (Phase 2)
-  Sub-steps: edge cases + success criteria + dependencies
-  Gate: boundaries clear, ready for baseline
+  Sub-steps: edge cases + success criteria + dependencies + fill Scenario Discovery Matrix
+  Gate: boundaries clear, matrix filled, ready for baseline
 
 Task 3: RED — Baseline (Phase 3)
-  Sub-steps: design pressure scenarios + run subagent baseline
-  Gate: ≥N scenarios executed, ≥1 reproducible failure identified, failure modes recorded
+  Sub-steps: select scenarios from matrix + run subagent baseline
+  Gate: ≥N scenarios executed, ≥1 reproducible failure identified, failure modes labeled with matrix cells
 
 Task 4: GREEN — Write SKILL.md (Phase 4)
   Sub-steps: write minimal SKILL.md + red-blue review
@@ -134,12 +134,15 @@ Four core questions:
 **Enter Gate:**
 - [ ] Phase 1 Exit Gate passed
 
-Dig into edge cases, input/output formats, success criteria, dependencies. Check available MCPs for research. Wait until boundaries are clear before proceeding to Phase 3.
+Dig into edge cases, input/output formats, success criteria, dependencies. Check available MCPs for research.
+
+**Fill the Scenario Discovery Matrix** (`writing-skills/scenario-discovery-matrix.md`): scan all 7 axes, mark applicable cells, skip cells only with a reason. The filled matrix is the input for Phase 3 scenario selection.
 
 **Exit Gate:**
 - [ ] Edge cases documented
 - [ ] Success criteria defined
 - [ ] Dependencies identified
+- [ ] Scenario Discovery Matrix filled (all axes scanned)
 - [ ] Ready to design baseline scenarios
 
 ## Phase 3: RED — Baseline
@@ -149,19 +152,23 @@ Dig into edge cases, input/output formats, success criteria, dependencies. Check
 
 **Mandatory for ALL skill types.** Run pressure scenarios with a subagent WITHOUT the skill.
 
+**Select scenarios from the filled matrix** using the Phase 3 Selection Rules in `writing-skills/scenario-discovery-matrix.md`. Don't free-associate — pick the minimal orthogonal set that covers the matrix axes.
+
 For each scenario:
 1. Spawn a subagent with the scenario prompt and NO skill loaded
 2. Record verbatim: what choices did it make? What rationalizations did it use? Which pressures triggered violations?
-3. Save results to workspace
+3. Label each failure with the matrix cell it exposed (e.g. "Axis 3: Rationalization + Axis 4: Sunk cost")
+4. Save results to workspace
 
 **Iron Law reminder:** You must see the agent fail before writing the skill. Skip this and you're guessing what to teach.
 
 For detailed pressure scenario design, read `writing-skills/testing-skills-with-subagents.md`.
 
 **Exit Gate:**
-- [ ] ≥N pressure scenarios executed (Discipline/Technique/Pattern ≥3, Reference ≥2)
+- [ ] Scenarios selected from matrix (each covers ≥1 task type + ≥1 failure mode + ≥1 context/boundary cell)
+- [ ] ≥N scenarios executed (Discipline/Technique/Pattern ≥3, Reference ≥2)
 - [ ] **At least one reproducible baseline failure identified** — if zero failures found after all scenarios, either redesign scenarios (different angles, harder pressure) or stop with "skill not justified yet". Running scenarios is not enough; the Iron Law requires observed failure. Inferred gaps from schema/code analysis are hypotheses for new scenarios, not observed failures — run them as scenarios before counting them.
-- [ ] Failure modes recorded (specific behaviors + rationalizations)
+- [ ] Failure modes recorded with matrix labels (specific behaviors + rationalizations)
 - [ ] Results saved to workspace
 
 ## Phase 4: GREEN — Write SKILL.md
@@ -358,6 +365,8 @@ Four hard constraints, none optional:
 
 Read feedback + benchmark data. Generalize across test cases into patterns — don't overfit to individual cases. For discipline skills, also extract new rationalizations from transcripts.
 
+**Classify each failure** as `SKILL_DEFECT` (skill text is wrong/incomplete — fix the skill) or `EXECUTION_LAPSE` (agent flubbed despite clear instructions — don't change the skill). Only `SKILL_DEFECT` failures drive edits in 6b. Writing EXECUTION_LAPSE fixes into the skill bloats it with noise.
+
 ### 6b. Bounded Edits
 
 Each iteration: at most 3 changes (add/delete/replace) to SKILL.md. No full rewrites. Remove content that isn't pulling its weight.
@@ -426,7 +435,7 @@ Run `skill-creator/scripts/package_skill.py` to create a `.skill` file. Requires
 ## Exit Gate (Global)
 
 - [ ] Skill intent + type confirmed (Phase 1)
-- [ ] Baseline failure modes recorded with ≥1 reproducible failure (Phase 3)
+- [ ] Scenario Discovery Matrix filled, baseline failures recorded with matrix labels (Phase 2-3)
 - [ ] SKILL.md produced, covers failure modes, red-blue reviewed (Phase 4)
 - [ ] Eval benchmark has numeric pass_rate (Phase 5)
 - [ ] Iteration converged, no regression (Phase 6)
