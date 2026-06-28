@@ -83,6 +83,7 @@ for each task in plan:
 - 取 task，确认 ≤ 5 文件 + 验收标准。超过 → 回 Plan 拆
 - **HITL task**：停下等用户决策再继续。**AFK task**：连续推进
 - **读 Plan task 的真实代码**：Plan Round 2 已填充测试代码 + 实现代码 + 验证命令，作为实现起点。不是照抄——实际代码库可能变化，需要适应（import 调整、API 变更、类型不匹配）
+- **有 pd-ui 产出时**：前端 task 从原型文件读视觉参考，组件 `data-testid` 继承 `.ui.md` 定义的命名（不重新命名），确保 dev-verify 的 `interactions.json` 可直接复用
 - **Source check**：Read 所有涉及代码/文档，标注 `[Read path:line]` / `[Doc URL]` / `[推断]`
 - 框架 API 查官方文档确认。文档不可达 → 标 `UNVERIFIED` + 退回本地源码
 - 只碰本 task 声明的文件。计划外发现用 **NOTICED BUT NOT TOUCHING** 模式：显式记录发现 + 位置 + 原因，问用户是否建 task。具体：不顺手清理相邻代码、不重构只读文件的 import、不删不懂的注释、不加 spec 外"看起来有用"的功能、不现代化只读文件语法

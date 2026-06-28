@@ -148,6 +148,7 @@ Task 6: 用户 approve
 - **PRD 原始路径清单**（使用路径 / 跨域路径 / 系统路径 / 约束）——这是 source of truth，不是 Design 的 TO 表
 - restate 的路径 ↔ SC 绑定
 - Design 的 TO 表（辅助参照，但不替代 PRD 原始清单）
+- **有 pd-ui 产出时**：`.ui.md` 的覆盖矩阵（页面 + 交互）作为前端实现完整度的对照基准——IA 中列出的每个页面/视图/交互在代码里都有对应实现吗？`data-testid` 命名是否和 `.ui.md` 定义一致？
 
 为什么拿 PRD 原始清单而非 TO 表：Design 漏掉某条路径时，TO 表里也没有这条，只对照 TO 表会跟着漏。PRD 原始清单是上游 source，对照它才能兜住 Design 的遗漏。路径 ID 体系见 `{NOCODE_SKILL_REF}/path-conventions.md`。
 

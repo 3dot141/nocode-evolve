@@ -147,7 +147,7 @@ Task 8: 写设计文档
 
 本步只搞清楚"UI 长什么样"（交互流、IA、视觉方向），不做 UI 技术方案——组件拆分、状态管理、渲染策略这些技术决策在方案选定后（Step 6 领域覆盖检查的前端项 + 设计文档 UI 节）才做。
 
-1. **有 pd-ui 产出（`.ui.md`）**→ 读它，理解 UI 需求（交互流、IA、视觉方向）。设计源标识从 `.ui.md` 继承（`claude-design` / `prototype`），后续写进设计文档 `## UI 设计` 节
+1. **有 pd-ui 产出（`.ui.md`）**→ 读它，理解 UI 需求（交互流、IA、视觉方向）。同时提取：`data-testid` 命名体系 → 组件接口约束；覆盖矩阵 → 前端测试目标；`interactions.json` 路径 → dev-verify 复用。设计源标识从 `.ui.md` 继承（`claude-design` / `prototype`），后续写进设计文档 `## UI 设计` 节
 2. **无 pd-ui 产出但有 UI 需求** → AskUserQuestion 让用户选：
    - **跑 pd-ui**（推荐）→ 调 `Skill(nocode-evolve:pd-ui)` 走完整交互视觉设计，产出 `.ui.md` 后回来继续
    - **直接选视觉方向** → 按 `{NOCODE_SKILL_REF}/ui-taste-model.md` 选一个 taste model，直接在设计文档里做视觉决策（不产出单独标识——taste model 被消化成具体值写进文档）
@@ -359,8 +359,8 @@ TO 传递给后续 Plan（指导切片 + task covers）、Build（驱动 TDD）�
 各输入作为设计文档固定章节落盘（下游 Plan/Build/Review 看不到本次对话，只看文档）：
 
 - **`## 前置调研`**：Step 1 三路探索结果，每条保留 `[Read]` / `[SOURCE]` 来源
-- **`## UI 设计`**（涉及前端时）：页面/组件清单 + 布局结构 + 交互行为 + UI 架构（组件拆分/状态管理/渲染策略）+ UI 技术选型。有 pd-ui 产出时附设计源标识 `[design-source: claude-design <projectId>]` 或 `[design-source: prototype <路径>]`，Build 去外部产物照做；无外部产物时设计文档本身就是全部视觉依据
-- **`## 验证策略`**：TO 表 + 按层级分组的测试方案 + 不测项 + 路径覆盖状态表。Verify 阶段直接读此章节执行
+- **`## UI 设计`**（涉及前端时）：页面/组件清单 + 布局结构 + 交互行为 + UI 架构（组件拆分/状态管理/渲染策略）+ UI 技术选型。有 pd-ui 产出时附设计源标识 `[design-source: claude-design <projectId>]` 或 `[design-source: prototype <路径>]`，Build 去外部产物照做；无外部产物时设计文档本身就是全部视觉依据。有 pd-ui 产出时额外记录：`[testid-source: <.ui.md 路径>]`（testid 命名体系）+ `[verify-baseline: <interactions.json 路径>]`（E2E 测试骨架）+ `[screenshot-baseline: <screenshots/ 路径>]`（视觉回归基线）
+- **`## 验证策略`**：TO 表 + 按层级分组的测试方案 + 不测项 + 路径覆盖状态表。有 pd-ui 产出时：覆盖矩阵直接作为前端 E2E 验收清单，`interactions.json` 作为测试骨架，不重新发明。Verify 阶段直接读此章节执行
 
 **设计 Review 六轴**（dev-design-refine 做的文档结构审查）：
 

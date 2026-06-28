@@ -90,7 +90,12 @@ Task 7: 反向审计（Step 7，Full 场景）
 
 ### Step 3: E2E / Browser（有 UI 变更时）
 
-**先读 UI 设计**：Read `.ui.md`（交互流 + IA + 视觉方向）+ prototype（有 `[design-source: claude-design]` 时 `/design import` 拉回，有 `[design-source: prototype]` 时读本地 HTML）。E2E 验证的基准是 UI 设计，不是"看起来能用"。
+**先读 UI 设计**：Read `.ui.md`（交互流 + IA + 视觉方向 + 覆盖矩阵 + testid 命名）+ prototype（有 `[design-source: claude-design]` 时 `/design import` 拉回，有 `[design-source: prototype]` 时读本地 HTML）。E2E 验证的基准是 UI 设计，不是"看起来能用"。
+
+**有 pd-ui 产出时直接复用**：
+- `.ui.md` 的覆盖矩阵（页面 + 交互）→ E2E 验收清单，逐条核对实现是否和设计一致
+- pd-ui 阶段的 `interactions.json` → E2E 测试骨架，selector（`data-testid`）已定好，直接用 `prototype-verify.mjs` 跑开发产物
+- pd-ui 阶段的 `screenshots/` → 视觉回归基线，开发截图和原型截图做对比
 
 启动 dev server → golden path + 边界 case → 截图/录屏作证据。
 无障碍检查（键盘可达、对比度、ARIA）。详见 `references/e2e-guide.md`。
