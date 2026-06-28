@@ -22,7 +22,24 @@ NO SKILL WITHOUT A FAILING BASELINE FIRST — ALL SKILL TYPES, NO EXCEPTIONS.
 
 This applies to discipline skills, technique skills, pattern skills, AND reference skills. "It's just a reference doc" is the #1 rationalization for skipping baseline — reference docs have gaps too, and baseline testing reveals them.
 
-## Eight-Phase Flow
+## Entry Routing
+
+Determine the work mode before entering the flow. Three paths:
+
+| Signal | Mode | Entry point |
+|---|---|---|
+| "create a skill", "turn this into a skill", new skill from scratch | **Create** | Step 0 → Phase 1-8 (full flow) |
+| "improve this skill", "edit SKILL.md", modify existing skill body | **Edit** | Step 0 → Phase 3-6 (baseline the current skill, then iterate) |
+| "optimize skill description", "fix trigger accuracy", "improve when it triggers" | **Description-only** | Phase 7 directly (own Enter Gate below) |
+
+**Description-only Enter Gate** (replaces normal Phase 7 Enter Gate):
+- [ ] Existing SKILL.md loaded and reviewed
+- [ ] Trigger query set defined (≥10 should-trigger + ≥10 should-not-trigger)
+- [ ] Baseline trigger accuracy measured (current hit/miss rate)
+
+Edit mode skips Phase 1-2 (intent and research already exist) but still requires Phase 3 baseline against the current skill version — otherwise you're editing blind.
+
+## Eight-Phase Flow (Create mode — full)
 
 ```
 Step 0: TaskCreate (create all tasks + gates upfront)
@@ -31,7 +48,7 @@ Phase 1: Capture Intent
     ↓
 Phase 2: Interview & Research
     ↓
-Phase 3: RED — Baseline (mandatory, all types)
+Phase 3: RED — Baseline (mandatory, all modes except description-only)
     ↓
 Phase 4: GREEN — Write SKILL.md
     ↓
@@ -59,7 +76,7 @@ Task 2: Interview & Research (Phase 2)
 
 Task 3: RED — Baseline (Phase 3)
   Sub-steps: design pressure scenarios + run subagent baseline
-  Gate: ≥N scenarios executed, failure modes recorded
+  Gate: ≥N scenarios executed, ≥1 reproducible failure identified, failure modes recorded
 
 Task 4: GREEN — Write SKILL.md (Phase 4)
   Sub-steps: write minimal SKILL.md
@@ -143,6 +160,7 @@ For detailed pressure scenario design, read `writing-skills/testing-skills-with-
 
 **Exit Gate:**
 - [ ] ≥N pressure scenarios executed (Discipline/Technique/Pattern ≥3, Reference ≥2)
+- [ ] **At least one reproducible baseline failure identified** — if zero failures found after all scenarios, either redesign scenarios (different angles, harder pressure) or stop with "skill not justified yet". Running scenarios is not enough; the Iron Law requires observed failure. Inferred gaps from schema/code analysis are hypotheses for new scenarios, not observed failures — run them as scenarios before counting them.
 - [ ] Failure modes recorded (specific behaviors + rationalizations)
 - [ ] Results saved to workspace
 
@@ -183,7 +201,9 @@ description: Use when [specific triggering conditions] — no workflow summary
 
 ### Workflow Skill Template
 
-**Criteria**: Discipline type + multi-step sequential execution → workflow skill. Must use the TODO + Gate template.
+**Criteria**: Multi-step sequential execution with ordering-critical or side-effecting operations → workflow skill. Must use the TODO + Gate template. This applies regardless of skill type (Discipline, Technique, Pattern, or Reference) — ordering risk is orthogonal to type classification.
+
+Examples: a Discipline skill with phased compliance checks, a Reference skill for a transactional API (finalize_plan → write_files), a Technique skill with destructive setup steps.
 
 Workflow skill SKILL.md must include:
 
@@ -343,8 +363,13 @@ If not converged → back to Phase 5 (re-run eval with new feedback).
 
 ## Phase 7: Description Optimization
 
-**Enter Gate:**
+**Enter Gate (create/edit mode):**
 - [ ] Phase 6 Exit Gate passed
+
+**Enter Gate (description-only mode):**
+- [ ] Existing SKILL.md loaded and reviewed
+- [ ] Trigger query set defined (≥10 should-trigger + ≥10 should-not-trigger)
+- [ ] Baseline trigger accuracy measured
 
 Generate 20 trigger eval queries (8-10 should-trigger + 8-10 should-not-trigger). Present for user review using `skill-creator/assets/eval_review.html`.
 
@@ -373,7 +398,7 @@ Run `skill-creator/scripts/package_skill.py` to create a `.skill` file. Requires
 ## Exit Gate (Global)
 
 - [ ] Skill intent + type confirmed (Phase 1)
-- [ ] Baseline failure modes recorded (Phase 3)
+- [ ] Baseline failure modes recorded with ≥1 reproducible failure (Phase 3)
 - [ ] SKILL.md produced and covers failure modes (Phase 4)
 - [ ] Eval benchmark has numeric pass_rate (Phase 5)
 - [ ] Iteration converged, no regression (Phase 6)
