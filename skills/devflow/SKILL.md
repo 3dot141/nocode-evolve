@@ -247,15 +247,52 @@ Design 完成方案选定 + 设计文档后，基于架构产出评估项目是�
 4. **依赖排序**：拓扑排序 + 风险优先（无依赖的高风险排前）
 5. **用户确认**：确认拆分 + 排序 + 第一个启动
 
-**拆分后的执行模型（PDCA）**：
+**拆分后的执行模型（PDCA + 依赖驱动并行）**：
 
-每个子任务继承全局 Design，走独立 devflow（Plan → Build → Verify → Review → Land）：
+每个子任务继承全局 Design，走独立 devflow（Plan → Build → Verify → Review → Land）。基于依赖图决定串行还是并行：
+
 ```
-Do:    子任务₁ → devflow(Plan → Build → Verify → Review → Land)
-Check: Land 后回检 master todo + 后续子任务是否受影响
-Act:   调整后续子任务（scope/顺序/新增/取消）→ 用户确认
-→ 子任务₂ → devflow → Check → Act → ...
-→ 全局集成验证（所有子任务 Land 后：跨子任务集成测试 + E2E 走查）
+依赖图示例：
+
+  子任务₁ (数据层)
+      ↓ 依赖
+  子任务₂ (API 层)  ←── 子任务₃ (AI 模块)  ← 无依赖，与₂并行
+      ↓ 依赖
+  子任务₄ (前端)
+
+执行：
+  ₁ 串行先做（底层）
+  → ₂ 和 ₃ 并行（workflow/subagent，各自独立 worktree）
+  → ₄ 串行最后（依赖 ₂₃）
+  → 全局集成验证
+```
+
+**并行执行**（无依赖关系的子任务）：
+- 用 Workflow `pipeline`/`parallel` 或多个 Agent（subagent_type 按需选）同时推进
+- 每个子任务在独立 worktree 中工作（isolation: 'worktree'），互不干扰
+- 每个子任务独立 Land（独立 PR + merge）
+
+**串行执行**（有依赖关系的子任务）：
+- 前置子任务 Land 后才启动后续子任务
+- PDCA 检查点：每个子任务 Land 后回检 master todo + 后续子任务是否受影响
+
+```
+PDCA 循环：
+
+  Plan   依赖图 + 并行/串行分组
+           │
+           ▼
+  Do     并行组内 workflow/subagent 同时推进
+         串行组按依赖顺序逐个推进
+           │
+           ▼
+  Check  每个子任务 Land 后：回检 master todo + 接口契约 + 后续影响
+           │
+           ▼
+  Act    调整后续子任务（scope/顺序/新增/取消）→ 用户确认
+           │
+           ▼
+  全局集成验证（所有子任务 Land 后：跨子任务集成测试 + E2E 走查）
 ```
 
 子任务不再经过 Define/Design（全局已做），各自建独立 worktree + 独立 PR。
