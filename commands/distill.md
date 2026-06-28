@@ -1,11 +1,11 @@
 ---
-description: 把当前会话沉淀分流到 wiki/rules/agents 六个出口（项目 wiki / 跨项目 advisor / 项目 rules / 项目配置 / 插件 rules / skip）
+description: 把当前会话沉淀分流到 wiki/rules/agents/docs 七个出口（项目 wiki / 跨项目 advisor / 项目 rules / 项目配置 / 子目录文档 / 插件 rules / skip）
 argument-hint: [optional-topic]
 ---
 
 # /distill：会话沉淀分流命令
 
-把当前会话里值得跨会话保留的内容沉淀到合适出口——AI 识别候选 + 自动贴分类标签 → 用户表格短码勾选/调整 → 六出口分发。
+把当前会话里值得跨会话保留的内容沉淀到合适出口——AI 识别候选 + 自动贴分类标签 → 用户表格短码勾选/调整 → 七出口分发。
 
 **设计文档**：`docs/plans/3dot141/260519-sediment-design.md`
 
@@ -21,7 +21,7 @@ argument-hint: [optional-topic]
 
 ---
 
-## 六个出口
+## 七个出口
 
 | 出口标签 | 落地路径 | 动作 |
 |---|---|---|
@@ -29,6 +29,7 @@ argument-hint: [optional-topic]
 | `wiki:cross-project` | （不写文件）| **advisor**：输出"建议跑 `/sow <intent>`" |
 | `rules:project` | 融进现有 rule，或新建 `<proj>/.agents-personal/rules/<slug>.md` + 改 `AGENTS.md` 触发条件 | 当前指令，项目专属；**先整合判断**（融合优先），否则双写新建 |
 | `agents:project` | `<proj>/.agents-personal/AGENTS.md` 对应分节 | 项目级偏好——变量覆盖 / 语气风格 / 命名惯例 / 协作约定等；直接写入 AGENTS.md，融合已有分节或新增分节 |
+| `docs:subdir` | `<proj>/<dir>/AGENTS.md` 和/或 `README.md` | 子目录工程约束/文档，入仓共享；走 project-distill |
 | `rules:plugin` | 融进现有 rule（含 `rule-references/` 子文件），或新建 `$NOCODE_EVOLVE_REPO/rules/rule-<slug>.md` + 改 `rules/manifest.json` 后 `node hooks/generate.mjs` 重新生成 catalog 分片 + 升 `plugin.json` | 当前指令，跨项目通用；**先整合判断**（融合优先），否则三步联动建新 |
 | `skip` | （不写）| 列出原因供用户最后反悔 |
 
@@ -56,14 +57,16 @@ argument-hint: [optional-topic]
 按主题聚类（同主题合并），每个候选 AI 自动贴标签 + 生成完整 body：
 
 ```
-候选 = { summary, label, slug, disposition, target_layer, path, body }
+候选 = { summary, label, slug, disposition, target_layer, path, body, target_dir, target_file }
   summary      ≤40 字摘要
-  label        ∈ {wiki:project, wiki:cross-project, rules:project, agents:project, rules:plugin, skip}
+  label        ∈ {wiki:project, wiki:cross-project, rules:project, agents:project, docs:subdir, rules:plugin, skip}
   slug         kebab-case 3-5 词
-  disposition  新建 | 融合→<现有文件路径> | supersede→<现有文件路径> | promote→<draft 文件路径>（仅 wiki:project / rules:* 有意义；见下「整合判断」）；agents:project 固定为 融合→AGENTS.md 或 新增分节
+  disposition  新建 | 融合→<现有文件路径> | supersede→<现有文件路径> | promote→<draft 文件路径>（仅 wiki:project / rules:* 有意义；见下「整合判断」）；agents:project 固定为 融合→AGENTS.md 或 新增分节；docs:subdir 按目标文件是否已存在走新建/融合
   target_layer draft | pages（仅 wiki:project；首次出现→draft, 与 pages/ 强相关→pages, 与 draft/ 强相关→draft）
   section_type var | style | naming | convention | rules-trigger（仅 agents:project；标识写入 AGENTS.md 的哪种分节）
-  path         disposition=新建 时按 label+target_layer 算落盘路径；融合/supersede 时=目标现有文件路径；agents:project 固定为 AGENTS.md
+  target_dir   目标子目录路径，相对项目根（仅 docs:subdir；如 "hooks/"）
+  target_file  agents | readme | both（仅 docs:subdir；默认 both）
+  path         disposition=新建 时按 label+target_layer 算落盘路径；融合/supersede 时=目标现有文件路径；agents:project 固定为 AGENTS.md；docs:subdir 为 <target_dir>/AGENTS.md 或 README.md
   body         disposition=新建 时=完整文件正文（分发直接 write）；融合 时=要融进目标的内容片段
 ```
 
@@ -93,9 +96,14 @@ argument-hint: [optional-topic]
 | 决策回溯 / 演进 / 术语定义 / 踩坑 | `wiki:*` |
 | 命令模板 / 触发条件 / 工作流约定 | `rules:*` |
 | 变量覆盖 / 语气风格偏好 / 命名惯例 / 协作约定 / 输出格式偏好 | `agents:project` |
+| **某个子目录的工程约束 / 使用说明 / 目录级规则**（如"hooks/ 下禁手改生成物"） | `docs:subdir` |
 | 项目特有业务术语 / 具体代码路径 | `*:project` |
 | 跨项目通用 AI 行为 / skill 覆盖 | `*:plugin` (cwd 是 nocode-evolve 仓) 或 `wiki:cross-project` (cwd 不是) |
 | 一次性进度 / 通用 best practice | `skip` |
+
+**`agents:project` vs `docs:subdir` 区分**：
+- 内容是**个人偏好 / 项目级配置**（变量 / 语气 / 命名） → `agents:project`（写到 `.agents-personal/AGENTS.md`，gitignored）
+- 内容是**某个目录的工程约束**，所有协作者都应遵守 → `docs:subdir`（写到 `<dir>/AGENTS.md`，入仓共享）
 
 **0 候选**：报"本次无可沉淀内容"，停。
 **全 skip**：报"识别 N 项均建议跳过 + 原因"，停。
@@ -124,6 +132,7 @@ argument-hint: [optional-topic]
 | `wiki:cross-project` | 用户 vault (建议 /sow) |
 | `rules:project` | 项目 rule |
 | `agents:project` | 项目配置 (AGENTS.md) |
+| `docs:subdir` | 子目录文档 (<dir>/) |
 | `rules:plugin` | 插件 rule |
 | `skip` | — |
 
@@ -149,7 +158,7 @@ argument-hint: [optional-topic]
 
 no → 整次 distill 终止；yes → 进入分发。
 
-### 4. 五出口分发
+### 4. 六出口分发
 
 按 label 分发：
 
@@ -177,6 +186,14 @@ no → 整次 distill 终止；yes → 进入分发。
 #### `agents:project` 出口
 
 调 `Skill(nocode-evolve:personal-distill)`，传入本出口的候选列表（含 section_type / body）。personal-distill 负责 AGENTS.md 分节写入——融合已有分节或新增分节。
+
+#### `docs:subdir` 出口
+
+调 `Skill(nocode-evolve:project-distill)`，传入本出口的候选列表（含 target_dir / target_file / body）。project-distill 负责分析目标目录 + 写入 AGENTS.md 和/或 README.md。
+
+与 `agents:project` 的落地路径完全不同：
+- `agents:project` → `.agents-personal/AGENTS.md`（gitignored，个人配置）
+- `docs:subdir` → `<dir>/AGENTS.md` + `README.md`（入仓，共享约束）
 
 #### `rules:plugin` 出口（融合优先，否则三步联动）
 
@@ -328,6 +345,7 @@ manifest+generate: rules/manifest.json 已加条目, node hooks/generate.mjs 重
 - ❌ **写 plugin rule 但忘升 version**——CLAUDE.md 硬约束
 - ❌ **AGENTS.md 加触发条件含糊**："需要时读 rules/foo.md" 等于没触发
 - ❌ **agents:project 和 rules:project 混淆**：变量/语气/命名惯例/协作约定 → `agents:project`（写 AGENTS.md 分节）；触发条件/工作流指令 → `rules:project`（写 rules/ 文件 + AGENTS.md 触发条目）。区分标准：前者是偏好/配置，后者是 agent 行为指令
+- ❌ **agents:project 和 docs:subdir 混淆**：个人偏好/项目级配置 → `agents:project`（写 `.agents-personal/AGENTS.md`，gitignored）；某个子目录的工程约束 → `docs:subdir`（写 `<dir>/AGENTS.md`，入仓共享）。区分标准：前者是个人的、后者是共享的
 - ❌ **rules 文件名带日期**：rules 是当前指令不是历史记录，文件名只用 slug
 - ❌ **在 distill 内部 commit / push**：只写文件，commit/push 由用户在主交互流程里处理
 - ❌ **替 /sow 校验 env**：cross-project advisor 不检查 `$USER_VAULT_PATH`——是 /sow 自己的责任
@@ -347,6 +365,8 @@ manifest+generate: rules/manifest.json 已加条目, node hooks/generate.mjs 重
 | `agents:project` 候选的变量名与已有变量冲突 | 展示新旧值对比，用户选保留哪个 |
 | slug 冲突 (rules / wiki) | **转整合判断**（疑似融合目标）：在 AskUserQuestion 里加选项"融进已有 <path>" 和 "改名新建" |
 | 融合目标是 `rule-references/` 子文件 | catalog 不动（门面已路由）；仅升版本 |
+| `docs:subdir` 目标目录不存在 | 报"目标目录 `<dir>/` 不存在"，该项在表格里标灰 + 不可选 |
+| `docs:subdir` 目标目录已有 AGENTS.md / README.md | project-distill 走更新逻辑（融合，不覆盖） |
 | `$NOCODE_EVOLVE_REPO` 路径不存在 | 插件 rule 项在表格里标灰 + 不可选 |
 | Step 1 写文件后 Step 2 改 manifest / generate 失败 | 不回滚 Step 1，报"写入了 rule 文件但 manifest 未登记，请手动改 manifest 后跑 generate" |
 | Step 2 后 Step 3 改 plugin.json 失败 | 不回滚前两步，报"前两步完成但版本未升，请手动改 plugin.json" |
