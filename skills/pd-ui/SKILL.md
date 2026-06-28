@@ -61,7 +61,7 @@ Task 4: 视觉探索
   Gate: 视觉参考集整理
 
 Task 5: 保真度 + 交付方式 + 视觉方向
-  Sub-steps: 选保真度 → 选交付方式 → 定视觉方向
+  Sub-steps: 选保真度(ASCII/低保真/高保真/完整实现) → 选交付方式 → 定视觉方向
   Gate: 三项已定（ASCII 档跳 Task 6-7）
 
 Task 6: Design System 决策
@@ -73,8 +73,8 @@ Task 7: 生成原型
   Gate: 原型产出 + 原型清单 100% 覆盖 IA 全部页面/视图（ASCII 档 skip）
 
 Task 8: 验证
-  Sub-steps: Playwright 渲染验证 → 页面覆盖矩阵(基于截图) → 交互覆盖矩阵(高保真,基于截图) → PRD 路径走查 → 五维自审 → vis-review
-  Gate: Playwright errors=0 + 页面 100% + 交互 100% + 路径全通 + 自审通过
+  Sub-steps: 测试方案(8a,审批) → Playwright 分层验证(8b,P1/P2/P3按保真度) → 页面覆盖矩阵(8c) → 交互覆盖矩阵(8d) → 交叉审(8e) → 写入.ui.md(8f)
+  Gate: 测试方案审批通过 + Playwright errors=0 + 按保真度 Gate 表全过
 
 Task 9: 保存 + Handoff
   Sub-steps: 写 .ui.md + 保存原型 → 提示 devflow
@@ -200,15 +200,17 @@ Task 9: 保存 + Handoff
 
 **5a. 保真度**（AskUserQuestion，默认低保真）：
 
-| 档 | 产出 | 适用 | 后续 |
-|---|---|---|---|
-| **ASCII** | 视觉方向文字描述写入 `.ui.md` | 够拍板结构，不需要看视觉 | 跳 Step 6-7 |
-| **低保真** | 静态 UI（具体配色/排版/间距值） | 确认视觉观感 | 走 Step 6-7 |
-| **高保真** | 可交互、可导航、多屏流程 + 4 态 | 演示 / 验证复杂交互 | 走 Step 6-7 |
+| 档 | 核心能力 | 原型覆盖度 | Playwright 验证 | 适用 | 后续 |
+|---|---|---|---|---|---|
+| **ASCII** | 文字描述 | — | — | 够拍板结构，不需要看视觉 | 跳 Step 6-7 |
+| **低保真** | 看得见 | 每个 IA 页面/视图都有静态渲染 | Phase 1：截图确认渲染正常 | 确认视觉观感 | 走 Step 6-7 |
+| **高保真** | 点得动 | 低保真 + 每个交互点可操作 | Phase 1 + Phase 2：交互场景验证 | 验证交互逻辑 | 走 Step 6-7 |
+| **完整实现** | 跑得通 | 高保真 + 4 态逐控件 + 边界态全覆盖 + 跨页导航链路 | Phase 1 + Phase 2 + Phase 3：完整测试套件 | 演示 / 交付前验收 | 走 Step 6-7 |
 
-**低保真 vs 高保真的区别（few-shot）：**
-- 低保真：一张静态截图——"首页长这样，侧边栏蓝底白字，卡片 12px 圆角"
+**三层递进（few-shot）：**
+- 低保真：一张静态截图——"首页长这样，侧边栏蓝底白字，卡片 12px 圆角"。嵌入组件在宿主页面里展示布局，不需要能点
 - 高保真：能点的——"点侧边栏的'资源库'跳到列表页，点一行展开详情抽屉，空状态显示引导"
+- 完整实现：跑得通——"每个按钮 hover/active/focus-visible/disabled 4 态都有、列表区 empty/loading/error 切换正常、从首页走到详情再回来链路无断点"
 
 **5b. 交付方式**（低/高保真时，AskUserQuestion）：
 
@@ -244,11 +246,12 @@ Task 9: 保存 + Handoff
 
 **5d. 渐进式升级**（已有前一档产出时）：
 - 已有 ASCII → 升级到低保真：**加视觉**（配色/排版），不重新设计交互
-- 已有低保真 → 升级到高保真：**加交互**（导航/4 态），不重画页面
+- 已有低保真 → 升级到高保真：**加交互**（导航/嵌入组件能弹出），不重画页面
+- 已有高保真 → 升级到完整实现：**加 4 态 + 边界态 + 跨页链路**，不重做交互逻辑
 - 回查 `.ui.md` 确认升级基线，不推翻
 
 **Exit Gate:**
-- [ ] 保真度 + 交付方式 + 视觉方向已定
+- [ ] 保真度（ASCII / 低保真 / 高保真 / 完整实现）+ 交付方式 + 视觉方向已定
 - [ ] ASCII 档：视觉描述已写入 `.ui.md`，Step 6-7 标 skip
 
 > 展开：视觉方向三轴定义、渐进式升级判断规则 → `references/visual-direction.md`
@@ -312,7 +315,8 @@ patterns     页面级布局               → Step 7 组装
 | **怎么出** | `Skill(nocode-evolve:claude-design)` → `claude-design <brief>` | 本地写多个 `.html` 文件 |
 | **喂什么** | brief = IA + 交互清单 + 视觉方向；挂 template + design system（如有） | IA + 交互清单 + 视觉方向 + token/组件；无设计系统则加载 taste skill |
 | **低保真** | 每个独立页面一个文件（含宿主内的嵌入组件），静态 | 每个独立页面一个文件（含宿主内的嵌入组件），静态 |
-| **高保真** | 保留独立页面文件 + 新增一个组合文件（融合全部页面，JS tab 切换/弹窗/4 态） | 多文件之间用 URL 跳转，每个文件内做弹窗/4 态 |
+| **高保真** | 保留独立页面文件 + 新增一个组合文件（融合全部页面，JS tab 切换/弹窗） | 多文件之间用 URL 跳转，每个文件内做弹窗/4 态 |
+| **完整实现** | 高保真基础上：组合文件内每个控件 4 态 + 边界态切换 + 跨页导航链路 | 高保真基础上：每个控件 4 态 + 边界态切换 + URL 跳转链路全覆盖 |
 | **产物** | claude.ai 项目（记 projectId） | `{pd_ui_prototype}` 目录 |
 
 **Claude Design 高保真的两层结构：**
@@ -360,10 +364,28 @@ Claude Design 不支持跨文件导航，所以交互统一在这个组合文件
 视觉方向：工具感，参考 Linear。
 ```
 
-**两条线共同要求：**
-- 低保真：给具体值（配色 hex / 字号 / 间距 / 圆角），不说"某种蓝"
-- 高保真：token 不硬编码，4 态（hover / active / focus-visible / disabled），empty / loading / error 态
-- 渐进式：在已有基线上加，不推翻
+**两条线共同要求（按保真度分层）：**
+
+| | 低保真 | 高保真 | 完整实现 |
+|---|---|---|---|
+| **视觉值** | 具体值（hex / 字号 / 间距 / 圆角） | token 不硬编码（CSS 变量） | 同高保真 |
+| **嵌入组件** | 在宿主页面展示布局（初始隐藏态可见） | 可触发（点击弹出/滑出） | 可触发 + 关闭后状态回归 |
+| **4 态** | 不要求 | 不要求 | 每个可操作控件 hover/active/focus-visible/disabled 逐个实现 |
+| **边界态** | 不要求 | 不要求 | 数据区 empty/loading/error 全覆盖，可切换 |
+| **导航链路** | 不要求 | 页面间可跳转 | 端到端链路可走通（A→B→C→A 无断点） |
+| **test-id** | 所有可操作元素加 `data-testid` | 同低保真 | 同低保真 |
+| **渐进式** | 在 ASCII 基线上加视觉 | 在低保真上加交互 | 在高保真上加 4 态 + 边界态 + 链路 |
+
+**test-id 约定（所有保真度，两条线通用）：**
+每个可操作元素（按钮、链接、输入框、导航项、状态切换控件、弹窗触发器）加 `data-testid` 属性。Playwright selector 用 `[data-testid="xxx"]` 定位，不依赖脆弱的 CSS class 或文本内容。
+
+命名规则：`<页面>-<组件>[-<变体>]`，kebab-case。例：
+- `library-filter-btn` — 资源库筛选按钮
+- `library-import-trigger` — 导入对话框触发按钮
+- `library-import-dialog` — 导入对话框本体
+- `library-import-cancel` — 导入对话框取消按钮
+- `library-state-empty` — 切换到 empty 态的控件
+- `nav-home` / `nav-library` / `nav-settings` — 导航项
 
 **原型清单（Step 8 验证的输入）：**
 
@@ -388,7 +410,8 @@ Step 7 产出后、进 Step 8 前，列一份原型清单，记录实际产出�
 - [ ] 原型已产出
 - [ ] 原型清单 100% 覆盖 IA 全部页面/视图（独立页面有文件 + 嵌入组件在宿主页面内实现，无遗漏）
 - [ ] Claude Design 线：projectId 已记录 / HTML 线：文件已保存
-- [ ] 高保真：4 态 + 导航 + empty/loading/error 已覆盖
+- [ ] 高保真：交互可操作（弹窗能弹、抽屉能滑、导航能跳）
+- [ ] 完整实现：4 态逐控件 + 边界态全覆盖 + 跨页导航链路无断点
 
 > 展开：`claude-design <brief>` 完整写法、HTML 原型规范、两条线详细操作 → `references/prototype-gen.md`
 
@@ -402,7 +425,7 @@ Step 7 产出后、进 Step 8 前，列一份原型清单，记录实际产出�
 **三表关系：** PRD 路径覆盖 → 页面覆盖矩阵 → 交互覆盖矩阵，是同一条链的三个粒度递进，不是重复核对：
 - PRD 路径覆盖：每条使用路径能走通吗（端到端）
 - 页面覆盖矩阵：每个 IA 页面/视图都画出来了吗（逐页）
-- 交互覆盖矩阵：每个交互点都能操作吗（逐交互，仅高保真）
+- 交互覆盖矩阵：每个交互点都能操作吗（逐交互，高保真 + 完整实现）
 
 PRD 路径覆盖的状态必须由下面两个矩阵聚合得出，不能单独手填 ✅——矩阵里有 ❌，路径就不能标 ✅。
 
@@ -410,55 +433,139 @@ PRD 路径覆盖的状态必须由下面两个矩阵聚合得出，不能单独�
 
 **Core Actions:**
 
-### 8-pre. Playwright 渲染验证（低/高保真，本地 HTML 线必做）
+### 8a. 测试方案（先审后跑）
 
-在填写覆盖矩阵之前，先用 `prototype-verify.mjs` 实际渲染原型并截图。矩阵里的 ✅ 必须能对应到截图证据，不允许只看代码或 summary 就手填。
+在跑 Playwright 之前，先基于原型清单 + 保真度输出一份测试方案，用户审批后再写脚本执行。不允许跳过方案直接跑。
 
-**基础截图（Phase 1）：**
+**测试方案内容（按保真度递增）：**
+
+```
+## 测试方案
+
+保真度：完整实现
+交付方式：本地 HTML
+
+### Phase 1 — 页面截图
+| 文件 | 对应 IA 页面 | 预期内容 |
+|---|---|---|
+| home.html | 首页 | 卡片网格 + 统计面板 + 活动流 |
+| library.html | 资源库 | 筛选栏 + 数据表格 + 嵌入组件布局可见 |
+| settings.html | 设置页 | 偏好设置表单 |
+
+### Phase 2 — 交互场景（高保真+完整实现）
+| 场景 | 文件 | 操作 | 预期结果 | data-testid |
+|---|---|---|---|---|
+| 打开资源详情 | library.html | 点击行 | Drawer 滑出 | library-detail-trigger → library-detail-drawer |
+| 打开导入对话框 | library.html | 点击"+导入" | Dialog 弹出 | library-import-trigger → library-import-dialog |
+| 关闭导入对话框 | library.html | 点击"取消" | Dialog 关闭 | library-import-cancel |
+
+### Phase 3 — 完整验证（仅完整实现）
+| 维度 | 场景 | 文件 | data-testid | 预期 |
+|---|---|---|---|---|
+| 4 态 | 筛选按钮 hover | library.html | library-filter-btn | 背景色变化 |
+| 4 态 | 筛选按钮 disabled | library.html | library-filter-btn | 灰色 + 不可点 |
+| 边界态 | 列表 empty | library.html | library-state-empty | "暂无数据" + 引导 |
+| 边界态 | 列表 loading | library.html | library-state-loading | 骨架屏 |
+| 边界态 | 列表 error | library.html | library-state-error | 错误提示 + 重试 |
+| 链路 | 首页→资源库→详情→首页 | home.html | nav-library → library-detail-trigger → nav-home | 无断点 |
+```
+
+**审批 Gate**：用户确认测试方案后才进 8b 写 interactions.json 执行。方案有遗漏就补，有多余就删。
+
+### 8b. Playwright 渲染验证（两条线都做）
+
+基于审批通过的测试方案，写 `interactions.json` 并用 `prototype-verify.mjs` 执行。矩阵里的 ✅ 必须能对应到截图证据，不允许只看代码或 summary 就手填。
+
+Claude Design 线先 `claude-design read` 拉到本地再跑，流程一致。
+
+**按保真度分层跑不同 Phase：**
+
+| 保真度 | 跑什么 | 验证什么 |
+|---|---|---|
+| **低保真** | Phase 1 | 每个页面渲染正常（不白屏、不报错）、嵌入组件布局可见 |
+| **高保真** | Phase 1 + Phase 2 | 低保真全部 + 每个交互可操作（点击弹出/滑出/跳转） |
+| **完整实现** | Phase 1 + Phase 2 + Phase 3 | 高保真全部 + 4 态逐控件验证 + 边界态切换 + 跨页导航链路走通 |
+
+**Phase 1 — 基础截图（所有保真度）：**
 ```bash
 node scripts/prototype-verify.mjs <prototype-dir>
 ```
 自动打开每个 HTML 文件、截全页面图、收集页面元数据（链接/按钮/dialog 数量）。
 
-**交互验证（Phase 2，高保真必做）：**
+**Phase 2 — 交互场景验证（高保真 + 完整实现）：**
 准备 `interactions.json`，列出每个需要验证的交互场景（嵌入组件触发、状态切换等）：
 ```bash
 node scripts/prototype-verify.mjs <prototype-dir> --interactions interactions.json
 ```
 
-interactions.json 示例：
+interactions.json 示例（selector 统一用 `data-testid`）：
 ```json
 [
   {
     "file": "library.html",
     "label": "资源详情抽屉",
     "steps": [
-      { "action": "click", "selector": "tr.resource-row", "screenshot": "detail-drawer-open" }
+      { "action": "click", "selector": "[data-testid='library-detail-trigger']", "screenshot": "detail-drawer-open" }
     ]
   },
   {
     "file": "library.html",
     "label": "导入对话框",
     "steps": [
-      { "action": "click", "selector": "button:has-text('导入')", "screenshot": "import-dialog-open" },
-      { "action": "click", "selector": "dialog button:has-text('取消')", "screenshot": "import-dialog-closed" }
-    ]
-  },
-  {
-    "file": "library.html",
-    "label": "empty 态",
-    "steps": [
-      { "action": "click", "selector": "[data-state='empty']", "screenshot": "library-empty" }
+      { "action": "click", "selector": "[data-testid='library-import-trigger']", "screenshot": "import-dialog-open" },
+      { "action": "click", "selector": "[data-testid='library-import-cancel']", "screenshot": "import-dialog-closed" }
     ]
   }
 ]
+```
+
+**Phase 3 — 完整测试套件（仅完整实现）：**
+在 Phase 2 基础上扩展 interactions.json，覆盖三个维度：
+
+1. **4 态逐控件**：每个可操作控件的 hover / active / focus-visible / disabled
+```json
+{
+  "file": "library.html",
+  "label": "筛选按钮 4 态",
+  "steps": [
+    { "action": "hover", "selector": "[data-testid='library-filter-btn']", "screenshot": "filter-btn-hover" },
+    { "action": "click", "selector": "[data-testid='library-filter-btn']", "screenshot": "filter-btn-active" },
+    { "action": "focus", "selector": "[data-testid='library-filter-btn']", "screenshot": "filter-btn-focus" }
+  ]
+}
+```
+
+2. **边界态切换**：每个数据区的 empty / loading / error
+```json
+{
+  "file": "library.html",
+  "label": "列表边界态",
+  "steps": [
+    { "action": "click", "selector": "[data-testid='library-state-empty']", "screenshot": "library-empty" },
+    { "action": "click", "selector": "[data-testid='library-state-loading']", "screenshot": "library-loading" },
+    { "action": "click", "selector": "[data-testid='library-state-error']", "screenshot": "library-error" }
+  ]
+}
+```
+
+3. **跨页导航链路**：从页面 A 到页面 B 再到 C 再回 A，验证链路无断点
+```json
+{
+  "file": "home.html",
+  "label": "首页→资源库→详情→首页 链路",
+  "steps": [
+    { "action": "click", "selector": "[data-testid='nav-library']", "screenshot": "nav-to-library" },
+    { "action": "click", "selector": "[data-testid='library-detail-trigger']", "screenshot": "nav-to-detail" },
+    { "action": "click", "selector": "[data-testid='nav-home']", "screenshot": "nav-back-home" }
+  ]
+}
 ```
 
 **产出：**
 - `verify-output/screenshots/` — 全部截图（每个页面 + 每个交互步骤）
 - `verify-output/verify-report.json` — 结构化报告（文件/状态/截图路径/错误）
 
-**Claude Design 线**：Claude Design 产物无法本地渲染，用 `claude-design render` 预览 + 截图替代。如果不可用，手动在 claude.ai 预览并截图。
+**Claude Design 线**：先用 `claude-design read <projectId> <path>` 把产物拉到本地临时目录，然后在拉下来的文件上跑 `prototype-verify.mjs`，流程与本地 HTML 线一致。拉取失败时降级为 `claude-design render` 预览 + 截图。
 
 **验证失败处理**：
 - 截图缺失（文件打不开）→ 修原型后重跑
@@ -467,7 +574,7 @@ interactions.json 示例：
 
 截图完成后，基于截图填写下面的覆盖矩阵。每个 ✅ 旁标注对应的截图文件名。
 
-### 8a. 页面覆盖矩阵（所有保真度必做）
+### 8c. 页面覆盖矩阵（所有保真度必做）
 
 真值源：Step 3 的 IA（页面/视图清单）。矩阵行从 IA 逐条搬，每行核对该页面在各层产出中是否存在。**IA 中的每个页面/视图都必须在原型中有实现——不存在"设计覆盖但原型未实现"的中间态。**
 
@@ -494,12 +601,14 @@ interactions.json 示例：
 - **状态覆盖(4态)**：所有保真度必须有（Step 2 四块之一）。核对该页面/视图涉及的正常/empty/loading/error 是否在线框中标出
 - **原型实现位置**：低保真 + 高保真必须有。独立页面填文件名；嵌入组件填"宿主文件名 内 (组件类型)"
 - **原型中可达**：高保真必须有。填写到达方式——Claude Design 线填组合文件内的 tab/弹窗/抽屉；本地 HTML 线填 URL 跳转 / 页内 `<dialog>` / JS 滑出。ASCII 档标"N/A"
-- **截图证据**：低/高保真必须有。填 8-pre 产出的截图文件名。嵌入组件填交互触发后的截图。**无截图不允许标 ✅**
+- **截图证据**：低/高保真/完整实现必须有。填 8b 产出的截图文件名。嵌入组件填交互触发后的截图。**无截图不允许标 ✅**
 - **状态**：✅ 已覆盖（有截图证据） / ❌ 缺失（缺失即补，补完重跑验证再改 ✅）。**Gate 要求全部 ✅，不接受部分覆盖**
 
-### 8b. 交互覆盖矩阵（仅高保真必做）
+### 8d. 交互覆盖矩阵（高保真 + 完整实现必做）
 
 真值源：Step 2 的交互清单（每条交互带 ID，如 `订单.P1.3`）。逐条核对每个交互在原型中是否可操作。基于 Step 7 原型清单定位实际实现位置。
+
+**高保真 vs 完整实现的区别**：高保真只需核对交互"能操作"（点了有反应）；完整实现还要核对每个控件的 4 态和边界态。
 
 ```
 ## 交互覆盖矩阵
@@ -516,35 +625,46 @@ interactions.json 示例：
 - **可操作控件**：拆到具体控件级别（按钮、输入框、筛选栏、排序、分页等），每个控件单独核对 4 态。只有完全无可操作控件的纯文本展示区才标"—"——有筛选/排序/分页/行 hover 的列表不算纯展示
 - **4 态**：每个可操作控件的 hover / active / focus-visible / disabled 逐个核对
 - **边界态**：该交互涉及的数据区有 empty / loading / error 吗。不涉及数据的标"—"
-- **截图证据**：8-pre Playwright 验证产出的截图文件名，证明该交互实际可操作。**无截图不允许标 ✅**
+- **截图证据**：8b Playwright 验证产出的截图文件名，证明该交互实际可操作。**无截图不允许标 ✅**
 - **状态**：✅ 全部达标（有截图证据） / ❌ 未达标（列出缺什么）。补完重跑验证再改 ✅。**Gate 只认 ✅，不存在中间态通过**
 
-### 8c. 独立交叉审（低/高保真）
+### 8e. 独立交叉审（低保真 / 高保真 / 完整实现）
 
-两路并行审，避免同源自评盲区：
+调 `Skill(nocode-evolve:red-blue-deep)` 强制重档，审查范围：
 
-1. **Subagent 审**（`nocode-evolve:code-reviewer` 或 general-purpose）— 按 8a/8b 矩阵 + PRD 路径走查 + 五维自审（信息层级 / 一致性 / 交互完整性 / 可行性 / PRD 对齐），输出分级 Report（Critical / Warning / Suggestion）
-2. **Codex 审**（`codex-companion.mjs task`）— 同样的审查范围，独立视角。Codex 不可用时降级为仅 subagent 单审 + 明说 fallback
+- 8c/8d 矩阵完整性（有没有漏页面 / 漏交互）
+- PRD 路径走查（端到端能走通吗）
+- 五维自审（信息层级 / 一致性 / 交互完整性 / 可行性 / PRD 对齐）
+- Playwright 截图 vs 设计意图（截图里看到的和设计的是不是同一个东西）
 
-两路结果合并：交集 = 高置信必修；对称差 = 盲点补充，逐条判断。Critical 必须全部修复。
+red-blue-deep 重档会走红军环节（独立模型审），输出分级 Report（Critical / Warning / Suggestion）。Critical 必须全部修复后重跑 Playwright 验证。
 
-### 8d. 验证记录写入 .ui.md
+### 8f. 验证记录写入 .ui.md
 
 在 `.ui.md` 中新建独立的 `## 验证记录` 节，包含：
-1. 页面覆盖矩阵
-2. 交互覆盖矩阵（高保真）
-3. PRD 路径走查结果
-4. 五维自审结果
-5. 交叉审 Report 摘要
+1. 测试方案（8a 审批通过的版本）
+2. 页面覆盖矩阵
+3. 交互覆盖矩阵（高保真 + 完整实现）
+4. PRD 路径走查结果
+5. 五维自审结果
+6. 交叉审 Report 摘要
+7. Playwright verify-report.json 摘要（errors / screenshots 数量）
 
 PRD 路径覆盖表（已有节）的状态从矩阵聚合：该路径涉及的所有页面和交互都 ✅ → 路径才标 ✅。
 
-**Exit Gate:**
-- [ ] Playwright 验证已跑（低/高保真本地 HTML）：verify-report.json errors = 0
-- [ ] 页面覆盖矩阵：100% 覆盖，所有 IA 页面/视图 ✅（无 ❌，无"设计有原型无"），每个 ✅ 有截图证据
-- [ ] 交互覆盖矩阵（高保真）：100% 覆盖，所有交互 ✅（无 ❌，Gate 只认 ✅），每个 ✅ 有截图证据
-- [ ] PRD 路径走查：所有路径可走通
-- [ ] 交叉审无 Critical（或已修复）
+**Exit Gate（按保真度递增）：**
+
+| Gate 项 | 低保真 | 高保真 | 完整实现 |
+|---|---|---|---|
+| Playwright Phase 1（截图） | 必须 | 必须 | 必须 |
+| Playwright Phase 2（交互） | — | 必须 | 必须 |
+| Playwright Phase 3（4 态 + 边界态 + 链路） | — | — | 必须 |
+| 页面覆盖矩阵 100%（有截图证据） | 必须 | 必须 | 必须 |
+| 交互覆盖矩阵 100%（有截图证据） | — | 必须 | 必须 |
+| PRD 路径走查 | 必须 | 必须 | 必须 |
+| 交叉审无 Critical | 必须 | 必须 | 必须 |
+
+verify-report.json errors = 0 才过 Gate。
 
 ---
 
@@ -575,8 +695,9 @@ PRD 路径覆盖表（已有节）的状态从矩阵聚合：该路径涉及的�
 | 借口 | 现实 |
 |---|---|
 | "界面让开发看着办" | 你没决定的地方由实现细节替你决定 |
-| "低保真够了，不用想交互态" | empty/loading/error 是一半的真实使用时间 |
+| "低保真够了，不用想交互态" | empty/loading/error 是一半的真实使用时间，完整实现才覆盖 |
 | "直接上高保真快" | 没批准低保真就糊高保真 = 在未验证的骨架上贴皮 |
+| "高保真够了，4 态以后开发再说" | 4 态在开发阶段补的成本远高于原型阶段——完整实现就是为了提前验证 |
 | "视觉方向凭感觉定一个" | 2-3 个方向让人选，比赌一个返工率低 |
 | "先拍个 IA 再补交互" | IA 是从交互拆解汇总出来的 |
 | "小项目也要建设计系统" | 小项目 brand-neutral 够用 |
@@ -590,7 +711,7 @@ PRD 路径覆盖表（已有节）的状态从矩阵聚合：该路径涉及的�
 - 跳 Step 2 直接出 IA
 - IA 先于交互拆解产出
 - wireframe 缺 empty/loading/error
-- 跳档（没低保真就出高保真）
+- 跳档（没低保真就出高保真，或没高保真就出完整实现）
 - 只给一个视觉方向
 - 没对照 PRD 逐条核路径
 - 交互流没标路径 ID

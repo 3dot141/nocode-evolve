@@ -9,7 +9,7 @@
 两条线的产出都遵循同一个结构：
 
 - **拆分（独立页面文件）**：每个独立页面一个文件，嵌入组件（Modal/Dialog/Drawer）在宿主页面内实现。低保真到这里就够了
-- **组合（交互原型）**：高保真在独立页面基础上，再产出可交互的原型。区别在于怎么组合
+- **组合（交互原型）**：高保真 / 完整实现在独立页面基础上，再产出可交互的原型。区别在于怎么组合
 
 **文件拆分标准**：独立页面 = 不同路径分支的落地页（首页、列表页、设置页），各一个文件；嵌入组件 = 同一页面内的交互分支（弹窗、抽屉、对话框），在宿主页面内实现，不单独建文件。
 
@@ -20,7 +20,8 @@
 | 怎么出 | `Skill(nocode-evolve:claude-design)` → `claude-design <brief>` | 本地写多个 `.html` 文件 |
 | 喂什么 | brief = IA + 交互清单 + 视觉方向 + 保真度；挂 template/design system | IA + 交互清单 + 视觉方向 + token/组件；无设计系统则加载 taste skill |
 | 低保真（拆分） | 每个独立页面一个文件（含宿主内嵌入组件），静态 | 每个独立页面一个文件（含宿主内嵌入组件），静态 |
-| 高保真（组合） | 保留独立页面 + 额外一个组合文件（融合全部页面代码，JS tab 切换/弹窗/4 态） | 多文件之间用 URL 跳转串联，每个文件内做弹窗/4 态 |
+| 高保真（组合） | 保留独立页面 + 额外一个组合文件（融合全部页面代码，JS tab 切换/弹窗） | 多文件之间用 URL 跳转串联，每个文件内做弹窗 |
+| 完整实现 | 高保真基础上：组合文件内每个控件 4 态 + 边界态切换 + 跨页导航链路 | 高保真基础上：每个控件 4 态 + 边界态切换 + URL 跳转链路全覆盖 |
 | 组合的代价 | 内容在独立页面和组合文件中重复，改一处要同步改另一处 | 无重复，每个文件只存在一份 |
 | 产物在哪 | claude.ai 项目（记 projectId） | `{pd_ui_prototype}` 目录落本地 repo |
 | 适合 | 团队 canvas 协作、复用组织设计系统 | 版本控制、离线、无重复维护 |
@@ -114,15 +115,15 @@ Claude Design 不支持跨文件导航，所以交互统一在这个组合文件
 视觉方向：工具感，参考 Linear。
 ```
 
-### 拉回本地（可选）
+### 拉回本地（Step 8 验证必做）
 
-需要把 Claude Design 产物纳入版本库时：
+Step 8 Playwright 验证需要本地文件，Claude Design 线必须先拉回：
 
 ```
 claude-design read <projectId> <path>
 ```
 
-把指定项目的文件拉进工作目录。Step 9 Handoff 时按需操作，不强制。
+把指定项目的文件拉进工作目录，然后在拉下来的文件上跑 `prototype-verify.mjs`，流程与本地 HTML 线一致。拉取失败时降级为 `claude-design render` 预览 + 截图。
 
 ---
 
@@ -138,29 +139,35 @@ claude-design read <projectId> <path>
 
 ### 高保真：可点击原型
 
-四条硬要求：
+两条硬要求：
 
 1. **token 不硬编码** — 颜色/间距用 CSS 变量（`var(--accent)`），不散落 hex。公共样式文件定义，各页引用
-2. **交互元素 4 态** — hover / active / focus-visible / disabled，缺一不可
-3. **边界态** — 列表/数据区覆盖 empty / loading / error，不只画正常态
-4. **多文件 URL 跳转** — `<a href="library.html">` 跳转到其他页面，点击能真的跳。弹窗/抽屉在各自页面内用 JS 实现
+2. **交互可操作** — 嵌入组件能弹出/滑出、页面间能跳转。弹窗/抽屉在各自页面内用 JS 实现
 
 ```html
-<!-- 多文件导航示例 -->
+<!-- 多文件导航示例（每个可操作元素加 data-testid） -->
 <nav>
-  <a href="home.html">首页</a>
-  <a href="library.html">资源库</a>
-  <a href="settings.html">设置</a>
+  <a href="home.html" data-testid="nav-home">首页</a>
+  <a href="library.html" data-testid="nav-library">资源库</a>
+  <a href="settings.html" data-testid="nav-settings">设置</a>
 </nav>
 
 <!-- 页内弹窗 -->
-<dialog id="import-dialog">
+<dialog id="import-dialog" data-testid="library-import-dialog">
   <h2>导入资源</h2>
   <!-- ... -->
-  <button onclick="this.closest('dialog').close()">取消</button>
+  <button onclick="this.closest('dialog').close()" data-testid="library-import-cancel">取消</button>
 </dialog>
-<button onclick="document.getElementById('import-dialog').showModal()">+导入</button>
+<button onclick="document.getElementById('import-dialog').showModal()" data-testid="library-import-trigger">+导入</button>
 ```
+
+### 完整实现：跑得通的原型
+
+在高保真基础上加三个维度：
+
+1. **4 态逐控件** — 每个可操作控件（按钮、输入框、链接、筛选栏等）的 hover / active / focus-visible / disabled，缺一不可
+2. **边界态全覆盖** — 列表/数据区覆盖 empty / loading / error，不只画正常态。用 `data-state` 属性切换
+3. **跨页导航链路** — 从任一页面出发，走完一条完整使用路径再回来，链路无断点
 
 ### 无设计系统时：用 taste skill
 
@@ -178,8 +185,9 @@ Step 6 判定小项目跳过设计系统时，HTML 线靠 taste skill 兜底视�
 
 ## 两条线共同要求
 
-- **渐进式** — 在 Step 5 确认的升级基线上加东西，不推翻重来。低保真升高保真 = 给已有静态页面加交互，不重画
-- **截图走查** — 有 browser/截图工具 → 截图逐个关键页走查；否则按 IA 结构自查
+- **test-id** — 每个可操作元素（按钮、链接、输入框、导航项、状态切换控件、弹窗触发器）加 `data-testid` 属性。Playwright selector 用 `[data-testid="xxx"]` 定位，不依赖脆弱的 CSS class 或文本内容。命名规则：`<页面>-<组件>[-<变体>]`，kebab-case。两条线（本地 HTML + Claude Design）都加
+- **渐进式** — 在 Step 5 确认的升级基线上加东西，不推翻重来。低保真→高保真 = 加交互；高保真→完整实现 = 加 4 态 + 边界态 + 链路
+- **截图走查** — Step 8 用 Playwright 自动截图 + 交互验证，不手动看
 - **对照 IA 核覆盖** — 原型产出后回扫 Step 3 的 IA：每个页面/视图都有对应屏吗？每条交互流走得通吗？缺的补，多的删
 
 ---
@@ -187,6 +195,7 @@ Step 6 判定小项目跳过设计系统时，HTML 线靠 taste skill 兜底视�
 ## 检查点
 
 原型产出后验证：
-- 保真度对应的完整度达标（低保真有具体视觉值；高保真有 4 态 + 导航 + 边界态）
+- 保真度对应的完整度达标（低保真有视觉值；高保真可交互；完整实现有 4 态 + 边界态 + 链路）
 - IA 的页面/视图 100% 覆盖：独立页面有文件，嵌入组件在宿主页面内实现，无遗漏
-- Claude Design 线：projectId 已记录 / HTML 线：文件已保存到 `{pd_ui_prototype}`
+- 所有可操作元素有 `data-testid`（Step 8 Playwright 验证依赖）
+- Claude Design 线：projectId 已记录 + `claude-design read` 可拉回本地 / HTML 线：文件已保存到 `{pd_ui_prototype}`
