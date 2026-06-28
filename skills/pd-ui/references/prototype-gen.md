@@ -115,6 +115,94 @@ Claude Design 不支持跨文件导航，所以交互统一在这个组合文件
 视觉方向：工具感，参考 Linear。
 ```
 
+### 并行生成（≥3 个独立页面时推荐）
+
+页面多时一个 brief 塞所有页面，单次调用质量会下降。拆分并行：每页一个 subagent 独立生成，最后合流推送。
+
+**前提**：设计系统已就绪（Step 6 done/skip）、视觉方向已定（Step 5c）。
+
+#### 1. 拆分 page-brief
+
+IA 每个独立页面拆成一份 page-brief。共享部分抽公共 context，避免重复：
+
+```
+公共 context（所有 subagent 共享）：
+- 设计系统引用："用 <设计系统名> 设计系统"
+- 视觉方向：Step 5c 确定的方向（一句话 + 参考产品）
+- 保真度：低保真 / 高保真 / 完整实现
+- 公共样式约定：配色 token / 字号体系 / 间距规范 / 导航结构
+
+page-brief（每页独有）：
+- 页面名称 + 文件名
+- 该页 IA 结构（区块清单）
+- 该页交互清单（从 Step 2 筛选该页相关交互）
+- 该页嵌入组件（Modal/Dialog/Drawer，在宿主页面内实现）
+- test-id 前缀（<页面名>-）
+```
+
+#### 2. 并行生成
+
+每页一个 subagent，产出 `.html` 文件到本地（纯本地写文件，不调 Claude Design API）：
+
+```
+parallel(pages.map(page => () =>
+  agent(`生成 ${page.name} 页面。\n${sharedContext}\n${page.brief}`, {
+    label: `page:${page.file}`,
+    phase: 'Generate'
+  })
+))
+```
+
+subagent 只产本地文件。orchestrator 负责最终推送——不让 subagent 各自调 API，否则违反并发限制。
+
+#### 3. 合流判定（基于导航链路连通性）
+
+并行完成后，不是纯用户选择"融合还是分支"——**由页面之间的导航链路决定**哪些能合并、哪些必须独立。
+
+**判定逻辑：**
+
+1. 从 IA 的导航结构提取页面间跳转关系，构建**导航图**
+2. 找出导航图中的**连通子图**——哪些页面之间有前端链路可达（导航栏跳转、按钮跳转、链接跳转）
+3. 分类：
+
+| 类型 | 特征 | 例子 | 处理 |
+|---|---|---|---|
+| **主链路页面** | 在导航图的最大连通子图内，前端链路连贯 | 首页 ↔ 资源库 ↔ 设置 | 融合到 `prototype.html` 组合文件 |
+| **孤立页面** | 无法通过前端导航到达，只在特定条件触发 | 404 页面、onboarding 引导、邮件验证页 | 保留为独立文件，不进组合文件 |
+| **条件分支** | 连通但触发条件特殊（如登录后跳转、权限不同展示不同页面） | 登录页 → 首页（登录后）| 视链路完整性：能串起来就融合，串不起来就独立 |
+
+**推送流程：**
+```
+1. 选/建目标 project
+2. 写入前版本检查（已有 project 时 list_files → read_file 拿 etag）
+3. 所有文件（主链路 + 孤立）推到同一 project
+   finalize_plan(project_id, writes: [所有页面文件名])
+   write_files(project_id, plan_token, files: [所有页面，已存在的带 if_match])
+4. 高保真 → 追加 prototype.html（只融合主链路页面）→ 再一次 finalize_plan → write_files
+```
+
+**最终产物结构：**
+```
+project/
+├── home.html          ← 主链路（进组合文件）
+├── library.html       ← 主链路（进组合文件）
+├── settings.html      ← 主链路（进组合文件）
+├── prototype.html     ← 组合文件：融合主链路页面，tab 切换
+├── 404.html           ← 孤立页面（独立保留）
+└── onboarding.html    ← 孤立页面（独立保留）
+```
+
+#### 4. 高保真组合文件
+
+组合文件只融合**主链路页面**（导航图连通子图内的页面），不强行塞入孤立页面：
+
+- 读取主链路页面文件（`read_file` 每个页面）
+- 融合代码到 `prototype.html`：顶部 tab 切换 + JS 弹窗/抽屉 + 4 态
+- 孤立页面保持独立文件，各自可渲染、可截图，但不参与组合文件的导航链路
+- 再一次 `finalize_plan` → `write_files` 推送组合文件
+
+组合文件内容与独立页面重复——改了独立页面，组合文件要同步改。
+
 ### 拉回本地（Step 8 验证必做）
 
 Step 8 Playwright 验证需要本地文件，Claude Design 线必须先拉回：
