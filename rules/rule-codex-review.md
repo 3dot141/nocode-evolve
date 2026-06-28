@@ -21,22 +21,25 @@ node "${CLAUDE_PLUGIN_ROOT}/vendor/codex/scripts/codex-companion.mjs" setup --js
 
 `.ready == true` → 走 codex;否则(未装 / 未登录 / 报错)→ **降级:我自己做,并明说「codex 不可用,fallback 自做」**。本规则不让 codex 成为硬依赖。
 
-## 场景 1:红蓝重档·红军交给 Codex
+## 场景 1:红蓝重档·独立审查交给 Codex
 
-**触发**:`red-blue-deep` 判为**重档**、走到 Step 3 红军环节。**轻档不触发**(命名 / 文案 / 单点小改不拉 codex)。
+**触发**:`red-blue-deep` 判为**重档**、走到 Step 3 独立审查环节。**轻档不触发**(命名 / 文案 / 单点小改不拉 codex)。
 
-**做法**:不自己演红军,把"攻击提议"交给 Codex 独立做——
+**做法**:不自己演红军,把完整独立审查交给 Codex(与 Subagent 并行双跑,见 red-blue-deep Step 3)——
 
 ```bash
 node "${CLAUDE_PLUGIN_ROOT}/vendor/codex/scripts/codex-companion.mjs" task \
-  "只读,不要改任何代码。作为独立红军攻击下面的提议,列具体弱点 / 边界 / 隐藏代价,
-   每条落到「实现时会遇到 X」或「N 个月后会出现 Y」,不要「理论上可能」:
-   <被评估的提议 + 第一性原理拆出的真约束>"
+  "只读,不要改任何代码。独立审查以下方案,列出:
+   1. 优势(落到具体场景)
+   2. 弱点和隐藏代价(「实现时会遇到 X」/「N 个月后 Y」,不要「理论上可能」)
+   3. 盲区(提议者可能没想到的维度)
+   4. 替代方案
+   <被评估的提议 + 约束条件 + 真约束>"
 ```
 
 > 用 `task` 不用 `adversarial-review`:红蓝多是**设计 / 选型决策**,未必有 git diff;`adversarial-review` 针对代码改动。若该决策恰好对应一段具体改动,可改用 `adversarial-review --wait`。
 
-拿到 Codex 攻击点 → 折进 Step 4 结论,注明哪些来自 Codex 独立视角。
+Codex 审查结果与 Subagent 审查结果合并三路(主 agent 蓝军 + subagent + codex),折进 Step 4 结论。
 
 ## 场景 2:代码 review 收尾
 
