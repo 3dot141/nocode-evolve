@@ -25,6 +25,8 @@ This applies to discipline skills, technique skills, pattern skills, AND referen
 ## Eight-Phase Flow
 
 ```
+Step 0: TaskCreate (全量 task + gate 一次建好)
+    ↓
 Phase 1: Capture Intent
     ↓
 Phase 2: Interview & Research
@@ -42,7 +44,50 @@ Phase 7: Description Optimization
 Phase 8: Package
 ```
 
+## Step 0: TaskCreate
+
+**进入后第一件事**，创建以下全部 task：
+
+```
+Task 1: Capture Intent (Phase 1)
+  Sub-steps: 4 问题 + skill type 判定
+  Gate: 意图、触发条件、输出格式、skill 类型四项明确
+
+Task 2: Interview & Research (Phase 2)
+  Sub-steps: 边界 case + 成功标准 + 依赖
+  Gate: 边界清晰，可进 baseline
+
+Task 3: RED — Baseline (Phase 3)
+  Sub-steps: 设计 pressure scenarios + 跑 subagent baseline
+  Gate: ≥N 个 scenario 跑完，失败模式已记录
+
+Task 4: GREEN — Write SKILL.md (Phase 4)
+  Sub-steps: 写 SKILL.md 最小版本
+  Gate: SKILL.md 产出，覆盖 baseline 失败
+
+Task 5: Eval — Run & Review (Phase 5)
+  Sub-steps: eval set 创建 + train/validation split + 跑评测
+  Gate: benchmark 产出，pass_rate 有数字
+
+Task 6: REFACTOR — Iterate (Phase 6)
+  Sub-steps: aggregate reflect → bounded edits → validation gate → convergence
+  Gate: 收敛或用户满意
+
+Task 7: Description Optimization (Phase 7)
+  Sub-steps: 20 trigger queries + 优化 description
+  Gate: trigger 准确率达标
+
+Task 8: Package (Phase 8)
+  Sub-steps: 打包 .skill 文件
+  Gate: 产物就绪
+```
+
+每完成一个标 done。
+
 ## Phase 1: Capture Intent
+
+**Enter Gate:**
+- [ ] 用户明确要创建/编辑/优化 skill（或 conversation 中有可捕获的 workflow）
 
 Understand what the user wants the skill to do.
 
@@ -63,11 +108,27 @@ Four core questions:
 | **Pattern** | flatten-with-flags, information-hiding | Recognition + application + counter-examples, ≥3 scenarios | Explain-why |
 | **Reference** | API docs, command references | Retrieval + application + coverage, ≥2 scenarios | Explain-why |
 
+**Exit Gate:**
+- [ ] 意图、触发条件、输出格式、skill 类型四项明确
+- [ ] 用户确认
+
 ## Phase 2: Interview & Research
+
+**Enter Gate:**
+- [ ] Phase 1 Exit Gate 已过
 
 Dig into edge cases, input/output formats, success criteria, dependencies. Check available MCPs for research. Wait until boundaries are clear before proceeding to Phase 3.
 
+**Exit Gate:**
+- [ ] 边界 case 已梳理
+- [ ] 成功标准已定义
+- [ ] 依赖项已识别
+- [ ] 可以设计 baseline scenarios
+
 ## Phase 3: RED — Baseline
+
+**Enter Gate:**
+- [ ] Phase 2 Exit Gate 已过
 
 **Mandatory for ALL skill types.** Run pressure scenarios with a subagent WITHOUT the skill.
 
@@ -80,7 +141,16 @@ For each scenario:
 
 For detailed pressure scenario design, read `writing-skills/testing-skills-with-subagents.md`.
 
+**Exit Gate:**
+- [ ] ≥N 个 pressure scenario 已执行（Discipline/Technique/Pattern ≥3, Reference ≥2）
+- [ ] 失败模式已记录（具体行为 + rationalizations）
+- [ ] 结果已保存到 workspace
+
 ## Phase 4: GREEN — Write SKILL.md
+
+**Enter Gate:**
+- [ ] Phase 3 Exit Gate 已过
+- [ ] 有明确的失败模式列表可对照
 
 Write the minimal skill that addresses the specific failures observed in Phase 3.
 
@@ -111,6 +181,64 @@ description: Use when [specific triggering conditions] — no workflow summary
 - Use theory of mind — the model is smart, reasoning works better than rigid MUSTs
 - One excellent example beats many mediocre ones
 
+### Workflow Skill Template
+
+**判定**：skill 类型为 Discipline 且含多步骤顺序执行（阶段制 sequential）→ 工作流型 skill，必须用 TODO + Gate 模板。
+
+工作流型 skill 的 SKILL.md 必须包含：
+
+1. **Step 0: TaskCreate** — 进入后第一件事，一次性创建全部 task。每个 task 含 Sub-steps + Gate：
+
+```markdown
+## Step 0: TaskCreate
+
+**进入后第一件事**，创建以下全部 task：
+
+Task 1: [步骤名] (Step 1)
+  Sub-steps: [具体子步骤]
+  Gate: [通过条件]
+
+Task 2: [步骤名] (Step 2)
+  Sub-steps: [具体子步骤]
+  Gate: [通过条件]
+
+...
+
+每完成一个标 done。
+```
+
+2. **每个 Step 的 Enter Gate + Exit Gate**：
+
+```markdown
+### Step N: [步骤名]
+
+**Enter Gate:**
+- [ ] 前置 Step Exit Gate 已过
+- [ ] [本步骤所需前置条件]
+
+[步骤内容]
+
+**Exit Gate:**
+- [ ] [本步骤完成的客观标准]
+- [ ] [可验证的产出物]
+```
+
+3. **全局 Exit Gate** — 所有 Step 的 Exit Gate 汇总：
+
+```markdown
+## Exit Gate（全局）
+
+- [ ] [Step 1 关键产出]
+- [ ] [Step 2 关键产出]
+- [ ] ...
+```
+
+**Gate 写法原则**：
+- Gate 条件必须可客观判定（有/无、通过/失败、数字达标），不用主观词（"足够好"、"差不多"）
+- Enter Gate 防止跳步——前置步骤没过不允许进入
+- Exit Gate 防止草率推进——没有产出证据不允许标 done
+- 条件用 checkbox `- [ ]`，方便逐条核对
+
 ### General Guidelines
 
 - Keep SKILL.md under 500 lines; overflow goes to references/
@@ -118,7 +246,17 @@ description: Use when [specific triggering conditions] — no workflow summary
 - **SKILL.md for agents, README.md for humans** — SKILL.md contains only what the agent needs to execute. Attribution, changelogs, design rationale, and methodology context go in the skill's README.md for human readers
 - For Anthropic's official skill authoring best practices, read `writing-skills/anthropic-best-practices.md`
 
+**Exit Gate:**
+- [ ] SKILL.md 已产出
+- [ ] 覆盖 Phase 3 记录的每个失败模式
+- [ ] 工作流型 skill 已包含 Step 0 TaskCreate + 每步 Enter/Exit Gate
+- [ ] 行数 ≤ 500（溢出部分移到 references/）
+
 ## Phase 5: Eval — Run & Review
+
+**Enter Gate:**
+- [ ] Phase 4 Exit Gate 已过
+- [ ] SKILL.md 已就绪
 
 ### 5a. Create Eval Set + Train/Validation Split
 
@@ -153,7 +291,18 @@ Score definition: `pass_rate = passed assertions / total assertions` per eval ca
 
 Read user feedback from `feedback.json` (training set only).
 
+**Exit Gate:**
+- [ ] Eval set ≥ 8 prompts，train/validation 已 split
+- [ ] With-skill + baseline 均已跑完
+- [ ] Assertions 已编写（subjective 类除外）
+- [ ] Benchmark 已产出，pass_rate 有数字
+- [ ] Viewer 已生成（仅展示 training set）
+
 ## Phase 6: REFACTOR — Iterate (SkillOpt Discipline)
+
+**Enter Gate:**
+- [ ] Phase 5 Exit Gate 已过
+- [ ] Benchmark 数据可用
 
 Four hard constraints, none optional:
 
@@ -188,7 +337,14 @@ Stop when ANY of:
 
 If not converged → back to Phase 5 (re-run eval with new feedback).
 
+**Exit Gate:**
+- [ ] 收敛（validation pass_rate 变化 ≤ threshold 连续 2 轮）或用户满意
+- [ ] 无回归（validation score ≥ 进入时 score）
+
 ## Phase 7: Description Optimization
+
+**Enter Gate:**
+- [ ] Phase 6 Exit Gate 已过
 
 Generate 20 trigger eval queries (8-10 should-trigger + 8-10 should-not-trigger). Present for user review using `skill-creator/assets/eval_review.html`.
 
@@ -198,9 +354,31 @@ Generate 20 trigger eval queries (8-10 should-trigger + 8-10 should-not-trigger)
 
 Update frontmatter description with the best result.
 
+**Exit Gate:**
+- [ ] 20 trigger queries 已测试（8-10 should + 8-10 should-not）
+- [ ] Description 已更新到最优版本
+- [ ] Trigger 准确率达标
+
 ## Phase 8: Package
 
+**Enter Gate:**
+- [ ] Phase 7 Exit Gate 已过
+
 Run `skill-creator/scripts/package_skill.py` to create a `.skill` file. Requires Python 3. Without Python: tell the user to zip the skill directory manually.
+
+**Exit Gate:**
+- [ ] .skill 文件已生成（或用户手动 zip）
+- [ ] 产物可分发
+
+## Exit Gate（全局）
+
+- [ ] Skill 意图 + 类型已确认（Phase 1）
+- [ ] Baseline 失败模式已记录（Phase 3）
+- [ ] SKILL.md 已产出并覆盖失败模式（Phase 4）
+- [ ] Eval benchmark pass_rate 有数字（Phase 5）
+- [ ] 迭代收敛、无回归（Phase 6）
+- [ ] Description trigger 准确率达标（Phase 7）
+- [ ] 产物已打包（Phase 8）
 
 ## When to Create a Skill
 
