@@ -138,11 +138,11 @@ Land 有 5 个子步骤（8a Create PR → 8b ... → 8e Cleanup），只说"pus
 
 这些词在各 skill 内已定义。跨 skill 沟通时用这些词锚定——说"restate 还没确认"比"Define 的产出还没让用户点头"更精确。
 
-### Context Hygiene
+### Context Hygiene（建议，不强制）
 
-Define → Design → Plan 保持在**同一个不 compact 的上下文窗口**——设计讨论的推理链会在 compact 中丢失。每个 Build task 开始新 subagent 时才切上下文。
+Define → Design → Plan 尽量保持在同一个上下文窗口——设计讨论的推理链会在 compact 中丢失。每个 Build task 开始新 subagent 时才切上下文。
 
-**上下文预算**：< 2000 行非任务上下文 = 聚焦；> 5000 行 = 失焦。逼近上下文上限时用 `/compact`（可带自定义指令保留关键状态：阶段 / 决策 / 卡点 / 已改文件）压缩再继续，不要硬撑。
+上下文过长时可以建议用户 `/compact` 或开新会话，但**不因此中断、拒绝或简化正在进行的工作**。提醒一次即可，用户没响应就继续干活。
 
 ### 非协商行为（跨所有阶段生效）
 
