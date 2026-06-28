@@ -1,6 +1,6 @@
 ---
 name: devflow
-description: 工程任务流程领航（8 阶段 · 4 场景路由）。可被 model 主动调起，也可用户 /调 进入。给"当前阶段判断 + 下一步建议 + 备选"，用户拍板，不替用户执行。agent 视角：复杂/多步/跨阶段任务（跨文件 + 状态未知 / 需要 commit / PR / 设计文档 / 评审 / 用户说"整个/整体/全流程"）时，主动调起本 skill。不用于简单单步任务（由 define skill 的 Mini 场景处理）。
+description: 工程任务流程领航（8 阶段 · 5 场景路由，含 Full-Loop 大规模拆分）。可被 model 主动调起，也可用户 /调 进入。给"当前阶段判断 + 下一步建议 + 备选"，用户拍板，不替用户执行。agent 视角：复杂/多步/跨阶段任务（跨文件 + 状态未知 / 需要 commit / PR / 设计文档 / 评审 / 用户说"整个/整体/全流程"）时，主动调起本 skill。不用于简单单步任务（由 define skill 的 Mini 场景处理）。
 ---
 
 # nocode-evolve:devflow — 工程任务流程领航
@@ -32,10 +32,25 @@ Define 返回后，拿到确认的 restate + 场景分类，进 Step 2。
 
 用户选跳过 = 显式授权，按其意愿继续。不反复追问。
 
+**Full 场景规模评估**（PRD/UI 就绪后、进入 Step 2 前执行）：
+
+评估项目规模 = 团队人数 × 工期（月）× 30 = 人天数。
+
+- **≤ 300 人天** → 标准 Full 流程，进 Step 2
+- **> 300 人天** → Full-Loop，进拆分流程（Step 2 Full-Loop 路径）
+
+评估依据：PRD 范围 + UI 页面/视图数量 + 技术复杂度 + 团队规模。用 AskUserQuestion 确认：
+1. 预估团队规模（人数）
+2. 预估工期（月）
+3. 确认规模判定 → > 300 人天进 Full-Loop / ≤ 300 人天走标准 Full
+
+用户可覆盖判断（"不需要拆分 / 直接走 Full" = 显式授权走标准 Full）。
+
 ### Step 2: 按场景路由
 
 ```
-┌─ Full:     [产品流前置检查] → Env → Design → Plan → Build → Verify → Review → Land
+┌─ Full-Loop:  [产品流前置检查] → 规模评估(>300人天) → Decompose → [子任务₁ devflow → 子任务₂ devflow → ...] → 全局集成验证
+├─ Full:     [产品流前置检查] → Env → Design → Plan → Build → Verify → Review → Land
 ├─ Standard: Env → Plan → Build → Verify → Review → Land
 ├─ Fix:      Env → [Debug] → Build → Verify → Review → Land
 └─ Mini:     Build-lite → Verify-lite → Land-lite (不开 worktree)
@@ -193,6 +208,108 @@ Fix 类任务的 Review 通过后，问一句：**"什么能预防这个 bug？"
 | 1d. 产出 restate | 结构化输出 | Quality Bar + Out of Scope 不可省 |
 | 1e. 用户确认 | AskUserQuestion 三选 | 确认/修改/重来（"随你"不算确认） |
 
+#### Decompose sub-flow (Full-Loop only)
+
+> 规模 > 300 人天时触发。把一个大项目拆成可独立交付的子任务，每个子任务走自己的 devflow。
+
+| Sub-step | 做什么 | 决策 |
+|---|---|---|
+| Da. 拆分维度选择 | 按产品域 / 用户流 / 技术层 / 交付批次选维度 | 推荐产品域优先（最自然的边界） |
+| Db. 定义子任务 | 每个子任务写清 5 要素（见下） | 每个子任务 ≤ 300 人天 |
+| Dc. 覆盖验证 | `red-blue-deep` 强制重档（深度）| 子任务∪ = 全项目范围？缺口→补任务，重叠→明确边界 |
+| Dd. 依赖排序 | 拓扑排序 + 风险优先 | 无依赖的高风险排前 |
+| De. 建 master todo | 每个子任务一条 TaskCreate | 含依赖关系和估工 |
+| Df. 用户确认 | AskUserQuestion：确认拆分 + 排序 + 第一个启动 | 可调整顺序 / 合并 / 拆更细 |
+
+**Db 子任务 5 要素**（每个子任务必须写清）：
+
+```
+子任务 N: <名称>
+  1. Scope:     做什么（in）+ 不做什么（out）
+  2. 依赖:      前置子任务（哪些完成后才能开始）
+  3. 估工:      人天数（≤ 300）
+  4. 验收标准:  可验证的完成条件
+  5. 交付物:    代码 / 文档 / 接口 / 配置
+```
+
+**Dc 覆盖验证**（red-blue-deep 深度）：
+
+调 `Skill(nocode-evolve:red-blue-deep)` 强制重档，审查维度：
+- **完整性**：所有子任务的 Scope 合集是否 = PRD 全部需求？列出每条 PRD 需求被哪个子任务覆盖
+- **边界清晰度**：子任务之间有没有灰色地带（A 以为 B 做，B 以为 A 做）？
+- **接口契约**：子任务之间的接口/数据流/依赖关系是否明确？
+- **可独立交付**：每个子任务能否独立 Land（独立 PR、独立部署、不破坏主干）？
+
+覆盖验证不通过 → 回 Db 调整子任务定义。
+
+**拆分逻辑选择参考**：
+
+| 维度 | 适用 | 例子 | 优点 | 风险 |
+|---|---|---|---|---|
+| **产品域** | 多模块产品 | 用户模块 / 订单模块 / 支付模块 | 边界自然、团队可并行 | 跨域依赖可能被低估 |
+| **用户流** | 端到端体验 | 注册流 / 下单流 / 退款流 | 每个子任务可独立演示 | 底层逻辑可能重复建设 |
+| **技术层** | 分层架构 | 数据层 / API 层 / 前端层 | 关注点清晰 | 集成风险后置 |
+| **交付批次** | 渐进式上线 | MVP / 增强1 / 增强2 | 早期可用、风险递减 | 后续批次可能推翻前面设计 |
+
+推荐先按产品域拆，域内再按交付批次分期。纯技术层拆分集成风险最高——除非团队已有成熟的契约测试。
+
+### Full-Loop 执行模型（PDCA）
+
+拆分确认后，逐个子任务走完整 devflow。每个子任务独立经过 Define → (场景路由) → ... → Land 全流程：
+
+```
+PDCA 循环：
+
+  Plan   Decompose 确定的子任务清单 + 排序
+           │
+           ▼
+  Do     子任务₁ → devflow(Define → Env → ... → Land)
+           │
+           ▼
+  Check  子任务₁ Land 后 → 回检 master todo + 覆盖度 + 后续影响
+           │
+           ▼
+  Act    发现问题 → 调整后续子任务 scope / 顺序 / 新增 / 取消
+           │
+           ▼
+  Do     子任务₂ → devflow → Check → Act
+           │
+           ...
+           ▼
+  全局集成验证（所有子任务 Land 后）
+```
+
+**每个子任务的 devflow**：
+- 子任务进入 devflow 后走标准 Step 1（Define 判断场景），可能是 Full / Standard / Fix
+- 子任务的 worktree 独立（各自 Env 阶段建）
+- 子任务的 Land 独立（各自 PR + merge）
+- 子任务内不再递归 Decompose（≤ 300 人天不触发 Full-Loop）
+
+**Check 环节**（每个子任务 Land 后，停下做三件事）：
+
+1. **master todo 更新**：标当前子任务 done + 更新进度百分比
+2. **影响评估**：已完成子任务的实际实现是否影响后续子任务？
+   - 接口与预期不同 → 更新后续子任务的依赖描述
+   - 范围发生漂移 → 调整后续子任务 scope
+   - 新发现的技术约束 → 记录并评估影响
+3. **覆盖度重新评估**：已完成 + 待做的子任务是否仍覆盖全部 PRD 需求？
+
+**Act 环节**（Check 发现问题时）：
+
+- 后续子任务需调整 → 更新 master todo + AskUserQuestion 确认
+- 需新增子任务 → 插入 master todo + 简化版覆盖验证（不必全量 red-blue-deep）
+- 子任务需取消 → TaskUpdate cancel + 说明原因
+- 无问题 → 直接进入下一个子任务
+
+**全局集成验证**（最后一个子任务 Land 后）：
+
+所有子任务各自通过了 Verify + Review + Land，但没有验证过它们**组合在一起**是否正常工作。最后做一次全局验证：
+- 跨子任务集成测试（接口契约 + 数据流端到端）
+- E2E 路径走查（PRD 的每条使用路径端到端走通）
+- 性能回归（多子任务合并后的性能基线）
+
+全局验证不通过 → 开新的 Fix 场景 devflow 修复。
+
 #### Env sub-flow
 
 | Sub-step | 做什么 | 决策 |
@@ -269,16 +386,18 @@ Fix 类任务的 Review 通过后，问一句：**"什么能预防这个 bug？"
 
 ## 场景差异速查
 
-| | Full | Standard | Fix | Mini |
-|---|---|---|---|---|
-| Define | 完整循环 | 完整循环 | 侧重复现 | mini-goal |
-| Env | ✅ | ✅ | ✅ | ❌ |
-| Design | ✅ | ❌ | ❌ | ❌ |
-| Plan | ✅ | ✅ | ❌ (直接 Build fix) | ❌ |
-| Build | 完整 slice 循环 | 完整 slice 循环 | 修复 slice | Build-lite (单 TDD slice) |
-| Verify | 完整 6a-6e | 完整 6a-6e | 完整 6a-6e | Verify-lite (test+build) |
-| Review | 完整 7a-7e | 完整 7a-7e | 完整 7a-7e | ❌ |
-| Land | 完整 8a-8e | 完整 8a-8e | 完整 8a-8e | Land-lite (commit only) |
+| | Full-Loop | Full | Standard | Fix | Mini |
+|---|---|---|---|---|---|
+| Define | 完整循环 + 规模评估 | 完整循环 | 完整循环 | 侧重复现 | mini-goal |
+| Decompose | ✅ (Da-Df) | ❌ | ❌ | ❌ | ❌ |
+| 子任务 devflow | 每个子任务独立 devflow (PDCA) | ❌ | ❌ | ❌ | ❌ |
+| Env | 每子任务各自建 worktree | ✅ | ✅ | ✅ | ❌ |
+| Design | 每子任务按场景判断 | ✅ | ❌ | ❌ | ❌ |
+| Plan | 每子任务按场景判断 | ✅ | ✅ | ❌ (直接 Build fix) | ❌ |
+| Build | 每子任务完整 slice 循环 | 完整 slice 循环 | 完整 slice 循环 | 修复 slice | Build-lite (单 TDD slice) |
+| Verify | 每子任务 6a-6e + 全局集成 | 完整 6a-6e | 完整 6a-6e | 完整 6a-6e | Verify-lite (test+build) |
+| Review | 每子任务 7a-7e | 完整 7a-7e | 完整 7a-7e | 完整 7a-7e | ❌ |
+| Land | 每子任务独立 PR + merge | 完整 8a-8e | 完整 8a-8e | 完整 8a-8e | Land-lite (commit only) |
 
 ---
 
@@ -289,7 +408,7 @@ Fix 类任务的 Review 通过后，问一句：**"什么能预防这个 bug？"
 - **回退**：用户说"回到阶段 N"可回退重做
 - **中途进入**：用户说"从阶段 N 开始"可从中间进入。agent 检查前置 Gate 状态并报告
 - **task 排序**：用户问"先做哪个" → 按 Plan 的 risk-first 原则：最不确定的 task 排前，先撞墙
-- **场景分类争议**（Mini vs Standard vs Full）：拿不准偏 Full。但如果任务只涉及安全/认证策略变更（如"记住我"延长 token），即使看似小改也可能是 Full（触及安全模型）。判断依据是"是否涉及架构/安全决策"而非"代码量大不大"
+- **场景分类争议**（Mini vs Standard vs Full vs Full-Loop）：拿不准偏 Full。规模 > 300 人天偏 Full-Loop。但如果任务只涉及安全/认证策略变更（如"记住我"延长 token），即使看似小改也可能是 Full（触及安全模型）。判断依据是"是否涉及架构/安全决策"而非"代码量大不大"
 
 ---
 
