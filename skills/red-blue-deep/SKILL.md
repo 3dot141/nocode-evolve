@@ -1,6 +1,6 @@
 ---
 name: red-blue-deep
-description: 评估/拍板类提问的红蓝军辩论框架。先判档位：轻档一句表态、重档完整四步（第一性原理→蓝军→红军→结论 + sequential-thinking）。Use this skill whenever the user asks evaluative questions like 「X 怎么样 / 行不行 / 合适吗 / 值得吗 / 会不会有问题 / 选 A 还是 B / 哪个方案更好 / 靠谱吗」, "what do you think about X / should we use Y / is X a good idea / which is better", or hesitates between options——even if they don't explicitly ask for a "debate" or "evaluation". 不要用于纯事实查询「X 是什么 / 在哪里」、纯执行「把 X 改成 Y」、纯检索。
+description: 评估/拍板类提问的红蓝军辩论框架。先判档位：轻档一句表态、重档完整五步（sequential-thinking 强制 gate → 第一性原理 → 蓝军 → 红军 → 双重审核 → 结论）。Use this skill whenever the user asks evaluative questions like 「X 怎么样 / 行不行 / 合适吗 / 值得吗 / 会不会有问题 / 选 A 还是 B / 哪个方案更好 / 靠谱吗」, "what do you think about X / should we use Y / is X a good idea / which is better", or hesitates between options——even if they don't explicitly ask for a "debate" or "evaluation". 不要用于纯事实查询「X 是什么 / 在哪里」、纯执行「把 X 改成 Y」、纯检索。
 ---
 
 # 红蓝军辩论
@@ -36,9 +36,26 @@ description: 评估/拍板类提问的红蓝军辩论框架。先判档位：轻
 
 ❌ 反例：为命名问题走完整三段红蓝军——折磨用户。
 
-## 重档输出（完整四步）
+## 重档输出（完整五步）
 
-下面用同一个例子串完 4 步——用户问「会话存储要不要上 Redis」。
+**前置 Gate — 开 sequential-thinking**：进 Step 1 前**必须**先调用 `Skill(sequential-thinking)` 或 `mcp__sequential-thinking__sequentialthinking` 开启结构化思考 session。**不开不能往下走**——这是硬 gate，不是建议。
+
+sequential-thinking 在重档中的作用：
+- 多分支推演（每个红军论点都可能引出新方案）
+- 中途回退重拆（红军环节发现 Step 1 拆错了基础假设，回去重拆，不硬撑）
+- 试折中分支不丢主线（蓝军强支撑、红军强反驳后想试折中，可开新分支推演）
+
+```
+sequential-thinking 可用？
+     │
+     ├─ 可用 ──→ 开启 session → 进 Step 1
+     │
+     └─ 不可用 ──→ 明说「sequential-thinking 不可用，
+                    重档辩论在无结构化思考辅助下进行」
+                    → 仍进 Step 1（降级不阻断）
+```
+
+下面用同一个例子串完 5 步——用户问「会话存储要不要上 Redis」。
 
 ### Step 1: 第一性原理拆解
 
@@ -70,7 +87,7 @@ description: 评估/拍板类提问的红蓝军辩论框架。先判档位：轻
 
 ### Step 3: 红军（攻击 Redis 提议）
 
-> **重档红军优先交给 Codex**：本环节默认把"攻击提议"交给独立模型做（见 `rule-codex-review` 场景一）——跨模型攻击才避得开同源自审盲区。Codex 回收的攻击点同样要满足下面"落到具体场景"的标准，再整合进 Step 4；codex 不可用则按下面自己演红军。
+> **重档红军优先交给 Codex**：本环节默认把"攻击提议"交给独立模型做（见 `rule-codex-review` 场景一）——跨模型攻击才避得开同源自审盲区。Codex 回收的攻击点同样要满足下面"落到具体场景"的标准，再整合进 Step 5 结论；codex 不可用则按下面自己演红军。
 >
 > **CLAIM 剥离**：交给 Codex 时**只传方案描述 + 约束条件，不传你的初始倾向**。传了倾向，独立模型会倾向验证而非证伪——就像给 reviewer 看了作者的自评，攻击力直接打折。
 
@@ -81,24 +98,53 @@ description: 评估/拍板类提问的红蓝军辩论框架。先判档位：轻
 > - Memcached 在本场景能力等价但维护更简单（无持久化即是优势）→ Redis 的"持久化"对当前需求是 over-engineering
 > - 3 个月后如果产品转向单进程部署（小规模 SaaS）→ Redis 变成纯负担
 
-### Step 4: 结论
+### Step 4: 双重审核
+
+Step 1-3 由主 agent 在完整上下文中完成——有偏见是必然的（你拆了第一性原理、写了蓝军防守、看了红军攻击，已经有倾向了）。本步隔离上下文，让独立 reviewer 从零审查被评估方案。
+
+**并行双跑**（参照 `rule-codex-review` 场景四）：
+
+1. **Subagent**（`Agent` general-purpose）：传入被评估方案 + 约束条件，要求做完整独立 review（优势、风险、盲区、替代方案）
+2. **Codex**：同样传入方案 + 约束，独立 review
+
+```bash
+node "${CLAUDE_PLUGIN_ROOT}/vendor/codex/scripts/codex-companion.mjs" task \
+  "只读。独立审查以下方案，列出：优势、风险、盲区、替代方案。
+   每条落到具体场景，不要「理论上可能」：
+   <方案描述 + 约束条件>"
+```
+
+**CLAIM 剥离**（同 Step 3）：只传方案和约束，**不传你的蓝/红军分析和倾向**。传了就不是独立审查——reviewer 会锚定你的分析而不是自己想。
+
+**合并三路发现**：
+- 三路交集（主 agent + subagent + codex 都提到）= 高置信
+- 对称差（只有一路提到）= 盲区，逐条判断是否成立
+- 盲区中成立的纳入 Step 5 结论
+
+```
+codex 可用？
+     │
+     ├─ 可用 ──→ subagent + codex 并行双跑 → 合并三路
+     │
+     └─ 不可用 ──→ 仅 subagent 单跑 + 明说「codex 不可用，
+                    仅 subagent 独立审查」→ 合并两路
+```
+
+✅ 示例（续 Redis 案例）：
+> **subagent 独立发现**：sticky session 在 WebSocket 长连接场景下不生效（负载均衡无法粘连），这是主 agent 蓝/红军都没提到的盲区。
+> **codex 独立发现**：如果后续需要跨数据中心部署，所有内存方案都要重来——Redis 的 Cluster 模式反而是唯一能水平扩的。
+> **合并判断**：WebSocket 盲区成立（当前系统有长连接）→ 纳入结论；跨 DC 扩展不成立（3 年内单 DC）→ 记录但不影响结论。
+
+### Step 5: 结论
 
 格式：「**倾向 A —— 因为 [关键蓝军论点]；但承认 [关键红军论点] 是真问题，[如何缓解]**」
 
+纳入 Step 4 双重审核的发现——特别是盲区中成立的部分，必须在结论中有体现，不能合并完又丢掉。
+
 ✅ 示例：
-> **倾向 sticky session + 内存** —— 因为 QPS 实际很低、登录态丢了用户重登可接受，少一个组件就少一个故障源；但承认负载均衡器更换 / 单实例宕机时所有粘到该实例的会话集体失效是真问题——缓解方式：先用 sticky 跑 3 个月，QPS 或宕机频率突破阈值再迁 Redis（迁移成本是单接口改造，可接受）。
+> **倾向 sticky session + 内存** —— 因为 QPS 实际很低、登录态丢了用户重登可接受，少一个组件就少一个故障源；但承认负载均衡器更换 / 单实例宕机时会话集体失效是真问题——缓解方式：先用 sticky 跑 3 个月，QPS 或宕机频率突破阈值再迁 Redis。**双重审核补充**：WebSocket 长连接场景 sticky session 不生效，当前系统有长连接模块→如果该模块也需要会话共享，sticky 方案要额外处理或排除该模块。
 
 不要「看情况」「都有道理」「你怎么想」——这是逃避。
-
-## Sequential-Thinking（重档默认开）
-
-重档**默认调用** `sequential-thinking` skill 或 `mcp__sequential-thinking__sequentialthinking`：
-
-- 重档天然有多分支（每个红军论点都可能引出新方案）
-- 允许**中途回退重拆**：红军环节发现 step 1 拆错了基础假设，回去重拆，不要硬撑
-- 允许**试折中分支不丢主线**：蓝军强支撑某方案、红军强反驳后想试折中方案，可开新分支推演而不丢主线
-
-**何时可跳过**：只有 1 个明显倾向方案 + 红军没有动摇你倾向的论点 = 跳过。只要红军论点让你动摇了初始倾向，就开 sequential-thinking——不要凭硬撑做决定。
 
 ## Doubt Theater 检测
 
@@ -122,3 +168,6 @@ sequential-thinking 允许回退重拆，但最多 3 轮。第 3 轮仍无法收
 - 双方都列了结论说「都可以」→ 失职
 - 红军论点全是「理论上可能」→ 没暴露真问题
 - 全段中立陈述无对抗 → 退化成 pros/cons 列表
+- 重档跳过 sequential-thinking gate → 失去多分支推演和回退能力，硬撑做决定
+- 双重审核传了自己的蓝/红军分析 → reviewer 被锚定，失去独立性
+- 双重审核发现了盲区但结论没体现 → 做了审核等于没做
