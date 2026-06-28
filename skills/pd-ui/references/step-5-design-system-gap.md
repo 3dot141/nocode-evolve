@@ -1,4 +1,4 @@
-# Step 5 展开：设计系统补齐（claude-design）
+# Step 6 展开：设计系统补齐（claude-design）
 
 ## 为什么先补齐再组装
 
@@ -29,7 +29,7 @@ claude-design open <projectId>
 
 ### 2. Gap Analysis
 
-对照 Step 3 交互清单，逐交互检查：
+对照 Step 2 交互清单，逐交互检查：
 
 | 交互点 | 需要的组件 | 现有 components | 缺失 |
 |---|---|---|---|
@@ -65,4 +65,4 @@ claude-design write <projectId> components/filter-bar.dc.html components/multi-s
 补齐后验证：
 - `claude-design open <projectId>` 确认文件已在项目里
 - 新组件引用的 token 在 foundations 里都有定义
-- 组件变体覆盖了 Step 3 交互里会用到的状态
+- 组件变体覆盖了 Step 2 交互里会用到的状态

@@ -1,6 +1,6 @@
-# Step 5 展开：Design System 决策与创建
+# Step 6 展开：Design System 决策与创建
 
-> pd-ui Step 5 的展开 reference。设计系统 = 品牌渲染层（颜色 / 字体 / 组件），让多个页面看起来像同一个产品。本文覆盖：三步走顺序、创建方式选型、gap analysis、并行创建、claude-design 操作参考。
+> pd-ui Step 6 的展开 reference。设计系统 = 品牌渲染层（颜色 / 字体 / 组件），让多个页面看起来像同一个产品。本文覆盖：三步走顺序、创建方式选型、gap analysis、并行创建、claude-design 操作参考。
 
 ## 一、三步走为什么是这个顺序
 
@@ -47,7 +47,7 @@ patterns/      ← 组织层：页面级布局（sidebar + content area + detail
 
 ## 三、Gap Analysis 流程
 
-对照 IA（Step 2 产出）逐交互检查：这个交互需要哪些组件？现有设计系统覆盖吗？
+对照 IA（Step 3 产出）逐交互检查：这个交互需要哪些组件？现有设计系统覆盖吗？
 
 ### 1. 盘点现有
 
@@ -97,7 +97,7 @@ claude-design open <projectId>
 组件名：<ComponentName>
 服务的交互点：<从 gap analysis 取>
 必须覆盖的变体/状态：<从交互 4 态推，如 default / focused / disabled>
-视觉方向（Step 4 选定）：<一句话描述 + 调性>
+视觉方向（Step 5 选定）：<一句话描述 + 调性>
 
 可用的 foundations token（只能用这些，禁止硬编码 hex/px）：
 <冻结的 token 清单>

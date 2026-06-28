@@ -69,12 +69,12 @@ Task 6: Design System 决策
   Gate: skip/复用/创建完成（ASCII 档 skip）
 
 Task 7: 生成原型
-  Sub-steps: 回查交付方式 → Claude Design 或本地 HTML 出稿
-  Gate: 原型产出（ASCII 档 skip）
+  Sub-steps: 回查交付方式 → Claude Design 或本地 HTML 出稿 → 产出原型清单
+  Gate: 原型产出 + 原型清单已列（ASCII 档 skip）
 
 Task 8: 验证
-  Sub-steps: PRD 路径走查 → 五维自审 → vis-review
-  Gate: 走查 + 自审通过
+  Sub-steps: 页面覆盖矩阵 → 交互覆盖矩阵(高保真) → PRD 路径走查 → 五维自审 → vis-review
+  Gate: 三表全 ✅ + 自审通过
 
 Task 9: 保存 + Handoff
   Sub-steps: 写 .ui.md + 保存原型 → 提示 devflow
@@ -212,10 +212,14 @@ Task 9: 保存 + Handoff
 
 **5b. 交付方式**（低/高保真时，AskUserQuestion）：
 
-| 方式 | 产物在哪 | 选它当 |
-|---|---|---|
-| **Claude Design** | claude.ai 项目 | 要多屏导航、团队在 canvas 协作、基于组织设计系统生成 |
-| **本地 HTML** | `.ui-prototype.html` 落 repo | 要版本控制、离线、不依赖 claude.ai |
+两条线的共同结构：**多页面独立文件（拆分）+ 交互原型（组合）**。低保真只需要拆分的独立页面；高保真在独立页面基础上再产出一个可交互的组合原型。
+
+| 方式 | 产物在哪 | 独立页面（拆分） | 交互原型（组合） | 选它当 |
+|---|---|---|---|---|
+| **Claude Design** | claude.ai 项目 | 每页一个文件 | 额外一个组合文件，融合所有页面代码，JS 实现 tab 切换/弹窗/4 态 | 团队 canvas 协作、设计系统复用 |
+| **本地 HTML** | 落 repo | 每页一个 `.html` | 多文件之间用 URL 跳转串联，不需要额外组合文件 | 版本控制、离线、无重复维护 |
+
+**Claude Design 的代价**：组合文件里的内容和独立页面文件是重复的，改了独立页面的设计，组合文件也要同步改。
 
 两条线 Step 6-7 步骤相同、实现不同。选定后全程走一条线。
 
@@ -298,23 +302,51 @@ patterns     页面级布局               → Step 7 组装
 
 | | Claude Design 线 | 本地 HTML 线 |
 |---|---|---|
-| **怎么出** | `Skill(nocode-evolve:claude-design)` → `claude-design <brief>` | 本地写 `.ui-prototype.html` |
+| **怎么出** | `Skill(nocode-evolve:claude-design)` → `claude-design <brief>` | 本地写多个 `.html` 文件 |
 | **喂什么** | brief = IA + 交互清单 + 视觉方向；挂 template + design system（如有） | IA + 交互清单 + 视觉方向 + token/组件；无设计系统则加载 taste skill |
-| **低保真** | 静态多屏 UI | 静态页面 HTML |
-| **高保真** | 多屏可交互 + 导航逻辑 + 4 态 | 可点击原型，关键流程走得通 |
-| **产物** | claude.ai 项目（记 projectId） | `{pd_ui_prototype}` |
+| **低保真** | 每页一个文件，静态 | 每页一个文件，静态 |
+| **高保真** | 保留独立页面文件 + 新增一个组合文件（融合全部页面，JS tab 切换/弹窗/4 态） | 多文件之间用 URL 跳转，每个文件内做弹窗/4 态 |
+| **产物** | claude.ai 项目（记 projectId） | `{pd_ui_prototype}` 目录 |
 
-**brief 示例（Claude Design 线）：**
+**Claude Design 高保真的两层结构：**
+- **独立页面文件**（`home.html`、`library.html`…）：每页的完整视觉，可单独审查
+- **组合文件**（`prototype.html`）：融合所有页面代码，用 tab/section 切换模拟导航 + JS 弹窗/抽屉 + 4 态。跨文件导航在 Claude Design 不支持，所以交互只能在这个组合文件里实现
+- **代价**：改了独立页面，组合文件要同步改
+
+**brief 示例（Claude Design 线，低保真）：**
 
 ```
 用 Nocode Manager 设计系统，创建一个资源管理应用的低保真原型。
+每个页面一个独立文件。
 
 页面结构（来自 IA）：
-- 首页：预设卡片 + 统计面板 + 活动流
-- 资源库：筛选栏 + 数据表格 + 批量操作
-- 资源详情：抽屉式，属性表单 + 同步状态
+- home.html — 首页：预设卡片 + 统计面板 + 活动流
+- library.html — 资源库：筛选栏 + 数据表格 + 批量操作
+- detail.html — 资源详情：抽屉式，属性表单 + 同步状态
 
 视觉方向：工具感——深色底、紧凑行高、等宽标签，参考 Linear。
+```
+
+**brief 示例（Claude Design 线，高保真）：**
+
+```
+用 Nocode Manager 设计系统，生成资源管理应用的高保真可交互原型。
+
+第一步：独立页面文件（每页一个，和低保真相同）
+- home.html / library.html / detail.html / settings.html
+
+第二步：组合文件 prototype.html
+把所有页面的代码融合到一个文件里，用顶部 tab 切换页面。
+Claude Design 不支持跨文件导航，所以交互统一在这个组合文件实现。
+
+组合文件内交互（必须能点）：
+- 顶部 tab 切换：首页 ↔ 资源库 ↔ 设置
+- 资源库点一行 → 右侧滑出详情面板（JS display toggle）
+- 点"+导入" → 弹出模态对话框 → 确认后关闭
+- 列表区：用按钮切换 empty / loading / 正常 / error 四种状态
+
+交互元素 4 态：hover / active / focus-visible / disabled（CSS 实现）。
+视觉方向：工具感，参考 Linear。
 ```
 
 **两条线共同要求：**
@@ -322,8 +354,23 @@ patterns     页面级布局               → Step 7 组装
 - 高保真：token 不硬编码，4 态（hover / active / focus-visible / disabled），empty / loading / error 态
 - 渐进式：在已有基线上加，不推翻
 
+**原型清单（Step 8 验证的输入）：**
+
+Step 7 产出后、进 Step 8 前，列一份原型清单，记录实际产出了什么。Step 8 矩阵基于这份清单核对，不凭记忆。
+
+```
+## 原型清单
+
+| 文件/位置 | 对应 IA 页面 | 类型 | 交互入口 | 状态切换入口 |
+|---|---|---|---|---|
+| home.html | 首页 | 独立页面 | — | — |
+| library.html | 资源库 | 独立页面 | 行点击→详情 | empty/loading/error 按钮 |
+| prototype.html | 全部 | 组合文件 | tab 切换、弹窗、抽屉 | 状态切换按钮 |
+```
+
 **Exit Gate:**
 - [ ] 原型已产出
+- [ ] 原型清单已列（文件/位置 + 对应 IA 页面 + 交互入口 + 状态切换入口）
 - [ ] Claude Design 线：projectId 已记录 / HTML 线：文件已保存
 - [ ] 高保真：4 态 + 导航 + empty/loading/error 已覆盖
 
@@ -334,16 +381,90 @@ patterns     页面级布局               → Step 7 组装
 ## Step 8: 验证
 
 **Enter Gate:**
-- [ ] ASCII 档：Step 5 完成 / 低高保真：Step 7 完成
+- [ ] ASCII 档：Step 5 完成 / 低高保真：Step 7 完成（含原型清单）
+
+**三表关系：** PRD 路径覆盖 → 页面覆盖矩阵 → 交互覆盖矩阵，是同一条链的三个粒度递进，不是重复核对：
+- PRD 路径覆盖：每条使用路径能走通吗（端到端）
+- 页面覆盖矩阵：每个 IA 页面/视图都画出来了吗（逐页）
+- 交互覆盖矩阵：每个交互点都能操作吗（逐交互，仅高保真）
+
+PRD 路径覆盖的状态必须由下面两个矩阵聚合得出，不能单独手填 ✅——矩阵里有 ❌，路径就不能标 ✅。
 
 **Core Actions:**
-1. **PRD 路径逐条走查** — 按路径 ID 点名，缺补多删
-2. **五维自审** — 信息层级 / 一致性 / 交互完整性 / 可行性 / PRD 对齐
-3. **vis-review 交叉审**（低/高保真，可选）
+
+### 8a. 页面覆盖矩阵（所有保真度必做）
+
+真值源：Step 3 的 IA（页面/视图清单）。矩阵行从 IA 逐条搬，每行核对该页面在各层产出中是否存在。
+
+**页面分两类：**
+- **独立页面**（首页、列表页、设置页等）：在 IA 中是顶层页面/视图，有独立文件
+- **嵌入组件**（弹窗、抽屉、对话框等）：不是独立页面，嵌入在宿主页面内。独立文件列标"嵌入于 X"
+
+```
+## 页面覆盖矩阵
+
+| IA 页面/视图 | 类型 | ASCII 线框 | 状态覆盖(4态) | 独立页面 | 原型中可达 | 状态 |
+|---|---|---|---|---|---|---|
+| 首页 | 独立页面 | ✓ | 正常/empty/loading/error ✓ | home.html | tab "首页" / URL 跳转 | ✅ |
+| 资源库 | 独立页面 | ✓ | 正常/empty/loading/error ✓ | library.html | tab "资源库" / URL 跳转 | ✅ |
+| 资源详情 | 嵌入组件 | ✓ | 正常/empty ✓ | 嵌入于 library | 行点击滑出 | ✅ |
+| 导入对话框 | 嵌入组件 | ✓ | 正常 ✓ | 嵌入于 library | "+导入"按钮弹出 | ✅ |
+| 设置页 | 独立页面 | ✓ | 正常 ✓ | settings.html | tab "设置" / URL 跳转 | ✅ |
+```
+
+**列说明：**
+- **ASCII 线框**：所有保真度必须有（Step 2 逐交互拆解时产出）
+- **状态覆盖(4态)**：所有保真度必须有（Step 2 四块之一）。核对该页面/视图涉及的正常/empty/loading/error 是否在线框中标出
+- **独立页面**：低保真 + 高保真必须有。嵌入组件标"嵌入于 X"（宿主页面名）
+- **原型中可达**：高保真必须有。填写到达方式——Claude Design 线填组合文件内的 tab/弹窗/抽屉；本地 HTML 线填 URL 跳转 / 页内 `<dialog>` / JS 滑出。ASCII 档标"N/A"
+- **状态**：✅ 已覆盖 / ❌ 缺失（缺失即补，补完改 ✅）
+
+### 8b. 交互覆盖矩阵（仅高保真必做）
+
+真值源：Step 2 的交互清单（每条交互带 ID，如 `订单.P1.3`）。逐条核对每个交互在原型中是否可操作。基于 Step 7 原型清单定位实际实现位置。
+
+```
+## 交互覆盖矩阵
+
+| 交互 ID | 交互描述 | 原型中的实现 | 可操作控件 | 4 态 | 边界态 | 状态 |
+|---|---|---|---|---|---|---|
+| 订单.P1.1 | 浏览商品列表 | 资源库 tab，数据表格 | 筛选栏 H/A/F/D ✓、排序按钮 H/A/F/D ✓ | ✓ | E/L/Err ✓ | ✅ |
+| 订单.P1.3 | 加入购物车 | "+导入"按钮 → 模态弹窗 | 按钮 H/A/F/D ✓、弹窗确认/取消 H/A/F/D ✓ | ✓ | — | ✅ |
+| 订单.P1.4 | 编辑购物车 | 详情抽屉，属性表单 | 行 hover ✓、输入框 H/A/F/D ✓ | ✓ | Empty ✓ | ✅ |
+```
+
+**列说明：**
+- **交互 ID**：从 Step 2 交互清单逐条搬，不允许跳过
+- **可操作控件**：拆到具体控件级别（按钮、输入框、筛选栏、排序、分页等），每个控件单独核对 4 态。只有完全无可操作控件的纯文本展示区才标"—"——有筛选/排序/分页/行 hover 的列表不算纯展示
+- **4 态**：每个可操作控件的 hover / active / focus-visible / disabled 逐个核对
+- **边界态**：该交互涉及的数据区有 empty / loading / error 吗。不涉及数据的标"—"
+- **状态**：✅ 全部达标 / ❌ 未达标（列出缺什么）。补完改 ✅。**Gate 只认 ✅，不存在中间态通过**
+
+### 8c. 独立交叉审（低/高保真）
+
+两路并行审，避免同源自评盲区：
+
+1. **Subagent 审**（`nocode-evolve:code-reviewer` 或 general-purpose）— 按 8a/8b 矩阵 + PRD 路径走查 + 五维自审（信息层级 / 一致性 / 交互完整性 / 可行性 / PRD 对齐），输出分级 Report（Critical / Warning / Suggestion）
+2. **Codex 审**（`codex-companion.mjs task`）— 同样的审查范围，独立视角。Codex 不可用时降级为仅 subagent 单审 + 明说 fallback
+
+两路结果合并：交集 = 高置信必修；对称差 = 盲点补充，逐条判断。Critical 必须全部修复。
+
+### 8d. 验证记录写入 .ui.md
+
+在 `.ui.md` 中新建独立的 `## 验证记录` 节，包含：
+1. 页面覆盖矩阵
+2. 交互覆盖矩阵（高保真）
+3. PRD 路径走查结果
+4. 五维自审结果
+5. 交叉审 Report 摘要
+
+PRD 路径覆盖表（已有节）的状态从矩阵聚合：该路径涉及的所有页面和交互都 ✅ → 路径才标 ✅。
 
 **Exit Gate:**
-- [ ] 路径走查 + 五维自审通过
-- [ ] vis-review 无 Critical（或已修复）
+- [ ] 页面覆盖矩阵：所有 IA 页面/视图 ✅（无 ❌）
+- [ ] 交互覆盖矩阵（高保真）：所有交互 ✅（无 ❌，Gate 只认 ✅）
+- [ ] PRD 路径走查：所有路径可走通
+- [ ] 交叉审无 Critical（或已修复）
 
 ---
 
