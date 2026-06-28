@@ -75,19 +75,19 @@ Task 2: Interview & Research (Phase 2)
   Gate: boundaries clear, matrix filled, ready for baseline
 
 Task 3: RED — Baseline (Phase 3)
-  Sub-steps: select scenarios from matrix + run subagent baseline
+  Sub-steps: select scenarios from matrix + run subagent baseline + codex cross-model baseline
   Gate: ≥N scenarios executed, ≥1 reproducible failure identified, failure modes labeled with matrix cells
 
 Task 4: GREEN — Write SKILL.md (Phase 4)
-  Sub-steps: write minimal SKILL.md + red-blue review
-  Gate: SKILL.md produced, covers baseline failures, red-blue review completed
+  Sub-steps: write minimal SKILL.md + red-blue review + self-verification guideline check
+  Gate: SKILL.md produced, covers baseline failures, red-blue review completed, self-verification steps have independent review guidance
 
 Task 5: Eval — Run & Review (Phase 5)
   Sub-steps: create eval set + train/validation split + run evaluation
   Gate: benchmark produced, pass_rate has numbers
 
 Task 6: REFACTOR — Iterate (Phase 6)
-  Sub-steps: aggregate reflect → bounded edits → validation gate → convergence
+  Sub-steps: aggregate reflect → bounded edits → validation gate (含 codex cross-model) → convergence
   Gate: converged or user satisfied
 
 Task 7: Description Optimization (Phase 7)
@@ -159,6 +159,23 @@ For each scenario:
 2. Record verbatim: what choices did it make? What rationalizations did it use? Which pressures triggered violations?
 3. Label each failure with the matrix cell it exposed (e.g. "Axis 3: Rationalization + Axis 4: Sunk cost")
 4. Save results to workspace
+
+**Codex 跨模型 baseline**：至少 1 个场景同时用 codex 跑，发现跨模型差异性的失败模式。
+
+```
+codex 可用？（setup --json）
+     │
+     ├─ 可用 ──→ 跑 ≥1 scenario → 与 subagent 失败模式对比
+     │              - 两者都失败 = 高置信失败模式
+     │              - 仅一方失败 = 模型特有盲区，仍是有效 baseline failure
+     │
+     └─ 不可用 ──→ 仅 subagent（明说「codex 不可用，跨模型 baseline 跳过」）
+```
+
+```bash
+node "${CLAUDE_PLUGIN_ROOT}/vendor/codex/scripts/codex-companion.mjs" task \
+  "<scenario prompt, same as subagent, NO skill loaded>"
+```
 
 **Iron Law reminder:** You must see the agent fail before writing the skill. Skip this and you're guessing what to teach.
 
@@ -283,6 +300,19 @@ Mark each task done as it completes.
 
 - For Anthropic's official skill authoring best practices, read `writing-skills/anthropic-best-practices.md`
 
+### Self-Verification Guideline（产出 skill 的独立审查引导）
+
+如果你写出来的 skill 包含**agent 验证自己产出**的步骤（review / verify / check / validate / 确认 / 评审），该步骤应包含独立审查引导。适用于所有 skill 类型，不限 workflow skill。
+
+判断规则：skill 的某个步骤里，agent 在检查自己刚做出来的东西（代码 / 设计 / 方案 / 文档 / 配置）→ 该步骤加独立审查引导。
+
+引导方式按场景选：
+- **评估/拍板类**（"这个方案行不行"）→ 指向 `Skill(nocode-evolve:red-blue-deep)`
+- **产出审查类**（"这段代码/文档有没有问题"）→ 推荐 subagent + codex 并行独立 review（参照 `rule-codex-review` 场景四）
+- **合规检查类**（"是否遵守了规则"）→ 推荐 subagent 独立检查（不需要跨模型）
+
+不加引导的步骤：纯机械验证（跑测试 / lint / 类型检查）、有客观标准的 pattern 匹配——这些不需要独立视角。
+
 ### Red-Blue Review
 
 After writing SKILL.md, call `Skill(nocode-evolve:red-blue-deep)` to review it. Input: "Review this SKILL.md — does it actually address the baseline failures? Are there loopholes, missing edge cases, or instructions that an agent could misinterpret?" red-blue-deep will determine the appropriate depth (light/heavy) on its own.
@@ -294,6 +324,7 @@ Fix any issues found by the review before passing the Exit Gate.
 - [ ] Covers every failure mode recorded in Phase 3
 - [ ] Red-blue review completed, findings addressed
 - [ ] Workflow skills include Step 0 TaskCreate + Enter/Exit Gate per step
+- [ ] Self-verification steps include independent review guidance (or confirmed no self-verification steps exist)
 - [ ] Line count ≤ 500 (overflow moved to references/)
 
 ## Phase 5: Eval — Run & Review
@@ -375,6 +406,8 @@ Each iteration: at most 3 changes (add/delete/replace) to SKILL.md. No full rewr
 
 Re-run the validation set (held-out 40%) after edits. Compare `new_score` against `previous_score`.
 
+**Codex cross-model validation**：validation set 中至少 1 case 用 codex 执行（同 Phase 3 的跨模型 baseline 逻辑）。codex 执行失败而 subagent 成功 → 可能是 SKILL_DEFECT（指令依赖模型特有推理，不够显式），计入 6a 下一轮 Aggregate Reflect。codex 不可用则跳过，明说。
+
 - `new_score < previous_score` → **reject** edits, revert, try different approach
 - `new_score >= previous_score` → **accept**, update previous_score
 
@@ -435,8 +468,8 @@ Run `skill-creator/scripts/package_skill.py` to create a `.skill` file. Requires
 ## Exit Gate (Global)
 
 - [ ] Skill intent + type confirmed (Phase 1)
-- [ ] Scenario Discovery Matrix filled, baseline failures recorded with matrix labels (Phase 2-3)
-- [ ] SKILL.md produced, covers failure modes, red-blue reviewed (Phase 4)
+- [ ] Scenario Discovery Matrix filled, baseline failures recorded with matrix labels, codex cross-model baseline done (Phase 2-3)
+- [ ] SKILL.md produced, covers failure modes, red-blue reviewed, self-verification steps have independent review guidance (Phase 4)
 - [ ] Eval benchmark has numeric pass_rate (Phase 5)
 - [ ] Iteration converged, no regression (Phase 6)
 - [ ] Description trigger accuracy meets threshold (Phase 7)
