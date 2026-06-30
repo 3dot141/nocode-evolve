@@ -13,6 +13,8 @@
 
 **这是工序, 不是自觉**——不论任务大小、context 深度、是否 mid-task, Step 0 都先扫. 跳过 = 软触发漏, 这正是 catalog 常驻设计要解决的.
 
+**Fork/subagent 触发降级**: fork/subagent 的 Step 0 扫桶只按其 **prompt 意图** 匹配, 不按执行中读到的内容匹配. 读到 UI 内容 ≠ 用户要求做 UI 设计; 读到测试代码 ≠ 用户要求跑 TDD. 执行中遇到与 prompt 无关的 skill 命中 → 跳过, 不触发. 同理, 不在 prompt 范围外 TaskCreate / 调 workflow skill (devflow/pdflow/pd-ui 等).
+
 ## Skill 调用纪律
 
 **动手前先检查有没有 skill 匹配。** 哪怕只有 1% 的可能性也先调 Skill() 看一眼——调了发现不对可以不用, 但跳过了就回不来.

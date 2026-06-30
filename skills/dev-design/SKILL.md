@@ -354,7 +354,9 @@ TO 传递给后续 Plan（指导切片 + task covers）、Build（驱动 TDD）�
 
 **Core Actions:**
 
-调 `Skill(nocode-evolve:dev-design-refine)`，输入上方清单全部内容。dev-design-refine 接管：doc-type 选择 → 写 → review → render。
+**硬交接**——调 `Skill(nocode-evolve:dev-design-refine)`，dev-design-refine 接管后续全部文档工作（doc-type 选择 → 逐章写 → review → render）。不能跳过 Skill() 调用自己写文档——dev-design-refine 有自己的 protocol 和质量标准（骨架模板 / 逐章展开 / reviewer 审查），手写的文档达不到同等质量。
+
+传入上方 Enter Gate 清单全部内容作为输入。手里有足够信息不是跳过的理由。
 
 各输入作为设计文档固定章节落盘（下游 Plan/Build/Review 看不到本次对话，只看文档）：
 
@@ -415,3 +417,4 @@ TO 传递给后续 Plan（指导切片 + task covers）、Build（驱动 TDD）�
 - 高风险路径被标"不测"但没说明原因——逃生口
 - Step 1 跳过了外部搜索就直接提方案——可能遗漏更好的现成方案
 - 方案论据没有 `[Read]` 或 `[SOURCE]` 引用——凭直觉不是凭事实
+- Step 8 没调 dev-design-refine 就自己写了设计文档——"我有足够信息"不是跳过 Skill() 的理由，手写文档缺 refine 的结构审查和质量保证
