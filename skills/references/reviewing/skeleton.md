@@ -62,7 +62,7 @@ review 不是越重越好。先按**评审对象的风险 + 可逆性**定深度
 
 | 评审对象 | 默认方法 | 备选 | 独立性 |
 |---|---|---|---|
-| **代码 diff** | `checklist`（领域维度）+ `red-blue-adversarial`（异源交叉） | `error-mechanism` | 异源 |
+| **代码 diff** | `checklist`（领域维度，通用质量清单载体 = `code-quality-method`）+ `red-blue-adversarial`（异源交叉） | `error-mechanism` | 异源 |
 | **方案 / 决策 / 架构选型** | `red-blue-adversarial` | `perspective-based` | 异源 |
 | **设计文档** | `checklist`（领域维度）+ `red-blue-adversarial`（异源交叉） | — | 异源 |
 | **安全**（外部输入 / 认证 / 敏感数据） | `threat-modeling` + `checklist`（`security-method` card · OWASP） | — | 异源 |

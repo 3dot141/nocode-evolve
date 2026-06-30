@@ -85,13 +85,13 @@ Task 3: Cross-Review（red-blue-adversarial · 异源交叉）
   Sub-steps: CLAIM 剥离后派 codex 异源交叉（经 rule-codex-review；不可用则降级并明说）
   Gate: 两路 findings 合并或降级标注
 
-Task 4: Path Coverage Check
-  Sub-steps: Spec 轴附加维度，拿 PRD 原始路径清单逐条比对实现
-  Gate: 路径覆盖率报告产出
-
-Task 5: Findings Triage
+Task 4: Findings Triage（Standards 轴，对应 Step 4）
   Sub-steps: 套统一契约 schema 分级（Critical/Warning/Suggestion + kind），过 Evidence Gate
   Gate: findings 呈现给用户
+
+Task 5: Path Coverage Check（Spec 轴，对应 Step 6）
+  Sub-steps: Spec 轴附加维度，拿 PRD 原始路径清单逐条比对实现
+  Gate: 路径覆盖率报告产出
 
 Task 6: 用户 approve
   Sub-steps: Critical 全 fix + 用户逐条拍板 Warning
