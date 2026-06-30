@@ -1,6 +1,6 @@
-# .ui.md 模板
+# .ix.md 模板
 
-Step 9 产出 `.ui.md` 时使用此模板。
+Step 3 产出 `.ix.md` 时使用此模板。
 
 ```markdown
 # 设计: {title}

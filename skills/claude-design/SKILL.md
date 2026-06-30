@@ -1,6 +1,6 @@
 ---
 name: claude-design
-description: Use when operating on Claude Design projects from the terminal — creating projects, generating designs from a brief, reading/writing files, previewing, managing design systems, sharing, or member management. Use when the user says "claude-design", "设计项目", "创建设计", "预览设计", "设计系统", "分享项目", or when pd-ui/dev-design-render routes to Claude Design delivery. Also use when the user provides a claude.ai/design URL.
+description: Use when operating on Claude Design projects from the terminal — creating projects, generating designs from a brief, reading/writing files, previewing, managing design systems, sharing, or member management. Use when the user says "claude-design", "设计项目", "创建设计", "预览设计", "设计系统", "分享项目", or when pd-vd/dev-design-render routes to Claude Design delivery. Also use when the user provides a claude.ai/design URL.
 ---
 
 # claude-design — Claude Design 终端操作
@@ -16,6 +16,7 @@ agent 默认只认识一套工具。两套共存时,**必须按下表选择**,�
 
 | 场景 | 用哪个 | 为什么 |
 |---|---|---|
+| **创建设计系统项目** | **DesignSync** `create_project` | MCP `create_project` 只能建普通项目(原型/设计),**不能建 DS 类型**——项目类型创建时不可变 |
 | **上传大文件(>50KB / 二进制)** | **DesignSync** `write_files` + `localPath` | **MCP 的 localPath 未实现**,只能 inline data;200KB JS bundle 塞 inline 会撑爆 context |
 | register/unregister assets | DesignSync | MCP 没有 |
 | 其他所有操作 | MCP 优先 | MCP 功能更全(preview、conversation、members、design systems、copy_files) |
@@ -59,7 +60,7 @@ agent 从 MCP 工具的 schema 描述就能正确使用基本操作(baseline 已
 | `read` | `read_file` | 读文件(内容 HTML entity 转义,需解码) |
 | `write` | `finalize_plan` → `write_files` | 写文件(两步事务,带 etag 防并发) |
 | `delete` | `finalize_plan` → `delete_files` | 删文件 |
-| `create` | `create_project` | 创建项目(可绑 `design_system_id`) |
+| `create` | `create_project` | 创建普通项目(原型/设计,可绑已有 `design_system_id`)。**建 DS 项目走 DesignSync** |
 | `preview` | `render_preview` | 获取预览链接(**serve_url 不给用户,只给 open_url**) |
 | `systems` | `list_design_systems` | 列出可用设计系统(`is_default=true` 是默认) |
 | `copy` | `finalize_plan` → `copy_files` | 跨项目复制(服务端,不受 256KB 限制) |
@@ -72,7 +73,7 @@ agent 从 MCP 工具的 schema 描述就能正确使用基本操作(baseline 已
 
 ## 生成设计:`claude-design <brief>`
 
-从自然语言 brief 生成设计,写入 Claude Design 项目。pd-ui Step 7 的 Claude Design 线走这条路。
+从自然语言 brief 生成设计,写入 Claude Design 项目。pd-vd Step 4 的 Claude Design 线走这条路。
 
 ### 流程
 
@@ -106,9 +107,9 @@ agent 从 MCP 工具的 schema 描述就能正确使用基本操作(baseline 已
 6. finalize_plan → write_files(已存在文件带 if_match) → 给用户 open_url
 ```
 
-### brief 四块结构(pd-ui 约定)
+### brief 四块结构(pd-vd 约定)
 
-pd-ui 传来的 brief 通常包含:
+pd-vd 传来的 brief 通常包含:
 
 1. **设计系统引用** — "用 XX 设计系统"(有 → 绑 design_system_id)
 2. **页面结构(IA)** — 每个页面/视图的区块
@@ -131,6 +132,20 @@ pd-ui 传来的 brief 通常包含:
 ---
 
 ## 设计系统操作
+
+### 创建设计系统项目(DesignSync)
+
+MCP `create_project` 建的是普通项目(原型/设计),绑 `design_system_id` 只是引用已有 DS,不是新建 DS。项目类型 `PROJECT_TYPE_DESIGN_SYSTEM` 在创建时确定,之后不可变。
+
+```
+想建 DS 项目？
+     │
+     ├─ DesignSync create_project(name: "XX Design System")
+     │   → 返回 projectId (类型 = PROJECT_TYPE_DESIGN_SYSTEM)
+     │   → 后续用 finalize_plan + write_files 推 .dc.html 组件
+     │
+     └─ ✗ MCP create_project → 只能建普通项目,无法转为 DS
+```
 
 ### 创建 .dc.html 组件(小文件 → MCP)
 
@@ -171,8 +186,8 @@ MCP write_files(project_id, plan_token, files: [{path, data, if_match}])
 
 | 调用方 | 怎么用 claude-design |
 |---|---|
-| **pd-ui Step 6** | `claude-design systems` 搜已有 → `claude-design create` 建设计系统项目 → `claude-design write` 推组件 |
-| **pd-ui Step 7** | `claude-design <brief>` 生成原型 → 记 projectId |
-| **pd-ui Step 9** | 记录 projectId 到 .ui.md |
+| **pd-vd Step 3** | `claude-design systems` 搜已有 → `claude-design create` 建设计系统项目 → `claude-design write` 推组件 |
+| **pd-vd Step 4** | `claude-design <brief>` 生成原型 → 记 projectId |
+| **pd-vd Step 6** | 记录 projectId 到 .vd.md |
 | **dev-design-render** | `claude-design create` + `claude-design write` 推渲染后的设计文档 |
 | **/design-sync** | 独立 skill,推 React bundle 用 DesignSync 的 localPath;claude-design 不替代它 |

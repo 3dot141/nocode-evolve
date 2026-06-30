@@ -1,17 +1,17 @@
 ---
 name: dev-design-render
-description: Render design documents (from dev-design-refine) into styled interactive HTML. Converts the full markdown document into a browsable HTML page — ASCII diagrams become Canvas/SVG, code blocks get syntax highlighting, sections become navigable. Delivery via Claude Design or local HTML (references pd-ui's dual-track approach). Not for UI prototypes (use pd-ui).
+description: Render design documents (from dev-design-refine) into styled interactive HTML. Converts the full markdown document into a browsable HTML page — ASCII diagrams become Canvas/SVG, code blocks get syntax highlighting, sections become navigable. Delivery via Claude Design or local HTML (references pd-vd's dual-track approach). Not for UI prototypes (use pd-vd).
 ---
 
 # dev-design-render — 设计文档 → HTML
 
 把设计文档（markdown）转成可浏览的 HTML 页面。不只是图——整个文档都渲染：标题变导航、表格变交互表、ASCII 图变 Canvas/SVG、代码块加语法高亮。
 
-参考 pd-ui 的双线方案：Claude Design 或本地 HTML，用户选。
+参考 pd-vd 的双线方案：Claude Design 或本地 HTML，用户选。
 
 ## 非本 skill 请求
 
-UI 原型 → pd-ui。写设计文档 → dev-design-refine。
+UI 原型 → pd-vd。写设计文档 → dev-design-refine。
 
 ## Enter Gate
 
@@ -83,7 +83,7 @@ Task 4: 验证 + 保存
 
 **Core Actions:**
 
-AskUserQuestion（参考 pd-ui 方案）：
+AskUserQuestion（参考 pd-vd 方案）：
 
 | 方式 | 产出 | 适用 |
 |---|---|---|

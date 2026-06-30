@@ -127,8 +127,8 @@ rule / skill 触发条件命中后, 要跳过 / 偏离它, **只认用户消息�
 |---|---|---|
 | `{pd_research_output}` | `docs/pd/{username}/{yymmdd}-{serial}-{topic}/research-report.md` | pd-research |
 | `{pd_prd_output}` | `docs/pd/{username}/{yymmdd}-{serial}-{topic}/{topic}.prd.md` | pd-prd |
-| `{pd_ui_output}` | `docs/pd/{username}/{yymmdd}-{serial}-{topic}/{topic}.ui.md` | pd-ui |
-| `{pd_ui_prototype}` | `docs/pd/{username}/{yymmdd}-{serial}-{topic}/{topic}.ui-prototype.html` | pd-ui (高保真) |
+| `{pd_ix_output}` | `docs/pd/{username}/{yymmdd}-{serial}-{topic}/{topic}.ix.md` | pd-ix |
+| `{pd_vd_output}` | `docs/pd/{username}/{yymmdd}-{serial}-{topic}/{topic}.vd.md` | pd-vd |
 | `{dev_design_output}` | `docs/dev/{username}/{yymmdd}-{serial}-{topic}/{topic}-design.md` | dev-design / brainstorming |
 | `{dev_plan_output}` | `docs/dev/{username}/{yymmdd}-{serial}-{topic}/{topic}-plan.md` | dev-plan |
 | `{dev_verify_output}` | `docs/dev/{username}/{yymmdd}-{serial}-{topic}/verify-report.md` | dev-verify |

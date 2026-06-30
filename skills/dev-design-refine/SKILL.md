@@ -72,7 +72,7 @@ Task N+2: 保存 + 渲染
    - research → Read `references/example-research-skeleton.md`
    学骨架和颗粒度，不照搬措辞。
 
-3. **加载输入**：dev-design 的选定方案、探索结论、UI 设计（`.ui.md`，如有）、测试计划。无 dev-design 产出时，从用户描述提取。
+3. **加载输入**：dev-design 的选定方案、探索结论、UI 设计（`.ix.md` / `.vd.md`，如有）、测试计划。无 dev-design 产出时，从用户描述提取。
 
 **Exit Gate:**
 - [ ] 场景类型已定
@@ -184,7 +184,7 @@ Task N+2: 保存 + 渲染
 - [ ] 总图产出，边已识别
 
 **Core Actions:**
-逐条边展开。来自 pd-ui 的交互设计 → 细化为前端组件 + 消费的域接口；无 pd-ui 时从使用路径推导。
+逐条边展开。来自 pd-ix 的交互设计 → 细化为前端组件 + 消费的域接口；无 pd-ix 时从使用路径推导。
 
 每个场景章节自包含：
 - **流程图**（用户操作的串行步骤）

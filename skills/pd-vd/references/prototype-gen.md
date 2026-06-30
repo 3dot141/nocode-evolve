@@ -23,7 +23,7 @@
 | 高保真（组合） | 保留独立页面 + 额外一个组合文件（融合全部页面代码，JS tab 切换/弹窗） | 多文件之间用 URL 跳转串联，每个文件内做弹窗 |
 | 完整实现 | 高保真基础上：组合文件内每个控件 4 态 + 边界态切换 + 跨页导航链路 | 高保真基础上：每个控件 4 态 + 边界态切换 + URL 跳转链路全覆盖 |
 | 组合的代价 | 内容在独立页面和组合文件中重复，改一处要同步改另一处 | 无重复，每个文件只存在一份 |
-| 产物在哪 | claude.ai 项目（记 projectId） | `{pd_ui_prototype}` 目录落本地 repo |
+| 产物在哪 | claude.ai 项目（记 projectId） | `{pd_vd_output}` 目录落本地 repo |
 | 适合 | 团队 canvas 协作、复用组织设计系统 | 版本控制、离线、无重复维护 |
 
 ---
@@ -217,7 +217,7 @@ claude-design read <projectId> <path>
 
 ## 本地 HTML 线
 
-产出多个 `.html` 文件 → `{pd_ui_prototype}` 目录，落本地 repo。多文件之间用 URL 跳转串联，不需要额外的组合文件。
+产出多个 `.html` 文件 → `{pd_vd_output}` 目录，落本地 repo。多文件之间用 URL 跳转串联，不需要额外的组合文件。
 
 ### 低保真：静态页面
 
@@ -286,4 +286,4 @@ Step 6 判定小项目跳过设计系统时，HTML 线靠 taste skill 兜底视�
 - 保真度对应的完整度达标（低保真有视觉值；高保真可交互；完整实现有 4 态 + 边界态 + 链路）
 - IA 的页面/视图 100% 覆盖：独立页面有文件，嵌入组件在宿主页面内实现，无遗漏
 - 所有可操作元素有 `data-testid`（Step 8 Playwright 验证依赖）
-- Claude Design 线：projectId 已记录 + `claude-design read` 可拉回本地 / HTML 线：文件已保存到 `{pd_ui_prototype}`
+- Claude Design 线：projectId 已记录 + `claude-design read` 可拉回本地 / HTML 线：文件已保存到 `{pd_vd_output}`

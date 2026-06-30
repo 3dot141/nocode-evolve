@@ -151,7 +151,7 @@ Round 1 的骨架定了"改什么"，Round 2 填"怎么改"——每个 task 补
 
 **每个 task 完整读 5 份上游文档 + 代码库**：
 1. **PRD**（`.prd.md`）— 业务是什么，这条路径的业务规则
-2. **UI / 原型**（`.ui.md` / prototype）— 界面长什么样，交互怎么走。有 `.ui.md` 时：IA 页面结构作为前端任务拆分参照（一个 IA 页面 ≈ 一个前端 task），`data-testid` 命名写进 task 的接口约束，`interactions.json` 路径记入 task 备注供 dev-verify 复用
+2. **UI / 原型**（`.ix.md` + `.vd.md` / prototype）— 界面长什么样，交互怎么走。有 `.ix.md` 时：IA 页面结构作为前端任务拆分参照（一个 IA 页面 ≈ 一个前端 task），`data-testid` 命名写进 task 的接口约束，`interactions.json` 路径记入 task 备注供 dev-verify 复用
 3. **restate** — 验收标准（SC），怎么算做完
 4. **设计文档**（dev-design-refine 产出）— BF 伪代码 + 类接口 + 单测设计 Given/When/Then
 5. **Plan Round 1 骨架** — 本 task 改哪些文件、covers 哪些路径

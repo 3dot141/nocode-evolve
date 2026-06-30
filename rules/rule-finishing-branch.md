@@ -56,7 +56,7 @@ Implementation complete. What would you like to do?
 | Option | 主要动作 | 涉及 Gate | Read 子文件 (按需) |
 |---|---|---|---|
 | **1. Merge 回 base** | commit 整理 → 显示 merge 计划 → Gate Merge → 本地 merge → tests → cleanup worktree → (删 branch **前**捕获远程坐标) 删 branch → remote 分支清理 (Gate Remote-Delete) | Gate Merge + Gate Remote-Delete | `commit-tidy.md`, `remote-branch-cleanup.md` |
-| **2. Push + 建 PR** | commit 整理 → 生成 title/body → Gate Title-Body → PR 计划 → Gate PR → push (含 non-ff fallback) → 建 PR → reviewer add → Gate Worktree-Cleanup (worktree 清理提示) | Gate Title-Body + Gate PR + Gate Worktree-Cleanup | `commit-tidy.md`, `pr-flow-gh.md`; 若 `toolchain == "bkt"` **额外** `pr-flow-bkt-appendix.md` |
+| **2. Push + 建 PR** | commit 整理 → 解析 target (Step 2a) → Gate Title-Body (target + title/body + 影响文件) → Gate PR (push + reviewer) → push (含 non-ff fallback) → 建 PR → reviewer add → Gate Worktree-Cleanup | Gate Title-Body + Gate PR + Gate Worktree-Cleanup | `commit-tidy.md`, `pr-flow-gh.md`; 若 `toolchain == "bkt"` **额外** `pr-flow-bkt-appendix.md` |
 | **3. Keep as-is** | 一行报告 worktree 路径; **不动**任何文件; 不删 branch | (无) | (无) |
 | **4. Discard** | 显示将删 (branch / commits / worktree path) → typed `discard` 字面确认 → cleanup worktree → (force delete branch **前**捕获远程坐标) force delete branch → remote 分支清理 (Gate Remote-Delete) | Gate Discard + Gate Remote-Delete | `remote-branch-cleanup.md` (Gate Discard 在 sp skill 自带) |
 
@@ -71,7 +71,7 @@ Implementation complete. What would you like to do?
 | Gate | 位置 | 内容 | 用户响应 |
 |---|---|---|---|
 | **Gate Merge** (Merge Plan) | option 1, commit 整理后 | "将 merge `<branch>` → `<base>`, 删 worktree `<path>`, 删 branch `<name>`" | OK → 执行; 改主意 → 回 4 选项菜单 |
-| **Gate Title-Body** (Title/Body) | option 2, commit 整理后 | 草稿 title (≤50 字) + 完整 body markdown (引用 `rule-push-summary.md` 输出契约: ≤200 字, 基础内容 + 重点评测) | OK → 进 Gate PR; 改 → agent 重生成 → 再 Gate Title-Body (循环) |
+| **Gate Title-Body** (Title/Body) | option 2, target 解析后 | 解析的 target (`<remote>/<branch>` + 来源) + title (≤50 字) + body (≤200 字, 基础内容 + 重点评测) + 影响文件 tree | OK → 进 Gate PR; 改 target → 不重生成 body; 改 title/body → 重生成 → 循环 |
 | **Gate PR** (PR Plan) | option 2, Gate Title-Body 后 | `push: origin/<branch>` + `source: <owner>:<source-branch>` + `target: <owner>:<target-branch>` + `reviewer: <list>` | OK → 执行 push+create+reviewer; 改任一字段 → 局部更新 → 再 Gate PR (不重生成 title/body) |
 | **Gate Discard** (Discard) | option 4 | "将删 branch `<name>` + commits `<list>` + worktree `<path>`" | typed `discard` **字面**才执行; 任何其他响应 (含 'yes' / 'y' / 'OK' / 'confirm') 都算否定, 回菜单 |
 | **Gate Worktree-Cleanup** (Worktree Cleanup) | option 2, PR 创建 + reviewer 加完后, 仅当前在 worktree (非主仓) 时弹出 | "PR 已创建, 当前在 worktree `<path>`. ① 保留 worktree(默认) ② 清理 worktree (附 PR 合并后删远程分支的提示)" | ① 保留; ② 清理 worktree + 输出合并后删远程的工具栈相关提示 (细节见 `pr-flow-gh.md` / `pr-flow-bkt-appendix.md` Step 8) |

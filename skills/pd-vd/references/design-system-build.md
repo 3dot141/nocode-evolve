@@ -1,6 +1,6 @@
-# Step 6 展开：Design System 决策与创建
+# Step 3 展开：Design System 决策与创建
 
-> pd-ui Step 6 的展开 reference。设计系统 = 品牌渲染层（颜色 / 字体 / 组件），让多个页面看起来像同一个产品。本文覆盖：三步走顺序、创建方式选型、gap analysis、并行创建、claude-design 操作参考。
+> pd-vd Step 3 的展开 reference。设计系统 = 品牌渲染层（颜色 / 字体 / 组件），让多个页面看起来像同一个产品。本文覆盖：三步走顺序、创建方式选型、gap analysis、并行创建、claude-design 操作参考。
 
 ## 一、三步走为什么是这个顺序
 

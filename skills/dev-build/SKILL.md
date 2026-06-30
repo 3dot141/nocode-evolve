@@ -175,7 +175,7 @@ Build 为每个 task 组装 implementer prompt，内容来自三个来源：
 
 1. **task 描述**（来自 Plan）：完整 task 文本、代码、验证命令
 2. **执行纪律**（来自 `references/implementer-disciplines.md`）：Iron Law TDD、Scope Lock、偏差分级、NOTICED BUT NOT TOUCHING、异常路径
-3. **上下文注入**（按条件）：有 pd-ui 原型时注入视觉清点纪律；技术栈配方按项目特征注入
+3. **上下文注入**（按条件）：有 pd-vd 原型时注入视觉清点纪律；技术栈配方按项目特征注入
 
 Prompt 模板见 `references/implementer-prompt.md`。
 

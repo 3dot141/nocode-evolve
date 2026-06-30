@@ -334,7 +334,7 @@ DDD 域划分的正式规格，被 §4 的流程图引用。每个域围绕一�
 
 文档存到 `{pd_prd_output}` 变量指定的路径（见 `model/agent-about.md`「文档产出路径变量」）。和同 topic 的 research-report 落同一目录。
 
-完成后提示："PRD 写完了。若需求涉及界面，建议下一步做交互视觉设计（调 `nocode-evolve:pd-ui`），把需求落成界面结构 + 视觉方向；纯后端 / 无界面需求可直接进 devflow 开发流。"
+完成后提示："PRD 写完了。若需求涉及界面，建议下一步做交互设计（调 `nocode-evolve:pd-ix`），把需求落成界面结构 + 交互流（之后可再做视觉设计 `nocode-evolve:pd-vd`）；纯后端 / 无界面需求可直接进 devflow 开发流。"
 
 ## 文档质量硬规则
 

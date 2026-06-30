@@ -57,7 +57,7 @@ commit message 说清 what + why。
 | 卡住/方向不确定 | 报 NEEDS_CONTEXT，写出不确定点 + 假设 + 需要什么信息 |
 | 上下文冲突（spec 说 X 但代码是 Y） | 报 NEEDS_CONTEXT，列出冲突点 |
 
-## pd-ui 视觉清点（有原型时注入）
+## pd-vd 视觉清点（有原型时注入）
 
-- 前端 task 从原型文件读视觉参考，组件 `data-testid` 继承 `.ui.md` 定义的命名
+- 前端 task 从原型文件读视觉参考，组件 `data-testid` 继承 `.vd.md` 定义的命名
 - **样式完整性清点**（必做）：实现前先清点原型定义的视觉层——token（颜色/字体/间距）、组件样式（按钮变体/卡片/输入框/导航等）、交互状态（hover/active/disabled/empty/loading/error）、装饰层（纹理/渐变/阴影）。逐项确认 app 里有对应实现，缺哪补哪

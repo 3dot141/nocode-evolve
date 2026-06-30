@@ -17,6 +17,7 @@ Claude Design 有三套接口，各管一件事。搞清楚分工才知道该用
 
 - 只管 `PROJECT_TYPE_DESIGN_SYSTEM` 项目
 - 方法：`list_projects` / `get_project` / `list_files` / `get_file` / `create_project` / `finalize_plan` / `write_files` / `delete_files`
+- `create_project` 是**唯一能新建 DS 类型项目**的接口（MCP `create_project` 只建普通项目）
 - 用于推 `.dc.html` 设计系统卡片（foundations / components / patterns）
 - **不能**创建普通设计项目 / 原型
 
@@ -41,7 +42,7 @@ Claude Design 有三套接口，各管一件事。搞清楚分工才知道该用
 
 ## 设计源标识
 
-pd-ui 产出的设计源标识，记录在 `.ui.md` 中，下游继承：
+pd-vd 产出的设计源标识，记录在 `.vd.md` 中，下游继承：
 
 | 标识 | 含义 | 下游怎么消费 |
 |---|---|---|

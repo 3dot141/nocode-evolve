@@ -51,15 +51,35 @@ scripts/
 
 根目录文件直接列 (不加前缀目录), 目录按字母序排.
 
-## Gate Title-Body: title/body + 影响文件 用户确认
+## Step 2a: 解析 PR target
 
-agent 输出生成的 title + body + 影响文件 tree 给用户审, 等响应:
+Gate Title-Body 前先解析 target, 让用户尽早看到 PR 方向, 避免「target 是 upstream/release 还是 origin/release」的歧义。
+
+解析 `base_branch` (优先级):
+
+1. `git config branch.<current>.nocode-evolve-base` (worktree 创建 / devflow Env 阶段 Gate Base 写入)
+2. `@{upstream}` (tracking branch)
+3. `origin/HEAD` 指向 → fallback `origin/main`
+
+解析结果 → `target_remote` + `target_branch`:
+- `upstream/release` → target_remote=`upstream`, target_branch=`release` (fork 场景, PR: `origin/<branch>` → `upstream/release`)
+- `origin/main` → target_remote=`origin`, target_branch=`main`
+
+**项目本地 override**: **仅**读 `.agents-personal/rules/personal-repo-pr.md` 的 target 约定。不存在 = 无约定, 走默认优先级, 不在其他位置搜索。
+
+## Gate Title-Body: target + title/body + 影响文件 用户确认
+
+agent 输出 target + title + body + 影响文件 tree 给用户审, 等响应:
 
 - "OK / 好 / 没问题 / 通过" → 进 Step 3
-- 任何修改意见 (e.g. "标题太长", "body 第二段删掉", "亮点加一条"...) → agent **重生成** 整段 title + body, 再次输出, 再次 askGate (影响文件 tree 不变, 除非有新 commit)
+- 改 target (e.g. "target 应该是 origin/release") → 更新 target, **不重生成 title/body**, 再次 askGate
+- 改 title/body (e.g. "标题太长", "body 第二段删掉") → **重生成** title + body, 再次 askGate
 
 ```
-[Gate Title-Body] 候选 title + body + 影响文件如下, 确认 OK 还是给修改意见?
+[Gate Title-Body] 候选 PR 草稿如下, 确认 OK 还是给修改意见?
+
+# target
+<target_remote>/<target_branch>    ← 来源: <nocode-evolve-base | @{upstream} | origin/HEAD>
 
 # title
 <标题>
@@ -70,7 +90,7 @@ agent 输出生成的 title + body + 影响文件 tree 给用户审, 等响应:
 # 影响文件
 <tree 格式的文件路径, 按目录聚拢>
 
-(回 OK / 或给修改意见)
+(target / title / body 均可改; 回 OK 进 Gate PR 确认 reviewer)
 ```
 
 循环到用户明确 OK 才进 Step 3.
@@ -87,9 +107,9 @@ agent 输出生成的 title + body + 影响文件 tree 给用户审, 等响应:
   reviewer: <list, 含 default reviewer>
 ```
 
-**`base_branch` 来源**: 优先读 `git config branch.<branch>.nocode-evolve-base` (worktree 创建 / devflow Env 阶段 Gate Base 确认时写入)——去 remote 前缀取分支名作 target branch; remote 段是 `upstream` (fork 场景) 时 target repo 即 upstream, PR 形态为 `origin/<branch>` → `upstream/<base>`, **不**先合并回本地 base 再从 fork base 发 PR (会污染 fork 镜像 + 并行 PR 归零)。无 config 再按 `origin/HEAD` → `main` 推断。
+**`target`**: 沿用 Step 2a 解析结果 (`target_remote`/`target_branch`), Gate Title-Body 阶段用户改过的以改后值为准。fork 场景 (target_remote=`upstream`) PR 形态为 `origin/<branch>` → `upstream/<target_branch>`, 不先合并回本地 base 再从 fork base 发 PR。
 
-**项目本地 override**: 先**仅**读 `.agents-personal/rules/personal-repo-pr.md` (reviewer 名单 / target 约定的唯一项目本地来源)。该文件不存在 = 无项目本地约定 → **直接**走下面默认优先级, **不在其他位置搜索** (不扫项目根 / docs / 其他 rule, 不"找实际位置")。
+**项目本地 reviewer override**: **仅**读 `.agents-personal/rules/personal-repo-pr.md` 的 reviewer 名单。不存在 = 无项目本地约定 → 走下面 default reviewer 优先级, 不在其他位置搜索。
 
 查 default reviewer (按优先级试):
 

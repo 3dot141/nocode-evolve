@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * prototype-verify.mjs — Playwright-based prototype verification for pd-ui Step 8
+ * prototype-verify.mjs — Playwright-based prototype verification for pd-vd Step 5
  *
  * Delegates to Python playwright (must be installed: pip install playwright).
  *

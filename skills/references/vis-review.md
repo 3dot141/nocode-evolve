@@ -1,12 +1,12 @@
 # vis-review — 交互视觉设计评审
 
-**评审对象**: pd-ui 的 `.ui.md` 产出
+**评审对象**: pd-ix 的 `.ix.md` + pd-vd 的 `.vd.md` 产出
 **评审模式**: red-blue 双模型交叉审
 
 ## 流程
 
-1. **蓝军（Claude）**：按维度表逐项审查 `.ui.md`，列出通过项 + 疑点
-2. **红军（Codex）**：把 `.ui.md` 原文 + 维度表交给 Codex 独立攻击。**CLAIM 剥离**——不传蓝军结论
+1. **蓝军（Claude）**：按维度表逐项审查 `.ix.md` / `.vd.md`，列出通过项 + 疑点
+2. **红军（Codex）**：把 `.ix.md` / `.vd.md` 原文 + 维度表交给 Codex 独立攻击。**CLAIM 剥离**——不传蓝军结论
 3. **合并 findings**：去重合并，Critical / Warning / Suggestion 分级
 4. **Critical 必须修复**再交付
 

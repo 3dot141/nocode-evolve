@@ -6,7 +6,7 @@ Build 编排者为每个 task 组装此 prompt，通过 Workflow agent() 派发�
 
 1. 填入 task 完整文本（从 Plan 文档提取，不让 subagent 自己读 Plan 文件）
 2. 注入 `implementer-disciplines.md` 全文作为执行纪律
-3. 按条件注入：有 pd-ui 原型时注入视觉清点段落；按技术栈配方注入对应 reference 路径
+3. 按条件注入：有 pd-vd 原型时注入视觉清点段落；按技术栈配方注入对应 reference 路径
 
 ## Prompt 模板
 
@@ -35,7 +35,7 @@ Report back with status NEEDS_CONTEXT. Don't guess or make assumptions.
 
 {INJECT: implementer-disciplines.md 全文}
 
-{CONDITIONAL: pd-ui 视觉清点段落}
+{CONDITIONAL: pd-vd 视觉清点段落}
 
 ## Domain References (按需 Read)
 
