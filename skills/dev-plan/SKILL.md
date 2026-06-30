@@ -59,20 +59,24 @@ Task 5: 插 checkpoint
   Sub-steps: 每 2-3 task 一个 checkpoint
   Gate: checkpoint 边界已插
 
+Task 6: Round 1 Red-Blue Review — 骨架对抗审视
+  Sub-steps: 调 Skill(nocode-evolve:red-blue-deep) 评估骨架 → 结论中成立的质疑修正到骨架
+  Gate: red-blue-deep 流程完成，成立的质疑已修正
+
 ═══ Round 2: 填充代码（读设计文档 + 代码库 → 写真实代码）═══
 
-Task 6: 逐 task 填充真实代码
+Task 7: 逐 task 填充真实代码
   Sub-steps: 读设计文档对应 BF 伪代码 + 读最新代码库 → 写测试代码 + 实现代码 + 验证命令
   Gate: 零占位符，每 task 有真实测试 + 实现 + 命令
   注: 无依赖的 task 可并行填充
 
 ═══ 收尾 ═══
 
-Task 7: Plan Validation — 四项自检
-  Sub-steps: 需求覆盖 + 路径覆盖 + 任务可验证 + 依赖无环
-  Gate: 四项全过（任一不过回 Task 6 补）
+Task 8: Round 2 Red-Blue Review + Plan Validation
+  Sub-steps: 调 Skill(nocode-evolve:red-blue-deep) 评估完整计划 → 裁决修正 → 四项自检（需求覆盖 + 路径覆盖 + 可验证 + 无环）
+  Gate: red-blue-deep 流程完成 + 裁决修正完成 + 四项自检全过（任一不过回 Task 7 补）
 
-Task 8: 用户确认 + 选执行模式
+Task 9: 用户确认 + 选执行模式
   Sub-steps: 完整呈现计划 → AskUserQuestion 确认 → 选执行模式
   Gate: 用户确认 + 执行模式已选（subagent 并行 / 顺序）
 ```
@@ -125,7 +129,23 @@ Round 1 写骨架——定清楚**改什么、覆盖什么、谁做**，代码�
 
 每 2-3 个 task 一个 checkpoint = 全测试通过 + build 通过 + 用户 review。checkpoint 是 rollback 边界。
 
-### Step 6: 填充真实代码（Round 2）
+### Step 6: Round 1 Red-Blue Review
+
+Round 1 骨架完成，在填充代码前对计划骨架做对抗审视。骨架阶段发现的问题修正成本低，填充完再改代价翻倍。
+
+调用 `Skill(nocode-evolve:red-blue-deep)`，评估问题：
+
+> 「这份计划的骨架合理吗？切片策略（垂直还是横切？每片独立可验证吗？）、依赖图（有没有隐式耦合遗漏？）、risk-first 排序（最不确定的真的排前面了吗？）、task 粒度（sizing 准吗？有 and 该拆的吗？）、restate 覆盖（有遗漏路径吗？）」
+
+附上完整骨架（依赖图 + task 列表含 covers/sizing/HITL-AFK + checkpoint）作为被评估对象。red-blue-deep 会自行判档位并走对应流程（第一性原理 → 蓝军 → 独立审查 → 结论）。
+
+**结论落地**：red-blue-deep 结论中成立的质疑修正到骨架中（回 Step 3/4/5 对应调整）。
+
+**Exit Gate:**
+- [ ] red-blue-deep 流程完成
+- [ ] 结论中成立的质疑已落实到骨架修正
+
+### Step 7: 填充真实代码（Round 2）
 
 Round 1 的骨架定了"改什么"，Round 2 填"怎么改"——每个 task 补上 TDD steps 真实代码。
 
@@ -164,31 +184,47 @@ Round 1 的骨架定了"改什么"，Round 2 填"怎么改"——每个 task 补
 
 **并行填充**：无依赖的 task 可并行填充（spawn subagent 各自读设计文档 + 代码库 → 写代码）。
 
-### Step 7: Plan Validation
+### Step 8: Round 2 Red-Blue Review + Plan Validation
 
-**Enter Gate:**
-- [ ] Round 2 填充完成（每 task 有真实代码）
-- [ ] checkpoint 已插（Step 5）
+填充完成，代码和测试都写好了，在交用户确认前做最后一轮对抗审视 + 清单自检。
 
-用户确认前自检计划质量。四项检查，任一不通过回 Step 4 补：
+#### 8a. Red-Blue Review
 
-**6a. 需求覆盖**：restate 的每条 Success Criteria 至少被一个 task 覆盖。逐条核对，缺覆盖的标出来。
+调用 `Skill(nocode-evolve:red-blue-deep)`，评估问题：
 
-**6b. 路径覆盖**：汇总所有 task 的 `covers` 字段，对照 restate 路径清单——**每条路径/约束至少被一个 task 覆盖**。有路径没被任何 task 覆盖 → 补 task，或显式说明该路径在当前迭代不实现（标注原因）。产出路径→task 映射表。
+> 「这份填充了真实代码的计划拿去执行可行吗？代码能跑通吗（API 签名 / import 路径 / 已废弃接口）？测试覆盖关键场景了吗（有没有只测 happy path）？实现和设计文档一致吗？执行顺序对吗（前置 task 产出够后续用吗）？」
 
-**6c. 任务可验证**：每个 task 声明了怎么验证完成（测试命令/预期输出/人工确认项）。"写完就算完"不算验证——验证命令不存在的 task 在 Build 阶段会卡住。
+附上完整计划（含所有 task 的代码 + 测试 + 验证命令 + 设计文档引用）作为被评估对象。
 
-**6d. 依赖无环**：task 间依赖不成环，底层 task 排前面。循环依赖说明切片方式有问题。
+**结论落地**：red-blue-deep 结论中成立的质疑修正到计划中（回 Step 7 修正对应 task）。
+
+#### 8b. 需求覆盖
+
+restate 的每条 Success Criteria 至少被一个 task 覆盖。逐条核对，缺覆盖的标出来。
+
+#### 8c. 路径覆盖
+
+汇总所有 task 的 `covers` 字段，对照 restate 路径清单——**每条路径/约束至少被一个 task 覆盖**。有路径没被任何 task 覆盖 → 补 task，或显式说明该路径在当前迭代不实现（标注原因）。产出路径→task 映射表。
+
+#### 8d. 任务可验证
+
+每个 task 声明了怎么验证完成（测试命令/预期输出/人工确认项）。"写完就算完"不算验证——验证命令不存在的 task 在 Build 阶段会卡住。
+
+#### 8e. 依赖无环
+
+task 间依赖不成环，底层 task 排前面。循环依赖说明切片方式有问题。
 
 **Exit Gate:**
-- [ ] 6a 需求覆盖：每条 SC 被 ≥1 task 覆盖
-- [ ] 6b 路径覆盖：路径→task 映射表产出，无漏路径
-- [ ] 6c 可验证：每 task 有验证命令
-- [ ] 6d 无环：依赖图无环
+- [ ] red-blue-deep 流程完成
+- [ ] 结论中成立的质疑已修正到计划中
+- [ ] 8b 需求覆盖：每条 SC 被 ≥1 task 覆盖
+- [ ] 8c 路径覆盖：路径→task 映射表产出，无漏路径
+- [ ] 8d 可验证：每 task 有验证命令
+- [ ] 8e 无环：依赖图无环
 
-四项全过再进 Step 7 让用户确认。
+任一不过回 Step 7 补。
 
-### Step 7: 用户确认 + 执行模式
+### Step 9: 用户确认 + 执行模式
 
 计划完整呈现后用 AskUserQuestion 确认，再选执行模式：
 
@@ -223,6 +259,8 @@ Subagent → `Skill(nocode-evolve:subagent-driven-development)`。当前会话 �
 - [ ] 每个 task 标了 HITL/AFK
 - [ ] 每个 task 标了 `covers`，所有 task 汇总覆盖 restate 每条路径（路径→task 映射表已产出）
 - [ ] 测试目标已分配到 slice
+- [ ] Round 1 red-blue-deep 通过 + 骨架已修正（Step 6）
+- [ ] Round 2 red-blue-deep + Plan Validation 通过（Step 8）
 - [ ] 用户显式确认计划（AskUserQuestion）
 - [ ] 执行模式已选（subagent 并行 / 当前会话顺序）
 - [ ] 后续 Build 输入齐全：任务序列 + 测试目标 + 执行模式
@@ -240,6 +278,7 @@ Subagent → `Skill(nocode-evolve:subagent-driven-development)`。当前会话 �
 | "横着按层做更整齐" | 整齐但不可验证。垂直每片做完都能跑能回滚 |
 | "简单的先做，难的留后面" | risk-first：不确定性留到投入最大时暴露更贵 |
 | "checkpoint 太频繁拖节奏" | checkpoint 是 rollback 边界。省掉它出问题只能回退整个计划 |
+| "red-blue-deep 太重了" | 骨架改一行 vs 填充完改十行。前置审视省的是后面的返工 |
 
 ## Red Flags
 
@@ -249,3 +288,5 @@ Subagent → `Skill(nocode-evolve:subagent-driven-development)`。当前会话 �
 - 最不确定的部分排到了最后
 - 没读相关代码就开始写 task
 - task 缺 `covers` 字段，或汇总后有路径没被任何 task 覆盖（漏实现的早期信号）
+- red-blue-deep 被跳过或降级为轻档（计划审视是跨模块不可逆的，应该走重档）
+- red-blue-deep 结论中成立的质疑没有落实到骨架/代码修正
