@@ -66,8 +66,12 @@ Task 7: 测试与验证计划
   Gate: 覆盖状态表全 ✅ + 用户确认
 
 Task 8: 写设计文档
-  Sub-steps: 输入清单核对 → 调 dev-design-refine → 六轴 review → design-review 交叉审
-  Gate: 输入清单无缺失 + 文档评审通过，无 Critical findings
+  Sub-steps: 输入清单核对 → 调 dev-design-refine（硬交接）
+  Gate: 输入清单无缺失 + 文档已产出
+
+Task 9: 设计文档评审
+  Sub-steps: 六轴 review → design-review 交叉审（Claude 蓝军 + Codex 红军）
+  Gate: 六轴 + 交叉审通过，无 Critical findings
 ```
 
 每完成一个标 done。
@@ -354,7 +358,7 @@ TO 传递给后续 Plan（指导切片 + task covers）、Build（驱动 TDD）�
 
 **Core Actions:**
 
-**硬交接**——调 `Skill(nocode-evolve:dev-design-refine)`，dev-design-refine 接管后续全部文档工作（doc-type 选择 → 逐章写 → review → render）。不能跳过 Skill() 调用自己写文档——dev-design-refine 有自己的 protocol 和质量标准（骨架模板 / 逐章展开 / reviewer 审查），手写的文档达不到同等质量。
+**硬交接**——调 `Skill(nocode-evolve:dev-design-refine)`，dev-design-refine 接管文档工作（doc-type 选择 → 逐章写 → render）。不能跳过 Skill() 调用自己写文档——dev-design-refine 有自己的 protocol 和质量标准（骨架模板 / 逐章展开），手写的文档达不到同等质量。
 
 传入上方 Enter Gate 清单全部内容作为输入。手里有足够信息不是跳过的理由。
 
@@ -364,7 +368,21 @@ TO 传递给后续 Plan（指导切片 + task covers）、Build（驱动 TDD）�
 - **`## UI 设计`**（涉及前端时）：页面/组件清单 + 布局结构 + 交互行为 + UI 架构（组件拆分/状态管理/渲染策略）+ UI 技术选型。有 pd-ui 产出时附设计源标识 `[design-source: claude-design <projectId>]` 或 `[design-source: prototype <路径>]`，Build 去外部产物照做；无外部产物时设计文档本身就是全部视觉依据。有 pd-ui 产出时额外记录：`[testid-source: <.ui.md 路径>]`（testid 命名体系）+ `[verify-baseline: <interactions.json 路径>]`（E2E 测试骨架）+ `[screenshot-baseline: <screenshots/ 路径>]`（视觉回归基线）
 - **`## 验证策略`**：TO 表 + 按层级分组的测试方案 + 不测项 + 路径覆盖状态表。有 pd-ui 产出时：覆盖矩阵直接作为前端 E2E 验收清单，`interactions.json` 作为测试骨架，不重新发明。Verify 阶段直接读此章节执行
 
-**设计 Review 六轴**（dev-design-refine 做的文档结构审查）：
+**Exit Gate:**
+- [ ] 输入清单 6 项无缺失
+- [ ] 设计文档已由 dev-design-refine 产出
+- [ ] 后续 Step 9 review 可开始
+
+---
+
+### Step 9: 设计文档评审
+
+**Enter Gate:**
+- [ ] Step 8 设计文档已产出
+
+**Core Actions:**
+
+**设计 Review 六轴**（文档结构审查）：
 
 | 维度 | 检查什么 |
 |---|---|
@@ -377,11 +395,11 @@ TO 传递给后续 Plan（指导切片 + task covers）、Build（驱动 TDD）�
 
 涉及外部输入/认证/数据时做轻量 Threat Model（画信任边界 → 命名资产 → 跑 STRIDE 6 问）。
 
-**design-review 交叉审**：设计文档写完后，按 `{NOCODE_SKILL_REF}/design-review.md` 做 red-blue 双模型交叉评审——Claude 做蓝军、Codex 做红军（CLAIM 剥离不传蓝军结论）。findings 合并报告，Critical 必须修复。这和六轴互补——六轴是文档结构审查，design-review 是方案质量审查。
+**design-review 交叉审**：按 `{NOCODE_SKILL_REF}/design-review.md` 做 red-blue 双模型交叉评审——Claude 做蓝军、Codex 做红军（CLAIM 剥离不传蓝军结论）。findings 合并报告，Critical 必须修复。这和六轴互补——六轴是文档结构审查，design-review 是方案质量审查。
 
 **Exit Gate:**
-- [ ] 输入清单 6 项无缺失
-- [ ] 设计文档评审通过（六轴 review + design-review，无 Critical findings）
+- [ ] 六轴 review 通过
+- [ ] design-review 交叉审通过，无 Critical findings
 - [ ] 后续 Plan 输入齐全：restate + 设计文档 + 测试目标
 
 ## Exit Gate
@@ -393,7 +411,8 @@ TO 传递给后续 Plan（指导切片 + task covers）、Build（驱动 TDD）�
 - [ ] verify 策略已产出，5 维自审通过，用户确认
 - [ ] 路径覆盖审核通过（覆盖状态表全 ✅）
 - [ ] verify 策略已落盘到设计文档的「验证策略」章节
-- [ ] 设计文档评审通过（六轴 review + design-review，无 Critical findings）
+- [ ] 设计文档已由 dev-design-refine 产出（Step 8）
+- [ ] 设计文档评审通过——六轴 review + design-review 交叉审，无 Critical findings（Step 9）
 - [ ] 后续 Plan 输入齐全：restate + 设计文档 + 测试目标
 
 ## Common Rationalizations
