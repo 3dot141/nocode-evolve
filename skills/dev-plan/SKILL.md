@@ -265,6 +265,7 @@ AskUserQuestion: "计划确认了，怎么执行？"
 - [ ] 用户显式确认计划（AskUserQuestion）
 - [ ] 执行模式已选（Workflow 并行 / Workflow 顺序）并记录到 Plan header `Execution` 字段
 - [ ] 后续 Build 输入齐全：任务序列 + 测试目标 + 执行模式
+- [ ] **硬交接**：Exit Gate 全部通过后，向用户报告 Plan 完成（含 task 数量 + 执行模式 + 首个 slice 概要），建议下一阶段：Build（`nocode-evolve:dev-build`）。列出 Build 阶段的 sub-steps + 关键决策（devflow Step 5 格式）。等用户拍板，不自行进入下一阶段
 
 ## 核心规则（when X → do Y）
 

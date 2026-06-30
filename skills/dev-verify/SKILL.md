@@ -184,6 +184,7 @@ Step 6 是"按 checklist 逐条核"，Step 7 是"回头查 checklist 本身有�
 - [ ] 反向审计完成（Full 场景）——PRD 路径回扫，遗漏已补测或标注"已知未验+原因+风险"
 - [ ] 性能达标（有需求时）
 - [ ] 后续 Review 可开始
+- [ ] **硬交接**：Exit Gate 全部通过后，向用户报告 Verify 完成（含验收标准通过率 + 证据摘要 + 反向审计结论），建议下一阶段：Review（`nocode-evolve:dev-review`）。列出 Review 阶段的 sub-steps + 关键决策（devflow Step 5 格式）。等用户拍板，不自行进入下一阶段
 
 ## Common Rationalizations
 

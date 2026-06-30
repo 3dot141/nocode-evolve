@@ -196,6 +196,7 @@ Prompt 模板见 `references/implementer-prompt.md`。
 - [ ] 全部测试通过（整个相关套件，不只新写的）
 - [ ] build 通过
 - [ ] 后续 Verify 可开始
+- [ ] **硬交接**：Exit Gate 全部通过后，向用户报告 Build 完成（含完成 task 数 + 测试通过状态 + build 状态），建议下一阶段：Verify（`nocode-evolve:dev-verify`）。列出 Verify 阶段的 sub-steps + 关键决策（devflow Step 5 格式）。等用户拍板，不自行进入下一阶段
 
 **"lint + typecheck 通过" ≠ 完成。** 空函数体、未填充的方法、placeholder 注释都能过 lint 和 typecheck。Exit Gate 必须独立确认每个 task 的功能已实现，不只是语法合法。
 

@@ -533,6 +533,7 @@ TO 传递给后续 Plan（指导切片 + task covers）、Build（驱动 TDD）�
 - [ ] 设计文档已由 dev-design-refine 产出（Step 8c）
 - [ ] 设计文档评审通过——六轴 + 内部一致性核对 + design-review 交叉审，无 Critical findings（Step 9）
 - [ ] 后续 Plan 输入齐全：restate + 设计文档 + 测试目标
+- [ ] **硬交接**：Exit Gate 全部通过后，向用户报告 Design 完成（含方案摘要 + 测试目标概要），建议下一阶段：Plan（`nocode-evolve:dev-plan`）。列出 Plan 阶段的 sub-steps + 关键决策（devflow Step 5 格式）。等用户拍板，不自行进入下一阶段
 
 ## Common Rationalizations
 

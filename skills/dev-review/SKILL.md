@@ -176,6 +176,7 @@ Task 6: 用户 approve
 - [ ] 所有 Critical 已 fix
 - [ ] 用户对 Warning 逐条显式拍板
 - [ ] fix 改了代码 → 已回 Build → Verify → 再 Review（回流规则）
+- [ ] **硬交接**：Exit Gate 全部通过后，向用户报告 Review 完成（含 findings 统计 + Critical/Warning 处置结果），建议下一阶段：Land（`nocode-evolve:dev-land`）。列出 Land 阶段的 sub-steps + 关键决策（devflow Step 5 格式）。等用户拍板，不自行进入下一阶段
 
 ## Common Rationalizations
 
