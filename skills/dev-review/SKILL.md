@@ -9,7 +9,21 @@ description: Use before merging any change, after completing a feature, or when 
 
 自评 + 独立交叉评 + 统一 **findings** 分级。对自己写的、另一个 agent 写的、人写的代码都适用。
 
-> Leading word: **findings**。每条 finding 有 id + axis + evidence + fix + action。没有 evidence 的 finding 是直觉不是评审。
+## 引入 reviewing 框架
+
+dev-review 是 `reviewing` 框架的一个细则（评审对象 = 代码 diff）。**进入后先 Read 框架骨架，套通用流程**，不在本 skill 重写流程/独立性/分级语义：
+
+1. `Read {NOCODE_SKILL_REF}/reviewing/skeleton.md` —— 7 步流程 + 分档 + 方法选择表 + 公共能力 how-to
+2. `Read {NOCODE_SKILL_REF}/reviewing/findings-contract.md` —— finding / verdict schema + 5→3 分级映射 + Evidence Gate
+
+dev-review 在框架里的定位（其余照骨架走）：
+
+- **领域维度（框架第 3 步注入点）= 五轴 + Spec 轴路径覆盖**。五轴（正确性 / 可读性 / 架构 / 安全 / 性能）是 Standards 轴的领域维度；Spec 轴路径覆盖是**附加维度**（详见 Step 6）。这两组维度就是后续 finding 的 `axis`。
+- **选方法（框架第 4 步 selectMethods）= `[checklist（五轴逐项核查）+ red-blue-adversarial（异源 codex 交叉）]`**。代码 diff 对象查骨架方法选择表正是这两个。**按对象加选 card**：审到 SQL / schema / migration → 加选 `{NOCODE_SKILL_REF}/reviewing/methods/database-method.md`；审到架构决策 → 加选 `{NOCODE_SKILL_REF}/reviewing/methods/architecture-method.md`（不经 manifest，靠 selectMethods）。
+- **findings 套统一契约**：每条 finding 走 findings-contract 的 schema；分级走 C/W/S（dev-review 原生即 C/W/S，1:1 直通 `severity`），Q/SA 走 `kind`。
+- **公共能力全走框架**：CLAIM 剥离 / codex 经 `rule-codex-review` 派 / Evidence Gate / Doubt Theater / 分档判定都在 skeleton §4，本 skill 只引用不重写。
+
+> Leading word: **findings**。每条 finding 有 id + axis + evidence + fix。没有 evidence 的 finding 是直觉不是评审。
 
 产出：分级 findings 报告（Critical / Warning / Suggestion），用户逐条拍板。Critical 不可 override。
 
@@ -34,16 +48,19 @@ description: Use before merging any change, after completing a feature, or when 
 - [ ] 评审范围 = 本次变更涉及的代码（不评历史遗留）
 - [ ] Spec 轴输入就位：PRD 原始路径清单 + restate 路径↔SC 绑定 + Design TO 表（Full 场景）
 
-## 领域指南（评审时按需 Read）
+## 领域维度来源（评审时按需取）
 
-| 领域 | 何时 Read | 用来做什么 |
+**安全轴 / 架构轴的领域清单已统一为 method card 单源**——selectMethods 选对应 card，**不再 Read 旧 `security-guide.md` / `architecture-principles.md`**（消除重叠）。其余轴仍按需 Read guide。
+
+| 轴 / 检查 | 取什么 | 用来做什么 |
 |---|---|---|
-| `{NOCODE_SKILL_REF}/security-guide.md` | 过安全轴时 | OWASP 逐条 / 三层边界 / AI/LLM 安全 |
-| `{NOCODE_SKILL_REF}/performance-guide.md` | 过性能轴时 | N+1 / 重渲染 / bundle 反模式 |
-| `{NOCODE_SKILL_REF}/architecture-principles.md` | 过架构轴时 | Deep/Shallow / Seam 纪律 / Hyrum's Law |
-| `{NOCODE_SKILL_REF}/testing-guide.md` | 审测试质量时 | DAMP / 替身偏好序 / 金字塔 |
-| `{NOCODE_SKILL_REF}/frontend-guide.md` | 审 UI 代码时 | 组件模式 / Avoid AI Aesthetic / WCAG |
-| `{NOCODE_SKILL_REF}/path-conventions.md` | 过 Spec 轴路径检查时 | 路径 ID 体系 / 状态标注 / 下游消费协议 |
+| **安全轴** | selectMethods 选 `{NOCODE_SKILL_REF}/reviewing/methods/security-method.md`（card 单源） | OWASP 逐条 / 三层边界 / AI/LLM 安全 |
+| **架构轴** | selectMethods 选 `{NOCODE_SKILL_REF}/reviewing/methods/architecture-method.md`（card 单源） | Deep/Shallow / Seam 纪律 / Hyrum's Law |
+| 数据库（审到 SQL/schema/migration） | selectMethods 加选 `{NOCODE_SKILL_REF}/reviewing/methods/database-method.md` | SQL 反模式 / 索引 / RLS / 并发 |
+| 性能轴 | Read `{NOCODE_SKILL_REF}/performance-guide.md` | N+1 / 重渲染 / bundle 反模式 |
+| 测试质量 | Read `{NOCODE_SKILL_REF}/testing-guide.md` | DAMP / 替身偏好序 / 金字塔 |
+| UI 代码 | Read `{NOCODE_SKILL_REF}/frontend-guide.md` | 组件模式 / Avoid AI Aesthetic / WCAG |
+| Spec 轴路径检查 | Read `{NOCODE_SKILL_REF}/path-conventions.md` | 路径 ID 体系 / 状态标注 / 下游消费协议 |
 
 ## 协议
 
@@ -52,24 +69,28 @@ description: Use before merging any change, after completing a feature, or when 
 **进入后第一件事**，创建以下全部 task：
 
 ```
-Task 1: Five-Axis Self-Review
-  Sub-steps: 正确性 → 可读性 → 架构 → 安全 → 性能逐轴过 diff
+Task 0: Read 框架骨架
+  Sub-steps: Read skeleton.md + findings-contract.md，套通用流程；按 §1 分档（轻/重档）
+  Gate: 骨架已读 + 档位已定
+
+Task 1: Five-Axis Self-Review（checklist 方法 · 领域维度）
+  Sub-steps: 正确性 → 可读性 → 架构 → 安全 → 性能逐轴过 diff（安全/架构轴取对应 card）
   Gate: 五轴逐轴过，每轴至少一条 finding
 
 Task 2: Simplification Pass
   Sub-steps: Chesterton's Fence（删前 git blame）+ dead code
   Gate: 简化项已识别
 
-Task 3: Codex Cross-Review
-  Sub-steps: 独立交叉评（不可用则降级并明说）
+Task 3: Cross-Review（red-blue-adversarial · 异源交叉）
+  Sub-steps: CLAIM 剥离后派 codex 异源交叉（经 rule-codex-review；不可用则降级并明说）
   Gate: 两路 findings 合并或降级标注
 
 Task 4: Path Coverage Check
-  Sub-steps: Spec 轴，拿 PRD 原始路径清单逐条比对实现
+  Sub-steps: Spec 轴附加维度，拿 PRD 原始路径清单逐条比对实现
   Gate: 路径覆盖率报告产出
 
 Task 5: Findings Triage
-  Sub-steps: 统一 schema 分级（Critical/Warning/Suggestion）
+  Sub-steps: 套统一契约 schema 分级（Critical/Warning/Suggestion + kind），过 Evidence Gate
   Gate: findings 呈现给用户
 
 Task 6: 用户 approve
@@ -83,9 +104,9 @@ Task 7: 硬交接 — 调用下一步 skill
 
 每完成一个标 done。
 
-### Step 1: Five-Axis Self-Review
+### Step 1: Five-Axis Self-Review（checklist 方法 · 领域维度）
 
-按五轴逐一过 diff（详细检查点见 `references/five-axis-guide.md`）：
+这是框架第 4 步选的 `checklist` 方法套 dev-review 的领域维度（五轴）。按五轴逐一过 diff，每轴显式标 ✅/⚠️/❌（详细检查点见 `references/five-axis-guide.md`）：
 
 | 轴 | 核心问题 | 高频缺陷 |
 |---|---|---|
@@ -95,7 +116,7 @@ Task 7: 硬交接 — 调用下一步 skill
 | 安全 | 信任边界守住了吗？ | OWASP Top 10 / 注入 / 密钥硬编码 |
 | 性能 | 不必要的开销？ | N+1 / unbounded fetch / 缺分页 |
 
-安全详见 `{NOCODE_SKILL_REF}/security-guide.md`。性能详见 `{NOCODE_SKILL_REF}/performance-guide.md`。
+安全轴 / 架构轴取 method card（`reviewing/methods/security-method.md` / `architecture-method.md`，card 单源，不再 Read 旧 guide）。性能详见 `{NOCODE_SKILL_REF}/performance-guide.md`。
 
 **Review 中测试评估**：测试是否会在重构中存活？重命名内部函数测试就挂 = 测的是实现不是行为。
 
@@ -111,16 +132,22 @@ Task 7: 硬交接 — 调用下一步 skill
 - **Dead code**：识别 → 列出 → 问用户 → 确认后再删
 - **Testability**：接受依赖不创建依赖（`processOrder(order, gateway)` 而非内部 `new`）；返回结果不副作用；接口面积小。可测的形状 = 好的形状
 
-### Step 3: Codex Cross-Review
+### Step 3: Cross-Review（red-blue-adversarial · 异源交叉）
 
-自评有盲区——单模型 reviewer 与原作者共享同源盲点，不同架构的模型才能抓出来。先探 codex 可用性（`rule-codex-review` 的 `setup --json`），不可用则降级自评 + 明说（不静默跳过）。
-合并两路 findings：交集 = 高置信，对称差 = 各自盲点。
+这是框架第 4 步选的 `red-blue-adversarial` 方法的异源交叉路（重档），公共能力走 skeleton §4：
 
-**Doubt theater 检测**：连续 2+ 轮 reviewer 有实质发现但 0 条被分类为 actionable = 在验证不是在评审，停下升级。
+自评有盲区——单模型 reviewer 与原作者共享同源盲点，不同架构的模型才能抓出来。**CLAIM 剥离**后（只传 diff + 约束 + 五轴维度，不传自评结论）派独立审查，统一经 `rule-codex-review` 派 codex（先探可用性 `setup --json`），不可用则降级自评 + 明说并在独立性声明标"同模型（降级）"（不静默跳过）。
+合并两路 findings：同 `[location, axis]` 交集 = 高置信，对称差 = 各自盲点。
+
+**Doubt theater 检测**（skeleton §4.4）：连续 2+ 轮 reviewer 有实质发现但 0 条被分类为 actionable = 在验证不是在评审，停下升级。
 
 ### Step 4: Findings Triage
 
-每条 finding 统一结构：`id`（C1/W1/S1）+ `axis` + `evidence`（file:line + 代码）+ `fix`（可操作的修法）+ `action`（Critical/Warning/Suggestion）。
+每条 finding 套**统一契约**（`{NOCODE_SKILL_REF}/reviewing/findings-contract.md` 的 schema）：`id`（C1/W1/S1，特殊性质用 Q1/SA1）+ `severity`（critical/warning/suggestion）+ `kind`（normal/open-question/self-audit，正交于 severity）+ `axis`（五轴名或 Spec 轴）+ `location`（file:line / `[锚点]`）+ `evidence`（代码摘录）+ `finding`（问题描述）+ `fix`（可操作修法）+ `source`（蓝军 / 红军(Codex) / subagent）。
+
+> 原 `action`（Critical/Warning/Suggestion）语义即 `severity`——dev-review 原生就是 C/W/S，1:1 直通，无需映射。最上层加一个 `verdict { approved, counts, recommendation }`：存在未处置 Critical → `approved:false`。
+
+**Evidence Gate**（skeleton §4.3 / 契约约束③）：代码事实类 finding 缺 `location` 不许上 Critical/Warning，降级 `kind=open-question`（待作者核实），防猜测式指控。
 
 **Structural Remedies**：fix 字段不只指出问题，要给出具体重构动作——"replace conditionals with typed dispatcher" 比 "consider refactoring" 有用。具体到"把什么移到哪，怎么改调用方"。几条高置信度的 Structural Remedies 胜过一长串 nit。
 
