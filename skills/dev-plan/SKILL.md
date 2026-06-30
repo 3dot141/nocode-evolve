@@ -12,7 +12,7 @@ description: Use when you have defined goals and need to break work into tasks. 
 > Leading word: **tracer bullet**。每个 task 切一条窄但完整的端到端路径，不按层横切。
 
 输入：Define 的 restate + dev-design-refine 的设计文档（含领域划分、模块设计、接口、业务流、测试目标）（Full 场景）。
-输出：用户确认的任务序列 + 执行模式选择。
+输出：用户确认的任务序列 + 执行模式选择（记录到 Plan header `Execution` 字段）。
 
 ## 非本 skill 请求
 
@@ -77,8 +77,8 @@ Task 8: Round 2 Red-Blue Review + Plan Validation
   Gate: red-blue-deep 流程完成 + 裁决修正完成 + 四项自检全过（任一不过回 Task 7 补）
 
 Task 9: 用户确认 + 选执行模式
-  Sub-steps: 完整呈现计划 → AskUserQuestion 确认 → 选执行模式
-  Gate: 用户确认 + 执行模式已选（subagent 并行 / 顺序）
+  Sub-steps: 完整呈现计划 → AskUserQuestion 确认 → 选执行模式 → 记录到 Plan header Execution 字段
+  Gate: 用户确认 + 执行模式已选（Workflow 并行 / Workflow 顺序）
 ```
 
 每完成一个标 done。
@@ -230,13 +230,13 @@ task 间依赖不成环，底层 task 排前面。循环依赖说明切片方式
 
 ```
 AskUserQuestion: "计划确认了，怎么执行？"
-- Subagent 并行 (推荐) — 每 task 派独立 subagent，快速迭代
-- 当前会话顺序执行 — 在本会话逐 task 执行
+- Workflow 并行 (推荐) — 按依赖图拓扑派发，无依赖的 task 并行执行
+- Workflow 顺序 — 逐 task 派发，每个完成再下一个
 ```
 
-Subagent → `Skill(nocode-evolve:subagent-driven-development)`。当前会话 → Build slice 循环。
+两种模式都通过 Workflow 派发独立 subagent 执行，不在当前会话跑实现代码。区别只在并行度：并行模式按依赖图拓扑同时推进无依赖的 task，顺序模式一次一个。
 
-**Inline planning**：AFK task 连续推进前发轻量计划（"1.X 2.Y 3.Z → 除非你纠正否则执行"），30 秒成本换一个方向校验点。HITL task 本身就有停点，不需要。
+选择后记录到 Plan header 的 `Execution` 字段（`workflow-parallel` 或 `workflow-sequential`），供 Build 读取。
 
 ### Plan Document Header
 
@@ -250,6 +250,7 @@ Subagent → `Skill(nocode-evolve:subagent-driven-development)`。当前会话 �
 **Tech Stack**: [关键技术/库]
 **Design Doc**: [路径（Full 场景）]
 **Test Objectives**: [测试目标摘要]
+**Execution**: [workflow-parallel | workflow-sequential]
 ```
 
 ## Exit Gate
@@ -262,7 +263,7 @@ Subagent → `Skill(nocode-evolve:subagent-driven-development)`。当前会话 �
 - [ ] Round 1 red-blue-deep 通过 + 骨架已修正（Step 6）
 - [ ] Round 2 red-blue-deep + Plan Validation 通过（Step 8）
 - [ ] 用户显式确认计划（AskUserQuestion）
-- [ ] 执行模式已选（subagent 并行 / 当前会话顺序）
+- [ ] 执行模式已选（Workflow 并行 / Workflow 顺序）并记录到 Plan header `Execution` 字段
 - [ ] 后续 Build 输入齐全：任务序列 + 测试目标 + 执行模式
 
 ## 核心规则（when X → do Y）

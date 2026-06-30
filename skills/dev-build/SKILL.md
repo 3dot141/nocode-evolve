@@ -3,15 +3,9 @@ name: dev-build
 description: Use when executing implementation tasks from a plan, writing new code, or implementing features. Use when devflow routes to Build stage, or when the user says "开始实现/写代码/执行计划/build it/动手/实现这个功能/把X加上/继续写/implement". Also use when resuming implementation work after a break or switching back from debugging.
 ---
 
-# build — 增量实现，slice 闭环
+# build — Workflow 编排，per-task 三阶段验证
 
-**Iron Law: 没有失败测试就没有产品代码。先写了代码？删掉，从测试开始。**
-
-每个 task 走一个 **red-green** 循环闭环：失败测试(red) → 最小实现(green) → 重构 → commit。一次只推一个 slice，不积累未测代码。
-
-> Leading word: **red-green**。没见过红就不知道绿是不是真的。
-
-**头号反模式：horizontal slicing**——"先写所有 model，再写所有 service，再写所有 handler"。每层做完都不可验证，集成风险堆到最后才爆。同理"先写所有测试再写所有实现"也是 horizontal——批量写的测试测的是想象行为不是真实行为，会测 shape 不测 user-facing behavior。用 tracer bullet 垂直切：一个 slice = 一个失败测试 + 它的最小实现 + commit。
+Build 通过 Workflow 派发独立 subagent 执行 plan 中的每个 task。每个 task 走三阶段验证：实现 → spec 合规审查 → 代码质量审查。Build skill 本身是编排者，不执行实现代码。
 
 ## 非本 skill 请求
 
@@ -21,9 +15,9 @@ description: Use when executing implementation tasks from a plan, writing new co
 
 - [ ] Plan 任务序列已产出且用户确认
 - [ ] Full 场景：Design 测试目标可用（指导 TDD 写什么测试）
-- [ ] 执行模式已选（subagent 并行 / 当前会话顺序）
+- [ ] 执行模式已确定（见 Step 0）
 
-## 领域指南（实现时按需 Read）
+## 领域指南（注入到 implementer prompt 中按需 Read）
 
 | 领域 | 何时 Read | 用来做什么 |
 |---|---|---|
@@ -34,7 +28,7 @@ description: Use when executing implementation tasks from a plan, writing new co
 | `{NOCODE_SKILL_REF}/ui-taste-model.md` | 实现 UI 视觉层时 | 有 `[design-source: ...]` → 照外部产物实现不发挥：`claude-design <projectId>` 用 `/design import` 拉回、`prototype <路径>` 直接读 HTML；无标识 → 读设计文档 `## UI 设计` 节照做；设计文档也没有 → 按 `ui-taste-model.md` 选方向自行发挥 |
 | `{NOCODE_SKILL_REF}/architecture-principles.md` | 拿不准模块边界时 | Deep Module / Seam / 依赖分类 |
 
-**技术栈配方**：当项目技术栈命中以下场景时，Read 对应 reference 拿可粘贴代码样例：
+**技术栈配方**：当项目技术栈命中以下场景时，注入到 implementer prompt 让 subagent Read 对应 reference：
 
 | 场景 | 触发特征 | Read |
 |---|---|---|
@@ -44,116 +38,166 @@ description: Use when executing implementation tasks from a plan, writing new co
 
 ## 协议
 
-### Step 0: TaskCreate
+### Step 0: 确定执行模式
 
-**进入后第一件事**，创建以下全部 task：
+读 Plan 文档 header 的 `Execution` 字段：
 
-```
-Task 1: 加载计划
-  Sub-steps: 读 Plan 任务序列 + Design 测试目标
-  Gate: 计划 + 测试目标已加载
-
-Task 2: 逐 task 执行 slice
-  Sub-steps: 每个 plan task 走 5a Scope Lock → 5b Test First → 5c Implement → 5d Verify&Commit
-  Gate: 每个 task 完成标 completed
-
-Task 3: Gate 检查
-  Sub-steps: 跑完整测试套件 + build
-  Gate: 所有 task 完成 + 全测试通过 + build 通过
-```
-
-每完成一个标 done。
-
-### Step 1: slice 循环（逐 task）
-
-一次推进一个 task，不积累未测代码：
+- **有值**（`workflow-parallel` 或 `workflow-sequential`）→ 直接使用
+- **无值**（Plan 未记录，或跨会话恢复）→ AskUserQuestion 补问：
 
 ```
-for each task in plan:
-  5a. Scope Lock     锁范围 + 来源核对 + HITL 停 / AFK 继续
-  5b. Test First     Iron Law: 先写失败测试
-  5c. Implement      最小代码过绿 + 重构
-  5d. Verify & Commit  test+build+无回归 → 描述性 commit
+AskUserQuestion: "Plan 里没有记录执行模式，怎么跑？"
+- Workflow 并行 (推荐) — 按依赖图拓扑，无依赖的 task 并行执行
+- Workflow 顺序 — 逐 task 顺序执行
 ```
 
-> 端到端示例（一个完整 slice：5a Scope Lock → 5b 失败测试 → 5c 实现 → 5d commit）见 `references/examples/example-build-slice.md`
+### Step 1: 加载计划 + 生成 Workflow
 
-#### 5a. Scope Lock
+1. 读 Plan 文档：任务序列 + 依赖图 + Design 测试目标
+2. 解析依赖图拓扑，识别哪些 task 可并行
+3. 为每个 task 组装 implementer prompt（见下方「Implementer Prompt 组装」）
+4. 生成 Workflow 脚本并调用 `Workflow()` 执行
 
-- 取 task，确认 ≤ 5 文件 + 验收标准。超过 → 回 Plan 拆
-- **HITL task**：停下等用户决策再继续。**AFK task**：连续推进
-- **读 Plan task 的真实代码**：Plan Round 2 已填充测试代码 + 实现代码 + 验证命令，作为实现起点。不是照抄——实际代码库可能变化，需要适应（import 调整、API 变更、类型不匹配）
-- **有 pd-ui 产出时**：前端 task 从原型文件读视觉参考，组件 `data-testid` 继承 `.ui.md` 定义的命名（不重新命名），确保 dev-verify 的 `interactions.json` 可直接复用
-- **样式完整性清点**（有 pd-ui 原型时必做）：实现前先清点原型定义的视觉层——token（颜色/字体/间距）、组件样式（按钮变体/卡片/输入框/导航等）、交互状态（hover/active/disabled/empty/loading/error）、装饰层（纹理/渐变/阴影）。逐项确认 app 里有对应实现，缺哪补哪。"读了原型"≠"搬完了"——只搬 token 层而漏掉组件样式是已知反模式
-- **Source check**：Read 所有涉及代码/文档，标注 `[Read path:line]` / `[Doc URL]` / `[推断]`
-- 框架 API 查官方文档确认。文档不可达 → 标 `UNVERIFIED` + 退回本地源码
-- 只碰本 task 声明的文件。计划外发现用 **NOTICED BUT NOT TOUCHING** 模式：显式记录发现 + 位置 + 原因，问用户是否建 task。具体：不顺手清理相邻代码、不重构只读文件的 import、不删不懂的注释、不加 spec 外"看起来有用"的功能、不现代化只读文件语法
+### Step 2: Workflow 脚本结构
 
-#### 5b. Test First (Iron Law)
+```js
+export const meta = {
+  name: 'dev-build',
+  description: 'Execute plan tasks with per-task 3-stage verification',
+  phases: [
+    { title: 'Implement' },
+    { title: 'Spec Review' },
+    { title: 'Quality Review' },
+    { title: 'Final Review' },
+  ],
+}
 
-**NO PRODUCTION CODE WITHOUT A FAILING TEST FIRST.**
+// --- workflow-parallel 模式 ---
+// 按依赖图拓扑分层，同层 task 并行，跨层顺序
+// 例: T1,T2 无依赖 → 并行; T3 依赖 T1+T2 → 等前两个完成
+//
+// --- workflow-sequential 模式 ---
+// 所有 task 顺序执行，忽略并行机会
+//
+// 两种模式都走 pipeline 三阶段:
+// implement → spec review → quality review
 
-1. **Red** — 写表达验收标准的测试，运行确认失败（失败原因是"功能没实现"不是"测试写错"）。即使在询问验收标准阶段，也先示范测试签名让用户看到你理解了需求
-2. **Green** — 写刚好够过绿的代码
-3. **Refactor** — 行为不变降复杂度
+const IMPL_SCHEMA = {
+  type: 'object',
+  properties: {
+    status: { type: 'string', enum: ['DONE', 'DONE_WITH_CONCERNS', 'BLOCKED', 'NEEDS_CONTEXT'] },
+    summary: { type: 'string' },
+    filesChanged: { type: 'array', items: { type: 'string' } },
+    concerns: { type: 'string' },
+    testResults: { type: 'string' },
+  },
+  required: ['status', 'summary', 'filesChanged'],
+}
 
-已经写了产品代码再补测试？**删掉代码，从测试开始。** 没例外。不是"留着参考"——直接删，重新从测试出发。
+const REVIEW_SCHEMA = {
+  type: 'object',
+  properties: {
+    approved: { type: 'boolean' },
+    issues: { type: 'array', items: { type: 'string' } },
+  },
+  required: ['approved'],
+}
 
-**回归测试有效性验证**：写完回归测试后走一遍完整红绿循环证明它真能抓 bug——写 → 跑(过) → 还原 fix → 跑(必须红) → 恢复 → 跑(过)。"写了个回归测试"不算，亲眼看它在没有 fix 时失败才算。
+// 按拓扑层分组执行 (parallel 模式) 或逐个执行 (sequential 模式)
+for (const layer of topoLayers) {
+  const layerResults = await parallel(layer.map(task => () =>
+    pipeline(
+      [task],
+      // Stage 1: Implement
+      t => agent(implementerPrompt(t), {
+        label: `impl:${t.id}`,
+        phase: 'Implement',
+        schema: IMPL_SCHEMA,
+      }),
+      // Stage 2: Spec Review (only if DONE/DONE_WITH_CONCERNS)
+      // specReviewPrompt 必须包含: task 文本 + implResult + 设计文档相关段落
+      //   + plan 全局视图(依赖图+task 列表) + 前置 task 产出摘要
+      (implResult, t) => {
+        if (implResult.status === 'BLOCKED' || implResult.status === 'NEEDS_CONTEXT') {
+          log(`${t.id} blocked: ${implResult.concerns}`)
+          return null
+        }
+        return agent(specReviewPrompt(t, implResult, designDoc, planOverview, depOutputs), {
+          label: `spec:${t.id}`,
+          phase: 'Spec Review',
+          schema: REVIEW_SCHEMA,
+        })
+      },
+      // Stage 3: Quality Review (only if spec approved)
+      (specResult, t) => {
+        if (!specResult?.approved) {
+          log(`${t.id} spec review failed — needs fix`)
+          return null
+        }
+        return agent(qualityReviewPrompt(t), {
+          label: `quality:${t.id}`,
+          phase: 'Quality Review',
+          schema: REVIEW_SCHEMA,
+        })
+      },
+    )
+  ))
+}
 
-**学派选择（outside-in vs inside-out）**：默认 **outside-in**——先写切片最外层的失败测试，下层用 fake 顶住，逐层向内替换真实现。这和 Plan 的 tracer bullet 同向（从外切到里）。当切片核心是纯领域逻辑（算法/状态机/计算）时切回 **inside-out**（先把 domain 写对再包外层）。按切片形状选，不是信仰。
+// Final: 整体 code review
+phase('Final Review')
+const finalReview = await agent(finalReviewPrompt, {
+  label: 'final-review',
+  phase: 'Final Review',
+})
+```
 
-测试层级、DAMP/DRY、替身偏好序（real > fake > stub > mock）、测行为不测交互 → 见 `{NOCODE_SKILL_REF}/testing-guide.md` + `references/test-pyramid-guide.md`，不在此重述。
+> 这是结构示意，Build 根据实际 plan 内容生成具体脚本。
 
-**测试难写 = 设计难**（build 独有的设计反馈）：不知怎么测 → 先写期望 API / 先写断言；测试太复杂 → 设计太复杂，简化接口；必须 mock 一切 → 耦合太重，用依赖注入；setup 巨大 → 抽 helper 或简化设计
+### Step 3: 处理 Workflow 结果
 
-#### 5c. Implement + Green
+Workflow 完成后，Build 作为编排者验证结果：
 
-最少代码让测试变绿。不多写一行未被测试覆盖的逻辑。
-Feature flags 包裹未完成功能。新功能默认关闭。
+1. **BLOCKED / NEEDS_CONTEXT task**：汇总报告给用户，提供上下文后可重跑
+2. **Spec review 未通过的 task**：汇总 issues，决定是否重新派发 implementer 修复
+3. **全部通过**：进 Exit Gate
 
-#### 5d. Verify & Commit
+**编排者验证（不信 subagent 自报）**：
 
-test pass + build pass + 无回归，三项没全绿不许 commit。
-commit message 说清 what + why。
-**同一命令成功后不重复跑**——成功跑过的验证命令在代码未变前不要再跑，只在后续编辑后重跑。重复跑无信息增量。
+1. **独立查 diff**：Read subagent 改动的文件，确认 scope 未越界
+2. **独立跑测试**：跑完整测试套件，不只依赖 subagent 的测试输出
+3. **spec 核对**：subagent 交付的 vs task 验收标准逐条核对
+4. **空壳扫描**：检查 subagent 产出的代码中是否有未实现的空壳——空函数体、placeholder 注释（`// TODO`、`// implement`）、`throw new Error('not implemented')`、只有类型签名没有逻辑的方法。lint + typecheck 通过不代表功能完整，空函数合法但无用。发现空壳 → 视为 task 未完成，重新派发 implementer 补齐
 
-## 异常路径
+## Implementer Prompt 组装
+
+Build 为每个 task 组装 implementer prompt，内容来自三个来源：
+
+1. **task 描述**（来自 Plan）：完整 task 文本、代码、验证命令
+2. **执行纪律**（来自 `references/implementer-disciplines.md`）：Iron Law TDD、Scope Lock、偏差分级、NOTICED BUT NOT TOUCHING、异常路径
+3. **上下文注入**（按条件）：有 pd-ui 原型时注入视觉清点纪律；技术栈配方按项目特征注入
+
+Prompt 模板见 `references/implementer-prompt.md`。
+
+## 异常路径（编排者层面）
 
 | 触发 | 处理 |
 |---|---|
-| 同一测试修 3 次仍失败 | Debug 横切（见 `../../references/debug-protocol.md`）。**第一步不是列假设，是建 tight 反馈回路**：一条已跑过、能因此 bug 变红、确定性、秒级的命令。没有这条命令，禁止进假设阶段——读代码猜根因正是这个纪律要防的 |
-| 卡住/方向不确定 | Doubt-Driven：停下写出不确定点+假设，找用户或文档确认。上下文冲突（spec 说 X 但代码是 Y）→ 不静默选一个，显式列选项让用户拍板 |
-| 实现偏离计划 | **偏差分级处置**（见下） |
-
-### 偏差分级处置
-
-slice 执行中发现实现路径和计划不完全对得上——不是所有偏差都要回 Plan：
-
-| 偏差程度 | 信号 | 处置 |
-|---|---|---|
-| **小** — 路径不同但目标不变 | 换了个等价 API / 文件内位置微调 / 顺序略不同 | 记录偏差理由（commit message 或 NOTICED），继续 |
-| **中** — task scope 需调整 | 发现要多改 1-2 个文件 / 验收标准要补一条 | 暂停，在当前 task 补 scope 说明，不回 Plan。如果超出 ≤5 文件 → 升级为大偏差 |
-| **大** — 设计假设错误 | 依赖的接口不存在 / 架构方向不可行 / 核心数据结构需重新定义 | 停手，走回流路径 Build → Design → Plan |
-
-不要硬做也不要轻易回退——大多数偏差是小偏差，记下就好。
-
-### Subagent 产出验证
-
-用 subagent 并行执行 task 时，不信 subagent 自报的"完成"：
-
-1. **独立查 diff**：Read subagent 改动的文件，确认 scope 未越界
-2. **独立跑测试**：在主 agent 跑完整测试套件，不只依赖 subagent 的测试输出
-3. **spec 核对**：subagent 交付的 vs task 验收标准逐条核对
-
-这是 superpowers 两段评审（spec → quality）的轻量版——先看"做的对不对"再看"做的好不好"。
+| task BLOCKED | 收集 blocker 信息，提供更多 context 重新派发；或升级到更强 model 重试；或回 Plan 拆分 |
+| spec review 不过 | 派发 fix subagent 修复 spec issues → 重新 spec review → 循环直到通过 |
+| quality review 不过 | 派发 fix subagent 修复 quality issues → 重新 quality review → 循环直到通过 |
+| 多个 task 互相冲突 | 停手报告，可能需要回 Plan 调整依赖图 |
 
 ## Exit Gate
 
-- [ ] 所有 plan task 完成
+- [ ] 所有 plan task 完成（Workflow 结果确认）
+- [ ] 编排者独立验证通过（diff + 测试 + spec 核对 + 空壳扫描）
+- [ ] 零空壳：无空函数体、无 TODO/implement placeholder、无 `throw not implemented`
 - [ ] 全部测试通过（整个相关套件，不只新写的）
 - [ ] build 通过
 - [ ] 后续 Verify 可开始
+
+**"lint + typecheck 通过" ≠ 完成。** 空函数体、未填充的方法、placeholder 注释都能过 lint 和 typecheck。Exit Gate 必须独立确认每个 task 的功能已实现，不只是语法合法。
 
 ## 核心规则（when X → do Y）
 
@@ -171,10 +215,9 @@ slice 执行中发现实现路径和计划不完全对得上——不是所有�
 
 ## Red Flags
 
-- 写了产品代码但没有对应的失败测试
-- 一个 slice 改了 > 5 文件
-- commit 前没跑 build / 回归测试
+- Workflow 结果中有 BLOCKED task 未处理就继续
+- spec review 不过强行跳过
+- 编排者没有独立跑测试就报完成
 - commit message 是 "fix" / "update" / "wip"
-- 顺手改了计划外代码（NOTICED BUT NOT TOUCHING 缺失）
-- 测试一上来就绿（没经历 Red 阶段）
-- 框架 API 引用没有来源标注
+- subagent 越界改了计划外文件
+- 报"Build 完成"但留有空壳函数/未实现方法/TODO placeholder（lint+typecheck 通过 ≠ 功能完整）

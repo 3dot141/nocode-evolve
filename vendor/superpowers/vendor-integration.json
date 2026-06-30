@@ -57,8 +57,8 @@
       ]
     },
     "subagent-driven-development": {
-      "action": "keep-as-skill",
-      "reason": "subagent 编排方法论（拆任务/dispatch/review/收敛），与 agents-launcher（启动器）不同"
+      "action": "skip",
+      "reason": "编排模式（per-task 三阶段验证 + 状态机 + model selection）已吸收进 dev-build 的 Workflow 派发逻辑；prompt 模板搬到 dev-build/references/"
     },
     "receiving-code-review": {
       "action": "keep-as-skill",
