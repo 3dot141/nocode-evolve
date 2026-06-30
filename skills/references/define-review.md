@@ -1,18 +1,23 @@
-# define-review — 需求定义评审
+# define-review — 需求定义评审（restate 领域细则）
 
-**评审对象**: dev-define 的 restate 产出
-**评审模式**: red-blue 双模型交叉审（不是自审）
+**评审对象**：dev-define 的 restate 产出
+**定位**：本细则只提供 restate 的**领域维度**（reviewing 框架 skeleton 第 3 步注入点）。流程骨架（分档 / 对象界定 gate / 独立交叉 / findings 归一分级 / 收口拍板）与 findings 结构全部走框架，不在本文重写。
 
-## 流程
+## 引框架
 
-1. **蓝军（Claude）**：按维度表逐项审查 restate，列出通过项 + 疑点
-2. **红军（Codex）**：把 restate 原文 + 维度表交给 Codex 独立攻击（`rule-codex-review` 场景）。**CLAIM 剥离**——不传蓝军的审查结论，只传 restate 原文 + "请按这些维度攻击这份需求定义"
-3. **合并 findings**：蓝军疑点 + 红军攻击点去重合并，按 Critical / Warning / Suggestion 分级
-4. **Critical 必须修复**再放行到下一阶段
+1. **Read `{NOCODE_SKILL_REF}/reviewing/skeleton.md`** 套通用 7 步流程。restate 属"需求 / PRD / restate"类对象，按 skeleton §3 方法选择表取 **`checklist`（领域维度）+ `red-blue-adversarial`（异源交叉）**，独立性 = 异源。
+2. **Read `{NOCODE_SKILL_REF}/reviewing/findings-contract.md`** 套 findings 契约（finding schema + 5→3 分级映射 + Evidence Gate + verdict）。
 
-Codex 不可用 → 降级为 Claude 自己演红军（显式标注"Codex 不可用，降级自审"），但要用 red-blue-deep 的对抗框架，不是走过场。
+> 流程走框架后，本细则只负责下面这张**7 维度表**——它就是 skeleton 第 3 步的 `domainAxes[]`，每个维度名 = finding 的 `axis`。
 
-## 审查维度
+## 怎么走（全部引框架，本文不复述细节）
+
+- **分档**（skeleton §1）：restate 评审默认重档（需求定义的偏差不可逆、影响整个下游），走异源交叉。
+- **选方法 + 执行**（skeleton §3/步骤 4）：`checklist` 逐项遍历下面 7 维度产 finding（蓝军 / Claude 主路）。
+- **独立交叉**（skeleton 步骤 5 + §4.1/§4.2）：`red-blue-adversarial` 派 **Codex 红军**经 `rule-codex-review` 单一通道独立攻击——**CLAIM 剥离**（只传 restate 原文 + 7 维度清单 + "请按这些维度攻击这份需求定义"，不传蓝军已得结论）。Codex 不可用 → 按框架 §4.2 降级 Claude 自演红军并标"同模型（降级）"。
+- **归一分级 + 收口**（skeleton 步骤 6/7）：findings 套 contract schema，按 `[location, axis]` 去重（蓝红交集 = 高置信），分 Critical / Warning / Suggestion；**Critical 必修**再放行到下一阶段。
+
+## 领域维度（restate 七维 — 本细则唯一职责）
 
 | 维度 | 检查什么 |
 |---|---|
@@ -24,11 +29,4 @@ Codex 不可用 → 降级为 Claude 自己演红军（显式标注"Codex 不可
 | scope 边界 | Out of Scope 明确吗？会不会在 Build 阶段膨胀？ |
 | 简化检查 | restate 有没有过度复杂？路径之间有没有重叠可合并？SC 有没有冗余？ |
 
-## findings 格式
-
-```
-| # | 维度 | 级别 | 发现 | 建议 | 来源 |
-|---|---|---|---|---|---|
-| 1 | SC 可测性 | Critical | SC-3 "体验更好" 不可测 | 改为可量化指标 | 红军(Codex) |
-| 2 | scope 边界 | Warning | Out of Scope 未提数据迁移 | 补充 | 蓝军 |
-```
+> 这 7 维度同时供蓝军（checklist 遍历）和红军（Codex 攻击的维度清单）使用——红军拿到的就是这张表 + restate 原文，自己独立判断。

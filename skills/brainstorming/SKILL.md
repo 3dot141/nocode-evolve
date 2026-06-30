@@ -114,7 +114,13 @@ digraph brainstorming {
 - Commit the design document to git
 
 **Spec Self-Review:**
-After writing the spec document, look at it with fresh eyes:
+After writing the spec document, run a **light-depth self-review** (作者自评, 独立性=无) over it with fresh eyes. This review is built on the `reviewing` framework — read these first:
+
+1. `Read {NOCODE_SKILL_REF}/reviewing/skeleton.md` —— 套通用流程骨架（分档 → 对象界定 → 维度 → 执行 → 收口）。Spec self-review 天然**轻档**：走 step 1（轻档）→ 2（对象=刚写的 spec）→ 3（下面 4 个领域维度）→ 4（self-review 形态）→ 7（就地修复），跳过独立交叉（step 5），step 6 分级退化为"修掉或记为遗留"。
+2. `Read {NOCODE_SKILL_REF}/reviewing/methods/self-review.md` —— self-review 方法卡：轻量自查清单 + 纪律（自查是最低门槛不是充分条件；重档对象不能只用 self-review）+ 派发策略（不派 subagent、不调 codex）。
+3. `Read {NOCODE_SKILL_REF}/reviewing/findings-contract.md` —— 仅当有"记录但本轮不修"的遗留项时，套 finding schema（`axis` = 自查项名，`kind = self-audit`，`source = self-review`）。多数自查结果直接就地修复，不必进正式 findings 表。
+
+**领域维度（框架第 3 步注入点）** —— 对着 spec 过这 4 项（= self-review card 维度表按 spec 类型裁剪）：
 
 1. **Placeholder scan:** Any "TBD", "TODO", incomplete sections, or vague requirements? Fix them.
 2. **Internal consistency:** Do any sections contradict each other? Does the architecture match the feature descriptions?

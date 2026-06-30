@@ -1,6 +1,8 @@
 > **本文件是 `dev-design-refine` skill step 5 的 dispatch template，不是 plugin agent。**
 > 被 SKILL.md 整段 Read 后塞进 `Task(general-purpose)` 的 prompt。
 > 唯一 placeholder：`{DOC_PATH}` —— 在 dispatch 前替换为要 review 的设计文档路径。
+>
+> **单源声明（findings 框架对齐）**：本文件下方的 **C/W/S/Q/SA 五档**、《Evidence Gate（代码事实依据）》、《降级路径：Open Questions》、《Self-Audit（第二遍）》是 reviewing 框架 findings 契约里 **Q/SA → kind** 与 **Evidence Gate → 缺 location 降 open-question** 两条约束的**定义单源**——`skills/references/reviewing/findings-contract.md` §4 约束②③ 引用本文件，不复述判据。改这里的 Q/SA / Evidence Gate 触发判据时，去 findings-contract 同步检查映射是否仍对齐（本文件定义、契约只做 5→3 压档映射，二者不冲突）。
 
 # Design Doc Reviewer
 

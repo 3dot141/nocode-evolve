@@ -3,16 +3,22 @@
 **评审对象**: pd-prd 的 `.prd.md` 产出
 **评审模式**: red-blue 双模型交叉审
 
-## 流程
+## 引入框架
 
-1. **蓝军（Claude）**：按维度表逐项审查 PRD，列出通过项 + 疑点
-2. **红军（Codex）**：把 PRD 原文 + 维度表交给 Codex 独立攻击。**CLAIM 剥离**——不传蓝军结论
-3. **合并 findings**：去重合并，Critical / Warning / Suggestion 分级
-4. **Critical 必须修复**再让用户确认
+本细则套用 `reviewing` 框架，只保留 PRD 领域维度，流程/分级/独立交叉/收口全部走框架：
 
-Codex 不可用 → 降级 Claude 自演红军（标注降级）+ red-blue-deep 对抗框架。
+1. **Read `{NOCODE_SKILL_REF}/reviewing/skeleton.md`** —— 套通用流程骨架（分档 → 对象界定 → 评审维度 → 选方法 → 独立交叉 → findings 分级 → 收口拍板）。
+2. **Read `{NOCODE_SKILL_REF}/reviewing/findings-contract.md`** —— 套 findings 统一契约（finding/verdict schema + 5→3 分级映射 + Evidence Gate）。
 
-## 审查维度
+**对象定位**：PRD 文档 → 命中骨架方法选择表「需求 / PRD / restate」行 → 默认方法 `checklist`（下方 8 维度）+ `red-blue-adversarial`（异源交叉），独立性=异源。
+
+**档位**：PRD 是产品方案的真值源、下游 Define/Design 据此展开，属**重档**——走完整 7 步（含独立交叉）。
+
+**独立交叉**（骨架步骤 5，重档必走）：Claude 做蓝军、Codex 做红军，经 `rule-codex-review` 单一通道派发。**CLAIM 剥离**——只传 PRD 原文 + 维度表 + "请按这些维度攻击这份 PRD"，不传蓝军结论。Codex 不可用 → 降级 Claude 自演红军（标注降级、独立性降为"同模型"）+ red-blue-deep 对抗框架，不走过场。
+
+**收口**（骨架步骤 7）：findings 按契约归一到 C/W/S，**Critical 必须修复**再让用户确认。
+
+## 审查维度（框架第 3 步注入点 · PRD 8 维度）
 
 | 维度 | 检查什么 |
 |---|---|
@@ -25,11 +31,4 @@ Codex 不可用 → 降级 Claude 自演红军（标注降级）+ red-blue-deep 
 | 可行性 | AI 能力边界标了吗？投入上限 / appetite 合理吗？ |
 | 简化检查 | PRD 有没有过度膨胀？有没有可以砍掉的低价值 US 或路径？核心和边缘分清了吗？ |
 
-## findings 格式
-
-```
-| # | 维度 | 级别 | 发现 | 建议 | 来源 |
-|---|---|---|---|---|---|
-| 1 | 路径完整性 | Critical | 缺退款系统路径 | 补 系统.2 退款回调 | 红军(Codex) |
-| 2 | 简化检查 | Suggestion | US-7 和 US-3 高度重叠 | 合并为一条 | 蓝军 |
-```
+维度 = finding 的 `axis`。每条 finding 套 findings-contract 的 schema（`id`/`severity`/`kind`/`axis`/`location`/`evidence`/`finding`/`fix`/`source`），顶上加 verdict。

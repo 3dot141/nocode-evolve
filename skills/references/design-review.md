@@ -1,18 +1,21 @@
 # design-review — 技术设计评审
 
 **评审对象**: dev-design 的设计文档产出
-**评审模式**: red-blue 双模型交叉审
 
-## 流程
+## 引入 reviewing 框架
 
-1. **蓝军（Claude）**：按维度表逐项审查设计文档，列出通过项 + 疑点
-2. **红军（Codex）**：把设计文档原文 + 维度表交给 Codex 独立攻击。**CLAIM 剥离**——不传蓝军结论、不传方案选择倾向
-3. **合并 findings**：去重合并，Critical / Warning / Suggestion 分级
-4. **Critical 必须修复**再放行
+本细则**引入 `reviewing` 框架**，通用流程（分档 / 对象界定 / 独立交叉 / 分级 / 收口）走框架，本文只填**设计领域的评审维度**（框架第 3 步注入点）。
 
-Codex 不可用 → 降级 Claude 自演红军（标注降级）+ red-blue-deep 对抗框架。
+1. `Read {NOCODE_SKILL_REF}/reviewing/skeleton.md` —— 套 7 步通用流程骨架。
+2. `Read {NOCODE_SKILL_REF}/reviewing/findings-contract.md` —— 套 findings/verdict schema 与 C/W/S 分级、Evidence Gate。
 
-## 审查维度
+**对象 → 方法**（skeleton §3 方法选择表「设计文档」行）：`checklist`（本文 10 维度）+ `red-blue-adversarial`（异源交叉）。独立性：异源。
+
+- **分档**（skeleton §1）：设计文档涉及架构/选型/不可逆决策 → 默认**重档**，走异源交叉；纯文案/局部澄清类轻量改动可走轻档 self-review。
+- **独立交叉**（skeleton 步骤 5 + §4.1/§4.2）：CLAIM 剥离后把设计文档原文 + 本文维度表交 Codex（经 `rule-codex-review`）独立攻击——**不传蓝军结论、不传方案选择倾向**（设计评审特有：方案倾向最易污染独立路）。Codex 不可用 → 降级 Claude 自演红军（标注降级，独立性记「同模型」）+ red-blue-deep 对抗框架。
+- **分级 / 收口**（skeleton 步骤 6/7 + findings-contract）：findings 套统一 schema，C/W/S 分级，Critical 必修才放行。
+
+## 审查维度（设计领域，框架第 3 步注入）
 
 | 维度 | 检查什么 |
 |---|---|
@@ -27,11 +30,6 @@ Codex 不可用 → 降级 Claude 自演红军（标注降级）+ red-blue-deep 
 | UI 设计（涉及前端时） | 有 UI 设计节吗？组件清单/布局/交互行为/design taste skill 引用到位？ |
 | 简化检查 | 方案有没有过度工程？能不能用更简单的方案达到同样效果？有没有为假设的未来需求增加当前复杂度？ |
 
-## findings 格式
+## findings 产出
 
-```
-| # | 维度 | 级别 | 发现 | 建议 | 来源 |
-|---|---|---|---|---|---|
-| 1 | 方案对比 | Critical | 方案 B 是稻草人，没列 pros | 补充真实优势 | 红军(Codex) |
-| 2 | 简化检查 | Warning | 中间层抽象只有一个消费者 | 考虑去掉 | 蓝军 |
-```
+按 `findings-contract.md` 产出：每条问题套 finding schema（`id`/`severity`/`kind`/`axis`=上表维度名/`location`/`evidence`/`finding`/`fix`/`source`），顶上加 verdict。设计评审多为方案/文档事实，代码事实类 finding（引用具体代码路径/签名）按 Evidence Gate 要求带 `location`。

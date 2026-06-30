@@ -206,7 +206,7 @@ Standard 场景网络探索可简化为 `Agent(fork)` 轻量搜一两个查询�
 
 ### Step 7a: define-review（交叉审）
 
-用户确认前，按 `{NOCODE_SKILL_REF}/define-review.md` 做 red-blue 双模型交叉评审——Claude 做蓝军、Codex 做红军（CLAIM 剥离不传蓝军结论）。findings 合并报告，Critical 必须修复再让用户确认。
+用户确认前做 red-blue 双模型交叉评审：**Read `{NOCODE_SKILL_REF}/reviewing/skeleton.md`** 套通用流程（分档 / 对象界定 / 独立交叉 / 分级 / 收口），按其 §3 选 `red-blue-adversarial`（异源交叉）方法；维度用 **`{NOCODE_SKILL_REF}/define-review.md`** 的 restate 7 维度。Claude 做蓝军逐维遍历、Codex 做红军独立攻击（CLAIM 剥离不传蓝军结论，经框架公共能力 rule-codex-review）。findings 套 `{NOCODE_SKILL_REF}/reviewing/findings-contract.md` 合并报告，Critical 必须修复再让用户确认。
 
 ## Exit Gate
 

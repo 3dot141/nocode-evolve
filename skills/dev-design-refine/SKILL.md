@@ -473,37 +473,53 @@ Task N+2: 保存 + 渲染
 
 ## 通用收尾：Review + 保存（所有场景）
 
-### Review（双路交叉）
+### Review（引 reviewing 框架 · 双路交叉）
 
 **Enter Gate:**
 - [ ] 设计文档初稿完成
 
-**Core Actions:**
-**默认双路交叉验证**（general-purpose subagent + codex 跨模型并行各跑一遍）。一份稿被两个不同模型审：交集 = 高置信，对称差 = 盲点；避开「Claude 审 Claude」同源盲区。
+**引入 reviewing 框架（C1）**：本 Review 是 `reviewing` 框架的一个细则（评审对象 = 设计文档）。**进入后先 Read 框架骨架，套通用流程**，不在本 skill 重写流程 / 独立性 / 分级语义：
 
-1. **a. general-purpose subagent**（in-harness）：
-   - Read `skills/dev-design-refine/references/reviewer-template.md`
+1. `Read {NOCODE_SKILL_REF}/reviewing/skeleton.md` —— 套 7 步通用流程（分档 / 对象界定 / 独立交叉 / 分级 / 收口）+ 方法选择表 + 公共能力 how-to
+2. `Read {NOCODE_SKILL_REF}/reviewing/findings-contract.md` —— 套 finding / verdict schema + 5→3 分级映射 + **Q/SA 经 kind 承载（单源）** + Evidence Gate
+
+本 Review 在框架里的定位（其余照骨架走）：
+
+- **领域维度（框架第 3 步注入点）= `references/reviewer-template.md` 的 7 维度核心审查**（设计意图 / 决策 / 完整性 / 可执行 / 一致性 / 范围 / 骨架可读性）。这是 dev-design-refine 的领域判断逻辑，不在框架里——reviewer-template 同时承载 dispatch prompt 与维度单源。
+- **选方法（框架第 4 步 selectMethods）= `[checklist（reviewer-template 维度逐项核查）+ red-blue-adversarial（异源 codex 交叉）]`**。设计文档对象查骨架方法选择表正是这两个。独立性：异源。
+- **公共能力全走框架**：CLAIM 剥离 / codex 经 `rule-codex-review` 派 / Evidence Gate / Doubt Theater / 分档判定都在 skeleton §4，本节只引用不重写。
+- **分档**（skeleton §1）：设计文档跨模块、含架构 / 选型决策 → 默认**重档**，走双路异源交叉；琐碎改动 / 文案修订 / 用户显式说「轻档」→ 降轻档，只跑 general-purpose 一路，回复点名「轻档，跳过 codex 交叉」，独立性声明标「同模型」。
+
+**Core Actions — 独立交叉（框架步骤 5 · 双路异源）**：一份稿被两个不同模型审：交集 = 高置信，对称差 = 盲点；避开「Claude 审 Claude」同源盲区。两路并行，**CLAIM 剥离**后（只传文档原文 + 维度清单，不传主 agent 的审查结论 / 方案倾向，skeleton §4.1）：
+
+1. **a. general-purpose subagent**（in-harness · checklist 维度套 reviewer-template）：
+   - Read `references/reviewer-template.md`
    - 把模板里的 `{DOC_PATH}` 替换为当前文档路径
    - 调 Task tool（subagent_type=`general-purpose`，description=`"Review design doc"`，prompt = 替换后全文）
-2. **b. codex 跨模型**：按 `rule-codex-review.md` 场景 4 调 codex companion（reviewer-template 准则 + 文档路径）。先 `setup --json` 探测——codex 不可用才降级为仅 general-purpose 并明说 fallback。
-3. **合并两路 Report**：按 reviewer-template 五档（C/W/S/Q/SA）归类；两方都提的标「双方都提 = 高置信」、单方独有标来源。
-4. **降档**（琐碎改动 / 文案修订 / 用户显式说「轻档」）：可只跑 general-purpose 一路，回复点名「轻档，跳过 codex 交叉」。
+2. **b. codex 跨模型**（red-blue-adversarial 异源路，经 `rule-codex-review` 单一通道 · skeleton §4.2）：按场景 4 调 codex companion（reviewer-template 准则 + 文档路径）。先 `setup --json` 探测——codex 不可用才降级为仅 general-purpose 并明说 fallback，独立性声明标「同模型（降级）」。
 
-**用户确认环节（hard gate）**：
-- 把 Report 完整呈现给用户（C / W / S / **Open Questions** / **Self-Audit** 五档全保留，后两者绝不能漏）
+**合并两路 + 分级（框架步骤 6 · findings-contract）**：两路 raw findings 归一到 findings-contract 的 schema：
+- 套五档：**C/W/S 直通 `severity`；Q/SA 经 `kind`（open-question / self-audit）承载，severity 另算（约束②）**——五档语义不丢
+- 过 **Evidence Gate**（代码事实类缺 location → 降 open-question，约束③）
+- 按 `[location, axis]` 去重——两方都提的标「双方都提 = 高置信」、单方独有标 `source`
+
+**收口 + 用户确认（框架步骤 7 · hard gate）**：
+- 把 findings 完整呈现给用户（C / W / S / **Open Questions(Q)** / **Self-Audit(SA)** 五档全保留，后两者绝不能漏）
 - 每条问题短编号（`C1 / W1 / S1 / Q1 / SA1`）
 - 用户逐条勾选 fix / skip；Open Questions 三选 fix / skip / **answer**
 - 快捷选项：「全修 Critical+Warning+Self-Audit」「全跳过」「自由指示」
-- **用户确认前不动文档主体**
-- 例外：reviewer Verdict 是 ✅ Pass → 跳过此步直接保存
+- **Critical 不可 override**（skeleton §5）；**用户确认前不动文档主体**
+- 例外：verdict `approved:true`（reviewer ✅ Pass）→ 跳过此步直接保存
 
 **修订 + Review Log**：
 - 据用户决定 in-place 改主体；不在清单里的问题不顺手修
-- 把本轮 Report 全文 + 用户决定 + 修订摘要 append 到文档末尾 `## Review Log`
+- 把本轮 findings 全文 + 用户决定 + 修订摘要 append 到文档末尾 `## Review Log`
 - 询问「再来一轮 review？」是 → 回 Review；否 → 保存
 
 **Exit Gate:**
-- [ ] 双路 review 完成（或降档明说）
+- [ ] 框架已引（skeleton + findings-contract 已 Read）
+- [ ] 双路 review 完成（或降轻档明说）
+- [ ] findings 套统一契约（五档；Q/SA 经 kind）
 - [ ] 用户逐条确认 fix / skip
 - [ ] 修订完成 + Review Log 已追加
 

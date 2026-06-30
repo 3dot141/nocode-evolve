@@ -112,6 +112,9 @@ const IMPL_SCHEMA = {
   required: ['status', 'summary', 'filesChanged'],
 }
 
+// REVIEW_SCHEMA 是 reviewing 框架 findings 契约的 verdict 层在 dev-build 的落地：
+// approved → verdict.approved；issues[] 每条 tag 经 findings-contract 映射表压到 severity。
+// 见下方「per-task review 引入 reviewing 框架」。
 const REVIEW_SCHEMA = {
   type: 'object',
   properties: {
@@ -171,6 +174,26 @@ const finalReview = await agent(finalReviewPrompt, {
 ```
 
 > 这是结构示意，Build 根据实际 plan 内容生成具体脚本。
+
+### per-task review 引入 reviewing 框架
+
+per-task 的 **Spec Review + Quality Review** 两阶段不自造一套 review 范式，是 `reviewing` 框架的一次实例化。组装这两段 review prompt 时引入框架：
+
+- **套通用流程**：`Read {NOCODE_SKILL_REF}/reviewing/skeleton.md`——分档（实现是不可逆产出，per-task 默认重档）、对象界定 + 进入 gate（评审对象 = 单 task 的实现 diff；gate = implementer status ∈ DONE/DONE_WITH_CONCERNS）、独立交叉（spec/quality reviewer 是与 implementer 分离的独立 subagent，独立性档位 = 同模型独立）、收口（approved gate）都走框架，不在本 skill 重写流程。
+- **套 findings 契约**：`Read {NOCODE_SKILL_REF}/reviewing/findings-contract.md`——`REVIEW_SCHEMA` 的 `{approved, issues}` 是契约 **verdict 层**在 dev-build 的落地：`approved` 直接喂 verdict 的 `approved`（有未处置阻塞类 issue → false），`issues[]` 每条按 tag/级别经映射表压到 `severity`。
+- **领域维度（框架第 3 步注入点）= 本 skill 自己的两套维度**，框架不抹平、原样保留在两份 prompt 模板里：
+  - **Spec Review 维度**（`references/spec-reviewer-prompt.md`）：Missing requirements / Design alignment / Cross-task consistency / Empty shells / Extra / Misunderstandings——每条 issue 带 tag `[missing]` / `[empty-shell]` / `[design-mismatch]` / `[cross-task]` / `[extra]`。
+  - **Quality Review 维度**（`references/quality-reviewer-prompt.md`）：Structure / Quality / Testing / Conventions——Issues 分 Critical / Important / Minor。
+
+**tag / 级别 → 统一 severity 映射**（findings-contract §3 的 dev-build 列，本 skill 不另立分级体系）：
+
+| tag / 级别 | 统一 severity | 处置 |
+|---|---|---|
+| `[missing]` / `[empty-shell]` / `[design-mismatch]`（+ `approved:false`） | **Critical**（阻塞） | spec 不达标，重新派发 implementer 修复 |
+| `[cross-task]` + Quality `Important` | **Warning**（应修） | 跨 task 一致性 / 质量应修 |
+| `[extra]` + Quality `Minor` | **Suggestion**（记录） | 多余产出 / 小问题 |
+
+**两阶段 gate 不变**（框架步骤 7 收口语义）：Spec Review 仅在 implementer status ∈ DONE/DONE_WITH_CONCERNS 时跑；Quality Review 仅在 `specResult.approved === true` 时跑；任一 `approved:false` → 进 fix 循环（见「异常路径」），不放行。`approved:false` 等价于框架"存在未处置 Critical → 不放行"，是 Critical 不可 override 在 per-task 层的体现。
 
 ### Step 3: 处理 Workflow 结果
 

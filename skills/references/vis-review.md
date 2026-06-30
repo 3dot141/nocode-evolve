@@ -2,17 +2,24 @@
 
 **评审对象**: pd-ix 的 `.ix.md` + pd-vd 的 `.vd.md` 产出
 **评审模式**: red-blue 双模型交叉审
+**调用方**: pd-vd Step 5e（视觉验证的独立交叉审）
 
-## 流程
+## 引入框架
 
-1. **蓝军（Claude）**：按维度表逐项审查 `.ix.md` / `.vd.md`，列出通过项 + 疑点
-2. **红军（Codex）**：把 `.ix.md` / `.vd.md` 原文 + 维度表交给 Codex 独立攻击。**CLAIM 剥离**——不传蓝军结论
-3. **合并 findings**：去重合并，Critical / Warning / Suggestion 分级
-4. **Critical 必须修复**再交付
+本细则套用 `reviewing` 框架，只保留视觉领域维度，流程/分级/独立交叉/收口全部走框架：
 
-Codex 不可用 → 降级 Claude 自演红军（标注降级）+ red-blue-deep 对抗框架。
+1. **Read `{NOCODE_SKILL_REF}/reviewing/skeleton.md`** —— 套通用流程骨架（分档 → 对象界定 → 评审维度 → 选方法 → 独立交叉 → findings 分级 → 收口拍板）。
+2. **Read `{NOCODE_SKILL_REF}/reviewing/findings-contract.md`** —— 套 findings 统一契约（finding/verdict schema + 5→3 分级映射 + Evidence Gate）。
 
-## 审查维度
+**对象定位**：设计文档（`.ix.md` / `.vd.md`）→ 命中骨架方法选择表「设计文档」行 → 默认方法 `checklist`（下方视觉 9 维度）+ `red-blue-adversarial`（异源交叉），独立性=异源。
+
+**档位**：视觉设计跨页一致性 + 视觉决策返工成本高，属**重档**——走完整 7 步（含独立交叉）。
+
+**独立交叉**（骨架步骤 5，重档必走）：Claude 做蓝军、Codex 做红军，经 `rule-codex-review` 单一通道派发。**CLAIM 剥离**——只传 `.ix.md` / `.vd.md` 原文 + 维度表 + "请按这些维度攻击这份设计"，不传蓝军结论。Codex 不可用 → 降级 Claude 自演红军（标注降级、独立性降为"同模型"）+ red-blue-deep 对抗框架，不走过场。
+
+**收口**（骨架步骤 7）：findings 按契约归一到 C/W/S，**Critical 必须修复**再交付。
+
+## 审查维度（框架第 3 步注入点 · 视觉 9 维度）
 
 | 维度 | 检查什么 |
 |---|---|
@@ -26,11 +33,13 @@ Codex 不可用 → 降级 Claude 自演红军（标注降级）+ red-blue-deep 
 | 方向发散 | 给了 2-3 个视觉方向吗？不是赌单一方向？ |
 | 简化检查 | 有没有过度设计？能不能用更简单的交互达到同样效果？信息密度合适吗？ |
 
-## findings 格式
+维度 = finding 的 `axis`。每条 finding 套 findings-contract 的 schema（`id`/`severity`/`kind`/`axis`/`location`/`evidence`/`finding`/`fix`/`source`），顶上加 verdict。`location` 用 `.ix.md` / `.vd.md` 的章节锚点或原型 file:line。
+
+示例：
 
 ```
-| # | 维度 | 级别 | 发现 | 建议 | 来源 |
+| id | axis | severity | finding | fix | source |
 |---|---|---|---|---|---|
-| 1 | 状态完整性 | Critical | 支付页缺 error 态 | 补支付失败/超时状态 | 红军(Codex) |
-| 2 | 简化检查 | Suggestion | 设置页层级过深(3层) | 合并到 2 层 | 蓝军 |
+| C1 | 状态完整性 | critical | 支付页缺 error 态 | 补支付失败/超时状态 | 红军(Codex) |
+| S1 | 简化检查 | suggestion | 设置页层级过深(3层) | 合并到 2 层 | 蓝军 |
 ```

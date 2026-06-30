@@ -358,13 +358,16 @@ node scripts/prototype-verify.mjs <prototype-dir> --interactions interactions.js
 
 ### 5e. 独立交叉审（低保真 / 高保真 / 完整实现）
 
-调 `Skill(nocode-evolve:red-blue-deep)` 强制重档，审查范围：
+按 `{NOCODE_SKILL_REF}/vis-review.md` 做视觉交叉审。vis-review 已引入 `reviewing` 框架：Read `{NOCODE_SKILL_REF}/reviewing/skeleton.md` 套通用流程骨架（分档 → 独立交叉 → findings 分级 → 收口）+ Read `{NOCODE_SKILL_REF}/reviewing/findings-contract.md` 套 findings 契约，按 vis-review 的**视觉 9 维度**（框架第 3 步）评审 `.ix.md` + `.vd.md`。重档强制走 red-blue 双模型交叉——Claude 做蓝军、Codex 做红军（CLAIM 剥离不传蓝军结论）；Codex 不可用 → 降级 Claude 自演红军 + `red-blue-deep` 对抗框架。
+
+本步把以下材料连同 `.ix.md` / `.vd.md` 一起喂给 vis-review 评审：
 - 5c/5d 矩阵完整性
-- PRD 路径走查
-- 五维自审（信息层级 / 一致性 / 交互完整性 / 可行性 / PRD 对齐）
+- PRD 路径走查结果
 - Playwright 截图 vs 设计意图
 
-Critical 必须全部修复后重跑 Playwright 验证。
+vis-review 的 9 维度已含原五维自审（信息层级 / 一致性 / 交互流连贯=交互完整性 / 可行性 / PRD 路径覆盖=PRD 对齐），并补 4 维（竞品参考充分度 / 状态完整性 / 方向发散 / 简化检查）。
+
+findings 套统一契约（C/W/S），**Critical 必须全部修复后重跑 Playwright 验证**。
 
 ### 5f. 验证记录写入 .vd.md
 
@@ -373,8 +376,8 @@ Critical 必须全部修复后重跑 Playwright 验证。
 2. 页面覆盖矩阵
 3. 交互覆盖矩阵（高保真 + 完整实现）
 4. PRD 路径走查结果
-5. 五维自审结果
-6. 交叉审 Report 摘要
+5. vis-review 视觉 9 维度评审结果（含原五维自审）
+6. 交叉审 findings 摘要（vis-review，套 findings 契约 C/W/S）
 7. Playwright verify-report.json 摘要
 
 **Exit Gate（按保真度递增）：**
