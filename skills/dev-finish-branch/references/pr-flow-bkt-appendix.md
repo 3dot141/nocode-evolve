@@ -1,6 +1,6 @@
 # Option 2: Bitbucket DC bkt 附录 (覆盖 pr-flow-gh Step 6 + 7)
 
-`toolchain == "bkt"` 时, 本附录覆盖 `pr-flow-gh.md` 的 **Step 6 建 PR** + **Step 7 加 reviewer** 段, 用 `bkt` CLI + `bkt api` REST passthrough 替换. 主流程 (Step 1 生成 title/body + Gate Title-Body + Step 3 PR 计划 + Gate PR + Step 5 push) **不变**.
+`toolchain == "bkt"` 时, 本附录覆盖 `pr-flow-gh.md` 的 **Step 6 建 PR** + **Step 7 加 reviewer** 段, 用 `bkt` CLI + `bkt api` REST passthrough 替换. 主流程 (Step 1 生成 title/body + Step 2 收集影响文件 + Step 2a 解析 target + Gate Title-Body + Step 3 PR 计划 + Gate PR + Step 5 push) **不变**.
 
 沉淀 fx-data-agents 项目实战教训 (来源: `fx-data-agents/.agents-personal/rules/personal-repo-pr.md`). 项目本地特异内容 (reviewer 名单 / slug 历史) 仍在项目本地 rule, 本附录只承担通用 Bitbucket DC + bkt 模式.
 
@@ -8,7 +8,7 @@
 
 ## 前置条件
 
-- 已读 `pr-flow-gh.md` (主流程 Step 1-5 + Gate Title-Body + Gate PR 都走完)
+- 已读 `pr-flow-gh.md` (主流程 Step 1-2a + Gate Title-Body + Step 3 + Gate PR + Step 5 都走完)
 - 工具栈 = `bkt` (BF0 检测 `remote_url` 含 `"bitbucket."` 子串, 或私域 askUser 选 bkt)
 - `bkt` CLI 可用: `bkt --version` 验; subcommand (`bkt pr create` / `bkt pr edit`) + `bkt api` REST passthrough 任一即可, **subcommand 优先**
 

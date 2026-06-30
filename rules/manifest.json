@@ -11,15 +11,15 @@
   ],
   "rules": [
     {
-      "id": "finishing-branch",
+      "id": "dev-finish-branch",
       "bucket": "git-lifecycle",
       "also_buckets": [],
       "trigger_type": "regex+skill",
-      "trigger_desc": "即将执行 nocode-evolve:finishing-a-development-branch skill, 或用户说「完成 worktree / 收尾 / 合并 / 提 PR / 创建 PR / 合并到 main / 删 branch / discard worktree」",
+      "trigger_desc": "用户说「完成 worktree / 收尾 / 合并 / 提 PR / 创建 PR / 合并到 main / 删 branch / discard worktree」, 或 dev-land 调用",
       "triggers": ["提\\s*个?\\s*pr", "创建\\s*pr", "建\\s*个?\\s*pr", "pull\\s*request", "提.*?PR", "合并到\\s*(release|main|master|主干)", "收尾", "完成\\s*worktree", "删\\s*(branch|分支)", "discard\\s*worktree"],
-      "action": "Read rules/rule-finishing-branch.md 并走 Gate Title-Body/PR",
-      "read": "${CLAUDE_PLUGIN_ROOT}/rules/rule-finishing-branch.md",
-      "summary": "覆盖+扩展 superpowers skill, 4 选项 (merge/PR/keep/discard); Gate 体系 Merge/Title-Body/PR/Discard/Remote-Delete; gh 主, Bitbucket DC 读 bkt 附录",
+      "action": "Skill(nocode-evolve:dev-finish-branch)",
+      "read": "",
+      "summary": "独立 skill, 4 选项 (merge/PR/keep/discard); 工具栈检测 (gh/bkt); Gate 体系 Merge/Title-Body/PR/Discard/Worktree-Cleanup/Remote-Delete; PR flow 细节在 references/pr-flow-gh.md + pr-flow-bkt-appendix.md",
       "guard": "Bitbucket 用 bkt 不裸 curl; reviewer 用 bkt pr edit 不 PUT; force push 高风险二次确认。",
       "depends_on": [],
       "severity": "block",
@@ -27,10 +27,10 @@
       "pretooluse": [
         { "pattern": "gh\\s+pr\\s+create", "action": "inject", "note": "Gate Title-Body: create PR 前先把 title + body 展示给用户确认。用户本轮已明确 OK/确认 → 继续; 否则停下展示草稿等用户拍板, 不直接执行" },
         { "pattern": "bkt\\s+pr\\s+create", "action": "inject", "note": "Gate Title-Body: create PR 前先把 title + body 展示给用户确认。用户本轮已明确 OK/确认 → 继续; 否则停下展示草稿等用户拍板, 不直接执行" },
-        { "pattern": "bkt\\s+pr\\s+create.*(--reviewer|--with-default-reviewers)", "action": "inject", "note": "bkt pr create 不要带 reviewer/with-default-reviewers (部分失败会整个 create 失败 + cross-fork 解析常出错); 先 create, 再 bkt pr edit <id> --reviewer ... 加 (见 rule-finishing-branch Gate PR + pr-flow-bkt-appendix Workflow B)" },
+        { "pattern": "bkt\\s+pr\\s+create.*(--reviewer|--with-default-reviewers)", "action": "inject", "note": "bkt pr create 不要带 reviewer/with-default-reviewers (部分失败会整个 create 失败 + cross-fork 解析常出错); 先 create, 再 bkt pr edit <id> --reviewer ... 加 (见 dev-finish-branch Gate PR + pr-flow-bkt-appendix Workflow B)" },
         { "pattern": "bkt\\s+api\\s+.*--method\\s+PUT", "action": "block", "note": "禁 bkt api PUT 改 PR 元数据, 用 bkt pr edit" },
         { "pattern": "curl\\s+.*pull-?request", "action": "block", "note": "禁裸 curl 改 PR, 用 bkt" },
-        { "pattern": "git\\s+push\\s+.*--force(-with-lease)?", "action": "inject", "note": "git push --force 高风险 (覆盖远端他人 commit / 不可恢复): 1) 确认 worktree 私有 feature 分支 (非 main/release) 2) 用 --force-with-lease 不 --force 3) 先 git fetch + 看远端是否被推进过. 直接 force push 主干 = 灾难, rule-finishing-branch 已禁。" },
+        { "pattern": "git\\s+push\\s+.*--force(-with-lease)?", "action": "inject", "note": "git push --force 高风险 (覆盖远端他人 commit / 不可恢复): 1) 确认 worktree 私有 feature 分支 (非 main/release) 2) 用 --force-with-lease 不 --force 3) 先 git fetch + 看远端是否被推进过." },
         { "pattern": "gh\\s+api\\s+.*(pulls?\\b.*--method\\s+(PATCH|PUT)|--method\\s+(PATCH|PUT)\\s+.*pulls?\\b)", "action": "block", "note": "禁 gh api PATCH/PUT pulls 改 PR 元数据, 用 gh pr edit (语义清晰 + 避开 race / cross-fork base 问题)" }
       ]
     },
@@ -45,7 +45,7 @@
       "read": "${CLAUDE_PLUGIN_ROOT}/rules/rule-push-summary.md",
       "summary": "输出 标题 + 描述, 描述 ≤200字, 含基础内容(覆盖 push range 全 commit) + 重点评测(亮点 / 风险 / 未验证项)",
       "guard": "",
-      "depends_on": ["finishing-branch"],
+      "depends_on": ["dev-finish-branch"],
       "severity": "advisory",
       "lifecycle_stage": "4 收尾",
       "pretooluse": []
@@ -198,7 +198,7 @@
       "read": "",
       "summary": "飞书项目管理(FeishuProjectMcp): 工作项读取(含附件 X-Meego-File-Sign) + 状态流转(组员开发→研发已改待BUILD) + 搜索(search_by_mql) + 创建更新; project_key 撞多空间改传真实 24 位 hex key; 详细流程见 skill 内 references/",
       "guard": "下载附件必须带 X-Meego-File-Sign header; 非组员开发状态不强行流转; 别用 WebFetch 抓 SPA 链接。",
-      "depends_on": ["finishing-branch"],
+      "depends_on": ["dev-finish-branch"],
       "severity": "advisory",
       "lifecycle_stage": "cross",
       "pretooluse": []
@@ -364,17 +364,33 @@
       "pretooluse": []
     },
     {
+      "id": "dev-post-merge",
+      "bucket": "workflow",
+      "also_buckets": ["lark"],
+      "trigger_type": "regex+skill",
+      "trigger_desc": "dev-land 在合并后调用, 或用户说「PR 合了 / 流转任务 / 合并后流转 / 任务状态改一下」",
+      "triggers": ["pr.{0,4}(合了|merged|合并了)", "流转.{0,4}(任务|状态|工作项)", "合并.{0,4}后.{0,4}(流转|改状态)"],
+      "action": "Skill(nocode-evolve:dev-post-merge)",
+      "read": "",
+      "summary": "Post-merge 收尾: 从 commit 提取飞书任务号(#f-xxx/#g-xxx/#m-xxx) → lark-project 流转状态; 预留通知/changelog 扩展位",
+      "guard": "",
+      "depends_on": ["lark-project"],
+      "severity": "advisory",
+      "lifecycle_stage": "4 收尾",
+      "pretooluse": []
+    },
+    {
       "id": "dev-land",
       "bucket": "workflow",
       "also_buckets": ["git-lifecycle"],
       "trigger_type": "regex+skill",
-      "trigger_desc": "devflow 路由到 Land 阶段, 或用户说「land / 着陆 / 准备着陆 / 走 land 阶段」(注意: 独立说「提 PR / 收尾 / 合并」不在 devflow 上下文时走 finishing-branch, 不走本 skill)",
+      "trigger_desc": "devflow 路由到 Land 阶段, 或用户说「land / 着陆 / 准备着陆 / 走 land 阶段」(注意: 独立说「提 PR / 收尾 / 合并」不在 devflow 上下文时走 dev-finish-branch, 不走本 skill)",
       "triggers": ["\\bland\\b", "着陆", "land\\s*阶段", "走.{0,2}land"],
       "action": "Skill(nocode-evolve:dev-land)",
       "read": "",
-      "summary": "Landing 收尾: Pre-flight(Review Gate + 分支状态) → Disposition(4选项 merge/PR/keep/discard) → 执行(rule-finishing-branch) → Task Transition(lark-project) → Cleanup; Mini 走 Land-lite(commit only)",
+      "summary": "Landing 收尾编排: Pre-flight → dev-finish-branch(4选项 merge/PR/keep/discard + Gate 序列) → dev-post-merge(任务流转); Mini 走 Land-lite(commit only)",
       "guard": "",
-      "depends_on": ["dev-verify", "finishing-branch", "lark-project"],
+      "depends_on": ["dev-verify", "dev-finish-branch", "dev-post-merge"],
       "severity": "advisory",
       "lifecycle_stage": "4 收尾",
       "pretooluse": []

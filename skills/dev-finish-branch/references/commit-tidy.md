@@ -4,7 +4,7 @@ PR / merge 前给用户列 commit 整理建议 + 完整命令, 用户**自跑或
 
 ## 触发
 
-被门面 `rule-finishing-branch.md` 在 option 1 (merge) 或 option 2 (push+PR) 流程内调用. 进入 Gate Merge / Gate Title-Body 前.
+被 `dev-finish-branch` skill 在 option 1 (merge) 或 option 2 (push+PR) 流程内调用. 进入 Gate Merge / Gate Title-Body 前.
 
 ## 主流程
 

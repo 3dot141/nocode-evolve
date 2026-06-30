@@ -92,6 +92,11 @@
 **也属**: git-lifecycle
 **生命周期**: cross
 
+#### dev-post-merge (跨桶)
+**触发**: dev-land 在合并后调用, 或用户说「PR 合了 / 流转任务 / 合并后流转 / 任务状态改一下」
+**读**: ``
+**主桶**: workflow (完整定义见该桶)
+
 ### 桶: Figma 设计稿读取 (figma)
 **粗触发**: 读取 Figma 设计稿节点属性 (字号 / 颜色 / 间距 / 圆角), 用户给 figma.com 链接要求提取设计值 / 对齐 UI 实现
 **不含 (负例)**: 只看用户贴的设计稿截图 (不需要 API); Figma 原型预览链接 (无 inspect 需求)
@@ -139,8 +144,14 @@
 **读**: ``
 **生命周期**: 3 评审
 
+#### dev-post-merge
+**触发**: dev-land 在合并后调用, 或用户说「PR 合了 / 流转任务 / 合并后流转 / 任务状态改一下」
+**读**: ``
+**也属**: lark
+**生命周期**: 4 收尾
+
 #### dev-land
-**触发**: devflow 路由到 Land 阶段, 或用户说「land / 着陆 / 准备着陆 / 走 land 阶段」(注意: 独立说「提 PR / 收尾 / 合并」不在 devflow 上下文时走 finishing-branch, 不走本 skill)
+**触发**: devflow 路由到 Land 阶段, 或用户说「land / 着陆 / 准备着陆 / 走 land 阶段」(注意: 独立说「提 PR / 收尾 / 合并」不在 devflow 上下文时走 dev-finish-branch, 不走本 skill)
 **读**: ``
 **也属**: git-lifecycle
 **生命周期**: 4 收尾

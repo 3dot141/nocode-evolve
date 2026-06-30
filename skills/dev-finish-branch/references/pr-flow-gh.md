@@ -2,7 +2,7 @@
 
 option 2 在 `toolchain == "gh"` 时的全流程: title/body 生成 → Gate Title-Body → PR 计划 → Gate PR → push → `gh pr create` → reviewer add.
 
-含 **Gate 体系中的 Gate Title-Body + Gate PR** (Gate Merge 在门面 option 1, Gate Discard 在 sp skill 自带 option 4, Gate Remote-Delete 在 option 1/4 删 branch 后).
+含 **Gate 体系中的 Gate Title-Body + Gate PR** (Gate Merge 在 option 1, Gate Discard 在 option 4, Gate Remote-Delete 在 option 1/4 删 branch 后).
 
 ## 前置条件
 
@@ -235,7 +235,7 @@ common_dir=$(git rev-parse --git-common-dir)
 
 ### 执行 (选 ②)
 
-worktree 清理 (沿用 sp skill Step 6 + `skill-overlay.md` provenance 扩展):
+worktree 清理 (识别 4 种 provenance 路径模式, 见 dev-finish-branch SKILL.md):
 
 ```bash
 cd "$MAIN_ROOT"
@@ -262,7 +262,7 @@ PR 合并后清理远程分支:
 - **不要在 `gh pr create` 时塞 `--reviewer`** — 见 Step 6
 - **不要假设 default reviewer 一定有** — branch protection 没配 / CODEOWNERS 不存在 = 空列表, 正常进 Gate PR, 用户可手填
 - **不要自动 force-push** — non-ff 用户 typed `force` 字面才执行, 见 Step 5
-- **不要等 GitHub Actions / CI 状态** — sp skill 没覆盖, 不在本 doc scope; 用户自己看 PR 页
+- **不要等 GitHub Actions / CI 状态** — 不在本流程 scope; 用户自己看 PR 页
 - **不要 PR 创建完立刻关 / merge** — Option 2 终态是 PR 提交并加 reviewer, 后续 review / merge 走 GitHub UI 或另一轮 finishing-branch (这次选 option 1 本地 merge?)
 
 ## Bitbucket DC 项目

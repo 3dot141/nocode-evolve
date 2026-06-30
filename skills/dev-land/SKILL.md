@@ -1,19 +1,18 @@
 ---
 name: dev-land
-description: Use when Review is complete and you need to land the work (merge/PR/keep/discard). Use when devflow routes to Land stage, or when the user says "land/着陆/准备着陆/走 land 阶段/收尾/上线/ship it". Note: standalone "提PR/合并/merge" without devflow context should use finishing-branch rule, not this skill.
+description: "Use when Review is complete and you need to land the work. Orchestrates pre-flight checks, dev-finish-branch (PR/merge mechanics), and dev-post-merge (post-merge flow). Use when devflow routes to Land stage, or when user says \"land/着陆/准备着陆/走land阶段\". Note: standalone \"提PR/合并/merge\" without devflow context should use dev-finish-branch directly, not this skill."
 ---
 
 # land — 选路着陆，干净收场
 
-**Iron Law: 先确认 Review Gate 已过，再选着陆路径。没过 Review 的代码不着陆——不是"先合再补"。**
+**Iron Law: 先确认 Review Gate 已过，再选着陆路径。没过 Review 的代码不着陆。**
 
-Review 通过后的 **disposition** 门。4 条路（merge / PR / keep / discard），每条有自己的 Gate 序列。选哪条走到底，不要中途混搭。
-
-> Leading word: **disposition**。merge / PR / keep / discard 四选一，选了就走完这条路的全部 Gate。没有"先 push 看看再说"。
+编排层：pre-flight → dev-finish-branch（PR/merge 机制）→ dev-post-merge（post-merge 流转）。
 
 ## 非本 skill 请求
 
-"帮我看看代码" → Review，不是 Land。"写完了" → 先 Verify 再 Review 再 Land。单独说"提个 PR" / "删掉这个 worktree"且不在 devflow 上下文 → 直接走 `rule-finishing-branch`，不需要完整 Land 流程。
+"帮我看看代码" → Review，不是 Land。"写完了" → 先 Verify 再 Review 再 Land。
+单独说"提 PR" / "删 worktree"且不在 devflow 上下文 → 直接 `dev-finish-branch`。
 
 ## Enter Gate
 
@@ -25,28 +24,17 @@ Review 通过后的 **disposition** 门。4 条路（merge / PR / keep / discard
 
 ### Step 0: TaskCreate
 
-**进入后第一件事**，创建以下全部 task：
+**进入后第一件事**，创建以下 task：
 
 ```
 Task 1: Pre-flight
-  Sub-steps: 确认 Enter Gate + 分支状态
-  Gate: Review 状态 + 工作目录干净 + 分支新鲜度三项过
+  Gate: Review 状态 + 工作目录干净 + 分支新鲜度
 
-Task 2: Disposition
-  Sub-steps: 呈现 4 选项，用户选路径
-  Gate: 用户选定 merge/PR/keep/discard 之一
+Task 2: Ship
+  Gate: dev-finish-branch 完成（PR 已创建 / 已合并 / keep / discard）
 
-Task 3: Plan + Execute
-  Sub-steps: 呈现计划（PR: title/body + target + reviewer；Merge: merge 计划），Gate 确认后执行
-  Gate: PR 已创建 + reviewer 已添加（PR 路径）；或已本地合并（Merge 路径）
-
-Task 4: Poll & Merge
-  Sub-steps: PR 路径：ScheduleWakeup 轮询直到合并；Merge 路径：已在 Step 3 完成，直接过
-  Gate: 代码已合并（PR merged / 本地 merged）
-
-Task 5: Cleanup + 流转
-  Sub-steps: 合并后一起做：worktree 清理（Gate Worktree-Cleanup）+ 飞书任务流转
-  Gate: worktree 状态与用户选择一致 + 任务流转或标注跳过
+Task 3: Post-merge
+  Gate: dev-post-merge 完成（任务流转或标注跳过）
 ```
 
 每完成一个标 done。
@@ -66,111 +54,51 @@ Enter Gate 三项逐条检查：
 - [ ] 工作目录干净
 - [ ] 分支新鲜度确认
 
-### Step 2: Disposition
+### Step 2: Ship
 
-调 `nocode-evolve:finishing-a-development-branch`，由 `rule-finishing-branch` overlay 覆盖行为。
+调 `Skill(nocode-evolve:dev-finish-branch)`，它处理全部 commit/PR/merge/discard 机制（disposition 菜单、Gate 序列、worktree 清理）。
 
-skill 呈现 4 选项菜单（文案顺序由 sp skill 定义，不改）：
-1. **Merge 回 base** — 本地合并 + 清理
-2. **Push + 建 PR** — 远端协作（最常见路径）
-3. **Keep as-is** — 不动，用户后续处理
-4. **Discard** — 放弃这次工作
-
-**选路径建议**（不替用户选，仅在用户犹豫时给参考）：
-- 有 reviewer / 需要 CI → option 2 (PR)
-- 个人分支、快速修复、已自评 → option 1 (Merge)
-- 未完成但要保留 → option 3 (Keep)
-- 验证失败、方向错误 → option 4 (Discard)
+**Land 在 dev-finish-branch 之上的额外约束**：
 
 **发布策略**（Option 1/2 选定后、执行前追问——仅对生产改动）：
 > "这次改动的发布策略？全量 / 灰度（canary %）/ dark launch（flag 默认关）"
 >
-> AI 不执行部署，但把这个决策点暴露给用户——merge 和 release 是两个动作，不要混为一谈。用户选了灰度/dark launch → 提醒确认 flag 已就位。纯内部工具/无生产影响 → 跳过。
+> AI 不执行部署，但把决策点暴露给用户——merge 和 release 是两个动作。用户选了灰度/dark launch → 提醒确认 flag 已就位。纯内部工具/无生产影响 → 跳过。
 
-用户选定后，`rule-finishing-branch` 接管该路径的 Gate 序列。
-
-**Exit Gate:**
-- [ ] 用户已选定 Disposition（Merge / PR / Keep / Discard）
-- [ ] 发布策略已确认（生产改动时）或已跳过
-
-### Step 3: Plan + Execute
-
-先呈现计划，用户确认后再执行。按 `rule-finishing-branch` 的选项分发。
-
-**Option 2 (PR) 路径**：
-commit 整理 → Gate Title-Body（呈现 title/body 计划）→ Gate PR（呈现 push target + reviewer 计划）→ 用户确认 → push → 建 PR → 加 reviewer
-
-**PR body 回链**（Gate Title-Body 时）：PR body 除了描述改了什么，还要包含：
+**PR body 回链**（Option 2，Gate Title-Body 时）：PR body 除了 dev-finish-branch 的标准格式，额外包含：
 - **Requirements Addressed**：引用 Define 的 restate Success Criteria 编号，逐条说明满足
 - **Verification Evidence**：引用 Verify 阶段的关键证据（测试命令+结果摘要）
-这样 reviewer 看到 PR 就能追溯"为什么做"和"怎么证明做完了"，不用翻会话记录。
 
-**Option 1 (Merge) 路径**：
-commit 整理 → Gate Merge（呈现 merge 计划）→ 用户确认 → 本地 merge → tests
-
-**Option 3 (Keep)**：报告路径，结束（跳过 Step 4-5）。
-
-**Option 4 (Discard)**：Gate Discard (typed `discard`) → cleanup → Gate Remote-Delete（跳过 Step 4-5）。
-
-每个 Gate 停手等用户确认，不跳过。
-
-**完整示例**：走完 Option 2 (PR) 全流程（含 PR body 双回链）见 `references/examples/example-land-pr.md`。
+这样 reviewer 看到 PR 就能追溯"为什么做"和"怎么证明做完了"。
 
 **Exit Gate:**
-- [ ] PR 已创建 + reviewer 已添加（Option 2）；或已本地合并（Option 1）；或已 discard/keep（Option 3/4）
-- [ ] 所有路径内 Gate 已通过
+- [ ] dev-finish-branch 完成（PR 已创建 + worktree 状态确认 / 已合并 / keep / discard）
 
-### Step 4: Poll & Merge
+### Step 3: Post-merge
 
-**Option 2 (PR) 路径**：
-PR 创建后，ScheduleWakeup 轮询 PR 状态，直到 PR 合并。用户可选"直接 merge"（自己有权限时）或"不 merge，等 reviewer"。
+调 `Skill(nocode-evolve:dev-post-merge)`。
 
-**Option 1 (Merge) 路径**：已在 Step 3 本地合并，直接通过。
-
-**Option 3/4**：跳过。
+- **Option 1 (Merge)**：Step 2 完成后即执行
+- **Option 2 (PR)**：PR 合并后执行。通常在后续会话——用户说"PR 合了"或 agent 检查到 merged 状态时进入
+- **Option 3/4**：跳过
 
 **Exit Gate:**
-- [ ] 代码已合并（PR merged / 本地 merged）
-
-### Step 5: Cleanup + 流转
-
-合并后一起做，不分两步。
-
-**Worktree 清理**：
-- **Option 1/4**：worktree 已在该路径中清理
-- **Option 2**：Gate Worktree-Cleanup 问用户（保留 / 清理）。默认保留（用户可能要 iterate on PR feedback）
-- **Option 3**：不清理
-
-清理后 `ExitWorktree` 回主仓。确认 `git worktree list` 不再包含已清理路径。
-
-**任务流转**（合并后执行）：
-- 从 commit messages 提取飞书任务号（`#f-xxx` / `#g-xxx` / `#m-xxx`）
-- 按 `lark-project` (references/transition.md) 流转状态（组员开发 → 研发已改待BUILD）
-- 没有任务号 / 非飞书项目 → 跳过，不报错
-- **Option 3/4 不走任务流转**
-
-**Exit Gate:**
-- [ ] worktree 状态与用户选择一致（清理 / 保留）
-- [ ] 已 ExitWorktree 回主仓（清理时）
-- [ ] 飞书任务已流转（有任务号时）或已标注跳过
+- [ ] dev-post-merge 完成或已跳过
 
 ## Exit Gate（全局）
 
-- [ ] 选定路径的所有 Gate 已通过
-- [ ] 代码已合并（PR merged / 本地 merged / discard / keep）
-- [ ] worktree 状态与用户选择一致（清理 / 保留）
-- [ ] 飞书任务已流转（有任务号时）或已标注跳过
+- [ ] dev-finish-branch 完成
+- [ ] dev-post-merge 完成或已跳过（合并后）
 
 ## 场景差异
 
 | | Full / Standard / Fix | Mini |
 |---|---|---|
 | Pre-flight | 完整 Enter Gate | commit only |
-| Disposition | 4 选项完整 | 跳过（Mini 不开 worktree） |
-| Task Transition | 按需 | 跳过 |
-| Cleanup | 按路径 | 无 worktree 可清理 |
+| Ship | dev-finish-branch 完整 | 跳过（Mini 不开 worktree） |
+| Post-merge | 合并后按需 | 跳过 |
 
-Mini 场景的 Land-lite：确认 commit 已完成即可，不进完整 Step 1-5。
+Mini 场景的 Land-lite：确认 commit 已完成即可，不进完整 Step 1-3。
 
 ## Common Rationalizations
 
@@ -179,7 +107,7 @@ Mini 场景的 Land-lite：确认 commit 已完成即可，不进完整 Step 1-5
 | "Review 差不多了，先 push 再改" | Review Gate 没过就不着陆。"差不多"不是"过了" |
 | "先合了再跑 CI" | CI 是 PR 流程的一部分，不是合后补丁 |
 | "worktree 保着占空间，顺手删了" | Gate Worktree-Cleanup 让用户选。用户可能要 iterate on PR feedback |
-| "任务号懒得填" | Task Transition 闭环是 Land 的一部分，不是可选 |
+| "任务号懒得填" | 流转闭环是 Land 的一部分，不是可选 |
 | "force push 一下就好" | force push 是高风险操作，有专门的 Gate |
 
 ## Red Flags

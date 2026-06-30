@@ -45,10 +45,9 @@ agent 视角: 用户任务命中以下任一条件时, **主动调起 devflow sk
 **粗触发**: 任何把本地改动推进到分支 / 远端协作状态的请求 (提 PR / push / 合并 / 收尾 / worktree)
 **不含 (负例)**: 纯只读查询: 列 PR / 看分支 / 看 status / 看 log
 
-#### finishing-branch
-**触发**: 即将执行 nocode-evolve:finishing-a-development-branch skill, 或用户说「完成 worktree / 收尾 / 合并 / 提 PR / 创建 PR / 合并到 main / 删 branch / discard worktree」
-**读**: `${CLAUDE_PLUGIN_ROOT}/rules/rule-finishing-branch.md`
-**摘要**: 覆盖+扩展 superpowers skill, 4 选项 (merge/PR/keep/discard); Gate 体系 Merge/Title-Body/PR/Discard/Remote-Delete; gh 主, Bitbucket DC 读 bkt 附录
+#### dev-finish-branch
+**触发**: 用户说「完成 worktree / 收尾 / 合并 / 提 PR / 创建 PR / 合并到 main / 删 branch / discard worktree」, 或 dev-land 调用
+**读**: ``
 **关键约束(上浮)**: Bitbucket 用 bkt 不裸 curl; reviewer 用 bkt pr edit 不 PUT; force push 高风险二次确认。
 **生命周期**: 4 收尾
 
@@ -84,7 +83,7 @@ agent 视角: 用户任务命中以下任一条件时, **主动调起 devflow sk
 **主桶**: lark (完整定义见该桶)
 
 #### dev-land (跨桶)
-**触发**: devflow 路由到 Land 阶段, 或用户说「land / 着陆 / 准备着陆 / 走 land 阶段」(注意: 独立说「提 PR / 收尾 / 合并」不在 devflow 上下文时走 finishing-branch, 不走本 skill)
+**触发**: devflow 路由到 Land 阶段, 或用户说「land / 着陆 / 准备着陆 / 走 land 阶段」(注意: 独立说「提 PR / 收尾 / 合并」不在 devflow 上下文时走 dev-finish-branch, 不走本 skill)
 **读**: ``
 **主桶**: workflow (完整定义见该桶)
 

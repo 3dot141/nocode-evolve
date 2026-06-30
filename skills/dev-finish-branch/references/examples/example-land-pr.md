@@ -21,6 +21,11 @@
 
 ### Gate Title-Body
 
+PR target：
+```
+upstream/main    ← 来源: nocode-evolve-base
+```
+
 PR title（≤50 字）：
 ```
 feat(search): 支持中文分词搜索

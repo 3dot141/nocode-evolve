@@ -54,7 +54,7 @@ Define 返回后，拿到确认的 restate + 场景分类，进 Step 2。
 ```
 TaskCreate(subject: "阶段 8: Land",
            description: "调用: nocode-evolve:dev-land / Read: rule-finishing-branch / Gate: PR merged + 任务流转 + worktree 清理
-Sub-steps: ⓪ Skill(nocode-evolve:dev-land) → 8a.Pre-flight → 8b.Disposition → 8c.Plan + Execute → 8d.Poll & Merge → 8e.Cleanup + 流转")
+Sub-steps: ⓪ Skill(nocode-evolve:dev-land) → 8a.Pre-flight → 8b.Ship(dev-finish-branch) → 8c.Post-merge(dev-post-merge)")
 ```
 
 Sub-steps 写进 description 是为了**进入阶段时一眼看到完整步骤序列**——防止跳步遗漏。链首的 `⓪ Skill(...)` 是为了把"加载 skill"钉成每个阶段的第一个动作——**sub-steps 是地图，skill 才是详图**，照地图裸跑会丢掉 skill 内的模板 / Iron Law / 格式约束。
@@ -122,7 +122,7 @@ Land 有 5 个子步骤（8a Create PR → 8b ... → 8e Cleanup），只说"pus
 | 5 | **Build** | `nocode-evolve:dev-build` | — | 所有 task 完成 + 测试通过 + build 通过 |
 | 6 | **Verify** | `nocode-evolve:dev-verify` | — | 验收标准逐条通过 + 证据收集 |
 | 7 | **Review** | `nocode-evolve:dev-review` | `rule-codex-review` | Critical 全 fix + 用户 approve |
-| 8 | **Land** | `nocode-evolve:dev-land` | `rule-finishing-branch` | PR merged + 任务流转 + worktree 清理 |
+| 8 | **Land** | `nocode-evolve:dev-land` | — | dev-finish-branch(PR/merge/keep/discard) + dev-post-merge(任务流转) |
 
 ### 共享词汇（跨 skill leading words）
 

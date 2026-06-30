@@ -109,7 +109,7 @@ test('genPretooluse: 扁平化 pretooluse 靶 (不变)', () => {
   const p = genPretooluse(loadManifest());
   const block = p.find((x) => x.decision === 'block' && /PUT/.test(x.pattern));
   assert.ok(block, '应含 bkt PUT 的 block 靶');
-  assert.equal(block.rule, 'finishing-branch');
+  assert.equal(block.rule, 'dev-finish-branch');
   assert.ok(p.some((x) => x.decision === 'inject'), '应含 inject 靶');
 });
 

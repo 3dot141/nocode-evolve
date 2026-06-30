@@ -4,7 +4,7 @@
 
 ## 触发
 
-被门面 `rule-finishing-branch.md` 在 **option 1 (Merge) / option 4 (Discard) 删完本地 branch 后**调用. 其它场景**不**调:
+被 `dev-finish-branch` skill 在 **option 1 (Merge) / option 4 (Discard) 删完本地 branch 后**调用. 其它场景**不**调:
 
 - option 2 (PR) / option 3 (Keep) 不删本地 branch
 - `rule-git-worktree.md`「目录名冲突怎么办」/「销毁 worktree 前必读」两处 worktree 移除只删 worktree、保留 branch —— 远程清理是"删 branch"的附属动作, 不是"删 worktree"
@@ -45,7 +45,7 @@ git ls-remote --heads "$remote" "refs/heads/$remote_branch"   # 精确 ref, 不�
 算"未合并进 base 的远程独有 commit" (远程 tip 可达、base 不可达):
 
 ```bash
-# base 来自 sp skill「finishing-a-development-branch」Step3 Determine Base Branch (4 选项菜单前已定)
+# base 来自 dev-finish-branch Step 3 Disposition (4 选项菜单前已定)
 if [ -z "$BASE_BRANCH" ]; then                  # detached / 没能定 base
     lost="UNKNOWN"                              # 无基准可比, 降级
 else

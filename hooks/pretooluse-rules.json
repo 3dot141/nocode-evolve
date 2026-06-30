@@ -1,42 +1,42 @@
 [
   {
-    "rule": "finishing-branch",
+    "rule": "dev-finish-branch",
     "pattern": "gh\\s+pr\\s+create",
     "decision": "inject",
     "reason": "Gate Title-Body: create PR 前先把 title + body 展示给用户确认。用户本轮已明确 OK/确认 → 继续; 否则停下展示草稿等用户拍板, 不直接执行"
   },
   {
-    "rule": "finishing-branch",
+    "rule": "dev-finish-branch",
     "pattern": "bkt\\s+pr\\s+create",
     "decision": "inject",
     "reason": "Gate Title-Body: create PR 前先把 title + body 展示给用户确认。用户本轮已明确 OK/确认 → 继续; 否则停下展示草稿等用户拍板, 不直接执行"
   },
   {
-    "rule": "finishing-branch",
+    "rule": "dev-finish-branch",
     "pattern": "bkt\\s+pr\\s+create.*(--reviewer|--with-default-reviewers)",
     "decision": "inject",
-    "reason": "bkt pr create 不要带 reviewer/with-default-reviewers (部分失败会整个 create 失败 + cross-fork 解析常出错); 先 create, 再 bkt pr edit <id> --reviewer ... 加 (见 rule-finishing-branch Gate PR + pr-flow-bkt-appendix Workflow B)"
+    "reason": "bkt pr create 不要带 reviewer/with-default-reviewers (部分失败会整个 create 失败 + cross-fork 解析常出错); 先 create, 再 bkt pr edit <id> --reviewer ... 加 (见 dev-finish-branch Gate PR + pr-flow-bkt-appendix Workflow B)"
   },
   {
-    "rule": "finishing-branch",
+    "rule": "dev-finish-branch",
     "pattern": "bkt\\s+api\\s+.*--method\\s+PUT",
     "decision": "block",
     "reason": "禁 bkt api PUT 改 PR 元数据, 用 bkt pr edit"
   },
   {
-    "rule": "finishing-branch",
+    "rule": "dev-finish-branch",
     "pattern": "curl\\s+.*pull-?request",
     "decision": "block",
     "reason": "禁裸 curl 改 PR, 用 bkt"
   },
   {
-    "rule": "finishing-branch",
+    "rule": "dev-finish-branch",
     "pattern": "git\\s+push\\s+.*--force(-with-lease)?",
     "decision": "inject",
-    "reason": "git push --force 高风险 (覆盖远端他人 commit / 不可恢复): 1) 确认 worktree 私有 feature 分支 (非 main/release) 2) 用 --force-with-lease 不 --force 3) 先 git fetch + 看远端是否被推进过. 直接 force push 主干 = 灾难, rule-finishing-branch 已禁。"
+    "reason": "git push --force 高风险 (覆盖远端他人 commit / 不可恢复): 1) 确认 worktree 私有 feature 分支 (非 main/release) 2) 用 --force-with-lease 不 --force 3) 先 git fetch + 看远端是否被推进过."
   },
   {
-    "rule": "finishing-branch",
+    "rule": "dev-finish-branch",
     "pattern": "gh\\s+api\\s+.*(pulls?\\b.*--method\\s+(PATCH|PUT)|--method\\s+(PATCH|PUT)\\s+.*pulls?\\b)",
     "decision": "block",
     "reason": "禁 gh api PATCH/PUT pulls 改 PR 元数据, 用 gh pr edit (语义清晰 + 避开 race / cross-fork base 问题)"

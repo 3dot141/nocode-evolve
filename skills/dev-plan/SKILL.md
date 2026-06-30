@@ -79,6 +79,10 @@ Task 8: Round 2 Red-Blue Review + Plan Validation
 Task 9: 用户确认 + 选执行模式
   Sub-steps: 完整呈现计划 → AskUserQuestion 确认 → 选执行模式 → 记录到 Plan header Execution 字段
   Gate: 用户确认 + 执行模式已选（Workflow 并行 / Workflow 顺序）
+
+Task 10: 硬交接 — 调用下一步 skill
+  Sub-steps: 按 Exit Gate 硬交接报告 Plan 完成（task 数 + 执行模式 + 首个 slice）→ 建议进 Build → 等用户拍板后调 Skill(nocode-evolve:dev-build)
+  Gate: 用户拍板进入 Build（这一步不勾，Plan 不算收尾）
 ```
 
 每完成一个标 done。
@@ -281,6 +285,7 @@ AskUserQuestion: "计划确认了，怎么执行？"
 | "简单的先做，难的留后面" | risk-first：不确定性留到投入最大时暴露更贵 |
 | "checkpoint 太频繁拖节奏" | checkpoint 是 rollback 边界。省掉它出问题只能回退整个计划 |
 | "red-blue-deep 太重了" | 骨架改一行 vs 填充完改十行。前置审视省的是后面的返工 |
+| "这个改动简单，跳过某 Step 或不建 TaskCreate" | 进了 skill 就走完所有 Step。"简单"是你的判断，不是跳 Gate 的授权（详见 agent-catalog-using.md「进了 skill 就走完」） |
 
 ## Red Flags
 
@@ -292,3 +297,4 @@ AskUserQuestion: "计划确认了，怎么执行？"
 - task 缺 `covers` 字段，或汇总后有路径没被任何 task 覆盖（漏实现的早期信号）
 - red-blue-deep 被跳过或降级为轻档（计划审视是跨模块不可逆的，应该走重档）
 - red-blue-deep 结论中成立的质疑没有落实到骨架/代码修正
+- 因"任务简单 / 还在概览 / 用户说了'继续'"跳过某 Step、不建 Step 0 TaskCreate、或漏掉最后的交接 task
