@@ -54,7 +54,7 @@ Define 返回后，拿到确认的 restate + 场景分类，进 Step 2。
 ```
 TaskCreate(subject: "阶段 8: Land",
            description: "调用: nocode-evolve:dev-land / Read: rule-finishing-branch / Gate: PR merged + 任务流转 + worktree 清理
-Sub-steps: ⓪ Skill(nocode-evolve:dev-land) → 8a.Create PR → 8b.Add Reviewers → 8c.Poll & Merge → 8d.Task Transition → 8e.Cleanup")
+Sub-steps: ⓪ Skill(nocode-evolve:dev-land) → 8a.Pre-flight → 8b.Disposition → 8c.Plan + Execute → 8d.Poll & Merge → 8e.Cleanup + 流转")
 ```
 
 Sub-steps 写进 description 是为了**进入阶段时一眼看到完整步骤序列**——防止跳步遗漏。链首的 `⓪ Skill(...)` 是为了把"加载 skill"钉成每个阶段的第一个动作——**sub-steps 是地图，skill 才是详图**，照地图裸跑会丢掉 skill 内的模板 / Iron Law / 格式约束。
@@ -341,11 +341,11 @@ PDCA 循环：
 
 | Sub-step | 做什么 | 决策 |
 |---|---|---|
-| 8a. Create PR | `rule-finishing-branch` option 2 | Gate Title-Body（title≤50/body markdown 用户确认） + push + PR 已创建 |
-| 8b. Add Reviewers | `rule-finishing-branch` pr-flow | reviewer 已添加（部分失败报告跳过；或用户说跳过） |
-| 8c. Poll & Merge | ScheduleWakeup → merge | canMerge + merge 成功（用户可选"直接 merge"/"不 merge"） |
-| 8d. Task Transition | `lark-project` (references/transition.md) | 飞书 issue 流转到研发已改待BUILD（或跳过） |
-| 8e. Cleanup | `rule-finishing-branch` Gate Worktree-Cleanup | worktree 清理完成 |
+| 8a. Pre-flight | 确认 Review Gate + 工作目录干净 + 分支新鲜度 | 任一不满足 → 报告 + 建议动作，不自行修复 |
+| 8b. Disposition | 呈现 4 选项（merge/PR/keep/discard），用户选路径 | 有 reviewer/CI → 建议 PR；个人快修 → 建议 Merge |
+| 8c. Plan + Execute | 按路径呈现计划（PR: title/body + target + reviewer；Merge: merge 计划），Gate 确认后执行（push + create PR + add reviewer） | Gate Title-Body → Gate PR → 执行 |
+| 8d. Poll & Merge | PR 路径：ScheduleWakeup 轮询直到合并；Merge 路径：本地合并后直接过 | canMerge + merge 成功（用户可选"直接 merge"/"不 merge"） |
+| 8e. Cleanup + 流转 | 合并后一起做：worktree 清理（Gate Worktree-Cleanup）+ 飞书任务流转（`lark-project` references/transition.md） | 清理保留/删除由用户选；任务号缺失则跳过流转 |
 
 ---
 

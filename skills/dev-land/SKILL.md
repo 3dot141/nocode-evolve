@@ -36,17 +36,17 @@ Task 2: Disposition
   Sub-steps: 呈现 4 选项，用户选路径
   Gate: 用户选定 merge/PR/keep/discard 之一
 
-Task 3: Execute
-  Sub-steps: 按选定路径执行（rule-finishing-branch）
-  Gate: 选定路径的所有 Gate 通过
+Task 3: Plan + Execute
+  Sub-steps: 呈现计划（PR: title/body + target + reviewer；Merge: merge 计划），Gate 确认后执行
+  Gate: PR 已创建 + reviewer 已添加（PR 路径）；或已本地合并（Merge 路径）
 
-Task 4: Task Transition
-  Sub-steps: 飞书 issue 状态流转（lark-project references/transition.md）
-  Gate: 任务流转或标注跳过
+Task 4: Poll & Merge
+  Sub-steps: PR 路径：ScheduleWakeup 轮询直到合并；Merge 路径：已在 Step 3 完成，直接过
+  Gate: 代码已合并（PR merged / 本地 merged）
 
-Task 5: Cleanup
-  Sub-steps: worktree 清理 + 确认终态
-  Gate: worktree 状态与用户选择一致
+Task 5: Cleanup + 流转
+  Sub-steps: 合并后一起做：worktree 清理（Gate Worktree-Cleanup）+ 飞书任务流转
+  Gate: worktree 状态与用户选择一致 + 任务流转或标注跳过
 ```
 
 每完成一个标 done。
@@ -93,12 +93,12 @@ skill 呈现 4 选项菜单（文案顺序由 sp skill 定义，不改）：
 - [ ] 用户已选定 Disposition（Merge / PR / Keep / Discard）
 - [ ] 发布策略已确认（生产改动时）或已跳过
 
-### Step 3: Execute
+### Step 3: Plan + Execute
 
-按 `rule-finishing-branch` 的选项分发执行。关键 Gate 序列：
+先呈现计划，用户确认后再执行。按 `rule-finishing-branch` 的选项分发。
 
 **Option 2 (PR) 路径**：
-commit 整理 → Gate Title-Body → Gate PR → push → 建 PR → 加 reviewer → Gate Worktree-Cleanup
+commit 整理 → Gate Title-Body（呈现 title/body 计划）→ Gate PR（呈现 push target + reviewer 计划）→ 用户确认 → push → 建 PR → 加 reviewer
 
 **PR body 回链**（Gate Title-Body 时）：PR body 除了描述改了什么，还要包含：
 - **Requirements Addressed**：引用 Define 的 restate Success Criteria 编号，逐条说明满足
@@ -106,51 +106,60 @@ commit 整理 → Gate Title-Body → Gate PR → push → 建 PR → 加 review
 这样 reviewer 看到 PR 就能追溯"为什么做"和"怎么证明做完了"，不用翻会话记录。
 
 **Option 1 (Merge) 路径**：
-commit 整理 → Gate Merge → 本地 merge → tests → cleanup → Gate Remote-Delete
+commit 整理 → Gate Merge（呈现 merge 计划）→ 用户确认 → 本地 merge → tests
 
-**Option 3 (Keep)**：报告路径，结束。
+**Option 3 (Keep)**：报告路径，结束（跳过 Step 4-5）。
 
-**Option 4 (Discard)**：Gate Discard (typed `discard`) → cleanup → Gate Remote-Delete。
+**Option 4 (Discard)**：Gate Discard (typed `discard`) → cleanup → Gate Remote-Delete（跳过 Step 4-5）。
 
 每个 Gate 停手等用户确认，不跳过。
 
 **完整示例**：走完 Option 2 (PR) 全流程（含 PR body 双回链）见 `references/examples/example-land-pr.md`。
 
 **Exit Gate:**
-- [ ] 选定路径执行完毕（PR 已创建 / 已合并 / 已 discard / 保留）
+- [ ] PR 已创建 + reviewer 已添加（Option 2）；或已本地合并（Option 1）；或已 discard/keep（Option 3/4）
 - [ ] 所有路径内 Gate 已通过
 
-### Step 4: Task Transition
+### Step 4: Poll & Merge
 
-PR 合并后（option 2 等合并；option 1 合并后立即）：
+**Option 2 (PR) 路径**：
+PR 创建后，ScheduleWakeup 轮询 PR 状态，直到 PR 合并。用户可选"直接 merge"（自己有权限时）或"不 merge，等 reviewer"。
 
-- 从 commit messages 提取飞书任务号（`#f-xxx` / `#g-xxx` / `#m-xxx`）
-- 按 `lark-project` (references/transition.md) 流转状态（组员开发 → 研发已改待BUILD）
-- 没有任务号 / 非飞书项目 → 跳过，不报错
+**Option 1 (Merge) 路径**：已在 Step 3 本地合并，直接通过。
 
-**Option 3/4 不走 Task Transition**。
+**Option 3/4**：跳过。
 
 **Exit Gate:**
-- [ ] 飞书任务已流转（有任务号时）或已标注跳过
+- [ ] 代码已合并（PR merged / 本地 merged）
 
-### Step 5: Cleanup
+### Step 5: Cleanup + 流转
 
+合并后一起做，不分两步。
+
+**Worktree 清理**：
 - **Option 1/4**：worktree 已在该路径中清理
-- **Option 2**：按 Gate Worktree-Cleanup 用户选择（保留 / 清理）
+- **Option 2**：Gate Worktree-Cleanup 问用户（保留 / 清理）。默认保留（用户可能要 iterate on PR feedback）
 - **Option 3**：不清理
 
 清理后 `ExitWorktree` 回主仓。确认 `git worktree list` 不再包含已清理路径。
 
+**任务流转**（合并后执行）：
+- 从 commit messages 提取飞书任务号（`#f-xxx` / `#g-xxx` / `#m-xxx`）
+- 按 `lark-project` (references/transition.md) 流转状态（组员开发 → 研发已改待BUILD）
+- 没有任务号 / 非飞书项目 → 跳过，不报错
+- **Option 3/4 不走任务流转**
+
 **Exit Gate:**
 - [ ] worktree 状态与用户选择一致（清理 / 保留）
 - [ ] 已 ExitWorktree 回主仓（清理时）
+- [ ] 飞书任务已流转（有任务号时）或已标注跳过
 
 ## Exit Gate（全局）
 
 - [ ] 选定路径的所有 Gate 已通过
-- [ ] PR 已创建（option 2）或已合并（option 1）或已 discard（option 4）
-- [ ] 飞书任务已流转（有任务号时）或已标注跳过
+- [ ] 代码已合并（PR merged / 本地 merged / discard / keep）
 - [ ] worktree 状态与用户选择一致（清理 / 保留）
+- [ ] 飞书任务已流转（有任务号时）或已标注跳过
 
 ## 场景差异
 
