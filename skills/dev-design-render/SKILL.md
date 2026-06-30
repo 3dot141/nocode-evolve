@@ -37,6 +37,10 @@ Task 3: 渲染
 Task 4: 验证 + 保存
   Sub-steps: 核对内容完整性 → 保存
   Gate: 产出已保存
+
+Task 5: 收口 — 交回调用方
+  Sub-steps: 向 dev-design-refine / dev-design 报告渲染产出路径，交回主流程继续
+  Gate: 已交回调用方（渲染是终点分支，无下游阶段 skill）
 ```
 
 ### Step 1: 分析文档结构
@@ -179,3 +183,4 @@ AskUserQuestion（参考 pd-vd 方案）：
 - HTML 里的章节数跟原文档对不上（漏渲染了）
 - 图渲染跟 ASCII 原文节点/连线对不上
 - 没有设计文档就直接做 HTML（设计在先，渲染在后）
+- 因"任务简单 / 还在概览 / 用户说了'继续'"跳过某 Step、不建 Step 0 TaskCreate、或漏掉最后的交接 task

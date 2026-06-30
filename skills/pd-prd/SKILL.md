@@ -64,6 +64,10 @@ Task 8: 用户最终确认
 Task 9: 保存
   Sub-steps: 写文件到 {pd_prd_output}
   Gate: 文件保存 + 提示下一步
+
+Task 10: 硬交接 — 调用下一步 skill
+  Sub-steps: 报告 PRD 完成 → 按需求形态建议：涉及界面 → 调 Skill(nocode-evolve:pd-ix)（之后可续 pd-vd）；纯后端 / 无界面 → 进 devflow 开发流 → 等用户拍板
+  Gate: 用户拍板进入下一阶段（这一步不勾，PRD 不算收尾）
 ```
 
 每完成一个标 done。
@@ -378,6 +382,7 @@ research skill 的 Go/No-Go 建议基于以下判据（PRD 里引用）：
 | "先做着，需求做着做着就清楚了" | 那叫 spike，不叫产品设计。spike 完回来写 PRD |
 | "团队都知道要做什么" | 默契在第三个人加入时失效。写下来成本极低 |
 | "AI 写的 PRD 不靠谱" | AI 写初稿 + 人确认 > 人从零写。不靠谱的部分标 [ASSUMED] |
+| "这个改动简单，跳过某 Step 或不建 TaskCreate" | 进了 skill 就走完所有 Step。"简单"是你的判断，不是跳 Gate 的授权（详见 agent-catalog-using.md「进了 skill 就走完」） |
 
 ## Red Flags
 
@@ -395,3 +400,4 @@ research skill 的 Go/No-Go 建议基于以下判据（PRD 里引用）：
 - §4 流程图和 §5 领域能力图高度重复——§4 讲场景故事，§5 讲域内结构，不该画同一张图
 - 图中节点没标路径 ID（图和详述断连，读者无法跳转）
 - §1 没有核心设计决定速查表，或速查表内容和正文不一致
+- 因"任务简单 / 还在概览 / 用户说了'继续'"跳过某 Step、不建 Step 0 TaskCreate、或漏掉最后的交接 task

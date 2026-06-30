@@ -631,6 +631,7 @@ src/services/
 - ❌ **代用户拍板**：拿到 Report 自己挑修哪些——用户确认是 hard gate
 - ❌ **吞 Review Log**：只改主体不 append Review Log——审计轨迹断
 - ❌ **把 plan 内容塞进来**：class 内部 / TDD 步骤 / 具体 catch 块写法
+- ❌ 因"任务简单 / 还在概览 / 用户说了'继续'"跳过某 Step、不建 Step 0 TaskCreate、或漏掉收尾交接——进了 skill 就走完所有 Step（详见 agent-catalog-using.md「进了 skill 就走完」）
 
 ## 看 examples 学结构，不照搬措辞
 

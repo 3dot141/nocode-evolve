@@ -66,6 +66,10 @@ Task 8: 写设计文档
 Task 9: 设计文档评审
   Sub-steps: 六轴 review → 内部一致性核对(BF↔影响清单↔接口↔DDL↔工具集↔文本总结) → design-review 交叉审（Claude 蓝军 + Codex 红军）
   Gate: 六轴 + 一致性 + 交叉审通过，无 Critical findings
+
+Task 10: 硬交接 — 调用下一步 skill
+  Sub-steps: 按 Exit Gate 硬交接报告 Design 完成（方案摘要 + 测试目标）→ 建议进 Plan → 等用户拍板后调 Skill(nocode-evolve:dev-plan)
+  Gate: 用户拍板进入 Plan（这一步不勾，Design 不算收尾）
 ```
 
 每完成一个标 done。
@@ -544,6 +548,7 @@ TO 传递给后续 Plan（指导切片 + task covers）、Build（驱动 TDD）�
 | "用户说了用 X" | 用户指定方案 ≠ 跳过 Design。验证可行性 + 补设计细节仍是 Design 的活 |
 | "这个改动太小不需要设计" | 小改动走 Standard 跳 Design。进了 Design 就是因为它需要 |
 | "不用搜外部方案，我知道怎么做" | 你可能不知道有更好的库/模式。30 秒搜一下成本极低 |
+| "这个改动简单，跳过某 Step 或不建 TaskCreate" | 进了 skill 就走完所有 Step。"简单"是你的判断，不是跳 Gate 的授权（详见 agent-catalog-using.md「进了 skill 就走完」） |
 
 ## Red Flags
 
@@ -559,3 +564,4 @@ TO 传递给后续 Plan（指导切片 + task covers）、Build（驱动 TDD）�
 - Step 8 没调 dev-design-refine 就自己写了设计文档——"我有足够信息"不是跳过 Skill() 的理由，手写文档缺 refine 的结构审查和质量保证
 - Step 6c 领域覆盖检查只写了一句话就标 ✅——涉及的领域必须产出决策表（决策点/选了什么/为什么/备选），一句话不算展开
 - 写完文档后才发现核心设计问题（工具集/scope/middleware）——说明 Step 6c 没展开就跳到 Step 8 了，决策清点 gate 本该拦住
+- 因"任务简单 / 还在概览 / 用户说了'继续'"跳过某 Step、不建 Step 0 TaskCreate、或漏掉最后的交接 task

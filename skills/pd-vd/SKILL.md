@@ -67,7 +67,7 @@ Task 5: 验证
   Gate: 测试方案审批通过 + Playwright errors=0 + 按保真度 Gate 表全过
 
 Task 6: 保存 + Handoff
-  Sub-steps: 写 .vd.md + 保存原型 → 提示 devflow
+  Sub-steps: 写 .vd.md + 保存原型 → 报告完成并交回 devflow（以 PRD + .ix.md + .vd.md 为输入）
   Gate: 文件保存，全部 Task 更新
 ```
 
@@ -438,6 +438,7 @@ verify-report.json errors = 0 才过 Gate。
 | "Modal 太简单不用做原型" | IA 里列了就要实现，在宿主页面里加一个 `<dialog>` 不费事 |
 | "截图看了没问题就行" | Playwright 跑一遍比看一眼靠谱 |
 | "没有 .ix.md 但我知道交互是什么" | 凭记忆出视觉 = 在空气上贴皮，先跑 pd-ix |
+| "这个改动简单，跳过某 Step 或不建 TaskCreate" | 进了 skill 就走完所有 Step。"简单"是你的判断，不是跳 Gate 的授权（详见 agent-catalog-using.md「进了 skill 就走完」） |
 
 ## Red Flags
 
@@ -450,3 +451,4 @@ verify-report.json errors = 0 才过 Gate。
 - 嵌入组件单独建了文件（应在宿主页面内实现）
 - IA 中有页面/视图但原型里没实现
 - 升档时推翻前一档（渐进式 = 叠加不是替换）
+- 因"任务简单 / 还在概览 / 用户说了'继续'"跳过某 Step、不建 Step 0 TaskCreate、或漏掉最后的交接 task

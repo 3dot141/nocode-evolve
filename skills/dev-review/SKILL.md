@@ -75,6 +75,10 @@ Task 5: Findings Triage
 Task 6: 用户 approve
   Sub-steps: Critical 全 fix + 用户逐条拍板 Warning
   Gate: Critical 清零 + 用户拍板
+
+Task 7: 硬交接 — 调用下一步 skill
+  Sub-steps: 按 Exit Gate 硬交接报告 Review 完成（findings 统计 + Critical/Warning 处置）→ 建议进 Land → 等用户拍板后调 Skill(nocode-evolve:dev-land)
+  Gate: 用户拍板进入 Land（这一步不勾，Review 不算收尾）
 ```
 
 每完成一个标 done。
@@ -186,6 +190,7 @@ Task 6: 用户 approve
 | "reviewer 说的肯定对" | external 反馈先验证再实现。错的要 push-back |
 | "简化顺手就删了" | Chesterton's Fence——先 git blame 查来历 |
 | "这次 Critical 特殊" | Critical 不可 override 就是为了挡这句话 |
+| "这个改动简单，跳过某 Step 或不建 TaskCreate" | 进了 skill 就走完所有 Step。"简单"是你的判断，不是跳 Gate 的授权（详见 agent-catalog-using.md「进了 skill 就走完」） |
 
 ## Red Flags
 
@@ -195,3 +200,4 @@ Task 6: 用户 approve
 - 对外部 reviewer 每条都"good point"全盘照改
 - Spec 轴只对照 Design 的 TO 表，没回 PRD 原始路径清单（Design 漏的路径会跟着漏）
 - 约束（跨路径不变量）没逐条查校验逻辑，只看了单条路径功能
+- 因"任务简单 / 还在概览 / 用户说了'继续'"跳过某 Step、不建 Step 0 TaskCreate、或漏掉最后的交接 task

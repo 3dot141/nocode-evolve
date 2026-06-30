@@ -53,7 +53,7 @@ Task 3: IA 汇总 + 用户批准
   Gate: IA 经批准，.ix.md 已写入
 
 Task 4: 保存 + Handoff
-  Sub-steps: 保存 .ix.md → 提示 pd-vd 或 devflow
+  Sub-steps: 保存 .ix.md → 提示下一步：有界面 → 调 Skill(nocode-evolve:pd-vd)；否则进 devflow
   Gate: 文件保存，全部 Task 更新
 ```
 
@@ -153,6 +153,7 @@ Task 4: 保存 + Handoff
 | "先拍个 IA 再补交互" | IA 是从交互拆解汇总出来的 |
 | "交互太简单不用拆" | 简单的交互也有 empty/loading/error 态 |
 | "直接出视觉更快" | 没批准交互就出视觉 = 在未验证的骨架上贴皮 |
+| "这个改动简单，跳过某 Step 或不建 TaskCreate" | 进了 skill 就走完所有 Step。"简单"是你的判断，不是跳 Gate 的授权（详见 agent-catalog-using.md「进了 skill 就走完」） |
 
 ## Red Flags
 
@@ -162,3 +163,4 @@ Task 4: 保存 + Handoff
 - wireframe 缺 empty/loading/error
 - 交互流没标路径 ID
 - 没对照 PRD 逐条核路径
+- 因"任务简单 / 还在概览 / 用户说了'继续'"跳过某 Step、不建 Step 0 TaskCreate、或漏掉最后的交接 task

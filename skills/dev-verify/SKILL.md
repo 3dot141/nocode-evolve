@@ -67,6 +67,10 @@ Task 6: 验收逐条核对（Step 6）
 Task 7: 反向审计（Step 7，Full 场景）
   Sub-steps: 拿 PRD 原始路径清单回扫，按测试方案逐层查覆盖
   Gate: 遗漏已补测或标注"已知未验+原因+风险"
+
+Task 8: 硬交接 — 调用下一步 skill
+  Sub-steps: 按 Exit Gate 硬交接报告 Verify 完成（验收通过率 + 证据 + 反向审计结论）→ 建议进 Review → 等用户拍板后调 Skill(nocode-evolve:dev-review)
+  Gate: 用户拍板进入 Review（这一步不勾，Verify 不算收尾）
 ```
 
 每完成一个标 done。
@@ -195,6 +199,7 @@ Step 6 是"按 checklist 逐条核"，Step 7 是"回头查 checklist 本身有�
 | "上次跑过了，没动那块" | "没动"是假设。重新跑 |
 | "先报完成回头补" | "回头补"永远不来 |
 | "warning 不影响功能" | warning 是未来 error 的预告 |
+| "这个改动简单，跳过某 Step 或不建 TaskCreate" | 进了 skill 就走完所有 Step。"简单"是你的判断，不是跳 Gate 的授权（详见 agent-catalog-using.md「进了 skill 就走完」） |
 
 ## Common Failures
 
@@ -215,3 +220,4 @@ Step 6 是"按 checklist 逐条核"，Step 7 是"回头查 checklist 本身有�
 - 只核对了 SC，没核对路径和约束（Step 6 漏了一半）
 - Full 场景跳过反向审计——前面阶段漏的路径会一路漏到上线
 - 反向审计发现未验项但静默放过（没补测也没标"已知未验+原因+风险"）
+- 因"任务简单 / 还在概览 / 用户说了'继续'"跳过某 Step、不建 Step 0 TaskCreate、或漏掉最后的交接 task

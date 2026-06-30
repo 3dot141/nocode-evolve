@@ -51,6 +51,10 @@ Task 5: Go/No-Go — 用户拍板
 Task 6: 保存
   Sub-steps: 写文件到 {pd_research_output}
   Gate: 文件保存 + 提示下一步
+
+Task 7: 硬交接 — 调用下一步 skill
+  Sub-steps: 报告调研完成（Go/No-Go 结论）→ 建议写 PRD → 等用户拍板后调 Skill(nocode-evolve:pd-prd)
+  Gate: 用户拍板进入 PRD（这一步不勾，Research 不算收尾）
 ```
 
 每完成一个标 done。
@@ -220,6 +224,7 @@ research-report 存到 `{pd_research_output}` 变量指定的路径（见 `model
 | "调研浪费时间" | 30 分钟调研省 3 天返工 |
 | "先做着看，遇到问题再调研" | 遇到问题时已经投入了沉没成本 |
 | "竞品跟我们不一样" | 不一样也值得看——知道为什么不一样更有价值 |
+| "这个改动简单，跳过某 Step 或不建 TaskCreate" | 进了 skill 就走完所有 Step。"简单"是你的判断，不是跳 Gate 的授权（详见 agent-catalog-using.md「进了 skill 就走完」） |
 
 ## Red Flags
 
@@ -228,3 +233,4 @@ research-report 存到 `{pd_research_output}` 变量指定的路径（见 `model
 - Go/No-Go 建议没有理由（逃避判断）
 - 跳过了代码现状切面就去搜外部方案（可能重复造轮子）
 - 切面校验全跳过（没给用户看就直接综合）
+- 因"任务简单 / 还在概览 / 用户说了'继续'"跳过某 Step、不建 Step 0 TaskCreate、或漏掉最后的交接 task

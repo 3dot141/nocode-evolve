@@ -35,6 +35,10 @@ Task 2: Ship
 
 Task 3: Post-merge
   Gate: dev-post-merge 完成（任务流转或标注跳过）
+
+Task 4: 收口 — 报告完成并交回
+  Sub-steps: 向用户 / devflow 导航报告 Land 完成（合并状态 + 任务流转结果）→ 交回控制
+  Gate: 已报告完成（devflow 流程末端，无下游阶段 skill）
 ```
 
 每完成一个标 done。
@@ -109,6 +113,7 @@ Mini 场景的 Land-lite：确认 commit 已完成即可，不进完整 Step 1-3
 | "worktree 保着占空间，顺手删了" | Gate Worktree-Cleanup 让用户选。用户可能要 iterate on PR feedback |
 | "任务号懒得填" | 流转闭环是 Land 的一部分，不是可选 |
 | "force push 一下就好" | force push 是高风险操作，有专门的 Gate |
+| "这个改动简单，跳过某 Step 或不建 TaskCreate" | 进了 skill 就走完所有 Step。"简单"是你的判断，不是跳 Gate 的授权（详见 agent-catalog-using.md「进了 skill 就走完」） |
 
 ## Red Flags
 
@@ -117,3 +122,4 @@ Mini 场景的 Land-lite：确认 commit 已完成即可，不进完整 Step 1-3
 - PR 创建后立刻 merge 不等 review——option 2 终态是 PR 提交，不是合并
 - 清理 worktree 但没 ExitWorktree——先退出再清理
 - Option 2 选了 PR 路径又说"还是本地 merge 吧"——回 Step 2 重选，不混搭
+- 因"任务简单 / 还在概览 / 用户说了'继续'"跳过某 Step、不建 Step 0 TaskCreate、或漏掉最后的交接 task

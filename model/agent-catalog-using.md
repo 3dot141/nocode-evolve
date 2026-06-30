@@ -52,7 +52,9 @@
 
 1. **Step 0 TaskCreate 必须调用.** 进了 workflow skill 第一件事就是按它的 Step 0 把所有 task 建出来. 不建 = 漏步没有刹车, 后面跳了无人察觉. 跳过 TaskCreate 本身就是跳步.
 2. **走完所有 Step, 不因"轻"而省.** "任务简单 / 还在概览阶段 / 用户说了'继续'"都不是跳步授权. 快 ≠ 跳——每步可以简洁, 不能省步. Exit Gate 不看任务大小.
-3. **最后一个 task = 调用下一步要 handoff 的 skill.** workflow skill 的 task 列表最后一项, 显式写成"调用下一阶段 skill" (如 dev-plan 末尾 → 调 dev-build). 把硬交接固化成一个没勾的 task, context 丢了也不会断在原地. 终点 skill 没有下游, 最后 task 写"交回调用方 / 流程结束".
+3. **最后一个 task = 调用下一步要 handoff 的 skill.** workflow skill 的 task 列表最后一项, 显式写成"调用下一阶段 skill" (如 dev-plan 末尾 → 调 dev-build). 把硬交接固化成一个没勾的 task, context 丢了也不会断在原地. 终点 skill 没有下游阶段, 最后 task 写"向调用方 / 用户报告完成并交回控制"——是有实际动作的交接, 不是占位的空 task.
+
+> **fork/subagent 例外**: 上面三条约束针对**主 agent** 进入 workflow skill 的情形. 按本文件触发协议, fork/subagent 不在其 prompt 范围外 TaskCreate / 调 workflow skill——fork 内不主动建 task、不强制交接, 不算跳步违规.
 
 | 跳步的借口 | 现实 |
 |---|---|

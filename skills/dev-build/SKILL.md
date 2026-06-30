@@ -51,6 +51,24 @@ AskUserQuestion: "Plan 里没有记录执行模式，怎么跑？"
 - Workflow 顺序 — 逐 task 顺序执行
 ```
 
+**确定执行模式后立即 TaskCreate**，建 3 个编排里程碑（**不镜像 plan 的每个 task**——per-task 在 Workflow 内部跑，镜像出来会和内部重派/修复循环打架、谎报进度；这里只跟踪编排者自己的 3 步）：
+
+```
+Task 1: 派发 Workflow（Step 1-2）
+  Sub-steps: 加载计划 + 解析依赖图 + 组装 implementer prompt + 生成并调用 Workflow() 执行
+  Gate: Workflow 跑完，拿到所有 task 的结构化结果
+
+Task 2: 编排者验证（Step 3）
+  Sub-steps: 独立查 diff + 独立跑测试 + spec 逐条核对 + 空壳扫描
+  Gate: 全部 task 通过编排者独立验证（不信 subagent 自报）
+
+Task 3: 硬交接 — 调用下一步 skill
+  Sub-steps: 按 Exit Gate 硬交接报告 Build 完成（完成 task 数 + 测试 + build 状态）→ 建议进 Verify → 等用户拍板后调 Skill(nocode-evolve:dev-verify)
+  Gate: 用户拍板进入 Verify（这一步不勾，Build 不算收尾）
+```
+
+每完成一个标 done。
+
 ### Step 1: 加载计划 + 生成 Workflow
 
 1. 读 Plan 文档：任务序列 + 依赖图 + Design 测试目标
@@ -213,6 +231,7 @@ Prompt 模板见 `references/implementer-prompt.md`。
 | "我先验证下思路，测试稍后" | "稍后"= 永不。验证思路本身就该用测试表达 |
 | "事后测试达到同样目的" | tests-after 回答"代码做什么"，tests-first 回答"代码应该做什么"。前者被实现带偏 |
 | "一次多做几个 task 更快" | 批量的速度是假的——出问题时无法二分定位 |
+| "这个改动简单，跳过某 Step 或不建 TaskCreate" | 进了 skill 就走完所有 Step。"简单"是你的判断，不是跳 Gate 的授权（详见 agent-catalog-using.md「进了 skill 就走完」） |
 
 ## Red Flags
 
@@ -222,3 +241,4 @@ Prompt 模板见 `references/implementer-prompt.md`。
 - commit message 是 "fix" / "update" / "wip"
 - subagent 越界改了计划外文件
 - 报"Build 完成"但留有空壳函数/未实现方法/TODO placeholder（lint+typecheck 通过 ≠ 功能完整）
+- 因"任务简单 / 还在概览 / 用户说了'继续'"跳过某 Step、不建 Step 0 TaskCreate、或漏掉最后的交接 task
