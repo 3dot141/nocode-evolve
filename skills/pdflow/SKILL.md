@@ -44,7 +44,7 @@ description: 产品发现工作流领航（Research → PRD · 2 场景路由）
 
 ### Step 2: TaskCreate
 
-为当前场景的阶段建 task。每个有对应 skill 的阶段（Research / PRD / 交互设计 / 视觉设计），**task description 的 sub-steps 链首固定写 `⓪ Skill(...)`**——把"加载该阶段 skill"钉成进入阶段的第一个动作。Handoff 是衔接动作，无 skill，不加 ⓪。
+为当前场景的阶段建 task。每个有对应 skill 的阶段（Research / PRD / 交互设计 / 视觉设计），**task description 的 sub-steps 链首固定写 `⓪ Skill(...)`**——把"加载该阶段 skill"钉成进入阶段的第一个动作。Handoff 是衔接动作，无 skill，不加 ⓪。最后一个阶段 task（Handoff）建 TaskCreate 时带 `metadata: {handoff: true}`——供防跳步 Hook B 识别交接 task。
 
 **Full 场景**：
 ```

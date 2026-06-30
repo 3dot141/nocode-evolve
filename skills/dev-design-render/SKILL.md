@@ -41,6 +41,7 @@ Task 4: 验证 + 保存
 Task 5: 收口 — 交回调用方
   Sub-steps: 向 dev-design-refine / dev-design 报告渲染产出路径，交回主流程继续
   Gate: 已交回调用方（渲染是终点分支，无下游阶段 skill）
+  metadata: {handoff: true}（供防跳步 Hook B 识别交接 task）
 ```
 
 ### Step 1: 分析文档结构

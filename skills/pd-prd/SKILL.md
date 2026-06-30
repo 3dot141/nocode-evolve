@@ -68,6 +68,7 @@ Task 9: 保存
 Task 10: 硬交接 — 调用下一步 skill
   Sub-steps: 报告 PRD 完成 → 按需求形态建议：涉及界面 → 调 Skill(nocode-evolve:pd-ix)（之后可续 pd-vd）；纯后端 / 无界面 → 进 devflow 开发流 → 等用户拍板
   Gate: 用户拍板进入下一阶段（这一步不勾，PRD 不算收尾）
+  metadata: {handoff: true}（供防跳步 Hook B 识别交接 task）
 ```
 
 每完成一个标 done。

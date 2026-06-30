@@ -36,7 +36,7 @@
  */
 import { readJsonFile } from "./fs.mjs";
 import { BROKER_BUSY_RPC_CODE, BROKER_ENDPOINT_ENV, CodexAppServerClient } from "./app-server.mjs";
-import { loadBrokerSession } from "./broker-lifecycle.mjs";
+import { clearBrokerSession, loadBrokerSession } from "./broker-lifecycle.mjs";
 import { binaryAvailable } from "./process.mjs";
 
 const SERVICE_NAME = "claude_code_codex_plugin";
@@ -771,6 +771,26 @@ function buildAppServerAuthStatus(accountResponse, configResponse) {
   });
 }
 
+function isBrokerFallbackError(error) {
+  return (
+    isBrokerConnectionError(error) ||
+    error?.rpcCode === BROKER_BUSY_RPC_CODE
+  );
+}
+
+function isBrokerConnectionError(error) {
+  return error?.code === "ENOENT" || error?.code === "ECONNREFUSED";
+}
+
+function wasBrokerRequested(cwd, client, env = process.env) {
+  return (
+    client?.transport === "broker" ||
+    Boolean(env?.[BROKER_ENDPOINT_ENV]) ||
+    Boolean(process.env[BROKER_ENDPOINT_ENV]) ||
+    Boolean(loadBrokerSession(cwd)?.endpoint)
+  );
+}
+
 async function getCodexAuthStatusFromClient(client, cwd) {
   try {
     const accountResponse = await client.request("account/read", { refreshToken: false });
@@ -851,6 +871,37 @@ export async function getCodexAuthStatus(cwd, options = {}) {
     });
     return await getCodexAuthStatusFromClient(client, cwd);
   } catch (error) {
+    const brokerRequested = wasBrokerRequested(cwd, client, options.env);
+    const shouldRetryDirect = brokerRequested && isBrokerFallbackError(error);
+    if (brokerRequested && isBrokerConnectionError(error)) {
+      clearBrokerSession(cwd);
+    }
+    if (client) {
+      await client.close().catch(() => {});
+      client = null;
+    }
+
+    if (shouldRetryDirect) {
+      let directClient = null;
+      try {
+        directClient = await CodexAppServerClient.connect(cwd, {
+          env: options.env,
+          disableBroker: true
+        });
+        return await getCodexAuthStatusFromClient(directClient, cwd);
+      } catch (directError) {
+        return buildAuthStatus({
+          loggedIn: false,
+          detail: directError instanceof Error ? directError.message : String(directError),
+          source: "app-server"
+        });
+      } finally {
+        if (directClient) {
+          await directClient.close().catch(() => {});
+        }
+      }
+    }
+
     return buildAuthStatus({
       loggedIn: false,
       detail: error instanceof Error ? error.message : String(error),

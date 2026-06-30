@@ -70,6 +70,7 @@ Task 9: 设计文档评审
 Task 10: 硬交接 — 调用下一步 skill
   Sub-steps: 按 Exit Gate 硬交接报告 Design 完成（方案摘要 + 测试目标）→ 建议进 Plan → 等用户拍板后调 Skill(nocode-evolve:dev-plan)
   Gate: 用户拍板进入 Plan（这一步不勾，Design 不算收尾）
+  metadata: {handoff: true}（供防跳步 Hook B 识别交接 task）
 ```
 
 每完成一个标 done。

@@ -52,6 +52,7 @@ Define 返回后，拿到确认的 restate + 场景分类，进 Step 2。
 
 1. **三要素**：`调用` / `进入前 Read` / `Gate`（从「8 阶段总览」表抄）
 2. **Sub-steps 序列**：从下方「Phase sub-flows」抄该阶段的子步骤编号链，**链首固定是 `⓪ Skill(...)`**——把"加载该阶段 skill"写成显式第 0 步，进入阶段第一眼就看到
+3. **末阶段 handoff 标记**：最后一个阶段 task（交接/收口阶段，如 Land）建 TaskCreate 时带 `metadata: {handoff: true}`——供防跳步 Hook B 识别交接 task
 
 示例：
 ```
