@@ -1,0 +1,19 @@
+{
+  "skills": [
+    "nocode-evolve:devflow",
+    "nocode-evolve:pdflow",
+    "nocode-evolve:dev-define",
+    "nocode-evolve:dev-design",
+    "nocode-evolve:dev-design-refine",
+    "nocode-evolve:dev-design-render",
+    "nocode-evolve:dev-plan",
+    "nocode-evolve:dev-build",
+    "nocode-evolve:dev-verify",
+    "nocode-evolve:dev-review",
+    "nocode-evolve:dev-land",
+    "nocode-evolve:pd-research",
+    "nocode-evolve:pd-prd",
+    "nocode-evolve:pd-ix",
+    "nocode-evolve:pd-vd"
+  ]
+}

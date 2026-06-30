@@ -83,6 +83,7 @@ Task 9: 用户确认 + 选执行模式
 Task 10: 硬交接 — 调用下一步 skill
   Sub-steps: 按 Exit Gate 硬交接报告 Plan 完成（task 数 + 执行模式 + 首个 slice）→ 建议进 Build → 等用户拍板后调 Skill(nocode-evolve:dev-build)
   Gate: 用户拍板进入 Build（这一步不勾，Plan 不算收尾）
+  metadata: {handoff: true}（供防跳步 Hook B 识别交接 task）
 ```
 
 每完成一个标 done。

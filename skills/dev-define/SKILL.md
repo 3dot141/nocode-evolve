@@ -59,6 +59,7 @@ Task 7: 用户确认 — 三选 + 交叉审
 Task 8: 硬交接 — 调用下一步 skill
   Sub-steps: 按 Exit Gate 硬交接报告 Define 完成（场景分类 + restate 摘要）→ 按场景建议下一步：Full/Standard/Fix → Env（调 Skill(nocode-evolve:using-git-worktrees)）；Mini → Build-lite → 等用户拍板
   Gate: 用户拍板进入下一阶段（这一步不勾，Define 不算收尾）
+  metadata: {handoff: true}（供防跳步 Hook B 识别交接 task）
 ```
 
 每完成一个标 done。

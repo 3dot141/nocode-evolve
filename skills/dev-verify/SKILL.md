@@ -71,6 +71,7 @@ Task 7: 反向审计（Step 7，Full 场景）
 Task 8: 硬交接 — 调用下一步 skill
   Sub-steps: 按 Exit Gate 硬交接报告 Verify 完成（验收通过率 + 证据 + 反向审计结论）→ 建议进 Review → 等用户拍板后调 Skill(nocode-evolve:dev-review)
   Gate: 用户拍板进入 Review（这一步不勾，Verify 不算收尾）
+  metadata: {handoff: true}（供防跳步 Hook B 识别交接 task）
 ```
 
 每完成一个标 done。

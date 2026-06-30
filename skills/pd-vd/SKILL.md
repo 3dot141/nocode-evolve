@@ -69,6 +69,7 @@ Task 5: 验证
 Task 6: 保存 + Handoff
   Sub-steps: 写 .vd.md + 保存原型 → 报告完成并交回 devflow（以 PRD + .ix.md + .vd.md 为输入）
   Gate: 文件保存，全部 Task 更新
+  metadata: {handoff: true}（供防跳步 Hook B 识别交接 task）
 ```
 
 每完成一个标 done。

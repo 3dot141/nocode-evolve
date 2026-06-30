@@ -62,6 +62,15 @@
         ]
       },
       {
+        "matcher": "Skill",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ${CLAUDE_PLUGIN_ROOT}/hooks/skill-entry-reminder.mjs"
+          }
+        ]
+      },
+      {
         "matcher": "*",
         "hooks": [
           {
@@ -78,6 +87,17 @@
           {
             "type": "command",
             "command": "${CLAUDE_PLUGIN_ROOT}/skills/continuous-learning-v2/hooks/observe.sh"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ${CLAUDE_PLUGIN_ROOT}/hooks/handoff-stop-guard.mjs"
           }
         ]
       }

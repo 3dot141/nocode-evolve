@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import path from 'node:path';
-import { loadManifest, genPretooluse, genCatalogSharded, renderBucketBody, check, renderAll, SHARD_LIMIT } from './generate.mjs';
+import { loadManifest, genPretooluse, genWorkflowSkills, genCatalogSharded, renderBucketBody, check, renderAll, SHARD_LIMIT } from './generate.mjs';
 
 test('genCatalogSharded: 当前 manifest 分片 — 每片在阈值内, 文件名按序号', () => {
   const shards = genCatalogSharded(loadManifest());
@@ -111,6 +111,36 @@ test('genPretooluse: 扁平化 pretooluse 靶 (不变)', () => {
   assert.ok(block, '应含 bkt PUT 的 block 靶');
   assert.equal(block.rule, 'dev-finish-branch');
   assert.ok(p.some((x) => x.decision === 'inject'), '应含 inject 靶');
+});
+
+test('genWorkflowSkills: manifest.workflow_skills → {skills} 生成物 (含 15 个带前缀 skill)', () => {
+  const m = {
+    buckets: [],
+    rules: [],
+    workflow_skills: [
+      'nocode-evolve:devflow', 'nocode-evolve:pdflow', 'nocode-evolve:dev-define',
+      'nocode-evolve:dev-design', 'nocode-evolve:dev-design-refine', 'nocode-evolve:dev-design-render',
+      'nocode-evolve:dev-plan', 'nocode-evolve:dev-build', 'nocode-evolve:dev-verify',
+      'nocode-evolve:dev-review', 'nocode-evolve:dev-land', 'nocode-evolve:pd-research',
+      'nocode-evolve:pd-prd', 'nocode-evolve:pd-ix', 'nocode-evolve:pd-vd',
+    ],
+  };
+  const out = genWorkflowSkills(m);
+  assert.ok(out.file.endsWith('hooks/workflow-skills.json'), '生成物路径应为 hooks/workflow-skills.json');
+  const parsed = JSON.parse(out.text);
+  assert.equal(parsed.skills.length, 15, '应含 15 个 skill');
+  for (const s of m.workflow_skills) assert.ok(parsed.skills.includes(s), `缺 skill ${s}`);
+  assert.ok(parsed.skills.every((s) => s.startsWith('nocode-evolve:')), '每个 skill 都应带 nocode-evolve: 前缀');
+});
+
+test('genWorkflowSkills: 真实 manifest 含 15 skill 名单', () => {
+  const parsed = JSON.parse(genWorkflowSkills(loadManifest()).text);
+  assert.equal(parsed.skills.length, 15, '真实 manifest 应含 15 个 workflow skill');
+});
+
+test('targets: 含 workflow-skills.json 生成物', () => {
+  const t = renderAll(false);
+  assert.ok(t.some((x) => x.file.endsWith('workflow-skills.json')), 'workflow-skills.json 应在 targets');
 });
 
 test('targets: 含 catalog 分片 + pretooluse, 不含 route 区/triggers/旧 catalog.md', () => {

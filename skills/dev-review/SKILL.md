@@ -79,6 +79,7 @@ Task 6: 用户 approve
 Task 7: 硬交接 — 调用下一步 skill
   Sub-steps: 按 Exit Gate 硬交接报告 Review 完成（findings 统计 + Critical/Warning 处置）→ 建议进 Land → 等用户拍板后调 Skill(nocode-evolve:dev-land)
   Gate: 用户拍板进入 Land（这一步不勾，Review 不算收尾）
+  metadata: {handoff: true}（供防跳步 Hook B 识别交接 task）
 ```
 
 每完成一个标 done。

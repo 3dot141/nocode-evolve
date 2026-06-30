@@ -44,6 +44,7 @@ Task 1: 确定场景 + 加载输入
 Task 2..N: 按场景模板的 Step（feat 最多，research 最少）
 Task N+1: Review（双路交叉 + 用户逐条确认 + Review Log）
 Task N+2: 保存 + 渲染
+  metadata: {handoff: true}（供防跳步 Hook B 识别交接 task）
 ```
 
 每完成一个标 done。

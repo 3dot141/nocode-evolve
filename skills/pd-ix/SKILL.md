@@ -55,6 +55,7 @@ Task 3: IA 汇总 + 用户批准
 Task 4: 保存 + Handoff
   Sub-steps: 保存 .ix.md → 提示下一步：有界面 → 调 Skill(nocode-evolve:pd-vd)；否则进 devflow
   Gate: 文件保存，全部 Task 更新
+  metadata: {handoff: true}（供防跳步 Hook B 识别交接 task）
 ```
 
 每完成一个标 done。

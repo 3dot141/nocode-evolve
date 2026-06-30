@@ -65,6 +65,7 @@ Task 2: 编排者验证（Step 3）
 Task 3: 硬交接 — 调用下一步 skill
   Sub-steps: 按 Exit Gate 硬交接报告 Build 完成（完成 task 数 + 测试 + build 状态）→ 建议进 Verify → 等用户拍板后调 Skill(nocode-evolve:dev-verify)
   Gate: 用户拍板进入 Verify（这一步不勾，Build 不算收尾）
+  metadata: {handoff: true}（供防跳步 Hook B 识别交接 task）
 ```
 
 每完成一个标 done。

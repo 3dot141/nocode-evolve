@@ -39,6 +39,7 @@ Task 3: Post-merge
 Task 4: 收口 — 报告完成并交回
   Sub-steps: 向用户 / devflow 导航报告 Land 完成（合并状态 + 任务流转结果）→ 交回控制
   Gate: 已报告完成（devflow 流程末端，无下游阶段 skill）
+  metadata: {handoff: true}（供防跳步 Hook B 识别交接 task）
 ```
 
 每完成一个标 done。
