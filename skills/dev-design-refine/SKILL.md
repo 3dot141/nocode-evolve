@@ -435,7 +435,7 @@ Task N+2: 保存 + 渲染
 - [ ] 问题已定义
 
 **Core Actions:**
-- 委派 `research-workflow` skill（见 `skills/research-workflow/SKILL.md`），`type: mixed`，多角度搜索 + 验证
+- 委派 `research-workflow` skill（见 `skills/research-workflow/SKILL.md`），`type: mixed`，`depth: shallow`（默认；用户明确要求深入调研，或该预研要作为正式决策依据时改 `deep` 加对抗验证）
 - 每条发现带 `[SOURCE: url]` / `[Read path:line]` 来源
 
 **Exit Gate:**

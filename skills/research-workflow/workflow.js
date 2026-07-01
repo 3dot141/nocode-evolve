@@ -14,7 +14,7 @@ export const meta = {
 // {
 //   question: string                       — required, the research question
 //   type: 'web'|'code'|'mixed'|'custom'    — preset; bundles tool chain + iterate default
-//   depth: 'shallow' | 'deep'              — default 'deep'
+//   depth: 'shallow' | 'deep'              — default 'shallow'
 //   iterate: number                        — max search rounds per angle; default per-type
 //   systemPrompt: string                   — appended after the type's tool chain (required for 'custom')
 //   angles: [{label, query, rationale?}]   — optional, skip Scope if provided
@@ -56,7 +56,7 @@ if (!QUESTION) {
 }
 
 const TYPE = TOOL_CHAINS[raw.type] !== undefined ? raw.type : 'mixed'
-const DEPTH = raw.depth || 'deep'
+const DEPTH = raw.depth || 'shallow'
 const IS_DEEP = DEPTH === 'deep'
 const PRE_ANGLES = Array.isArray(raw.angles) && raw.angles.length > 0 ? raw.angles : null
 
