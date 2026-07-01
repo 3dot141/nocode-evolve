@@ -9,9 +9,27 @@ argument-hint: (无参数)
 
 ## 执行流程
 
+### Phase 0: 增量范围判断（Baseline Diff）
+
+先于 Phase 1 的任何检测，用 `scripts/plugin-dream-baseline.mjs` 判断本次要跑多大范围：
+
+```bash
+node "${CLAUDE_PLUGIN_ROOT}/scripts/plugin-dream-baseline.mjs" "${CLAUDE_PLUGIN_ROOT}"
+```
+
+解析输出 JSON（`{ action: "diff", diff: null | { commitDiff, dirtyFiles }, changed: boolean }`），按以下分支处理：
+
+| `diff` | `changed` | 处理 |
+|---|---|---|
+| `null`（首次运行，或 baseline 指向的 commit 因 rebase 等原因不可达） | `true` | 走全量：Phase 1 Layer1 + Layer2 都对全部对象跑；本轮 Phase 3 执行完毕后进入 **Phase 4**，调用 `setBaseline` 记录本次 HEAD 为新 baseline |
+| 非 `null` 且 `commitDiff`/`dirtyFiles` 均为空 | `false` | **秒回**，不进入 Phase 1，直接输出：`✓ plugin-dream：自上次检查以来 rules/skills/commands/hooks/scripts/rules/manifest.json/.claude-plugin/plugin.json 无变化，无需维护`，命令结束 |
+| 非 `null` 且 `commitDiff`/`dirtyFiles` 至少一个非空 | `true` | 合并 `commitDiff ∪ dirtyFiles` 得到"变更文件集合"，继续 Phase 1；Layer2 只对该集合覆盖到的 rule/skill/command 对象跑检测；本轮 Phase 3 执行完毕后**同样进入 Phase 4**，调用 `setBaseline` 把 baseline 推进到本次 HEAD（处理过一轮变化后必须前移，不止首次运行才前移，否则 diff 范围只会越滚越大，秒回永久失效）|
+
+> 这一步不可跳过——即使用户在参数里指定了范围（如"只查 rule"），也先跑本判断决定 Layer2 的候选文件集合是"全部 rule"还是"变更文件集合 ∩ rule"。
+
 ### Phase 1: Scan（两层检测）
 
-#### Layer 1 — 客观漂移（机械可测，跑现成命令）
+#### Layer 1 — 客观漂移（机械可测，跑现成命令；不受 Phase 0 增量范围影响，每次都全量跑——generate.mjs --check/vendor-sync.mjs --check 本身足够快，不需要增量优化）
 
 | 检测 | 命令/判据 | 修复类型 |
 |---|---|---|
@@ -21,6 +39,8 @@ argument-hint: (无参数)
 | 孤儿 rule | `ls rules/*.md` 归一化路径 ∖ manifest `read` 字段归一化后的登记集合（两侧路径归一化必须一致，否则会把全部 rule 误判孤儿） | 护栏：登记进 manifest 或删除（二次确认） |
 
 #### Layer 2 — 边界符合性（语义，按对象类型分组读文件判断；单文件级判据，不跨文件推理，保证结论可复现）
+
+> **扫描范围**：若 Phase 0 判定为"首次运行/降级"，以下每类对象全量扫描；若判定为"有变化"，每类对象只扫描 Phase 0 产出的"变更文件集合"里出现的那些 `rules/*.md` / `skills/*/SKILL.md` / `commands/*.md`（一个对象文件本身或其 manifest 条目出现在变更集合即算命中），其余对象本轮跳过。
 
 **rule 对象**（逐个 `rules/rule-*.md` + 对应 manifest 条目）：
 
@@ -71,6 +91,16 @@ argument-hint: (无参数)
 - **自动类**（O1/O2）：直接重跑对应命令
 - **护栏类**（O3/O4，涉及删除）：回显路径 + 原因 + 影响，二次确认后执行
 - **建议式**（Layer2 全部）：不自动改——rule 类委托 `Skill(nocode-evolve:plugin-distill)`，skill 类委托 `Skill(nocode-evolve:skill-writing)`，由用户在委托流程里最终拍板
+
+### Phase 4: 记录 Baseline（首次运行/降级、以及处理完变化之后都执行）
+
+只要没有在 Phase 0 判定"秒回"提前结束（即走到了这里，不论是"首次运行/降级"全量跑完，还是"有变化"处理完毕），本步骤都要执行：
+
+```bash
+node "${CLAUDE_PLUGIN_ROOT}/scripts/plugin-dream-baseline.mjs" --set "${CLAUDE_PLUGIN_ROOT}"
+```
+
+`setBaseline` 把 baseline 推进到当前 HEAD——这样下次 `/plugin-dream` 才能拿"这次处理完的点"作为新起点做增量判断；只有 Phase 0 判定"秒回"（无任何变化）时才跳过本步骤，因为那种情况根本不会执行到 Phase 1-3。
 
 ### 完成报告
 
