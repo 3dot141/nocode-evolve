@@ -72,9 +72,9 @@ Task 7: 逐 task 填充真实代码
 
 ═══ 收尾 ═══
 
-Task 8: Round 2 Red-Blue Review + Plan Validation
-  Sub-steps: 调 Skill(nocode-evolve:red-blue-deep) 评估完整计划 → 裁决修正 → 四项自检（需求覆盖 + 路径覆盖 + 可验证 + 无环）
-  Gate: red-blue-deep 流程完成 + 裁决修正完成 + 四项自检全过（任一不过回 Task 7 补）
+Task 8: Round 2 Checklist 核查 + 窄化 Red-Blue + Plan Validation
+  Sub-steps: checklist 逐项核查（API签名/测试覆盖/设计一致/废弃接口）→ 窄化 Skill(nocode-evolve:red-blue-deep) 只评跨task一致性 → 裁决修正 → 四项自检（需求覆盖 + 路径覆盖 + 可验证 + 无环）
+  Gate: checklist + red-blue-deep 流程完成 + 裁决修正完成 + 四项自检全过（任一不过回 Task 7 补）
 
 Task 9: 用户确认 + 选执行模式
   Sub-steps: 完整呈现计划 → AskUserQuestion 确认 → 选执行模式 → 记录到 Plan header Execution 字段
@@ -129,6 +129,7 @@ Round 1 写骨架——定清楚**改什么、覆盖什么、谁做**，代码�
 - **Sizing ≤ M**（≤5 文件），超了拆
 - **Rollback-friendly**：每 task 独立可回滚
 - **描述 durable 化**：用行为意图（"用户创建记录时验证必填字段"），不用易腐行号
+- **Review Tier**（`light` / `heavy`，决定 Build 阶段怎么审）：单文件 + 无 HITL + 不碰共享接口/契约/安全鉴权支付 → 标 `light`（Build 阶段不单独起 spec/quality subagent，并入下一个 checkpoint 批量审查）；其余 → 标 `heavy`（默认，走完整 per-task 三阶段 pipeline）。拿不准 → 标 `heavy`
 
 ### Step 5: 插 checkpoint
 
@@ -193,15 +194,21 @@ Round 1 的骨架定了"改什么"，Round 2 填"怎么改"——每个 task 补
 
 填充完成，代码和测试都写好了，在交用户确认前做最后一轮对抗审视 + 清单自检。
 
-#### 8a. Red-Blue Review
+#### 8a. Checklist 核查 + 窄化 Red-Blue
 
-调用 `Skill(nocode-evolve:red-blue-deep)`，评估问题：
+**Checklist 核查**（逐项过，不派 codex）：
+- API 签名 / import 路径是否与当前代码库一致（读最新代码库核实，不凭记忆）
+- 测试是否只测 happy path，有没有漏边界/异常分支
+- 实现是否和设计文档的 BF 伪代码 / 接口一致
+- 有没有引用已废弃接口
 
-> 「这份填充了真实代码的计划拿去执行可行吗？代码能跑通吗（API 签名 / import 路径 / 已废弃接口）？测试覆盖关键场景了吗（有没有只测 happy path）？实现和设计文档一致吗？执行顺序对吗（前置 task 产出够后续用吗）？」
+**窄化 Red-Blue**（只审跨 task 一致性 / 执行顺序）：调用 `Skill(nocode-evolve:red-blue-deep)`，评估：
 
-附上完整计划（含所有 task 的代码 + 测试 + 验证命令 + 设计文档引用）作为被评估对象。
+> 「前置 task 的产出（接口/数据结构/约定）够后续 task 用吗？多个 task 之间有没有隐含冲突的假设？执行顺序对吗？」
 
-**结论落地**：red-blue-deep 结论中成立的质疑修正到计划中（回 Step 7 修正对应 task）。
+不把完整实现代码整段喂给 red-blue 走 heavy 档 codex 审查。
+
+**结论落地**：checklist 发现的问题 + red-blue 结论中成立的质疑，都修正到计划中（回 Step 7 修正对应 task）。
 
 #### 8b. 需求覆盖
 
@@ -263,10 +270,11 @@ AskUserQuestion: "计划确认了，怎么执行？"
 - [ ] 计划已产出（依赖图 + 任务序列 + checkpoint）
 - [ ] 所有 task ≤ M，零占位符
 - [ ] 每个 task 标了 HITL/AFK
+- [ ] 每个 task 标了 Review Tier（light/heavy）
 - [ ] 每个 task 标了 `covers`，所有 task 汇总覆盖 restate 每条路径（路径→task 映射表已产出）
 - [ ] 测试目标已分配到 slice
 - [ ] Round 1 red-blue-deep 通过 + 骨架已修正（Step 6）
-- [ ] Round 2 red-blue-deep + Plan Validation 通过（Step 8）
+- [ ] Round 2 checklist 核查 + 窄化 red-blue-deep + Plan Validation 通过（Step 8）
 - [ ] 用户显式确认计划（AskUserQuestion）
 - [ ] 执行模式已选（Workflow 并行 / Workflow 顺序）并记录到 Plan header `Execution` 字段
 - [ ] 后续 Build 输入齐全：任务序列 + 测试目标 + 执行模式

@@ -18,7 +18,7 @@ dev-review 是 `reviewing` 框架的一个细则（评审对象 = 代码 diff）
 
 dev-review 在框架里的定位（其余照骨架走）：
 
-- **领域维度（框架第 3 步注入点）= 五轴 + Spec 轴路径覆盖**。五轴（正确性 / 可读性 / 架构 / 安全 / 性能）是 Standards 轴的领域维度；Spec 轴路径覆盖是**附加维度**（详见 Step 6）。这两组维度就是后续 finding 的 `axis`。
+- **领域维度（框架第 3 步注入点）= 五轴**。正确性 / 可读性 / 架构 / 安全 / 性能，是 Standards 轴的领域维度，也是后续 finding 的 `axis`。Spec 轴（需求对齐）不在 dev-review 查，前移到 Design/Plan/Build 阶段（见下方"Review 的检查范围是 Standards 轴"）。
 - **选方法（框架第 4 步 selectMethods）= `[checklist（五轴逐项核查）+ red-blue-adversarial（异源 codex 交叉）]`**。代码 diff 对象查骨架方法选择表正是这两个。**按对象加选 card**：审到 SQL / schema / migration → 加选 `{NOCODE_SKILL_REF}/reviewing/methods/database-method.md`；审到架构决策 → 加选 `{NOCODE_SKILL_REF}/reviewing/methods/architecture-method.md`（不经 manifest，靠 selectMethods）。
 - **findings 套统一契约**：每条 finding 走 findings-contract 的 schema；分级走 C/W/S（dev-review 原生即 C/W/S，1:1 直通 `severity`），Q/SA 走 `kind`。
 - **公共能力全走框架**：CLAIM 剥离 / codex 经 `rule-codex-review` 派 / Evidence Gate / Doubt Theater / 分档判定都在 skeleton §4，本 skill 只引用不重写。
@@ -29,13 +29,7 @@ dev-review 在框架里的定位（其余照骨架走）：
 
 **Review 顺序：先读测试，再读实现。** 测试告诉你代码该做什么，实现告诉你代码怎么做。先看意图再看手段。
 
-**双轴意识**：Review 隐含两个正交维度——
-- **Standards 轴**：代码标准合规（五轴 review 覆盖的就是这个）
-- **Spec 轴**：实现与需求/PRD/restate 是否对齐（过建了？欠建了？偏了？）
-
-一个改动可能一轴过一轴挂。五轴 review 做完后，回 Define 的 restate / Design 的设计文档核对 Spec 轴。两轴分别报 findings，不合并——合并会让一轴掩盖另一轴。
-
-**Spec 轴含路径覆盖检查**（详见 Step 6）。核对对象不止文档整体，要到**路径级粒度**——拿 **PRD 原始路径清单**（不只 Design 的 TO 表）逐条比对代码。这道检查能兜住 Design 阶段的漏项：Design 漏了某条路径 → TO 表里没有 → 但 PRD 清单有 → Review 在这里拦住，不用等 Verify。
+**Review 的检查范围是 Standards 轴**（五轴：正确性/可读性/架构/安全/性能），不查需求对齐。
 
 ## 非本 skill 请求
 
@@ -46,7 +40,6 @@ dev-review 在框架里的定位（其余照骨架走）：
 - [ ] Verify Gate 已过（验收标准逐条通过 + 证据齐全）
 - [ ] Change sizing 已判断（~100 行好；~300 行可接受；~1000 行先建议 split）
 - [ ] 评审范围 = 本次变更涉及的代码（不评历史遗留）
-- [ ] Spec 轴输入就位：PRD 原始路径清单 + restate 路径↔SC 绑定 + Design TO 表（Full 场景）
 
 ## 领域维度来源（评审时按需取）
 
@@ -60,7 +53,6 @@ dev-review 在框架里的定位（其余照骨架走）：
 | 性能轴 | Read `{NOCODE_SKILL_REF}/performance-guide.md` | N+1 / 重渲染 / bundle 反模式 |
 | 测试质量 | Read `{NOCODE_SKILL_REF}/testing-guide.md` | DAMP / 替身偏好序 / 金字塔 |
 | UI 代码 | Read `{NOCODE_SKILL_REF}/frontend-guide.md` | 组件模式 / Avoid AI Aesthetic / WCAG |
-| Spec 轴路径检查 | Read `{NOCODE_SKILL_REF}/path-conventions.md` | 路径 ID 体系 / 状态标注 / 下游消费协议 |
 
 ## 协议
 
@@ -85,19 +77,15 @@ Task 3: Cross-Review（red-blue-adversarial · 异源交叉）
   Sub-steps: CLAIM 剥离后派 codex 异源交叉（经 rule-codex-review；不可用则降级并明说）
   Gate: 两路 findings 合并或降级标注
 
-Task 4: Findings Triage（Standards 轴，对应 Step 4）
+Task 4: Findings Triage（对应 Step 4）
   Sub-steps: 套统一契约 schema 分级（Critical/Warning/Suggestion + kind），过 Evidence Gate
   Gate: findings 呈现给用户
 
-Task 5: Path Coverage Check（Spec 轴，对应 Step 6）
-  Sub-steps: Spec 轴附加维度，拿 PRD 原始路径清单逐条比对实现
-  Gate: 路径覆盖率报告产出
-
-Task 6: 用户 approve
+Task 5: 用户 approve
   Sub-steps: Critical 全 fix + 用户逐条拍板 Warning
   Gate: Critical 清零 + 用户拍板
 
-Task 7: 硬交接 — 调用下一步 skill
+Task 6: 硬交接 — 调用下一步 skill
   Sub-steps: 按 Exit Gate 硬交接报告 Review 完成（findings 统计 + Critical/Warning 处置）→ 建议进 Land → 等用户拍板后调 Skill(nocode-evolve:dev-land)
   Gate: 用户拍板进入 Land（这一步不勾，Review 不算收尾）
   metadata: {handoff: true}（供防跳步 Hook B 识别交接 task）
@@ -108,6 +96,8 @@ Task 7: 硬交接 — 调用下一步 skill
 ### Step 1: Five-Axis Self-Review（checklist 方法 · 领域维度）
 
 这是框架第 4 步选的 `checklist` 方法套 dev-review 的领域维度（五轴）。按五轴逐一过 diff，每轴显式标 ✅/⚠️/❌（详细检查点见 `references/five-axis-guide.md`）：
+
+**先读 Build 各 task 的 Quality Review verdict（有则读）**：可读性/架构/正确性（对应 Build Quality Review 的 Conventions/Structure/Quality）这三轴不再从零通读全部文件——Build per-task 已经查过一遍，这里只找"合并后才出现"的增量问题（多个 task 各自看都合规、合起来才暴露的循环依赖/重复抽象/职责重叠），已经被 per-task 挑过的同类问题不重复记 finding。**安全轴 / 性能轴仍是全量强制检查**——Build 的 Quality Review 没有这两个维度，这里是它们第一次、也是唯一一次被系统性检查。
 
 | 轴 | 核心问题 | 高频缺陷 |
 |---|---|---|
@@ -144,7 +134,7 @@ Task 7: 硬交接 — 调用下一步 skill
 
 ### Step 4: Findings Triage
 
-每条 finding 套**统一契约**（`{NOCODE_SKILL_REF}/reviewing/findings-contract.md` 的 schema）：`id`（C1/W1/S1，特殊性质用 Q1/SA1）+ `severity`（critical/warning/suggestion）+ `kind`（normal/open-question/self-audit，正交于 severity）+ `axis`（五轴名或 Spec 轴）+ `location`（file:line / `[锚点]`）+ `evidence`（代码摘录）+ `finding`（问题描述）+ `fix`（可操作修法）+ `source`（蓝军 / 红军(Codex) / subagent）。
+每条 finding 套**统一契约**（`{NOCODE_SKILL_REF}/reviewing/findings-contract.md` 的 schema）：`id`（C1/W1/S1，特殊性质用 Q1/SA1）+ `severity`（critical/warning/suggestion）+ `kind`（normal/open-question/self-audit，正交于 severity）+ `axis`（五轴名）+ `location`（file:line / `[锚点]`）+ `evidence`（代码摘录）+ `finding`（问题描述）+ `fix`（可操作修法）+ `source`（蓝军 / 红军(Codex) / subagent）。
 
 > 原 `action`（Critical/Warning/Suggestion）语义即 `severity`——dev-review 原生就是 C/W/S，1:1 直通，无需映射。最上层加一个 `verdict { approved, counts, recommendation }`：存在未处置 Critical → `approved:false`。
 
@@ -172,37 +162,6 @@ Task 7: 硬交接 — 调用下一步 skill
 
 **新依赖 5 问**（review 发现新增 import/package）：标准库能否解决？包多大？维护活跃？已知 CVE？License 兼容？答不全 = Warning。
 
-### Step 6: Path Coverage Check（Spec 轴路径级核对）
-
-五轴（Standards 轴）查"代码写得对不对"，这一步（Spec 轴）查"该做的路径有没有做"。两件事，分开报 findings。
-
-**输入**：
-- **PRD 原始路径清单**（使用路径 / 跨域路径 / 系统路径 / 约束）——这是 source of truth，不是 Design 的 TO 表
-- restate 的路径 ↔ SC 绑定
-- Design 的 TO 表（辅助参照，但不替代 PRD 原始清单）
-- **有 pd-ix/pd-vd 产出时**：`.ix.md` 的覆盖矩阵（页面 + 交互）作为前端实现完整度的对照基准——IA 中列出的每个页面/视图/交互在代码里都有对应实现吗？`data-testid` 命名是否和 `.vd.md` 定义一致？
-
-为什么拿 PRD 原始清单而非 TO 表：Design 漏掉某条路径时，TO 表里也没有这条，只对照 TO 表会跟着漏。PRD 原始清单是上游 source，对照它才能兜住 Design 的遗漏。路径 ID 体系见 `{NOCODE_SKILL_REF}/path-conventions.md`。
-
-**逐条核对**：
-1. **每条路径** → 实现里有没有对应代码？走查入口、关键步骤、异常分支、边界
-2. **每条约束** → 有没有对应的校验逻辑？（约束是跨路径不变量，如"退款 ≤ 实付"，要有显式守卫）
-3. **每条系统路径** → 后台行为/回调/定时任务在代码里落地了吗？
-
-**产出路径覆盖率报告**：
-
-```
-| 路径/约束 | 实现位置 | 覆盖 | 备注 |
-|---|---|---|---|
-| 订单.P1 | order/create.ts:45 | ✅ 覆盖 | |
-| 订单.P2 | order/cancel.ts:30 | ⚠️ 部分 | 缺"已发货不可取消"异常分支 |
-| 约束.1 | — | ❌ 未覆盖 | 退款金额无上限校验 |
-| 系统.1 | webhook/pay.ts:12 | ✅ 覆盖 | |
-```
-
-- **未覆盖 / 部分覆盖** → 标 reason，转 Spec 轴 finding（Critical 还是 Warning 看影响）
-- 这是 Build 之后的兜底关卡。Design Review 是第一道（设计层），这里是第二道（代码层）。两道都没拦住才会漏到 Verify
-
 ## Exit Gate
 
 - [ ] 所有 Critical 已 fix
@@ -226,6 +185,4 @@ Task 7: 硬交接 — 调用下一步 skill
 - finding 写成"感觉怪"——没有 file:line + evidence
 - 1000 行 diff 直接开评，没先建议 split
 - 对外部 reviewer 每条都"good point"全盘照改
-- Spec 轴只对照 Design 的 TO 表，没回 PRD 原始路径清单（Design 漏的路径会跟着漏）
-- 约束（跨路径不变量）没逐条查校验逻辑，只看了单条路径功能
 - 因"任务简单 / 还在概览 / 用户说了'继续'"跳过某 Step、不建 Step 0 TaskCreate、或漏掉最后的交接 task

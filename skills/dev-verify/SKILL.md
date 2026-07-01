@@ -31,7 +31,6 @@ Build 完成后的 **evidence** 门。"看起来对"不是证据，跑一下才�
 | `{NOCODE_SKILL_REF}/security-guide.md` | 涉及安全功能时 | 安全检查清单 / 渗透验证 |
 | `{NOCODE_SKILL_REF}/observability-guide.md` | 验证生产可观测时 | 埋点是否到位 / 告警是否 actionable |
 | `{NOCODE_SKILL_REF}/frontend-guide.md` | 有 UI 变更时 | 无障碍检查 / 响应式验证 |
-| `{NOCODE_SKILL_REF}/path-conventions.md` | 反向审计读路径清单时 | 路径/约束 ID 体系 / 状态标注 / 下游消费协议 |
 
 ## 协议
 
@@ -64,12 +63,8 @@ Task 6: 验收逐条核对（Step 6）
   Sub-steps: Define 验收标准 + 路径 + 约束逐条 ✅/❌ 附证据
   Gate: 逐条通过，任一 ❌ 回 Build
 
-Task 7: 反向审计（Step 7，Full 场景）
-  Sub-steps: 拿 PRD 原始路径清单回扫，按测试方案逐层查覆盖
-  Gate: 遗漏已补测或标注"已知未验+原因+风险"
-
-Task 8: 硬交接 — 调用下一步 skill
-  Sub-steps: 按 Exit Gate 硬交接报告 Verify 完成（验收通过率 + 证据 + 反向审计结论）→ 建议进 Review → 等用户拍板后调 Skill(nocode-evolve:dev-review)
+Task 7: 硬交接 — 调用下一步 skill
+  Sub-steps: 按 Exit Gate 硬交接报告 Verify 完成（验收通过率 + 证据）→ 建议进 Review → 等用户拍板后调 Skill(nocode-evolve:dev-review)
   Gate: 用户拍板进入 Review（这一步不勾，Verify 不算收尾）
   metadata: {handoff: true}（供防跳步 Hook B 识别交接 task）
 ```
@@ -155,41 +150,13 @@ Core Web Vitals：LCP ≤ 2.5s、INP ≤ 200ms、CLS ≤ 0.1。详见 `reference
 
 **Subagent 验证规则**：如果用了 subagent 执行 Build，subagent 报 success 不可信——独立查 VCS diff 确认真有改动、独立跑测试确认真通过。不信 agent 自报状态。
 
-### Step 7: 反向审计（Full 场景）
-
-Step 6 是"按 checklist 逐条核"，Step 7 是"回头查 checklist 本身有没有漏"——拿 **PRD 原始路径清单**（不只 Design 的 TO 表）回扫，确保前面阶段没有集体遗漏。无 PRD（Standard/Fix/Mini）→ 拿 restate 路径清单回扫；无路径清单 → 标注跳过。
-
-**① 按测试方案逐层检查**（对照设计文档「验证策略」章节）：
-
-- **E2E**：策略说要 E2E 的路径，有没有真跑？跑出来的结果能不能真的验出问题（不是跑了就算，要看断言是否覆盖关键状态）？
-- **单测**：路径 P1/P2/P3… 的核心逻辑都覆盖到了吗？逐条点名，不能"大致都测了"。
-- **集成测试**：跨领域交界（跨域.N）覆盖了吗？mock 边界是否把真实风险 mock 掉了？
-- **手动验证**：标"手动"的路径，有没有实际验过并留证据（截图/录屏/操作记录）？
-
-**② 约束验证**：每条约束（约束.N）有没有对应测试？测试够不够——单条路径通过 ≠ 约束成立，约束往往要多条路径组合才能证伪（如"退款 ≤ 实付"要测正常退款 + 超额退款被拒 + 多次部分退款累计）。
-
-**③ Design 不测项复查**：Design 当时标"测不了/后续补"的路径，理由现在还成立吗？环境/工具就位了就补测，仍不可测则确认风险可接受。
-
-**④ 产出反向审计报告**：
-
-```
-反向审计:
-- 路径覆盖: 订单.P1 ✅ / 订单.P2 ✅ / 跨域.1 ❌(物流回调未验) / 系统.1 ⚠️(标手动未留证据)
-- 约束覆盖: 约束.1 ✅(3 组用例) / 约束.2 ❌(库存为负未测组合场景)
-- 不测项复查: 系统.2(第三方沙箱) — 理由仍成立，风险可接受
-- 遗漏处置: 跨域.1 → 回 Build；约束.2 → 补测；系统.1 → 补留证据
-```
-
-发现遗漏 → **补测，或显式标注"已知未验 + 原因 + 风险"**，不静默放过。把未验项藏起来 = Step 6 失效。
-
 ## Exit Gate
 
 - [ ] 全部验证证据已收集（三元组齐全）
 - [ ] 验收标准 + 路径 + 约束逐条通过
-- [ ] 反向审计完成（Full 场景）——PRD 路径回扫，遗漏已补测或标注"已知未验+原因+风险"
 - [ ] 性能达标（有需求时）
 - [ ] 后续 Review 可开始
-- [ ] **硬交接**：Exit Gate 全部通过后，向用户报告 Verify 完成（含验收标准通过率 + 证据摘要 + 反向审计结论），建议下一阶段：Review（`nocode-evolve:dev-review`）。列出 Review 阶段的 sub-steps + 关键决策（devflow Step 5 格式）。等用户拍板，不自行进入下一阶段
+- [ ] **硬交接**：Exit Gate 全部通过后，向用户报告 Verify 完成（含验收标准通过率 + 证据摘要），建议下一阶段：Review（`nocode-evolve:dev-review`）。列出 Review 阶段的 sub-steps + 关键决策（devflow Step 5 格式）。等用户拍板，不自行进入下一阶段
 
 ## Common Rationalizations
 
@@ -219,6 +186,4 @@ Step 6 是"按 checklist 逐条核"，Step 7 是"回头查 checklist 本身有�
 - 有 UI 变更但没截图
 - 验收核对出现"大概通过/应该没问题"
 - 只核对了 SC，没核对路径和约束（Step 6 漏了一半）
-- Full 场景跳过反向审计——前面阶段漏的路径会一路漏到上线
-- 反向审计发现未验项但静默放过（没补测也没标"已知未验+原因+风险"）
 - 因"任务简单 / 还在概览 / 用户说了'继续'"跳过某 Step、不建 Step 0 TaskCreate、或漏掉最后的交接 task

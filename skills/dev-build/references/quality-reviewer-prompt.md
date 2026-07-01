@@ -2,6 +2,8 @@
 
 Build 编排者在 spec review 通过后派发此 prompt，验证实现质量。
 
+**Scope（早期门槛，不是全局质量审查）**：只看这一个 task 自己的 diff，快而窄——优先抓明显问题，不判断跨 task 的架构一致性（那是 Review 阶段 Five-Axis 的活，它会读你这份 verdict 再补全局增量）。
+
 ## Prompt 模板
 
 ```

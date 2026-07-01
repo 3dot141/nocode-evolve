@@ -404,7 +404,7 @@
       "triggers": ["review\\s*一下", "帮我?\\s*review", "审一下", "code\\s*review", "看.{0,4}代码", "评审", "帮我?\\s*审"],
       "action": "调 Skill(nocode-evolve:dev-review)",
       "read": "",
-      "summary": "devflow Review 阶段五轴评审 + Spec 轴路径覆盖检查; 产出分级 findings 报告 (Critical/Warning/Suggestion); Critical 不可 override; 与 codex-review 分工: dev-review = devflow 五轴评审, codex-review = 独立红军/第二实现/委派",
+      "summary": "devflow Review 阶段五轴评审(Standards 轴; Spec 轴需求对齐前移到 Design/Plan/Build 阶段查, Review 不再重查); 产出分级 findings 报告 (Critical/Warning/Suggestion); Critical 不可 override; 与 codex-review 分工: dev-review = devflow 五轴评审, codex-review = 独立红军/第二实现/委派",
       "guard": "",
       "depends_on": [],
       "severity": "advisory",

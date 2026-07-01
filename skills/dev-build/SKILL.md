@@ -87,7 +87,6 @@ export const meta = {
     { title: 'Implement' },
     { title: 'Spec Review' },
     { title: 'Quality Review' },
-    { title: 'Final Review' },
   ],
 }
 
@@ -165,13 +164,6 @@ for (const layer of topoLayers) {
     )
   ))
 }
-
-// Final: 整体 code review
-phase('Final Review')
-const finalReview = await agent(finalReviewPrompt, {
-  label: 'final-review',
-  phase: 'Final Review',
-})
 ```
 
 > 这是结构示意，Build 根据实际 plan 内容生成具体脚本。
@@ -186,6 +178,8 @@ per-task 的 **Spec Review + Quality Review** 两阶段不自造一套 review �
   - **Spec Review 维度**（`references/spec-reviewer-prompt.md`）：Missing requirements / Design alignment / Cross-task consistency / Empty shells / Extra / Misunderstandings——每条 issue 带 tag `[missing]` / `[empty-shell]` / `[design-mismatch]` / `[cross-task]` / `[extra]`。
   - **Quality Review 维度**（`references/quality-reviewer-prompt.md`）：Structure / Quality / Testing / Conventions——Issues 分 Critical / Important / Minor。
 
+**Quality Review 范围**：只看这一个 task 自己的 diff——抓 linter 能抓的 Conventions、缺测试、明显坏味道，不做跨 task 架构判断（Review 阶段 Five-Axis 负责，会读各 task 的 Quality Review verdict 补增量）。
+
 **tag / 级别 → 统一 severity 映射**（findings-contract §3 的 dev-build 列，本 skill 不另立分级体系）：
 
 | tag / 级别 | 统一 severity | 处置 |
@@ -195,6 +189,13 @@ per-task 的 **Spec Review + Quality Review** 两阶段不自造一套 review �
 | `[extra]` + Quality `Minor` | **Suggestion**（记录） | 多余产出 / 小问题 |
 
 **两阶段 gate 不变**（框架步骤 7 收口语义）：Spec Review 仅在 implementer status ∈ DONE/DONE_WITH_CONCERNS 时跑；Quality Review 仅在 `specResult.approved === true` 时跑；任一 `approved:false` → 进 fix 循环（见「异常路径」），不放行。`approved:false` 等价于框架"存在未处置 Critical → 不放行"，是 Critical 不可 override 在 per-task 层的体现。
+
+### Review Tier（轻档出口）
+
+不是每个 task 都要走完整三阶段 pipeline。按 Plan 阶段标的 Review Tier（`light`/`heavy`，见 dev-plan Step 4）分流：
+
+- **heavy**（默认，多文件 / 碰共享接口·契约 / 涉及安全鉴权支付 / 标 HITL）→ 走完整 pipeline：implement → spec review → quality review，不降档。
+- **light**（单文件 + 无 HITL + 不碰共享接口）→ 只走 implement，spec/quality review 不单独起 subagent——implement 结果先收集，等到下一个 checkpoint 边界，把该 checkpoint 区间内所有 light task 的 diff **合并送一次** spec+quality review（复用同一套 REVIEW_SCHEMA，评审对象从"单 task diff"变成"该 checkpoint 区间内全部 light task 合并 diff"）。
 
 ### Step 3: 处理 Workflow 结果
 
@@ -208,8 +209,8 @@ Workflow 完成后，Build 作为编排者验证结果：
 
 1. **独立查 diff**：Read subagent 改动的文件，确认 scope 未越界
 2. **独立跑测试**：跑完整测试套件，不只依赖 subagent 的测试输出
-3. **spec 核对**：subagent 交付的 vs task 验收标准逐条核对
-4. **空壳扫描**：检查 subagent 产出的代码中是否有未实现的空壳——空函数体、placeholder 注释（`// TODO`、`// implement`）、`throw new Error('not implemented')`、只有类型签名没有逻辑的方法。lint + typecheck 通过不代表功能完整，空函数合法但无用。发现空壳 → 视为 task 未完成，重新派发 implementer 补齐
+3. **spec 核对（抽查）**：抽查 1-2 个 task 的 spec reviewer 判断是否站得住，不逐条重查
+4. **空壳扫描（确定性脚本，非 LLM 判断）**：用 grep/AST 模式匹配扫全量 diff——空函数体、placeholder 注释（`// TODO`、`// implement`）、`throw new Error('not implemented')`、只有类型签名没有逻辑的方法。lint + typecheck 通过不代表功能完整，空函数合法但无用。发现空壳 → 视为 task 未完成，重新派发 implementer 补齐
 
 ## Implementer Prompt 组装
 
