@@ -23,10 +23,25 @@ devflow 第 4 阶段——把目标拆成 tracer bullet 任务序列，Round 1 �
 
 Round 1（骨架审视：切片策略/依赖图/任务粒度）不受影响，仍走完整 heavy 档——这是唯一的 pre-code 决策关卡，一旦 Build 逐个扇出 subagent 执行，事后没有"再拦一道"的机会，值得砸最贵资源。
 
-## 设计决策：task 骨架加 Review Tier 字段
+## 设计决策：task 骨架加 Review Tier 字段（已废弃，见下方新决策）
 
-见 `dev-build/README.md`「per-task review 加轻档出口」——dev-plan 负责在 task 骨架阶段打上 `light`/`heavy` 标签，Build 阶段消费这个标签决定怎么审。
+见 `dev-build/README.md`「per-task review 加轻档出口」——dev-plan 负责在 task 骨架阶段打上 `light`/`heavy` 标签，Build 阶段消费这个标签决定怎么审。这条决策在下方「Review Tier 字段移除」被反转。
+
+## 设计决策：Review Tier 字段移除，Execution 字段恢复，Round 2 引入领域指南消费
+
+`260701` dev-build 拆分为 subagent/executing 两种执行协议后调整。
+
+**原来的设计**：Plan 给每个 task 标 Review Tier（light/heavy），Build 按 tier 分流审查粒度；Execution 字段（选并行/顺序执行模式）在更早一版被移除，Build 固定顺序派发。
+
+**为什么改**：dev-build 侧决定把三阶段派发协议精简、贴近上游 superpowers（`subagent-driven-development` / `executing-plans`），Review Tier 的批量审查是对上游的额外正式化包装，跟着简化的 `dev-build-subagent.md` 一起移除。同时恢复"选执行方式"——但选项不再是"并行/顺序"（并行已确认有文件冲突 bug），而是"派 subagent 三阶段审查" vs "主 agent 自己顺序执行 plan 已写代码"，对应 plan/build 权威边界更清楚的两条路径（参照 superpowers `writing-plans` 结尾的 Execution Handoff 二选一）。
+
+另外，dev-build 的三阶段协议不再消费判断类领域指南（security-guide / architecture-principles 等）——这些改成 Plan 阶段消费：Plan 本来就要求逐行贴真实代码（Iron Law），写这些代码时才是做"用什么模式 / 怎么防护 / 怎么分层"这类判断的时机，等 Build 阶段再查为时已晚，也是在重复 Plan 已经做过的判断。
+
+**现在怎么办**：
+- task 模板去掉 `Review Tier` 字段
+- Plan Document Header 加回 `Execution` 字段（`subagent` / `executing`），Step 9 用户确认计划时一并选定
+- Step 7 填充代码时按场景消费领域指南（architecture-principles / security-guide / performance-guide / frontend-guide / testing-guide 的判断内容）+ 技术栈配方（`ts-test-patterns.md` / `go-patterns.md`，已从 `dev-build/references/` 搬到 `dev-plan/references/`）
 
 ## 下游消费者
 
-- `dev-build` — 读每个 task 的 Review Tier 决定审查粒度（固定由主 agent 顺序派发 subagent，不再读 `Execution` 字段）
+- `dev-build` — 读 Plan header 的 `Execution` 字段决定走 `dev-build-subagent.md` 还是 `dev-build-executing.md`

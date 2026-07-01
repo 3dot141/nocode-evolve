@@ -95,5 +95,4 @@ Read the implementation code and verify:
 Report:
 - ✅ Spec compliant (if everything matches after code inspection)
 - ❌ Issues found: [list specifically what's missing or extra, with file:line references]
-  - Tag each issue: [missing] / [empty-shell] / [design-mismatch] / [cross-task] / [extra]
 ```

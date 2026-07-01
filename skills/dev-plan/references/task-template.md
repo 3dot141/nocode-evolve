@@ -16,8 +16,6 @@
 
 **covers**: [订单.P1, 订单.P2, 约束.1]   # 必填：本 task 覆盖的路径/约束 ID（见 path-conventions.md）
 
-**Review Tier**: light | heavy   # 单文件+无HITL+不碰共享接口 → light（并入 checkpoint 批量审）；其余 → heavy（默认，走完整 per-task 三阶段审查）
-
 **验证命令**:
 - `npm test -- --grep "xxx"`        # 预期输出: 1 passing
 - `npm run build`                   # 预期输出: build succeeded
@@ -36,7 +34,6 @@
 要点：
 - `Size` 只能是 XS / S / M。L、XL 不允许，必须拆成多个 task。
 - `covers` 必填——标注本 task 覆盖的路径/约束 ID（来自 restate 路径清单）。所有 task 的 covers 汇总后必须覆盖 restate 每条路径，否则 Plan Exit Gate 不通过。
-- `Review Tier` 必填——拿不准标 `heavy`，不擅自降档。
 - `验证命令` 要带预期输出——"跑这个，应该看到这个"。没有预期输出的命令无法判定通过。
 - `真实改动` 是 HARD-GATE：不允许 `<your code here>` / `TODO` / `...`。
 
@@ -57,9 +54,6 @@
 **用户 Review**:
 - [ ] demo 已交付内容（这几个 task 端到端能跑通什么）
 - [ ] 用户确认继续 / 调整 / 回滚
-
-**Light Tier 批量审查**（若本 checkpoint 区间内有 `light` tier task）：
-- [ ] 该区间全部 light task 的合并 diff 已过一次 spec+quality review（见 dev-build「Review Tier」）
 
 **Rollback 点**: 此 checkpoint 之前所有 task 已各自 commit，出问题回退到这里。
 ```

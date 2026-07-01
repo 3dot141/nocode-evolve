@@ -58,7 +58,7 @@
     },
     "subagent-driven-development": {
       "action": "skip",
-      "reason": "编排模式（per-task 三阶段验证 + 状态机 + model selection）已吸收进 dev-build 的 Workflow 派发逻辑；prompt 模板搬到 dev-build/references/"
+      "reason": "已复刻为 dev-build/references/dev-build-subagent.md（per-task 三阶段验证 + 四状态协议贴近上游措辞，收尾对接 devflow Verify 而非 finishing-a-development-branch）；prompt 模板在 dev-build/references/"
     },
     "receiving-code-review": {
       "action": "keep-as-skill",
@@ -74,7 +74,7 @@
     },
     "executing-plans": {
       "action": "skip",
-      "reason": "dev-build 已覆盖"
+      "reason": "已复刻为 dev-build/references/dev-build-executing.md（贴近上游措辞，收尾对接 devflow Verify 而非 finishing-a-development-branch）"
     }
   }
 }

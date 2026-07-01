@@ -6,7 +6,7 @@ Build 编排者为每个 task 组装此 prompt，通过 `Agent()` 顺序派发�
 
 1. 填入 task 完整文本（从 Plan 文档提取，不让 subagent 自己读 Plan 文件）
 2. 注入 `implementer-disciplines.md` 全文作为执行纪律
-3. 按条件注入：有 pd-vd 原型时注入视觉清点段落；按技术栈配方注入对应 reference 路径
+3. 按条件注入：有 pd-vd 原型时注入视觉清点段落
 
 ## Prompt 模板
 
@@ -37,15 +37,13 @@ Report back with status NEEDS_CONTEXT. Don't guess or make assumptions.
 
 {CONDITIONAL: pd-vd 视觉清点段落}
 
-## Domain References (按需 Read)
-
-{CONDITIONAL: 技术栈配方对应的 reference 路径}
-
 ## Your Job
 
+Plan 里的 task 已经贴好了真实的测试代码 + 实现代码——你的角色是**忠实执行**，不是从零发明：
+
 1. Scope Lock: 确认 task 范围，Read 所有涉及代码
-2. Test First: 写失败测试，运行确认失败
-3. Implement: 最小代码过绿
+2. 落 plan 给的失败测试，运行确认失败（RED）——plan 的测试代码是权威起点。代码库有漂移（import 路径变了、依赖 API 变了）时按偏差分级适应，不擅自重新设计
+3. 落 plan 给的实现代码，运行确认通过（GREEN）——同样以 plan 的实现为起点去适配落地
 4. Verify & Commit: test + build + 无回归 → commit
 5. Self-review (see below)
 6. Report back

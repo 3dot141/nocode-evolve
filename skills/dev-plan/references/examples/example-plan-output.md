@@ -12,6 +12,7 @@
 **Tech Stack**: Express + 现有 orders/query.ts + csv-stringify
 **Design Doc**: N/A (Standard 场景)
 **Test Objectives**: 跨页导出全量 / UTF-8 BOM 不乱码 / 权限复用列表页
+**Execution**: subagent
 ```
 
 ## 依赖图
@@ -50,6 +51,8 @@ function buildQuery(filter: Filter, opts?: { unbounded?: boolean }) {
 **验证**：`npm test -- query.test.ts` → unbounded 时不带 LIMIT
 
 ### T3 — export 端点 [HITL, 权限确认] [M, 2 文件]
+
+**领域指南消费**：碰权限校验 → 读 `{NOCODE_SKILL_REF}/security-guide.md` 的 Broken Access Control 段，确认中间件复用而非重开一套校验逻辑
 
 ```ts
 // api/orders/export.ts

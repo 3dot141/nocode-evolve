@@ -1,6 +1,6 @@
 # dev-build
 
-devflow 第 5 阶段——主 agent 顺序派发 subagent，per-task 三阶段验证（implement → spec review → quality review）。Build skill 本身是编排者，不执行实现代码。
+devflow 第 5 阶段——读 Plan 的 `Execution` 字段，分发到 `dev-build-subagent`（顺序派发独立 subagent，per-task 三阶段验证：implement → spec review → quality review）或 `dev-build-executing`（主 agent 自己顺序执行 plan 已写代码）。Build skill 本身是编排入口，不执行实现代码，具体协议见对应 reference。
 
 ## 在 devflow 中的位置
 
@@ -47,7 +47,21 @@ devflow 第 5 阶段——主 agent 顺序派发 subagent，per-task 三阶段�
 
 **为什么加**：Plan 自己的 sizing 纪律（task ≤5 文件、"and"要拆）在鼓励产出大量"可逆+单文件+易回滚"画像的小 task，而 `reviewing/skeleton.md` §1 本来就为这种画像提供了轻档出口（跳过独立交叉）——dev-build 之前没有对接这个出口，导致小 task 也要付固定的三跳 subagent 成本。
 
-**现在怎么办**：Plan 阶段给每个 task 标 Review Tier（`light`/`heavy`），Build 按 tier 分流——`light` task 的 spec/quality review 不单独起 subagent，累积到下一个 checkpoint 批量合并审查一次；`heavy` task（多文件/碰共享接口/安全鉴权支付/HITL）走原有完整 pipeline 不受影响。
+**现在怎么办**：Plan 阶段给每个 task 标 Review Tier（`light`/`heavy`），Build 按 tier 分流——`light` task 的 spec/quality review 不单独起 subagent，累积到下一个 checkpoint 批量合并审查一次；`heavy` task（多文件/碰共享接口/安全鉴权支付/HITL）走原有完整 pipeline 不受影响。这条决策在下方「拆分为 subagent / executing 两条执行协议」被反转。
+
+## 设计决策：拆分为 subagent / executing 两条执行协议，Review Tier 移除，贴近上游
+
+`260701` 调整。
+
+**原来的设计**：dev-build 是单一执行路径——固定由主 agent 顺序派发 subagent 走三阶段（implement → spec review → quality review），并按 Review Tier 分档批量审查。
+
+**为什么改**：对照 superpowers 发现 `writing-plans` 结尾本来就有 Execution Handoff 二选一（Subagent-Driven / Inline Execution），dev-build 之前只内联了前者。恢复这条二选一时发现"贴近上游"和"保留 Review Tier 等正式化包装"互相矛盾——Review Tier、reviewing 框架 tag→severity 映射这些是在上游基础上加的重量级包装，留着就没法"贴近上游措辞"。判断类领域指南的消费点也一并移到 Plan（见 `dev-plan/README.md`），因为 Plan 本来就要求逐行贴真实代码（Iron Law），这类判断该在写代码那一刻做，等 Build 阶段再查为时已晚。
+
+**现在怎么办**：
+- `SKILL.md` 瘦成分发器——Enter/Exit Gate、Step 0 里程碑、硬交接不变，Step 1 读 Plan `Execution` 字段（`subagent` / `executing`）分发到对应 reference
+- 新建 `references/dev-build-subagent.md`（对应上游 `subagent-driven-development`）：三阶段派发 + 四状态协议，去掉 Review Tier 分档、reviewing 框架 tag→severity 映射这类正式化包装；implementer「Your Job」改为"忠实执行 plan 已写代码"而非从零 TDD
+- 新建 `references/dev-build-executing.md`（对应上游 `executing-plans`）：主 agent 自己顺序执行 plan 已写代码，不派 subagent、无独立 review，靠后续 dev-verify/dev-review 兜底；收尾对接 devflow 的 Verify 阶段，不像上游那样接到已被 nocode-evolve 替换掉的 `finishing-a-development-branch`
+- `implementer-prompt.md` 去掉技术栈配方按需注入（已移 Plan 阶段消费）
 
 ## 下游消费者
 

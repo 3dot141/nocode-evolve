@@ -129,7 +129,6 @@ Round 1 写骨架——定清楚**改什么、覆盖什么、谁做**，代码�
 - **Sizing ≤ M**（≤5 文件），超了拆
 - **Rollback-friendly**：每 task 独立可回滚
 - **描述 durable 化**：用行为意图（"用户创建记录时验证必填字段"），不用易腐行号
-- **Review Tier**（`light` / `heavy`，决定 Build 阶段怎么审）：单文件 + 无 HITL + 不碰共享接口/契约/安全鉴权支付 → 标 `light`（Build 阶段不单独起 spec/quality subagent，并入下一个 checkpoint 批量审查）；其余 → 标 `heavy`（默认，走完整 per-task 三阶段 pipeline）。拿不准 → 标 `heavy`
 
 ### Step 5: 插 checkpoint
 
@@ -164,6 +163,23 @@ Round 1 的骨架定了"改什么"，Round 2 填"怎么改"——每个 task 补
 6. **最新代码库** — 现有代码长什么样、import 怎么写、风格怎么跟
 
 5 份文档提供"做什么 + 长什么样 + 怎么验收 + 怎么做"，代码库提供"代码风格 + 现有 API"。缺任何一份都可能写出不准确的代码。
+
+**领域指南消费（判断类，写代码前按场景 Read）**：这里写的是最终真实代码，判断该用什么模式/怎么防护/怎么分层，要在这一刻做，不是留给 Build 阶段：
+
+| 场景 | Read | 用来做什么 |
+|---|---|---|
+| 涉及文件结构/模块边界 | `{NOCODE_SKILL_REF}/architecture-principles.md` | Deep Module / 依赖分类 / seam 纪律，指导怎么拆文件、定接口 |
+| 碰用户输入/认证/数据 | `{NOCODE_SKILL_REF}/security-guide.md` | 威胁模型 / OWASP 防护模式，决定这段代码该用什么防注入写法 |
+| 碰数据库查询/前端渲染 | `{NOCODE_SKILL_REF}/performance-guide.md` | N+1 / 缓存 / 懒加载模式选型 |
+| 碰 UI 组件 | `{NOCODE_SKILL_REF}/frontend-guide.md` | 组件模式 / 设计系统遵循 |
+| 写测试代码前 | `{NOCODE_SKILL_REF}/testing-guide.md` | 测试替身怎么选 / 测试金字塔怎么分层 / DAMP 原则 |
+
+**技术栈配方（落地可粘贴代码要用）**：
+
+| 场景 | Read |
+|---|---|
+| TS/JS 测试代码 | `references/ts-test-patterns.md` |
+| Go 代码 | `references/go-patterns.md` |
 
 **每个 task 填充为 TDD steps**：
 
@@ -236,11 +252,14 @@ task 间依赖不成环，底层 task 排前面。循环依赖说明切片方式
 
 任一不过回 Step 7 补。
 
-### Step 9: 用户确认计划
+### Step 9: 用户确认计划 + 选执行方式
 
-计划完整呈现后用 AskUserQuestion 让用户确认。
+计划完整呈现后用 AskUserQuestion 让用户确认，同时选执行方式：
 
-Build 阶段固定由主 agent 用 `Agent()` 逐个 task **顺序**派发独立 subagent 执行（不并行、不在当前会话跑实现代码），所以 Plan 不需要选执行模式、不写 `Execution` 字段。
+- **`subagent`**（推荐）——主 agent 顺序派发独立 subagent，per-task 走 implement → spec review → quality review 三阶段独立审查
+- **`executing`**——主 agent 自己顺序执行 plan 已写好的代码，不派 subagent、无独立 review，靠后续 dev-verify/dev-review 兜底
+
+选定后写入 Plan Document Header 的 `Execution` 字段，Build 阶段读这个字段决定走哪条协议。
 
 ### Plan Document Header
 
@@ -254,6 +273,7 @@ Build 阶段固定由主 agent 用 `Agent()` 逐个 task **顺序**派发独立 
 **Tech Stack**: [关键技术/库]
 **Design Doc**: [路径（Full 场景）]
 **Test Objectives**: [测试目标摘要]
+**Execution**: [subagent | executing]
 ```
 
 ## Exit Gate
@@ -261,13 +281,13 @@ Build 阶段固定由主 agent 用 `Agent()` 逐个 task **顺序**派发独立 
 - [ ] 计划已产出（依赖图 + 任务序列 + checkpoint）
 - [ ] 所有 task ≤ M，零占位符
 - [ ] 每个 task 标了 HITL/AFK
-- [ ] 每个 task 标了 Review Tier（light/heavy）
 - [ ] 每个 task 标了 `covers`，所有 task 汇总覆盖 restate 每条路径（路径→task 映射表已产出）
 - [ ] 测试目标已分配到 slice
 - [ ] Round 1 red-blue-deep 通过 + 骨架已修正（Step 6）
 - [ ] Round 2 checklist 核查 + 窄化 red-blue-deep + Plan Validation 通过（Step 8）
 - [ ] 用户显式确认计划（AskUserQuestion）
-- [ ] 后续 Build 输入齐全：任务序列 + 测试目标
+- [ ] 执行方式已选定（`Execution: subagent | executing`），写入 Plan Document Header
+- [ ] 后续 Build 输入齐全：任务序列 + 测试目标 + Execution 字段
 - [ ] **硬交接**：Exit Gate 全部通过后，向用户报告 Plan 完成（含 task 数量 + 首个 slice 概要），建议下一阶段：Build（`nocode-evolve:dev-build`）。列出 Build 阶段的 sub-steps + 关键决策（devflow Step 5 格式）。等用户拍板，不自行进入下一阶段
 
 ## 核心规则（when X → do Y）
