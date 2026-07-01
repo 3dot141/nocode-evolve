@@ -16,6 +16,21 @@ Define 回答"做什么"，Design 回答"怎么做"。核心动作是探索 **ap
 
 > 路径 / ID / 约束格式见 `{NOCODE_SKILL_REF}/path-conventions.md`。
 
+## 用户介入原则
+
+Design 全程默认由 agent 自主决策——探索、方案对比、方案选定、测试计划都不因为"要不要问用户"而停顿，决策连同理由 + 备选一并记入决策表，留到最后一次性给用户看。
+
+**触发 AskUserQuestion 停下来问，仅限以下情况**（不满足任一条就不问，agent 自主选定推荐项继续往下走）：
+
+1. **打平手**：权衡表打分/覆盖度相当，restate 的约束和验收标准推不出唯一更优解，选择取决于用户的主观优先级（预算、时间表、团队偏好、路线图）——这类信息 agent 拿不到。
+2. **冲突需拍板**：新方案与用户之前的显式指令或已有 ADR/wiki 决策冲突，需要用户决定是否推翻。
+3. **信息缺口**：需要 agent 无法从代码/restate/搜索里获得的外部信息（组织内部规范、第三方合同限制、只有用户知道的业务约束）。
+4. **不可逆 + 高影响**：决策一旦执行很难回头，且下游影响面大（如破坏性数据迁移方向），即便有推荐也要用户签字。
+
+**唯一的整体确认窗口**在 Exit Gate 的硬交接——设计文档产出、Step 9 评审通过后，向用户展示方案摘要 + 关键决策 + 测试目标，用户在这里一次性过目、可对任意决策提出异议要求回退重做。中间各 Step 不再单独停顿确认（触发上述例外时除外）。
+
+> 自主决策不等于省略对比——Iron Law 仍然成立：没对比过的方案是假设不是设计。省掉的只是"每轮都停下来问"这个动作，不是"列出差异化方案 + 权衡表"这个动作。
+
 ## 非本 skill 请求
 
 改 README / 写 commit message / 纯执行不需设计 / Define 未完成（无 restate）→ 不进 Design。Define 未完成回 Define；Mini/Standard 场景跳 Design 直接进 Plan。
@@ -42,11 +57,11 @@ Task 1: 探索 — 三层并行
   Gate: 三路结果回来并综合，探索总结产出
 
 Task 2: UI 设计（涉及前端时）
-  Sub-steps: 有 .ix.md/.vd.md 读它理解 UI 需求 / 无则 AskUserQuestion 选（pd-ix / taste model）
+  Sub-steps: 有 .ix.md/.vd.md 读它理解 UI 需求 / 无则 agent 按复杂度自主选（pd-ix / taste model），例外触发才 AskUserQuestion
   Gate: UI 需求已明确（纯后端 skip）
 
 Task 3-5: 多轮方案选定（从大到小循环）
-  Sub-steps: 每轮 Step 3(提方案) → Step 4(spike) → Step 5(用户选 + 层级下钻检查)
+  Sub-steps: 每轮 Step 3(提方案) → Step 4(spike) → Step 5(agent 自主选定，例外触发才问用户 + 层级下钻检查)
   L1 架构层 → L2 组件层 → L3 细节层，每轮选定后检查子决策，有则继续
   跟 PRD 功能领域交叉检查防遗漏
   Gate: 层级下钻检查全 ❌（没有更多子决策需要对比）
@@ -56,8 +71,8 @@ Task 6: 对齐 + Pre-mortem + 领域覆盖检查
   Gate: 无冲突 + 领域清单逐项标 ✅/跳过
 
 Task 7: 测试与验证计划
-  Sub-steps: TO 表(含 UI Browser TO) → Verify 策略(按层级 + 不测项) → 5 维自审 → 覆盖状态表 → AskUserQuestion 确认
-  Gate: 覆盖状态表全 ✅ + 用户确认
+  Sub-steps: TO 表(含 UI Browser TO) → Verify 策略(按层级 + 不测项) → 5 维自审 → 覆盖状态表（用户确认延后至硬交接）
+  Gate: 覆盖状态表全 ✅
 
 Task 8: 写设计文档
   Sub-steps: 决策清点(全✅) → 功能覆盖核对(全✅) → 输入清单核对 → 调 dev-design-refine（硬交接）
@@ -151,9 +166,9 @@ Task 10: 硬交接 — 调用下一步 skill
 本步只搞清楚"UI 长什么样"（交互流、IA、视觉方向），不做 UI 技术方案——组件拆分、状态管理、渲染策略这些技术决策在方案选定后（Step 6 领域覆盖检查的前端项 + 设计文档 UI 节）才做。
 
 1. **有 pd-ix/pd-vd 产出（`.ix.md` / `.vd.md`）**→ 读它，理解 UI 需求（交互流、IA 来自 `.ix.md`；视觉方向来自 `.vd.md`）。同时从 `.vd.md` 提取：`data-testid` 命名体系 → 组件接口约束；覆盖矩阵 → 前端测试目标；`interactions.json` 路径 → dev-verify 复用。设计源标识从 `.vd.md` 继承（`claude-design` / `prototype`），后续写进设计文档 `## UI 设计` 节
-2. **无 pd-ix/pd-vd 产出但有 UI 需求** → AskUserQuestion 让用户选：
-   - **跑 pd-ix**（推荐）→ 调 `Skill(nocode-evolve:pd-ix)` 走交互设计，产出 `.ix.md`（需要视觉时再跑 `pd-vd`）后回来继续
-   - **直接选视觉方向** → 按 `{NOCODE_SKILL_REF}/ui-taste-model.md` 选一个 taste model，直接在设计文档里做视觉决策（不产出单独标识——taste model 被消化成具体值写进文档）
+2. **无 pd-ix/pd-vd 产出但有 UI 需求** → agent 按判断自主决定，记录选择理由（不停顿；触发「用户介入原则」例外时才 AskUserQuestion）：
+   - **页面数量多 / 交互复杂（多状态流转、跨页面数据依赖）** → 走 pd-ix（推荐）→ 调 `Skill(nocode-evolve:pd-ix)` 走交互设计，产出 `.ix.md`（需要视觉时再跑 `pd-vd`）后回来继续
+   - **页面简单 / 交互直白** → 直接选视觉方向 → 按 `{NOCODE_SKILL_REF}/ui-taste-model.md` 选一个 taste model，直接在设计文档里做视觉决策（不产出单独标识——taste model 被消化成具体值写进文档）
 
 **Exit Gate:**
 - [ ] UI 需求已明确（交互流 / IA / 视觉方向），或纯后端已 skip
@@ -232,17 +247,17 @@ Task 10: 硬交接 — 调用下一步 skill
 
 ---
 
-### Step 5: 用户选方案 + 层级下钻检查
+### Step 5: 方案选定 + 层级下钻检查
 
 **Enter Gate:**
 - [ ] Step 4 完成（验证或 skip）
 
 **Core Actions:**
 
-**5a. 用户选方案**：AskUserQuestion 推荐选项放第一个，其余备选。
-- 用户选 Other → 听完后确认
-- 用户附带修改（"选 A 但把 X 换成 Y"）→ 记录修改，确认最终方案
-- 用户全部否决 → 回 Step 3，问否决原因
+**5a. 方案选定**：agent 按权衡表 + restate 约束/验收标准自主选定推荐项，记录选择理由 + 备选到决策表，不停顿继续 5b（触发「用户介入原则」例外时才 AskUserQuestion，选项仍是推荐放第一个 + 其余备选）。
+- 例外触发且用户选 Other → 听完后确认
+- 例外触发且用户附带修改（"选 A 但把 X 换成 Y"）→ 记录修改，确认最终方案
+- 例外触发且用户全部否决 → 回 Step 3，问否决原因
 
 **5b. 层级下钻检查**：选定方案后，检查方案内部有没有下一层需要对比的子决策。
 
@@ -266,7 +281,7 @@ Task 10: 硬交接 — 调用下一步 skill
 全部 ❌ → 进 Step 6。
 
 **Exit Gate:**
-- [ ] 用户显式选定方案（含附带修改已记录）
+- [ ] 方案已选定（agent 自主决策 + 理由记录入决策表；触发例外时为用户显式选定，含附带修改）
 - [ ] 层级下钻检查完成：全部 ❌（进 Step 6）或识别出 ✅ 子决策（回 Step 3 下一轮）
 
 ---
@@ -399,7 +414,7 @@ Step 1 的代码探索是广度的（"有什么可复用的"），这里是深�
 
 任一路径状态非 ✅ → 回补 TO 或方案。
 
-**7e. AskUserQuestion 确认**：整份计划（TO 表 + verify 策略 + 不测项 + 覆盖状态表）一次展示，用户确认/修改。
+**7e. 自审收口**：5 维自审 + 覆盖状态表全 ✅ 后直接进 Step 8，不停顿确认（整份计划随设计文档一并留到 Exit Gate 硬交接时给用户过目；触发「用户介入原则」例外时才提前 AskUserQuestion）。
 
 TO 传递给后续 Plan（指导切片 + task covers）、Build（驱动 TDD）、Review（路径覆盖检查）、Verify（验收核对）。
 
@@ -408,7 +423,7 @@ TO 传递给后续 Plan（指导切片 + task covers）、Build（驱动 TDD）�
 - [ ] Verify 策略按层级分组，不测项已列原因 + 风险
 - [ ] 5 维自审通过
 - [ ] 路径覆盖状态表全 ✅
-- [ ] 用户确认整份测试与验证计划
+- [ ] 测试与验证计划已定（用户确认延后至 Exit Gate 硬交接一次性给出，除非触发例外）
 
 ---
 
@@ -431,7 +446,7 @@ TO 传递给后续 Plan（指导切片 + task covers）、Build（驱动 TDD）�
 
 | # | 决策点 | 状态 | 来源 |
 |---|---|---|---|
-| D1 | 派发方案 | ✅ clientPage 扩展 | Step 5 用户选定 |
+| D1 | 派发方案 | ✅ clientPage 扩展 | Step 5 agent 自主选定 |
 | D2 | 会话 scope | ✅ 虚拟标识 + AgentScopeResolver | Step 6c 架构 |
 | D3 | 工具集 | ✅ EditorAgent 查询子集 7 个 | Step 6c 架构 |
 | D4 | skill 加载 | ⚠️ 反复过，最终选了 X | 需确认最终结论 |
@@ -526,11 +541,11 @@ TO 传递给后续 Plan（指导切片 + task covers）、Build（驱动 TDD）�
 
 ## Exit Gate
 
-- [ ] 方案已选定，用户显式确认
+- [ ] 方案已选定（agent 自主决策 + 理由记录入决策表；触发「用户介入原则」例外时为用户显式确认）
 - [ ] UI 需求已明确（涉及前端时）
 - [ ] 领域覆盖检查 8 项逐项标 ✅/跳过
 - [ ] 测试目标(TO)已产出，覆盖每条路径和约束
-- [ ] verify 策略已产出，5 维自审通过，用户确认
+- [ ] verify 策略已产出，5 维自审通过（用户确认延后至硬交接一次性给出）
 - [ ] 路径覆盖审核通过（覆盖状态表全 ✅）
 - [ ] verify 策略已落盘到设计文档的「验证策略」章节
 - [ ] 决策清点表全 ✅，无待确认/未讨论项（Step 8a）
@@ -538,7 +553,7 @@ TO 传递给后续 Plan（指导切片 + task covers）、Build（驱动 TDD）�
 - [ ] 设计文档已由 dev-design-refine 产出（Step 8c）
 - [ ] 设计文档评审通过——六轴 + 内部一致性核对 + design-review 交叉审，无 Critical findings（Step 9）
 - [ ] 后续 Plan 输入齐全：restate + 设计文档 + 测试目标
-- [ ] **硬交接**：Exit Gate 全部通过后，向用户报告 Design 完成（含方案摘要 + 测试目标概要），建议下一阶段：Plan（`nocode-evolve:dev-plan`）。列出 Plan 阶段的 sub-steps + 关键决策（devflow Step 5 格式）。等用户拍板，不自行进入下一阶段
+- [ ] **硬交接**：Exit Gate 全部通过后，向用户报告 Design 完成（含方案摘要 + 关键决策清单 + 测试目标概要）——这是本轮 Design 流程唯一的整体确认窗口（Step 2/5/7 触发「用户介入原则」例外时提前问过的除外），用户可在此对任意决策提出异议要求回退重做。确认通过后建议下一阶段：Plan（`nocode-evolve:dev-plan`）。列出 Plan 阶段的 sub-steps + 关键决策（devflow Step 5 格式）。等用户拍板，不自行进入下一阶段
 
 ## Common Rationalizations
 
@@ -550,6 +565,7 @@ TO 传递给后续 Plan（指导切片 + task covers）、Build（驱动 TDD）�
 | "这个改动太小不需要设计" | 小改动走 Standard 跳 Design。进了 Design 就是因为它需要 |
 | "不用搜外部方案，我知道怎么做" | 你可能不知道有更好的库/模式。30 秒搜一下成本极低 |
 | "这个改动简单，跳过某 Step 或不建 TaskCreate" | 进了 skill 就走完所有 Step。"简单"是你的判断，不是跳 Gate 的授权（详见 agent-catalog-using.md「进了 skill 就走完」） |
+| "为了少打扰用户，这个打平手/冲突/信息缺口的决策我自己拍了" | 那不是"减少打扰"，是替用户做了他该做的决定。命中「用户介入原则」任一条就必须停下来问，不能因为想少问就往下压 |
 
 ## Red Flags
 
@@ -566,3 +582,5 @@ TO 传递给后续 Plan（指导切片 + task covers）、Build（驱动 TDD）�
 - Step 6c 领域覆盖检查只写了一句话就标 ✅——涉及的领域必须产出决策表（决策点/选了什么/为什么/备选），一句话不算展开
 - 写完文档后才发现核心设计问题（工具集/scope/middleware）——说明 Step 6c 没展开就跳到 Step 8 了，决策清点 gate 本该拦住
 - 因"任务简单 / 还在概览 / 用户说了'继续'"跳过某 Step、不建 Step 0 TaskCreate、或漏掉最后的交接 task
+- 自主决策（Step 2/5/7）没有把理由 + 备选记入决策表——省的是"停下来问"这个动作，不是"留痕"这个动作
+- 方案选定/UI 路线/测试计划这类过程决策打平手、或与已有决策冲突，却没触发「用户介入原则」直接自己往下走
