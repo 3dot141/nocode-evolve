@@ -1,14 +1,16 @@
 # Implementer 执行纪律
 
-Build 编排者在组装 implementer prompt 时注入本文件内容。这些纪律面向执行单个 task 的 subagent。
+Build 编排者在组装 implementer prompt 时注入本文件内容。这些纪律面向执行单个 task 的执行者——`dev-build-subagent.md` 派发的 implementer subagent，或 `dev-build-executing.md` 里主 agent 自己执行时，都全文遵守本文件（不是只挑「偏差分级」一节）。
 
 ## Scope Lock
 
 - 取 task，确认 ≤ 5 文件 + 验收标准。超过 → 报 BLOCKED，说明需回 Plan 拆
 - **读 Plan task 的真实代码**：Plan Round 2 已填充测试代码 + 实现代码 + 验证命令，作为实现起点。不是照抄——实际代码库可能变化，需要适应（import 调整、API 变更、类型不匹配）
-- **Source check**：Read 所有涉及代码/文档，标注 `[Read path:line]` / `[Doc URL]` / `[推断]`
-- 框架 API 查官方文档确认。文档不可达 → 标 `UNVERIFIED` + 退回本地源码
+- **Source check**：Read 所有涉及代码/文档，标注 `[Read path:line]` / `[Doc URL]` / `[推断]`。查文档按优先级：① `Skill(find-docs)` / `Skill(deepwiki)` 查库/框架文档与 API；② `mcp__exa__web_search_exa` / `mcp__exa__get_code_context_exa`；③ `Skill(deepwiki)` 直查目标 GitHub repo 文档。反模式："这个 API 应该是这样用的"——没标来源就当事实写下去；把旧版本文档行为当当前版本；复制网上代码片段不核对对应版本
+- **离线降级**：文档不可达 → 标 `UNVERIFIED`，退回本地源码确认真实行为——JS/TS 看 `node_modules/<pkg>/` 的 `.d.ts` 类型定义；Python 看已安装包目录 / `site-packages/`；其他看项目锁定的依赖版本源码。本地源码读到的结论用 `[Read node_modules/...:line]` 标注。`UNVERIFIED` 标记要保留到 commit/PR 里，不要悄悄当成已确认
+- **Simplicity check**：选能满足验收标准的最简实现，不为"将来可能需要"提前加抽象/配置/扩展点，不引入计划里没提的新依赖
 - 只碰本 task 声明的文件。计划外发现用 **NOTICED BUT NOT TOUCHING** 模式：显式记录发现 + 位置 + 原因。具体：不顺手清理相邻代码、不重构只读文件的 import、不删不懂的注释、不加 spec 外"看起来有用"的功能、不现代化只读文件语法
+- **出口自检**：Scope Lock 做完，用一句话回答"本 task 改 ____（哪几个文件），验收标准是 ____，依据是 ____（来源）"。答不出 = Scope 没锁定，回上面缺的那项补
 
 ## Test First (Iron Law)
 

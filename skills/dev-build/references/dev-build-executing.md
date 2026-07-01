@@ -7,7 +7,7 @@
 对每个 task，按 plan 里的顺序：
 
 1. 标记 in_progress
-2. **照着 plan 已写的步骤逐条执行**（plan 已经是 bite-sized TDD steps：写失败测试 → 跑确认失败 → 写实现 → 跑确认通过 → commit）。**plan 的代码是权威来源，不是从零发明**——代码库如果和 plan 编写时有漂移，按 `implementer-disciplines.md` 的偏差分级处置，不擅自另起炉灶
+2. **照着 plan 已写的步骤逐条执行**（plan 已经是 bite-sized TDD steps：写失败测试 → 跑确认失败 → 写实现 → 跑确认通过 → commit）。**plan 的代码是权威来源，不是从零发明**——全程遵守 `implementer-disciplines.md` 整份纪律（Scope Lock、Source check、Simplicity check、偏差分级、NOTICED BUT NOT TOUCHING），不只挑偏差分级那一节。代码库如果和 plan 编写时有漂移，按偏差分级处置，不擅自另起炉灶
 3. 按 task 声明的验证命令跑验证，不跳过
 4. 标记 completed
 
