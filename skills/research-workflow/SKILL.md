@@ -152,7 +152,7 @@ Scope → Search+Extract（pipeline，无 barrier）→ Verify（3 票对抗）�
 {
   question: '<产品> 的竞品在功能、定价、定位上的差异',
   type: 'web',
-  depth: 'deep',
+  depth: 'shallow' | 'deep',  // 跟随 pd-research Step1 用户选择的调研档位，默认 shallow
   systemPrompt: '关注功能差异、用户痛点、定价策略、市场定位。产出应包含 Feature Matrix 和 Positioning Map 素材。',
 }
 ```
