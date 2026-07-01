@@ -11,6 +11,29 @@ option 2 在 `toolchain == "gh"` 时的全流程: title/body 生成 → Gate Tit
 - 工具栈 = `gh` (BF0 检测 = `github.com` 显式匹配, 或私域 askUser 选 gh)
 - `gh` CLI 可用 (`gh --version` 验)
 
+## Step 0: PR 路径决策线 — 进入时一次确认
+
+进 PR 流程前, 先把整条线展给用户**一次确认整条**——把原来"合并后才问 worktree 去留"的决策提前到此刻。PR 刚创建、还没 review 时让用户猜 worktree 去留是坏时机; 提前到进入时定, 信息(要不要盯、合并后清+流转到哪)一次说清:
+
+```
+[PR 路径决策线] 选了 PR, 这条线会走:
+  1. 提 PR              → title/body 你过一眼 (Gate Title-Body, 安全 Gate 保留)
+  2. 后台盯合并          → run_in_background 每 <interval> 秒查一次 PR 状态
+  3. 合并后 · 清 worktree
+  4. 合并后 · 流转飞书任务 <task-ids> → <目标状态>   (此刻定死目标状态)
+
+确认整条线?
+  ① 确认 → 全自动 (后台盯、合并后清 worktree + 流转, 中途只 Gate Title-Body/PR/force 打断)
+  ② 改某步 (目标状态 / 要不要流转 / interval)
+  ③ 只到第 1 步 (提完 PR 就停, worktree 保留, 不盯不流转 = 旧行为)
+```
+
+- **目标状态定死 (第 4 步)**: 从 commit 提取任务号 (`#f-xxx`/`#g-xxx`/`#m-xxx`) + 当前状态, 此刻推定目标状态并让用户确认, 写入决策; pr-watch 退出后 agent 按此执行, **不再问**。无任务号 → 第 4 步标"无流转"。
+- **确认①后**: worktree 处置由后台盯接管 (合并自动清), **Step 8 不再问 worktree 去留**。
+- **选③**: 跳过后台盯, 走 Step 8 的手动保留分支 (等价旧 Gate Worktree-Cleanup 的"保留")。
+
+> merge 路径 / discard 路径各有更短的决策线 (无后台盯、无流转), 见各自 reference。进入选了哪条 disposition 就展哪条线。
+
 ## Step 1: 生成 title + body
 
 **输出契约**直接引用 `rules/rule-push-summary.md`, 不在本文件复制规则:
@@ -204,11 +227,9 @@ gh pr edit <pr-number> --add-reviewer "alice,bob,charlie"
   - 单个 fail = 用户无 read 权限 / 用户不存在 → 跳过该 reviewer, 不阻断
   - 最后报告 "PR <url> 创建成功, reviewer X 添加失败已跳过"
 
-## Step 8: Gate Worktree-Cleanup — worktree 清理 (gh)
+## Step 8: 按决策线执行 — 起 pr-watch 或手动收尾 (gh)
 
-PR 创建 + reviewer 加完后, 检测当前是否在 worktree 中. 非 worktree 则跳过.
-
-### 前置检测
+PR 创建 + reviewer 加完后, 按 Step 0 决策线的选择分流。先检测是否在 worktree:
 
 ```bash
 git_dir=$(git rev-parse --git-dir)
@@ -216,37 +237,32 @@ common_dir=$(git rev-parse --git-common-dir)
 [ "$git_dir" != "$common_dir" ] && is_worktree=true || is_worktree=false
 ```
 
-`is_worktree == false` → 跳过, 报告 PR URL 结束.
+`is_worktree == false` → 无 worktree 可盯/清, 报告 PR URL 结束 (决策线 3/4 步对主仓不适用)。
 
-### Gate Worktree-Cleanup 文案
+### 决策线选① (全自动) → 起 pr-watch 后台盯
 
-```
-[Gate Worktree-Cleanup] PR 已创建: <pr_url>
-当前在 worktree: <worktree_path>
-
-① 保留 worktree (默认) — 继续在此 iterate PR feedback
-② 清理 worktree — 删本地 worktree, PR 合并后可删远程分支
-```
-
-### 判定
-
-- **选 ①**: 报 "worktree 已保留". 结束.
-- **选 ②**: 执行 worktree 清理, 然后输出远程分支清理提示.
-
-### 执行 (选 ②)
-
-worktree 清理 (识别 4 种 provenance 路径模式, 见 dev-finish-branch SKILL.md):
+`is_worktree == true` 且选①: 用 `Bash(run_in_background=true)` 起脚本 (REF = `dev-finish-branch/references` 绝对路径; MAIN_ROOT 见 SKILL.md Step 1):
 
 ```bash
-cd "$MAIN_ROOT"
-git worktree remove "<worktree_path>"    # 未提交改动会报错, 不加 --force
-git worktree prune
+node "<REF>/pr-watch.mjs" --toolchain gh --pr <pr-number> \
+  --worktree "<worktree_path>" --main-root "<MAIN_ROOT>" \
+  --interval 300 --tasks "<commit 提取的任务号, 逗号分隔, 无则省>"
 ```
 
-- `remove` 报错 → 报错因, 用户可 `git stash` 后重试
-- 成功 → 报 "已清理 worktree `<path>`"
+脚本 detached 后台每 5min 查一次 (无超时上限, 盯到终态), 退出时 re-invoke agent。报告: "PR 已创建 <pr_url>, 后台盯合并中 (每 5min), 合并后自动清 worktree + 流转"。本轮结束。
 
-远程分支清理提示 (GitHub):
+### pr-watch 退出后 → agent 读信号接续
+
+脚本退出触发 re-invoke, 读 stdout 的 `PR_WATCH_RESULT` 行:
+
+- `PR_WATCH_RESULT merged worktree=<p> tasks=<ids>` → worktree 已由脚本清理。`tasks` 非空 → **Read `post-merge.md`** 按 Step 0 定死的目标状态流转飞书任务; 空 → 报告合并完成, 无流转。
+- `PR_WATCH_RESULT closed worktree=<p>` → PR 被关未合, worktree 保留, 报告让用户决定 (重开 / 手动清)。
+
+### 决策线选③ (只到提 PR) → 手动保留
+
+不起脚本, 报告 "PR <pr_url> 创建成功, worktree 保留, 你后续 iterate / 合并后自己清"。等价旧 Gate Worktree-Cleanup 的"保留"。清理时识别 4 种 provenance 路径模式 (见 dev-finish-branch SKILL.md)。
+
+### 远程分支清理提示 (GitHub)
 
 ```
 PR 合并后清理远程分支:
@@ -255,7 +271,7 @@ PR 合并后清理远程分支:
   - 或 repo Settings → General → 勾选 "Automatically delete head branches"
 ```
 
-**不在此刻删远程** — PR 的 source 分支删了 PR 会关闭.
+**不在此刻删远程** — PR 的 source 分支删了 PR 会关闭。pr-watch 只清本地 worktree, 不碰远程分支。
 
 ## 不要
 

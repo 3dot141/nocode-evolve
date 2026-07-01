@@ -206,9 +206,18 @@ fi
 - **不要对 fork PR (Workflow B) 用 `bkt pr edit --with-default-reviewers`** — 报 `400 The source repository with id '0' does not exist` (bkt 拿不到 fork 的 source repo id). Workflow B 的 reviewer 必须 `--reviewer` 显式加 (见 Step 7.B); default reviewer 名单从 `bkt api '/rest/default-reviewers/1.0/projects/<target>/repos/<repo>/conditions'` 查, 排除作者本人
 - **不要用 `bkt pr view` 验证跨仓 (Workflow B) PR** — 它对 cross-repo PR 解析 `author` / `reviewers` 会显示 None / 空 (不可靠). 验证走 raw GET: `bkt api '/rest/api/1.0/projects/<target>/repos/<repo>/pull-requests/<id>' --json`, 看 `reviewers[].user.name` / `.status` / `author.user.name`
 
-## Step 8: Gate Worktree-Cleanup — worktree 清理 (bkt)
+## Step 8: 按决策线执行 — 起 pr-watch 或手动收尾 (bkt)
 
-前置检测 + Gate Worktree-Cleanup 文案 + worktree 清理步骤与 `pr-flow-gh.md` Step 8 一致, 此处不重复.
+前置检测 (is_worktree) + 决策线分流 (选①起 pr-watch 后台盯 / 选③手动保留) + pr-watch 退出后读 `PR_WATCH_RESULT` 信号接续 (merged → Read `post-merge.md` 流转 / closed → 保留), 与 `pr-flow-gh.md` Step 8 一致。差别只在 pr-watch 工具栈参数: bkt 需 `--target-project` + `--repo-slug`, `--pr` 传 bkt PR id:
+
+```bash
+node "<REF>/pr-watch.mjs" --toolchain bkt --pr <pr-id> \
+  --worktree "<worktree_path>" --main-root "<MAIN_ROOT>" \
+  --target-project "<PROJECT_KEY>" --repo-slug "<repo_slug>" \
+  --interval 300 --tasks "<任务号,逗号分隔,无则省>"
+```
+
+脚本 bkt 分支查 `bkt api .../pull-requests/<id> --json` 的 `.state` (OPEN/MERGED/DECLINED) + `/merge` 的 `.canMerge`, 归一化后走同一状态机 (见 pr-watch.mjs `normalizeBkt`)。
 
 远程分支清理提示 (Bitbucket):
 
