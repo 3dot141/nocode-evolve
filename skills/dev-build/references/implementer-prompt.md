@@ -1,6 +1,6 @@
 # Implementer Subagent Prompt 模板
 
-Build 编排者为每个 task 组装此 prompt，通过 Workflow agent() 派发。
+Build 编排者为每个 task 组装此 prompt，通过 `Agent()` 顺序派发独立 subagent。
 
 ## 组装规则
 

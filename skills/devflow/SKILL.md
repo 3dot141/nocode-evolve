@@ -311,7 +311,7 @@ PDCA 循环：
 | 4d. 写 task | 贴真实代码零占位符 | ≤M（≤5 文件），标 HITL/AFK |
 | 4e. 插 checkpoint | 每 2-3 task 一个 | rollback 边界 |
 | 4f. Plan Validation | 需求覆盖+任务可验证+依赖无环 | 不过回 4d 补 |
-| 4g. 用户确认 | AskUserQuestion | 确认计划 + 选执行模式（Subagent 并行/顺序） |
+| 4g. 用户确认 | AskUserQuestion | 确认计划 |
 
 #### Build sub-flow
 

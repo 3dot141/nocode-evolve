@@ -3,9 +3,9 @@ name: dev-build
 description: Use when executing implementation tasks from a plan, writing new code, or implementing features. Use when devflow routes to Build stage, or when the user says "开始实现/写代码/执行计划/build it/动手/实现这个功能/把X加上/继续写/implement". Also use when resuming implementation work after a break or switching back from debugging.
 ---
 
-# build — Workflow 编排，per-task 三阶段验证
+# build — subagent 顺序派发，per-task 三阶段验证
 
-Build 通过 Workflow 派发独立 subagent 执行 plan 中的每个 task。每个 task 走三阶段验证：实现 → spec 合规审查 → 代码质量审查。Build skill 本身是编排者，不执行实现代码。
+Build 作为编排者，用 `Agent()` 逐个派发独立 subagent 执行 plan 中的每个 task，**默认顺序、不并行**。每个 task 走三阶段验证：实现 → spec 合规审查 → 代码质量审查。Build skill 本身是编排者，不执行实现代码。
 
 ## 非本 skill 请求
 
@@ -15,7 +15,6 @@ Build 通过 Workflow 派发独立 subagent 执行 plan 中的每个 task。每�
 
 - [ ] Plan 任务序列已产出且用户确认
 - [ ] Full 场景：Design 测试目标可用（指导 TDD 写什么测试）
-- [ ] 执行模式已确定（见 Step 0）
 
 ## 领域指南（注入到 implementer prompt 中按需 Read）
 
@@ -38,28 +37,19 @@ Build 通过 Workflow 派发独立 subagent 执行 plan 中的每个 task。每�
 
 ## 协议
 
-### Step 0: 确定执行模式
+### Step 0: 建编排里程碑
 
-读 Plan 文档 header 的 `Execution` 字段：
+Build 固定由主 agent 顺序派发 subagent，无执行模式可选——不读 Plan 的 `Execution` 字段、不生成 Workflow 脚本、不并行。
 
-- **有值**（`workflow-parallel` 或 `workflow-sequential`）→ 直接使用
-- **无值**（Plan 未记录，或跨会话恢复）→ AskUserQuestion 补问：
-
-```
-AskUserQuestion: "Plan 里没有记录执行模式，怎么跑？"
-- Workflow 并行 (推荐) — 按依赖图拓扑，无依赖的 task 并行执行
-- Workflow 顺序 — 逐 task 顺序执行
-```
-
-**确定执行模式后立即 TaskCreate**，建 3 个编排里程碑（**不镜像 plan 的每个 task**——per-task 在 Workflow 内部跑，镜像出来会和内部重派/修复循环打架、谎报进度；这里只跟踪编排者自己的 3 步）：
+**进 Step 1 前立即 TaskCreate**，建 3 个编排里程碑（**不镜像 plan 的每个 task**——per-task 由主 agent 逐个派发/重派/修复，镜像出来会和这些内部循环打架、谎报进度；这里只跟踪编排者自己的 3 步）：
 
 ```
-Task 1: 派发 Workflow（Step 1-2）
-  Sub-steps: 加载计划 + 解析依赖图 + 组装 implementer prompt + 生成并调用 Workflow() 执行
-  Gate: Workflow 跑完，拿到所有 task 的结构化结果
+Task 1: 顺序派发 subagent（Step 1-2）
+  Sub-steps: 加载计划 + 按依赖排定线性顺序 + 组装 implementer prompt + 逐个 task 走三阶段派发
+  Gate: 所有 task 跑完三阶段，拿到每个 task 的结构化结果
 
 Task 2: 编排者验证（Step 3）
-  Sub-steps: 独立查 diff + 独立跑测试 + spec 逐条核对 + 空壳扫描
+  Sub-steps: 独立查 diff + 独立跑测试 + spec 抽查 + 空壳扫描
   Gate: 全部 task 通过编排者独立验证（不信 subagent 自报）
 
 Task 3: 硬交接 — 调用下一步 skill
@@ -70,110 +60,42 @@ Task 3: 硬交接 — 调用下一步 skill
 
 每完成一个标 done。
 
-### Step 1: 加载计划 + 生成 Workflow
+### Step 1: 加载计划 + 排定顺序
 
 1. 读 Plan 文档：任务序列 + 依赖图 + Design 测试目标
-2. 解析依赖图拓扑，识别哪些 task 可并行
+2. 按依赖图拓扑把 task 排成一条**线性执行顺序**（被依赖的先跑；无依赖的 task 也排进这条线，不并行）
 3. 为每个 task 组装 implementer prompt（见下方「Implementer Prompt 组装」）
-4. 生成 Workflow 脚本并调用 `Workflow()` 执行
+4. 按顺序逐个派发（见 Step 2），不生成 Workflow 脚本
 
-### Step 2: Workflow 脚本结构
+### Step 2: 逐 task 顺序派发协议
 
-```js
-export const meta = {
-  name: 'dev-build',
-  description: 'Execute plan tasks with per-task 3-stage verification',
-  phases: [
-    { title: 'Implement' },
-    { title: 'Spec Review' },
-    { title: 'Quality Review' },
-  ],
-}
+按 Step 1 排定的线性顺序遍历 task，每个 task 用主 agent 的 `Agent()` 工具**依次**派发独立 subagent，前一阶段 gate 通过才进下一阶段。**逐个 task 完成整条三阶段链，再进下一个 task——不并行。**
 
-// --- workflow-parallel 模式 ---
-// 按依赖图拓扑分层，同层 task 并行，跨层顺序
-// 例: T1,T2 无依赖 → 并行; T3 依赖 T1+T2 → 等前两个完成
-//
-// --- workflow-sequential 模式 ---
-// 所有 task 顺序执行，忽略并行机会
-//
-// 两种模式都走 pipeline 三阶段:
-// implement → spec review → quality review
+**每个 task 的三阶段：**
 
-const IMPL_SCHEMA = {
-  type: 'object',
-  properties: {
-    status: { type: 'string', enum: ['DONE', 'DONE_WITH_CONCERNS', 'BLOCKED', 'NEEDS_CONTEXT'] },
-    summary: { type: 'string' },
-    filesChanged: { type: 'array', items: { type: 'string' } },
-    concerns: { type: 'string' },
-    testResults: { type: 'string' },
-  },
-  required: ['status', 'summary', 'filesChanged'],
-}
+1. **Implement** — 派 implementer subagent（`Agent(subagent_type: "general-purpose")`，prompt 见「Implementer Prompt 组装」）。要求它按下面格式结构化报告，主 agent 读取后决定下一步：
+   - `status`：`DONE` / `DONE_WITH_CONCERNS` / `BLOCKED` / `NEEDS_CONTEXT`
+   - `summary` / `filesChanged` / `concerns` / `testResults`
+2. **Spec Review** — 仅当 `status ∈ {DONE, DONE_WITH_CONCERNS}` 时派发；`BLOCKED` / `NEEDS_CONTEXT` → 不进 review，按「异常路径」处理。specReviewPrompt 必须含：task 文本 + implementer 报告 + 设计文档相关段落 + plan 全局视图（依赖图 + task 列表）+ 前置 task 产出摘要。reviewer 报 `{approved, issues[]}`。
+3. **Quality Review** — 仅当 spec `approved === true` 时派发。qualityReviewPrompt。reviewer 报 `{approved, issues[]}`。
 
-// REVIEW_SCHEMA 是 reviewing 框架 findings 契约的 verdict 层在 dev-build 的落地：
-// approved → verdict.approved；issues[] 每条 tag 经 findings-contract 映射表压到 severity。
-// 见下方「per-task review 引入 reviewing 框架」。
-const REVIEW_SCHEMA = {
-  type: 'object',
-  properties: {
-    approved: { type: 'boolean' },
-    issues: { type: 'array', items: { type: 'string' } },
-  },
-  required: ['approved'],
-}
+**gate**：任一 review `approved:false` → 进 fix 循环（见「异常路径」），修完重审，通过才进下一 task。
 
-// 按拓扑层分组执行 (parallel 模式) 或逐个执行 (sequential 模式)
-for (const layer of topoLayers) {
-  const layerResults = await parallel(layer.map(task => () =>
-    pipeline(
-      [task],
-      // Stage 1: Implement
-      t => agent(implementerPrompt(t), {
-        label: `impl:${t.id}`,
-        phase: 'Implement',
-        schema: IMPL_SCHEMA,
-      }),
-      // Stage 2: Spec Review (only if DONE/DONE_WITH_CONCERNS)
-      // specReviewPrompt 必须包含: task 文本 + implResult + 设计文档相关段落
-      //   + plan 全局视图(依赖图+task 列表) + 前置 task 产出摘要
-      (implResult, t) => {
-        if (implResult.status === 'BLOCKED' || implResult.status === 'NEEDS_CONTEXT') {
-          log(`${t.id} blocked: ${implResult.concerns}`)
-          return null
-        }
-        return agent(specReviewPrompt(t, implResult, designDoc, planOverview, depOutputs), {
-          label: `spec:${t.id}`,
-          phase: 'Spec Review',
-          schema: REVIEW_SCHEMA,
-        })
-      },
-      // Stage 3: Quality Review (only if spec approved)
-      (specResult, t) => {
-        if (!specResult?.approved) {
-          log(`${t.id} spec review failed — needs fix`)
-          return null
-        }
-        return agent(qualityReviewPrompt(t), {
-          label: `quality:${t.id}`,
-          phase: 'Quality Review',
-          schema: REVIEW_SCHEMA,
-        })
-      },
-    )
-  ))
-}
-```
+**为什么顺序不并行**：并行派发的 subagent 共享同一个工作目录，「依赖图无依赖」≠「文件不冲突」——两个 task 改到同一个 lockfile / 快照 / 共享类型就会互相覆盖，这正是 superpowers 禁止并行 implementer 的原因。顺序执行天然规避，用少量 wall-clock 换可靠性 +「出问题能二分定位」。
 
-> 这是结构示意，Build 根据实际 plan 内容生成具体脚本。
+**报告契约**（subagent 结构化返回，主 agent 读取）：
+
+| 角色 | 字段 |
+|---|---|
+| implementer | `status`（四值同上）+ `summary` + `filesChanged` + `concerns` + `testResults` |
+| reviewer（spec / quality） | `approved`（bool）+ `issues[]`（每条带 tag，见下方「per-task review 引入 reviewing 框架」） |
 
 ### per-task review 引入 reviewing 框架
 
 per-task 的 **Spec Review + Quality Review** 两阶段不自造一套 review 范式，是 `reviewing` 框架的一次实例化。组装这两段 review prompt 时引入框架：
 
 - **套通用流程**：`Read {NOCODE_SKILL_REF}/reviewing/skeleton.md`——分档（实现是不可逆产出，per-task 默认重档）、对象界定 + 进入 gate（评审对象 = 单 task 的实现 diff；gate = implementer status ∈ DONE/DONE_WITH_CONCERNS）、独立交叉（spec/quality reviewer 是与 implementer 分离的独立 subagent，独立性档位 = 同模型独立）、收口（approved gate）都走框架，不在本 skill 重写流程。
-- **套 findings 契约**：`Read {NOCODE_SKILL_REF}/reviewing/findings-contract.md`——`REVIEW_SCHEMA` 的 `{approved, issues}` 是契约 **verdict 层**在 dev-build 的落地：`approved` 直接喂 verdict 的 `approved`（有未处置阻塞类 issue → false），`issues[]` 每条按 tag/级别经映射表压到 `severity`。
+- **套 findings 契约**：`Read {NOCODE_SKILL_REF}/reviewing/findings-contract.md`——reviewer 报告的 `{approved, issues}` 是契约 **verdict 层**在 dev-build 的落地：`approved` 直接喂 verdict 的 `approved`（有未处置阻塞类 issue → false），`issues[]` 每条按 tag/级别经映射表压到 `severity`。
 - **领域维度（框架第 3 步注入点）= 本 skill 自己的两套维度**，框架不抹平、原样保留在两份 prompt 模板里：
   - **Spec Review 维度**（`references/spec-reviewer-prompt.md`）：Missing requirements / Design alignment / Cross-task consistency / Empty shells / Extra / Misunderstandings——每条 issue 带 tag `[missing]` / `[empty-shell]` / `[design-mismatch]` / `[cross-task]` / `[extra]`。
   - **Quality Review 维度**（`references/quality-reviewer-prompt.md`）：Structure / Quality / Testing / Conventions——Issues 分 Critical / Important / Minor。
@@ -195,11 +117,11 @@ per-task 的 **Spec Review + Quality Review** 两阶段不自造一套 review �
 不是每个 task 都要走完整三阶段 pipeline。按 Plan 阶段标的 Review Tier（`light`/`heavy`，见 dev-plan Step 4）分流：
 
 - **heavy**（默认，多文件 / 碰共享接口·契约 / 涉及安全鉴权支付 / 标 HITL）→ 走完整 pipeline：implement → spec review → quality review，不降档。
-- **light**（单文件 + 无 HITL + 不碰共享接口）→ 只走 implement，spec/quality review 不单独起 subagent——implement 结果先收集，等到下一个 checkpoint 边界，把该 checkpoint 区间内所有 light task 的 diff **合并送一次** spec+quality review（复用同一套 REVIEW_SCHEMA，评审对象从"单 task diff"变成"该 checkpoint 区间内全部 light task 合并 diff"）。
+- **light**（单文件 + 无 HITL + 不碰共享接口）→ 只走 implement，spec/quality review 不单独起 subagent——implement 结果先收集，等到下一个 checkpoint 边界，把该 checkpoint 区间内所有 light task 的 diff **合并送一次** spec+quality review（复用同一套 `{approved, issues[]}` 报告契约，评审对象从"单 task diff"变成"该 checkpoint 区间内全部 light task 合并 diff"）。
 
-### Step 3: 处理 Workflow 结果
+### Step 3: 处理派发结果
 
-Workflow 完成后，Build 作为编排者验证结果：
+所有 task 派发完成后，Build 作为编排者验证结果：
 
 1. **BLOCKED / NEEDS_CONTEXT task**：汇总报告给用户，提供上下文后可重跑
 2. **Spec review 未通过的 task**：汇总 issues，决定是否重新派发 implementer 修复
@@ -233,7 +155,7 @@ Prompt 模板见 `references/implementer-prompt.md`。
 
 ## Exit Gate
 
-- [ ] 所有 plan task 完成（Workflow 结果确认）
+- [ ] 所有 plan task 完成（每个 task 三阶段结果确认）
 - [ ] 编排者独立验证通过（diff + 测试 + spec 核对 + 空壳扫描）
 - [ ] 零空壳：无空函数体、无 TODO/implement placeholder、无 `throw not implemented`
 - [ ] 全部测试通过（整个相关套件，不只新写的）
@@ -260,7 +182,7 @@ Prompt 模板见 `references/implementer-prompt.md`。
 
 ## Red Flags
 
-- Workflow 结果中有 BLOCKED task 未处理就继续
+- 有 BLOCKED task 未处理就继续派发下一个
 - spec review 不过强行跳过
 - 编排者没有独立跑测试就报完成
 - commit message 是 "fix" / "update" / "wip"

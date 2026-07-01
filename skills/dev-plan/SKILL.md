@@ -12,7 +12,7 @@ description: Use when you have defined goals and need to break work into tasks. 
 > Leading word: **tracer bullet**。每个 task 切一条窄但完整的端到端路径，不按层横切。
 
 输入：Define 的 restate + dev-design-refine 的设计文档（含领域划分、模块设计、接口、业务流、测试目标）（Full 场景）。
-输出：用户确认的任务序列 + 执行模式选择（记录到 Plan header `Execution` 字段）。
+输出：用户确认的任务序列。
 
 ## 非本 skill 请求
 
@@ -76,12 +76,12 @@ Task 8: Round 2 Checklist 核查 + 窄化 Red-Blue + Plan Validation
   Sub-steps: checklist 逐项核查（API签名/测试覆盖/设计一致/废弃接口）→ 窄化 Skill(nocode-evolve:red-blue-deep) 只评跨task一致性 → 裁决修正 → 四项自检（需求覆盖 + 路径覆盖 + 可验证 + 无环）
   Gate: checklist + red-blue-deep 流程完成 + 裁决修正完成 + 四项自检全过（任一不过回 Task 7 补）
 
-Task 9: 用户确认 + 选执行模式
-  Sub-steps: 完整呈现计划 → AskUserQuestion 确认 → 选执行模式 → 记录到 Plan header Execution 字段
-  Gate: 用户确认 + 执行模式已选（Workflow 并行 / Workflow 顺序）
+Task 9: 用户确认计划
+  Sub-steps: 完整呈现计划 → AskUserQuestion 确认
+  Gate: 用户确认计划
 
 Task 10: 硬交接 — 调用下一步 skill
-  Sub-steps: 按 Exit Gate 硬交接报告 Plan 完成（task 数 + 执行模式 + 首个 slice）→ 建议进 Build → 等用户拍板后调 Skill(nocode-evolve:dev-build)
+  Sub-steps: 按 Exit Gate 硬交接报告 Plan 完成（task 数 + 首个 slice）→ 建议进 Build → 等用户拍板后调 Skill(nocode-evolve:dev-build)
   Gate: 用户拍板进入 Build（这一步不勾，Plan 不算收尾）
   metadata: {handoff: true}（供防跳步 Hook B 识别交接 task）
 ```
@@ -236,19 +236,11 @@ task 间依赖不成环，底层 task 排前面。循环依赖说明切片方式
 
 任一不过回 Step 7 补。
 
-### Step 9: 用户确认 + 执行模式
+### Step 9: 用户确认计划
 
-计划完整呈现后用 AskUserQuestion 确认，再选执行模式：
+计划完整呈现后用 AskUserQuestion 让用户确认。
 
-```
-AskUserQuestion: "计划确认了，怎么执行？"
-- Workflow 并行 (推荐) — 按依赖图拓扑派发，无依赖的 task 并行执行
-- Workflow 顺序 — 逐 task 派发，每个完成再下一个
-```
-
-两种模式都通过 Workflow 派发独立 subagent 执行，不在当前会话跑实现代码。区别只在并行度：并行模式按依赖图拓扑同时推进无依赖的 task，顺序模式一次一个。
-
-选择后记录到 Plan header 的 `Execution` 字段（`workflow-parallel` 或 `workflow-sequential`），供 Build 读取。
+Build 阶段固定由主 agent 用 `Agent()` 逐个 task **顺序**派发独立 subagent 执行（不并行、不在当前会话跑实现代码），所以 Plan 不需要选执行模式、不写 `Execution` 字段。
 
 ### Plan Document Header
 
@@ -262,7 +254,6 @@ AskUserQuestion: "计划确认了，怎么执行？"
 **Tech Stack**: [关键技术/库]
 **Design Doc**: [路径（Full 场景）]
 **Test Objectives**: [测试目标摘要]
-**Execution**: [workflow-parallel | workflow-sequential]
 ```
 
 ## Exit Gate
@@ -276,9 +267,8 @@ AskUserQuestion: "计划确认了，怎么执行？"
 - [ ] Round 1 red-blue-deep 通过 + 骨架已修正（Step 6）
 - [ ] Round 2 checklist 核查 + 窄化 red-blue-deep + Plan Validation 通过（Step 8）
 - [ ] 用户显式确认计划（AskUserQuestion）
-- [ ] 执行模式已选（Workflow 并行 / Workflow 顺序）并记录到 Plan header `Execution` 字段
-- [ ] 后续 Build 输入齐全：任务序列 + 测试目标 + 执行模式
-- [ ] **硬交接**：Exit Gate 全部通过后，向用户报告 Plan 完成（含 task 数量 + 执行模式 + 首个 slice 概要），建议下一阶段：Build（`nocode-evolve:dev-build`）。列出 Build 阶段的 sub-steps + 关键决策（devflow Step 5 格式）。等用户拍板，不自行进入下一阶段
+- [ ] 后续 Build 输入齐全：任务序列 + 测试目标
+- [ ] **硬交接**：Exit Gate 全部通过后，向用户报告 Plan 完成（含 task 数量 + 首个 slice 概要），建议下一阶段：Build（`nocode-evolve:dev-build`）。列出 Build 阶段的 sub-steps + 关键决策（devflow Step 5 格式）。等用户拍板，不自行进入下一阶段
 
 ## 核心规则（when X → do Y）
 

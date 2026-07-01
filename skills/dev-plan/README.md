@@ -21,7 +21,7 @@ devflow 第 4 阶段——把目标拆成 tracer bullet 任务序列，Round 1 �
 
 **现在怎么办**：Step 8a 拆成两步——checklist 逐项核查代码能不能跑（不派 codex，成本低）+ 窄化后的 red-blue 只审跨 task 一致性/执行顺序这类真正的决策题（这部分本来就是 red-blue-adversarial 擅长的）。省下的 codex 配额移给 Review 阶段审最终会交付的 diff。
 
-Round 1（骨架审视：切片策略/依赖图/任务粒度）不受影响，仍走完整 heavy 档——这是唯一的 pre-code 决策关卡，一旦 Build 扇出多个 subagent 并行做，事后没有"再拦一道"的机会，值得砸最贵资源。
+Round 1（骨架审视：切片策略/依赖图/任务粒度）不受影响，仍走完整 heavy 档——这是唯一的 pre-code 决策关卡，一旦 Build 逐个扇出 subagent 执行，事后没有"再拦一道"的机会，值得砸最贵资源。
 
 ## 设计决策：task 骨架加 Review Tier 字段
 
@@ -29,4 +29,4 @@ Round 1（骨架审视：切片策略/依赖图/任务粒度）不受影响，�
 
 ## 下游消费者
 
-- `dev-build` — 读 Plan header `Execution` 字段决定执行模式；读每个 task 的 Review Tier 决定审查粒度
+- `dev-build` — 读每个 task 的 Review Tier 决定审查粒度（固定由主 agent 顺序派发 subagent，不再读 `Execution` 字段）
