@@ -31,23 +31,23 @@ PR title（≤50 字）：
 feat(search): 支持中文分词搜索
 ```
 
-PR body（含 Requirements Addressed + Verification 回链）：
+PR body（基础内容 + 重点评测，`rule-push-summary` 契约）：
 ```markdown
-## 改了什么
-搜索接口接入中文 analyzer，修复中文查询返回空的问题。
+基础内容：
+- a1b2c3d feat: 搜索接口接入中文 analyzer
 
-## Requirements Addressed
-- SC1 (响应 < 200ms p95): ✅ 接入 analyzer 后 p95=156ms
-- SC2 (无 lint warning): ✅ 0 warnings
-- SC3 (支持中文搜索): ✅ "笔记本电脑" 正确命中
-
-## Verification Evidence
-- 全套件: 127 passed (npm test)
-- 中文用例: curl '/api/search?q=笔记本' → 8 results
-- 性能: npm run bench:search → p95=156ms
+重点评测：
+- a1b2c3d 亮点: 修复中文查询返回空的问题，接入 analyzer 后 p95=156ms（SC1/SC2/SC3 均达标）
 ```
 
-→ 用户确认 body，进下一步。
+Affected（仅 Gate 展示，不进 PR body）：
+```
+src/search/
+├── analyzer.ts
+└── query.ts
+```
+
+→ 用户确认 target + title + body + Affected，进下一步。
 
 ### push + 建 PR + 加 reviewer
 

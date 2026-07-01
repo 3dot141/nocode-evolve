@@ -38,15 +38,15 @@ toolchain 检测（`github.com`→gh / `bitbucket.`→bkt）见 SKILL.md Step 1�
 
 （gh/bkt 无差异）
 
-## Step 2: 收集影响文件
+## Step 2: 收集 Affected
 
-Gate Title-Body 前拿全部变更文件，按目录层级组织成 tree 格式（`├──` `└──` `│`）：
+Gate Title-Body 前拿全部变更文件，按目录层级组织成 tree 格式（`├──` `└──` `│`），列在 **Affected** 一节：
 
 ```bash
 git diff --name-only "$(git merge-base HEAD $base_branch)..HEAD" | sort
 ```
 
-根目录文件直接列，目录按字母序。（gh/bkt 无差异）
+根目录文件直接列，目录按字母序。**Affected 只用于 Gate Title-Body 给用户一同确认，不写进 PR body**——body 只有 Step 1 的「基础内容 + 重点评测」（`rule-push-summary` 契约）。（gh/bkt 无差异）
 
 ## Step 2a: 解析 PR target
 
@@ -61,7 +61,7 @@ git diff --name-only "$(git merge-base HEAD $base_branch)..HEAD" | sort
 
 ## Gate Title-Body
 
-展示 `target`（+ 来源标注）+ title + body + 影响文件 tree，等用户响应：
+展示 `target`（+ 来源标注）+ title + body + **Affected**（影响文件 tree），等用户响应：
 - OK → 进 Step 3
 - 改 target → 更新 target，**不重生成** title/body，再 askGate
 - 改 title/body → **重生成**，再 askGate

@@ -79,7 +79,7 @@ cleanup 时识别 4 种 worktree 路径模式：
 | Gate | 位置 | 要点 |
 |---|---|---|
 | **Gate Merge** | option 1, commit 整理后 | 呈现 merge 计划（branch → base + 删 worktree + 删 branch），OK 执行 |
-| **Gate Title-Body** | option 2, target 解析后 | target (`<remote>/<branch>` + 来源) + title + body + 影响文件 tree。target/title/body 均可改 |
+| **Gate Title-Body** | option 2, target 解析后 | target (`<remote>/<branch>` + 来源) + title + body + **Affected**（影响文件 tree）。target/title/body 均可改 |
 | **Gate PR** | option 2, Gate Title-Body 后 | push + source + target + reviewer。可改任一字段，不重生成 title/body |
 | **Gate Discard** | option 4 | 列将删内容。typed `discard` **字面**才执行，yes/OK 算否定 |
 | **PR 决策线** | option 2, 进入 PR 流程(Step 0) | 一次确认整条（提PR/后台盯/合并后清+流转）。确认①→ worktree 由 pr-watch 合并后自动清，不再单问；选③手动保留 |
