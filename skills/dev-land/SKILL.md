@@ -1,13 +1,13 @@
 ---
 name: dev-land
-description: "Use when Review is complete and you need to land the work. Orchestrates pre-flight checks, dev-finish-branch (PR/merge mechanics), and dev-post-merge (post-merge flow). Use when devflow routes to Land stage, or when user says \"land/着陆/准备着陆/走land阶段\". Note: standalone \"提PR/合并/merge\" without devflow context should use dev-finish-branch directly, not this skill."
+description: "Use when Review is complete and you need to land the work. Orchestrates pre-flight checks and dev-finish-branch (PR/merge mechanics + post-merge flow). Use when devflow routes to Land stage, or when user says \"land/着陆/准备着陆/走land阶段\". Note: standalone \"提PR/合并/merge\" without devflow context should use dev-finish-branch directly, not this skill."
 ---
 
 # land — 选路着陆，干净收场
 
 **Iron Law: 先确认 Review Gate 已过，再选着陆路径。没过 Review 的代码不着陆。**
 
-编排层：pre-flight → dev-finish-branch（PR/merge 机制）→ dev-post-merge（post-merge 流转）。
+编排层：pre-flight → dev-finish-branch（PR/merge 机制 + post-merge 流转）。post-merge 流转已并入 dev-finish-branch（`references/post-merge.md`），不再是独立 skill。
 
 ## 非本 skill 请求
 
@@ -34,7 +34,7 @@ Task 2: Finish-branch
   Gate: dev-finish-branch 完成（PR 已创建 / 已合并 / keep / discard）
 
 Task 3: Post-merge
-  Gate: dev-post-merge 完成（任务流转或标注跳过）
+  Gate: post-merge 流转完成（dev-finish-branch 的 post-merge.md，或标注跳过）
 
 Task 4: 收口 — 报告完成并交回
   Sub-steps: 向用户 / devflow 导航报告 Land 完成（合并状态 + 任务流转结果）→ 交回控制
@@ -81,19 +81,19 @@ Enter Gate 三项逐条检查：
 
 ### Step 3: Post-merge
 
-调 `Skill(nocode-evolve:dev-post-merge)`。
+合并后流转已并入 dev-finish-branch——Read `dev-finish-branch/references/post-merge.md` 执行（原独立 dev-post-merge skill 已降级为该 reference）。
 
-- **Option 1 (Merge)**：Step 2 完成后即执行
-- **Option 2 (PR)**：PR 合并后执行。通常在后续会话——用户说"PR 合了"或 agent 检查到 merged 状态时进入
+- **Option 1 (Merge)**：Step 2 合并成功后即执行
+- **Option 2 (PR)**：pr-watch 盯到合并、退出 re-invoke 后触发；或后续会话用户说"PR 合了"时
 - **Option 3/4**：跳过
 
 **Exit Gate:**
-- [ ] dev-post-merge 完成或已跳过
+- [ ] post-merge 流转完成或已跳过
 
 ## Exit Gate（全局）
 
 - [ ] dev-finish-branch 完成
-- [ ] dev-post-merge 完成或已跳过（合并后）
+- [ ] post-merge 流转完成或已跳过（合并后）
 
 ## 场景差异
 

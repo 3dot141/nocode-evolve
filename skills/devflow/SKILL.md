@@ -58,7 +58,7 @@ Define 返回后，拿到确认的 restate + 场景分类，进 Step 2。
 ```
 TaskCreate(subject: "阶段 8: Land",
            description: "调用: nocode-evolve:dev-land / Gate: PR merged + 任务流转 + worktree 清理
-Sub-steps: ⓪ Skill(nocode-evolve:dev-land) → 8a.Pre-flight → 8b.Finish-branch(dev-finish-branch) → 8c.Post-merge(dev-post-merge)")
+Sub-steps: ⓪ Skill(nocode-evolve:dev-land) → 8a.Pre-flight → 8b.Finish-branch(dev-finish-branch) → 8c.Post-merge(dev-finish-branch 的 post-merge.md)")
 ```
 
 Sub-steps 写进 description 是为了**进入阶段时一眼看到完整步骤序列**——防止跳步遗漏。链首的 `⓪ Skill(...)` 是为了把"加载 skill"钉成每个阶段的第一个动作——**sub-steps 是地图，skill 才是详图**，照地图裸跑会丢掉 skill 内的模板 / Iron Law / 格式约束。
@@ -126,7 +126,7 @@ Land 有 5 个子步骤（8a Create PR → 8b ... → 8e Cleanup），只说"pus
 | 5 | **Build** | `nocode-evolve:dev-build` | — | 所有 task 完成 + 测试通过 + build 通过 |
 | 6 | **Verify** | `nocode-evolve:dev-verify` | — | 验收标准逐条通过 + 证据收集 |
 | 7 | **Review** | `nocode-evolve:dev-review` | `rule-codex-review` | Critical 全 fix + 用户 approve |
-| 8 | **Land** | `nocode-evolve:dev-land` | — | dev-finish-branch(PR/merge/keep/discard) + dev-post-merge(任务流转) |
+| 8 | **Land** | `nocode-evolve:dev-land` | — | dev-finish-branch(PR/merge/keep/discard + post-merge 任务流转) |
 
 ### 共享词汇（跨 skill leading words）
 
@@ -348,8 +348,8 @@ PDCA 循环：
 | 8a. Pre-flight | 确认 Review Gate + 工作目录干净 + 分支新鲜度 | 任一不满足 → 报告 + 建议动作，不自行修复 |
 | 8b. Disposition | 呈现 4 选项（merge/PR/keep/discard），用户选路径 | 有 reviewer/CI → 建议 PR；个人快修 → 建议 Merge |
 | 8c. Plan + Execute | 按路径呈现计划（PR: title/body + target + reviewer；Merge: merge 计划），Gate 确认后执行（push + create PR + add reviewer） | Gate Title-Body → Gate PR → 执行 |
-| 8d. Poll & Merge | PR 路径：ScheduleWakeup 轮询直到合并；Merge 路径：本地合并后直接过 | canMerge + merge 成功（用户可选"直接 merge"/"不 merge"） |
-| 8e. Cleanup + 流转 | 合并后一起做：worktree 清理（Gate Worktree-Cleanup）+ 飞书任务流转（`lark-project` references/transition.md） | 清理保留/删除由用户选；任务号缺失则跳过流转 |
+| 8d. Poll & Merge | PR 路径：pr-watch(run_in_background)后台盯直到合并、退出 re-invoke；Merge 路径：本地合并后直接过 | merge 成功（PR 路径由 pr-watch 自动盯，无超时上限） |
+| 8e. Cleanup + 流转 | 合并后一起做：worktree 清理（PR 决策线①的 pr-watch 合并后自动清）+ 飞书任务流转（`post-merge.md` → `lark-project`） | PR 路径 pr-watch 自动清；任务号缺失则跳过流转 |
 
 ---
 

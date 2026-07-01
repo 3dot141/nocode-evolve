@@ -46,9 +46,10 @@ agent 视角: 用户任务命中以下任一条件时, **主动调起 devflow sk
 **不含 (负例)**: 纯只读查询: 列 PR / 看分支 / 看 status / 看 log
 
 #### dev-finish-branch
-**触发**: 用户说「完成 worktree / 收尾 / 合并 / 提 PR / 创建 PR / 合并到 main / 删 branch / discard worktree」, 或 dev-land 调用
+**触发**: 用户说「完成 worktree / 收尾 / 合并 / 提 PR / 创建 PR / 合并到 main / 删 branch / discard worktree」, 或「PR 合了 / 流转任务 / 合并后流转」(post-merge 已并入), 或 dev-land 调用
 **读**: ``
 **关键约束(上浮)**: Bitbucket 用 bkt 不裸 curl; reviewer 用 bkt pr edit 不 PUT; force push 高风险二次确认。
+**也属**: lark
 **生命周期**: 4 收尾
 
 #### git-worktree

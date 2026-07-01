@@ -55,12 +55,12 @@ Detached HEAD → 3 选项（无 merge）。
 
 先 Read `references/commit-tidy.md`（Option 1 & 2 需要 commit 整理）。然后按选项 Read 对应 reference，由 reference 接管全部细节。
 
-**决策线（进入时一次确认）**：选定 disposition 后，reference 开头先展该路径的**完整决策线**，用户一次确认整条（含合并后清 worktree + 流转的目标状态）；确认后中途只保留安全 Gate（Title-Body / PR / force）。PR 路径的决策线见 `pr-flow-gh.md` Step 0。
+**决策线（进入时一次确认）**：选定 disposition 后，reference 开头先展该路径的**完整决策线**，用户一次确认整条（含合并后清 worktree + 流转的目标状态）；确认后中途只保留安全 Gate（Title-Body / PR / force）。**PR 流程 Step 骨架单源在 `prflow.md`**（Step 0-8），gh/bkt 命令实现见 `pr-flow-gh.md` / `pr-flow-bkt.md`。
 
 | Option | 额外 Read | 涉及 Gate |
 |---|---|---|
 | **1. Merge** | `references/remote-branch-cleanup.md`；合并后有任务号则 `references/post-merge.md` | Gate Merge + Gate Remote-Delete |
-| **2. PR** | `references/pr-flow-gh.md`; bkt 额外 `references/pr-flow-bkt-appendix.md`；合并后 `references/post-merge.md` | PR 决策线(Step 0) + Gate Title-Body + Gate PR + pr-watch |
+| **2. PR** | `references/prflow.md`（Step 骨架）+ `pr-flow-gh.md` / `pr-flow-bkt.md`（gh/bkt 实现）；合并后 `references/post-merge.md` | PR 决策线(Step 0) + Gate Title-Body + Gate PR + pr-watch |
 | **3. Keep** | (无，一行报告) | (无) |
 | **4. Discard** | `references/remote-branch-cleanup.md` | Gate Discard + Gate Remote-Delete |
 
@@ -87,13 +87,7 @@ cleanup 时识别 4 种 worktree 路径模式：
 
 ## pr-watch 后台盯合并（Option 2 决策线①）
 
-PR 决策线选①后，PR 创建完用 `Bash(run_in_background=true)` 起 `references/pr-watch.mjs`（gh/bkt 双栈，参数见 pr-flow reference）。脚本 detached 每 5min 查状态、无超时上限盯到终态：
-
-- **MERGED** → 确定性清 worktree（`git -C <MAIN_ROOT> worktree remove` + prune）+ 输出 `PR_WATCH_RESULT merged ...` → 脚本退出 re-invoke agent
-- **可合了** → osascript 系统通知一次（不重复骚扰）
-- **CLOSED 未合** → 通知 + `PR_WATCH_RESULT closed ...` + 退出（worktree 保留）
-
-脚本退出 re-invoke 后，agent 读 stdout 的 `PR_WATCH_RESULT`：merged 且 tasks 非空 → Read `post-merge.md` 按决策线定死的目标状态流转；closed → 报告保留。
+PR 决策线选①后，PR 创建完用 `Bash(run_in_background=true)` 起 `references/pr-watch.mjs` 后台盯合并（gh/bkt 双栈）：合并 → 确定性清 worktree + 输出 `PR_WATCH_RESULT` → 脚本退出 re-invoke agent → agent 读信号接续流转。**决策线 + 状态机 + Step 骨架见 `references/prflow.md`**（Step 8）。
 
 > 机制是 `run_in_background`（会话级，退出 re-invoke agent 做流转），不是 ScheduleWakeup。会话关了后台进程随之结束——由下方 Fallback 兜底。
 
