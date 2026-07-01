@@ -274,6 +274,7 @@ Build 阶段固定由主 agent 用 `Agent()` 逐个 task **顺序**派发独立 
 
 - **When** 某 task 涉及 > 5 文件 → **必须再拆**。L 任务把多个设计决策压成一句话
 - **When** task 标题里出现 "and" → 大概率该拆成两个 task
+- **When** 冒出跨切片的整体验证（全链路 E2E、既有功能回归、冒烟）→ **不拆成 task**。它不是一根 tracer bullet（Iron Law），不满足 task 定义；这类验证属于设计文档「汇总」节的验证策略总表，原样留给 dev-verify 读取执行（`skills/dev-verify/SKILL.md` Enter Gate），不进 plan 任务序列
 
 ## Common Rationalizations
 
@@ -297,3 +298,4 @@ Build 阶段固定由主 agent 用 `Agent()` 逐个 task **顺序**派发独立 
 - red-blue-deep 被跳过或降级为轻档（计划审视是跨模块不可逆的，应该走重档）
 - red-blue-deep 结论中成立的质疑没有落实到骨架/代码修正
 - 因"任务简单 / 还在概览 / 用户说了'继续'"跳过某 Step、不建 Step 0 TaskCreate、或漏掉最后的交接 task
+- 计划里出现"E2E 全链路验证""既有功能回归"这类整体确认性 task —— 不是 tracer bullet，违反 task 定义。应删除该 task，改为核对设计文档「汇总」节的验证策略总表是否已覆盖，交给 dev-verify 执行
