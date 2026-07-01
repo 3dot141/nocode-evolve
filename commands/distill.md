@@ -217,8 +217,8 @@ no → 整次 distill 终止；yes → 进入分发。
   ✓ skip: 一次性 bug 修复（原因：无沉淀价值）
   📋 wiki/index.md 已更新, wiki/log.md 已追加 3 条
 
-⚠ 融进 plugin rule（子文件）: rules/rule-references/rule-finishing-branch/pr-flow-bkt-appendix.md
-  manifest: 未动（门面 rule-finishing-branch 已在 manifest 路由）  版本: 1.3.1 → 1.4.0 (minor)
+⚠ 融进 plugin rule: rules/rule-push-summary.md
+  manifest: 已更新 push-summary 条目 triggers（本次融合扩了触发范围）并 generate 重新生成 catalog 分片  版本: 1.3.1 → 1.4.0 (minor)
 ⚠ 跨仓新建 plugin rule: ~/AI/nocode-evolve/rules/rule-distill-extension.md
   manifest+generate: rules/manifest.json 已加条目, generate 重新生成 catalog 分片  版本: 1.4.0 → 1.5.0 (minor)
   请到 nocode-evolve 仓 review + commit + 询问是否 push。
@@ -242,7 +242,7 @@ no → 整次 distill 终止；yes → 进入分发。
 
 ### 融合路径（disposition=融合）
 
-目标可能是顶层 `rules/rule-<x>.md`，**也可能是门面的子文件** `rules/rule-references/<x>/<子文件>.md`（如 fork-PR 知识融进 `pr-flow-bkt-appendix.md`）。
+目标可能是顶层 `rules/rule-<x>.md`，**也可能是门面的子文件** `rules/rule-references/<x>/<子文件>.md`（如某 rule 按工具栈/场景拆了多个子文件，融合内容对应命中其中一个）。
 
 1. **Read 目标文件全文** → 把 `body` 片段**融进合适章节**（必要时改章节结构，如新增 Workflow / Step 分支；**不是末尾 paste**）
 2. **manifest 处理**（关键差异——不无脑新增条目；改的是单源 `rules/manifest.json`，不手改生成物 catalog 分片）：
