@@ -30,7 +30,7 @@ description: "Use when Review is complete and you need to land the work. Orchest
 Task 1: Pre-flight
   Gate: Review 状态 + 工作目录干净 + 分支新鲜度
 
-Task 2: Ship
+Task 2: Finish-branch
   Gate: dev-finish-branch 完成（PR 已创建 / 已合并 / keep / discard）
 
 Task 3: Post-merge
@@ -59,7 +59,7 @@ Enter Gate 三项逐条检查：
 - [ ] 工作目录干净
 - [ ] 分支新鲜度确认
 
-### Step 2: Ship
+### Step 2: Finish-branch
 
 调 `Skill(nocode-evolve:dev-finish-branch)`，它处理全部 commit/PR/merge/discard 机制（disposition 菜单、Gate 序列、worktree 清理）。
 
@@ -100,7 +100,7 @@ Enter Gate 三项逐条检查：
 | | Full / Standard / Fix | Mini |
 |---|---|---|
 | Pre-flight | 完整 Enter Gate | commit only |
-| Ship | dev-finish-branch 完整 | 跳过（Mini 不开 worktree） |
+| Finish-branch | dev-finish-branch 完整 | 跳过（Mini 不开 worktree） |
 | Post-merge | 合并后按需 | 跳过 |
 
 Mini 场景的 Land-lite：确认 commit 已完成即可，不进完整 Step 1-3。

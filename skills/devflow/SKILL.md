@@ -58,7 +58,7 @@ Define 返回后，拿到确认的 restate + 场景分类，进 Step 2。
 ```
 TaskCreate(subject: "阶段 8: Land",
            description: "调用: nocode-evolve:dev-land / Read: rule-finishing-branch / Gate: PR merged + 任务流转 + worktree 清理
-Sub-steps: ⓪ Skill(nocode-evolve:dev-land) → 8a.Pre-flight → 8b.Ship(dev-finish-branch) → 8c.Post-merge(dev-post-merge)")
+Sub-steps: ⓪ Skill(nocode-evolve:dev-land) → 8a.Pre-flight → 8b.Finish-branch(dev-finish-branch) → 8c.Post-merge(dev-post-merge)")
 ```
 
 Sub-steps 写进 description 是为了**进入阶段时一眼看到完整步骤序列**——防止跳步遗漏。链首的 `⓪ Skill(...)` 是为了把"加载 skill"钉成每个阶段的第一个动作——**sub-steps 是地图，skill 才是详图**，照地图裸跑会丢掉 skill 内的模板 / Iron Law / 格式约束。
