@@ -45,8 +45,11 @@ export function decide(status, notifiedMergeable) {
 }
 
 // re-invoke 识别契约: 脚本退出后 agent 读 stdout 这一行，接续流转/收尾
-export function resultLine(action, cfg) {
-  if (action.type === 'cleanup') return `PR_WATCH_RESULT merged worktree=${cfg.worktree} tasks=${cfg.tasks ?? ''}`;
+export function resultLine(action, cfg, cleanupFailed = false) {
+  if (action.type === 'cleanup') {
+    const suffix = cleanupFailed ? ' cleanup=failed' : '';
+    return `PR_WATCH_RESULT merged worktree=${cfg.worktree} tasks=${cfg.tasks ?? ''}${suffix}`;
+  }
   if (action.type === 'closed') return `PR_WATCH_RESULT closed worktree=${cfg.worktree}`;
   return '';
 }
@@ -78,6 +81,8 @@ export function queryStatus(cfg, run) {
   // bkt: cross-fork 别用 `bkt pr view`(author/reviewers 解析不可靠)，走 raw GET
   const base = `/rest/api/1.0/projects/${cfg.targetProject}/repos/${cfg.repoSlug}/pull-requests/${cfg.pr}`;
   const pr = JSON.parse(run(['bkt', 'api', base, '--json']));
+  // C2: state 已终态(MERGED/DECLINED)无需查 /merge — 省一次请求 + 避免 merged 后 /merge 报错噪音
+  if (pr.state === 'MERGED' || pr.state === 'DECLINED') return normalizeBkt(pr, null);
   let merge = null;
   try { merge = JSON.parse(run(['bkt', 'api', `${base}/merge`, '--json'])); }
   catch { /* /merge 查不到 → 当不可合，继续盯 */ }
@@ -116,9 +121,16 @@ export async function loop(cfg, deps = {}) {
 
     const action = decide(status, notified);
     if (action.type === 'cleanup') {
-      cleanupWorktree(cfg, run);
-      notify('PR 已合并', 'worktree 已清理，可流转任务', process.platform, run);
-      out(resultLine(action, cfg));
+      let cleanupFailed = false;
+      try {
+        cleanupWorktree(cfg, run);
+      } catch (e) {
+        // C1: 清理失败也要输出信号, 别让 agent 漏掉流转(PR 已 merged 是既成事实)
+        cleanupFailed = true;
+        out(`[pr-watch] cleanup failed: ${e.message}`);
+      }
+      notify('PR 已合并', cleanupFailed ? 'worktree 清理失败，需手动清' : 'worktree 已清理，可流转任务', process.platform, run);
+      out(resultLine(action, cfg, cleanupFailed));
       return 'merged';
     }
     if (action.type === 'closed') {
@@ -138,6 +150,13 @@ export async function loop(cfg, deps = {}) {
 
 if (import.meta.url === `file://${process.argv[1]}`) {
   const a = parseArgs(process.argv.slice(2));
+  // W-parseArgs(codex): 缺必填参数会让 loop 带 undefined 跑(gh pr view undefined 直接崩), 入口先校验
+  const required = ['toolchain', 'pr', 'worktree', 'main-root'];
+  const missing = required.filter((k) => a[k] === undefined || a[k] === true);
+  if (missing.length) {
+    console.error(`[pr-watch] 缺必填参数: ${missing.map((k) => '--' + k).join(', ')}`);
+    process.exit(2);
+  }
   const cfg = {
     toolchain: a.toolchain,
     pr: a.pr,
