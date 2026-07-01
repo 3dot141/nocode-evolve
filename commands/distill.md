@@ -30,7 +30,7 @@ argument-hint: [optional-topic]
 | `rules:project` | 融进现有 rule，或新建 `<proj>/.agents-personal/rules/<slug>.md` + 改 `AGENTS.md` 触发条件 | 当前指令，项目专属；**先整合判断**（融合优先），否则双写新建 |
 | `agents:project` | `<proj>/.agents-personal/AGENTS.md` 对应分节 | 项目级偏好——变量覆盖 / 语气风格 / 命名惯例 / 协作约定等；直接写入 AGENTS.md，融合已有分节或新增分节 |
 | `docs:subdir` | `<proj>/<dir>/AGENTS.md` 和/或 `README.md` | 子目录工程约束/文档，入仓共享；走 project-distill |
-| `rules:plugin` | 融进现有 rule（含 `rule-references/` 子文件），或新建 `$NOCODE_EVOLVE_REPO/rules/rule-<slug>.md` + 改 `rules/manifest.json` 后 `node hooks/generate.mjs` 重新生成 catalog 分片 + 升 `plugin.json` | 当前指令，跨项目通用；**先整合判断**（融合优先），否则三步联动建新 |
+| `rules:plugin` | 委托 `Skill(nocode-evolve:plugin-distill)` 处理（融合优先，否则三步联动；rule/skill 双轨） | 当前指令，跨项目通用；**先整合判断**（融合优先），否则三步联动建新 |
 | `skip` | （不写）| 列出原因供用户最后反悔 |
 
 ---
@@ -195,9 +195,9 @@ no → 整次 distill 终止；yes → 进入分发。
 - `agents:project` → `.agents-personal/AGENTS.md`（gitignored，个人配置）
 - `docs:subdir` → `<dir>/AGENTS.md` + `README.md`（入仓，共享约束）
 
-#### `rules:plugin` 出口（融合优先，否则三步联动）
+#### `rules:plugin` 出口（委托 plugin-distill）
 
-按 `disposition` 走下方「rules:plugin 分发：融合路径 + 三步联动」节。
+调 `Skill(nocode-evolve:plugin-distill)`，传入本出口的候选列表（含 disposition / body / target / bucket / triggerDesc 等）。plugin-distill 负责完整的融合判断 + 三步联动写入协议（rule 文件 + manifest 登记 + generate + 版本升级），本文件不再重复维护该逻辑。
 
 #### `skip` 出口
 
@@ -217,9 +217,9 @@ no → 整次 distill 终止；yes → 进入分发。
   ✓ skip: 一次性 bug 修复（原因：无沉淀价值）
   📋 wiki/index.md 已更新, wiki/log.md 已追加 3 条
 
-⚠ 融进 plugin rule: rules/rule-push-summary.md
+⚠ 融进 plugin rule（经 plugin-distill）: rules/rule-push-summary.md
   manifest: 已更新 push-summary 条目 triggers（本次融合扩了触发范围）并 generate 重新生成 catalog 分片  版本: 1.3.1 → 1.4.0 (minor)
-⚠ 跨仓新建 plugin rule: ~/AI/nocode-evolve/rules/rule-distill-extension.md
+⚠ 跨仓新建 plugin rule（经 plugin-distill）: ~/AI/nocode-evolve/rules/rule-distill-extension.md
   manifest+generate: rules/manifest.json 已加条目, generate 重新生成 catalog 分片  版本: 1.4.0 → 1.5.0 (minor)
   请到 nocode-evolve 仓 review + commit + 询问是否 push。
 
@@ -234,103 +234,11 @@ no → 整次 distill 终止；yes → 进入分发。
 
 ---
 
-## rules:plugin 分发：融合路径 + 三步联动
+## rules:plugin 分发（已迁移到 plugin-distill）
 
-新架构下 `rules/` 不再分 axis（`overlay-` / `agent-` / `tool-` 命名前缀已废弃），所有触发式规则统一命名为 `rule-<slug>.md`，由 `rules/manifest.json`（单源）登记、`node hooks/generate.mjs` 生成进 `model/agent-catalog-*.md`（catalog 分片，完整路由常驻 context），agent 命中粗桶后按触发条件按需 Read。
+`rules:plugin` 出口的融合判断 + 三步联动写入协议已整体搬到 `Skill(nocode-evolve:plugin-distill)`（`commands/plugin-distill.md`）——单一权威实现，本文件不再重复。委托方式见上方「`rules:plugin` 出口」节。
 
-按候选的 `disposition` 分两条路：**融合**（强相关，融进现有 rule）走下方「融合路径」；**新建**走「三步联动」。
-
-### 融合路径（disposition=融合）
-
-目标可能是顶层 `rules/rule-<x>.md`，**也可能是门面的子文件** `rules/rule-references/<x>/<子文件>.md`（如某 rule 按工具栈/场景拆了多个子文件，融合内容对应命中其中一个）。
-
-1. **Read 目标文件全文** → 把 `body` 片段**融进合适章节**（必要时改章节结构，如新增 Workflow / Step 分支；**不是末尾 paste**）
-2. **manifest 处理**（关键差异——不无脑新增条目；改的是单源 `rules/manifest.json`，不手改生成物 catalog 分片）：
-   | 融合目标 | manifest 动作 |
-   |---|---|
-   | 顶层 `rule-<x>.md`，触发/摘要仍准确 | **不动** |
-   | 顶层 `rule-<x>.md`，本次融合扩了 scope（触发范围变大） | **改 manifest 里那条** rule 的 triggers/summary，**不新增条目**；改后 `node hooks/generate.mjs` 重新生成 catalog 分片 |
-   | `rule-references/` 子文件（门面 `rule-<x>.md` 已路由） | **不动**（门面 rule 已在 manifest 路由） |
-3. **升 `plugin.json` 版本**：融合通常 `minor`（补充现有 rule 能力 = 兼容增强）或 `patch`（纯文案补充）；不默认像新建那样跳 minor
-4. 报告："融进 `<目标路径>`，manifest [未动 / 已更新条目 `<slug>` 并 generate 重新生成 catalog 分片]，版本 `x → y`"
-
-> 融合路径**不新增 manifest 条目、不新建文件**——这正是「融合优先」要省下的路由表面。
-
-### 三步联动（disposition=新建）
-
-#### Step 1: 写 rule 文件
-
-文件路径：`${NOCODE_EVOLVE_REPO}/rules/rule-<slug>.md`。
-
-slug 冲突 → **不直接 abort，转整合判断**：slug 已存在往往说明这就是融合目标。报"slug `rule-<slug>.md` 已存在——疑似融合目标，建议 `N fuse rules/rule-<slug>.md`（融进它）或 `N /<new-slug>`（确实是新主题，改名建新）"，回表格等用户。
-
-`write(filePath, body)`。
-
-### Step 2: 改 `rules/manifest.json`（单源）登记新 rule + 重新生成
-
-新架构下 `rules/manifest.json` 是唯一真值源；`model/agent-catalog-*.md`（catalog 分片，完整路由常驻）是 `node hooks/generate.mjs` 的**生成物**——**禁手改生成物**，只改 manifest 再重新生成。manifest 没登记就等于 agent 触发不到（sanity check 会 stderr 警告）。
-
-**实施策略（具体到 Edit 工具调用）**：
-
-1. Read `${NOCODE_EVOLVE_REPO}/rules/manifest.json`，定位 `rules` 数组
-2. 在数组末尾新增一条 rule 对象，挑合适的 `bucket`（必要时看 `buckets` 段），含 `id` / `bucket` / `trigger_desc`（触发）/ `read`（`${CLAUDE_PLUGIN_ROOT}/rules/rule-<slug>.md`）/ `summary`（摘要）/ 可选 `guard` / `pretooluse`：
-
-```json
-{
-  "id": "<slug>",
-  "bucket": "<bucket-id>",
-  "trigger_desc": "<具体到能自识别的触发条件，不写\"看情况 / 需要时\">",
-  "read": "${CLAUDE_PLUGIN_ROOT}/rules/rule-<slug>.md",
-  "summary": "<一句话核心动作，让 agent 看了就知道这条 rule 干什么>"
-}
-```
-
-3. 跑 `node hooks/generate.mjs` 重新生成 catalog 分片（`node hooks/generate.mjs --check` 验零漂移）
-
-**触发条件写法约束**：必须具体到 agent 自己能判断命中——参考 manifest 里已有条目（如 push-summary 的 `trigger_desc`，不是"需要时读"）。
-
-**不用 sed/awk**——JSON 多行匹配脆弱；Edit 工具的精确字符串匹配 + `generate.mjs` 重生成更可靠。
-
-### Step 3: 升 `plugin.json` 版本
-
-```
-新增 rule        → minor   (默认；类比 CLAUDE.md:21-25 「新增 hook/skill/兼容性增强 = minor」)
-改既有规则语义反转 → major
-文案修订          → patch  (rarely)
-```
-
-`major` 需要会话里明确出现"反转既有规则"、"删除已部署规则"等破坏性信号。
-
-Read `.claude-plugin/plugin.json` → bump version → Write 回去。
-
-### 三步契约
-
-- 三步**必须按顺序**：先写 rule 文件 → 再改 manifest 并 generate 重新生成 → 再升版本；任一步失败后续不执行
-- **本逻辑内三步不回滚已成功步**（避免半成品状态更难恢复——文件保留比删了让用户从头来更易恢复）
-- **但本项失败不影响其他候选项的分发**——与整体"非 transactional" 一致
-- commit/push 不进本逻辑——CLAUDE.md 工作流约定 commit 由主交互完成
-
-### 报告
-
-```
-已写入 plugin rule: rule-<slug>.md
-manifest+generate: rules/manifest.json 已加条目, node hooks/generate.mjs 重新生成 catalog 分片
-版本: <oldVersion> → <newVersion> (<bumpLevel>)
-请到 nocode-evolve 仓 review + commit + 询问是否 push。
-```
-
-### 孤儿 rule 划界
-
-如果发现 `nocode-evolve/rules/` 下有未被 `rules/manifest.json` 登记（故未进 catalog 分片）的孤儿文件——**不主动补**。归用户手动处理（inject-rules.sh sanity check 每 session stderr 警告，足够提示）。
-
-理由：scope 控制——`/distill` 是沉淀命令，不是 manifest 整理工具。
-
-在报告末尾仅做提示：
-
-```
-ℹ 发现孤儿 rule N 个：[rule-foo.md, ...]
-   sanity check 已警告，请手动登记进 rules/manifest.json 后跑 generate, 或评估是否删除。
-```
+孤儿 rule 划界（distill 不主动补，归 `/nocodehub dream` 巡检）等边界情况同样已在 `plugin-distill.md` 里维护。
 
 ---
 

@@ -71,15 +71,9 @@ sequential-thinking 允许回退重拆，最多 3 轮。第 3 轮仍不收敛 = 
 | light | 否 | 否 | 否 |
 | heavy | **是**（general-purpose，独立 review）| **是**（并行双跑）| **必开（硬 gate）** |
 
-**heavy 独立审查并行双跑**（参照 `rule-codex-review` 场景四）：
-1. Subagent（`Agent` general-purpose）：传方案 + 约束 + Step 1 真约束，做完整独立 review
-2. Codex：同样输入，独立 review
-
-```bash
-node "${CLAUDE_PLUGIN_ROOT}/vendor/codex/scripts/codex-companion.mjs" task \
-  "只读。独立审查以下方案，列出：1.优势（落到具体场景）2.弱点和隐藏代价（『实现时遇到 X』『N 月后 Y』，不要『理论上可能』）3.盲区 4.替代方案
-   <方案 + 约束 + 真约束>"
-```
+**heavy 独立审查并行双跑**（单源在 `rule-codex-review` 场景 1，本卡不重复派发细节，只提两点）：
+1. Subagent（`Agent` general-purpose）与 Codex 两路都传方案 + 约束 + Step 1 真约束，做完整独立 review。
+2. 两个 `Agent()` 调用要放**同一条消息**里一起发出才是真并行（Codex 那路也是 `Agent()` 包一层 Bash，不在主 agent 直接 Bash 调 `codex-companion.mjs`）——具体派发模板见 `rule-codex-review.md` 场景 1。
 
 **降级**：
 - codex 不可用 → **仅 subagent 单跑 + 明说**「codex 不可用，仅 subagent 独立审查」→ 合并两路（不阻断）
