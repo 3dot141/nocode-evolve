@@ -33,7 +33,7 @@
    - **不自动循环修订**：Report 原样呈现给用户，逐条勾选 fix / skip（也可一键全修/全跳过/自由指示）
    - 据用户决定修订主体后，**本轮 Report 全文 + 用户决定 + 修订摘要 append 到文档末尾 `## Review Log`**
    - 是否再来一轮 review 由用户决定，不再有"最多 3 轮"硬限制
-   - **默认交叉验证**：这轮独立审稿**默认单跑 Codex**（见 `rule-codex-review` 场景四），避开 Claude 自审同源盲区；codex 探活不通过才 fallback 改跑 `design-doc-reviewer` (general-purpose) subagent 单路，并明说 fallback。仅琐碎 / 文案改动可降档直接单跑 gp（跳过 codex）。Report 分级 / 逐条确认 / Review Log 流程不变
+   - **默认交叉验证**：这轮独立审稿**默认单跑 Codex**（见 `rule-codex-review` 场景四，不预先探活，直接尝试），避开 Claude 自审同源盲区；codex 调用报错才 fallback 改跑 `design-doc-reviewer` (general-purpose) subagent 单路，并明说 fallback。仅琐碎 / 文案改动可降档直接单跑 gp（跳过 codex）。Report 分级 / 逐条确认 / Review Log 流程不变
 
 4. **`dev-design-render`** (见 `skills/dev-design-render/SKILL.md`) —— 把设计文档 ASCII 图渲染成 HTML 可视化
    - 输入：reviewer 通过的 markdown

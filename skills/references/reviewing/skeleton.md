@@ -97,9 +97,8 @@ review 不是越重越好。先按**评审对象的风险 + 可逆性**定深度
 
 异源攻击/审查**统一走 `rule-codex-review`**（`{CLAUDE_PLUGIN_ROOT}/rules/rule-codex-review.md`），不另起通道：
 
-1. **先探可用性**：`node "${CLAUDE_PLUGIN_ROOT}/vendor/codex/scripts/codex-companion.mjs" setup --json` → `.ready == true` 才走 codex。探活主 agent 直接 Bash（快、输出小）。
-2. **派发**：决策/选型类用 `task`（只读，传 CLAIM 剥离后的对象 + 约束 + 维度）；对应一段具体 diff 用 `adversarial-review --wait`；纯缺陷查代码用 `review`。**实际调用派 subagent 执行**（`Agent()` 包一层 Bash），不在主 agent 直接 Bash 跑这条命令——原始输出别堆进主 agent context。具体派发模板见 `rule-codex-review.md`。
-3. **降级**：codex 不可用（未装 / 未登录 / 报错）→ **不静默跳过**，改 Claude 自演红军（用 red-blue 对抗框架，不走过场）+ 明说"codex 不可用，fallback 自做"，并在独立性声明里标"同模型（降级）"而非"异源"。
+1. **不预先探活，直接派发**：决策/选型类用 `task`（只读，传 CLAIM 剥离后的对象 + 约束 + 维度）；对应一段具体 diff 用 `adversarial-review --wait`；纯缺陷查代码用 `review`。**实际调用派 subagent 执行**（`Agent()` 包一层 Bash），不在主 agent 直接 Bash 跑这条命令——原始输出别堆进主 agent context。具体派发模板见 `rule-codex-review.md`。
+2. **降级**：subagent 返回报错（未装 / 未登录 / 其他运行时错误）→ **不静默跳过**，改 Claude 自演红军（用 red-blue 对抗框架，不走过场）+ 明说"codex 调用失败，fallback 自做"，并在独立性声明里标"同模型（降级）"而非"异源"。
 
 > codex 是**异源独立性**的来源；它不可用时降级不阻断，但必须在 verdict 里如实标独立性档位下降。
 

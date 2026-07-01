@@ -11,7 +11,7 @@ description: 评估/拍板类提问的红蓝军辩论框架。先判档位：轻
 
 ## 方法实现见 card（单源）
 
-红蓝对抗的完整方法——档位判定表与边界示例、light/heavy 两档、sequential-thinking 硬 gate、第一性原理 → 蓝军 → 独立审查 → 结论四步、CLAIM 剥离、独立审查默认单跑 Codex + 探活不通过 fallback subagent、Doubt Theater 检测、三轮收敛上限、findings/verdict 输出契约——**单源在方法 card**：
+红蓝对抗的完整方法——档位判定表与边界示例、light/heavy 两档、sequential-thinking 硬 gate、第一性原理 → 蓝军 → 独立审查 → 结论四步、CLAIM 剥离、独立审查不预先探活默认单跑 Codex + 调用报错 fallback subagent、Doubt Theater 检测、三轮收敛上限、findings/verdict 输出契约——**单源在方法 card**：
 
 **必做**：`Read {NOCODE_SKILL_REF}/reviewing/methods/red-blue-adversarial.md`，按其执行整套流程。
 
@@ -31,5 +31,5 @@ description: 评估/拍板类提问的红蓝军辩论框架。先判档位：轻
 ## 调用约定（行为不变保证）
 
 - **入口不变**：`Skill(nocode-evolve:red-blue-deep)` 仍是本 skill，frontmatter `name` / `description` 未改——现有调用方（dev-plan 两轮、pd-vd Step、devflow Red-Blue 派发）的 `Skill()` 调用全部不断。
-- **行为不变**：light/heavy 档位判定、sequential-thinking 硬 gate、第一性原理四步——全部经 card 落地。独立审查派发已从「subagent + codex 并行双跑」改为「默认单跑 Codex，探活不通过才 fallback subagent」（见 card Step 3 / 派发策略）。
+- **行为不变**：light/heavy 档位判定、sequential-thinking 硬 gate、第一性原理四步——全部经 card 落地。独立审查派发已从「subagent + codex 并行双跑」改为「不预先探活，默认单跑 Codex，调用报错才 fallback subagent」（见 card Step 3 / 派发策略）。
 - **单源不双轨**：方法细则只在 card 维护，本壳不再内嵌，改方法去 card。
