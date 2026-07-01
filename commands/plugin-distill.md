@@ -42,7 +42,7 @@ argument-hint: <描述> | (被 /distill 传结构化候选)
 
 ### 三步联动（disposition=新建，或独立调用判定为新建 rule）
 
-1. **写 rule 文件**：`slug` 从描述/候选提取；`filePath = ${NOCODE_EVOLVE_REPO}/rules/rule-<slug>.md`。slug 冲突（manifest 已有同名）→ 不 abort，`AskUserQuestion`：融进已有 `rule-<slug>.md` / 改名新建。`Write(filePath, body)`
+1. **写 rule 文件**：`slug` 从描述/候选提取；`filePath = ${NOCODE_EVOLVE_REPO}/rules/rule-<slug>.md`。冲突检查须覆盖两层——manifest 已登记同名，**或** 文件系统里已存在 `rule-<slug>.md`（哪怕未登记，即孤儿 rule，`/plugin-dream` 的 O4 检测对象）：任一命中 → 不 abort、不静默覆盖，`AskUserQuestion`：融进已有 `rule-<slug>.md` / 改名新建。仅当两层都未命中才 `Write(filePath, body)`（Review P2：原逻辑只查 manifest，会静默覆盖孤儿 rule 文件内容，是真实数据丢失风险）
 2. **改 `rules/manifest.json` + 重新生成**：数组末尾新增一条：
    ```json
    {
