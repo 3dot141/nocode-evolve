@@ -19,8 +19,7 @@ node "${CLAUDE_PLUGIN_ROOT}/vendor/codex/scripts/codex-companion.mjs" setup --js
 **Step 2 — 真正调用(派 subagent 执行,不直接 Bash)**:探活通过后,把 `review`/`adversarial-review`/`task` 这条实际命令交给一个 subagent 去跑,不在主 agent 里自己 Bash。原因:
 
 - codex 的原始输出(尤其 `task`/`adversarial-review`)可能很长,直接 Bash 会把它整段堆进主 agent context;subagent 只把结果带回来,主 agent 只收干净的产出。
-- 场景 1/4 需要 Codex 那路与「Subagent 独立审查」那路**真并行**——两个 `Agent()` 调用放进**同一条消息**里发出才会同时跑;混用「`Agent()` + Bash `run_in_background`」两套并行机制,彼此不感知,还要主 agent 手动轮询 Bash 任务,反而更慢更啰嗦。
-- 四个场景统一走 `Agent()` 派发,不再一个场景直接 Bash、一个场景 subagent 两套写法。
+- 四个场景统一走 `Agent()` 派发,不再一个场景直接 Bash、一个场景 subagent 两套写法;场景 1/4 探活不通过时的 fallback(改派 Subagent / design-doc-reviewer 单跑)同样走 `Agent()`,不直接 Bash。
 
 统一派发模板(`<verb 命令>` 按各场景替换):
 
@@ -41,15 +40,15 @@ Agent({
 
 `<verb>`:`review`(缺陷) / `adversarial-review`(挑方案,可带 focus text) / `task`(通用,默认只读,加 `--write` 才改代码)。改动大或任务重 → 在 subagent 的 prompt 里让它自己用 `run_in_background: true` 起、`Monitor`/`BashOutput` 等到完成再返回,不要把这层轮询甩回主 agent。
 
-## 场景 1:红蓝重档·独立审查交给 Codex
+## 场景 1:红蓝重档·独立审查默认交给 Codex
 
 **触发**:`red-blue-deep` 判为**重档**、走到 Step 3 独立审查环节。**轻档不触发**(命名 / 文案 / 单点小改不拉 codex)。
 
-**做法**:不自己演红军,把完整独立审查交给 Codex(与 Subagent 并行双跑,见 red-blue-deep Step 3)——两路都是 `Agent()` 调用,**同一条消息里一起发出**才是真并行:
+**做法**:不自己演红军,独立审查**默认单路交给 Codex**(不与 Subagent 并行双跑)——先按「调用方式」Step 1 探活:
+
+- **探活通过** → 派一个 `Agent()` 去 Bash 跑 Codex,把完整独立审查交给它:
 
 ```
-// 同一条回复里一次性发出两个 Agent() 调用
-Agent({ subagent_type: "general-purpose", description: "独立审查(Subagent 红军)", prompt: "<CLAIM 剥离后的方案+约束+维度清单>" })
 Agent({
   subagent_type: "general-purpose",
   description: "独立审查(Codex 红军)",
@@ -67,9 +66,15 @@ Agent({
 })
 ```
 
+- **探活不通过**(未装 / 未登录 / 报错) → **fallback 改派 Subagent 单跑**,明说「codex 不可用,fallback 至 subagent 独立审查」:
+
+```
+Agent({ subagent_type: "general-purpose", description: "独立审查(Subagent 红军,codex fallback)", prompt: "<CLAIM 剥离后的方案+约束+维度清单>" })
+```
+
 > 用 `task` 不用 `adversarial-review`:红蓝多是**设计 / 选型决策**,未必有 git diff;`adversarial-review` 针对代码改动。若该决策恰好对应一段具体改动,可改用 `adversarial-review --wait`。
 
-Codex 审查结果与 Subagent 审查结果合并三路(主 agent 蓝军 + subagent + codex),折进 Step 4 结论。
+独立审查结果(Codex 或 fallback 后的 Subagent,二选一非双跑)与主 agent 蓝军合并两路,折进 Step 4 结论。
 
 ## 场景 2:代码 review 收尾
 
@@ -108,11 +113,11 @@ node "${CLAUDE_PLUGIN_ROOT}/vendor/codex/scripts/codex-companion.mjs" task --wri
 
 **触发**:`dev-design-refine` 工作流走到 review 环节(见 `rule-superpowers-brainstorming.md` step 5 第 3 步)——**默认即触发**(交叉验证已是默认,不再限"重档")。仅琐碎 / 文案改动用户显式降档时才跳过。
 
-**做法**:Codex 跨模型审稿与 Claude `design-doc-reviewer` (general-purpose) subagent **并行双跑**,合并两路 Report(交集=高置信、对称差=盲点)——两路都是 `Agent()` 调用,**同一条消息里一起发出**才是真并行:
+**做法**:独立审稿**默认单路交给 Codex**(不与 Claude `design-doc-reviewer` 并行双跑)——先按「调用方式」Step 1 探活:
+
+- **探活通过** → 派一个 `Agent()` 去 Bash 跑 Codex 审稿:
 
 ```
-// 同一条回复里一次性发出两个 Agent() 调用
-Agent({ subagent_type: "general-purpose", description: "设计文档审稿(Claude design-doc-reviewer)", prompt: "<reviewer-template.md 准则 + 文档全文>" })
 Agent({
   subagent_type: "general-purpose",
   description: "设计文档审稿(Codex)",
@@ -128,13 +133,20 @@ Agent({
 })
 ```
 
-Review Report 后续处理(逐条勾选 fix/skip、追加 `## Review Log`)按 design-doc 工作流原样走。codex 不可用 → 降级为仅 `design-doc-reviewer` (general-purpose) subagent 单跑,并明说 fallback。
+- **探活不通过**(未装 / 未登录 / 报错) → **fallback 改派 Claude `design-doc-reviewer` (general-purpose) subagent 单跑**,明说「codex 不可用,fallback 至 design-doc-reviewer 独立审稿」:
+
+```
+Agent({ subagent_type: "general-purpose", description: "设计文档审稿(Claude design-doc-reviewer,codex fallback)", prompt: "<reviewer-template.md 准则 + 文档全文>" })
+```
+
+Review Report(Codex 或 fallback 后的 design-doc-reviewer,二选一非双跑)后续处理(逐条勾选 fix/skip、追加 `## Review Log`)按 design-doc 工作流原样走。
 
 ## 不要
 
 - 轻档红蓝 / 简单任务也拉 codex —— 噪音 + 烧额度。
 - 跳过 `setup --json` 探测就硬调 —— codex 没装 / 没登录会直接报错,必须先探后降级。
-- 探活通过后在主 agent 里直接 Bash 跑 `review`/`adversarial-review`/`task` —— 必须派 subagent 执行,原始输出别堆进主 agent context;需要跟 Subagent 独立审查并行的场景(1/4),两个 `Agent()` 调用要放同一条消息发出,不要一个 Bash `run_in_background` 一个 `Agent()` 混着来。
+- 探活通过后在主 agent 里直接 Bash 跑 `review`/`adversarial-review`/`task` —— 必须派 subagent 执行,原始输出别堆进主 agent context;场景 1/4 默认单路交给 Codex,不再需要与 Subagent 同一条消息并行发出。
+- codex 探活通过时还额外并派一路 Subagent 跟它同跑 —— 场景 1/4 已改为默认单路,Subagent 只在 codex 探活不通过时才作为 fallback 派发,不是常态双跑。
 - codex 不可用时静默卡住或假装调了 —— 必须降级自做 + 明说 fallback。
 - 改 `vendor/codex/` 里的文件 —— 那是上游镜像,改了 re-sync 会冲突;接口要变只改本规则。
 - hardcode 插件 cache 路径 / version 目录 —— 一律走 `${CLAUDE_PLUGIN_ROOT}/vendor/codex/...`。

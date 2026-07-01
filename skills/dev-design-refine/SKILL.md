@@ -489,20 +489,21 @@ Task N+2: 保存 + 渲染
 - **领域维度（框架第 3 步注入点）= `references/reviewer-template.md` 的 7 维度核心审查**（设计意图 / 决策 / 完整性 / 可执行 / 一致性 / 范围 / 骨架可读性）。这是 dev-design-refine 的领域判断逻辑，不在框架里——reviewer-template 同时承载 dispatch prompt 与维度单源。
 - **选方法（框架第 4 步 selectMethods）= `[checklist（reviewer-template 维度逐项核查）+ red-blue-adversarial（异源 codex 交叉）]`**。设计文档对象查骨架方法选择表正是这两个。独立性：异源。
 - **公共能力全走框架**：CLAIM 剥离 / codex 经 `rule-codex-review` 派 / Evidence Gate / Doubt Theater / 分档判定都在 skeleton §4，本节只引用不重写。
-- **分档**（skeleton §1）：设计文档跨模块、含架构 / 选型决策 → 默认**重档**，走双路异源交叉；琐碎改动 / 文案修订 / 用户显式说「轻档」→ 降轻档，只跑 general-purpose 一路，回复点名「轻档，跳过 codex 交叉」，独立性声明标「同模型」。
+- **分档**（skeleton §1）：设计文档跨模块、含架构 / 选型决策 → 默认**重档**，独立交叉默认单跑 Codex；琐碎改动 / 文案修订 / 用户显式说「轻档」→ 降轻档，直接跳过 codex 只跑 general-purpose 一路，回复点名「轻档，跳过 codex 交叉」，独立性声明标「同模型」。
 
-**Core Actions — 独立交叉（框架步骤 5 · 双路异源）**：一份稿被两个不同模型审：交集 = 高置信，对称差 = 盲点；避开「Claude 审 Claude」同源盲区。两路并行，**CLAIM 剥离**后（只传文档原文 + 维度清单，不传主 agent 的审查结论 / 方案倾向，skeleton §4.1）：
+**Core Actions — 独立交叉（框架步骤 5 · 默认单路 Codex）**：默认只让 Codex 跨模型审一遍，避开「Claude 审 Claude」同源盲区；Codex 探活不通过才 fallback 改用 general-purpose subagent 单跑，不与 Codex 并行。**CLAIM 剥离**后（只传文档原文 + 维度清单，不传主 agent 的审查结论 / 方案倾向，skeleton §4.1）：
 
-1. **a. general-purpose subagent**（in-harness · checklist 维度套 reviewer-template）：
+先 `setup --json` 探测：
+- **探活通过** → **b. codex 跨模型**（red-blue-adversarial 异源路，经 `rule-codex-review` 单一通道 · skeleton §4.2）：按场景 4 调 codex companion（reviewer-template 准则 + 文档路径）。
+- **探活不通过** → **fallback a. general-purpose subagent**（in-harness · checklist 维度套 reviewer-template），并明说「codex 不可用，fallback 至 general-purpose subagent」，独立性声明标「同模型（降级）」：
    - Read `references/reviewer-template.md`
    - 把模板里的 `{DOC_PATH}` 替换为当前文档路径
    - 调 Task tool（subagent_type=`general-purpose`，description=`"Review design doc"`，prompt = 替换后全文）
-2. **b. codex 跨模型**（red-blue-adversarial 异源路，经 `rule-codex-review` 单一通道 · skeleton §4.2）：按场景 4 调 codex companion（reviewer-template 准则 + 文档路径）。先 `setup --json` 探测——codex 不可用才降级为仅 general-purpose 并明说 fallback，独立性声明标「同模型（降级）」。
 
-**合并两路 + 分级（框架步骤 6 · findings-contract）**：两路 raw findings 归一到 findings-contract 的 schema：
+**分级归一（框架步骤 6 · findings-contract）**：单路(Codex 或 fallback 后的 general-purpose，二选一非双跑) raw findings 归一到 findings-contract 的 schema：
 - 套五档：**C/W/S 直通 `severity`；Q/SA 经 `kind`（open-question / self-audit）承载，severity 另算（约束②）**——五档语义不丢
 - 过 **Evidence Gate**（代码事实类缺 location → 降 open-question，约束③）
-- 按 `[location, axis]` 去重——两方都提的标「双方都提 = 高置信」、单方独有标 `source`
+- 按 `[location, axis]` 标 `source`（Codex / general-purpose，标明本轮走的是哪一路）
 
 **收口 + 用户确认（框架步骤 7 · hard gate）**：
 - 把 findings 完整呈现给用户（C / W / S / **Open Questions(Q)** / **Self-Audit(SA)** 五档全保留，后两者绝不能漏）
