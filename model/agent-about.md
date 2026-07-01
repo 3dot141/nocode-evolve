@@ -87,12 +87,14 @@ nocode-evolve 通过 SessionStart hook + skills + PreToolUse 三种机制影响 
 
 ## 工具偏好 — 代码搜索默认走 semble-search
 
-代码搜索 (按语义 / 符号 / 意图 / 找实现 / 找相关代码) 默认调 `Agent(subagent_type: "nocode-evolve:semble-search")`, 不用 Grep / Glob / Read+find 盲扫. fallback 链在 `agents/semble-search.md` 已声明; 全不可用则退 Bash grep / Explore agent 并报"semble 不可用, fallback 到 X".
+代码搜索 (按语义 / 符号 / 意图 / 找实现 / 找相关代码) 默认调 `Agent(subagent_type: "nocode-evolve:semble-search")`, 不用 Grep / Glob / Read+find 盲扫. fallback 链在 `agents/semble-search.md` 已声明; 全不可用则退 Bash rg (ripgrep) / Explore agent 并报"semble 不可用, fallback 到 X".
 
 不触发 (用原生工具, 不绕 semble):
 - 已知精确文件路径 → 直接 Read
-- 单行 literal 精确匹配 → Bash grep
+- 单行 literal 精确匹配 → Bash rg (ripgrep)
 - 文件名 pattern 查找 → Bash find / Glob
+
+**grep → rg 替换**: 任何场合需要用 grep (含上面的 fallback 和 不触发 场景), 一律换成 `rg` (ripgrep) 执行, 不直接调 grep. 仅当 `rg` 命令本身不可用 (未安装等) 时才退回 grep, 并明说"rg 不可用, fallback 到 grep".
 
 ## 常驻 git 习惯 (behavior)
 
