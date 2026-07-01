@@ -35,6 +35,8 @@ Workflow({
 
 大多数情况只需要 `question` + `type` + `depth`。`type` 决定了用什么工具、怎么降级、迭代几轮——这些都不用调用方操心。
 
+**约束：仅主 agent 可委派。** `Workflow` 是主 agent 的工具，subagent / fork 内没有它。调用方 skill 若正在 subagent 或 fork 里执行，委派本 workflow 会失败——需要 research 能力时，由主 agent 来委派。
+
 ## 参数
 
 | 参数 | 必填 | 说明 |
