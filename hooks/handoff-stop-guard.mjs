@@ -1,6 +1,7 @@
 #!/usr/bin/env node
-// Stop hook (防跳步 Hook B): 重放 transcript 的 task 状态, 若有未完成的交接(handoff) task → block,
-// 拦住 agent 在断链处停下。设计: docs/superpowers/specs/3dot141/260630-anti-skip-hook-design.md §7.2 (BF2-4) + §8。
+// Stop hook (防跳步 Hook B): 重放 transcript 的 task 状态, 若交接(handoff) task 未完成且是当前
+// 唯一还处于活动态的 task → block, 拦住 agent 在断链处停下 (其余阶段仍 pending 时不拦, 见 W5)。
+// 设计: docs/superpowers/specs/3dot141/260630-anti-skip-hook-design.md §7.2 (BF2-4) + §8。
 //
 // 安全姿态: 所有运行时失败一律偏向"放行"——最坏退化为"hook 不存在", 不卡死 session。
 //
@@ -82,12 +83,24 @@ export function replayTaskState(lines) {
 }
 
 // W4: 活动态白名单——只有 pending / in_progress 的 handoff task 才算"未完成", cancelled/completed 不拦。
+// W5: 唯一未竟工作门槛——若还有其他非 handoff task 处于活动态, 说明还没轮到这个 handoff task
+//   (如 devflow 一次性建出全部阶段 task, 中间阶段边界的合法停顿也会让末阶段 task 保持 pending),
+//   此时不算"跳过交接", 放行; 只有 handoff task 是唯一剩下的活动态 task 时才判定为真正逼近终点, 拦。
 export function findOpenHandoffTasks(tasks) {
-  return Object.values(tasks).filter(
+  const all = Object.values(tasks);
+  const openHandoff = all.filter(
     (t) =>
       t.metadata?.handoff === true &&
       (t.status === 'pending' || t.status === 'in_progress'),
   );
+  if (openHandoff.length === 0) return openHandoff;
+
+  const hasOtherOpenWork = all.some(
+    (t) =>
+      t.metadata?.handoff !== true &&
+      (t.status === 'pending' || t.status === 'in_progress'),
+  );
+  return hasOtherOpenWork ? [] : openHandoff;
 }
 
 // Stop decide: 有未完成交接 task → block; 否则 null (放行)。lines 可传入或由 transcript_path 读。

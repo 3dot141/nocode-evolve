@@ -67,6 +67,29 @@ test('findOpenHandoffTasks: 命中活动态 handoff', () => {
   assert.equal(findOpenHandoffTasks(tasks).length, 1);
 });
 
+// ===== W5: 唯一未竟工作门槛 =====
+
+test('findOpenHandoffTasks: 还有其他非 handoff task 处于 pending → 不算未完成 (还没轮到)', () => {
+  const lines = [
+    ...handoffCreateLines('toolu_land', '阶段 8: Land', 6),
+    line([taskCreate('toolu_plan', '阶段 4: Plan', {})]),
+    line([taskResult('toolu_plan', 2)]),
+  ];
+  const { tasks } = replayTaskState(lines);
+  assert.equal(findOpenHandoffTasks(tasks).length, 0);
+});
+
+test('findOpenHandoffTasks: 其他 task 都 completed，只剩 handoff task → 判定未完成 (真逼近终点)', () => {
+  const lines = [
+    ...handoffCreateLines('toolu_land', '阶段 8: Land', 6),
+    line([taskCreate('toolu_plan', '阶段 4: Plan', {})]),
+    line([taskResult('toolu_plan', 2)]),
+    line([taskUpdate('2', 'completed')]),
+  ];
+  const { tasks } = replayTaskState(lines);
+  assert.equal(findOpenHandoffTasks(tasks).length, 1);
+});
+
 // ===== decideStop: 放行路径 =====
 
 test('decideStop: handoff task 已 completed → null (放行)', () => {
@@ -77,6 +100,28 @@ test('decideStop: handoff task 已 completed → null (放行)', () => {
 test('decideStop: handoff task 已 cancelled → null (W4 活动态白名单)', () => {
   const lines = [...handoffCreateLines('toolu_a', 's', 5), line([taskUpdate('5', 'cancelled')])];
   assert.equal(decideStop({ transcript_path: 'x' }, lines), null);
+});
+
+test('decideStop: 其他阶段仍 pending (如 devflow 中间阶段边界) → null (W5, 还没轮到)', () => {
+  const lines = [
+    ...handoffCreateLines('toolu_land', '阶段 8: Land', 6),
+    line([taskCreate('toolu_plan', '阶段 4: Plan', {})]),
+    line([taskResult('toolu_plan', 2)]),
+  ];
+  assert.equal(decideStop({ transcript_path: 'x' }, lines), null);
+});
+
+test('decideStop: 其他阶段都 completed，只剩 handoff task pending → block (W5, 真逼近终点)', () => {
+  const lines = [
+    ...handoffCreateLines('toolu_land', '阶段 8: Land', 6),
+    line([taskCreate('toolu_plan', '阶段 4: Plan', {})]),
+    line([taskResult('toolu_plan', 2)]),
+    line([taskUpdate('2', 'completed')]),
+  ];
+  const out = decideStop({ transcript_path: 'x' }, lines);
+  assert.ok(out);
+  assert.equal(out.decision, 'block');
+  assert.match(out.reason, /阶段 8: Land/);
 });
 
 test('decideStop: 无 handoff metadata 的 task → null', () => {
