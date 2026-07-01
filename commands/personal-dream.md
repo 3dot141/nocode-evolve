@@ -11,15 +11,51 @@ argument-hint: (无参数)
 
 ## 执行流程
 
-### Phase 1: Scan（提取候选动作）
+### Phase 1: Scan（提取候选动作，接入增量判断）
 
-先调 `Skill(nocode-evolve:personal-lint)` 获取健康状态，然后对 `wiki/draft/` + `wiki/pages/` 每一页做深度检查：
+**Step 0 — baseline 增量判断**：先调用：
 
-对每页：
+```bash
+node "${CLAUDE_PLUGIN_ROOT}/scripts/personal-snapshot.mjs" --json
+```
+
+（若 `.agents-personal/.git` 不存在，这一步会顺带触发 `ensureNestedRepo`——首次建仓或检测旧 bare repo 触发迁移。）
+
+然后调用：
+
+```bash
+node -e "
+import('${CLAUDE_PLUGIN_ROOT}/scripts/personal-snapshot.mjs').then(async ({ resolvePersonalDir }) => {
+  const { diffSinceBaseline } = await import('${CLAUDE_PLUGIN_ROOT}/scripts/dream-baseline.mjs');
+  const { snapshot } = await import('${CLAUDE_PLUGIN_ROOT}/scripts/personal-snapshot.mjs');
+  const personalDir = resolvePersonalDir(process.env.CLAUDE_PROJECT_DIR || process.cwd());
+  const gitDir = personalDir + '/.git';
+  const result = diffSinceBaseline(gitDir, personalDir, 'refs/dream/last-baseline', {
+    prepareFn: () => snapshot(personalDir),
+    excludePaths: ['wiki/status.md'],
+  });
+  console.log(JSON.stringify({ changedFiles: result }));
+});
+"
+```
+
+按输出 `{ changedFiles: string[] | null }` 分支：
+
+| `changedFiles` | 处理 |
+|---|---|
+| `null`（首次运行，或 baseline 不可达降级） | 走全量：对 `wiki/draft/` + `wiki/pages/` 每一页做深度检查（下方原有流程不变）；Phase 3 结束后调 `advanceBaseline`（见 Phase 3 收尾） |
+| `[]`（有 baseline，diff 为空） | **秒回**：直接输出 `wiki 状态良好，无需维护动作。`，命令结束，不进入 Phase 2/3，也不调 `personal-lint` |
+| 非空数组 | 只对 `changedFiles` 里列出的 wiki 页做深度检查；额外执行下方**跨域.3 — related 路径变化检测**；结果与 `changedFiles` 覆盖的页面合并成本轮候选范围 |
+
+`changedFiles` 非 `null` 时才继续调 `Skill(nocode-evolve:personal-lint)` 获取健康状态，然后对**候选范围**（而不是 `wiki/draft/` + `wiki/pages/` 全部）做深度检查：
+
+对候选范围每页：
 1. 读 frontmatter（created、last_updated、maturity、related、sources）
 2. 检查 `related` 里的代码路径 → 该路径是否仍存在（`test -e <path>`）
 3. 抽样 Read 关键 related 文件，比对页面描述 vs 代码现状（是否已大幅变化）
 4. 检查与其他页面的主题重叠度（title + tags + description 相似性）
+
+**跨域.3 — related 路径变化检测**：对**未出现在** `changedFiles` 里的 wiki 页（即 wiki 页本身没变），仍按上面第 2 步的 stale 检测逻辑（`test -e <related路径>`）检查其 frontmatter `related:` 列出的代码路径是否有变化或不存在。命中的页面也并入本轮深度检查候选，即使它自己没有被 git diff 出来。
 
 生成候选动作：
 
@@ -65,6 +101,20 @@ personal-dream 维护建议：
 - **promote**：调 personal-distill 的 promote 流程（draft → pages，删除 draft 原文件）
 - **archive**：AskUserQuestion 二选——标 superseded 保留 / 删除。标 superseded 不走删除护栏，删除走
 
+**Baseline 前移**（只要执行到了这一步——即 Phase 1 判定为"首次运行"或"有变化"，不是"秒回"提前退出——处理完就前移，不区分是首次全量还是增量有变化）：
+
+```bash
+node -e "
+import('${CLAUDE_PLUGIN_ROOT}/scripts/dream-baseline.mjs').then(async ({ advanceBaseline }) => {
+  const { resolvePersonalDir } = await import('${CLAUDE_PLUGIN_ROOT}/scripts/personal-snapshot.mjs');
+  const personalDir = resolvePersonalDir(process.env.CLAUDE_PROJECT_DIR || process.cwd());
+  advanceBaseline(personalDir + '/.git', 'refs/dream/last-baseline', ${HAD_FAILURES});
+});
+"
+```
+
+`${HAD_FAILURES}`：本轮 Phase 3 执行的候选里，若存在**系统性失败**（如文件写入报错、删除护栏确认中途异常取消）→ `true`（baseline 不前移，这些文件下次仍会出现在 diff 里）；用户在 Phase 2 显式勾选"跳过"某候选是正常决策，不算失败 → 其余情况均传 `false`（baseline 前移）。
+
 全部完成后：
 1. 更新 `wiki/index.md`
 2. 追加 `wiki/log.md`（每条动作一行记录）
@@ -90,7 +140,7 @@ personal-dream 完成：
 | personal-lint | Phase 1 开头调，获取健康基线 |
 | personal-distill | promote 动作委派给 distill 的 promote 流程 |
 | personal-recall | 不调用 |
-| personal-snapshot | 不调用（snapshot 是 SessionStart 自动跑的） |
+| personal-snapshot | Phase 1 Step 0 调用（`--json` 触发 ensureNestedRepo/迁移 + 作为 `diffSinceBaseline` 的 `prepareFn` 落定 working tree），SessionStart 也仍会自动跑 |
 
 ## 不要
 
