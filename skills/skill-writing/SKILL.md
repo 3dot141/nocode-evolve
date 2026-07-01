@@ -302,11 +302,13 @@ Mark each task done as it completes.
 
 ### Self-Verification Guideline（产出 skill 的独立审查引导）
 
-如果你写出来的 skill 包含**agent 验证自己产出**的步骤（review / verify / check / validate / 确认 / 评审），该步骤应包含独立审查引导。适用于所有 skill 类型，不限 workflow skill。
+如果你写出来的 skill 包含**agent 验证自己产出**的步骤（review / verify / check / validate / 确认 / 评审），该步骤应引入合适的 review 方法论 + 独立审查引导。适用于所有 skill 类型，不限 workflow skill。
 
-判断规则：skill 的某个步骤里，agent 在检查自己刚做出来的东西（代码 / 设计 / 方案 / 文档 / 配置）→ 该步骤加独立审查引导。
+判断规则：skill 的某个步骤里，agent 在检查自己刚做出来的东西（代码 / 设计 / 方案 / 文档 / 配置）→ 该步骤加引导。引导分两层：
 
-引导方式按场景选：
+**第一层 · 结构化 review 引入 `reviewing` 框架（review 方法论底座）**：若该 review 步骤是**多维度评审**（多个评审维度 + 分档 + findings 分级 + 收口，例如新 skill 自带一个代码 / 设计 / 方案评审阶段），引导它引入 `reviewing` 框架、别在新 skill 里重造一套 review 流程——新 skill 的该步骤写成先 `Read {NOCODE_SKILL_REF}/reviewing/skeleton.md`（7 步流程 + 方法库选择表 + 公共能力）+ `Read {NOCODE_SKILL_REF}/reviewing/findings-contract.md`（统一 findings/verdict 契约），在框架第 3 步注入本领域评审维度、第 4 步从方法库选打法。
+
+**第二层 · 独立交叉那一步选谁**（reviewing 框架第 5 步的载体；轻量单点自查则跳过第一层直接选）：
 - **评估/拍板类**（"这个方案行不行"）→ 指向 `Skill(nocode-evolve:red-blue-deep)`
 - **产出审查类**（"这段代码/文档有没有问题"）→ 推荐 subagent + codex 并行独立 review（参照 `rule-codex-review` 场景四）
 - **合规检查类**（"是否遵守了规则"）→ 推荐 subagent 独立检查（不需要跨模型）
@@ -324,7 +326,7 @@ Fix any issues found by the review before passing the Exit Gate.
 - [ ] Covers every failure mode recorded in Phase 3
 - [ ] Red-blue review completed, findings addressed
 - [ ] Workflow skills include Step 0 TaskCreate + Enter/Exit Gate per step
-- [ ] Self-verification steps include independent review guidance (or confirmed no self-verification steps exist)
+- [ ] Self-verification steps include review methodology (reviewing framework for structured review) + independent review guidance (or confirmed no self-verification steps exist)
 - [ ] Line count ≤ 500 (overflow moved to references/)
 
 ## Phase 5: Eval — Run & Review
