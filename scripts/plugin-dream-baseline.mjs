@@ -11,9 +11,15 @@
 // 监控范围（红军 W7 修复，从"只列 generate.mjs/vendor-sync.mjs 两个文件"放宽到整个 hooks/ scripts/ 目录）:
 //   rules/ skills/ commands/ hooks/ scripts/ rules/manifest.json .claude-plugin/plugin.json
 //
+// Review 复审 C1 修复：分支名允许包含 `$`/`;` 等 shell 元字符（git check-ref-format 只禁空格/
+// 控制字符等），此前这里用字符串拼接 `branch.${branch}...` 塞进 execSync 的 shell 命令，
+// 精心构造的分支名（如 `pwn;touch${IFS}/tmp/x`）会在 currentBranch/diffSinceBaseline/
+// setBaseline 里触发任意命令执行（已用 PoC 复现）。改用 git-exec.mjs 的 execFileSync 参数
+// 数组调用——分支名无论含什么字符都只是一个 argv 元素，不会被 shell 解释。
+//
 // 设计: docs/superpowers/specs/3dot141/260701-dream-incremental-design.md（PluginRepo 域）
-import { execSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { git, parsePorcelain } from './git-exec.mjs';
 
 const CONFIG_KEY_SUFFIX = 'nocode-evolve-plugin-dream-baseline';
 
@@ -27,31 +33,12 @@ export const MONITORED_PATHS = [
   '.claude-plugin/plugin.json',
 ];
 
-function git(pluginRoot, cmd, allowFail = false) {
-  try {
-    // 只掐掉末尾换行/空白（trimEnd 语义），不能用 trim() —— `git status --porcelain` 首行形如
-    // " M rules/rule-foo.md"（前导空格是状态码的一部分），全量 trim() 会把首行前导空格吃掉，
-    // 导致按固定偏移 slice(3) 解析路径时错位（parsePorcelain 依赖这个固定偏移）。
-    return execSync(`git -C "${pluginRoot}" ${cmd}`, {
-      encoding: 'utf8',
-      stdio: ['pipe', 'pipe', 'pipe'],
-    }).replace(/\s+$/, '');
-  } catch (e) {
-    if (allowFail) return '';
-    throw e;
-  }
-}
-
 export function currentBranch(pluginRoot) {
-  return git(pluginRoot, 'rev-parse --abbrev-ref HEAD', true) || 'HEAD';
+  return git({ cwd: pluginRoot }, ['rev-parse', '--abbrev-ref', 'HEAD'], { allowFail: true }) || 'HEAD';
 }
 
 function configKey(branch) {
   return `branch.${branch}.${CONFIG_KEY_SUFFIX}`;
-}
-
-function pathspecArgs() {
-  return MONITORED_PATHS.map((p) => `"${p}"`).join(' ');
 }
 
 function parseNameOnly(output) {
@@ -62,39 +49,20 @@ function parseNameOnly(output) {
     .filter(Boolean);
 }
 
-function parsePorcelain(output) {
-  if (!output) return [];
-  // 不能先对整行 trim() 再 slice(3) —— porcelain 每行前两个字符是状态码（未改动的一侧用空格占位，
-  // 例如 " M path" 表示"已暂存无改动、working tree 有修改"），先 trim 会把这个有意义的前导空格吃掉，
-  // 导致 slice(3) 少切一个字符，路径解析错位。
-  return output
-    .split('\n')
-    .filter((l) => l.length > 0)
-    .map((l) => l.slice(3).trimEnd())
-    .map((p) => {
-      // rename/copy 行是 "old_path -> new_path" 组合成一个字符串（Round 2 复审 W4：原实现
-      // 直接把这整段当路径返回，既不是有效路径也无法用于 pathspec 过滤匹配）——取箭头后的新路径，
-      // 因为对增量检测而言"文件现在在哪"才是有意义的状态。
-      const arrowIdx = p.indexOf(' -> ');
-      return arrowIdx === -1 ? p : p.slice(arrowIdx + 4);
-    });
-}
-
 // 读取当前分支的 baseline，判断自 baseline 以来 rules/skills/commands/hooks/scripts 等受监控路径是否有变化。
 // 返回:
 //   null                                     — 首次运行（无 baseline）或 baseline 不可达（降级），调用方应走全量分支
 //   { commitDiff: string[], dirtyFiles: string[] } — 已提交的变更文件列表 + 未提交的 working tree 变更文件列表
 export function diffSinceBaseline(pluginRoot) {
   const branch = currentBranch(pluginRoot);
-  const baseline = git(pluginRoot, `config ${configKey(branch)}`, true);
+  const baseline = git({ cwd: pluginRoot }, ['config', configKey(branch)], { allowFail: true });
   if (!baseline) {
     return null; // 首次，走全量分支
   }
 
-  const paths = pathspecArgs();
   try {
-    const commitDiffRaw = git(pluginRoot, `diff --name-only ${baseline}..HEAD -- ${paths}`);
-    const dirtyRaw = git(pluginRoot, `status --porcelain -- ${paths}`);
+    const commitDiffRaw = git({ cwd: pluginRoot }, ['diff', '--name-only', `${baseline}..HEAD`, '--', ...MONITORED_PATHS]);
+    const dirtyRaw = git({ cwd: pluginRoot }, ['status', '--porcelain', '--', ...MONITORED_PATHS]);
     return {
       commitDiff: parseNameOnly(commitDiffRaw),
       dirtyFiles: parsePorcelain(dirtyRaw),
@@ -115,8 +83,8 @@ export function hasChanges(diffResult) {
 // 把当前分支的 baseline 推进到当前 HEAD（首次运行结束后 / 一轮 /plugin-dream 检查完成后调用）。
 export function setBaseline(pluginRoot) {
   const branch = currentBranch(pluginRoot);
-  const headSha = git(pluginRoot, 'rev-parse HEAD');
-  git(pluginRoot, `config ${configKey(branch)} ${headSha}`);
+  const headSha = git({ cwd: pluginRoot }, ['rev-parse', 'HEAD']);
+  git({ cwd: pluginRoot }, ['config', configKey(branch), headSha]);
   return { branch, baseline: headSha };
 }
 

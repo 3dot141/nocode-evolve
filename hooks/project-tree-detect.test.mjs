@@ -113,12 +113,21 @@ test('findUpperProjectRoot — 完全没有 .git → 返回目标目录本身（
 });
 
 // ── refName ──
+// Review 复审 C3 修复：原实现只是把 '/' 替换成 '_'，不是单射映射——'a/b'（嵌套子目录）
+// 与字面量名为 'a_b' 的一级子目录会产生相同 ref 名；dirPath===gitRoot 的哨兵值 'root'
+// 也会跟字面量名为 'root' 的一级子目录相撞（已用 refName() 直接调用复现两组碰撞）。
+// 改为对"相对路径原始字符串"（root 场景是空字符串 '', 与任何真实子目录的相对路径都
+// 不可能相同）取 hash 作为唯一性来源，可读前缀只做展示不参与唯一性判断，因此下面的
+// 断言从"精确匹配旧格式字符串"改为"匹配新格式模式 + 校验唯一性/合法性"。
 
-test('refName — dirPath === gitRoot 时返回 refs/dream/last-baseline__root，不含尾部斜杠，check-ref-format 通过', () => {
+const REF_PATTERN = /^refs\/dream\/last-baseline__[a-zA-Z0-9._-]+-[0-9a-f]{12}$/;
+
+test('refName — dirPath === gitRoot 时返回 __root 前缀的合法 ref，不含尾部斜杠，check-ref-format 通过', () => {
   const tmp = makeTmpDir();
   try {
     const name = refName(tmp, tmp);
-    assert.equal(name, 'refs/dream/last-baseline__root');
+    assert.match(name, REF_PATTERN);
+    assert.match(name, /^refs\/dream\/last-baseline__root-/);
     assert.ok(!name.endsWith('/'), '不应有尾部斜杠');
     assert.ok(checkRefFormat(name), 'git check-ref-format --allow-onelevel 应校验通过');
   } finally {
@@ -132,7 +141,8 @@ test('refName — 子目录 src 返回合法且与 root 不同的 ref 名', () =
     const src = join(tmp, 'src');
     mkdirSync(src);
     const name = refName(src, tmp);
-    assert.equal(name, 'refs/dream/last-baseline__src');
+    assert.match(name, REF_PATTERN);
+    assert.match(name, /^refs\/dream\/last-baseline__src-/);
     assert.notEqual(name, refName(tmp, tmp));
     assert.ok(checkRefFormat(name), 'git check-ref-format --allow-onelevel 应校验通过');
   } finally {
@@ -157,14 +167,60 @@ test('refName — docs 与 src 两个不同子目录返回不同且都合法的 
   }
 });
 
-test('refName — 多级嵌套子目录把 / 替换成 _，仍是单层合法 ref', () => {
+test('refName — 多级嵌套子目录, 仍是单层合法 ref', () => {
   const tmp = makeTmpDir();
   try {
     const nested = join(tmp, 'skills', 'dev-build');
     mkdirSync(nested, { recursive: true });
     const name = refName(nested, tmp);
-    assert.equal(name, 'refs/dream/last-baseline__skills_dev-build');
+    assert.match(name, REF_PATTERN);
+    assert.match(name, /^refs\/dream\/last-baseline__skills_dev-build-/);
     assert.ok(checkRefFormat(name));
+  } finally {
+    rmSync(tmp, { recursive: true, force: true });
+  }
+});
+
+test('refName — 嵌套子目录 a/b 与字面量一级子目录 a_b 不再碰撞（Review 复审 C3，已复现两次的真实 bug）', () => {
+  const tmp = makeTmpDir();
+  try {
+    const nested = join(tmp, 'a', 'b');
+    const flat = join(tmp, 'a_b');
+    mkdirSync(nested, { recursive: true });
+    mkdirSync(flat, { recursive: true });
+
+    const nameNested = refName(nested, tmp);
+    const nameFlat = refName(flat, tmp);
+    assert.notEqual(nameNested, nameFlat, 'a/b 和 a_b 曾经产生相同 ref，现在必须不同');
+    assert.ok(checkRefFormat(nameNested));
+    assert.ok(checkRefFormat(nameFlat));
+  } finally {
+    rmSync(tmp, { recursive: true, force: true });
+  }
+});
+
+test('refName — 根目录(root)与字面量名为 root 的一级子目录不再碰撞（Review 复审 C3）', () => {
+  const tmp = makeTmpDir();
+  try {
+    const literalRoot = join(tmp, 'root');
+    mkdirSync(literalRoot, { recursive: true });
+
+    const nameForRepoRoot = refName(tmp, tmp);
+    const nameForLiteralRootDir = refName(literalRoot, tmp);
+    assert.notEqual(nameForRepoRoot, nameForLiteralRootDir, '仓库根和字面量名为 root 的子目录曾经产生相同 ref，现在必须不同');
+    assert.ok(checkRefFormat(nameForRepoRoot));
+    assert.ok(checkRefFormat(nameForLiteralRootDir));
+  } finally {
+    rmSync(tmp, { recursive: true, force: true });
+  }
+});
+
+test('refName — 同一路径多次调用结果确定性一致（同一目录不会随机产生不同 ref）', () => {
+  const tmp = makeTmpDir();
+  try {
+    const src = join(tmp, 'src');
+    mkdirSync(src);
+    assert.equal(refName(src, tmp), refName(src, tmp));
   } finally {
     rmSync(tmp, { recursive: true, force: true });
   }

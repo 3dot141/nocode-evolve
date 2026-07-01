@@ -132,7 +132,11 @@ function main() {
   if (!personalDir) process.exit(0); // 理论上 resolveKey 已保证非空，双重防御
 
   try {
-    recordUsage(personalDir, key);
+    // timeoutMs 用远小于默认 2000ms 的短超时（Review 复审 W6 修复）：本 hook 挂在每次
+    // Read 工具调用的 PostToolUse 上，锁被占用时用默认超时会让用户读一次 wiki 页就被
+    // 拖慢到 2 秒——真实可感知的交互延迟。漏记一次引用计数是低代价的（只是统计偏差一点），
+    // 远比阻塞用户的 Read 调用代价小，所以短超时后放弃比等满 2 秒更合理。
+    recordUsage(personalDir, key, { timeoutMs: 150 });
   } catch (e) {
     process.stderr.write(`[usage-tracker] WARN: recordUsage failed: ${e.message}\n`);
   }

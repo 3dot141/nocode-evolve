@@ -18,10 +18,15 @@ argument-hint: [dir-path]
 
 若未传 `dir-path` 参数，取当前项目根（`${CLAUDE_PROJECT_DIR:-$(pwd)}`）。
 
+> **安全捕获约定（Review 复审 C2 修复）**：`<dir-path>` 来自用户输入，绝不能直接拼进任何 bash 命令的双引号字符串——**双引号不会阻止 `$(...)`/反引号命令替换**，Round 2 曾经把它改成环境变量赋值 `VAR="<dir-path>"` 但这个修复并不彻底（已复现：`DREAM_DIR_PATH="/tmp/$(touch poc)" bash -c '...'` 里的 `$(touch poc)` 依然会被执行，即使整段在双引号内）。本文件下面所有需要用到 `<dir-path>`（以及从脚本输出解析得到的 `<gitRoot>`/`<refName>`/最终选定的目录，防御性同等处理，因为它们最终也来自用户可影响的路径）的 bash 代码块，一律先用 **heredoc + 加引号的定界符**（`<<'DREAM_EOF'`）把原始值读进 shell 变量再引用——定界符加引号后，heredoc body 不做任何 shell 展开（不认 `$()`、不认反引号、不认变量替换、不认转义），是真正安全的写法；随后引用 `"$VAR"` 只是取变量的字面值，不会重新解释其中的内容。因为 Bash 工具的 shell 状态不跨调用持久化，**每个**需要这些值的独立 bash 代码块都要各自重新做一次 heredoc 捕获，不能假设前一个代码块里设的变量还在。
+
 调用 `project-tree-detect.mjs` 判断 `<dir-path>` 是否在 git 仓库内：
 
 ```bash
-node "${CLAUDE_PLUGIN_ROOT}/scripts/project-tree-detect.mjs" detect "<dir-path>"
+DIR_PATH=$(cat <<'DREAM_EOF'
+<dir-path>
+DREAM_EOF
+) && node "${CLAUDE_PLUGIN_ROOT}/scripts/project-tree-detect.mjs" detect "$DIR_PATH"
 ```
 
 输出形如 `{ "dirPath": "...", "isGitRepo": true|false, "gitRoot": "..."|null }`。
@@ -38,12 +43,15 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/project-tree-detect.mjs" detect "<dir-path>"
 - 用户选 **要** → 调用：
 
   ```bash
-  node "${CLAUDE_PLUGIN_ROOT}/scripts/project-tree-detect.mjs" find-root "<dir-path>"
+  DIR_PATH=$(cat <<'DREAM_EOF'
+  <dir-path>
+  DREAM_EOF
+  ) && node "${CLAUDE_PLUGIN_ROOT}/scripts/project-tree-detect.mjs" find-root "$DIR_PATH"
   ```
 
   输出 `{ "dirPath": "...", "upperRoot": "...", "sameAsDirPath": true|false }`。
 
-  - 若 `sameAsDirPath` 为 `true`（两个候选退化为同一个）→ 不再追问第二个选项，直接确认在 `<dir-path>` 执行 `git init -b main "<dir-path>"`，`gitRoot = <dir-path>`。
+  - 若 `sameAsDirPath` 为 `true`（两个候选退化为同一个）→ 不再追问第二个选项，直接确认在 `<dir-path>` 初始化，`gitRoot = <dir-path>`。
   - 若 `sameAsDirPath` 为 `false` → 用 `AskUserQuestion` 二选一：
 
     | 选项 | 说明 |
@@ -51,13 +59,24 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/project-tree-detect.mjs" detect "<dir-path>"
     | (a) 就用 `<dir-path>` 本身 | 只把 `<dir-path>` 纳入版本追踪 |
     | (b) 用 `<upperRoot>`（推断出的上层项目根） | 把整个上层项目纳入版本追踪，`<dir-path>` 只是其中一个子目录 |
 
-    按用户选择的目录执行 `git init -b main "<选定目录>"`，`gitRoot = <选定目录>`。
+    `gitRoot = <选定目录>`（`<dir-path>` 或 `<upperRoot>`）。
+
+  执行 `git init`（同样用 heredoc 捕获选定目录）：
+
+  ```bash
+  GIT_ROOT=$(cat <<'DREAM_EOF'
+  <选定目录, 即 gitRoot>
+  DREAM_EOF
+  ) && git init -b main "$GIT_ROOT"
+  ```
 
   `git init` 完成后仓库没有任何 commit（unborn HEAD）——若不处理，后面 `advanceBaseline` 对着零 commit 仓库跑 `update-ref ... HEAD` 会失败，baseline 永远建立不起来。**git init 完成后，在此处显式补一次初始 commit**：
 
   ```bash
-  git -C "<gitRoot>" add -A
-  git -C "<gitRoot>" -c user.name=project-dream -c user.email=project-dream@local commit -q -m "init" --allow-empty
+  GIT_ROOT=$(cat <<'DREAM_EOF'
+  <选定目录, 即 gitRoot>
+  DREAM_EOF
+  ) && git -C "$GIT_ROOT" add -A && git -C "$GIT_ROOT" -c user.name=project-dream -c user.email=project-dream@local commit -q -m "init" --allow-empty
   ```
 
   （`--allow-empty` 兜底目录本身是空的情况；有文件时正常把现有内容纳入首个 commit。）完成后 HEAD 已存在，继续走下面「分支 B」。
@@ -67,15 +86,30 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/project-tree-detect.mjs" detect "<dir-path>"
 `gitRoot` 取自上一步 `detect`（或分支 A 里 git init 时选定的目录）。计算 baseline ref 名：
 
 ```bash
-node "${CLAUDE_PLUGIN_ROOT}/scripts/project-tree-detect.mjs" ref-name "<dir-path>" "<gitRoot>"
+DIR_PATH=$(cat <<'DREAM_EOF'
+<dir-path>
+DREAM_EOF
+) && GIT_ROOT=$(cat <<'DREAM_EOF2'
+<gitRoot>
+DREAM_EOF2
+) && node "${CLAUDE_PLUGIN_ROOT}/scripts/project-tree-detect.mjs" ref-name "$DIR_PATH" "$GIT_ROOT"
 ```
 
-输出 `{ "refName": "refs/dream/last-baseline__..." }`——`<dir-path>` 等于 `<gitRoot>` 时得到 `refs/dream/last-baseline__root`；子目录得到扁平化的 `refs/dream/last-baseline__<相对路径把/换成_>`。同一仓库下对不同 `<dir-path>` 各自算出独立的 ref 名，互不覆盖、不冲突。
+输出 `{ "refName": "refs/dream/last-baseline__..." }`——`<dir-path>` 等于 `<gitRoot>` 时得到 `__root-<hash>` 后缀；子目录得到可读前缀 + 抗碰撞 hash 后缀（`refName()` 内部对相对路径原始字符串取 hash 保证唯一性，见 `scripts/project-tree-detect.mjs`）。同一仓库下对不同 `<dir-path>` 各自算出独立的 ref 名，互不覆盖、不冲突。
 
-调用 `dream-baseline.mjs` 做增量 diff（不传 `prepareFn`——project-dream 场景不需要 personal-dream 专属的整树 snapshot；用 `pathspec` 把 diff 限定在 `<dir-path>` 范围内，避免子目录场景误报整仓库其他部分的变化）。`<gitRoot>`/`<dir-path>`/`<refName>` 经 shell 环境变量传入、JS 里用 `process.env` 读取，不直接拼进 JS 字符串字面量（`<dir-path>` 来自用户输入，直接拼字符串会有注入风险）：
+调用 `dream-baseline.mjs` 做增量 diff（不传 `prepareFn`——project-dream 场景不需要 personal-dream 专属的整树 snapshot；用 `pathspec` 把 diff 限定在 `<dir-path>` 范围内，避免子目录场景误报整仓库其他部分的变化）。`gitRoot`/`dirPath`/`refName` 先各自 heredoc 捕获进 shell 变量，再原样传给 `DREAM_*` 环境变量（此时变量值已经是安全的字面字符串，`DREAM_GIT_ROOT="$GIT_ROOT"` 这一步不会重新解释里面的内容），JS 里用 `process.env` 读取，全程不拼进 JS 字符串字面量：
 
 ```bash
-DREAM_GIT_ROOT="<gitRoot>" DREAM_DIR_PATH="<dir-path>" DREAM_REF_NAME="<refName>" node -e "
+GIT_ROOT=$(cat <<'DREAM_EOF'
+<gitRoot>
+DREAM_EOF
+) && DIR_PATH=$(cat <<'DREAM_EOF2'
+<dir-path>
+DREAM_EOF2
+) && REF_NAME=$(cat <<'DREAM_EOF3'
+<refName>
+DREAM_EOF3
+) && DREAM_GIT_ROOT="$GIT_ROOT" DREAM_DIR_PATH="$DIR_PATH" DREAM_REF_NAME="$REF_NAME" node -e "
 import('${CLAUDE_PLUGIN_ROOT}/scripts/dream-baseline.mjs').then(({ diffSinceBaseline }) => {
   const gitRoot = process.env.DREAM_GIT_ROOT;
   const dirPath = process.env.DREAM_DIR_PATH;
@@ -86,7 +120,7 @@ import('${CLAUDE_PLUGIN_ROOT}/scripts/dream-baseline.mjs').then(({ diffSinceBase
 "
 ```
 
-`includeDirty: true`：project-dream 不传 `prepareFn`，不会像 personal-dream 那样自动把 working tree 提交干净——用户在 `<dir-path>` 下编辑了文件但还没 commit 是正常状态，纯 commit 层 diff 看不到这些改动会导致漏扫描，必须叠加 `git status --porcelain` 结果。`excludePaths: ['.dream.lock']`：`advanceBaseline`（Step 3a）的 `RepoLock` 锁文件落在 `gitRoot` 根，正常情况下 `acquire`/`release` 瞬时配对不会被 diff 看到，但异常崩溃导致锁文件残留时，若不排除会被当成"变更文件"纳入结果造成自我污染式误判。
+`includeDirty: true`：project-dream 不传 `prepareFn`，不会像 personal-dream 那样自动把 working tree 提交干净——用户在 `<dir-path>` 下编辑了文件但还没 commit 是正常状态，纯 commit 层 diff 看不到这些改动会导致漏扫描，必须叠加 `git status --porcelain` 结果。`excludePaths: ['.dream.lock']`：`advanceBaseline`（Step 3a）的 `RepoLock` 锁文件默认落在 `gitRoot` 根，正常情况下 `acquire`/`release` 瞬时配对不会被 diff 看到，但异常崩溃导致锁文件残留时，若不排除会被当成"变更文件"纳入结果造成自我污染式误判（Step 3a 已进一步改为把锁文件放进 `<gitRoot>/.git` 内部，这里的排除是双重保险）。
 
 输出 `{ "changedFiles": string[] | null }`：
 
@@ -104,10 +138,13 @@ import('${CLAUDE_PLUGIN_ROOT}/scripts/dream-baseline.mjs').then(({ diffSinceBase
 
 ### Step 1: 递归扫描
 
-从指定目录开始，递归列出所有子目录。
+从指定目录开始，递归列出所有子目录。同 Step 0 的安全捕获约定——`<scan-root>` 先 heredoc 捕获进变量再引用，不直接拼进 `find` 命令文本：
 
 ```bash
-find <scan-root> -type d ! -path '*/.git/*' ! -path '*/node_modules/*' ! -path '*/dist/*' ! -path '*/build/*' ! -path '*/coverage/*' ! -path '*/__pycache__/*' ! -path '*/.agents-personal/*' ! -name '.*'
+SCAN_ROOT=$(cat <<'DREAM_EOF'
+<scan-root>
+DREAM_EOF
+) && find "$SCAN_ROOT" -type d ! -path '*/.git/*' ! -path '*/node_modules/*' ! -path '*/dist/*' ! -path '*/build/*' ! -path '*/coverage/*' ! -path '*/__pycache__/*' ! -path '*/.agents-personal/*' ! -name '.*'
 ```
 
 对 `SCAN_ROOTS`（由 Step 0 给出）里的每个 `<scan-root>` 各跑一次，结果合并去重后排序。全量模式下 `SCAN_ROOTS` 只有一个元素——原始的 `<dir-path>`，行为与增量能力接入前完全一致；增量模式下 `SCAN_ROOTS` 是 Step 0 对 diff 结果收窄后的多个目录，扫描范围更小，Step 2/3 后续流程不变。
@@ -188,14 +225,20 @@ find <scan-root> -type d ! -path '*/.git/*' ! -path '*/node_modules/*' ! -path '
 
 若 Step 0 判定为增量模式（即成功拿到了 `gitRoot`/`refName`——不论是走「本来就是 git 仓库」还是「刚 git init」的分支）：
 
-`<gitRoot>`/`<refName>` 同 Step 0 经环境变量传入，不拼进 JS 字符串字面量。`${HAD_FAILURES}` 是本命令自己算出的布尔字面量（`true`/`false`），非用户输入，直接插值不受此约束。
+`<gitRoot>`/`<refName>` 同 Step 0 先 heredoc 捕获再经环境变量传入，不拼进 JS 字符串字面量。`${HAD_FAILURES}` 是本命令自己算出的布尔字面量（`true`/`false`），非用户输入，直接插值不受此约束。锁文件用 `dream-baseline.mjs` 导出的 `projectLockDir(gitRoot)`（即 `<gitRoot>/.git`）而不是默认的仓库根——落在 `.git` 内部天然不出现在用户的 `git status` 里，不会被误提交（Review 复审 W3 修复）：
 
 ```bash
-DREAM_GIT_ROOT="<gitRoot>" DREAM_REF_NAME="<refName>" node -e "
-import('${CLAUDE_PLUGIN_ROOT}/scripts/dream-baseline.mjs').then(({ advanceBaseline }) => {
+GIT_ROOT=$(cat <<'DREAM_EOF'
+<gitRoot>
+DREAM_EOF
+) && REF_NAME=$(cat <<'DREAM_EOF2'
+<refName>
+DREAM_EOF2
+) && DREAM_GIT_ROOT="$GIT_ROOT" DREAM_REF_NAME="$REF_NAME" node -e "
+import('${CLAUDE_PLUGIN_ROOT}/scripts/dream-baseline.mjs').then(({ advanceBaseline, projectLockDir }) => {
   const gitRoot = process.env.DREAM_GIT_ROOT;
   const refName = process.env.DREAM_REF_NAME;
-  advanceBaseline(gitRoot + '/.git', refName, ${HAD_FAILURES});
+  advanceBaseline(gitRoot + '/.git', refName, ${HAD_FAILURES}, { lockDir: projectLockDir(gitRoot) });
 });
 "
 ```

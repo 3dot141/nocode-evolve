@@ -21,21 +21,22 @@
 //
 // 设计: docs/superpowers/specs/3dot141/260701-dream-incremental-design.md
 //   § PersonalHistory 域 / MigrationRunner 模块
-import { execSync } from 'node:child_process';
+import { execFileSync } from 'node:child_process';
 import { existsSync, mkdirSync, mkdtempSync, renameSync, rmSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { acquire, release } from './repo-lock.mjs';
 import { snapshot, resolvePersonalDir, projectId, bareRepoPath, historyRootDir } from './personal-snapshot.mjs';
+import { git as gitExec } from './git-exec.mjs';
 
 const JSON_OUTPUT = process.argv.includes('--json');
 const LOCK_TIMEOUT_MS = 2000;
 
-function git(gitDir, cmd) {
-  return execSync(`git --git-dir="${gitDir}" ${cmd}`, {
-    encoding: 'utf8',
-    stdio: ['pipe', 'pipe', 'pipe'],
-  }).trim();
+// 薄封装：本文件历史上传的是 (gitDir, cmd 字符串)，改成 execFileSync 参数数组风格后
+// 调用点不用大改——仍传 subArgs 数组即可（Review 复审 W1 一致性修复：与其余三个
+// git 消费者统一到 git-exec.mjs，不再自己维护字符串拼接的 git() helper）。
+function git(gitDir, subArgs) {
+  return gitExec({ gitDir }, subArgs);
 }
 
 // migrateIfNeeded — 幂等迁移入口. 不要求调用方预先判断"要不要迁移".
@@ -75,9 +76,9 @@ export function migrateIfNeeded(projectDir, oldBareDir) {
                                                                        // 保证下面的 renameSync 是同设备原子操作 (不触发 EXDEV)
     const tmpGitDir = join(tmpDir, '.git');
 
-    execSync(`git init -b main "${tmpDir}"`, { encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] });
-    git(tmpGitDir, `fetch "${oldBareDir}"`); // 旧 bare repo 本身就是合法的 git remote
-    git(tmpGitDir, 'update-ref refs/heads/main FETCH_HEAD');
+    execFileSync('git', ['init', '-b', 'main', tmpDir], { encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] });
+    git(tmpGitDir, ['fetch', oldBareDir]); // 旧 bare repo 本身就是合法的 git remote
+    git(tmpGitDir, ['update-ref', 'refs/heads/main', 'FETCH_HEAD']);
     // 只导入历史指针, 不 reset 工作区、不要求内容匹配.
 
     renameSync(tmpGitDir, gitDir); // 单次 rename, 同卷内原子操作, 不会出现半迁移状态

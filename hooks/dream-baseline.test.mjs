@@ -1,10 +1,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, writeFileSync, mkdirSync, rmSync } from 'node:fs';
+import { mkdtempSync, writeFileSync, mkdirSync, rmSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { tmpdir } from 'node:os';
 import { execSync } from 'node:child_process';
-import { diffSinceBaseline, advanceBaseline } from '../scripts/dream-baseline.mjs';
+import { diffSinceBaseline, advanceBaseline, projectLockDir } from '../scripts/dream-baseline.mjs';
 
 function makeTmpDir() {
   return mkdtempSync(join(tmpdir(), 'db-test-'));
@@ -237,6 +237,32 @@ test('diffSinceBaseline — includeDirty=true 时 rename 行取重命名后的�
     const result = diffSinceBaseline(gitDir, workTree, 'refs/dream/last-baseline', { includeDirty: true });
     assert.ok(result.includes('new.txt'), `应解析出新路径 (实际: ${JSON.stringify(result)})`);
     assert.ok(!result.some((p) => p.includes(' -> ')), '不应残留箭头分隔的组合字符串');
+  } finally {
+    rmSync(tmp, { recursive: true, force: true });
+  }
+});
+
+// ── lockDir 参数化（Review 复审 W3：project-dream 锁文件不应落在用户工作区）──
+
+test('projectLockDir(gitRoot) 返回 <gitRoot>/.git', () => {
+  assert.equal(projectLockDir('/foo/bar'), join('/foo/bar', '.git'));
+});
+
+test('advanceBaseline — 传入 options.lockDir 时锁文件落在指定目录而非 dirname(gitDir)', () => {
+  const tmp = makeTmpDir();
+  try {
+    const { gitDir, workTree } = initRepo(tmp);
+    writeFileSync(join(tmp, 'a.txt'), 'v1');
+    commitAll(gitDir, workTree, 'c1');
+
+    advanceBaseline(gitDir, 'refs/dream/last-baseline', false, { lockDir: projectLockDir(tmp) });
+
+    assert.ok(!existsSync(join(tmp, '.dream.lock')), '不传 lockDir 时的默认位置不应有锁文件残留');
+    assert.equal(
+      execSync(`git --git-dir="${gitDir}" rev-parse refs/dream/last-baseline`, { encoding: 'utf8' }).trim(),
+      execSync(`git --git-dir="${gitDir}" rev-parse HEAD`, { encoding: 'utf8' }).trim(),
+      'lockDir 只影响锁文件位置，不影响 baseline 前移本身'
+    );
   } finally {
     rmSync(tmp, { recursive: true, force: true });
   }

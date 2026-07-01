@@ -319,8 +319,10 @@ test('case 4.1 — snapshot 拿不到锁时返回 skipped_locked, 不阻塞', ()
     runScript({ CLAUDE_PROJECT_DIR: tmp, NOCODE_HISTORY_ROOT: history });
     const logBefore = nestedGitLog(personal);
 
-    // 手工占用锁, 模拟另一进程正在写
-    writeFileSync(join(personal, '.dream.lock'), '999999');
+    // 手工占用锁, 模拟另一进程正在写——用当前测试进程自己的 pid（保证在整个测试期间
+    // 存活），而不是一个随意编造的数字：repo-lock.mjs 现在会检测锁文件对应的 pid
+    // 是否还存活，编造的 pid 会被当成"陈旧锁"回收，测不出真实的持锁竞争场景。
+    writeFileSync(join(personal, '.dream.lock'), String(process.pid));
     writeFileSync(join(personal, 'doc.md'), '# v2 while locked');
 
     const out = runScript({ CLAUDE_PROJECT_DIR: tmp, NOCODE_HISTORY_ROOT: history });
@@ -329,6 +331,104 @@ test('case 4.1 — snapshot 拿不到锁时返回 skipped_locked, 不阻塞', ()
 
     const logAfter = nestedGitLog(personal);
     assert.equal(logBefore, logAfter, '拿不到锁时不应产生新 commit');
+  } finally {
+    rmSync(tmp, { recursive: true, force: true });
+  }
+});
+
+test('case 4.2 — ensureNestedRepo 首次建仓分支加锁: 拿不到锁时不建仓, 不抛异常（Review 复审 W4）', () => {
+  const tmp = makeTmpDir();
+  const personal = join(tmp, '.agents-personal');
+  mkdirSync(personal, { recursive: true });
+
+  try {
+    // 手工占用锁 (用当前进程自己的 pid, 保证不被当成陈旧锁回收), 模拟另一进程正在建仓.
+    writeFileSync(join(personal, '.dream.lock'), String(process.pid));
+
+    const created = ensureNestedRepo(personal);
+    assert.equal(created, false, '拿不到锁时不应建仓');
+    assert.ok(!existsSync(join(personal, '.git')), '拿不到锁时 .git 不应被创建');
+  } finally {
+    rmSync(join(personal, '.dream.lock'), { force: true });
+    rmSync(tmp, { recursive: true, force: true });
+  }
+});
+
+test('case 4.3 — ensureNestedRepo 释放锁后, 双重检查发现 .git 已被并发建好则跳过（Review 复审 W4）', () => {
+  const tmp = makeTmpDir();
+  const personal = join(tmp, '.agents-personal');
+  mkdirSync(personal, { recursive: true });
+
+  try {
+    // 模拟"等锁期间, 另一进程已经建好仓库"的场景: 先真实建好 .git, 再调用 ensureNestedRepo,
+    // 双重检查应该发现 .git 已存在从而跳过, 不重新 init（不依赖锁竞争本身, 直接验证双重检查分支）。
+    execFileSync('git', ['init', '-q', '-b', 'main', personal]);
+    const created = ensureNestedRepo(personal);
+    assert.equal(created, false, '.git 已存在时(即使是刚被别的进程建好的)也应跳过, 不重新 init');
+  } finally {
+    rmSync(tmp, { recursive: true, force: true });
+  }
+});
+
+// ── BF5: 老架构迁移入口 gate（Review 复审 W5）──
+
+test('case 5.1 — .agents-personal/ 不存在但老 bare repo 存在 → 仍触发迁移, 不再永远 skip', () => {
+  const tmp = makeTmpDir();
+  const history = join(tmp, 'history');
+  // 故意不创建 .agents-personal/ 目录 —— 模拟"曾经用过老架构, 但本机这个目录不存在
+  // (被删除/换机器)"的场景. project-id 用项目根目录本身算 (不依赖 .agents-personal/ 存在).
+  mkdirSync(tmp, { recursive: true });
+
+  const id = projectId(join(tmp, '.agents-personal')); // projectId 内部只用 dirname, 目录本身不需要真实存在
+  const oldBareDir = join(history, id);
+  makeOldBareRepoWithHistory(oldBareDir);
+
+  try {
+    const out = runScript({ CLAUDE_PROJECT_DIR: tmp, NOCODE_HISTORY_ROOT: history });
+    const result = JSON.parse(out);
+    assert.notEqual(result.status, 'skipped', '老 bare repo 存在时不应因 .agents-personal/ 不存在就直接 skip');
+
+    const personal = join(tmp, '.agents-personal');
+    assert.ok(existsSync(join(personal, '.git')), '应自动建出 .agents-personal/ 并完成迁移');
+    const log = nestedGitLog(personal);
+    assert.ok(log.includes('legacy commit'), '应导入旧仓库历史, 不是孤儿化');
+  } finally {
+    rmSync(tmp, { recursive: true, force: true });
+  }
+});
+
+test('case 5.2 — .agents-personal/ 不存在且没有老 bare repo → 仍然正常 skip（不误建目录）', () => {
+  const tmp = makeTmpDir();
+  const history = join(tmp, 'history');
+  mkdirSync(tmp, { recursive: true });
+
+  try {
+    const out = runScript({ CLAUDE_PROJECT_DIR: tmp, NOCODE_HISTORY_ROOT: history });
+    const result = JSON.parse(out);
+    assert.equal(result.status, 'skipped', '没有 .agents-personal/ 也没有老历史时应正常 skip');
+    assert.ok(!existsSync(join(tmp, '.agents-personal')), '不应凭空建出 .agents-personal/ 目录');
+  } finally {
+    rmSync(tmp, { recursive: true, force: true });
+  }
+});
+
+// ── BF6: 路径含空格（Review 复审 W1，已用真实复现验证）──
+
+test('case 6.1 — 项目路径含空格时 snapshot 仍能正常建仓 + commit', () => {
+  const tmp = mkdtempSync(join(tmpdir(), 'ps test space '));
+  const personal = join(tmp, '.agents-personal');
+  const history = join(tmp, 'history');
+  mkdirSync(join(personal, 'wiki'), { recursive: true });
+  writeFileSync(join(personal, 'wiki', 'page.md'), '# page');
+
+  try {
+    const out = runScript({ CLAUDE_PROJECT_DIR: tmp, NOCODE_HISTORY_ROOT: history });
+    const result = JSON.parse(out);
+    assert.equal(result.status, 'committed', `路径含空格时也应正常提交(实际: ${JSON.stringify(result)})`);
+    assert.ok(existsSync(join(personal, '.git')));
+
+    const log = nestedGitLog(personal);
+    assert.equal(log.split('\n').length, 1);
   } finally {
     rmSync(tmp, { recursive: true, force: true });
   }

@@ -9,6 +9,7 @@ import { execFileSync } from 'node:child_process';
 import { realpathSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createHash } from 'node:crypto';
 
 // git -C <dirPath> rev-parse --show-toplevel 成功即返回 toplevel 绝对路径（git 已把它解析为物理路径，
 // symlink 已展开）；不在任何 git 仓库内（或 dirPath 不存在）时返回 null，不抛异常——调用方按"非 git 目录"
@@ -49,15 +50,26 @@ export function findUpperProjectRoot(dirPath) {
   return safeRealpath(dirPath);
 }
 
-// refName(dirPath, gitRoot) —— baseline ref 命名，扁平化避免 D/F 冲突：
-//   dirPath === gitRoot（realpath 对齐后比较，兼容 symlink/相对路径输入）→ 'refs/dream/last-baseline__root'
-//   否则 → 'refs/dream/last-baseline__' + relative(gitRoot, dirPath)，把 '/' 和 '\' 都替换成 '_'
+// refName(dirPath, gitRoot) —— baseline ref 命名，扁平化避免 D/F 冲突。
+//
+// Review 复审 C3 修复：原实现只是把 '/' 替换成 '_'，不是单射映射——已用直接调用复现两组
+// 真实碰撞：① 嵌套子目录 'a/b' 与字面量一级子目录 'a_b' 都会替换成 'a_b'；② 仓库根（哨兵值
+// 'root'）与字面量名为 'root' 的一级子目录也会撞在一起。碰撞后果：两个不同目录共享同一条
+// baseline ref，其中一个的 diff 判断会被另一个的历史污染（漏检或误报"无变化"）。
+//
+// 修法：唯一性来源改成对"相对路径的原始字符串"取 hash——path.relative(gitRoot, dirPath)
+// 对固定 gitRoot 而言，不同的 dirPath 必然产生不同的字符串（可以从 gitRoot+rel 唯一还原出
+// dirPath），包括根目录场景（rel === ''，这个空字符串不可能是任何真实子目录的相对路径）。
+// 可读前缀仍然保留（帮助人工排查时一眼看出对应哪个目录），但不参与唯一性判断，允许非单射。
 export function refName(dirPath, gitRoot) {
   const resolvedDirPath = safeRealpath(dirPath);
   const resolvedGitRoot = safeRealpath(gitRoot);
-  const rel = path.relative(resolvedGitRoot, resolvedDirPath);
-  const suffix = rel === '' ? 'root' : rel.replace(/[\\/]/g, '_');
-  return `refs/dream/last-baseline__${suffix}`;
+  const rel = path.relative(resolvedGitRoot, resolvedDirPath); // '' 表示根目录, 对任何真实子目录都不可能是这个值
+  const hash = createHash('sha256').update(rel).digest('hex').slice(0, 12); // 12 位 hex, 碰撞概率可忽略
+  const readable = (rel === '' ? 'root' : rel.replace(/[\\/]/g, '_'))
+    .replace(/[^a-zA-Z0-9._-]/g, '_') // git ref 组件字符白名单以外的一律替换
+    .replace(/\.\.+/g, '_'); // 折叠连续的点, 避免出现 git 禁止的 ".."
+  return `refs/dream/last-baseline__${readable}-${hash}`;
 }
 
 function output(result) {

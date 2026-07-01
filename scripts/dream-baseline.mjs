@@ -5,39 +5,23 @@
 // 不硬编码调用任何特定 snapshot 函数, 不强制整树 diff — 通过 options.prepareFn / options.pathspec 收窄.
 //
 // 设计: docs/superpowers/specs/3dot141/260701-dream-incremental-design.md #BaselineTracker 模块
-// 依赖: scripts/repo-lock.mjs (Task 1, acquire/release)
-import { execSync } from 'node:child_process';
-import { dirname } from 'node:path';
+// 依赖: scripts/repo-lock.mjs (Task 1, acquire/release)、scripts/git-exec.mjs (共享安全 git 调用)
+//
+// Review 复审修复：git 子进程调用改用 git-exec.mjs 的 execFileSync 参数数组，不再自己维护
+// quote() 手工转义（与其余三个消费者统一到同一份实现，避免转义策略走散）。
+import { dirname, join } from 'node:path';
+import { execFileSync } from 'node:child_process';
 import { acquire, release } from './repo-lock.mjs';
+import { git, parsePorcelain } from './git-exec.mjs';
 
 const LOCK_TIMEOUT_MS = 2000;
-
-function quote(value) {
-  return `"${String(value).replace(/(["\\$`])/g, '\\$1')}"`;
-}
-
-function git(gitDir, workTree, tokens, config = {}) {
-  const parts = ['git'];
-  for (const [k, v] of Object.entries(config)) parts.push('-c', `${k}=${v}`);
-  parts.push(`--git-dir=${quote(gitDir)}`);
-  if (workTree) parts.push(`--work-tree=${quote(workTree)}`);
-  parts.push(...tokens);
-  // 只掐掉末尾换行/空白，不能用 .trim() —— `git status --porcelain` 首行形如
-  // " M path"，前导空格是状态码的一部分，全量 trim() 会把它吃掉，导致
-  // parsePorcelainPaths 按固定偏移 slice(3) 解析时错位（与 plugin-dream-baseline.mjs
-  // 的 git() helper 同一处理，此处补齐，跑测试时发现的真实 bug）。
-  return execSync(parts.join(' '), {
-    encoding: 'utf8',
-    stdio: ['pipe', 'pipe', 'pipe'],
-  }).replace(/\s+$/, '');
-}
 
 // 'missing'  = ref 不存在 (首次, 静默走全量分支, 不 warn)
 // 'broken'   = ref 存在但指向的对象不可达 (仓库损坏/history 被裁剪), 调用方需要 warn 后降级
 // 'valid'    = ref 存在且指向有效对象
 function refStatus(gitDir, refName) {
   try {
-    execSync(`git --git-dir=${quote(gitDir)} show-ref --verify --quiet ${quote(refName)}`, {
+    execFileSync('git', [`--git-dir=${gitDir}`, 'show-ref', '--verify', '--quiet', refName], {
       stdio: ['pipe', 'pipe', 'pipe'],
     });
     return 'valid';
@@ -45,20 +29,6 @@ function refStatus(gitDir, refName) {
     if (e.status === 1) return 'missing';
     return 'broken';
   }
-}
-
-// git status --porcelain 输出解析成路径列表. rename/copy 行 ("old -> new") 取箭头后的新路径
-// (与 scripts/plugin-dream-baseline.mjs 的 parsePorcelain 同一处理, Round 2 复审 W4 一并对齐)。
-function parsePorcelainPaths(output) {
-  if (!output) return [];
-  return output
-    .split('\n')
-    .filter((l) => l.length > 0)
-    .map((l) => l.slice(3).trimEnd())
-    .map((p) => {
-      const arrowIdx = p.indexOf(' -> ');
-      return arrowIdx === -1 ? p : p.slice(arrowIdx + 4);
-    });
 }
 
 /**
@@ -96,15 +66,13 @@ export function diffSinceBaseline(gitDir, workTree, refName, options = {}) {
   }
 
   try {
-    const pathspecTokens = [quote(pathspec || '.'), ...excludePaths.map((p) => quote(`:!${p}`))];
-    const diffTokens = ['diff', '--name-only', quote(refName), 'HEAD', '--', ...pathspecTokens];
-    const out = git(gitDir, workTree, diffTokens);
+    const pathspecArgs = [pathspec || '.', ...excludePaths.map((p) => `:!${p}`)];
+    const out = git({ gitDir, workTree }, ['diff', '--name-only', refName, 'HEAD', '--', ...pathspecArgs]);
     const changed = new Set(out ? out.split('\n').filter(Boolean) : []);
 
     if (includeDirty) {
-      const statusTokens = ['status', '--porcelain', '--', ...pathspecTokens];
-      const dirtyOut = git(gitDir, workTree, statusTokens);
-      for (const p of parsePorcelainPaths(dirtyOut)) changed.add(p);
+      const dirtyOut = git({ gitDir, workTree }, ['status', '--porcelain', '--', ...pathspecArgs]);
+      for (const p of parsePorcelain(dirtyOut)) changed.add(p);
     }
 
     return Array.from(changed);
@@ -122,19 +90,25 @@ export function diffSinceBaseline(gitDir, workTree, refName, options = {}) {
  * @param {string} gitDir      - 目标仓库的 --git-dir
  * @param {string} refName     - baseline ref 名
  * @param {boolean} hadFailures - Phase 3 执行阶段是否有系统性失败 (用户主动跳过不算); true 则不前移
+ * @param {object} [options]
+ * @param {string} [options.lockDir] - 锁文件所在目录; 不传则默认 dirname(gitDir)（personal-dream
+ *   场景：.agents-personal/ 本身是插件私有目录，用它的根即可）。project-dream 场景应显式传
+ *   `join(gitRoot, '.git')`——落在 .git 内部而不是用户项目根目录，天然不出现在 `git status`
+ *   里、不会被误提交（Review 复审 W3 修复：此前统一用 dirname(gitDir)，project-dream 场景
+ *   会把锁文件放进用户自己的工作区）。
  */
-export function advanceBaseline(gitDir, refName, hadFailures) {
+export function advanceBaseline(gitDir, refName, hadFailures, options = {}) {
   if (hadFailures) {
     return; // 有系统性失败时不前移, 下次 diff 仍能看到这些文件重新处理 (C6)
   }
-  const lockDir = dirname(gitDir); // gitDir 形如 <root>/.git, 锁文件放 <root> 根, 不依赖 .git 已存在
+  const lockDir = options.lockDir || dirname(gitDir);
   const handle = acquire(lockDir, LOCK_TIMEOUT_MS);
   if (!handle) {
     process.stderr.write('[dream-baseline] WARN: 拿不到锁, 跳过本次 baseline 前移\n');
     return; // 不阻塞; 下次运行 diff 范围略大, 不会漏检
   }
   try {
-    execSync(`git --git-dir=${quote(gitDir)} update-ref ${quote(refName)} HEAD`, {
+    execFileSync('git', [`--git-dir=${gitDir}`, 'update-ref', refName, 'HEAD'], {
       stdio: ['pipe', 'pipe', 'pipe'],
     });
   } catch (e) {
@@ -142,4 +116,11 @@ export function advanceBaseline(gitDir, refName, hadFailures) {
   } finally {
     release(handle);
   }
+}
+
+// project-dream 场景的推荐锁目录：<gitRoot>/.git（而非仓库根），配 advanceBaseline 的
+// options.lockDir 使用。导出成命名函数方便调用方（commands/project-dream.md 的 node -e
+// 片段）不需要自己拼路径细节。
+export function projectLockDir(gitRoot) {
+  return join(gitRoot, '.git');
 }

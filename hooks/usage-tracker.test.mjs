@@ -394,3 +394,29 @@ test('CLI: 非法 JSON stdin → exit 0，不抛异常', () => {
     rmSync(tmp, { recursive: true, force: true });
   }
 });
+
+// ── 锁竞争延迟（Review 复审 W6：本 hook 挂在每次 Read 调用上，锁被占用时不该让用户等 2 秒）──
+
+test('CLI: 锁被占用时应快速跳过（远小于 2000ms 默认超时），不拖慢用户的 Read 调用', () => {
+  const tmp = makeTmpDir();
+  try {
+    const personal = join(tmp, '.agents-personal');
+    mkdirSync(join(personal, 'wiki', 'pages'), { recursive: true });
+    writeFileSync(join(personal, 'wiki', 'pages', 'foo.md'), '# foo');
+
+    // 用当前测试进程自己的 pid 占锁（保证整个测试期间存活），模拟另一操作正在写 status.md。
+    writeFileSync(join(personal, '.dream.lock'), String(process.pid));
+
+    const start = Date.now();
+    runScript(
+      { tool_name: 'Read', tool_input: { file_path: join(personal, 'wiki', 'pages', 'foo.md') } },
+      { CLAUDE_PROJECT_DIR: tmp },
+    );
+    const elapsed = Date.now() - start;
+
+    assert.ok(elapsed < 1000, `锁被占用时应快速跳过而不是等满 2000ms 默认超时（实际 ${elapsed}ms）`);
+    assert.ok(!existsSync(join(personal, 'wiki', 'status.md')), '拿不到锁时不应写入 status.md');
+  } finally {
+    rmSync(tmp, { recursive: true, force: true });
+  }
+});

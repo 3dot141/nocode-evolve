@@ -1,9 +1,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, writeFileSync, mkdirSync, rmSync } from 'node:fs';
+import { mkdtempSync, writeFileSync, mkdirSync, rmSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { execSync } from 'node:child_process';
+import { execSync, execFileSync } from 'node:child_process';
 import {
   diffSinceBaseline,
   setBaseline,
@@ -189,6 +189,34 @@ test('working tree 有 rename（如 rules/rule-foo.md → rules/rule-bar.md）�
     );
     assert.ok(!result.dirtyFiles.some((p) => p.includes(' -> ')), '不应残留箭头分隔的组合字符串');
   } finally {
+    cleanup(repo);
+  }
+});
+
+// ── 分支名命令注入回归测试（Review Round 复审 C1，已用 PoC 复现后修复）──
+
+test('分支名含 shell 元字符（分号 + ${IFS}）时 currentBranch/diffSinceBaseline/setBaseline 都不触发命令执行', () => {
+  const repo = makeRepo();
+  try {
+    // 分号 + ${IFS}（代替字面空格，git 分支名不允许空格）是一个合法的 git 分支名，
+    // 若 git() helper 用字符串拼接 + execSync（shell 解释）会在这里执行 touch。
+    // 用 execFileSync（参数数组，不经过 shell）建分支——这是测试 setup 代码本身要绕开
+    // shell 解释才能把"字面上的 ${IFS} 四个字符"真正写进分支名，不代表被测实现也这样处理。
+    const maliciousBranch = 'pwn;touch${IFS}/tmp/pdb-baseline-should-not-exist;echo${IFS}x';
+    execFileSync('git', ['-C', repo, 'checkout', '-q', '-b', maliciousBranch]);
+
+    const branch = currentBranch(repo);
+    assert.equal(branch, maliciousBranch, 'currentBranch 应原样返回分支名，不应崩溃');
+
+    assert.doesNotThrow(() => diffSinceBaseline(repo));
+    assert.doesNotThrow(() => setBaseline(repo));
+
+    assert.ok(
+      !existsSync('/tmp/pdb-baseline-should-not-exist'),
+      '恶意分支名不应触发任何 shell 命令执行'
+    );
+  } finally {
+    rmSync('/tmp/pdb-baseline-should-not-exist', { force: true });
     cleanup(repo);
   }
 });
