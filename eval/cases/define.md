@@ -31,6 +31,6 @@ default_intent:
 - [other-rule-primary] 方案对比一下                               # → design
 - [other-rule-primary] 技术选型用什么                             # → design
 - [other-rule-primary] 开始写代码                                 # → build
-- [other-rule-primary] 帮我提个 PR                                # → finishing-branch
+- [other-rule-primary] 帮我提个 PR                                # → finish-branch
 - [near-miss]          这个变量名改成什么好                       # → 直接动手 / mini
 - [explicit-exclusion] 列一下当前的 task

@@ -263,7 +263,7 @@ PR 合并后清理远程分支:
 - **不要假设 default reviewer 一定有** — branch protection 没配 / CODEOWNERS 不存在 = 空列表, 正常进 Gate PR, 用户可手填
 - **不要自动 force-push** — non-ff 用户 typed `force` 字面才执行, 见 Step 5
 - **不要等 GitHub Actions / CI 状态** — 不在本流程 scope; 用户自己看 PR 页
-- **不要 PR 创建完立刻关 / merge** — Option 2 终态是 PR 提交并加 reviewer, 后续 review / merge 走 GitHub UI 或另一轮 finishing-branch (这次选 option 1 本地 merge?)
+- **不要 PR 创建完立刻关 / merge** — Option 2 终态是 PR 提交并加 reviewer, 后续 review / merge 走 GitHub UI 或另一轮 dev-finish-branch (这次选 option 1 本地 merge?)
 
 ## Bitbucket DC 项目
 

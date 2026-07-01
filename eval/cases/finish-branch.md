@@ -1,18 +1,18 @@
-# rule-finishing-branch
+# rule-finish-branch
 
-primary_route: finishing-branch
+primary_route: finish-branch
 acceptable_alternates: []
 preamble_profiles: [cold, mid-task-momentum]   # 每条正样本各情境跑一次；recall 取最严(动量下)
 
 default_intent:                    # rule 级默认；case 可加 expected/forbidden 覆盖
-  must_action_ids: ["read-rule-finishing-branch", "gate-pr", "use-bkt"]
+  must_action_ids: ["skill-finish-branch", "gate-pr", "use-bkt"]
   forbidden_action_ids: ["put-reviewer", "raw-curl-pr", "gh-on-bitbucket"]
 
 # action-id 词表(probe 从中选 will_do_actions;含干扰项防纯泄漏):
-#   read-rule-finishing-branch / gate-title-body / gate-pr / use-bkt / bkt-pr-edit-reviewer
+#   skill-finish-branch / gate-title-body / gate-pr / use-bkt / bkt-pr-edit-reviewer
 #   put-reviewer(反) / raw-curl-pr(反) / gh-on-bitbucket(反) / push-only / open-issue(无关)
 
-## positive   (该触发 → finishing-branch)
+## positive   (该触发 → finish-branch)
 - 帮我提个 PR
 - 创建 pr
 - 提交推送，然后建个 PR

@@ -80,7 +80,7 @@ test('genCatalogSharded: 跨桶 rule (also_buckets) 在目标桶可发现', () =
 test('genCatalogSharded: 有 guard 的 rule 上浮 guard 行', () => {
   const m = loadManifest();
   const full = genCatalogSharded(m).map((s) => s.text).join('\n');
-  assert.match(full, /\*\*关键约束\(上浮\)\*\*: Bitbucket 用 bkt/, 'finishing-branch guard 应上浮');
+  assert.match(full, /\*\*关键约束\(上浮\)\*\*: Bitbucket 用 bkt/, 'dev-finish-branch guard 应上浮');
 });
 
 test('renderBucketBody: 复用同一渲染逻辑', () => {

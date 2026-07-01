@@ -3,8 +3,8 @@ import assert from 'node:assert/strict';
 import { matchRules, decide } from './pretooluse-guard.mjs';
 
 const RULES = [
-  { rule: 'finishing-branch', pattern: 'gh\\s+pr\\s+create', decision: 'inject', reason: '提 PR 前先 Read rule-finishing-branch.md 走 Gate Title-Body/PR' },
-  { rule: 'finishing-branch', pattern: 'bkt\\s+api\\s+.*--method\\s+PUT', decision: 'block', reason: '禁 bkt api PUT 改 PR 元数据, 用 bkt pr edit' },
+  { rule: 'dev-finish-branch', pattern: 'gh\\s+pr\\s+create', decision: 'inject', reason: '提 PR 前先调 dev-finish-branch 走 Gate Title-Body/PR' },
+  { rule: 'dev-finish-branch', pattern: 'bkt\\s+api\\s+.*--method\\s+PUT', decision: 'block', reason: '禁 bkt api PUT 改 PR 元数据, 用 bkt pr edit' },
 ];
 
 test('matchRules: gh pr create 命中 inject 靶', () => {
@@ -21,7 +21,7 @@ test('decide: inject → 无 permissionDecision (不 auto-approve) + additionalC
   const out = decide([RULES[0]]);
   assert.equal(out.hookSpecificOutput.hookEventName, 'PreToolUse');
   assert.equal(out.hookSpecificOutput.permissionDecision, undefined, 'inject 不该返回 permissionDecision (否则跳过权限框)');
-  assert.match(out.hookSpecificOutput.additionalContext, /finishing-branch/);
+  assert.match(out.hookSpecificOutput.additionalContext, /dev-finish-branch/);
 });
 
 test('decide: block 优先于 inject → deny', () => {

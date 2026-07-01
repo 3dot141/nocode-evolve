@@ -47,10 +47,9 @@ nocode-evolve/
 │                                             # (agent-catalog-2/3.md 按需生成)
 ├── rules/                                    # 按需 Read (catalog 路由)
 │   ├── manifest.json                         # ★ 单一真值源
-│   ├── rule-*.md ×7                          # finishing-branch / git-worktree / git-inspection /
-│   │                                         # git-freshness / codex-review / push-summary /
-│   │                                         # superpowers-brainstorming
-│   └── rule-references/rule-finishing-branch/ # rule 子文件 (bkt 附录等)
+│   └── rule-*.md ×7                          # git-worktree / git-inspection / git-freshness /
+│                                             # codex-review / push-summary / superpowers-brainstorming /
+│                                             # figma-design-read
 ├── skills/                                   # Claude Code skill
 │   ├── devflow/                              # 流程领航 (model 可主动调起)
 │   ├── bkt/                                  # Bitbucket CLI

@@ -25,6 +25,6 @@ default_intent:
 
 - [other-rule-primary] 开始写代码                        # → build
 - [other-rule-primary] review 一下                       # → code-review
-- [other-rule-primary] 帮我提个 PR                       # → finishing-branch
+- [other-rule-primary] 帮我提个 PR                       # → finish-branch
 - [near-miss]          测试过了吗                         # → 纯查询
 - [explicit-exclusion] 看一下测试覆盖率

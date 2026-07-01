@@ -57,7 +57,7 @@ Define 返回后，拿到确认的 restate + 场景分类，进 Step 2。
 示例：
 ```
 TaskCreate(subject: "阶段 8: Land",
-           description: "调用: nocode-evolve:dev-land / Read: rule-finishing-branch / Gate: PR merged + 任务流转 + worktree 清理
+           description: "调用: nocode-evolve:dev-land / Gate: PR merged + 任务流转 + worktree 清理
 Sub-steps: ⓪ Skill(nocode-evolve:dev-land) → 8a.Pre-flight → 8b.Finish-branch(dev-finish-branch) → 8c.Post-merge(dev-post-merge)")
 ```
 

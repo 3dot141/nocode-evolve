@@ -43,7 +43,7 @@ Codex 审查结果与 Subagent 审查结果合并三路(主 agent 蓝军 + subag
 
 ## 场景 2:代码 review 收尾
 
-**触发**:完成分支 / 显式 review 请求(「review 一下 / 看这次改动有没有问题 / 帮我审一遍」)。与 `rule-finishing-branch` 衔接——PR 前可加一道独立 Codex review。
+**触发**:完成分支 / 显式 review 请求(「review 一下 / 看这次改动有没有问题 / 帮我审一遍」)。与 `dev-finish-branch` 衔接——PR 前可加一道独立 Codex review。
 
 **做法**:
 - 找缺陷 → `review`;挑方案 / 设计假设 → `adversarial-review`(可在末尾追 focus text 指定关注点)。
