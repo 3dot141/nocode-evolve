@@ -1571,10 +1571,14 @@ function git(gitDir, workTree, tokens, config = {}) {
   parts.push(`--git-dir=${quote(gitDir)}`);
   if (workTree) parts.push(`--work-tree=${quote(workTree)}`);
   parts.push(...tokens);
+  // 只掐掉末尾换行/空白，不能用 .trim() —— `git status --porcelain` 首行形如
+  // " M path"，前导空格是状态码的一部分，全量 trim() 会把它吃掉，导致
+  // parsePorcelainPaths 按固定偏移 slice(3) 解析时错位（Build 阶段实跑测试时发现的真实 bug，
+  // 与 plugin-dream-baseline.mjs 的 git() helper 同一处理，此处补齐）。
   return execSync(parts.join(' '), {
     encoding: 'utf8',
     stdio: ['pipe', 'pipe', 'pipe'],
-  }).trim();
+  }).replace(/\s+$/, '');
 }
 
 // 'missing'  = ref 不存在 (首次, 静默走全量分支, 不 warn)
