@@ -228,63 +228,9 @@ description: Use when [specific triggering conditions] — no workflow summary
 
 ### Workflow Skill Template
 
-**Criteria**: Multi-step sequential execution with ordering-critical or side-effecting operations → workflow skill. Must use the TODO + Gate template. This applies regardless of skill type (Discipline, Technique, Pattern, or Reference) — ordering risk is orthogonal to type classification.
+**Criteria**: Multi-step sequential execution with ordering-critical or side-effecting operations → workflow skill, regardless of skill type — ordering risk is orthogonal to type classification. Examples: a Discipline skill with phased compliance checks, a Reference skill for a transactional API (finalize_plan → write_files), a Technique skill with destructive setup steps.
 
-Examples: a Discipline skill with phased compliance checks, a Reference skill for a transactional API (finalize_plan → write_files), a Technique skill with destructive setup steps.
-
-Workflow skill SKILL.md must include:
-
-1. **Step 0: TaskCreate** — first thing on entry, create all tasks at once. Each task has Sub-steps + Gate:
-
-```markdown
-## Step 0: TaskCreate
-
-**First thing on entry** — create all tasks at once:
-
-Task 1: [step name] (Step 1)
-  Sub-steps: [specific sub-steps]
-  Gate: [pass criteria]
-
-Task 2: [step name] (Step 2)
-  Sub-steps: [specific sub-steps]
-  Gate: [pass criteria]
-
-...
-
-Mark each task done as it completes.
-```
-
-2. **Enter Gate + Exit Gate for every Step**:
-
-```markdown
-### Step N: [step name]
-
-**Enter Gate:**
-- [ ] Previous Step Exit Gate passed
-- [ ] [prerequisites for this step]
-
-[step content]
-
-**Exit Gate:**
-- [ ] [objective completion criteria]
-- [ ] [verifiable artifact]
-```
-
-3. **Global Exit Gate** — summary of all Step Exit Gates:
-
-```markdown
-## Exit Gate (Global)
-
-- [ ] [Step 1 key artifact]
-- [ ] [Step 2 key artifact]
-- [ ] ...
-```
-
-**Gate writing principles**:
-- Gate conditions must be objectively verifiable (yes/no, pass/fail, number meets threshold) — no subjective words ("good enough", "mostly done")
-- Enter Gate prevents skipping — cannot enter if prior step hasn't passed
-- Exit Gate prevents premature advancement — cannot mark done without evidence of output
-- Use checkbox `- [ ]` format for item-by-item verification
+Workflow skill SKILL.md must include: **Step 0 TaskCreate** (all tasks created upfront, each with Sub-steps + Gate), **Enter Gate + Exit Gate for every Step**, and a **Global Exit Gate**. Gates must be objectively verifiable (yes/no, pass/fail, threshold) — no subjective words. Full templates and gate-writing principles: read `writing-skills/workflow-skill-template.md`.
 
 ### General Guidelines
 

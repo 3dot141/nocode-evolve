@@ -27,6 +27,7 @@ skill-writing/
     ├── persuasion-principles.md       心理学原理（anti-rationalization）
     ├── testing-skills-with-subagents.md  subagent 压力测试方法
     ├── scenario-discovery-matrix.md   Phase 2/3 场景发现矩阵（7 轴扫描，本仓原创）
+    ├── workflow-skill-template.md     workflow skill 模板 + Gate 写作原则（Phase 4 引用，本仓原创）
     ├── graphviz-conventions.dot       flowchart 样式规范
     ├── render-graphs.js               flowchart 渲染脚本
     └── examples/                      测试示例
