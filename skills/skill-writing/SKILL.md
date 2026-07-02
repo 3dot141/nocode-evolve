@@ -230,7 +230,9 @@ description: Use when [specific triggering conditions] — no workflow summary
 
 **Criteria**: Multi-step sequential execution with ordering-critical or side-effecting operations → workflow skill, regardless of skill type — ordering risk is orthogonal to type classification. Examples: a Discipline skill with phased compliance checks, a Reference skill for a transactional API (finalize_plan → write_files), a Technique skill with destructive setup steps.
 
-Workflow skill SKILL.md must include: **Step 0 TaskCreate** (all tasks created upfront, each with Sub-steps + Gate), **Enter Gate + Exit Gate for every Step**, and a **Global Exit Gate**. Gates must be objectively verifiable (yes/no, pass/fail, threshold) — no subjective words. Full templates and gate-writing principles: read `writing-skills/workflow-skill-template.md`.
+Workflow skill SKILL.md must include: **Step 0 TaskCreate** (all tasks created upfront, each with Sub-steps + Gate), **Enter Gate + Exit Gate for every Step**, and a **Global Exit Gate**. Gates must be objectively verifiable (yes/no, pass/fail, threshold) — no subjective words.
+
+**Read `writing-skills/workflow-skill-template.md` for the full templates and gate-writing principles.**
 
 ### General Guidelines
 
