@@ -47,16 +47,16 @@ review 这件事在仓库里被重造了十几遍：每个 review 都重新发�
 
 细则（如 `dev-review`、四件套 reference、各嵌入式自审 step）在自己的 SKILL.md / reference 里这样接：
 
-1. **Read 骨架** — `Read references/reviewing/skeleton.md`，拿到完整的 7 步流程详解 + 分档判据表 + 方法选择表 + 公共能力 how-to。
+1. **Read 骨架** — `Read {NOCODE_SKILL_REF}/reviewing/skeleton.md`，拿到完整的 7 步流程详解 + 分档判据表 + 方法选择表 + 公共能力 how-to。
 2. **照判据自己做** — skeleton 是 markdown，不是可执行函数。按里面的判据：分档（步骤 1）→ 对象界定+gate（步骤 2）→ 选方法（步骤 4，查方法选择表）。
 3. **填领域维度** — 在步骤 3 注入点填本细则领域的维度清单（dev-review 的五轴、define-review 的 restate 七维等）。
-4. **选 method card** — 按 skeleton 的方法选择表，`Read references/reviewing/methods/<method>.md` 拿到该方法的维度表 / 输出契约 / 派发策略。
-5. **套 findings 契约** — 产出按 `references/reviewing/findings-contract.md` 的统一 schema 落，severity 走 C/W/S，Q/SA 走 kind。
+4. **选 method card** — 按 skeleton 的方法选择表，`Read {NOCODE_SKILL_REF}/reviewing/methods/<method>.md` 拿到该方法的维度表 / 输出契约 / 派发策略。
+5. **套 findings 契约** — 产出按 `{NOCODE_SKILL_REF}/reviewing/findings-contract.md` 的统一 schema 落，severity 走 C/W/S，Q/SA 走 kind。
 
 > 这是零新机制的引入方式：框架作为 reference 被 `Read`，不需要 manifest 路由、不需要新 hook。另一条引入路径 C2（dispatch template 派 subagent）用于需要独立交叉的重档场景，细节见 skeleton 的公共能力章。
 
 ## 框架文件地图
 
-- `references/reviewing/skeleton.md` — **流程骨架单源**：分档判据表 + 7 步详解 + 方法选择表 + 公共能力 how-to（CLAIM 剥离 / codex 经 `rule-codex-review` 派 / Evidence Gate / Doubt Theater / 分档）。细则 C1 引入时 Read 它。
-- `references/reviewing/findings-contract.md` — **findings 统一契约单源**：finding schema + verdict 层 + 5→3 分级映射表 + 三条关键约束（security High 上提 Critical / Q-SA 作 kind / Evidence Gate）。
-- `references/reviewing/methods/` — **评审方法库**：每个方法一份 card（维度表/思路 + 输出契约 + 派发策略）。基础方法 6 个（red-blue-adversarial / checklist / perspective-based / error-mechanism / self-review / threat-modeling）+ 领域方法 card（security-method / database-method / code-quality-method / architecture-method）。
+- `{NOCODE_SKILL_REF}/reviewing/skeleton.md` — **流程骨架单源**：分档判据表 + 7 步详解 + 方法选择表 + 公共能力 how-to（CLAIM 剥离 / codex 经 `rule-codex-review` 派 / Evidence Gate / Doubt Theater / 分档）。细则 C1 引入时 Read 它。
+- `{NOCODE_SKILL_REF}/reviewing/findings-contract.md` — **findings 统一契约单源**：finding schema + verdict 层 + 5→3 分级映射表 + 三条关键约束（security High 上提 Critical / Q-SA 作 kind / Evidence Gate）。
+- `{NOCODE_SKILL_REF}/reviewing/methods/` — **评审方法库**：每个方法一份 card（维度表/思路 + 输出契约 + 派发策略）。基础方法 6 个（red-blue-adversarial / checklist / perspective-based / error-mechanism / self-review / threat-modeling）+ 领域方法 card（security-method / database-method / code-quality-method / architecture-method）。

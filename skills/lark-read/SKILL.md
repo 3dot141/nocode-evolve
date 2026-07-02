@@ -14,7 +14,7 @@ metadata:
 
 ## 前置
 
-**CRITICAL — 开始前 MUST 先用 Read 工具读取 [`lark-shared`](../../.skills-manager-link/lark-shared/SKILL.md) 确认认证就绪。**
+**CRITICAL — 开始前 MUST 先调 `Skill(lark-shared)` 确认认证就绪。**（lark-shared 是外部 skill，随 lark-cli 技能包安装，不在本插件内；不可用时跳过此步，认证报错时再提示用户安装 lark-cli 技能包。）
 
 ## 流程
 

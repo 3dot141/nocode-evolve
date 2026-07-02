@@ -158,7 +158,7 @@ rule-git-worktree 默认 "fetch + 静默基于 upstream 最新" 建分支. 两�
 fx-data-agents worktree base = `<agents-worktree-base-sha>` (跟 web 主仓时间窗口对齐)
 两仓 fork 时间不对齐, 跨仓 import 可能撞 API 漂移. 把 web worktree reset --hard
 到 web 主仓 HEAD `<web-main-sha>` 对齐?
-注意: reset 会冲掉 Step 1.5 改的 `package.json` packageManager 字段, **需要重做**."
+注意: reset 会冲掉 Gate 1.5 改的 `package.json` packageManager 字段, **需要重做**."
 选项:
   - reset 对齐 (推荐, 跟 agents worktree 同时间窗口)
   - 不 reset (接受可能的 API 漂移风险, 跨仓 import 失败再处理)
@@ -169,7 +169,7 @@ reset 命令:
 
 ```bash
 git -C <web-worktree> reset --hard <web-main-HEAD-sha>
-# 若 Step 1.5 改过 package.json packageManager → 重做 Edit
+# 若 Gate 1.5 改过 package.json packageManager → 重做 Edit
 ```
 
 ## Step 3 — 执行脚本启动 (主仓 / worktree 共用)
@@ -323,7 +323,7 @@ cd ../fx-data-server && docker compose down
 5. 后台 task ID 必须记录告知用户, 否则停服只能 pkill fallback
 6. launcher 内置 `buildKillCommands` — 启动会先 kill 旧, 别在 skill 里又叠一层手工清理
 7. worktree 启动必须按 Step 1 → 2 → 3 顺序, 不能跳过 cp / 联调对齐
-8. worktree `reset` / `git pull` 后, Step 1.5 改的 `package.json` packageManager 改动会被冲掉, **需要重做**
+8. worktree `reset` / `git pull` 后, Gate 1.5 改的 `package.json` packageManager 改动会被冲掉, **需要重做**
 9. 关键决策点 (cp / 改 .env.local / reset / 重启已在跑 / 升档全栈 / 替换主仓 agents) **必须 askUser**, 不擅自动
 10. launcher 在插件目录不在 fx 仓 → `FX_*_DIR` 主仓 / worktree 启动都强制, 漏了必报 validateRepos 错; `${CLAUDE_PLUGIN_ROOT}` Bash 不展开, 先换绝对路径
 11. 单独重启 sync 容器 (如 `test-sync`) 必须连带重启 `sync-polars-localhost` — socat sidecar 共享 sync 网络栈, 主容器重启后绑定失效, Excel 导入静默写空表 (表还标 valid, 无报错)

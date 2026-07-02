@@ -2,7 +2,7 @@
 name: instinct-import
 description: Import instincts from teammates, Skill Creator, or other sources
 command: /instinct-import
-implementation: python3 ~/.claude/skills/continuous-learning-v2/scripts/instinct-cli.py import <file>
+implementation: python3 "${CLAUDE_PLUGIN_ROOT}/skills/continuous-learning-v2/scripts/instinct-cli.py" import <file>
 ---
 
 # Instinct Import Command
@@ -10,7 +10,7 @@ implementation: python3 ~/.claude/skills/continuous-learning-v2/scripts/instinct
 ## Implementation
 
 ```bash
-python3 ~/.claude/skills/continuous-learning-v2/scripts/instinct-cli.py import <file-or-url> [--dry-run] [--force] [--min-confidence 0.7]
+python3 "${CLAUDE_PLUGIN_ROOT}/skills/continuous-learning-v2/scripts/instinct-cli.py" import <file-or-url> [--dry-run] [--force] [--min-confidence 0.7]
 ```
 
 Import instincts from:

@@ -2,7 +2,7 @@
 name: instinct-status
 description: Show all learned instincts with their confidence levels
 command: /instinct-status
-implementation: python3 ~/.claude/skills/continuous-learning-v2/scripts/instinct-cli.py status
+implementation: python3 "${CLAUDE_PLUGIN_ROOT}/skills/continuous-learning-v2/scripts/instinct-cli.py" status
 ---
 
 # Instinct Status Command
@@ -12,7 +12,7 @@ Shows all learned instincts with their confidence scores, grouped by domain.
 ## Implementation
 
 ```bash
-python3 ~/.claude/skills/continuous-learning-v2/scripts/instinct-cli.py status
+python3 "${CLAUDE_PLUGIN_ROOT}/skills/continuous-learning-v2/scripts/instinct-cli.py" status
 ```
 
 ## Usage

@@ -15,12 +15,12 @@ argument-hint: <sub-action> [args]
 
 | 子动作 | 做什么 | 转发到 | 独立命令 |
 |---|---|---|---|
-| `init` | 初始化 .agents-personal/ 结构 | `Skill(nocode-evolve:personal-init)` | `/personalhub-init` |
-| `write` | 写入 wiki / rules / AGENTS.md（变量·语气·命名·约定） | `Skill(nocode-evolve:personal-distill)` | `/personalhub-distill` |
-| `search` | 检索 .agents-personal/ 内容（wiki + rules + AGENTS.md 各分节） | `Skill(nocode-evolve:personal-recall)` | `/personalhub-recall` |
-| `check` | 健康检查 | `Skill(nocode-evolve:personal-lint)` | `/personalhub-lint` |
-| `tidy` | 自主维护（stale/prune/merge/promote） | `Skill(nocode-evolve:personal-dream)` | `/personalhub-dream` |
-| `snap` | 手动触发备份快照 | `node "${CLAUDE_PLUGIN_ROOT}/scripts/personalhub-snapshot.mjs" --json` | — |
+| `init` | 初始化 .agents-personal/ 结构 | `Skill(nocode-evolve:personal-init)` | `/personal-init` |
+| `write` | 写入 wiki / rules / AGENTS.md（变量·语气·命名·约定） | `Skill(nocode-evolve:personal-distill)` | `/personal-distill` |
+| `search` | 检索 .agents-personal/ 内容（wiki + rules + AGENTS.md 各分节） | `Skill(nocode-evolve:personal-recall)` | `/personal-recall` |
+| `check` | 健康检查 | `Skill(nocode-evolve:personal-lint)` | `/personal-lint` |
+| `tidy` | 自主维护（stale/prune/merge/promote） | `Skill(nocode-evolve:personal-dream)` | `/personal-dream` |
+| `snap` | 手动触发备份快照 | `node "${CLAUDE_PLUGIN_ROOT}/scripts/personal-snapshot.mjs" --json` | — |
 | `status` | 概览当前状态 | 内联执行（见下方） | — |
 
 ## 执行
@@ -52,7 +52,7 @@ argument-hint: <sub-action> [args]
 直接跑脚本：
 
 ```bash
-node "${CLAUDE_PLUGIN_ROOT}/scripts/personalhub-snapshot.mjs" --json
+node "${CLAUDE_PLUGIN_ROOT}/scripts/personal-snapshot.mjs" --json
 ```
 
 输出快照结果（committed / no_changes / error）。

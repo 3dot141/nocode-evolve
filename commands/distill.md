@@ -175,7 +175,7 @@ no → 整次 distill 终止；yes → 进入分发。
 原因: <这条为何跨项目>
 ```
 
-**不替 `/sow` 校验 `$USER_VAULT_PATH`**——env 检查是 `/sow` 自己的责任，见 `skills/sow/SKILL.md` env 依赖节。（v1 env 名 `USER_WIKI_PATH` 已弃用，sow v2 改读 `USER_VAULT_PATH`）
+**不替 `/sow` 校验 `$USER_VAULT_PATH`**——env 检查是 `/sow` 自己的责任，见 `commands/sow.md` 的「环境依赖」节。（v1 env 名 `USER_WIKI_PATH` 已弃用，sow v2 改读 `USER_VAULT_PATH`）
 
 **不替 `/sow` 判层**——sow v2 已支持三层（Inbox / Inputs / Outputs），advisor 仅推 `/sow <intent>`，由 sow 自判层 + 用户 NL 确认 loop。distill 不预估层、不绑层、不在 advisor 输出里附加层建议，职责保单一。
 

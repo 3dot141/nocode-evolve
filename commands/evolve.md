@@ -2,7 +2,7 @@
 name: evolve
 description: Cluster related instincts into skills, commands, or agents
 command: /evolve
-implementation: python3 ~/.claude/skills/continuous-learning-v2/scripts/instinct-cli.py evolve
+implementation: python3 "${CLAUDE_PLUGIN_ROOT}/skills/continuous-learning-v2/scripts/instinct-cli.py" evolve
 ---
 
 # Evolve Command
@@ -10,7 +10,7 @@ implementation: python3 ~/.claude/skills/continuous-learning-v2/scripts/instinct
 ## Implementation
 
 ```bash
-python3 ~/.claude/skills/continuous-learning-v2/scripts/instinct-cli.py evolve [--generate]
+python3 "${CLAUDE_PLUGIN_ROOT}/skills/continuous-learning-v2/scripts/instinct-cli.py" evolve [--generate]
 ```
 
 Analyzes instincts and clusters related ones into higher-level structures:
