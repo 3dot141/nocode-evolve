@@ -1,9 +1,9 @@
-# nocode-evolve
+# nocode
 
 Harrison 的 Claude Code 个人插件。架构(**两类知识分离 + 单一真值源**):
 
 - **规则知识 (reactive)**:SessionStart 注入**完整 rule 路由**(catalog 分片常驻 context,必在、无软触发漏);agent 命中桶后按需 `Read` 对应 `rules/rule-*.md`。
-- **编排知识 (proactive)**:`nocode-evolve:devflow` 可被 model 主动调起,也可用户 `/调` 进入,给「当前阶段判断 + 下一步建议 + 备选」,**用户拍板,不替执行**。
+- **编排知识 (proactive)**:`nocode:devflow` 可被 model 主动调起,也可用户 `/调` 进入,给「当前阶段判断 + 下一步建议 + 备选」,**用户拍板,不替执行**。
 - **硬拦截**:`PreToolUse` hook 对危险 Bash 命令(`bkt PUT` / 裸 curl 等)`deny` / `inject`,唯一的确定性机制。
 - **单源生成**:`rules/manifest.json` → `hooks/generate.mjs` → `model/agent-catalog-*.md` 分片 + `hooks/pretooluse-rules.json`。
 
@@ -28,7 +28,7 @@ Harrison 的 Claude Code 个人插件。架构(**两类知识分离 + 单一真�
 ## 当前结构
 
 ```
-nocode-evolve/
+nocode/
 ├── .claude-plugin/
 │   ├── plugin.json                           # 插件清单
 │   └── marketplace.json                      # GitHub marketplace 描述
@@ -81,7 +81,7 @@ claude --plugin-dir /Users/yes365/AI/nocode-evolve
 ```bash
 # 在 Claude Code 内执行 (slash 命令)
 /plugin marketplace add /Users/yes365/AI/nocode-evolve
-/plugin install nocode-evolve@nocode-evolve
+/plugin install nocode@nocode
 ```
 
 ### 方式 C:GitHub marketplace(跨设备同步)
@@ -89,18 +89,18 @@ claude --plugin-dir /Users/yes365/AI/nocode-evolve
 2. 在 Claude Code 内:
    ```
    /plugin marketplace add 3dot141/nocode-evolve
-   /plugin install nocode-evolve@nocode-evolve
+   /plugin install nocode@nocode
    ```
 
 ## 日常操作
 
 | 操作 | 命令 |
 |---|---|
-| 启用 / 禁用 | `/plugin enable nocode-evolve@nocode-evolve` / `/plugin disable ...` |
+| 启用 / 禁用 | `/plugin enable nocode@nocode` / `/plugin disable ...` |
 | 改完热加载 | `/reload-plugins` |
 | 校验清单 | `/plugin validate` |
 | 查看加载详情 | `claude --debug` 启动 |
-| 卸载 | `claude plugin uninstall nocode-evolve@nocode-evolve --scope user` |
+| 卸载 | `claude plugin uninstall nocode@nocode --scope user` |
 
 ## 后续扩展(按需加目录即可)
 
@@ -110,7 +110,7 @@ skills/
 └── my-skill/
     └── SKILL.md          # frontmatter 必填 description
 ```
-安装后调用名为 `/nocode-evolve:my-skill`。手动入口型(用户主动调,不自动触发)加 `disable-model-invocation: true`。
+安装后调用名为 `/nocode:my-skill`。手动入口型(用户主动调,不自动触发)加 `disable-model-invocation: true`。
 
 ### 加 Rules(走 manifest 单源)
 1. 改 `rules/manifest.json`(加 rule 定义:bucket / triggers / summary / guard / pretooluse)

@@ -29,7 +29,7 @@
     },
     "systematic-debugging": {
       "action": "keep-as-skill",
-      "reason": "调试方法论，nocode-evolve 缺口"
+      "reason": "调试方法论，nocode 缺口"
     },
     "writing-skills": {
       "action": "skip",

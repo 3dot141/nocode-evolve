@@ -1,14 +1,14 @@
 ---
 type: prd
-topic: nocode-evolve——Harrison 个人 Claude Code 工具箱
+topic: nocode——Harrison 个人 Claude Code 工具箱
 date: 260511
 author: 3dot141
 status: approved
 ---
 
-# PRD：nocode-evolve
+# PRD：nocode
 
-> dogfood：以 nocode-evolve 插件本身作为 PRD 示例。演示新 PRD 骨架（背景 / 目标 / 用户场景 / 验收标准）下"主因辅因 / 场景结构化 / 验收标准 + 明确排除"的写法。
+> dogfood：以 nocode 插件本身作为 PRD 示例。演示新 PRD 骨架（背景 / 目标 / 用户场景 / 验收标准）下"主因辅因 / 场景结构化 / 验收标准 + 明确排除"的写法。
 
 ## 背景
 
@@ -37,7 +37,7 @@ status: approved
 - **角色**：Harrison（多项目并行开发者）
 - **触发**：上午在 project-A（后端服务）讨论 auth 设计，下午切到 project-B（前端应用）
 - **当前流程**：开 project-B 会话 → AI 不知道 B 的命名约定 → Harrison 重新解释 5-10 分钟 → 才能讨论 UI
-- **期望流程**：开 project-B 会话 → AI 加载 nocode-evolve 全局规则 + B 的 `.agents-personal/AGENTS.md` 覆盖 → 立即按 B 的约定工作
+- **期望流程**：开 project-B 会话 → AI 加载 nocode 全局规则 + B 的 `.agents-personal/AGENTS.md` 覆盖 → 立即按 B 的约定工作
 - **痛点定位**：切项目时的 5-10 分钟"AI 重新校准期"
 
 #### 场景二：写设计文档

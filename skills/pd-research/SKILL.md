@@ -15,7 +15,7 @@ description: Use when the user wants to explore a problem space before committin
 
 已有明确技术方案只需实现 / 单文件修改 / 纯事实查询 → 不进 Research。
 已有 PRD 只需写代码 → 直接进 devflow Define。
-只想做技术方案对比（不涉及产品调研）→ 走 `nocode-evolve:dev-design`。
+只想做技术方案对比（不涉及产品调研）→ 走 `nocode:dev-design`。
 
 ## Enter Gate
 
@@ -53,7 +53,7 @@ Task 6: 保存
   Gate: 文件保存 + 提示下一步
 
 Task 7: 硬交接 — 调用下一步 skill
-  Sub-steps: 报告调研完成（Go/No-Go 结论）→ 建议写 PRD → 等用户拍板后调 Skill(nocode-evolve:pd-prd)
+  Sub-steps: 报告调研完成（Go/No-Go 结论）→ 建议写 PRD → 等用户拍板后调 Skill(nocode:pd-prd)
   Gate: 用户拍板进入 PRD（这一步不勾，Research 不算收尾）
   metadata: {handoff: true}（供防跳步 Hook B 识别交接 task）
 ```
@@ -192,7 +192,7 @@ Task 7: 硬交接 — 调用下一步 skill
 
 research-report 存到 `{pd_research_output}` 变量指定的路径（见 `model/agent-about.md`「文档产出路径变量」）。
 
-完成后提示用户："调研完成。要继续写 PRD 吗？（调 `nocode-evolve:pd-prd`）"
+完成后提示用户："调研完成。要继续写 PRD 吗？（调 `nocode:pd-prd`）"
 
 ## Exit Gate
 

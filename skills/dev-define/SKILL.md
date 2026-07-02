@@ -57,7 +57,7 @@ Task 7: 用户确认 — 三选 + 交叉审
   Gate: 用户显式确认 + 无 Critical findings
 
 Task 8: 硬交接 — 调用下一步 skill
-  Sub-steps: 按 Exit Gate 硬交接报告 Define 完成（场景分类 + restate 摘要）→ 按场景建议下一步：Full/Standard/Fix → Env（调 Skill(nocode-evolve:using-git-worktrees)）；Mini → Build-lite → 等用户拍板
+  Sub-steps: 按 Exit Gate 硬交接报告 Define 完成（场景分类 + restate 摘要）→ 按场景建议下一步：Full/Standard/Fix → Env（调 Skill(nocode:using-git-worktrees)）；Mini → Build-lite → 等用户拍板
   Gate: 用户拍板进入下一阶段（这一步不勾，Define 不算收尾）
   metadata: {handoff: true}（供防跳步 Hook B 识别交接 task）
 ```
@@ -217,7 +217,7 @@ Standard 场景网络探索可简化为 `Agent(fork)` 轻量搜一两个查询�
 - [ ] （Full/Standard）路径清单已校验——有 PRD 则搬入并查完整性，无 PRD 则现场生成
 - [ ] （Full/Standard）每条路径至少绑定一条 SC，无裸路径也无裸 SC
 - [ ] 后续阶段输入齐全：Full → Design 可用 restate + 路径清单，Standard → Plan 可用 restate + 路径清单
-- [ ] **硬交接**：Exit Gate 全部通过后，向用户报告 Define 完成（含场景分类 + restate 摘要），并按场景建议下一阶段：Full/Standard/Fix → Env（`nocode-evolve:using-git-worktrees`），Mini → Build-lite。列出下一阶段的 sub-steps + 关键决策（devflow Step 5 格式）。等用户拍板，不自行进入下一阶段
+- [ ] **硬交接**：Exit Gate 全部通过后，向用户报告 Define 完成（含场景分类 + restate 摘要），并按场景建议下一阶段：Full/Standard/Fix → Env（`nocode:using-git-worktrees`），Mini → Build-lite。列出下一阶段的 sub-steps + 关键决策（devflow Step 5 格式）。等用户拍板，不自行进入下一阶段
 
 ## Common Rationalizations
 

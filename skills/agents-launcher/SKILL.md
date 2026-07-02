@@ -29,7 +29,7 @@ description: 本仓 fx-data-agents 三服务 (web :10001 / agents Hono :8070 / s
 
 主入口: `${CLAUDE_PLUGIN_ROOT}/skills/agents-launcher/dev-orchestrator.mjs` (Node ESM).
 
-> **launcher 随 nocode-evolve 插件分发, 不在任何 fx 仓内** (fx-data-agents 主仓的 `.claude/skills/` 是空的). `${CLAUDE_PLUGIN_ROOT}` 占位插件根, 但 **Bash 工具不展开它** (它只在 hooks.json 里被 harness 替换). 构造 Bash 命令前, agent 必须把它换成插件真实安装目录的绝对路径 (本机 dev 部署 = `/Users/yes365/AI/nocode-evolve`). 下文命令模板均按此处理.
+> **launcher 随 nocode 插件分发, 不在任何 fx 仓内** (fx-data-agents 主仓的 `.claude/skills/` 是空的). `${CLAUDE_PLUGIN_ROOT}` 占位插件根, 但 **Bash 工具不展开它** (它只在 hooks.json 里被 harness 替换). 构造 Bash 命令前, agent 必须把它换成插件真实安装目录的绝对路径 (本机 dev 部署 = `/Users/yes365/AI/nocode-evolve`). 下文命令模板均按此处理.
 
 ### 仓路径 env (主仓 / worktree 启动都强制)
 

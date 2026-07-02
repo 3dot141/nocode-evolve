@@ -86,7 +86,7 @@ Task 5: 用户 approve
   Gate: Critical 清零 + 用户拍板
 
 Task 6: 硬交接 — 调用下一步 skill
-  Sub-steps: 按 Exit Gate 硬交接报告 Review 完成（findings 统计 + Critical/Warning 处置）→ 建议进 Land → 等用户拍板后调 Skill(nocode-evolve:dev-land)
+  Sub-steps: 按 Exit Gate 硬交接报告 Review 完成（findings 统计 + Critical/Warning 处置）→ 建议进 Land → 等用户拍板后调 Skill(nocode:dev-land)
   Gate: 用户拍板进入 Land（这一步不勾，Review 不算收尾）
   metadata: {handoff: true}（供防跳步 Hook B 识别交接 task）
 ```
@@ -167,7 +167,7 @@ Task 6: 硬交接 — 调用下一步 skill
 - [ ] 所有 Critical 已 fix
 - [ ] 用户对 Warning 逐条显式拍板
 - [ ] fix 改了代码 → 已回 Build → Verify → 再 Review（回流规则）
-- [ ] **硬交接**：Exit Gate 全部通过后，向用户报告 Review 完成（含 findings 统计 + Critical/Warning 处置结果），建议下一阶段：Land（`nocode-evolve:dev-land`）。列出 Land 阶段的 sub-steps + 关键决策（devflow Step 5 格式）。等用户拍板，不自行进入下一阶段
+- [ ] **硬交接**：Exit Gate 全部通过后，向用户报告 Review 完成（含 findings 统计 + Critical/Warning 处置结果），建议下一阶段：Land（`nocode:dev-land`）。列出 Land 阶段的 sub-steps + 关键决策（devflow Step 5 格式）。等用户拍板，不自行进入下一阶段
 
 ## Common Rationalizations
 

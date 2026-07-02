@@ -5,7 +5,7 @@
 //   --ttl:       cache TTL 秒数 (默认 7200 = 2h)
 // 输出 stdout JSON: { branch, base, behind, ahead, age_seconds, cache_hit, cold_start, gate, message }
 // exit 0 = ok / exit 2 = gate (agent 应停手 + 三选). 离线 / fetch 失败: WARN + ok (不阻塞), 但冷启动除外 (见下).
-// cache 文件: git rev-parse --git-path nocode-evolve-freshness.json (worktree 独立, .git/ 内不会被 commit).
+// cache 文件: git rev-parse --git-path nocode-freshness.json (worktree 独立, .git/ 内不会被 commit).
 //
 // 冷启动拦截: 当前 branch+base 在 cache 里【从来没有过记录】(机器首次 / 该分支首次 / 升级后旧格式作废) →
 //   coldStart=true, 无条件 gate 一次 (不论 fetch 成功与否、behind 多少), 让用户首次显式确认基线.
@@ -13,7 +13,7 @@
 //   离线冷启动 (无 entry + fetch 失败) 不写 entry, 仍反复拦, 直到联网成功建立基线.
 //
 // base 推断优先级:
-//   1) git config branch.<branch>.nocode-evolve-base             (worktree 创建时写入, 不随 push -u 漂移)
+//   1) git config branch.<branch>.nocode-base             (worktree 创建时写入, 不随 push -u 漂移)
 //   2) git rev-parse --abbrev-ref --symbolic-full-name HEAD@{u}  (当前分支 upstream)
 //      → eg. "origin/release/x" 或 "origin/main"
 //   3) git rev-parse --abbrev-ref origin/HEAD                    (远端 default branch)
@@ -45,7 +45,7 @@ function git(cmd, allowFail = false) {
 }
 
 function pickBase(branch) {
-  const configured = git(`config branch.${branch}.nocode-evolve-base`, true);
+  const configured = git(`config branch.${branch}.nocode-base`, true);
   if (configured) return configured;
   const upstream = git('rev-parse --abbrev-ref --symbolic-full-name HEAD@{u}', true);
   if (upstream) return upstream;
@@ -55,7 +55,7 @@ function pickBase(branch) {
 }
 
 function cachePath() {
-  return git('rev-parse --git-path nocode-evolve-freshness.json', true) || '.git/nocode-evolve-freshness.json';
+  return git('rev-parse --git-path nocode-freshness.json', true) || '.git/nocode-freshness.json';
 }
 
 function cacheKey(branch, base) {

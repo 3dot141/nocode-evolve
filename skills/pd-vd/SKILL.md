@@ -1,6 +1,6 @@
 ---
 name: pd-vd
-description: Use when the user wants to design the visual direction and produce prototypes after interaction design is complete. Use when the user says "视觉设计/视觉方向/配色/原型/wireframe/线框图/设计稿/长什么样/出个原型", or when pdflow routes to the visual design stage after pd-ix, or when upgrading fidelity of an existing design. Produces a .vd.md (visual spec) + optional .prototype.html. Requires .ix.md as input. Not for interaction design (use nocode-evolve:pd-ix), technical architecture (use nocode-evolve:dev-design), or production component code (use devflow Build).
+description: Use when the user wants to design the visual direction and produce prototypes after interaction design is complete. Use when the user says "视觉设计/视觉方向/配色/原型/wireframe/线框图/设计稿/长什么样/出个原型", or when pdflow routes to the visual design stage after pd-ix, or when upgrading fidelity of an existing design. Produces a .vd.md (visual spec) + optional .prototype.html. Requires .ix.md as input. Not for interaction design (use nocode:pd-ix), technical architecture (use nocode:dev-design), or production component code (use devflow Build).
 ---
 
 # pd-vd — 视觉设计
@@ -39,7 +39,7 @@ description: Use when the user wants to design the visual direction and produce 
 ## Enter Gate
 
 - [ ] pd-vd skill 已加载
-- [ ] `.ix.md` 存在（交互阶段已完成）——无 `.ix.md` 时建议先跑 `Skill(nocode-evolve:pd-ix)`
+- [ ] `.ix.md` 存在（交互阶段已完成）——无 `.ix.md` 时建议先跑 `Skill(nocode:pd-ix)`
 
 ## Step 0: TaskCreate
 
@@ -182,7 +182,7 @@ Task 6: 保存 + Handoff
 
 | 来源 | 怎么搜 |
 |---|---|
-| Claude Design | `Skill(nocode-evolve:claude-design)` → `claude-design systems` / `claude-design list` |
+| Claude Design | `Skill(nocode:claude-design)` → `claude-design systems` / `claude-design list` |
 | 本地代码库 | 扫已有 design tokens / 组件库 |
 | Figma | `figma-design-read` |
 
@@ -219,7 +219,7 @@ patterns     页面级布局               → Step 4 组装
 
 | | Claude Design 线 | 本地 HTML 线 |
 |---|---|---|
-| **怎么出** | `Skill(nocode-evolve:claude-design)` → `claude-design <brief>` | 本地写多个 `.html` 文件 |
+| **怎么出** | `Skill(nocode:claude-design)` → `claude-design <brief>` | 本地写多个 `.html` 文件 |
 | **喂什么** | brief = IA + 交互清单 + 视觉方向；挂 template + design system（如有） | IA + 交互清单 + 视觉方向 + token/组件；无设计系统则加载 taste skill |
 | **低保真** | 每个独立页面一个文件（含宿主内的嵌入组件），静态 | 每个独立页面一个文件（含宿主内的嵌入组件），静态 |
 | **高保真** | 保留独立页面文件 + 新增一个组合文件（融合全部页面，JS tab 切换/弹窗） | 多文件之间用 URL 跳转，每个文件内做弹窗/4 态 |

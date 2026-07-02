@@ -29,7 +29,7 @@ rm -rf /tmp/superpowers-upstream
 
 每个 skill 的集成状态。agent 或人工合入内容后更新此表。
 
-| skill | 状态 | nocode-evolve 对应 | 说明 |
+| skill | 状态 | nocode 对应 | 说明 |
 |---|---|---|---|
 | using-superpowers | **已合入** | `model/agent-catalog-using.md` | Red Flags + 调用纪律 + 指令优先级 |
 | brainstorming | overlay | `rule-superpowers-brainstorming` | rule overlay 叠输出路径 + worktree |
@@ -49,9 +49,9 @@ rm -rf /tmp/superpowers-upstream
 
 ### 状态定义
 
-- **已合入**: 内容已融入 nocode-evolve 自有文件，vendor 版本仅做上游追踪参考
-- **overlay**: nocode-evolve 通过 rule overlay 扩展该 skill，skill 本身仍由 superpowers 插件提供（卸载后需接管）
+- **已合入**: 内容已融入 nocode 自有文件，vendor 版本仅做上游追踪参考
+- **overlay**: nocode 通过 rule overlay 扩展该 skill，skill 本身仍由 superpowers 插件提供（卸载后需接管）
 - **吸收**: 核心方法论已提取到自有 skill/reference，不再直接调用 superpowers 版本
 - **待合入**: 有价值但尚未集成
 - **待评估**: 可能有价值，需进一步判断
-- **不需要**: 与 nocode-evolve 无关
+- **不需要**: 与 nocode 无关

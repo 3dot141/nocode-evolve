@@ -23,7 +23,7 @@
 
 ## Step 2: Lark 任务流转
 
-调 `nocode-evolve:lark-project`，按 `lark-project/references/transition.md` 流转状态到**决策线定死的目标状态**（PR 路径在 prflow Step 0 决策线已确认；典型流转：组员开发 → 研发已改待BUILD）。
+调 `nocode:lark-project`，按 `lark-project/references/transition.md` 流转状态到**决策线定死的目标状态**（PR 路径在 prflow Step 0 决策线已确认；典型流转：组员开发 → 研发已改待BUILD）。
 
 **前置条件**：有 Step 1 提取到的任务号 + FeishuProjectMcp 可用。
 

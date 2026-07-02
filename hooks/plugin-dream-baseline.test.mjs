@@ -63,7 +63,7 @@ test('baseline 指向的 commit 不可达（模拟 rebase 丢失）→ 捕获异
   try {
     const branch = currentBranch(repo);
     const fakeSha = '0'.repeat(40);
-    git(repo, `config branch.${branch}.nocode-evolve-plugin-dream-baseline ${fakeSha}`);
+    git(repo, `config branch.${branch}.nocode-plugin-dream-baseline ${fakeSha}`);
 
     const result = diffSinceBaseline(repo);
     assert.equal(result, null, '异常应被捕获，不冒泡，降级为 null（走全量分支）');
@@ -98,7 +98,7 @@ test('setBaseline(pluginRoot) 写入当前分支的 baseline git config key，�
     assert.equal(result.branch, branch);
     assert.equal(result.baseline, headSha);
 
-    const configured = git(repo, `config branch.${branch}.nocode-evolve-plugin-dream-baseline`);
+    const configured = git(repo, `config branch.${branch}.nocode-plugin-dream-baseline`);
     assert.equal(configured, headSha);
   } finally {
     cleanup(repo);
@@ -168,7 +168,7 @@ test('分支名含斜杠（如 feat/dream-incremental）时 baseline 读写不�
     assert.equal(branch, 'feat/dream-incremental');
 
     setBaseline(repo);
-    const configured = git(repo, `config branch.${branch}.nocode-evolve-plugin-dream-baseline`);
+    const configured = git(repo, `config branch.${branch}.nocode-plugin-dream-baseline`);
     assert.ok(configured, '带斜杠的分支名也应能正确写入/读取 git config');
   } finally {
     cleanup(repo);

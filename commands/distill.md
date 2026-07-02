@@ -30,7 +30,7 @@ argument-hint: [optional-topic]
 | `rules:project` | 融进现有 rule，或新建 `<proj>/.agents-personal/rules/<slug>.md` + 改 `AGENTS.md` 触发条件 | 当前指令，项目专属；**先整合判断**（融合优先），否则双写新建 |
 | `agents:project` | `<proj>/.agents-personal/AGENTS.md` 对应分节 | 项目级偏好——变量覆盖 / 语气风格 / 命名惯例 / 协作约定等；直接写入 AGENTS.md，融合已有分节或新增分节 |
 | `docs:subdir` | `<proj>/<dir>/AGENTS.md` 和/或 `README.md` | 子目录工程约束/文档，入仓共享；走 project-distill |
-| `rules:plugin` | 委托 `Skill(nocode-evolve:plugin-distill)` 处理（融合优先，否则三步联动；rule/skill 双轨） | 当前指令，跨项目通用；**先整合判断**（融合优先），否则三步联动建新 |
+| `rules:plugin` | 委托 `Skill(nocode:plugin-distill)` 处理（融合优先，否则三步联动；rule/skill 双轨） | 当前指令，跨项目通用；**先整合判断**（融合优先），否则三步联动建新 |
 | `skip` | （不写）| 列出原因供用户最后反悔 |
 
 ---
@@ -50,7 +50,7 @@ argument-hint: [optional-topic]
 
 ### 0. 静默 Lint
 
-若 `<proj>/.agents-personal/` 已存在，调 `Skill(nocode-evolve:personal-lint)` 做健康检查。结果附在 Step 2 表格底部。不存在则跳过。
+若 `<proj>/.agents-personal/` 已存在，调 `Skill(nocode:personal-lint)` 做健康检查。结果附在 Step 2 表格底部。不存在则跳过。
 
 ### 1. 扫会话 + 生成候选
 
@@ -98,7 +98,7 @@ argument-hint: [optional-topic]
 | 变量覆盖 / 语气风格偏好 / 命名惯例 / 协作约定 / 输出格式偏好 | `agents:project` |
 | **某个子目录的工程约束 / 使用说明 / 目录级规则**（如"hooks/ 下禁手改生成物"） | `docs:subdir` |
 | 项目特有业务术语 / 具体代码路径 | `*:project` |
-| 跨项目通用 AI 行为 / skill 覆盖 | `*:plugin` (cwd 是 nocode-evolve 仓) 或 `wiki:cross-project` (cwd 不是) |
+| 跨项目通用 AI 行为 / skill 覆盖 | `*:plugin` (cwd 是 nocode 仓) 或 `wiki:cross-project` (cwd 不是) |
 | 一次性进度 / 通用 best practice | `skip` |
 
 **`agents:project` vs `docs:subdir` 区分**：
@@ -150,7 +150,7 @@ argument-hint: [optional-topic]
 
 **全 skip**：报"识别 N 项均建议跳过 + 原因"，停。
 
-### 3. 跨仓写入二次确认（仅当 rules:plugin 且 cwd ≠ nocode-evolve 仓时）
+### 3. 跨仓写入二次确认（仅当 rules:plugin 且 cwd ≠ nocode 仓时）
 
 ```
 项 #N (rules:plugin) 将写入 ~/AI/nocode-evolve/，确认？(yes/no)
@@ -164,7 +164,7 @@ no → 整次 distill 终止；yes → 进入分发。
 
 #### `wiki:project` 出口
 
-调 `Skill(nocode-evolve:personal-distill)`，传入本出口的候选列表（含 disposition / body / target_layer）。personal-distill 负责完整的 wiki 写入协议（两层目录 / 整合判断 / frontmatter / index 重建 / log 追加）。
+调 `Skill(nocode:personal-distill)`，传入本出口的候选列表（含 disposition / body / target_layer）。personal-distill 负责完整的 wiki 写入协议（两层目录 / 整合判断 / frontmatter / index 重建 / log 追加）。
 
 #### `wiki:cross-project` 出口（advisor）
 
@@ -181,15 +181,15 @@ no → 整次 distill 终止；yes → 进入分发。
 
 #### `rules:project` 出口
 
-调 `Skill(nocode-evolve:personal-distill)`，传入本出口的候选列表（含 disposition / body / slug）。personal-distill 负责 rules 文件写入 + AGENTS.md 触发条目管理。
+调 `Skill(nocode:personal-distill)`，传入本出口的候选列表（含 disposition / body / slug）。personal-distill 负责 rules 文件写入 + AGENTS.md 触发条目管理。
 
 #### `agents:project` 出口
 
-调 `Skill(nocode-evolve:personal-distill)`，传入本出口的候选列表（含 section_type / body）。personal-distill 负责 AGENTS.md 分节写入——融合已有分节或新增分节。
+调 `Skill(nocode:personal-distill)`，传入本出口的候选列表（含 section_type / body）。personal-distill 负责 AGENTS.md 分节写入——融合已有分节或新增分节。
 
 #### `docs:subdir` 出口
 
-调 `Skill(nocode-evolve:project-distill)`，传入本出口的候选列表（含 target_dir / target_file / body）。project-distill 负责分析目标目录 + 写入 AGENTS.md 和/或 README.md。
+调 `Skill(nocode:project-distill)`，传入本出口的候选列表（含 target_dir / target_file / body）。project-distill 负责分析目标目录 + 写入 AGENTS.md 和/或 README.md。
 
 与 `agents:project` 的落地路径完全不同：
 - `agents:project` → `.agents-personal/AGENTS.md`（gitignored，个人配置）
@@ -197,7 +197,7 @@ no → 整次 distill 终止；yes → 进入分发。
 
 #### `rules:plugin` 出口（委托 plugin-distill）
 
-调 `Skill(nocode-evolve:plugin-distill)`，传入本出口的候选列表（含 disposition / body / target / bucket / triggerDesc 等）。plugin-distill 负责完整的融合判断 + 三步联动写入协议（rule 文件 + manifest 登记 + generate + 版本升级），本文件不再重复维护该逻辑。
+调 `Skill(nocode:plugin-distill)`，传入本出口的候选列表（含 disposition / body / target / bucket / triggerDesc 等）。plugin-distill 负责完整的融合判断 + 三步联动写入协议（rule 文件 + manifest 登记 + generate + 版本升级），本文件不再重复维护该逻辑。
 
 #### `skip` 出口
 
@@ -221,7 +221,7 @@ no → 整次 distill 终止；yes → 进入分发。
   manifest: 已更新 push-summary 条目 triggers（本次融合扩了触发范围）并 generate 重新生成 catalog 分片  版本: 1.3.1 → 1.4.0 (minor)
 ⚠ 跨仓新建 plugin rule（经 plugin-distill）: ~/AI/nocode-evolve/rules/rule-distill-extension.md
   manifest+generate: rules/manifest.json 已加条目, generate 重新生成 catalog 分片  版本: 1.4.0 → 1.5.0 (minor)
-  请到 nocode-evolve 仓 review + commit + 询问是否 push。
+  请到 nocode 仓 review + commit + 询问是否 push。
 
 ℹ 健康检查（personal-lint）：0 error / 1 warn
   ⚠ 孤立页: draft/260512-local-dev-beta-feature-toggle.md
@@ -230,13 +230,13 @@ no → 整次 distill 终止；yes → 进入分发。
 
 ---
 
-> **wiki + rules 写入协议已搬到 `/personal-distill`**（`commands/personal-distill.md`）。distill 通过 `Skill(nocode-evolve:personal-distill)` 委派写入，不在本文件内重复。
+> **wiki + rules 写入协议已搬到 `/personal-distill`**（`commands/personal-distill.md`）。distill 通过 `Skill(nocode:personal-distill)` 委派写入，不在本文件内重复。
 
 ---
 
 ## rules:plugin 分发（已迁移到 plugin-distill）
 
-`rules:plugin` 出口的融合判断 + 三步联动写入协议已整体搬到 `Skill(nocode-evolve:plugin-distill)`（`commands/plugin-distill.md`）——单一权威实现，本文件不再重复。委托方式见上方「`rules:plugin` 出口」节。
+`rules:plugin` 出口的融合判断 + 三步联动写入协议已整体搬到 `Skill(nocode:plugin-distill)`（`commands/plugin-distill.md`）——单一权威实现，本文件不再重复。委托方式见上方「`rules:plugin` 出口」节。
 
 孤儿 rule 划界（distill 不主动补，归 `/nocodehub dream` 巡检）等边界情况同样已在 `plugin-distill.md` 里维护。
 
@@ -248,7 +248,7 @@ no → 整次 distill 终止；yes → 进入分发。
 - ❌ **rules 永远新建**：明明是现有 rule 的延伸还新建 `rule-<slug>.md` + 加 catalog 条目 → catalog 膨胀 + 触发条件碎片化。强相关先融合（含融进 `rule-references/` 子文件）
 - ❌ **融合还新增 catalog 条目**：融进现有 rule 时门面条目已覆盖，无脑再加一条 = 重复路由
 - ❌ **末尾 paste**：整合 wiki 已有页 / 融进现有 rule 时不把新内容堆到 `## YYMMDD Update` 节——融进合适章节
-- ❌ **跨仓写入不二次确认**：cwd ≠ nocode-evolve 仓而要写 plugin rule 时，不弹二次确认就动手
+- ❌ **跨仓写入不二次确认**：cwd ≠ nocode 仓而要写 plugin rule 时，不弹二次确认就动手
 - ❌ **写 plugin rule 但忘了登记进 rules/manifest.json 并 generate 重新生成**——sanity check 警告等于白沉淀
 - ❌ **写 plugin rule 但忘升 version**——CLAUDE.md 硬约束
 - ❌ **AGENTS.md 加触发条件含糊**："需要时读 rules/foo.md" 等于没触发
@@ -278,8 +278,8 @@ no → 整次 distill 终止；yes → 进入分发。
 | `$NOCODE_EVOLVE_REPO` 路径不存在 | 插件 rule 项在表格里标灰 + 不可选 |
 | Step 1 写文件后 Step 2 改 manifest / generate 失败 | 不回滚 Step 1，报"写入了 rule 文件但 manifest 未登记，请手动改 manifest 后跑 generate" |
 | Step 2 后 Step 3 改 plugin.json 失败 | 不回滚前两步，报"前两步完成但版本未升，请手动改 plugin.json" |
-| nocode-evolve 仓有未提交改动 | 不阻断，报告里加一行"两边都要 commit" |
-| `nocode-evolve/rules/` 下有孤儿文件 | 不主动补路由；报告末尾仅提示 |
+| nocode 仓有未提交改动 | 不阻断，报告里加一行"两边都要 commit" |
+| `nocode/rules/` 下有孤儿文件 | 不主动补路由；报告末尾仅提示 |
 | wiki/ 目录不存在（首次使用） | distill 自动创建骨架：`wiki/index.md` + `wiki/log.md` + `wiki/draft/` + `wiki/pages/` |
 | 已有 `wiki/INDEX.md`（旧格式大写） | 重命名为 `index.md`（OKF §6） |
 | 已有 pages/ 页无 maturity/topic/TLDR | 向后兼容 fallback：默认 active / Uncategorized / 用 description |
@@ -295,6 +295,6 @@ no → 整次 distill 终止；yes → 进入分发。
 不要主动 push 或 commit——按 CLAUDE.md 工作流，commit 由主交互流程在你完成所有沉淀后单独执行。
 
 如本次涉及 `rules:plugin` 出口，提醒用户：
-- `nocode-evolve` 仓有新文件（rule + manifest 改 + generate 生成物 catalog 分片 + plugin.json）
+- `nocode` 仓有新文件（rule + manifest 改 + generate 生成物 catalog 分片 + plugin.json）
 - 主仓如有 rules:project 改动也需要 commit
 - 两边的 commit / push 由用户自己决定

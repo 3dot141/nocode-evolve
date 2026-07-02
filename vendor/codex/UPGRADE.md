@@ -1,7 +1,7 @@
 # vendor/codex — 升级与维护
 
 `openai/codex-plugin-cc` 的**引擎部分**(纯 Node ESM,零运行时依赖)按快照 vendor 进本仓,
-让 nocode-evolve 能自包含地调用本机 Codex 做 review / 红军 / 委派,**不依赖外部插件的安装与门控**。
+让 nocode 能自包含地调用本机 Codex 做 review / 红军 / 委派,**不依赖外部插件的安装与门控**。
 
 调用方在 `rules/rule-codex-review.md`(直接 Bash 调下面的 companion verb)。
 

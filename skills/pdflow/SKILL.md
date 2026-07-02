@@ -3,7 +3,7 @@ name: pdflow
 description: 产品发现工作流领航（Research → PRD · 2 场景路由）。可被 devflow 主动建议，也可用户 /调 进入。给"当前阶段判断 + 下一步建议"，用户拍板，不替执行。用于产品调研和需求定义阶段，独立于开发流 devflow。触发：用户说"pdflow/产品发现/走产品阶段/先调研再写 PRD"，或 devflow Full 场景建议先走产品流。
 ---
 
-# nocode-evolve:pdflow — 产品阶段工作流领航
+# nocode:pdflow — 产品阶段工作流领航
 
 > 产品流驾驶舱。独立于 devflow，专管"开发前"的产品调研和需求定义。
 >
@@ -14,7 +14,7 @@ description: 产品发现工作流领航（Research → PRD · 2 场景路由）
 > **顺序推进纪律（硬约束）**：禁止自动跳步。推进只有一条路：todo 写好流程 → 进入当前节点 → 顺序执行子步骤 → 逐条验证 Gate → 全部通过 → 报告用户 → 等用户拍板 → 才进下一阶段。agent 不得自行跳过、合并、快进任何阶段。"这步简单直接过" / "上一轮做过" 都不是跳步的理由。
 
 > ❌ 反例：PRD 阶段判断"需求简单"，跳过用户确认直接快进交互设计——没确认的需求带着错误往下游设计流。
-> ✅ 正例：简单需求也走完每个子步骤 + Gate + 等拍板；每阶段 todo 的最后一项是"调用下一阶段 skill"（如 Research 末尾 → 调 `nocode-evolve:pd-prd`）。（防跳步通则详见 `agent-catalog-using.md`「进了 skill 就走完」）
+> ✅ 正例：简单需求也走完每个子步骤 + Gate + 等拍板；每阶段 todo 的最后一项是"调用下一阶段 skill"（如 Research 末尾 → 调 `nocode:pd-prd`）。（防跳步通则详见 `agent-catalog-using.md`「进了 skill 就走完」）
 
 ### Step 1: 判断场景
 
@@ -49,19 +49,19 @@ description: 产品发现工作流领航（Research → PRD · 2 场景路由）
 **Full 场景**：
 ```
 Task 1: Research — 发散探索（竞品/代码/市场/已有方案）
-  Sub-steps: ⓪ Skill(nocode-evolve:pd-research) → 发散探索 → 产出 research-report
+  Sub-steps: ⓪ Skill(nocode:pd-research) → 发散探索 → 产出 research-report
   Gate: research-report 产出 + Go/No-Go 用户拍板
 
 Task 2: PRD — 收敛成文档
-  Sub-steps: ⓪ Skill(nocode-evolve:pd-prd) → 读 memo + clarify → 写 .prd.md
+  Sub-steps: ⓪ Skill(nocode:pd-prd) → 读 memo + clarify → 写 .prd.md
   Gate: .prd.md 产出 + 用户确认
 
 Task 3: 交互设计 — 界面结构 + 交互流（无界面需求可跳过）
-  Sub-steps: ⓪ Skill(nocode-evolve:pd-ix) → 起点 → 竞品+交互拆解 → IA批准 → 产出 .ix.md
+  Sub-steps: ⓪ Skill(nocode:pd-ix) → 起点 → 竞品+交互拆解 → IA批准 → 产出 .ix.md
   Gate: .ix.md 产出 + 用户确认 IA
 
 Task 4: 视觉设计 — 视觉方向 + 原型（无界面需求可跳过）
-  Sub-steps: ⓪ Skill(nocode-evolve:pd-vd) → 视觉探索 → 保真度+交付+方向 → DS → 原型 → 产出 .vd.md
+  Sub-steps: ⓪ Skill(nocode:pd-vd) → 视觉探索 → 保真度+交付+方向 → DS → 原型 → 产出 .vd.md
   Gate: .vd.md 产出 + 用户确认方向
 
 Task 5: Handoff — 衔接开发流
@@ -71,15 +71,15 @@ Task 5: Handoff — 衔接开发流
 **Light 场景**：
 ```
 Task 1: PRD — 收敛成文档
-  Sub-steps: ⓪ Skill(nocode-evolve:pd-prd) → 读 memo + clarify → 写 .prd.md
+  Sub-steps: ⓪ Skill(nocode:pd-prd) → 读 memo + clarify → 写 .prd.md
   Gate: .prd.md 产出 + 用户确认
 
 Task 2: 交互设计 — 界面结构 + 交互流（无界面需求可跳过）
-  Sub-steps: ⓪ Skill(nocode-evolve:pd-ix) → 起点 → 竞品+交互拆解 → IA批准 → 产出 .ix.md
+  Sub-steps: ⓪ Skill(nocode:pd-ix) → 起点 → 竞品+交互拆解 → IA批准 → 产出 .ix.md
   Gate: .ix.md 产出 + 用户确认 IA
 
 Task 3: 视觉设计 — 视觉方向 + 原型（无界面需求可跳过）
-  Sub-steps: ⓪ Skill(nocode-evolve:pd-vd) → 视觉探索 → 保真度+交付+方向 → DS → 原型 → 产出 .vd.md
+  Sub-steps: ⓪ Skill(nocode:pd-vd) → 视觉探索 → 保真度+交付+方向 → DS → 原型 → 产出 .vd.md
   Gate: .vd.md 产出 + 用户确认方向
 
 Task 4: Handoff — 衔接开发流
@@ -90,7 +90,7 @@ Task 4: Handoff — 衔接开发流
 
 每个阶段严格按以下 5 步执行，不跳不并行，缺任一步 = 跳步 bug：
 
-1. **加载 skill（硬 Gate）**：标 in_progress 后的第一个动作必须是 `Skill(nocode-evolve:pd-research)` / `Skill(nocode-evolve:pd-prd)` / `Skill(nocode-evolve:pd-ix)` / `Skill(nocode-evolve:pd-vd)`。没看到 Skill 调用回执，不许执行任何 sub-step——task description 里的 sub-steps 是地图，skill 内才有 clarify gate / 文档结构 / 标注约定这些详图。
+1. **加载 skill（硬 Gate）**：标 in_progress 后的第一个动作必须是 `Skill(nocode:pd-research)` / `Skill(nocode:pd-prd)` / `Skill(nocode:pd-ix)` / `Skill(nocode:pd-vd)`。没看到 Skill 调用回执，不许执行任何 sub-step——task description 里的 sub-steps 是地图，skill 内才有 clarify gate / 文档结构 / 标注约定这些详图。
 2. **顺序执行 sub-steps**：按 task description 中的子步骤链逐个执行，每个子步骤完成后确认其条件满足再进下一个。
 3. **Gate 证据点名**：所有子步骤完成后，逐条核对 Gate 条件 + 具体证据。任一条不满足 = 不标 completed。
 4. **标 completed + 停下报告**：向用户报告本阶段完成情况 + 建议下一步。**不自动进入下一阶段。**

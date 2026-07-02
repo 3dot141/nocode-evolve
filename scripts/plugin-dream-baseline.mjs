@@ -4,9 +4,9 @@
 //   node scripts/plugin-dream-baseline.mjs [pluginRoot]           查看当前 diff 判断
 //   node scripts/plugin-dream-baseline.mjs --set [pluginRoot]     写入/推进 baseline 到当前 HEAD
 //
-// baseline 存储: git config branch.<branch>.nocode-evolve-plugin-dream-baseline
+// baseline 存储: git config branch.<branch>.nocode-plugin-dream-baseline
 //   key 按分支隔离，不用全局 key —— 避免多 worktree/分支同时跑 /plugin-dream 时互相覆盖 baseline（红军 C7 修复，
-//   与 rule-git-worktree.md 已验证的 branch.<branch>.nocode-evolve-base 模式一致）.
+//   与 rule-git-worktree.md 已验证的 branch.<branch>.nocode-base 模式一致）.
 //
 // 监控范围（红军 W7 修复，从"只列 generate.mjs/vendor-sync.mjs 两个文件"放宽到整个 hooks/ scripts/ 目录）:
 //   rules/ skills/ commands/ hooks/ scripts/ rules/manifest.json .claude-plugin/plugin.json
@@ -21,7 +21,7 @@
 import { fileURLToPath } from 'node:url';
 import { git, parsePorcelain } from './git-exec.mjs';
 
-const CONFIG_KEY_SUFFIX = 'nocode-evolve-plugin-dream-baseline';
+const CONFIG_KEY_SUFFIX = 'nocode-plugin-dream-baseline';
 
 export const MONITORED_PATHS = [
   'rules/',

@@ -309,7 +309,7 @@ Mark each task done as it completes.
 **第一层 · 结构化 review 引入 `reviewing` 框架（review 方法论底座）**：若该 review 步骤是**多维度评审**（多个评审维度 + 分档 + findings 分级 + 收口，例如新 skill 自带一个代码 / 设计 / 方案评审阶段），引导它引入 `reviewing` 框架、别在新 skill 里重造一套 review 流程——新 skill 的该步骤写成先 `Read {NOCODE_SKILL_REF}/reviewing/skeleton.md`（7 步流程 + 方法库选择表 + 公共能力）+ `Read {NOCODE_SKILL_REF}/reviewing/findings-contract.md`（统一 findings/verdict 契约），在框架第 3 步注入本领域评审维度、第 4 步从方法库选打法。
 
 **第二层 · 独立交叉那一步选谁**（reviewing 框架第 5 步的载体；轻量单点自查则跳过第一层直接选）：
-- **评估/拍板类**（"这个方案行不行"）→ 指向 `Skill(nocode-evolve:red-blue-deep)`
+- **评估/拍板类**（"这个方案行不行"）→ 指向 `Skill(nocode:red-blue-deep)`
 - **产出审查类**（"这段代码/文档有没有问题"）→ 推荐 subagent + codex 并行独立 review（参照 `rule-codex-review` 场景四）
 - **合规检查类**（"是否遵守了规则"）→ 推荐 subagent 独立检查（不需要跨模型）
 
@@ -317,7 +317,7 @@ Mark each task done as it completes.
 
 ### Red-Blue Review
 
-After writing SKILL.md, call `Skill(nocode-evolve:red-blue-deep)` to review it. Input: "Review this SKILL.md — does it actually address the baseline failures? Are there loopholes, missing edge cases, or instructions that an agent could misinterpret?" red-blue-deep will determine the appropriate depth (light/heavy) on its own.
+After writing SKILL.md, call `Skill(nocode:red-blue-deep)` to review it. Input: "Review this SKILL.md — does it actually address the baseline failures? Are there loopholes, missing edge cases, or instructions that an agent could misinterpret?" red-blue-deep will determine the appropriate depth (light/heavy) on its own.
 
 Fix any issues found by the review before passing the Exit Gate.
 

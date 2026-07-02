@@ -17,7 +17,7 @@
 **触发** (任何一项命中):
 
 - 即将做设计性动作 (写设计文档 / PRD / RFC / ADR / 方案对比 / 技术选型 / 重构方案 / 架构设计)
-- 即将做**代码搜索** (`Agent(subagent_type: "nocode-evolve:semble-search")` / Bash `grep -r` / `rg` / `find` 找实现 / `Explore` agent)
+- 即将做**代码搜索** (`Agent(subagent_type: "nocode:semble-search")` / Bash `grep -r` / `rg` / `find` 找实现 / `Explore` agent)
 - 即将做**多文件 Read** 分析方案 (≥3 文件 Read 探源)
 
 **不触发** (明确豁免):
@@ -42,11 +42,11 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/freshness-check.mjs" --max-behind=5 --ttl=72
 脚本内部逻辑 (agent 无需手动跑这些, 脚本封装):
 
 1. **base 分支推断** (优先级):
-   - `git config branch.<branch>.nocode-evolve-base` (worktree 创建时写入, 记录真实分叉基线; 不随 `push -u` 漂移到 `origin/<feature-branch>`)
+   - `git config branch.<branch>.nocode-base` (worktree 创建时写入, 记录真实分叉基线; 不随 `push -u` 漂移到 `origin/<feature-branch>`)
    - `git rev-parse --abbrev-ref --symbolic-full-name HEAD@{u}` (当前分支 upstream, eg. `origin/release/x` 或 `origin/main`)
    - 无 upstream / detached → `git rev-parse --abbrev-ref origin/HEAD` (远端 default branch, 通常 `origin/main`)
    - 兜底 `origin/main`
-2. **cache** (`git rev-parse --git-path nocode-evolve-freshness.json` — 每 worktree 独立, `.git/` 下不被 commit; 结构 v2: `entries` 按 `<branch>+<base>` 分条记 `last_fetch_ms/behind/ahead`):
+2. **cache** (`git rev-parse --git-path nocode-freshness.json` — 每 worktree 独立, `.git/` 下不被 commit; 结构 v2: `entries` 按 `<branch>+<base>` 分条记 `last_fetch_ms/behind/ahead`):
    - 命中条件: 该 `branch+base` 有 entry + `(now - last_fetch_ms) < TTL (默认 2h)`
    - 命中 → 直接用 entry, 毫秒返回, **不 fetch**
 3. **cache miss** → `git fetch origin <base 去 origin/ 前缀>` (静默) → 重算 `behind = HEAD..base` / `ahead = base..HEAD` → 写回该 branch+base 的 entry
@@ -75,4 +75,4 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/freshness-check.mjs" --max-behind=5 --ttl=72
 
 ## 机制化局限 (诚实标注)
 
-本 rule 是 **behavior 触发** — "即将搜代码 / 设计"不是单条 Bash 命令, **PreToolUse 拦不到** (主搜索通道 `Agent(subagent_type: "nocode-evolve:semble-search")` 不经 Bash matcher). 主要靠 catalog Step 0 工序 + agent 自觉跑脚本. cache 机制大幅降低重复 fetch 成本 (2h 内 0 网络开销), 是性能上的兜底, 但不是触发上的硬保证.
+本 rule 是 **behavior 触发** — "即将搜代码 / 设计"不是单条 Bash 命令, **PreToolUse 拦不到** (主搜索通道 `Agent(subagent_type: "nocode:semble-search")` 不经 Bash matcher). 主要靠 catalog Step 0 工序 + agent 自觉跑脚本. cache 机制大幅降低重复 fetch 成本 (2h 内 0 网络开销), 是性能上的兜底, 但不是触发上的硬保证.

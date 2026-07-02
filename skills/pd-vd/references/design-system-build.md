@@ -124,7 +124,7 @@ claude-design open <projectId>
 
 ### 写入流程
 
-通过 `Skill(nocode-evolve:claude-design)` 统一操作。claude-design 内部自动路由到 MCP 或 DesignSync:
+通过 `Skill(nocode:claude-design)` 统一操作。claude-design 内部自动路由到 MCP 或 DesignSync:
 
 - **小文件**（.dc.html 等 < 50KB）→ MCP `finalize_plan` → `write_files`（inline data）
 - **大文件**（bundle/字体/图片 > 50KB）→ DesignSync `finalize_plan` → `write_files`（localPath 从磁盘读）

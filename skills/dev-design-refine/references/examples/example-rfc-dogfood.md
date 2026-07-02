@@ -1,7 +1,7 @@
 ---
 type: rfc
 rfc_id: RFC-001
-topic: 是否在 nocode-evolve 引入项目级 wiki 系统
+topic: 是否在 nocode 引入项目级 wiki 系统
 date: 260509
 author: 3dot141
 status: accepted
@@ -9,7 +9,7 @@ status: accepted
 
 # RFC-001：引入项目级 wiki 系统
 
-> dogfood：以 nocode-evolve 插件历史决策为题材，演示新 RFC 骨架（背景 / 目标 / 提案 / 影响评估 / 开放问题）的写法。
+> dogfood：以 nocode 插件历史决策为题材，演示新 RFC 骨架（背景 / 目标 / 提案 / 影响评估 / 开放问题）的写法。
 
 ## 背景
 
@@ -39,7 +39,7 @@ status: accepted
 
 ### 提案核心
 
-为 nocode-evolve 增加项目级长期记忆能力：用户主动跑 `/wiki-update` 触发，AI 从当前会话提炼出 1-3 个值得沉淀的主题，写入 `<project>/.agents-personal/wiki/pages/yymmdd-<slug>.md`，自动派生 INDEX；AI 在新会话遇到项目背景类问题时通过 overlay-wiki rule 驱动主动 `ls wiki/` → `Read INDEX` → 按 description 决定是否 Read 具体页。
+为 nocode 增加项目级长期记忆能力：用户主动跑 `/wiki-update` 触发，AI 从当前会话提炼出 1-3 个值得沉淀的主题，写入 `<project>/.agents-personal/wiki/pages/yymmdd-<slug>.md`，自动派生 INDEX；AI 在新会话遇到项目背景类问题时通过 overlay-wiki rule 驱动主动 `ls wiki/` → `Read INDEX` → 按 description 决定是否 Read 具体页。
 
 ### 问题拆解
 
@@ -124,7 +124,7 @@ status: accepted
 | 范围 | 受影响事项 |
 |---|---|
 | 单一作者（Harrison） | 跨项目工作时 AI 体验提升，但要养成定期跑 `/wiki-update` 的习惯 |
-| nocode-evolve 插件本体 | 新增 1 个 command + 1 个 overlay rule + 1 个 hook，约 200 行内 |
+| nocode 插件本体 | 新增 1 个 command + 1 个 overlay rule + 1 个 hook，约 200 行内 |
 | 既有项目 | 历史项目零影响——不跑 `/wiki-update` = 没有 wiki，行为完全 backward compatible |
 
 ### 缺点 / 风险
@@ -136,7 +136,7 @@ status: accepted
 
 ### 迁移 / 兼容
 
-- 既有 nocode-evolve 用户：升级后默认行为不变（wiki 目录不存在 = 全程跳过相关逻辑）
+- 既有 nocode 用户：升级后默认行为不变（wiki 目录不存在 = 全程跳过相关逻辑）
 - 新用户：首次跑 `/wiki-update` 自动创建 `.agents-personal/wiki/` 目录
 - 删除 wiki：用户直接 `rm -rf .agents-personal/wiki/` 即可，无 cleanup migration
 

@@ -17,7 +17,7 @@ wiki 是 AI 的**项目知识第一站**，两层内容（`draft/` 草稿 + `pag
 
 会话开局只做存在性检查(`ls`)。实际 Read `wiki/index.md` 推迟到命中下列任一:
 
-- 即将调 `nocode-evolve:brainstorming` / `nocode-evolve:design-doc-writing`;
+- 即将调 `nocode:brainstorming` / `nocode:design-doc-writing`;
 - 用户消息含「设计 / 选型 / 方案 / 架构 / 重构 / RFC / 提案」等设计性意图;
 - 需要项目历史背景才能动手: 上手 / 调试某子系统(如 SigNoz 查询、本地联调、agent 装配、system prompt 构成), 或问「为什么这么设计 / 之前怎么决定 / 踩过什么坑」;
 - **即将排查 / 调试 / 联调任何环境或功能问题**（本地功能看不见 / 进不去 / 灰度开关 / 白名单 / 权限不通 / 环境配置差异 / 接口不返回预期数据）→ **默认先查 wiki/index.md**，不等识别为"项目特有知识"再查（排查类任务的项目特有知识命中率高，先查 wiki 的成本远低于漏查的代价）;

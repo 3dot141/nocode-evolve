@@ -17,4 +17,4 @@ model: opus
 
 把被审的 SQL / migration / schema diff 填入 database-method card 的 `{DIFF}`，按维度逐项核查，产出 findings + verdict。
 
-> `{NOCODE_SKILL_REF}` = nocode-evolve 插件的 `skills/references`。card 改造自本 agent 原内容，领域清单完整保留。
+> `{NOCODE_SKILL_REF}` = nocode 插件的 `skills/references`。card 改造自本 agent 原内容，领域清单完整保留。

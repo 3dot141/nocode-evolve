@@ -3,7 +3,7 @@ name: devflow
 description: 工程任务流程领航（8 阶段 · 4 场景路由）。可被 model 主动调起，也可用户 /调 进入。给"当前阶段判断 + 下一步建议 + 备选"，用户拍板，不替用户执行。agent 视角：复杂/多步/跨阶段任务（跨文件 + 状态未知 / 需要 commit / PR / 设计文档 / 评审 / 用户说"整个/整体/全流程"）时，主动调起本 skill。不用于简单单步任务（由 define skill 的 Mini 场景处理）。
 ---
 
-# nocode-evolve:devflow — 工程任务流程领航
+# nocode:devflow — 工程任务流程领航
 
 > 驾驶舱。**model 命中复杂多步任务时主动调起**，用户也可 `/调` 进入。给建议不替执行。
 >
@@ -16,11 +16,11 @@ description: 工程任务流程领航（8 阶段 · 4 场景路由）。可被 m
 > **顺序推进纪律（硬约束）**：禁止自动跳步。推进只有一条路：todo 写好流程 → 进入当前节点 → 顺序执行子步骤 → 逐条验证 Gate → 全部通过 → 报告用户 → 等用户拍板 → 才进下一阶段。agent 不得自行跳过、合并、快进任何阶段或子步骤。"这步简单直接过" / "上一轮做过" / "用户说快点" / "用户说自主执行到 land" 都不是跳步的理由——快≠跳，可以每步简洁，不能省步骤。用户授权自主推进免除的是等待拍板的时间，不是阶段本身。
 
 > ❌ 反例：进了某阶段判断"任务简单"，跳过该阶段的对抗审视 / 用户确认，用户一句"继续"就快进下一阶段——没走完 Gate 的产出直接往下游流。
-> ✅ 正例：简单任务也逐子步骤走完 + 逐条验证 Gate + 等用户拍板；每阶段 todo 的最后一项是"调用下一阶段 skill"（如 Plan 末尾 → 调 `nocode-evolve:dev-build`），把交接固化成一个没勾的 task，context 丢了也不断在原地。（防跳步通则详见 `agent-catalog-using.md`「进了 skill 就走完」）
+> ✅ 正例：简单任务也逐子步骤走完 + 逐条验证 Gate + 等用户拍板；每阶段 todo 的最后一项是"调用下一阶段 skill"（如 Plan 末尾 → 调 `nocode:dev-build`），把交接固化成一个没勾的 task，context 丢了也不断在原地。（防跳步通则详见 `agent-catalog-using.md`「进了 skill 就走完」）
 
 ### Step 1: 调 Define 判断场景
 
-任何任务进入 devflow 的第一步都是调 `nocode-evolve:dev-define`。Define 内部完成：
+任何任务进入 devflow 的第一步都是调 `nocode:dev-define`。Define 内部完成：
 - 需求澄清 + 目标定义
 - 场景分类（Full / Standard / Fix / Mini）
 
@@ -28,9 +28,9 @@ Define 返回后，拿到确认的 restate + 场景分类，进 Step 2。
 
 **Full 场景产品流前置检查**（Define 返回 Full 场景后、进入 Step 2 前执行）：检查 `{pd_prd_output}` 所在目录下有没有已有 `.prd.md`：
 - 有 → Define 读它作为输入，正常进 Step 2
-- 没有 → 建议用户先走产品流（`nocode-evolve:pdflow`），用 AskUserQuestion 三选：
+- 没有 → 建议用户先走产品流（`nocode:pdflow`），用 AskUserQuestion 三选：
   1. "走产品流 (pdflow)" — 调起产品流驾驶舱（Research → PRD），完成后回 devflow
-  2. "只做 research" — 调起 `nocode-evolve:pd-research` 单独调研
+  2. "只做 research" — 调起 `nocode:pd-research` 单独调研
   3. "跳过，直接继续" — 不做产品调研，按用户描述继续
 
 用户选跳过 = 显式授权，按其意愿继续。不反复追问。
@@ -57,8 +57,8 @@ Define 返回后，拿到确认的 restate + 场景分类，进 Step 2。
 示例：
 ```
 TaskCreate(subject: "阶段 8: Land",
-           description: "调用: nocode-evolve:dev-land / Gate: PR merged + 任务流转 + worktree 清理
-Sub-steps: ⓪ Skill(nocode-evolve:dev-land) → 8a.Pre-flight → 8b.Finish-branch(dev-finish-branch) → 8c.Post-merge(dev-finish-branch 的 post-merge.md)")
+           description: "调用: nocode:dev-land / Gate: PR merged + 任务流转 + worktree 清理
+Sub-steps: ⓪ Skill(nocode:dev-land) → 8a.Pre-flight → 8b.Finish-branch(dev-finish-branch) → 8c.Post-merge(dev-finish-branch 的 post-merge.md)")
 ```
 
 Sub-steps 写进 description 是为了**进入阶段时一眼看到完整步骤序列**——防止跳步遗漏。链首的 `⓪ Skill(...)` 是为了把"加载 skill"钉成每个阶段的第一个动作——**sub-steps 是地图，skill 才是详图**，照地图裸跑会丢掉 skill 内的模板 / Iron Law / 格式约束。
@@ -68,7 +68,7 @@ Sub-steps 写进 description 是为了**进入阶段时一眼看到完整步骤�
 每个阶段严格按以下 6 步执行，不跳不并行，缺任一步 = 跳步 bug：
 
 1. **进入前** Read 该阶段的 rule（如有）
-2. **加载 skill（硬 Gate）**：TaskUpdate 标 in_progress 后的**第一个动作**必须是 `Skill(nocode-evolve:<阶段 skill>)`。没看到 Skill 调用回执，不许执行任何 sub-step。
+2. **加载 skill（硬 Gate）**：TaskUpdate 标 in_progress 后的**第一个动作**必须是 `Skill(nocode:<阶段 skill>)`。没看到 Skill 调用回执，不许执行任何 sub-step。
 3. **顺序执行 sub-steps**：按 task description 中的子步骤链**逐个**执行，每个子步骤完成后确认其产出/条件满足，再进下一个子步骤。不跳步、不合并、不并行。
 4. **Gate 证据点名**：所有子步骤完成后，逐条核对 Gate 条件 + 满足它的具体证据。任一条不满足 = 不标 completed。
 5. **TaskUpdate completed + 停下报告**：标 completed 后**停下**，向用户报告本阶段完成情况 + 下一步建议（格式见 Step 5）。**不自动进入下一阶段。**
@@ -82,9 +82,9 @@ Sub-steps 写进 description 是为了**进入阶段时一眼看到完整步骤�
 **反例**（触发本次强化的 bug）：
 ```
 ❌ 进入 Build 阶段，看到 task description 里已有 "5a.Scope Lock → 5b.Test First → ..."，
-   直接照着写代码——没调 Skill(nocode-evolve:dev-build)，丢了 TDD Iron Law 和 slice 循环约束。
+   直接照着写代码——没调 Skill(nocode:dev-build)，丢了 TDD Iron Law 和 slice 循环约束。
 ```
-正确做法：标 in_progress → 先 `Skill(nocode-evolve:dev-build)` 拿到完整指令 → 再按 sub-steps 推进。
+正确做法：标 in_progress → 先 `Skill(nocode:dev-build)` 拿到完整指令 → 再按 sub-steps 推进。
 
 ### Step 5: 输出建议 + 等用户拍板
 
@@ -119,14 +119,14 @@ Land 有 5 个子步骤（8a Create PR → 8b ... → 8e Cleanup），只说"pus
 
 | # | 阶段 | 调用 | 进入前 Read | Gate |
 |---|---|---|---|---|
-| 1 | **Define** | `nocode-evolve:dev-define` | — | 问题边界收敛 + 场景分类 + 用户确认 |
-| 2 | **Env** | Gate Base → `nocode-evolve:using-git-worktrees` → EnterWorktree | `rule-git-worktree` | worktree 已建并进入（注：Env 不需要独立 nocode-evolve skill，逻辑完全由 superpowers skill + rule-git-worktree 覆盖） |
-| 3 | **Design** | `nocode-evolve:dev-design` | — | 方案确认 + 测试目标 + 设计文档评审通过 + 用户 approve |
-| 4 | **Plan** | `nocode-evolve:dev-plan` | — | 计划已产出 + 所有 task ≤ M + 用户确认 |
-| 5 | **Build** | `nocode-evolve:dev-build` | — | 所有 task 完成 + 测试通过 + build 通过 |
-| 6 | **Verify** | `nocode-evolve:dev-verify` | — | 验收标准逐条通过 + 证据收集 |
-| 7 | **Review** | `nocode-evolve:dev-review` | `rule-codex-review` | Critical 全 fix + 用户 approve |
-| 8 | **Land** | `nocode-evolve:dev-land` | — | dev-finish-branch(PR/merge/keep/discard + post-merge 任务流转) |
+| 1 | **Define** | `nocode:dev-define` | — | 问题边界收敛 + 场景分类 + 用户确认 |
+| 2 | **Env** | Gate Base → `nocode:using-git-worktrees` → EnterWorktree | `rule-git-worktree` | worktree 已建并进入（注：Env 不需要独立 nocode skill，逻辑完全由 superpowers skill + rule-git-worktree 覆盖） |
+| 3 | **Design** | `nocode:dev-design` | — | 方案确认 + 测试目标 + 设计文档评审通过 + 用户 approve |
+| 4 | **Plan** | `nocode:dev-plan` | — | 计划已产出 + 所有 task ≤ M + 用户确认 |
+| 5 | **Build** | `nocode:dev-build` | — | 所有 task 完成 + 测试通过 + build 通过 |
+| 6 | **Verify** | `nocode:dev-verify` | — | 验收标准逐条通过 + 证据收集 |
+| 7 | **Review** | `nocode:dev-review` | `rule-codex-review` | Critical 全 fix + 用户 approve |
+| 8 | **Land** | `nocode:dev-land` | — | dev-finish-branch(PR/merge/keep/discard + post-merge 任务流转) |
 
 ### 共享词汇（跨 skill leading words）
 
@@ -165,7 +165,7 @@ Define → Design → Plan 尽量保持在同一个上下文窗口——设计�
 | 能力 | 调用 | 触发时机 | 优先级（冲突时） |
 |---|---|---|---|
 | **Debug** | `../../references/debug-protocol.md` | Build/Verify 遇阻（测试失败/卡住） | bug/失败 → 优先 Debug |
-| **Red-Blue-Deep** | `nocode-evolve:red-blue-deep` | 决策分歧（选 A 还是 B？） | 决策前 → 优先 Red-Blue |
+| **Red-Blue-Deep** | `nocode:red-blue-deep` | 决策分歧（选 A 还是 B？） | 决策前 → 优先 Red-Blue |
 | **Doubt-Driven** | spawn 独立 reviewer（偏向证伪不是批准） | 非平凡决策（跨模块/不可逆/安全敏感） | 决策后验证 → 优先 Doubt |
 | **Context Engineering** | 主动建议 `/distill` + 新会话 | 长会话（多轮工具调用/跨子任务） | 上下文风险 → 建议收尾 |
 | **Git Freshness** | `rule-git-freshness` | 设计/搜索/多文件 Read 前 | 自动触发 |
@@ -207,7 +207,7 @@ Fix 类任务的 Review 通过后，问一句：**"什么能预防这个 bug？"
 |---|---|---|
 | 2a. Base 推断 | 按优先级推断 base ref | upstream→@{u}→origin/HEAD→origin/main |
 | 2b. Gate Base | 展示 base + behind/ahead 状态 | ahead>0 弹问三选；流程内必须用户确认 |
-| 2c. worktree add | `git worktree add -b` + 写 nocode-evolve-base config | 分支名 / 路径自动推导 |
+| 2c. worktree add | `git worktree add -b` + 写 nocode-base config | 分支名 / 路径自动推导 |
 | 2d. EnterWorktree | 切 cwd 到 worktree | — |
 | 2e. Setup | worktree-setup.mjs 补齐 env/config | envCandidates 哪些 cp（拿不准优先 cp） |
 | 2f. Verify Baseline | 跑测试确认起点干净 | 失败则报告 + 请示 |

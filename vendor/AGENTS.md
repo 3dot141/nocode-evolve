@@ -1,6 +1,6 @@
 # vendor/ — 上游插件 vendor 管理
 
-本目录存放 nocode-evolve 依赖的上游 Claude Code 插件原版源码，用于版本追踪和内容合入。
+本目录存放 nocode 依赖的上游 Claude Code 插件原版源码，用于版本追踪和内容合入。
 
 ## 目录结构
 

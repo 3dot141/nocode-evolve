@@ -33,7 +33,7 @@ Task 2: 编排者验证
   Gate: 全部 task 通过编排者独立验证（不信执行方自报）
 
 Task 3: 硬交接 — 调用下一步 skill
-  Sub-steps: 按 Exit Gate 硬交接报告 Build 完成（完成 task 数 + 测试 + build 状态）→ 建议进 Verify → 等用户拍板后调 Skill(nocode-evolve:dev-verify)
+  Sub-steps: 按 Exit Gate 硬交接报告 Build 完成（完成 task 数 + 测试 + build 状态）→ 建议进 Verify → 等用户拍板后调 Skill(nocode:dev-verify)
   Gate: 用户拍板进入 Verify（这一步不勾，Build 不算收尾）
   metadata: {handoff: true}（供防跳步 Hook B 识别交接 task）
 ```
@@ -72,7 +72,7 @@ Task 3: 硬交接 — 调用下一步 skill
 - [ ] 全部测试通过（整个相关套件，不只新写的）
 - [ ] build 通过
 - [ ] 后续 Verify 可开始
-- [ ] **硬交接**：Exit Gate 全部通过后，向用户报告 Build 完成（含完成 task 数 + 测试通过状态 + build 状态），建议下一阶段：Verify（`nocode-evolve:dev-verify`）。列出 Verify 阶段的 sub-steps + 关键决策（devflow Step 5 格式）。等用户拍板，不自行进入下一阶段
+- [ ] **硬交接**：Exit Gate 全部通过后，向用户报告 Build 完成（含完成 task 数 + 测试通过状态 + build 状态），建议下一阶段：Verify（`nocode:dev-verify`）。列出 Verify 阶段的 sub-steps + 关键决策（devflow Step 5 格式）。等用户拍板，不自行进入下一阶段
 
 **"lint + typecheck 通过" ≠ 完成。** 空函数体、未填充的方法、placeholder 注释都能过 lint 和 typecheck。Exit Gate 必须独立确认每个 task 的功能已实现，不只是语法合法。
 

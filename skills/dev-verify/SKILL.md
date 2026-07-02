@@ -64,7 +64,7 @@ Task 6: 验收逐条核对（Step 6）
   Gate: 逐条通过，任一 ❌ 回 Build
 
 Task 7: 硬交接 — 调用下一步 skill
-  Sub-steps: 按 Exit Gate 硬交接报告 Verify 完成（验收通过率 + 证据）→ 建议进 Review → 等用户拍板后调 Skill(nocode-evolve:dev-review)
+  Sub-steps: 按 Exit Gate 硬交接报告 Verify 完成（验收通过率 + 证据）→ 建议进 Review → 等用户拍板后调 Skill(nocode:dev-review)
   Gate: 用户拍板进入 Review（这一步不勾，Verify 不算收尾）
   metadata: {handoff: true}（供防跳步 Hook B 识别交接 task）
 ```
@@ -156,7 +156,7 @@ Core Web Vitals：LCP ≤ 2.5s、INP ≤ 200ms、CLS ≤ 0.1。详见 `reference
 - [ ] 验收标准 + 路径 + 约束逐条通过
 - [ ] 性能达标（有需求时）
 - [ ] 后续 Review 可开始
-- [ ] **硬交接**：Exit Gate 全部通过后，向用户报告 Verify 完成（含验收标准通过率 + 证据摘要），建议下一阶段：Review（`nocode-evolve:dev-review`）。列出 Review 阶段的 sub-steps + 关键决策（devflow Step 5 格式）。等用户拍板，不自行进入下一阶段
+- [ ] **硬交接**：Exit Gate 全部通过后，向用户报告 Verify 完成（含验收标准通过率 + 证据摘要），建议下一阶段：Review（`nocode:dev-review`）。列出 Review 阶段的 sub-steps + 关键决策（devflow Step 5 格式）。等用户拍板，不自行进入下一阶段
 
 ## Common Rationalizations
 

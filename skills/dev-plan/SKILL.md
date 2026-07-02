@@ -60,7 +60,7 @@ Task 5: 插 checkpoint
   Gate: checkpoint 边界已插
 
 Task 6: Round 1 Red-Blue Review — 骨架对抗审视
-  Sub-steps: 调 Skill(nocode-evolve:red-blue-deep) 评估骨架 → 结论中成立的质疑修正到骨架
+  Sub-steps: 调 Skill(nocode:red-blue-deep) 评估骨架 → 结论中成立的质疑修正到骨架
   Gate: red-blue-deep 流程完成，成立的质疑已修正
 
 ═══ Round 2: 填充代码（读设计文档 + 代码库 → 写真实代码）═══
@@ -73,7 +73,7 @@ Task 7: 逐 task 填充真实代码
 ═══ 收尾 ═══
 
 Task 8: Round 2 Checklist 核查 + 窄化 Red-Blue + Plan Validation
-  Sub-steps: checklist 逐项核查（API签名/测试覆盖/设计一致/废弃接口）→ 窄化 Skill(nocode-evolve:red-blue-deep) 只评跨task一致性 → 裁决修正 → 四项自检（需求覆盖 + 路径覆盖 + 可验证 + 无环）
+  Sub-steps: checklist 逐项核查（API签名/测试覆盖/设计一致/废弃接口）→ 窄化 Skill(nocode:red-blue-deep) 只评跨task一致性 → 裁决修正 → 四项自检（需求覆盖 + 路径覆盖 + 可验证 + 无环）
   Gate: checklist + red-blue-deep 流程完成 + 裁决修正完成 + 四项自检全过（任一不过回 Task 7 补）
 
 Task 9: 用户确认计划
@@ -81,7 +81,7 @@ Task 9: 用户确认计划
   Gate: 用户确认计划
 
 Task 10: 硬交接 — 调用下一步 skill
-  Sub-steps: 按 Exit Gate 硬交接报告 Plan 完成（task 数 + 首个 slice）→ 建议进 Build → 等用户拍板后调 Skill(nocode-evolve:dev-build)
+  Sub-steps: 按 Exit Gate 硬交接报告 Plan 完成（task 数 + 首个 slice）→ 建议进 Build → 等用户拍板后调 Skill(nocode:dev-build)
   Gate: 用户拍板进入 Build（这一步不勾，Plan 不算收尾）
   metadata: {handoff: true}（供防跳步 Hook B 识别交接 task）
 ```
@@ -138,7 +138,7 @@ Round 1 写骨架——定清楚**改什么、覆盖什么、谁做**，代码�
 
 Round 1 骨架完成，在填充代码前对计划骨架做对抗审视。骨架阶段发现的问题修正成本低，填充完再改代价翻倍。
 
-调用 `Skill(nocode-evolve:red-blue-deep)`，评估问题：
+调用 `Skill(nocode:red-blue-deep)`，评估问题：
 
 > 「这份计划的骨架合理吗？切片策略（垂直还是横切？每片独立可验证吗？）、依赖图（有没有隐式耦合遗漏？）、risk-first 排序（最不确定的真的排前面了吗？）、task 粒度（sizing 准吗？有 and 该拆的吗？）、restate 覆盖（有遗漏路径吗？）」
 
@@ -218,7 +218,7 @@ Round 1 的骨架定了"改什么"，Round 2 填"怎么改"——每个 task 补
 - 实现是否和设计文档的 BF 伪代码 / 接口一致
 - 有没有引用已废弃接口
 
-**窄化 Red-Blue**（只审跨 task 一致性 / 执行顺序）：调用 `Skill(nocode-evolve:red-blue-deep)`，评估：
+**窄化 Red-Blue**（只审跨 task 一致性 / 执行顺序）：调用 `Skill(nocode:red-blue-deep)`，评估：
 
 > 「前置 task 的产出（接口/数据结构/约定）够后续 task 用吗？多个 task 之间有没有隐含冲突的假设？执行顺序对吗？」
 
@@ -288,7 +288,7 @@ task 间依赖不成环，底层 task 排前面。循环依赖说明切片方式
 - [ ] 用户显式确认计划（AskUserQuestion）
 - [ ] 执行方式已选定（`Execution: subagent | executing`），写入 Plan Document Header
 - [ ] 后续 Build 输入齐全：任务序列 + 测试目标 + Execution 字段
-- [ ] **硬交接**：Exit Gate 全部通过后，向用户报告 Plan 完成（含 task 数量 + 首个 slice 概要），建议下一阶段：Build（`nocode-evolve:dev-build`）。列出 Build 阶段的 sub-steps + 关键决策（devflow Step 5 格式）。等用户拍板，不自行进入下一阶段
+- [ ] **硬交接**：Exit Gate 全部通过后，向用户报告 Plan 完成（含 task 数量 + 首个 slice 概要），建议下一阶段：Build（`nocode:dev-build`）。列出 Build 阶段的 sub-steps + 关键决策（devflow Step 5 格式）。等用户拍板，不自行进入下一阶段
 
 ## 核心规则（when X → do Y）
 

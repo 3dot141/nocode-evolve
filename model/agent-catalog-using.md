@@ -1,7 +1,7 @@
 # Skill 使用纪律 + 触发协议 (常驻)
 
 > 吸收自 superpowers v5.1.0 `using-superpowers` skill (MIT, github.com/obra/superpowers, commit e4a2375c).
-> 融合 nocode-evolve catalog Step 0 触发协议 + devflow/command 主动调用条件.
+> 融合 nocode catalog Step 0 触发协议 + devflow/command 主动调用条件.
 
 ## 触发协议 (强制工序, 非"自觉")
 

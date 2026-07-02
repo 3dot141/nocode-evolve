@@ -1,5 +1,5 @@
 ---
-description: nocode-evolve 插件自维护聚合入口（hub），分发到 3 个子动作（write/dream/status）
+description: nocode 插件自维护聚合入口（hub），分发到 3 个子动作（write/dream/status）
 argument-hint: <sub-action> [args]
 ---
 
@@ -11,9 +11,9 @@ argument-hint: <sub-action> [args]
 
 | | personalhub | projecthub | nocodehub |
 |---|---|---|---|
-| 管什么 | `.agents-personal/`（私有知识库） | 项目子目录的 AGENTS.md + README.md | nocode-evolve 插件自身（rules/skills/manifest/commands） |
+| 管什么 | `.agents-personal/`（私有知识库） | 项目子目录的 AGENTS.md + README.md | nocode 插件自身（rules/skills/manifest/commands） |
 | 入仓 | gitignored | 版本控制，共享 | 版本控制，共享（插件仓库本身） |
-| 受众 | 仅当前用户的 agent | 所有协作者的 agent + 人类 | nocode-evolve 插件的维护者 |
+| 受众 | 仅当前用户的 agent | 所有协作者的 agent + 人类 | nocode 插件的维护者 |
 | 文件 | wiki/ + rules/ + AGENTS.md | 各子目录的 AGENTS.md + README.md | commands/rules/skills/manifest.json |
 
 ## 用法
@@ -24,8 +24,8 @@ argument-hint: <sub-action> [args]
 
 | 子动作 | 做什么 | 转发到 | 独立命令 |
 |---|---|---|---|
-| `write` | 新增/优化 plugin rule 或 skill | `Skill(nocode-evolve:plugin-distill)` | `/plugin-distill` |
-| `dream` | 插件仓库自维护巡检（客观漂移+边界符合性） | `Skill(nocode-evolve:plugin-dream)` | `/plugin-dream` |
+| `write` | 新增/优化 plugin rule 或 skill | `Skill(nocode:plugin-distill)` | `/plugin-distill` |
+| `dream` | 插件仓库自维护巡检（客观漂移+边界符合性） | `Skill(nocode:plugin-dream)` | `/plugin-dream` |
 | `status` | 概览当前插件健康状态 | 内联执行（见下方） | — |
 
 ## 执行
@@ -62,7 +62,7 @@ argument-hint: <sub-action> [args]
 输出格式：
 
 ```
-📦 nocode-evolve 插件状态
+📦 nocode 插件状态
 
   版本:    5.1.2
   rule 数: 25

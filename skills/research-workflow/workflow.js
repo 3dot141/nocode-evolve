@@ -29,7 +29,7 @@ const TOOL_CHAINS = {
 遇到开源库用 deepwiki 查文档。
 引用格式: [SOURCE: url]。`,
 
-  code: `搜索用 semble-search agent（Agent subagent_type: "nocode-evolve:semble-search"）。
+  code: `搜索用 semble-search agent（Agent subagent_type: "nocode:semble-search"）。
 semble-search 不可用时降级：Bash grep -r 或 rg → Explore agent。
 引用格式: [Read path:line]。`,
 

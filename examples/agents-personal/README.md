@@ -1,7 +1,7 @@
 # `.agents-personal/` 模板
 
-项目本地 Agent 覆盖目录的范式参考，配合 `nocode-evolve` 插件使用。
-镜像 `nocode-evolve/rules/agent-about.md` 的四章结构（角色 / 行为准则 / 占位符 / 项目指令）。
+项目本地 Agent 覆盖目录的范式参考，配合 `nocode` 插件使用。
+镜像 `nocode/rules/agent-about.md` 的四章结构（角色 / 行为准则 / 占位符 / 项目指令）。
 
 ## 用法
 
@@ -27,7 +27,7 @@ cp -r <plugin-root>/examples/agents-personal .agents-personal
 
 ## 设计约定
 
-参考 `nocode-evolve/rules/overlay-agents-personal.md`：
+参考 `nocode/rules/overlay-agents-personal.md`：
 
 - **AGENTS.md 是路由表**：只列触发条件，不写细节
 - **rules/<topic>.md 放细节**：命令模板、事实表、坑、示例。一个 topic 一个文件

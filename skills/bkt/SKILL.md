@@ -86,11 +86,11 @@ Some commands are **Data Center only** or **Cloud only** — check the command r
 
 When a user's context is DC, do not suggest Cloud-only commands (and vice versa). If the platform is unknown, ask or check with `bkt auth status`.
 
-## Overlay (nocode-evolve plugin)
+## Overlay (nocode plugin)
 
-本插件在 PR 流程上有 overlay 规则,**finishing / PR 创建场景以 `nocode-evolve:dev-finish-branch` skill 为准**。主要差异(PreToolUse hook 也会注入/阻断提醒):
+本插件在 PR 流程上有 overlay 规则,**finishing / PR 创建场景以 `nocode:dev-finish-branch` skill 为准**。主要差异(PreToolUse hook 也会注入/阻断提醒):
 
-- **`bkt pr create` 不要带 `--reviewer` / `--with-default-reviewers`** —— 部分失败会让整个 create 失败、且 cross-fork 时 default-reviewers 解析常出错。nocode-evolve 流程: `bkt pr create` 不带 reviewer → 用 `bkt pr edit <id> --reviewer ...` 后加(允许部分失败 + 大小写 fallback)。详见 `dev-finish-branch` skill Gate Title-Body/PR + `skills/dev-finish-branch/references/pr-flow-bkt.md` Workflow B。
+- **`bkt pr create` 不要带 `--reviewer` / `--with-default-reviewers`** —— 部分失败会让整个 create 失败、且 cross-fork 时 default-reviewers 解析常出错。nocode 流程: `bkt pr create` 不带 reviewer → 用 `bkt pr edit <id> --reviewer ...` 后加(允许部分失败 + 大小写 fallback)。详见 `dev-finish-branch` skill Gate Title-Body/PR + `skills/dev-finish-branch/references/pr-flow-bkt.md` Workflow B。
 - **禁 `bkt api --method PUT` 改 PR 元数据** —— PUT 全量替换会清 reviewer 数组。一律 `bkt pr edit`。
 - **禁裸 `curl` 改 PR** —— 用 `bkt`,统一鉴权与错误处理。
 
@@ -104,7 +104,7 @@ bkt pr create --title "feat: add caching" --target main
 
 Source branch, title, and target default to sensible values from git state. Add `--draft` for work-in-progress。
 
-> ⚠️ **nocode-evolve overlay**: 不要在 create 时加 `--reviewer` / `--with-default-reviewers`(见上方 Overlay 段);先 `bkt pr create` 拿到 PR id,再 `bkt pr edit <id> --reviewer alice` 加。
+> ⚠️ **nocode overlay**: 不要在 create 时加 `--reviewer` / `--with-default-reviewers`(见上方 Overlay 段);先 `bkt pr create` 拿到 PR id,再 `bkt pr edit <id> --reviewer alice` 加。
 
 ### Review cycle
 

@@ -114,7 +114,7 @@ fi
 
 if [[ "$file" == "$PLUGIN_ROOT"/* ]]; then
   rel="${file#${PLUGIN_ROOT}/}"
-  header="<!-- source: nocode-evolve/${rel} -->"
+  header="<!-- source: nocode/${rel} -->"
 else
   header="<!-- source: ${file} (project override) -->"
 fi

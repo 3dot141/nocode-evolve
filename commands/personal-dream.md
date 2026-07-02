@@ -47,7 +47,7 @@ import('${CLAUDE_PLUGIN_ROOT}/scripts/personal-snapshot.mjs').then(async ({ reso
 | `[]`（有 baseline，diff 为空） | **秒回**：直接输出 `wiki 状态良好，无需维护动作。`，命令结束，不进入 Phase 2/3，也不调 `personal-lint` |
 | 非空数组 | 只对 `changedFiles` 里列出的 wiki 页做深度检查；额外执行下方**跨域.3 — related 路径变化检测**；结果与 `changedFiles` 覆盖的页面合并成本轮候选范围 |
 
-`changedFiles` 非 `null` 时才继续调 `Skill(nocode-evolve:personal-lint)` 获取健康状态，然后对**候选范围**（而不是 `wiki/draft/` + `wiki/pages/` 全部）做深度检查：
+`changedFiles` 非 `null` 时才继续调 `Skill(nocode:personal-lint)` 获取健康状态，然后对**候选范围**（而不是 `wiki/draft/` + `wiki/pages/` 全部）做深度检查：
 
 对候选范围每页：
 1. 读 frontmatter（created、last_updated、maturity、related、sources）

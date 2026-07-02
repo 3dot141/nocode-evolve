@@ -1,6 +1,6 @@
 ---
 name: pd-ix
-description: Use when the user wants to design the interaction structure of a product after the PRD is defined. Use when the user says "交互设计/信息架构/页面流/交互拆解/IA/用户流程", or when pdflow routes to the interaction design stage after PRD. Produces a .ix.md (interaction spec with IA, page flow, and interaction breakdown). Not for visual design (use nocode-evolve:pd-vd), technical architecture (use nocode-evolve:dev-design), or production component code (use devflow Build).
+description: Use when the user wants to design the interaction structure of a product after the PRD is defined. Use when the user says "交互设计/信息架构/页面流/交互拆解/IA/用户流程", or when pdflow routes to the interaction design stage after PRD. Produces a .ix.md (interaction spec with IA, page flow, and interaction breakdown). Not for visual design (use nocode:pd-vd), technical architecture (use nocode:dev-design), or production component code (use devflow Build).
 ---
 
 # pd-ix — 交互设计
@@ -53,7 +53,7 @@ Task 3: IA 汇总 + 用户批准
   Gate: IA 经批准，.ix.md 已写入
 
 Task 4: 保存 + Handoff
-  Sub-steps: 保存 .ix.md → 提示下一步：有界面 → 调 Skill(nocode-evolve:pd-vd)；否则进 devflow
+  Sub-steps: 保存 .ix.md → 提示下一步：有界面 → 调 Skill(nocode:pd-vd)；否则进 devflow
   Gate: 文件保存，全部 Task 更新
   metadata: {handoff: true}（供防跳步 Hook B 识别交接 task）
 ```
@@ -122,7 +122,7 @@ Task 4: 保存 + Handoff
 **Core Actions:**
 1. `.ix.md` → `{pd_ix_output}`
 2. 提示下一步选择：
-   - **进 pd-vd**（推荐，有界面需求时）→ 调 `Skill(nocode-evolve:pd-vd)` 做视觉设计
+   - **进 pd-vd**（推荐，有界面需求时）→ 调 `Skill(nocode:pd-vd)` 做视觉设计
    - **直接进 devflow** → 以 PRD + `.ix.md` 为输入
 
 **Exit Gate:**

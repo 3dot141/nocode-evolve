@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-本仓库是 Claude Code 插件 `nocode-evolve` 的源码。在此仓库工作时遵守以下约束。
+本仓库是 Claude Code 插件 `nocode` 的源码。在此仓库工作时遵守以下约束。
 
 > 与 `AGENTS.md` 同义（软链接），供其他遵循 AGENTS.md 约定的工具读取。
 

@@ -51,7 +51,7 @@ git diff --name-only "$(git merge-base HEAD $base_branch)..HEAD" | sort
 ## Step 2a: 解析 PR target
 
 解析 `base_branch`（优先级）：
-1. `git config branch.<current>.nocode-evolve-base`（worktree 创建 / Env Gate Base 写入）
+1. `git config branch.<current>.nocode-base`（worktree 创建 / Env Gate Base 写入）
 2. `@{upstream}`
 3. `origin/HEAD` → fallback `origin/main`
 

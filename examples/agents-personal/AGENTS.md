@@ -1,6 +1,6 @@
 # 项目本地 Agent 覆盖
 
-> 覆盖 `nocode-evolve/rules/agent-about.md` 的项目本地配置。优先级最高，会话内同名定义以本文件为准。
+> 覆盖 `nocode/rules/agent-about.md` 的项目本地配置。优先级最高，会话内同名定义以本文件为准。
 > 镜像插件级 agent-about 的四章结构：角色 / 行为准则 / 占位符 / 项目指令。
 
 # 角色配置

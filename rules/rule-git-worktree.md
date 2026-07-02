@@ -1,6 +1,6 @@
-# nocode-evolve:using-git-worktrees 行为覆盖
+# nocode:using-git-worktrees 行为覆盖
 
-执行 `nocode-evolve:using-git-worktrees` skill 时，本文规则覆盖 skill 内默认值。
+执行 `nocode:using-git-worktrees` skill 时，本文规则覆盖 skill 内默认值。
 若与 skill 内文冲突，**以本规则为准**。
 
 ## 顶层原则：每个分支都要 worktree——不在主仓裸开 branch
@@ -61,7 +61,7 @@ fi
 git worktree add "$worktree_path" -b "$BRANCH_NAME" $start_point   # start_point 空则基于当前 HEAD
 
 # 记录 freshness base (freshness-check.mjs 最高优先级读此 config, 不随 push -u 漂移)
-[ -n "$base_ref" ] && git -C "$worktree_path" config branch."$BRANCH_NAME".nocode-evolve-base "$base_ref"
+[ -n "$base_ref" ] && git -C "$worktree_path" config branch."$BRANCH_NAME".nocode-base "$base_ref"
 
 # 切 cwd 不在此处用 cd——见下文「Worktree 创建后: 切到 worktree 工作目录」:
 # harness 有 EnterWorktree 必用 EnterWorktree(path=) 持久化; 仅 harness 无此工具时才退每次 cd
@@ -84,7 +84,7 @@ worktree 的新分支 base 应跟上远程，避免长在过时代码上、与�
 
 > 为什么用 `ahead` 而非"behind 很多"：纯落后时基于远程最新永远无损（你没有独有 commit 会被丢），不必拿模糊阈值打扰用户；真正需要拍板的只有"本地有独有 commit 时 base 选谁"这一种分歧。
 
-> **devflow 流程内（Env 阶段）**：本节静默逻辑升级为 **Gate Base 显式确认**——base 选择 + 基准状态一次呈现、用户拍板后才 `git worktree add`，确认值写 `nocode-evolve-base` config（见 devflow skill「Env sub-flow 2b. Gate Base」）。非流程零散建 worktree 维持本节静默默认。
+> **devflow 流程内（Env 阶段）**：本节静默逻辑升级为 **Gate Base 显式确认**——base 选择 + 基准状态一次呈现、用户拍板后才 `git worktree add`，确认值写 `nocode-base` config（见 devflow skill「Env sub-flow 2b. Gate Base」）。非流程零散建 worktree 维持本节静默默认。
 
 ### 示例
 
@@ -149,7 +149,7 @@ worktree 的新分支 base 应跟上远程，避免长在过时代码上、与�
 ## 为什么是扁平 `<project>-<branch>` 而不是容器 `<project>.worktrees/<branch>/`
 
 - **路径短一层**，`cd` / IDE 打开都更直接
-- **shell 补全友好**：在 parent 目录敲 `cd nocode-evolve<TAB>` 能同时列出主仓和所有 worktree，看一眼就知道有哪些分支在工作
+- **shell 补全友好**：在 parent 目录敲 `cd nocode<TAB>` 能同时列出主仓和所有 worktree，看一眼就知道有哪些分支在工作
 - **不需要为容器目录做 `mkdir -p`**，git worktree add 直接落地
 - 反过来"项目目录被 worktree 包围"也容易识别——同前缀视觉聚拢就够了，不必再多一层目录
 
@@ -160,7 +160,7 @@ skill `SKILL.md` 中下列默认行为**全部失效**，按本文执行：
 | skill 内默认 | 本规则覆盖为 |
 |---|---|
 | 「Check Existing Directories」优先 `.worktrees` / `worktrees` | 跳过——不再检测项目内目录，直接用平级模板 |
-| 「Check CLAUDE.md」找 worktree 目录偏好 | 跳过——本文已是 nocode-evolve 全局偏好，不再二次询问 |
+| 「Check CLAUDE.md」找 worktree 目录偏好 | 跳过——本文已是 nocode 全局偏好，不再二次询问 |
 | 「Ask User」三选一菜单 | 跳过——不询问，直接用平级模板 |
 | 「Safety Verification」对 `.worktrees` / `worktrees` 做 `git check-ignore` 并改 `.gitignore` | 跳过——worktree 已在项目外，不需要 ignore，也不要往项目 `.gitignore` 里加东西 |
 | 「Quick Reference」表中关于 `.worktrees/` / `worktrees/` 的 4 行 | 全部失效，按本文路径模板 |
@@ -345,7 +345,7 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/worktree-setup.mjs" teardown \
 # remove 被拒绝(有其他 untracked)→ 进 needsAttention, 不自动 --force; 人工判后再处理
 ```
 
-> **不要在销毁 worktree 时顺手清理远程分支.** worktree 移除只删工作目录、**保留 branch** (本节「目录名冲突怎么办」重建复用、通用销毁皆如此). 远程分支清理是**删 branch** 的附属动作, 归 `nocode-evolve:dev-finish-branch` skill 的 **Gate Remote-Delete** (option 1 Merge / option 4 Discard 删本地 branch 后触发), 不归 worktree 移除——在保留 branch 的场景删远程会误删正要继续的分支.
+> **不要在销毁 worktree 时顺手清理远程分支.** worktree 移除只删工作目录、**保留 branch** (本节「目录名冲突怎么办」重建复用、通用销毁皆如此). 远程分支清理是**删 branch** 的附属动作, 归 `nocode:dev-finish-branch` skill 的 **Gate Remote-Delete** (option 1 Merge / option 4 Discard 删本地 branch 后触发), 不归 worktree 移除——在保留 branch 的场景删远程会误删正要继续的分支.
 
 ### 想要分支化 personal 配置时
 

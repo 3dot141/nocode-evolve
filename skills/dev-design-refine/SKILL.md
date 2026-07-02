@@ -21,7 +21,7 @@ dev-design 选完方案（"走哪条路"），本 skill 做详细设计（"选�
 
 ## 非本 skill 请求
 
-- 没有 dev-design 的选定方案，要先探索方案 → 回 `nocode-evolve:dev-design`
+- 没有 dev-design 的选定方案，要先探索方案 → 回 `nocode:dev-design`
 - 写代码注释 / PR 描述 / commit message / README / changelog → 不进
 - 纯执行不需设计 → 直接做
 
@@ -530,7 +530,7 @@ Task N+2: 保存 + 渲染
 **Core Actions:**
 1. 保存到 `{dev_design_output}`（见 `model/agent-about.md`「文档产出路径变量」）
 2. **AskUserQuestion：是否渲染成 HTML？**
-   - 是 → 调 `Skill(nocode-evolve:dev-design-render)` 把设计文档转成可浏览的 HTML（架构图/流程图/时序图渲染为 SVG，表格可交互）
+   - 是 → 调 `Skill(nocode:dev-design-render)` 把设计文档转成可浏览的 HTML（架构图/流程图/时序图渲染为 SVG，表格可交互）
    - 否 → 设计文档（markdown）即最终交付
 3. **硬交接**：向调用方/用户报告 dev-design-refine 完成 + 文档保存路径——若由 dev-design Step 8c 调入，交回其 Step 9 继续评审；独立进入则向用户报告完成并建议下一步（评审走 dev-review / 直接进 dev-plan）
 
@@ -672,4 +672,4 @@ src/services/
 - `references/examples/example-<type>-{dogfood,business}.md` — 填好的示例
 - `references/reviewer-template.md` — reviewer 审查准则
 - `references/cards/{quick-view,prerequisites}.md` — 骨架驱动型内容的可选锚点节
-- `Skill(nocode-evolve:dev-design-render)` — 设计文档 → HTML 可视化
+- `Skill(nocode:dev-design-render)` — 设计文档 → HTML 可视化

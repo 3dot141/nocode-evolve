@@ -23,7 +23,7 @@
 
 PR target：
 ```
-upstream/main    ← 来源: nocode-evolve-base
+upstream/main    ← 来源: nocode-base
 ```
 
 PR title（≤50 字）：

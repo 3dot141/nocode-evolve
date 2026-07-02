@@ -17,15 +17,15 @@ argument-hint: <sub-action|URL> [args]
 |---|---|---|
 | `feishu.cn/docx/*` | `Skill(lark-doc)` | 飞书文档读写 |
 | `feishu.cn/wiki/*` | `Skill(lark-doc)` 或 `Skill(lark-wiki)` | 内容读写走 doc，空间管理走 wiki |
-| `project.feishu.cn/*` | `Skill(nocode-evolve:lark-project)` | 飞书项目工作项 |
+| `project.feishu.cn/*` | `Skill(nocode:lark-project)` | 飞书项目工作项 |
 | `doubao.com/docx/*` 或 `/wiki/*` | `Skill(lark-doc)` | 豆包文档（同 Lark API） |
 
 ## 子动作路由
 
 | 子动作 | 做什么 | 转发到 |
 |---|---|---|
-| `read` | 完整读取飞书文档（含图片） | `Skill(nocode-evolve:lark-read)` |
-| `project` | 飞书项目管理（MCP） | `Skill(nocode-evolve:lark-project)` |
+| `read` | 完整读取飞书文档（含图片） | `Skill(nocode:lark-read)` |
+| `project` | 飞书项目管理（MCP） | `Skill(nocode:lark-project)` |
 | `doc` | 文档读写 API | `Skill(lark-doc)` |
 | `wiki` | 知识空间管理 | `Skill(lark-wiki)` |
 | `task` | 飞书任务管理 | `Skill(lark-task)` |

@@ -3,7 +3,7 @@
 执行下列 superpowers skill 时，本文规则覆盖 skill 内默认值。
 若与 skill 内文冲突，**以本规则为准**。
 
-## nocode-evolve:brainstorming
+## nocode:brainstorming
 
 ### 输出路径
 
@@ -13,13 +13,13 @@
 
 **触发写设计文档时都走完整 worktree → write → review → render 流程** —— 不分入口：brainstorming 走到 step 5，**或用户直接要求写 PRD / RFC / 设计文档 / ADR（绕过 brainstorming）**，两条路径一致：
 
-1. **`nocode-evolve:using-git-worktrees`** —— 写设计文档前先开 worktree（两条入口都开，不是 brainstorming step 5 专属）
+1. **`nocode:using-git-worktrees`** —— 写设计文档前先开 worktree（两条入口都开，不是 brainstorming step 5 专属）
    - 分支名建议 `design/<topic>`，`<topic>` 沿用上面输出路径中的 kebab-case 主题
    - worktree 路径按 `rules/rule-git-worktree.md` 落到项目同级 `<project>-<branch-flat>/`（例：`design/foo-bar` → `<parent>/<project>-design_foo-bar/`）
    - 后续 write / review / render 三步都在新 worktree 内执行——主仓 working tree 不被设计文档草稿污染，便于并行多份设计 / 多 IDE 窗口对照
    - 例外：用户显式声明「在主仓写 / 不要 worktree / 就地写」→ 跳过本步，但要回复里点名告知"按你的要求跳过 worktree，直接在主仓 <branch> 写"
 
-2. **`nocode-evolve:dev-design-refine`** —— 生成 markdown 设计文档
+2. **`nocode:dev-design-refine`** —— 生成 markdown 设计文档
    - 类型选择（按业界 4 类 doc-type 主轴：PRD / RFC / Design Doc / ADR）
    - 每个 doc-type 一套线性骨架（背景 → 目标 → ... → 后果，无元结构标签）
    - Design Doc 骨架：背景 / 目标 / 架构（架构图 / 流程图 / 时序图 / 文本总结）/ 实现（影响 / 接口设计 / 业务流 BFx / 异常与失败模式 / 单测设计）/ 方案选型（Q→选项→定 三行）/ 其他（部署 …）

@@ -118,11 +118,11 @@ test('genWorkflowSkills: manifest.workflow_skills → {skills} 生成物 (含 15
     buckets: [],
     rules: [],
     workflow_skills: [
-      'nocode-evolve:devflow', 'nocode-evolve:pdflow', 'nocode-evolve:dev-define',
-      'nocode-evolve:dev-design', 'nocode-evolve:dev-design-refine', 'nocode-evolve:dev-design-render',
-      'nocode-evolve:dev-plan', 'nocode-evolve:dev-build', 'nocode-evolve:dev-verify',
-      'nocode-evolve:dev-review', 'nocode-evolve:dev-land', 'nocode-evolve:pd-research',
-      'nocode-evolve:pd-prd', 'nocode-evolve:pd-ix', 'nocode-evolve:pd-vd',
+      'nocode:devflow', 'nocode:pdflow', 'nocode:dev-define',
+      'nocode:dev-design', 'nocode:dev-design-refine', 'nocode:dev-design-render',
+      'nocode:dev-plan', 'nocode:dev-build', 'nocode:dev-verify',
+      'nocode:dev-review', 'nocode:dev-land', 'nocode:pd-research',
+      'nocode:pd-prd', 'nocode:pd-ix', 'nocode:pd-vd',
     ],
   };
   const out = genWorkflowSkills(m);
@@ -130,7 +130,7 @@ test('genWorkflowSkills: manifest.workflow_skills → {skills} 生成物 (含 15
   const parsed = JSON.parse(out.text);
   assert.equal(parsed.skills.length, 15, '应含 15 个 skill');
   for (const s of m.workflow_skills) assert.ok(parsed.skills.includes(s), `缺 skill ${s}`);
-  assert.ok(parsed.skills.every((s) => s.startsWith('nocode-evolve:')), '每个 skill 都应带 nocode-evolve: 前缀');
+  assert.ok(parsed.skills.every((s) => s.startsWith('nocode:')), '每个 skill 都应带 nocode: 前缀');
 });
 
 test('genWorkflowSkills: 真实 manifest 含 16 skill 名单', () => {

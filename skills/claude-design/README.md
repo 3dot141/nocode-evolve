@@ -25,4 +25,4 @@ Claude Design 终端操作 skill——从 Claude Code 里操作 claude.ai/design
 
 ## 使用方式
 
-agent 通过 `Skill(nocode-evolve:claude-design)` 调用，或被 pd-vd / dev-design-render 在流程中调用。用户直接操作 Claude Design 项目走 `/design` 内置命令。
+agent 通过 `Skill(nocode:claude-design)` 调用，或被 pd-vd / dev-design-render 在流程中调用。用户直接操作 Claude Design 项目走 `/design` 内置命令。

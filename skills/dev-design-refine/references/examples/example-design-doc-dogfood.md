@@ -77,7 +77,7 @@ Report 原样呈现 → 用户逐条确认
 ### 影响
 
 ```
-nocode-evolve/
+nocode/
 ├── skills/design-doc-writing/
 │   ├── SKILL.md                                   (改)  ① 《选 doc-type》骨架速记行更新为 6 节
 │   │                                                    ② 《写作准则 #5》原"架构问题↔实现逻辑 1:1 映射"改为
@@ -268,7 +268,7 @@ function rewriteExamplesAndReviewer():                  // 主入口: 重写 exa
 无运行时部署. 本次改动是 Claude Code 插件源码文件修改, 通过 `plugin.json` version 升级 (major) 触发用户端 plugin marketplace 更新:
 
 - **灰度策略**: 无——插件直接拉 git, 用户主动 update; 不分批
-- **回滚预案**: 用户端 `nocode-evolve` 卸载或 git checkout 上一版 tag; 主仓 git revert + 再升 version (patch)
+- **回滚预案**: 用户端 `nocode` 卸载或 git checkout 上一版 tag; 主仓 git revert + 再升 version (patch)
 - **监控指标**: 无 metric——插件无运行时. 通过 GitHub issue / 用户反馈监控
 
 ---

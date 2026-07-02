@@ -63,13 +63,13 @@ argument-hint: <描述> | (被 /distill 传结构化候选)
 已写入 plugin rule: rule-<slug>.md
 manifest+generate: rules/manifest.json 已加条目, node hooks/generate.mjs 重新生成 catalog 分片
 版本: <old> → <new> (<bumpLevel>)
-请到 nocode-evolve 仓 review + commit，push 需询问。
+请到 nocode 仓 review + commit，push 需询问。
 ```
 
 ### skill 委托
 
 1. 从描述推导信号词（`create a skill` / `improve this skill` / `fix trigger accuracy`），让 `skill-writing` 的 Entry Routing 自判 Create/Edit/Description-only，不替它选模式
-2. `Skill(nocode-evolve:skill-writing, <intent> + <signalWord>)`。skill-writing 走到 Phase 7（描述优化）收敛即可，Phase 8 Package（打包 `.skill` 分发）对本仓无意义（marketplace 直接读 git），明确不需要
+2. `Skill(nocode:skill-writing, <intent> + <signalWord>)`。skill-writing 走到 Phase 7（描述优化）收敛即可，Phase 8 Package（打包 `.skill` 分发）对本仓无意义（marketplace 直接读 git），明确不需要
 3. **Gate**：只有 skill 文件确有改动（对比委托前后的 `git status`/`git diff` 有实际变更）才继续；委托中止 / 用户放弃 / 无改动 → 报告"skill 未改动"，**不升版本**
 4. 有改动 → 升 `plugin.json` 版本（`minor`，判据同上现读 CLAUDE.md）——**skill-writing 本身不碰 plugin.json，这一步必须自己补**
 5. 报告：`skill 已更新: <skillPath>，版本: <old> → <new> (minor)，请 review + commit，push 需询问`

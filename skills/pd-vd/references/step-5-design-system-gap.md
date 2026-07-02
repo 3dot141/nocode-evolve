@@ -16,7 +16,7 @@ patterns 由 components 组装，components 依赖 foundations。如果跳过 ga
 
 ## claude-design 操作流程
 
-通过 `Skill(nocode-evolve:claude-design)` 统一操作，内部自动路由到 MCP 或 DesignSync。
+通过 `Skill(nocode:claude-design)` 统一操作，内部自动路由到 MCP 或 DesignSync。
 
 ### 1. 盘点现有
 

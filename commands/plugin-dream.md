@@ -5,7 +5,7 @@ argument-hint: (无参数)
 
 # /plugin-dream：插件仓库自维护巡检
 
-检查 nocode-evolve 插件仓库自身（rules/skills/commands/manifest）与预期状态的偏差，提议修复动作，用户确认后执行。独立于 `/plugin-distill`——distill 管写入，dream 管巡检维护。
+检查 nocode 插件仓库自身（rules/skills/commands/manifest）与预期状态的偏差，提议修复动作，用户确认后执行。独立于 `/plugin-distill`——distill 管写入，dream 管巡检维护。
 
 ## 执行流程
 
@@ -54,7 +54,7 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/plugin-dream-baseline.mjs" "${CLAUDE_PLUGIN_
 | read 路径规范 | 仅对 rule 文件型 `read` 检查——用 `${CLAUDE_PLUGIN_ROOT}` 前缀；空 `read`/括号说明串/`model/` 路径不算违规，跳过 |
 | 模式边界 | 是当前指令，文件名不含日期、不含历史叙述 |
 
-**skill 对象**（逐个 `skills/*/SKILL.md`；深度判断——是否符合原理/调用正确/专业性——委托 `nocode-evolve:skill-writing` 做只读评估，本命令不重新发明判据）：
+**skill 对象**（逐个 `skills/*/SKILL.md`；深度判断——是否符合原理/调用正确/专业性——委托 `nocode:skill-writing` 做只读评估，本命令不重新发明判据）：
 
 | 检测 | 判什么 |
 |---|---|
@@ -90,7 +90,7 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/plugin-dream-baseline.mjs" "${CLAUDE_PLUGIN_
 
 - **自动类**（O1/O2）：直接重跑对应命令
 - **护栏类**（O3/O4，涉及删除）：回显路径 + 原因 + 影响，二次确认后执行
-- **建议式**（Layer2 全部）：不自动改——rule 类委托 `Skill(nocode-evolve:plugin-distill)`，skill 类委托 `Skill(nocode-evolve:skill-writing)`，由用户在委托流程里最终拍板
+- **建议式**（Layer2 全部）：不自动改——rule 类委托 `Skill(nocode:plugin-distill)`，skill 类委托 `Skill(nocode:skill-writing)`，由用户在委托流程里最终拍板
 
 ### Phase 4: 记录 Baseline（首次运行/降级、以及处理完变化之后都执行）
 

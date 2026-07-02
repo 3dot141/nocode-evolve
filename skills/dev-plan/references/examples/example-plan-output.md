@@ -80,7 +80,7 @@ T1+T2 完成后插 checkpoint：两个工具单测通过 + build 通过 → 再�
 
 ## Step 6: Round 1 Red-Blue Review
 
-调用 `Skill(nocode-evolve:red-blue-deep)` 评估骨架。
+调用 `Skill(nocode:red-blue-deep)` 评估骨架。
 
 **评估问题**：「这份计划的骨架合理吗？切片策略、依赖图、risk-first 排序、task 粒度、restate 覆盖？」
 
@@ -98,7 +98,7 @@ T1+T2 完成后插 checkpoint：两个工具单测通过 + build 通过 → 再�
 
 #### 8a. Red-Blue Review
 
-调用 `Skill(nocode-evolve:red-blue-deep)` 评估完整计划。
+调用 `Skill(nocode:red-blue-deep)` 评估完整计划。
 
 **评估问题**：「这份填充了真实代码的计划拿去执行可行吗？代码/测试/设计一致性/执行顺序？」
 

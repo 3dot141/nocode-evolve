@@ -61,7 +61,7 @@ Enter Gate 三项逐条检查：
 
 ### Step 2: Finish-branch
 
-调 `Skill(nocode-evolve:dev-finish-branch)`，它处理全部 commit/PR/merge/discard 机制（disposition 菜单、Gate 序列、worktree 清理）。
+调 `Skill(nocode:dev-finish-branch)`，它处理全部 commit/PR/merge/discard 机制（disposition 菜单、Gate 序列、worktree 清理）。
 
 **Land 在 dev-finish-branch 之上的额外约束**：
 

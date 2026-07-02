@@ -7,7 +7,7 @@
 **不含 (负例)**: 写代码注释 / commit message / README / changelog
 
 #### superpowers-brainstorming
-**触发**: 即将执行 nocode-evolve:brainstorming skill (用户直接 /brainstorming 或 agent 主动调该 skill 时的 overlay); 其「写作工作流」节同样覆盖用户直接要求写 PRD / RFC / 设计文档 / ADR (绕过 brainstorming) 的路径——两条入口走同一条 worktree → write → review → render 链
+**触发**: 即将执行 nocode:brainstorming skill (用户直接 /brainstorming 或 agent 主动调该 skill 时的 overlay); 其「写作工作流」节同样覆盖用户直接要求写 PRD / RFC / 设计文档 / ADR (绕过 brainstorming) 的路径——两条入口走同一条 worktree → write → review → render 链
 **读**: `${CLAUDE_PLUGIN_ROOT}/rules/rule-superpowers-brainstorming.md`
 **摘要**: brainstorming overlay + 设计文档写作工作流: 输出路径按 {dev_design_output} 变量 + worktree → write → review → render 四步; 不分入口——brainstorming step 5 或用户直接要求写 PRD/RFC/设计文档/ADR 均走同一条链
 **生命周期**: 0 设计
@@ -43,9 +43,9 @@
 **主桶**: review (完整定义见该桶)
 
 #### git-freshness (跨桶)
-**触发**: 即将做设计性动作 (设计文档/PRD/RFC/ADR/方案对比/技术选型/重构方案/架构设计), 或即将做代码搜索 (Agent nocode-evolve:semble-search / Bash grep -r/rg/find / Explore), 或多文件 Read (≥3 文件) 探源做方案分析 — 不论主仓 or worktree (worktree 内长期工作仍可能 stale, 不被 rule-git-worktree 覆盖). 一句 node "${CLAUDE_PLUGIN_ROOT}/scripts/freshness-check.mjs" 调脚本拿 base/behind/ahead, gate=gate (behind ≥ 5, 或 branch+base 首次冷启动) 时停手三选, 否则继续. cache TTL 2h 内毫秒返回不 fetch
+**触发**: 即将做设计性动作 (设计文档/PRD/RFC/ADR/方案对比/技术选型/重构方案/架构设计), 或即将做代码搜索 (Agent nocode:semble-search / Bash grep -r/rg/find / Explore), 或多文件 Read (≥3 文件) 探源做方案分析 — 不论主仓 or worktree (worktree 内长期工作仍可能 stale, 不被 rule-git-worktree 覆盖). 一句 node "${CLAUDE_PLUGIN_ROOT}/scripts/freshness-check.mjs" 调脚本拿 base/behind/ahead, gate=gate (behind ≥ 5, 或 branch+base 首次冷启动) 时停手三选, 否则继续. cache TTL 2h 内毫秒返回不 fetch
 **读**: `${CLAUDE_PLUGIN_ROOT}/rules/rule-git-freshness.md`
-**摘要**: 设计/方案动作 + 代码搜索/多文件 Read 前用 scripts/freshness-check.mjs 检查当前分支与 base 的 behind 差距; base 推断优先级: git config nocode-evolve-base (worktree 创建时写入, 不随 push -u 漂移) → upstream → origin/HEAD → origin/main; behind ≥ 5 commits 或 branch+base 首次冷启动 gate 三选 (pull --rebase / 接受 / 跳过); cache 2h TTL 不 fetch 不打扰; 离线 fetch 失败 warn 不阻塞. 主仓 + worktree 内长期工作都管 (worktree-add 那刻仍由 rule-git-worktree 覆盖)
+**摘要**: 设计/方案动作 + 代码搜索/多文件 Read 前用 scripts/freshness-check.mjs 检查当前分支与 base 的 behind 差距; base 推断优先级: git config nocode-base (worktree 创建时写入, 不随 push -u 漂移) → upstream → origin/HEAD → origin/main; behind ≥ 5 commits 或 branch+base 首次冷启动 gate 三选 (pull --rebase / 接受 / 跳过); cache 2h TTL 不 fetch 不打扰; 离线 fetch 失败 warn 不阻塞. 主仓 + worktree 内长期工作都管 (worktree-add 那刻仍由 rule-git-worktree 覆盖)
 **主桶**: git-lifecycle (完整定义见该桶)
 
 #### pdflow (跨桶)

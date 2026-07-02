@@ -83,7 +83,7 @@ Task 9: 设计文档评审
   Gate: 六轴 + 一致性 + 交叉审通过，无 Critical findings
 
 Task 10: 硬交接 — 调用下一步 skill
-  Sub-steps: 按 Exit Gate 硬交接报告 Design 完成（方案摘要 + 测试目标）→ 建议进 Plan → 等用户拍板后调 Skill(nocode-evolve:dev-plan)
+  Sub-steps: 按 Exit Gate 硬交接报告 Design 完成（方案摘要 + 测试目标）→ 建议进 Plan → 等用户拍板后调 Skill(nocode:dev-plan)
   Gate: 用户拍板进入 Plan（这一步不勾，Design 不算收尾）
   metadata: {handoff: true}（供防跳步 Hook B 识别交接 task）
 ```
@@ -173,7 +173,7 @@ Task 10: 硬交接 — 调用下一步 skill
 
 1. **有 pd-ix/pd-vd 产出（`.ix.md` / `.vd.md`）**→ 读它，理解 UI 需求（交互流、IA 来自 `.ix.md`；视觉方向来自 `.vd.md`）。同时从 `.vd.md` 提取：`data-testid` 命名体系 → 组件接口约束；覆盖矩阵 → 前端测试目标；`interactions.json` 路径 → dev-verify 复用。设计源标识从 `.vd.md` 继承（`claude-design` / `prototype`），后续写进设计文档 `## UI 设计` 节
 2. **无 pd-ix/pd-vd 产出但有 UI 需求** → agent 按判断自主决定，记录选择理由（不停顿；触发「用户介入原则」例外时才 AskUserQuestion）：
-   - **页面数量多 / 交互复杂（多状态流转、跨页面数据依赖）** → 走 pd-ix（推荐）→ 调 `Skill(nocode-evolve:pd-ix)` 走交互设计，产出 `.ix.md`（需要视觉时再跑 `pd-vd`）后回来继续
+   - **页面数量多 / 交互复杂（多状态流转、跨页面数据依赖）** → 走 pd-ix（推荐）→ 调 `Skill(nocode:pd-ix)` 走交互设计，产出 `.ix.md`（需要视觉时再跑 `pd-vd`）后回来继续
    - **页面简单 / 交互直白** → 直接选视觉方向 → 按 `{NOCODE_SKILL_REF}/ui-taste-model.md` 选一个 taste model，直接在设计文档里做视觉决策（不产出单独标识——taste model 被消化成具体值写进文档）
 
 **Exit Gate:**
@@ -483,7 +483,7 @@ TO 传递给后续 Plan（指导切片 + task covers）、Build（驱动 TDD）�
 
 **这一步拦住的是"PRD 说了但设计里漏了"。** 决策清点拦的是"讨论了但没定"，功能覆盖拦的是"根本没讨论到"——两个维度互补。
 
-**8c. 硬交接**——调 `Skill(nocode-evolve:dev-design-refine)`，dev-design-refine 接管文档工作（doc-type 选择 → 逐章写 → render）。不能跳过 Skill() 调用自己写文档——dev-design-refine 有自己的 protocol 和质量标准（骨架模板 / 逐章展开），手写的文档达不到同等质量。
+**8c. 硬交接**——调 `Skill(nocode:dev-design-refine)`，dev-design-refine 接管文档工作（doc-type 选择 → 逐章写 → render）。不能跳过 Skill() 调用自己写文档——dev-design-refine 有自己的 protocol 和质量标准（骨架模板 / 逐章展开），手写的文档达不到同等质量。
 
 传入上方 Enter Gate 清单全部内容 + 决策清点表作为输入。手里有足够信息不是跳过的理由。
 
@@ -559,7 +559,7 @@ TO 传递给后续 Plan（指导切片 + task covers）、Build（驱动 TDD）�
 - [ ] 设计文档已由 dev-design-refine 产出（Step 8c）
 - [ ] 设计文档评审通过——六轴 + 内部一致性核对 + design-review 交叉审，无 Critical findings（Step 9）
 - [ ] 后续 Plan 输入齐全：restate + 设计文档 + 测试目标
-- [ ] **硬交接**：Exit Gate 全部通过后，向用户报告 Design 完成（含方案摘要 + 关键决策清单 + 测试目标概要）——这是本轮 Design 流程唯一的整体确认窗口（Step 2/5/7 触发「用户介入原则」例外时提前问过的除外），用户可在此对任意决策提出异议要求回退重做。确认通过后建议下一阶段：Plan（`nocode-evolve:dev-plan`）。列出 Plan 阶段的 sub-steps + 关键决策（devflow Step 5 格式）。等用户拍板，不自行进入下一阶段
+- [ ] **硬交接**：Exit Gate 全部通过后，向用户报告 Design 完成（含方案摘要 + 关键决策清单 + 测试目标概要）——这是本轮 Design 流程唯一的整体确认窗口（Step 2/5/7 触发「用户介入原则」例外时提前问过的除外），用户可在此对任意决策提出异议要求回退重做。确认通过后建议下一阶段：Plan（`nocode:dev-plan`）。列出 Plan 阶段的 sub-steps + 关键决策（devflow Step 5 格式）。等用户拍板，不自行进入下一阶段
 
 ## Common Rationalizations
 

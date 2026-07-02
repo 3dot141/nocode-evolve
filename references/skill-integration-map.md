@@ -60,7 +60,7 @@
 |---|---|---|
 | `interview-me` | agent-skills | **核心吸收**: 一次一问+猜测+置信度+95%停止条件+"want vs should want" |
 | `spec-driven-development` | agent-skills | **模式吸收**: 可量化成功标准+假设列出+Boundaries(Always/Ask/Never) |
-| `brainstorming` | superpowers | **子调用复用**: `Skill(nocode-evolve:brainstorming)`，方案探索时调用 |
+| `brainstorming` | superpowers | **子调用复用**: `Skill(nocode:brainstorming)`，方案探索时调用 |
 
 ### 2. Env
 
@@ -108,8 +108,8 @@
 | `browser-testing-with-devtools` | agent-skills | **UI 测试能力**: 给 agent 浏览器做 e2e+截图取证 |
 | `performance-optimization` | agent-skills | **可选度量**: 有性能需求时 Lighthouse/profiling/benchmark |
 | `web-performance-auditor` | agent-skills | **可选 agent persona**: 专家级 Web 性能审计 |
-| `/verify` skill | nocode-evolve 现有 | **复用**: 运行 app 观察行为 |
-| `agent-browser` skill | nocode-evolve 现有 | **复用**: 浏览器自动化 |
+| `/verify` skill | nocode 现有 | **复用**: 运行 app 观察行为 |
+| `agent-browser` skill | nocode 现有 | **复用**: 浏览器自动化 |
 
 ### 7. Review
 
@@ -121,7 +121,7 @@
 | `performance-optimization` | agent-skills | **性能轴展开**: review 级检查(N+1/unbounded/missing pagination) |
 | `receiving-code-review` | superpowers | **反馈纪律吸收**: 禁语表+unclear→停+YAGNI check+push-back 协议 |
 | `requesting-code-review` | superpowers | **dispatch 模式**: 发起 review 的模式 |
-| codex 交叉评审 | nocode-evolve 现有 | **复用**: Claude 自评+Codex 独立评+合并呈现 |
+| codex 交叉评审 | nocode 现有 | **复用**: Claude 自评+Codex 独立评+合并呈现 |
 
 ### 8. Land
 
@@ -134,7 +134,7 @@
 
 | 能力 | 集成 Skill | 触发时机 |
 |---|---|---|
-| **Red-Blue-Deep** | `nocode-evolve:red-blue-deep` | 评估/拍板类提问 |
+| **Red-Blue-Deep** | `nocode:red-blue-deep` | 评估/拍板类提问 |
 | **Doubt-Driven** | agent-skills `doubt-driven-development` | 非平凡决策（Build/Design/Plan 中） |
 | **Debug** | superpowers `systematic-debugging` + agent-skills `debugging-and-error-recovery` | Build/Verify 遇阻（测试失败/行为异常/卡住） |
 | **Context Engineering** | agent-skills `context-engineering` | 长会话管理（主动建议开新会话/distill） |

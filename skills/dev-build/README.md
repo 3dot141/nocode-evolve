@@ -60,7 +60,7 @@ devflow 第 5 阶段——读 Plan 的 `Execution` 字段，分发到 `dev-build
 **现在怎么办**：
 - `SKILL.md` 瘦成分发器——Enter/Exit Gate、Step 0 里程碑、硬交接不变，Step 1 读 Plan `Execution` 字段（`subagent` / `executing`）分发到对应 reference
 - 新建 `references/dev-build-subagent.md`（对应上游 `subagent-driven-development`）：三阶段派发 + 四状态协议，去掉 Review Tier 分档、reviewing 框架 tag→severity 映射这类正式化包装；implementer「Your Job」改为"忠实执行 plan 已写代码"而非从零 TDD
-- 新建 `references/dev-build-executing.md`（对应上游 `executing-plans`）：主 agent 自己顺序执行 plan 已写代码，不派 subagent、无独立 review，靠后续 dev-verify/dev-review 兜底；收尾对接 devflow 的 Verify 阶段，不像上游那样接到已被 nocode-evolve 替换掉的 `finishing-a-development-branch`
+- 新建 `references/dev-build-executing.md`（对应上游 `executing-plans`）：主 agent 自己顺序执行 plan 已写代码，不派 subagent、无独立 review，靠后续 dev-verify/dev-review 兜底；收尾对接 devflow 的 Verify 阶段，不像上游那样接到已被 nocode 替换掉的 `finishing-a-development-branch`
 - `implementer-prompt.md` 去掉技术栈配方按需注入（已移 Plan 阶段消费）
 
 ## 下游消费者

@@ -6,11 +6,11 @@
 
 | Skill | 视觉方向 | 适用场景 |
 |---|---|---|
-| `nocode-evolve:minimalist-ui` | 简约编辑风，暖单色调，平面网格 | 内容型产品、编辑器、笔记类 |
-| `nocode-evolve:high-end-visual-design` | 高端质感，精确字号/间距/阴影 | 品牌官网、SaaS、需要精致感 |
-| `nocode-evolve:industrial-brutalist-ui` | 机械工业风，瑞士排版，极端字号对比 | 数据密集仪表盘、作品集 |
-| `nocode-evolve:design-taste-frontend` | 防模板化，反 AI 默认审美 | 落地页、作品集、改版 |
-| `nocode-evolve:redesign-existing-projects` | 升级已有 UI，先审计再改 | 改造已有项目 |
+| `nocode:minimalist-ui` | 简约编辑风，暖单色调，平面网格 | 内容型产品、编辑器、笔记类 |
+| `nocode:high-end-visual-design` | 高端质感，精确字号/间距/阴影 | 品牌官网、SaaS、需要精致感 |
+| `nocode:industrial-brutalist-ui` | 机械工业风，瑞士排版，极端字号对比 | 数据密集仪表盘、作品集 |
+| `nocode:design-taste-frontend` | 防模板化，反 AI 默认审美 | 落地页、作品集、改版 |
+| `nocode:redesign-existing-projects` | 升级已有 UI，先审计再改 | 改造已有项目 |
 
 ## 决策树
 

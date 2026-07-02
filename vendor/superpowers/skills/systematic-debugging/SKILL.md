@@ -176,7 +176,7 @@ You MUST complete each phase before proceeding to the next.
    - Automated test if possible
    - One-off test script if no framework
    - MUST have before fixing
-   - For writing proper failing tests, follow the anti-patterns checklist in `references/testing-anti-patterns.md` (plugin root); TDD workflow itself is covered by `nocode-evolve:dev-build`
+   - For writing proper failing tests, follow the anti-patterns checklist in `references/testing-anti-patterns.md` (plugin root); TDD workflow itself is covered by `nocode:dev-build`
 
 2. **Implement Single Fix**
    - Address the root cause identified
@@ -284,8 +284,8 @@ These techniques are part of systematic debugging and available in this director
 - **`condition-based-waiting.md`** - Replace arbitrary timeouts with condition polling
 
 **Related skills:**
-- **nocode-evolve:dev-build** (+ `references/testing-anti-patterns.md` in plugin root) - For creating failing test case (Phase 4, Step 1)
-- **nocode-evolve:dev-verify** - Verify fix worked before claiming success
+- **nocode:dev-build** (+ `references/testing-anti-patterns.md` in plugin root) - For creating failing test case (Phase 4, Step 1)
+- **nocode:dev-verify** - Verify fix worked before claiming success
 
 ## Real-World Impact
 

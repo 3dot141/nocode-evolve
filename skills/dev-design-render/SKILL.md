@@ -92,7 +92,7 @@ AskUserQuestion（参考 pd-vd 方案）：
 
 | 方式 | 产出 | 适用 |
 |---|---|---|
-| **Claude Design** | `Skill(nocode-evolve:claude-design)` → `claude-design <brief>` 生成，可在线协作浏览 | 要团队在线查看、评审协作 |
+| **Claude Design** | `Skill(nocode:claude-design)` → `claude-design <brief>` 生成，可在线协作浏览 | 要团队在线查看、评审协作 |
 | **本地 HTML** | 单文件 `.html` 落 repo | 要版本控制、离线查看、归档 |
 
 **Exit Gate:**
@@ -107,7 +107,7 @@ AskUserQuestion（参考 pd-vd 方案）：
 
 #### Claude Design 线
 
-`Skill(nocode-evolve:claude-design)` → `claude-design <brief>` 生成，brief 包含：
+`Skill(nocode:claude-design)` → `claude-design <brief>` 生成，brief 包含：
 - 设计文档全文
 - 渲染要求：技术文档风格、可导航章节、图用交互式渲染
 - 图的 ASCII 原文 + 类型标注

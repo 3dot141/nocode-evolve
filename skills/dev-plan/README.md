@@ -13,7 +13,7 @@ devflow 第 4 阶段——把目标拆成 tracer bullet 任务序列，Round 1 �
 
 `260701` 的 devflow 多层 review 收敛审查中调整。
 
-**原来的设计**：Round 2 填充真实代码后，整段调 `Skill(nocode-evolve:red-blue-deep)` 走 heavy 档（sequential-thinking 强制 gate + subagent + codex 并行），评估"代码能不能跑通、测试覆盖够不够、执行顺序对不对"。
+**原来的设计**：Round 2 填充真实代码后，整段调 `Skill(nocode:red-blue-deep)` 走 heavy 档（sequential-thinking 强制 gate + subagent + codex 并行），评估"代码能不能跑通、测试覆盖够不够、执行顺序对不对"。
 
 **为什么改**：
 1. **方法用错了**——`{NOCODE_SKILL_REF}/reviewing/methods/red-blue-adversarial.md` 自己声明"不适合：逐项缺陷核查、固定维度遍历"，但"API 签名对不对/测试覆盖够不够"正是这类逐项核查题。`{NOCODE_SKILL_REF}/reviewing/skeleton.md` §3 方法选择表里代码类对象该走的组合是 `checklist + red-blue-adversarial`，不是单独 red-blue。

@@ -17,7 +17,7 @@
 
 | | Claude Design 线 | 本地 HTML 线 |
 |---|---|---|
-| 怎么出 | `Skill(nocode-evolve:claude-design)` → `claude-design <brief>` | 本地写多个 `.html` 文件 |
+| 怎么出 | `Skill(nocode:claude-design)` → `claude-design <brief>` | 本地写多个 `.html` 文件 |
 | 喂什么 | brief = IA + 交互清单 + 视觉方向 + 保真度；挂 template/design system | IA + 交互清单 + 视觉方向 + token/组件；无设计系统则加载 taste skill |
 | 低保真（拆分） | 每个独立页面一个文件（含宿主内嵌入组件），静态 | 每个独立页面一个文件（含宿主内嵌入组件），静态 |
 | 高保真（组合） | 保留独立页面 + 额外一个组合文件（融合全部页面代码，JS tab 切换/弹窗） | 多文件之间用 URL 跳转串联，每个文件内做弹窗 |
@@ -32,7 +32,7 @@
 
 ### `claude-design <brief>` 写法
 
-先调 `Skill(nocode-evolve:claude-design)` 加载 claude-design skill，然后传 brief。Claude Design 基于已同步的设计系统生成多屏设计/原型。brief 写得越结构化，产出越贴合。
+先调 `Skill(nocode:claude-design)` 加载 claude-design skill，然后传 brief。Claude Design 基于已同步的设计系统生成多屏设计/原型。brief 写得越结构化，产出越贴合。
 
 **brief 必含四块：**
 

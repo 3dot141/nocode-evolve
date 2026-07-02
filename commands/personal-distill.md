@@ -7,7 +7,7 @@ argument-hint: [wiki|rules|agents] [optional-content-description]
 
 统一管理 `.agents-personal/` 的所有写入操作——wiki 知识沉淀、rules 指令写入、AGENTS.md 变量/分节更新。
 
-**被 `/distill` 调用**（distill 路由 wiki:project / rules:project / agents:project 时 `Skill(nocode-evolve:personal-distill)` 传入候选）。也可用户直接 `/personal-distill` 独立写入。
+**被 `/distill` 调用**（distill 路由 wiki:project / rules:project / agents:project 时 `Skill(nocode:personal-distill)` 传入候选）。也可用户直接 `/personal-distill` 独立写入。
 
 ## 入参
 
@@ -33,7 +33,7 @@ distill 传入结构化候选列表，每个候选含：
 
 ### Step 0: 写入前检查
 
-调 `Skill(nocode-evolve:personal-lint)` 做健康检查。结果附在最终报告底部。error 不阻断写入（用户可选先修复或继续），但结论必须明确指出。
+调 `Skill(nocode:personal-lint)` 做健康检查。结果附在最终报告底部。error 不阻断写入（用户可选先修复或继续），但结论必须明确指出。
 
 `.agents-personal/` 不存在 → 报 "未初始化" + 建议 `/personal-init`，停。
 

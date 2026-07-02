@@ -91,7 +91,7 @@ Workflow({
 
 ### inline —— 不调本 workflow（0~1 个 agent）
 
-这一档是给调用方的判断标准，不是 workflow 参数：主 agent 已经知道要看哪（讨论里定过方向、有明确路径或术语），一次 `Agent(nocode-evolve:semble-search)` 或一次 WebSearch 就能答——**别发 Workflow**，省掉 scope / synthesize 的固定开销。误传 `depth: 'inline'` 会直接报错提醒。
+这一档是给调用方的判断标准，不是 workflow 参数：主 agent 已经知道要看哪（讨论里定过方向、有明确路径或术语），一次 `Agent(nocode:semble-search)` 或一次 WebSearch 就能答——**别发 Workflow**，省掉 scope / synthesize 的固定开销。误传 `depth: 'inline'` 会直接报错提醒。
 
 ### targeted —— 定向覆盖（最轻 workflow 档）
 

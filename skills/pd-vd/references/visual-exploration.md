@@ -75,7 +75,7 @@ Claude Design 新建项目时的一个起步入口。选 Template = 拿一个已
 
 ### 怎么搜
 
-- Claude Design 可用 → `Skill(nocode-evolve:claude-design)` → `claude-design list` 确认授权，浏览模板库找匹配本产品类型的（dashboard / landing / app / settings 等）
+- Claude Design 可用 → `Skill(nocode:claude-design)` → `claude-design list` 确认授权，浏览模板库找匹配本产品类型的（dashboard / landing / app / settings 等）
 - 匹配判断：看模板的页面结构跟本次 IA 的关键页是否接近，接近 → 记为起点候选
 - **Claude Design 不可用 / 走本地 HTML 线 → 跳过本节**，无 template 概念，直接走 Step 5 视觉方向发散
 

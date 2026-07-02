@@ -1,6 +1,6 @@
 ---
 name: pd-prd
-description: Use when the user wants to write a product requirements document. Use when the user says "写 PRD/产品需求/产品设计/产品 brief/写需求文档", or after research skill completes and the user wants to synthesize findings into a document. Also use when devflow Full-scene suggests running the product flow. Not for technical design docs (use nocode-evolve:dev-design-refine) or code comments/README.
+description: Use when the user wants to write a product requirements document. Use when the user says "写 PRD/产品需求/产品设计/产品 brief/写需求文档", or after research skill completes and the user wants to synthesize findings into a document. Also use when devflow Full-scene suggests running the product flow. Not for technical design docs (use nocode:dev-design-refine) or code comments/README.
 ---
 
 # prd — 收敛成产品需求文档
@@ -13,8 +13,8 @@ description: Use when the user wants to write a product requirements document. U
 
 ## 非本 skill 请求
 
-纯调研不写文档 → 走 `nocode-evolve:pd-research`。
-技术设计文档 / RFC / ADR → 走 `nocode-evolve:dev-design-refine`。
+纯调研不写文档 → 走 `nocode:pd-research`。
+技术设计文档 / RFC / ADR → 走 `nocode:dev-design-refine`。
 已有 PRD 直接进开发 → 走 devflow Define。
 改 README / commit message → 不进本 skill。
 
@@ -66,7 +66,7 @@ Task 9: 保存
   Gate: 文件保存 + 提示下一步
 
 Task 10: 硬交接 — 调用下一步 skill
-  Sub-steps: 报告 PRD 完成 → 按需求形态建议：涉及界面 → 调 Skill(nocode-evolve:pd-ix)（之后可续 pd-vd）；纯后端 / 无界面 → 进 devflow 开发流 → 等用户拍板
+  Sub-steps: 报告 PRD 完成 → 按需求形态建议：涉及界面 → 调 Skill(nocode:pd-ix)（之后可续 pd-vd）；纯后端 / 无界面 → 进 devflow 开发流 → 等用户拍板
   Gate: 用户拍板进入下一阶段（这一步不勾，PRD 不算收尾）
   metadata: {handoff: true}（供防跳步 Hook B 识别交接 task）
 ```
@@ -339,7 +339,7 @@ DDD 域划分的正式规格，被 §4 的流程图引用。每个域围绕一�
 
 文档存到 `{pd_prd_output}` 变量指定的路径（见 `model/agent-about.md`「文档产出路径变量」）。和同 topic 的 research-report 落同一目录。
 
-完成后提示："PRD 写完了。若需求涉及界面，建议下一步做交互设计（调 `nocode-evolve:pd-ix`），把需求落成界面结构 + 交互流（之后可再做视觉设计 `nocode-evolve:pd-vd`）；纯后端 / 无界面需求可直接进 devflow 开发流。"
+完成后提示："PRD 写完了。若需求涉及界面，建议下一步做交互设计（调 `nocode:pd-ix`），把需求落成界面结构 + 交互流（之后可再做视觉设计 `nocode:pd-vd`）；纯后端 / 无界面需求可直接进 devflow 开发流。"
 
 ## 文档质量硬规则
 

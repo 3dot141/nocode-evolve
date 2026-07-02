@@ -4,10 +4,10 @@
 
 ## 本插件工作模型 (架构总览)
 
-nocode-evolve 通过 SessionStart hook + skills + PreToolUse 三种机制影响 agent 行为, 分两类知识 + 一类硬护栏:
+nocode 通过 SessionStart hook + skills + PreToolUse 三种机制影响 agent 行为, 分两类知识 + 一类硬护栏:
 
 - **规则知识 (reactive)**: SessionStart 注入**完整规则路由**到 `model/agent-catalog-*.md` 分片常驻 context. 每条用户消息收到, **先扫 4 个粗桶 trigger_summary 一次** (catalog 头部 Step 0 工序), 命中 → 按需 `Read` `rules/rule-*.md`. 没有按需 route skill 中转.
-- **编排知识 (proactive)**: `Skill(nocode-evolve:devflow)` 可被 model 主动调起 (也可用户 `/调` 进入) 获取流程导航. 复杂多步任务时 agent 主动调起 devflow 给阶段判断 + 下一步建议, 用户拍板, devflow 不替执行.
+- **编排知识 (proactive)**: `Skill(nocode:devflow)` 可被 model 主动调起 (也可用户 `/调` 进入) 获取流程导航. 复杂多步任务时 agent 主动调起 devflow 给阶段判断 + 下一步建议, 用户拍板, devflow 不替执行.
 - **硬护栏 (确定性)**: `PreToolUse` hook 对危险 Bash 命令 (force push / gh api PATCH pulls / `.agents-personal` 删除 / `bkt` PUT / 裸 curl) `inject` 提醒或 `block` 拒绝. 唯一不依赖 agent 自觉的确定性机制.
 - **单源生成**: `rules/manifest.json` → `hooks/generate.mjs` → catalog 分片 + `pretooluse-rules.json`. 改 rule 改 manifest, 不手改生成物 (生成物头部有禁手改标记).
 
@@ -66,7 +66,7 @@ nocode-evolve 通过 SessionStart hook + skills + PreToolUse 三种机制影响 
 
 ## 评估类提问调红蓝军 skill
 
-用户问 "X 怎么样 / 行不行 / 合适吗 / 值得吗 / 选 A 还是 B / 哪个更好", 或显式说"红蓝军 / 第一性原理"——调 `Skill(nocode-evolve:red-blue-deep)`, skill 内会判档位 (轻档 / 重档).
+用户问 "X 怎么样 / 行不行 / 合适吗 / 值得吗 / 选 A 还是 B / 哪个更好", 或显式说"红蓝军 / 第一性原理"——调 `Skill(nocode:red-blue-deep)`, skill 内会判档位 (轻档 / 重档).
 不要在调用前自己先给结论. 不触发: 纯事实 / 纯执行 / 纯检索.
 
 ## 语气规范 — 工程动词用规范词, 不用口头俗语
@@ -87,7 +87,7 @@ nocode-evolve 通过 SessionStart hook + skills + PreToolUse 三种机制影响 
 
 ## 工具偏好 — 代码搜索默认走 semble-search
 
-代码搜索 (按语义 / 符号 / 意图 / 找实现 / 找相关代码) 默认调 `Agent(subagent_type: "nocode-evolve:semble-search")`, 不用 Grep / Glob / Read+find 盲扫. fallback 链在 `agents/semble-search.md` 已声明; 全不可用则退 Bash rg (ripgrep) / Explore agent 并报"semble 不可用, fallback 到 X".
+代码搜索 (按语义 / 符号 / 意图 / 找实现 / 找相关代码) 默认调 `Agent(subagent_type: "nocode:semble-search")`, 不用 Grep / Glob / Read+find 盲扫. fallback 链在 `agents/semble-search.md` 已声明; 全不可用则退 Bash rg (ripgrep) / Explore agent 并报"semble 不可用, fallback 到 X".
 
 不触发 (用原生工具, 不绕 semble):
 - 已知精确文件路径 → 直接 Read
@@ -101,7 +101,7 @@ nocode-evolve 通过 SessionStart hook + skills + PreToolUse 三种机制影响 
 无关键词触发, 随本文件常驻生效:
 
 - **git-inspection**: 连续跑 ≥2 个 git 只读命令(status / diff / log / show / branch / ls-files / remote -v)时, 默认用 `&&` 串成一个 Bash call, 各段间插 `echo "---<label>"` 分隔, 减少 turn 浪费。
-- **git-freshness**: 即将做设计性动作 / 代码搜索 (`Agent(nocode-evolve:semble-search)` / `grep -r` / `rg` / `Explore`) / 多文件 Read 探源做方案前, 一句 `node "${CLAUDE_PLUGIN_ROOT}/scripts/freshness-check.mjs" --max-behind=5 --ttl=7200` 拿 base (upstream → origin/HEAD → origin/main fallback) 的 behind 差距. exit 2 (behind ≥ 5) → 停手把 `message` 转述用户三选 (pull-rebase / 接受 / 跳过). cache TTL 2h 内毫秒返回不 fetch 不打扰. 支持 worktree 非 main 派生 base. `git worktree add` **那刻**仍由 `rule-git-worktree` 覆盖, 本条管之后所有就地 / worktree 内长期动作.
+- **git-freshness**: 即将做设计性动作 / 代码搜索 (`Agent(nocode:semble-search)` / `grep -r` / `rg` / `Explore`) / 多文件 Read 探源做方案前, 一句 `node "${CLAUDE_PLUGIN_ROOT}/scripts/freshness-check.mjs" --max-behind=5 --ttl=7200` 拿 base (upstream → origin/HEAD → origin/main fallback) 的 behind 差距. exit 2 (behind ≥ 5) → 停手把 `message` 转述用户三选 (pull-rebase / 接受 / 跳过). cache TTL 2h 内毫秒返回不 fetch 不打扰. 支持 worktree 非 main 派生 base. `git worktree add` **那刻**仍由 `rule-git-worktree` 覆盖, 本条管之后所有就地 / worktree 内长期动作.
 
 ## 偏离 rule/skill 触发需用户显式授权
 
