@@ -26,5 +26,8 @@ export function parseArgs(argv) {
     cssWatch: flags.has('css-watch'),
     dockerDownOnExit: flags.has('docker-down-on-exit'),
     yes: flags.has('yes'),
+    // 运维子命令：--status 查健康不起服务；--stop 按 services 杀进程不起服务
+    status: flags.has('status'),
+    stop: flags.has('stop'),
   };
 }

@@ -14,6 +14,31 @@ const toolDir = dirname(fileURLToPath(import.meta.url));
 const args = parseArgs(process.argv.slice(2));
 const repos = resolveRepos({ toolDir });
 
+// ---- 运维子命令（不起服务，不要求仓路径有效）----
+// --status：各服务端口健康 + 监听 PID，一次调用替代手工 lsof/curl 轮询
+if (args.status) {
+  const pidOn = (port) => {
+    try { return execFileSync('sh', ['-c', `lsof -ti tcp:${port} -sTCP:LISTEN | head -1`], { encoding: 'utf8' }).trim() || '-'; }
+    catch { return '-'; }
+  };
+  const row = async (name, port, up) =>
+    console.log(`[status] ${name.padEnd(6)} :${String(port).padEnd(5)} ${up ? 'UP  ' : 'DOWN'} pid=${up ? pidOn(port) : '-'}`);
+  await row('web', PORTS.web, await tcpOpen(PORTS.web));
+  await row('agents', PORTS.agents, await httpOk(`http://127.0.0.1:${PORTS.agents}/health`));
+  await row('server', PORTS.server, await tcpOpen(PORTS.server));
+  await row('pg', 5432, await tcpOpen(5432));
+  await row('minio', 9000, await tcpOpen(9000));
+  process.exit(0);
+}
+// --stop：按 --workspace 的 services 范围杀进程后退出（docker 一律不动）
+if (args.stop) {
+  for (const [cmd, a] of buildKillCommands({ ports: PORTS, serverDir: repos.SERVER_DIR, services: args.services })) {
+    await runToEnd('stop', cmd, a);
+  }
+  console.log('[stop] 完成（docker 未动，需要停 docker 请显式 docker compose down）');
+  process.exit(0);
+}
+
 // ---- 前置校验（fail loud）----
 const need = ['AGENTS_DIR'];
 if (args.services.web) need.push('WEB_DIR');
@@ -42,10 +67,6 @@ function tcpOpen(port) {
 async function httpOk(url) {
   try { const r = await fetch(url, { signal: AbortSignal.timeout(1500) }); return r.status >= 200 && r.status < 500; }
   catch { return false; }
-}
-function detectJdk21() {
-  try { return execFileSync('/usr/libexec/java_home', ['-v', '21'], { encoding: 'utf8' }).trim(); }
-  catch { return null; }
 }
 async function confirm(q) {
   const rl = createInterface({ input: process.stdin, output: process.stdout });
@@ -130,18 +151,35 @@ async function main() {
   }
 
   // ---- Step 2: agents + server（并行启动，分别等健康）----
+  if (args.services.agents && !args.services.docker) {
+    // ui 档不管 docker，但 agents 硬依赖 pg/minio —— 未就绪会 silent 卡到健康超时，预检 fail loud
+    const pgUp = await tcpOpen(5432);
+    const minioUp = await tcpOpen(9000);
+    if (!pgUp || !minioUp) {
+      throw new Error(`agents 依赖的中间件未就绪: pg5432=${pgUp ? 'UP' : 'DOWN'} minio9000=${minioUp ? 'UP' : 'DOWN'}。改用 --workspace=agents 让 launcher 起 docker，或先手动 docker compose up -d`);
+    }
+  }
   if (args.services.agents) {
     children.push(spawnPrefixed('agents', 'pnpm', ['dev:server'], { cwd: repos.AGENTS_DIR }));
     await waitHealthy('agents', () => httpOk(`http://127.0.0.1:${PORTS.agents}/health`), { tries: 60, intervalMs: 1000 });
   }
   if (args.services.server) {
-    const jdk = detectJdk21();
-    if (!jdk) throw new Error('未找到 JDK 21（/usr/libexec/java_home -v 21）。Gradle 8.5 不支持 Java 26，必须 JDK21。');
-    children.push(spawnPrefixed('server', './gradlew', ['clean', 'bootRun'], {
+    // 委派 scripts/dev-start.sh app —— fx-data-server 仓的启动知识单源在该脚本：
+    // GraalVM 检测 + ZGC→G1GC patch + 代理清除 + -Drpc.host 注入 + wait_for_es + 增量编译（--no-build-cache）。
+    // 脚本自带健康等待，成功即退出；bootRun 由脚本后台脱管（PID 记 <SERVER_DIR>/.dev-start.pid，日志 dev-start.log），
+    // 不进 children —— teardown 靠 buildKillCommands（gradlew --stop + lsof kill）覆盖。
+    const devStart = join(toolDir, 'scripts', 'dev-start.sh');
+    const code = await runToEnd('server', 'bash', [devStart, 'app'], {
       cwd: repos.SERVER_DIR,
-      env: { ...process.env, JAVA_HOME: jdk, SERVER_PORT: targets.serverEnv.SERVER_PORT },
-    }));
-    await waitHealthy('server', () => httpOk(`http://127.0.0.1:${PORTS.server}/`), { tries: 180, intervalMs: 2000 });
+      env: {
+        ...process.env,
+        FX_SERVER_DIR: repos.SERVER_DIR,
+        APP_PORT: targets.serverEnv.SERVER_PORT,
+        SERVER_PORT: targets.serverEnv.SERVER_PORT,
+      },
+    });
+    if (code !== 0) throw new Error(`dev-start.sh app 失败（exit ${code}），查看 ${join(repos.SERVER_DIR, 'dev-start.log')}`);
+    await waitHealthy('server', () => httpOk(`http://127.0.0.1:${PORTS.server}/`), { tries: 30, intervalMs: 2000 });
   }
 
   // ---- Step 3: web ----

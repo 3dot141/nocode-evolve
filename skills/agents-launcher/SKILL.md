@@ -1,7 +1,7 @@
 ---
 name: agents-launcher
 disable-model-invocation: true
-description: 本仓 fx-data-agents 三服务 (web :10001 / agents Hono :8070 / server Spring :8081) 的本地 dev 启停编排. 主仓启动直接执行脚本; worktree 启动按 cp gitignored 文件 → 联调对齐 → 执行脚本三步走. 关键决策点 (cp 文件 / 改 .env.local / reset worktree / 重启已在跑的服务 / 升档全栈 / 替换主仓 agents) 用 askUser 显式 gate, 不擅自动. 脚本含预检 + 后台启动 + healthy 轮询 + 完成汇报.
+description: 本仓 fx-data-agents 三服务 (web :10001 / agents Hono :8070 / server Spring :8081) 的本地 dev 启停编排. 逻辑全在脚本 (dev-orchestrator.mjs + scripts/dev-start.sh), skill 只做路由与 askUser gate. 主仓启动直接执行脚本; worktree 启动按 cp gitignored 文件 → 联调对齐 → 执行脚本三步走. server (Spring) 委派 scripts/dev-start.sh (GraalVM 检测/ZGC patch/代理清除/增量编译). 查状态 --status, 停服 --stop. 关键决策点 (cp 文件 / 改 .env.local / reset worktree / 重启已在跑的服务 / 升档全栈 / 替换主仓 agents) 用 askUser 显式 gate, 不擅自动.
 ---
 
 # agents-launcher — 本地 dev 服务启停
@@ -48,6 +48,8 @@ launcher 在插件目录, **无法从自身位置自动推出 fx 仓根**——`
 | `--workspace=<X>` | `ui`(默认, web+agents) / `agents`(+docker) / `full`(+docker+Spring) |
 | `--no-<svc>` | 子集减法: `--no-web` / `--no-agents` / `--no-server` |
 | `--yes` | 跳过 launcher 内自动路径解析的 y/N 确认 (worktree / cross-repo 必加) |
+| `--status` | 只查状态不起服务: web/agents/server/pg/minio 各端口 UP/DOWN + 监听 PID (不校验仓路径, 不需要 FX_*_DIR) |
+| `--stop` | 按 `--workspace` 范围杀进程后退出, docker 一律不动; 停 server 需 `--workspace=full --stop` |
 
 Workspace 三档按用户表述路由 (**默认 `ui`**, 不擅自升级):
 
@@ -59,7 +61,16 @@ Workspace 三档按用户表述路由 (**默认 `ui`**, 不擅自升级):
 | "只 agents" / "只起 agents" | `--workspace=ui --no-web` |
 | "只 web" / "只起 web" | `--workspace=ui --no-agents` |
 
-**升档需 askUser**: 默认 ui 没 Spring (慢且要 JDK21), 用户说"全栈"再升 `full`. 模糊信号 → askUser "起 ui 还是 full (含 Spring 后端)?", 别擅自升档.
+**升档需 askUser**: 默认 ui 没 Spring (慢且需 GraalVM, 委派脚本自动检测), 用户说"全栈"再升 `full`. 模糊信号 → askUser "起 ui 还是 full (含 Spring 后端)?", 别擅自升档.
+
+### server (Spring) 委派 scripts/dev-start.sh
+
+launcher 不裸跑 `gradlew bootRun`. `full` 档起 server 时委派 `${CLAUDE_PLUGIN_ROOT}/skills/agents-launcher/scripts/dev-start.sh app`(源自 fx-data-server 团队的本地启动脚本, 随插件分发), 自动获得: GraalVM 检测(候选路径 + `.java-home` 缓存写在 server 仓根) / ZGC→G1GC+EnableJVMCI patch(GraalJS 沙箱必需) / macOS 代理清除(防 localhost gRPC 被系统代理劫持 502) / `-Drpc.host` Polars 回连注入 / wait_for_es / 增量编译(`bootRun --no-build-cache`, 非 clean).
+
+- 脚本要求 env `FX_SERVER_DIR`(launcher 自动传); 手动跑: `FX_SERVER_DIR=<server仓根> bash <插件根>/skills/agents-launcher/scripts/dev-start.sh app`
+- **server 日志不进 launcher stdout**, 在 `<FX_SERVER_DIR>/dev-start.log`; bootRun 进程由脚本后台脱管(PID 记 server 仓根 `.dev-start.pid`), 停服由 `--stop` 的 `gradlew --stop` + 端口 kill 覆盖
+- **副作用**: 脚本会 patch server 仓 `build.gradle.kts`(ZGC→G1GC, 幂等)且**不还原**——server 仓 `git status` 会脏, **勿把该改动误提交**
+- launcher 只用它的 `app` 子命令; 脚本的 sync 子命令是 2026-06-25 修复前的旧版(本地 Gradle 模式), **不要用它起 sync**
 
 服务端口表 (写死, launcher 自己读 `lib/ports.mjs`, **skill 内不硬编码**, 此表仅速查):
 
@@ -174,19 +185,17 @@ git -C <web-worktree> reset --hard <web-main-HEAD-sha>
 
 ## Step 3 — 执行脚本启动 (主仓 / worktree 共用)
 
-### 3.1 启动前预检 (fail loud)
+### 3.1 启动前预检
 
-**中间件依赖**: agents 必须能连 pg5432 + minio9000.
+**中间件预检已内置**: ui 档(无 docker)启动 agents 前, launcher 自动 tcp 预检 pg5432 + minio9000, 未就绪 fail loud 退出(报错给出 `--workspace=agents` / 手动 compose up 两条路), 不需要手工 lsof.
+
+**幂等检查用 `--status`**(一次调用替代手工 lsof/curl, 命令里 `${CLAUDE_PLUGIN_ROOT}` 先换插件真实绝对路径):
 
 ```bash
-lsof -nP -iTCP:5432 -sTCP:LISTEN >/dev/null && \
-lsof -nP -iTCP:9000 -sTCP:LISTEN >/dev/null && echo "OK" || \
-echo "FAIL: pg5432 / minio9000 未起, agents 会 silent 卡住"
+node ${CLAUDE_PLUGIN_ROOT}/skills/agents-launcher/dev-orchestrator.mjs --status
 ```
 
-未起的话: 换 `--workspace=agents` (launcher 会 `docker compose up`), 或手动 `cd ../fx-data-server && docker compose up -d`. **不要在 pg/minio 未起的情况下硬上 ui workspace** — agents 会卡到 healthy 轮询超时, 浪费 60-120s.
-
-**幂等检查**: 目标 workspace 的所有端口都已 LISTEN.
+输出 web/agents/server/pg/minio 各端口 UP/DOWN + 监听 PID. 目标 workspace 端口全 UP → 触发 Gate 3.1.
 
 ### Gate 3.1 — 已在跑且用户没明说"重启"时 askUser
 
@@ -249,28 +258,19 @@ FX_WEB_DIR=<fx-data-web worktree 绝对路径> \
   - 跳过
 ```
 
-### 3.3 Healthy 轮询
+### 3.3 Healthy 确认
 
-```bash
-for i in $(seq 1 120); do
-  agents=$(curl -s -o /dev/null -w "%{http_code}" --max-time 1 http://127.0.0.1:8070/health)
-  nc -z 127.0.0.1 10001 >/dev/null 2>&1 && web=OK || web=NO
-  [ "$agents" = "200" ] && [ "$web" = "OK" ] && { echo "[$i] ready"; break; }
-  sleep 1
-done
-```
+launcher 内部已按服务等健康(agents `/health`、web/server 端口), 全部就绪打印 `✅ 就绪 → http://localhost:10001/decision/home`. **agent 不要手写 curl/nc 轮询**——等后台 task 输出该行, 或跑一次 `--status` 确认全 UP.
 
-按起的服务调整端口检查项: agents 用 `curl /health`, web/server 用 `nc -z`.
-
-**坑**: `nc -z 127.0.0.1 PORT 2>&1` 会污染 break 条件. `nc -z` 成功时 exit 0, 但 stderr 输出 `Connection ... succeeded!`. 用 `2>&1` 把 stderr 合并 stdout 后再走 `&& echo OK || echo NO`, `$web` 变量值变成一大坨, 永远不等于字符串 `"OK"`. 必须 `nc -z ... >/dev/null 2>&1 && echo OK || echo NO`.
+超时(launcher 抛「健康检查超时」): 看后台 task 输出定位卡在哪个服务; server 卡住先看 `<FX_SERVER_DIR>/dev-start.log`.
 
 ### 3.4 完成汇报
 
 启动成功后告诉用户:
 
-1. 每个目标服务的监听 PID:
+1. 每个目标服务的监听 PID(跑 `--status` 取, 不手写 lsof):
    ```bash
-   lsof -nP -iTCP:10001,8070 -sTCP:LISTEN 2>/dev/null
+   node ${CLAUDE_PLUGIN_ROOT}/skills/agents-launcher/dev-orchestrator.mjs --status
    ```
 2. 访问入口: `http://localhost:10001/decision/home`
 3. 后台 task ID (停服用)
@@ -292,11 +292,10 @@ done
 ### Fallback: task ID 未知 / 服务外部起的
 
 ```bash
-pkill -f "telemetry/preload.ts"              # 杀 agents tsx watch 父进程
-lsof -ti tcp:8070,10001 | xargs -r kill -9   # 清残留端口占用
+node ${CLAUDE_PLUGIN_ROOT}/skills/agents-launcher/dev-orchestrator.mjs --stop --workspace=<范围>
 ```
 
-**坑**: `pkill node` 只杀子进程没用 — `tsx watch` 是父子结构: 父进程监听文件改动, spawn 子 node. 只杀子 node, 父 watch 会**自动重启**它, 端口立刻被重占, 看上去像没杀掉. 必须杀**父进程**, 关键词 `telemetry/preload.ts` (这是 watch 父进程命令行的标志, 不是 child).
+`--stop` 内置正确杀法, **不要再手写 pkill/lsof**: agents 杀 tsx watch **父进程**(`pkill -f telemetry/preload.ts`——tsx watch 是父子结构, 只杀子 node 会被父 watch 自动重启, 端口立刻重占)+ 端口清理; web 清 :10001; server 走 `gradlew --stop` + :8081 kill(需 `--workspace=full`).
 
 ### docker 中间件: 默认不停
 
@@ -316,24 +315,27 @@ cd ../fx-data-server && docker compose down
 
 ## 必踩坑速查
 
-1. `nc -z` 健康检查别加 `2>&1` — stderr 污染 break 变量, 循环跑满超时
+1. 状态 / 健康一律 `--status`, 别手写 curl/nc/lsof 轮询 (历史坑: 手写 `nc -z` 加 `2>&1` 会 stderr 污染 break 变量, 循环跑满超时)
 2. `--workspace=ui` 默认含 web, 用户没说"只 agents"别加 `--no-web`, :10001 起不来
-3. pg5432 / minio9000 没起时 agents 会 silent 卡住, 启动前预检
-4. 杀 `tsx watch` 要杀父进程 (`telemetry/preload.ts` 关键词), 不是杀子 node
-5. 后台 task ID 必须记录告知用户, 否则停服只能 pkill fallback
+3. pg5432 / minio9000 未就绪时 launcher 的 ui 档会预检 fail loud (报错给出解法), 不再 silent 卡住
+4. 杀 `tsx watch` 要杀父进程 (`telemetry/preload.ts` 关键词), 不是杀子 node — `--stop` 已内置
+5. 后台 task ID 必须记录告知用户; 丢了用 `--stop --workspace=<范围>` 兜底
 6. launcher 内置 `buildKillCommands` — 启动会先 kill 旧, 别在 skill 里又叠一层手工清理
 7. worktree 启动必须按 Step 1 → 2 → 3 顺序, 不能跳过 cp / 联调对齐
 8. worktree `reset` / `git pull` 后, Gate 1.5 改的 `package.json` packageManager 改动会被冲掉, **需要重做**
 9. 关键决策点 (cp / 改 .env.local / reset / 重启已在跑 / 升档全栈 / 替换主仓 agents) **必须 askUser**, 不擅自动
 10. launcher 在插件目录不在 fx 仓 → `FX_*_DIR` 主仓 / worktree 启动都强制, 漏了必报 validateRepos 错; `${CLAUDE_PLUGIN_ROOT}` Bash 不展开, 先换绝对路径
 11. 单独重启 sync 容器 (如 `test-sync`) 必须连带重启 `sync-polars-localhost` — socat sidecar 共享 sync 网络栈, 主容器重启后绑定失效, Excel 导入静默写空表 (表还标 valid, 无报错)
+12. server 委派 `scripts/dev-start.sh` 有副作用: 会 patch server 仓 `build.gradle.kts` (ZGC→G1GC) 且不还原, **勿把该改动误提交**; server 日志在 `<FX_SERVER_DIR>/dev-start.log` 不在 launcher stdout
 
 ## 不要做
 
 - 不要把 agents-launcher 抽象成"任意服务管理器" — scope 只本仓三服务
 - 不要在 skill 里硬编码端口 — 端口在 `lib/ports.mjs`, 让 launcher 自己读
 - 不要绕过 launcher 直接 `pnpm dev:server` — 失去 kill 旧 + healthy 等待 + teardown
-- 不要默认 `--workspace=full` — Spring 慢且要 JDK21, 模糊信号下 askUser
+- 不要绕过 `scripts/dev-start.sh` 手拼 `gradlew bootRun` 起 server — 丢 GraalVM/ZGC patch/代理清除/rpc.host 修补, GraalJS 沙箱和 Polars 联调会挂
+- 不要手写 lsof/curl/nc 查状态或 pkill 停服 — 用 `--status` / `--stop`, 杀法和坑都固化在脚本里
+- 不要默认 `--workspace=full` — Spring 慢且需 GraalVM, 模糊信号下 askUser
 - 不要因"停 docker"擅自 `docker compose down` — 影响其他容器
 - 不要 worktree 改了 `packages/server` / `packages/shared` 还复用主仓 agents — agents 后端代码不生效, 用户测的不是 worktree 行为
 - 不要去 fx 仓 (主仓 / worktree) 里找 launcher — 它随插件分发, 真实路径在 `${CLAUDE_PLUGIN_ROOT}/skills/agents-launcher/`, fx 仓的 `.claude/skills/` 是空的
@@ -350,7 +352,8 @@ cd ../fx-data-server && docker compose down
 | "只起 agents" | Step 3: `--workspace=ui --no-web --yes` |
 | "在 worktree 内起 dev 测前端改动" | Step 1 (Gate 1 cp) → Step 2 (Gate 2.1 改 AGENTS_LOCAL_SRC, Gate 2.2 reset 对齐) → Step 3 (Gate 3.2 复用主仓 agents) |
 | "在 worktree 内起 dev 测后端改动" | Step 1 → Step 2 → Step 3 (Gate 3.2 替换主仓 agents 成 worktree agents) |
-| "停服" | `TaskStop <已知 task ID>`; 未知则 fallback `pkill -f telemetry/preload.ts` + `lsof -ti tcp:... \| xargs kill -9` |
+| "停服" | `TaskStop <已知 task ID>`; 未知则 fallback `--stop --workspace=<范围>` |
+| "看服务状态" | `--status` (web/agents/server/pg/minio 端口 + PID, 一次调用) |
 | "重启 docker" | **不进 skill** — 是 docker compose 的事 |
 | "重启 test-sync / sync 容器" | `docker restart <IMAGE_PREFIX>-sync sync-polars-localhost` — sidecar 必须连带重启, 见「docker 中间件」节 |
 | "看 agents 日志" | **不进 skill** — Read 后台 task 的 output 文件 |
