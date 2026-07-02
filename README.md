@@ -81,7 +81,7 @@ claude --plugin-dir /Users/yes365/AI/nocode-evolve
 ```bash
 # 在 Claude Code 内执行 (slash 命令)
 /plugin marketplace add /Users/yes365/AI/nocode-evolve
-/plugin install nocode@nocode
+/plugin install nocode@nocode-market
 ```
 
 ### 方式 C:GitHub marketplace(跨设备同步)
@@ -89,18 +89,18 @@ claude --plugin-dir /Users/yes365/AI/nocode-evolve
 2. 在 Claude Code 内:
    ```
    /plugin marketplace add 3dot141/nocode-evolve
-   /plugin install nocode@nocode
+   /plugin install nocode@nocode-market
    ```
 
 ## 日常操作
 
 | 操作 | 命令 |
 |---|---|
-| 启用 / 禁用 | `/plugin enable nocode@nocode` / `/plugin disable ...` |
+| 启用 / 禁用 | `/plugin enable nocode@nocode-market` / `/plugin disable ...` |
 | 改完热加载 | `/reload-plugins` |
 | 校验清单 | `/plugin validate` |
 | 查看加载详情 | `claude --debug` 启动 |
-| 卸载 | `claude plugin uninstall nocode@nocode --scope user` |
+| 卸载 | `claude plugin uninstall nocode@nocode-market --scope user` |
 
 ## 后续扩展(按需加目录即可)
 

@@ -1,6 +1,6 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
-  "name": "nocode",
+  "name": "nocode-market",
   "owner": { "name": "Harrison", "url": "https://github.com/3dot141" },
   "plugins": [
     {
