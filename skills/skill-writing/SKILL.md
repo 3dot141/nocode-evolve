@@ -87,7 +87,7 @@ Task 5: Eval — Run & Review (Phase 5)
   Gate: benchmark produced, pass_rate has numbers
 
 Task 6: REFACTOR — Iterate (Phase 6)
-  Sub-steps: aggregate reflect → bounded edits → validation gate (含 codex cross-model) → convergence
+  Sub-steps: aggregate reflect → bounded edits → validation gate (incl. codex cross-model) → convergence
   Gate: converged or user satisfied
 
 Task 7: Description Optimization (Phase 7)
@@ -163,16 +163,16 @@ For each scenario:
 3. Label each failure with the matrix cell it exposed (e.g. "Axis 3: Rationalization + Axis 4: Sunk cost")
 4. Save results to workspace
 
-**Codex 跨模型 baseline**：至少 1 个场景同时用 codex 跑，发现跨模型差异性的失败模式。
+**Codex cross-model baseline**: run at least 1 scenario through codex as well, to surface failure modes that differ across models.
 
 ```
-codex 可用？（setup --json）
+codex available? (setup --json)
      │
-     ├─ 可用 ──→ 跑 ≥1 scenario → 与 subagent 失败模式对比
-     │              - 两者都失败 = 高置信失败模式
-     │              - 仅一方失败 = 模型特有盲区，仍是有效 baseline failure
+     ├─ yes ──→ run ≥1 scenario → compare failure modes with subagent
+     │              - both fail = high-confidence failure mode
+     │              - only one fails = model-specific blind spot, still a valid baseline failure
      │
-     └─ 不可用 ──→ 仅 subagent（明说「codex 不可用，跨模型 baseline 跳过」）
+     └─ no ──→ subagent only (state "codex unavailable, cross-model baseline skipped")
 ```
 
 ```bash
@@ -249,22 +249,23 @@ Workflow skill SKILL.md must include: **Step 0 TaskCreate** (all tasks created u
      └─ fail (specific error) ──→ fallback path + report reason
 ```
 
+- **No weak cross-references.** Only name another skill / command when it is a hard execution dependency (handoff, required framework, routing "Not for X — use Y"); never cite another skill's internals (Step N, section titles) as a "reference pattern".
 - For Anthropic's official skill authoring best practices, read `writing-skills/anthropic-best-practices.md`
 
-### Self-Verification Guideline（产出 skill 的独立审查引导）
+### Self-Verification Guideline (independent-review guidance for produced skills)
 
-如果你写出来的 skill 包含**agent 验证自己产出**的步骤（review / verify / check / validate / 确认 / 评审），该步骤应引入合适的 review 方法论 + 独立审查引导。适用于所有 skill 类型，不限 workflow skill。
+If the skill you produce contains steps where the **agent verifies its own output** (review / verify / check / validate / confirm / assess), that step should adopt a proper review methodology + independent-review guidance. Applies to all skill types, not just workflow skills.
 
-判断规则：skill 的某个步骤里，agent 在检查自己刚做出来的东西（代码 / 设计 / 方案 / 文档 / 配置）→ 该步骤加引导。引导分两层：
+Decision rule: a step where the agent checks something it just produced (code / design / plan / document / config) → add guidance to that step. Guidance has two layers:
 
-**第一层 · 结构化 review 引入 `reviewing` 框架（review 方法论底座）**：若该 review 步骤是**多维度评审**（多个评审维度 + 分档 + findings 分级 + 收口，例如新 skill 自带一个代码 / 设计 / 方案评审阶段），引导它引入 `reviewing` 框架、别在新 skill 里重造一套 review 流程——新 skill 的该步骤写成先 `Read {NOCODE_SKILL_REF}/reviewing/skeleton.md`（7 步流程 + 方法库选择表 + 公共能力）+ `Read {NOCODE_SKILL_REF}/reviewing/findings-contract.md`（统一 findings/verdict 契约），在框架第 3 步注入本领域评审维度、第 4 步从方法库选打法。
+**Layer 1 · Structured reviews adopt the `reviewing` framework (review methodology base)**: if the review step is a **multi-dimension review** (multiple review dimensions + tiering + findings grading + wrap-up — e.g. the new skill ships its own code / design / plan review phase), guide it to adopt the `reviewing` framework instead of reinventing a review flow inside the new skill — write that step as: first `Read {NOCODE_SKILL_REF}/reviewing/skeleton.md` (7-step flow + method-library selection table + shared capabilities) + `Read {NOCODE_SKILL_REF}/reviewing/findings-contract.md` (unified findings/verdict contract), then inject the domain's review dimensions at framework step 3 and pick tactics from the method library at step 4.
 
-**第二层 · 独立交叉那一步选谁**（reviewing 框架第 5 步的载体；轻量单点自查则跳过第一层直接选）：
-- **评估/拍板类**（"这个方案行不行"）→ 指向 `Skill(nocode:red-blue-deep)`
-- **产出审查类**（"这段代码/文档有没有问题"）→ 推荐先自审（`{NOCODE_SKILL_REF}/reviewing/methods/self-review.md`），有异议升档单跑 codex 独立 review（参照 `rule-codex-review` 场景四 + reviewing skeleton §1a 升档判据）
-- **合规检查类**（"是否遵守了规则"）→ 推荐先自查，拿不准再派 subagent 独立检查（不需要跨模型）
+**Layer 2 · Who runs the independent cross-check** (the carrier of the reviewing framework's step 5; lightweight single-point self-checks skip Layer 1 and pick directly):
+- **Evaluation / decision** ("is this approach sound?") → point to `Skill(nocode:red-blue-deep)`
+- **Output review** ("does this code / document have problems?") → recommend self-review first (`{NOCODE_SKILL_REF}/reviewing/methods/self-review.md`), escalating to a single codex independent review on disagreement (per `rule-codex-review` scenario 4 + reviewing skeleton §1a escalation criteria)
+- **Compliance check** ("were the rules followed?") → recommend self-check first, dispatching an independent subagent when uncertain (no cross-model needed)
 
-不加引导的步骤：纯机械验证（跑测试 / lint / 类型检查）、有客观标准的 pattern 匹配——这些不需要独立视角。
+Steps that need no guidance: purely mechanical verification (tests / lint / type checks) and pattern matching against objective criteria — these need no independent perspective.
 
 ### Self-Review
 
@@ -272,9 +273,9 @@ After writing SKILL.md, self-review it — author's own pass, no subagent, no co
 
 - Does it actually address every baseline failure recorded in Phase 3?
 - Are there loopholes, missing edge cases, or instructions an agent could misinterpret?
-- Method-card items: placeholder/TODO 残留、内部矛盾、歧义模糊、scope 漂移、空壳未兑现、完整性
+- Method-card items: leftover placeholders/TODOs, internal contradictions, ambiguity, scope drift, hollow promises never fulfilled, completeness
 
-Fix issues inline before passing the Exit Gate; unfixed items must be recorded explicitly. Self-review 是最低门槛不是充分条件——发现真硬伤（critical）或对象明显高风险时，升档调 `Skill(nocode:red-blue-deep)` 补独立审查。
+Fix issues inline before passing the Exit Gate; unfixed items must be recorded explicitly. Self-review is the minimum bar, not a sufficient one — on finding a genuine critical defect, or when the subject is clearly high-risk, escalate to `Skill(nocode:red-blue-deep)` for an independent review.
 
 **Exit Gate:**
 - [ ] SKILL.md produced
@@ -363,7 +364,7 @@ Each iteration: at most 3 changes (add/delete/replace) to SKILL.md. No full rewr
 
 Re-run the validation set (held-out 40%) after edits. Compare `new_score` against `previous_score`.
 
-**Codex cross-model validation**：validation set 中至少 1 case 用 codex 执行（同 Phase 3 的跨模型 baseline 逻辑）。codex 执行失败而 subagent 成功 → 可能是 SKILL_DEFECT（指令依赖模型特有推理，不够显式），计入 6a 下一轮 Aggregate Reflect。codex 不可用则跳过，明说。
+**Codex cross-model validation**: run at least 1 validation case through codex (same logic as the Phase 3 cross-model baseline). If codex fails where the subagent succeeds → likely a SKILL_DEFECT (the instructions rely on model-specific reasoning and aren't explicit enough); feed it into the next round of 6a Aggregate Reflect. If codex is unavailable, skip and say so.
 
 - `new_score < previous_score` → **reject** edits, revert, try different approach
 - `new_score >= previous_score` → **accept**, update previous_score

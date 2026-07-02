@@ -82,6 +82,7 @@ manifest+generate: rules/manifest.json 已加条目, node hooks/generate.mjs 重
 
 - AI 自判直接写——被 `/distill` 调用时信任其已完成候选呈现+用户勾选；独立调用时拿不准分类要问不要猜
 - rules 永远新建——强相关先融合
+- 弱相关点名其他 skill / command / rule——仅执行链硬依赖（handoff / 必须调用的框架 / 路由消歧「X 不归本条,走 Y」）才点名；不引用对方内部结构（Step 编号 / 小节名）当"参考模式"
 - 末尾 paste——融进合适章节
 - 忘了登记 manifest 或忘升版本
 - skill 委托后无条件升版本——必须 gate 在"确有改动"
