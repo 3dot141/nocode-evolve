@@ -1,7 +1,7 @@
 ---
 name: agents-launcher
 disable-model-invocation: true
-description: 本仓 fx-data-agents 三服务 (web :10001 / agents Hono :8070 / server Spring :8081) 的本地 dev 启停编排. 逻辑全在脚本 (dev-orchestrator.mjs + scripts/dev-start.sh), skill 只做路由与 askUser gate. 主仓启动直接执行脚本; worktree 启动按 仓况盘点 → cp gitignored 文件 → 联调对齐 → 执行脚本四步走. server (Spring) 委派 scripts/dev-start.sh (GraalVM 检测/ZGC patch/代理清除/增量编译). 查状态 --status, 停服 --stop. 关键决策点 (缺 worktree 时建/混搭/跳过 / cp 文件 / 改 .env.local / reset worktree / 重启已在跑的服务 / 升档全栈 / 替换主仓 agents) 用 askUser 显式 gate, 不擅自动.
+description: 本仓 fx-data-agents 三服务 (web :10001 / agents Hono :8070 / server Spring :8081) 的本地 dev 启停编排. 逻辑全在脚本 (dev-orchestrator.mjs 编排 + server-cli/web-cli/agents-cli 三个 per-service CLI), skill 只做路由与 askUser gate. 主仓启动直接执行 orchestrator; worktree 启动按 仓况盘点 → per-service prepare → 联调对齐 → 执行 orchestrator 四步走. server 由 server-cli 承载 (ANTLR 预热/GraalVM 检测/ZGC patch/代理清除/基础设施容器/bootRun). 查状态 --status, 停服 --stop. 关键决策点 (缺 worktree 时建/混搭/跳过 / prepare cp / 改 .env.local / reset worktree / 重启已在跑的服务 / 升档全栈 / 替换主仓 agents) 用 askUser 显式 gate, 不擅自动.
 ---
 
 # agents-launcher — 本地 dev 服务启停
@@ -62,16 +62,41 @@ Workspace 三档按用户表述路由 (**默认 `ui`**, 不擅自升级):
 | "只 agents" / "只起 agents" | `--workspace=ui --no-web` |
 | "只 web" / "只起 web" | `--workspace=ui --no-agents` |
 
-**升档需 askUser**: 默认 ui 没 Spring (慢且需 GraalVM, 委派脚本自动检测), 用户说"全栈"再升 `full`. 模糊信号 → askUser "起 ui 还是 full (含 Spring 后端)?", 别擅自升档.
+**升档需 askUser**: 默认 ui 没 Spring (慢且需 GraalVM, server-cli 自动检测), 用户说"全栈"再升 `full`. 模糊信号 → askUser "起 ui 还是 full (含 Spring 后端)?", 别擅自升档.
 
-### server (Spring) 委派 scripts/dev-start.sh
+### per-service CLI（skill gate 通过后的执行单元）
 
-launcher 不裸跑 `gradlew bootRun`. `full` 档起 server 时委派 `${CLAUDE_PLUGIN_ROOT}/skills/agents-launcher/scripts/dev-start.sh app`(源自 fx-data-server 团队的本地启动脚本, 随插件分发), 自动获得: GraalVM 检测(候选路径 + `.java-home` 缓存写在 server 仓根) / ZGC→G1GC+EnableJVMCI patch(GraalJS 沙箱必需) / macOS 代理清除(防 localhost gRPC 被系统代理劫持 502) / `-Drpc.host` Polars 回连注入 / wait_for_es / 增量编译(`bootRun --no-build-cache`, 非 clean).
+| CLI | 动词 | 用途 |
+|---|---|---|
+| `server-cli.mjs` | `prepare` / `infra` / `start` / `stop` / `status` | prepare = ANTLR 生成类预热 + GraalVM 检测缓存（新建 server worktree 后必跑一次, 否则 IDE 报红）; start = 原 dev-start.sh app 链的 node 实现 |
+| `web-cli.mjs` | `prepare` / `env` / `pkgmgr` / `align` / `start` / `stop` / `status` | prepare = cp .env.local（`FX_WEB_FROM=<源仓>`）; env = 写 AGENTS_LOCAL_SRC 等四键; pkgmgr = corepack 缓存检查+packageManager patch（`--patch=<version>`）; align = fork 对齐检查（`--reset` 显式才 reset） |
+| `agents-cli.mjs` | `prepare` / `start` / `stop` / `status` | prepare = cp config.yaml（`FX_AGENTS_FROM=<源仓>`） |
 
-- 脚本要求 env `FX_SERVER_DIR`(launcher 自动传); 手动跑: `FX_SERVER_DIR=<server仓根> bash <插件根>/skills/agents-launcher/scripts/dev-start.sh app`
-- **server 日志不进 launcher stdout**, 在 `<FX_SERVER_DIR>/dev-start.log`; bootRun 进程由脚本后台脱管(PID 记 server 仓根 `.dev-start.pid`), 停服由 `--stop` 的 `gradlew --stop` + 端口 kill 覆盖
-- **副作用**: 脚本会 patch server 仓 `build.gradle.kts`(ZGC→G1GC, 幂等)且**不还原**——server 仓 `git status` 会脏, **勿把该改动误提交**
-- launcher 只用它的 `app` 子命令; 脚本的 sync 子命令是 2026-06-25 修复前的旧版(本地 Gradle 模式), **不要用它起 sync**
+调用模板（`${CLAUDE_PLUGIN_ROOT}` 先换插件真实绝对路径; repo 路径用 FX_*_DIR env 传）:
+
+```bash
+FX_SERVER_DIR=<server 仓根> node ${CLAUDE_PLUGIN_ROOT}/skills/agents-launcher/server-cli.mjs prepare
+FX_WEB_DIR=<web 仓根> FX_AGENTS_DIR=<agents 仓根> node ${CLAUDE_PLUGIN_ROOT}/skills/agents-launcher/web-cli.mjs env
+FX_AGENTS_DIR=<agents 仓根> FX_AGENTS_FROM=<主仓根> node ${CLAUDE_PLUGIN_ROOT}/skills/agents-launcher/agents-cli.mjs prepare
+```
+
+CLI 全部非交互——破坏性动作（align --reset / 改 .env.local）由本 skill 的 Gate 问过用户后才调, CLI 只认显式 flag。
+
+### server (Spring) 由 server-cli 承载
+
+launcher 不裸跑 `gradlew bootRun`. `full` 档起 server 时 orchestrator 直调 `server-cli` 的完整 app 链（`.env` 加载 → 本地基础设施 env → 基础设施容器检查/启动 → bootRun）, 自动获得: GraalVM 检测(候选路径 + `.java-home` 缓存写在 server 仓根, 无 GraalVM 时容器方案降级) / ZGC→G1GC+EnableJVMCI patch(GraalJS 沙箱必需) / macOS 代理清除(防 localhost gRPC 被系统代理劫持 502) / `-Drpc.host` Polars 回连注入 / wait_for_es / 增量编译(`bootRun --no-build-cache`, 非 clean).
+
+- 手动跑: `FX_SERVER_DIR=<server仓根> node <插件根>/skills/agents-launcher/server-cli.mjs start [--kill-old]`（端口占用默认 fail loud, `--kill-old` 显式杀旧）
+- **server 日志不进 launcher stdout**, 在 `<FX_SERVER_DIR>/dev-start.log`; bootRun 进程后台脱管(PID 记 server 仓根 `.dev-start.pid`), 停服由 `--stop`（gradlew --stop + 容器清理 + 端口 kill）或 `server-cli stop` 覆盖
+- **副作用**: 会 patch server 仓 `build.gradle.kts`(ZGC→G1GC, 幂等)且**不还原**——server 仓 `git status` 会脏, **勿把该改动误提交**
+
+**server worktree 首次准备（ANTLR 坑）**: fx-agent-workspace 的 ANTLR 生成类落在 gitignored 目录（新接线 `src/main/antlr-generated` / 旧接线 `src/main/generated`）, 新建 worktree 后为空——命令行 gradle 会自愈（生成 task 挂 compileJava.dependsOn）, 但 IDE (IDEA JPS) 不跑 gradle task, 直接打开报红. 新建 server worktree 后跑一次:
+
+```bash
+FX_SERVER_DIR=<server worktree> node <插件根>/skills/agents-launcher/server-cli.mjs prepare
+```
+
+内部执行 `./gradlew :fx-agent-workspace:generateGrammarSource`（两代接线通用聚合入口）, 并自动解析 JAVA_HOME（GraalVM → `java_home -v 21`; 本机默认 JDK 过新会 build 失败, prepare 已处理）.
 
 服务端口表 (写死, launcher 自己读 `lib/ports.mjs`, **skill 内不硬编码**, 此表仅速查):
 
@@ -167,11 +192,11 @@ worktree-setup.mjs 自动补齐 IDE / node_modules / symlink personal, 但下列
   - 我自己 cp / 跳过
 ```
 
-cp 模板:
+cp 命令（gate 确认后执行, CLI 已存在则跳过不覆盖）:
 
 ```bash
-cp <agents-main>/packages/server/conf/config.yaml      <agents-worktree>/packages/server/conf/config.yaml
-cp <web-main>/packages/jsy-web/server/.env.local       <web-worktree>/packages/jsy-web/server/.env.local
+FX_AGENTS_DIR=<agents-worktree> FX_AGENTS_FROM=<agents-main> node <插件根>/skills/agents-launcher/agents-cli.mjs prepare
+FX_WEB_DIR=<web-worktree> FX_WEB_FROM=<web-main> node <插件根>/skills/agents-launcher/web-cli.mjs prepare
 ```
 
 ### Gate 1.5 — corepack cache 不全时 askUser 改 package.json
@@ -186,6 +211,13 @@ packageManager 字段成本机已缓存的版本 `pnpm@<Y>`?
   - 改成 pnpm@<已缓存版本>
   - 我自己装 pnpm@<X> 后重试
   - 跳过 (会启动失败)
+```
+
+检测与执行都用 web-cli（检测不带 flag 只报告; gate 确认后带 `--patch` 执行）:
+
+```bash
+FX_WEB_DIR=<web-worktree> node <插件根>/skills/agents-launcher/web-cli.mjs pkgmgr                    # 检测: 输出 locked/cached/needsPatch
+FX_WEB_DIR=<web-worktree> node <插件根>/skills/agents-launcher/web-cli.mjs pkgmgr --patch=<Y>       # gate 确认后: 定向替换 packageManager 字段
 ```
 
 ## Step 2 — 联调对齐 (worktree 专属)
@@ -210,6 +242,12 @@ web vite 通过 `AGENTS_LOCAL_SRC` 决定加载哪份 fx-data-agents (详见 `LO
   - 改成 worktree 路径 (推荐, 测前端联调必选)
   - 保留主仓 (只测后端 / 不测 desktop 改动)
   - 跳过
+```
+
+gate 确认后执行（写 AGENTS_LOCAL_SRC 等四键, 幂等 upsert）:
+
+```bash
+FX_WEB_DIR=<web 仓> FX_AGENTS_DIR=<agents-worktree> node <插件根>/skills/agents-launcher/web-cli.mjs env
 ```
 
 ### 2.2 base 时间对齐 (避免跨仓 API 漂移)
@@ -238,11 +276,12 @@ fx-data-agents worktree base = `<agents-worktree-base-sha>` (跟 web 主仓时�
   - 跳过
 ```
 
-reset 命令:
+检查与 reset 都用 web-cli（检查不带 flag; gate 确认后带 `--reset`, 仅限 worktree, **禁止对主仓用**）:
 
 ```bash
-git -C <web-worktree> reset --hard <web-main-HEAD-sha>
-# 若 Gate 1.5 改过 package.json packageManager → 重做 Edit
+FX_WEB_DIR=<web-worktree> node <插件根>/skills/agents-launcher/web-cli.mjs align <web-main-HEAD-sha>            # 检查对齐状态
+FX_WEB_DIR=<web-worktree> node <插件根>/skills/agents-launcher/web-cli.mjs align <web-main-HEAD-sha> --reset    # gate 确认后 reset
+# 若 Gate 1.5 改过 package.json packageManager → 重做 pkgmgr --patch
 ```
 
 ## Step 3 — 执行脚本启动 (主仓 / worktree 共用)
@@ -391,14 +430,15 @@ cd ../fx-data-server && docker compose down
 9. 关键决策点 (缺 worktree 处置 / cp / 改 .env.local / reset / 重启已在跑 / 升档全栈 / 替换主仓 agents) **必须 askUser**, 不擅自动
 10. launcher 在插件目录不在 fx 仓 → `FX_*_DIR` 主仓 / worktree 启动都强制, 漏了必报 validateRepos 错; `${CLAUDE_PLUGIN_ROOT}` Bash 不展开, 先换绝对路径
 11. 单独重启 sync 容器 (如 `test-sync`) 必须连带重启 `sync-polars-localhost` — socat sidecar 共享 sync 网络栈, 主容器重启后绑定失效, Excel 导入静默写空表 (表还标 valid, 无报错)
-12. server 委派 `scripts/dev-start.sh` 有副作用: 会 patch server 仓 `build.gradle.kts` (ZGC→G1GC) 且不还原, **勿把该改动误提交**; server 日志在 `<FX_SERVER_DIR>/dev-start.log` 不在 launcher stdout
+12. server-cli 有副作用: 会 patch server 仓 `build.gradle.kts` (ZGC→G1GC, 幂等) 且不还原, **勿把该改动误提交**; server 日志在 `<FX_SERVER_DIR>/dev-start.log` 不在 launcher stdout
+13. 新建 server worktree 后先跑 `server-cli prepare`, 否则 IDE 对 ANTLR 生成类报红 (dev 启动不受影响, gradle 自愈); prepare 已自动解析 JAVA_HOME (本机默认 JDK 过新会 build 失败)
 
 ## 不要做
 
 - 不要把 agents-launcher 抽象成"任意服务管理器" — scope 只本仓三服务
 - 不要在 skill 里硬编码端口 — 端口在 `lib/ports.mjs`, 让 launcher 自己读
 - 不要绕过 launcher 直接 `pnpm dev:server` — 失去 kill 旧 + healthy 等待 + teardown
-- 不要绕过 `scripts/dev-start.sh` 手拼 `gradlew bootRun` 起 server — 丢 GraalVM/ZGC patch/代理清除/rpc.host 修补, GraalJS 沙箱和 Polars 联调会挂
+- 不要绕过 `server-cli` 手拼 `gradlew bootRun` 起 server — 丢 GraalVM/ZGC patch/代理清除/rpc.host 修补, GraalJS 沙箱和 Polars 联调会挂
 - 不要手写 lsof/curl/nc 查状态或 pkill 停服 — 用 `--status` / `--stop`, 杀法和坑都固化在脚本里
 - 不要默认 `--workspace=full` — Spring 慢且需 GraalVM, 模糊信号下 askUser
 - 不要因"停 docker"擅自 `docker compose down` — 影响其他容器
