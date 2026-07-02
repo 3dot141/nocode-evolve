@@ -1,7 +1,7 @@
 # prd-review — PRD 评审
 
 **评审对象**: pd-prd 的 `.prd.md` 产出
-**评审模式**: dual-review 双重评判 + 总结（异源双评，无防守方——两路中立挑错后合并）
+**评审模式**: checklist 自审为主；升档时 dual-review（异源双评，无防守方——两路中立挑错后合并）
 
 ## 引入框架
 
@@ -10,11 +10,11 @@
 1. **Read `{NOCODE_SKILL_REF}/reviewing/skeleton.md`** —— 套通用流程骨架（分档 → 对象界定 → 评审维度 → 选方法 → 独立交叉 → findings 分级 → 收口拍板）。
 2. **Read `{NOCODE_SKILL_REF}/reviewing/findings-contract.md`** —— 套 findings 统一契约（finding/verdict schema + 5→3 分级映射 + Evidence Gate）。
 
-**对象定位**：PRD 文档 → 命中骨架方法选择表「需求 / PRD / restate」行 → 默认方法 `checklist`（下方 8 维度）+ `dual-review`（异源双评 + 总结），独立性=异源。
+**对象定位**：PRD 文档 → 命中骨架方法选择表「需求 / PRD / restate」行 → 主方法 `checklist`（下方 8 维度，主路自审默认）；`dual-review`（异源双评 + 总结）是升档预案（skeleton §1a 命中才派）。
 
-**档位**（skeleton §1 自动判，拿不准默认轻档）：PRD 含架构性产品决策 / 跨多领域路径 / 不可逆承诺（对外接口、计费、数据模型）→ **重档**（完整 7 步含独立交叉）；小改（增补单条 US / 文案澄清 / 局部路径修订）→ **轻档**（主路 checklist 自审，跳过独立交叉）。用户显式要求深审 → 重档。
+**档位**（skeleton §1 自动判，拿不准默认轻档）：PRD 含架构性产品决策 / 跨多领域路径 / 不可逆承诺（对外接口、计费、数据模型）→ **重档**（8 维度全量自审）；小改（增补单条 US / 文案澄清 / 局部路径修订）→ **轻档**（主路 checklist 快速过）。两档都不默认派独立交叉——何时派见 skeleton §1a 升档判据。
 
-**独立交叉**（骨架步骤 5，重档必走）：Claude 主路（当前会话 checklist 遍历，不外派）、Codex 独立路（隔离执行），经 `rule-codex-review` 单一通道派发。**CLAIM 剥离 + Context Capsule**——只传 PRD 原文 + 维度表 + 中立事实包（已拍板决策 / 被否决方案及原因 / 非目标），不传主路结论。Codex 调用报错 → fallback 改派 general-purpose subagent 独立路单跑（标注降级、独立性"同模型"），不自演、不走过场。
+**独立交叉**（骨架步骤 5，仅升档——自审后命中 §1a 判据：无法自行裁决的 finding / 结论有争议 / 用户显式要求深审）：Claude 主路（当前会话 checklist 遍历，不外派）、Codex 独立路（隔离执行），经 `rule-codex-review` 单一通道派发。**CLAIM 剥离 + Context Capsule**——只传 PRD 原文 + 维度表 + 中立事实包（已拍板决策 / 被否决方案及原因 / 非目标），不传主路结论。Codex 调用报错 → fallback 改派 general-purpose subagent 独立路单跑（标注降级、独立性"同模型"），不自演、不走过场。
 
 **收口**（骨架步骤 7）：findings 按契约归一到 C/W/S，**Critical 必须修复**再让用户确认。修完 findings 的重跑判据走 skeleton §4.6（delta review，纯修复不重跑独立路）。
 

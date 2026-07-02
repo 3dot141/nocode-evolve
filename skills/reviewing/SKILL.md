@@ -37,7 +37,7 @@ review 这件事在仓库里被重造了十几遍：每个 review 都重新发�
 | 2 | **对象界定 + 进入 gate** | 评什么、范围多大、前置条件是否满足 |
 | 3 | **评审维度**（细则注入点） | 框架**不规定**具体维度——细则在这里填自己领域的维度清单 |
 | 4 | **执行（选方法）** | 从方法库按「对象类型 + 档位」选 1+ 种方法执行 |
-| 5 | **独立交叉** | 框架公共能力：CLAIM 剥离 + 派 codex/subagent + 独立性档位声明 |
+| 5 | **独立交叉**（仅升档，skeleton §1a） | 默认不跑——自审后有异议才派：CLAIM 剥离 + 派 codex/subagent + 独立性档位声明 |
 | 6 | **findings 统一 schema + 分级** | 套统一结构 + C/W/S 三档 severity + kind（normal/open-question/self-audit） |
 | 7 | **收口 / triage / 拍板** | Critical 必修，按 verdict 呈现，交用户拍板 |
 
@@ -53,7 +53,7 @@ review 这件事在仓库里被重造了十几遍：每个 review 都重新发�
 4. **选 method card** — 按 skeleton 的方法选择表，`Read {NOCODE_SKILL_REF}/reviewing/methods/<method>.md` 拿到该方法的维度表 / 输出契约 / 派发策略。
 5. **套 findings 契约** — 产出按 `{NOCODE_SKILL_REF}/reviewing/findings-contract.md` 的统一 schema 落，severity 走 C/W/S，Q/SA 走 kind。
 
-> 这是零新机制的引入方式：框架作为 reference 被 `Read`，不需要 manifest 路由、不需要新 hook。另一条引入路径 C2（dispatch template 派 subagent）用于需要独立交叉的重档场景，细节见 skeleton 的公共能力章。
+> 这是零新机制的引入方式：框架作为 reference 被 `Read`，不需要 manifest 路由、不需要新 hook。另一条引入路径 C2（dispatch template 派 subagent）用于升档派独立交叉的场景（skeleton §1a），细节见 skeleton 的公共能力章。
 
 ## 框架文件地图
 

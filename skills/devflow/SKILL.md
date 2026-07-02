@@ -337,7 +337,7 @@ PDCA 循环：
 |---|---|---|
 | 7a. Five-Axis Self-Review | 先读测试再读实现，五轴逐轴过 | 每轴至少一条 finding |
 | 7b. Simplification Pass | Chesterton's Fence（删前 git blame） | Dead code 问用户确认后删 |
-| 7c. Codex Cross-Review | 不预先探活，直接派（经 rule-codex-review） | 调用报错降级自评 + 明说 |
+| 7c. Cross-Review（仅升档） | 自审有异议才派 codex（skeleton §1a，经 rule-codex-review，不预先探活） | 未命中升档判据记录后跳过；调用报错降级自评 + 明说 |
 | 7d. Findings Triage | 统一 schema，分类优先级 | Contract misread 最高优先 |
 | 7e. 用户 approve | Critical 全 fix，Warning 逐条拍板 | fix 改了代码须回 Build→Verify→再 Review |
 

@@ -5,16 +5,16 @@
 
 ## 引框架
 
-1. **Read `{NOCODE_SKILL_REF}/reviewing/skeleton.md`** 套通用 7 步流程。restate 属"需求 / PRD / restate"类对象，按 skeleton §3 方法选择表取 **`checklist`（领域维度）+ `dual-review`（异源双评 + 总结）**，独立性 = 异源。
+1. **Read `{NOCODE_SKILL_REF}/reviewing/skeleton.md`** 套通用 7 步流程。restate 属"需求 / PRD / restate"类对象，按 skeleton §3 方法选择表取 **`checklist`（领域维度，主路自审默认）**；`dual-review`（异源双评）是升档预案（skeleton §1a 命中才派）。
 2. **Read `{NOCODE_SKILL_REF}/reviewing/findings-contract.md`** 套 findings 契约（finding schema + 5→3 分级映射 + Evidence Gate + verdict）。
 
 > 流程走框架后，本细则只负责下面这张**7 维度表**——它就是 skeleton 第 3 步的 `domainAxes[]`，每个维度名 = finding 的 `axis`。
 
 ## 怎么走（全部引框架，本文不复述细节）
 
-- **分档**（skeleton §1 自动判）：restate 评审默认**轻档**（用户在场，restate 偏差当场可纠、发现延迟≈0）——主路 checklist 自审 7 维度，不拉 codex。升重档仅当：需求含多角色 / 权限 / 计费 / 数据迁移等不可逆面，或用户显式要求深审。重档才走异源交叉。
+- **分档**（skeleton §1 自动判）：restate 评审默认**轻档**（用户在场，restate 偏差当场可纠、发现延迟≈0）——主路 checklist 自审 7 维度，不拉 codex。需求含多角色 / 权限 / 计费 / 数据迁移等不可逆面 → 重档（7 维度全量过，仍是自审）。
 - **选方法 + 执行**（skeleton §3/步骤 4）：`checklist` 逐项遍历下面 7 维度产 finding（**主路 = 当前会话，不外派**）。
-- **独立交叉**（skeleton 步骤 5 + §4.1/§4.2，仅重档）：`dual-review` 派 **Codex 独立路**经 `rule-codex-review` 单一通道隔离评审——**CLAIM 剥离 + Context Capsule**（只传 restate 原文 + 7 维度清单 + 中立事实包（已拍板决策 / 被否决方案及原因 / 非目标），不传主路已得结论）。Codex 调用报错 → 按框架 §4.2 fallback 改派 general-purpose subagent 单跑，标"同模型（降级）"，不自演。
+- **独立交叉**（skeleton 步骤 5 + §4.1/§4.2，仅升档——自审后命中 §1a 判据：无法自行裁决的 finding / 结论有争议 / 用户显式要求深审）：`dual-review` 派 **Codex 独立路**经 `rule-codex-review` 单一通道隔离评审——**CLAIM 剥离 + Context Capsule**（只传 restate 原文 + 7 维度清单 + 中立事实包（已拍板决策 / 被否决方案及原因 / 非目标），不传主路已得结论）。Codex 调用报错 → 按框架 §4.2 fallback 改派 general-purpose subagent 单跑，标"同模型（降级）"，不自演。
 - **归一分级 + 收口**（skeleton 步骤 6/7）：findings 套 contract schema，按 `[location, axis]` 去重（双路交集 = 高置信），分 Critical / Warning / Suggestion；**Critical 必修**再放行到下一阶段。修完 findings 的重跑判据走 skeleton §4.6（delta review，纯修复不重跑独立路）。
 
 ## 领域维度（restate 七维 — 本细则唯一职责）

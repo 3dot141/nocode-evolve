@@ -42,7 +42,7 @@ dev-design 选完方案（"走哪条路"），本 skill 做详细设计（"选�
 通用结构：
 Task 1: 确定场景 + 加载输入
 Task 2..N: 按场景模板的 Step（feat 最多，research 最少）
-Task N+1: Review（双路交叉 + 用户逐条确认 + Review Log）
+Task N+1: Review（自审为主，有异议升档交叉 + 用户逐条确认 + Review Log）
 Task N+2: 保存 + 渲染
   metadata: {handoff: true}（供防跳步 Hook B 识别交接 task）
 ```
@@ -474,7 +474,7 @@ Task N+2: 保存 + 渲染
 
 ## 通用收尾：Review + 保存（所有场景）
 
-### Review（引 reviewing 框架 · 双路交叉）
+### Review（引 reviewing 框架 · 自审为主，有异议升档）
 
 **Enter Gate:**
 - [ ] 设计文档初稿完成
@@ -487,11 +487,13 @@ Task N+2: 保存 + 渲染
 本 Review 在框架里的定位（其余照骨架走）：
 
 - **领域维度（框架第 3 步注入点）= `references/reviewer-template.md` 的 7 维度核心审查**（设计意图 / 决策 / 完整性 / 可执行 / 一致性 / 范围 / 骨架可读性）。这是 dev-design-refine 的领域判断逻辑，不在框架里——reviewer-template 同时承载 dispatch prompt 与维度单源。
-- **选方法（框架第 4 步 selectMethods）= `[checklist（reviewer-template 维度逐项核查）+ dual-review（异源双评 + 总结）]`**。设计文档对象查骨架方法选择表正是这两个。独立性：异源。
+- **选方法（框架第 4 步 selectMethods）= `checklist`（reviewer-template 维度逐项核查，主路自审默认）**；`dual-review`（异源双评）是升档预案——自审后命中 skeleton §1a 升档判据才派，不默认跑。
 - **公共能力全走框架**：CLAIM 剥离 / codex 经 `rule-codex-review` 派 / Evidence Gate / Doubt Theater / 分档判定都在 skeleton §4，本节只引用不重写。
-- **分档**（skeleton §1 自动判）：设计文档跨模块、含架构 / 选型决策 → **重档**，独立交叉默认单跑 Codex；琐碎改动 / 文案修订、拿不准 → **轻档**（agent 自判，不需用户授权），直接跳过 codex 只跑 general-purpose 一路，回复点名「轻档，跳过 codex 交叉」，独立性声明标「同模型」。命中重档信号后要降 → 只认用户显式否定词。
+- **分档**（skeleton §1 自动判）：设计文档跨模块、含架构 / 选型决策 → **重档**（7 维度全量自审）；琐碎改动 / 文案修订、拿不准 → **轻档**（agent 自判，不需用户授权，快速过维度）。两档都不默认派独立交叉——何时派见 skeleton §1a。命中重档信号后要降 → 只认用户显式否定词。
 
-**Core Actions — 独立交叉（框架步骤 5 · 默认单路 Codex）**：默认只让 Codex 跨模型审一遍，避开「Claude 审 Claude」同源盲区；不预先探活,Codex 调用报错才 fallback 改用 general-purpose subagent 单跑，不与 Codex 并行。**CLAIM 剥离 + Context Capsule**后（只传文档原文 + 维度清单 + 中立事实包——已拍板决策 / 被否决方案及原因 / 非目标 / 预算，不传主 agent 的审查结论 / 方案倾向，skeleton §4.1）：
+**Core Actions — 主路自审（框架步骤 4 · checklist）**：当前会话按 `references/reviewer-template.md` 的 7 维度逐项核查文档，产出 raw findings，不派 subagent、不调 codex。
+
+**独立交叉（框架步骤 5 · 仅升档 · 默认单路 Codex）**：自审完成后过一遍 skeleton §1a 升档判据（自审出无法自行裁决的 finding / 结论有争议 / 用户显式要求深审 / Doubt Theater）；全不命中 → 记录「未命中升档判据，自审收口」直接进分级归一，独立性标「无（自审）」。命中 → 默认只让 Codex 跨模型审一遍，避开「Claude 审 Claude」同源盲区；不预先探活,Codex 调用报错才 fallback 改用 general-purpose subagent 单跑，不与 Codex 并行。**CLAIM 剥离 + Context Capsule**后（只传文档原文 + 维度清单 + 中立事实包——已拍板决策 / 被否决方案及原因 / 非目标 / 预算，不传主 agent 的审查结论 / 方案倾向，skeleton §4.1）：
 
 不预先探活，直接尝试：
 - **b. codex 跨模型**（dual-review 独立路，经 `rule-codex-review` 单一通道 · skeleton §4.2）：按场景 4 调 codex companion（reviewer-template 准则 + 文档路径 + Context Capsule）。
@@ -500,10 +502,10 @@ Task N+2: 保存 + 渲染
    - 把模板里的 `{DOC_PATH}` 替换为当前文档路径
    - 调 Task tool（subagent_type=`general-purpose`，description=`"Review design doc"`，prompt = 替换后全文）
 
-**分级归一（框架步骤 6 · findings-contract）**：单路(Codex 或 fallback 后的 general-purpose，二选一非双跑) raw findings 归一到 findings-contract 的 schema：
+**分级归一（框架步骤 6 · findings-contract）**：主路自审 +（升档时）独立路(Codex 或 fallback 后的 general-purpose，二选一非双跑) raw findings 归一到 findings-contract 的 schema：
 - 套五档：**C/W/S 直通 `severity`；Q/SA 经 `kind`（open-question / self-audit）承载，severity 另算（约束②）**——五档语义不丢
 - 过 **Evidence Gate**（代码事实类缺 location → 降 open-question，约束③）
-- 按 `[location, axis]` 标 `source`（Codex / general-purpose，标明本轮走的是哪一路）
+- 按 `[location, axis]` 标 `source`（主路 / Codex / general-purpose，标明各条来自哪一路）
 
 **收口 + 用户确认（框架步骤 7 · hard gate）**：
 - 把 findings 完整呈现给用户（C / W / S / **Open Questions(Q)** / **Self-Audit(SA)** 五档全保留，后两者绝不能漏）
@@ -520,7 +522,7 @@ Task N+2: 保存 + 渲染
 
 **Exit Gate:**
 - [ ] 框架已引（skeleton + findings-contract 已 Read）
-- [ ] 双路 review 完成（或降轻档明说）
+- [ ] 主路自审完成（升档时独立路完成或降级明说；未升档需记录「未命中升档判据」）
 - [ ] findings 套统一契约（五档；Q/SA 经 kind）
 - [ ] 用户逐条确认 fix / skip
 - [ ] 修订完成 + Review Log 已追加

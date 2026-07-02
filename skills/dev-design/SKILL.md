@@ -79,8 +79,8 @@ Task 8: 写设计文档
   Gate: 决策清点全 ✅ + 功能覆盖全 ✅ + 输入清单无缺失 + 文档已产出
 
 Task 9: 设计文档评审
-  Sub-steps: 六轴 review → 内部一致性核对(BF↔影响清单↔接口↔DDL↔工具集↔文本总结) → design-review 交叉审（Claude 主路 + Codex 独立路）
-  Gate: 六轴 + 一致性 + 交叉审通过，无 Critical findings
+  Sub-steps: 六轴 review → 内部一致性核对(BF↔影响清单↔接口↔DDL↔工具集↔文本总结) → design-review 自审（有异议升档 Codex 交叉，skeleton §1a）
+  Gate: 六轴 + 一致性 + design-review 通过，无 Critical findings
 
 Task 10: 硬交接 — 调用下一步 skill
   Sub-steps: 按 Exit Gate 硬交接报告 Design 完成（方案摘要 + 测试目标）→ 建议进 Plan → 等用户拍板后调 Skill(nocode:dev-plan)
@@ -537,12 +537,12 @@ TO 传递给后续 Plan（指导切片 + task covers）、Build（驱动 TDD）�
 
 发现矛盾 → 修文档（以 BF 伪代码为准，其他部分对齐到 BF）。修完重新过一遍矛盾对。
 
-**design-review 交叉审**（引入 `reviewing` 框架）：方案质量审查走框架——`Read {NOCODE_SKILL_REF}/reviewing/skeleton.md` 套 7 步通用流程（分档 / 独立交叉 / 分级 / 收口）+ `Read {NOCODE_SKILL_REF}/reviewing/findings-contract.md` 套 findings 契约；设计领域的 10 项评审维度见 `{NOCODE_SKILL_REF}/design-review.md`（框架第 3 步注入点）。「设计文档」对象按 skeleton §3 选 `checklist`（10 维度）+ `dual-review`（Codex 异源双评，CLAIM 剥离 + Context Capsule，不传主路结论 / 方案倾向），findings 套统一契约，Critical 必须修复。这和六轴互补——六轴是文档结构审查，内部一致性是交叉矛盾审查，design-review 是方案质量审查。
+**design-review**（引入 `reviewing` 框架，自审为主，有异议升档）：方案质量审查走框架——`Read {NOCODE_SKILL_REF}/reviewing/skeleton.md` 套 7 步通用流程（分档 / 独立交叉 / 分级 / 收口）+ `Read {NOCODE_SKILL_REF}/reviewing/findings-contract.md` 套 findings 契约；设计领域的 10 项评审维度见 `{NOCODE_SKILL_REF}/design-review.md`（框架第 3 步注入点）。「设计文档」对象按 skeleton §3 取主方法 `checklist`（10 维度，主路自审默认）；自审后命中 skeleton §1a 升档判据（无法自行裁决的 finding / 结论有争议 / 用户显式要求深审）→ 升档 `dual-review`（Codex 异源双评，CLAIM 剥离 + Context Capsule，不传主路结论 / 方案倾向）。findings 套统一契约，Critical 必须修复。这和六轴互补——六轴是文档结构审查，内部一致性是交叉矛盾审查，design-review 是方案质量审查。
 
 **Exit Gate:**
 - [ ] 六轴 review 通过
 - [ ] 内部一致性核对通过，无交叉矛盾
-- [ ] design-review 交叉审通过，无 Critical findings
+- [ ] design-review 通过（自审为主，升档时含交叉），无 Critical findings
 - [ ] 后续 Plan 输入齐全：restate + 设计文档 + 测试目标
 
 ## Exit Gate
@@ -557,7 +557,7 @@ TO 传递给后续 Plan（指导切片 + task covers）、Build（驱动 TDD）�
 - [ ] 决策清点表全 ✅，无待确认/未讨论项（Step 8a）
 - [ ] 功能覆盖表全 ✅，PRD 功能点均有设计落点（Step 8b）
 - [ ] 设计文档已由 dev-design-refine 产出（Step 8c）
-- [ ] 设计文档评审通过——六轴 + 内部一致性核对 + design-review 交叉审，无 Critical findings（Step 9）
+- [ ] 设计文档评审通过——六轴 + 内部一致性核对 + design-review（自审为主，升档时含交叉），无 Critical findings（Step 9）
 - [ ] 后续 Plan 输入齐全：restate + 设计文档 + 测试目标
 - [ ] **硬交接**：Exit Gate 全部通过后，向用户报告 Design 完成（含方案摘要 + 关键决策清单 + 测试目标概要）——这是本轮 Design 流程唯一的整体确认窗口（Step 2/5/7 触发「用户介入原则」例外时提前问过的除外），用户可在此对任意决策提出异议要求回退重做。确认通过后建议下一阶段：Plan（`nocode:dev-plan`）。列出 Plan 阶段的 sub-steps + 关键决策（devflow Step 5 格式）。等用户拍板，不自行进入下一阶段
 

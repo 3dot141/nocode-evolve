@@ -84,8 +84,8 @@ Step 3 产出 `.ix.md` 时使用此模板。
 |---|---|---|
 | 订单.P1 | 走通 | — |
 
-### 交叉审 Report
-[Step 8c 产出。subagent + codex 两路合并摘要]
+### 评审 Report
+[vis-review findings 摘要（自审为主，升档时含独立交叉），套 findings 契约]
 - Critical: (无 / 列出 + 修复记录)
 - Warning: ...
 - Suggestion: ...

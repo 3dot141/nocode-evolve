@@ -9,10 +9,10 @@
 1. `Read {NOCODE_SKILL_REF}/reviewing/skeleton.md` —— 套 7 步通用流程骨架。
 2. `Read {NOCODE_SKILL_REF}/reviewing/findings-contract.md` —— 套 findings/verdict schema 与 C/W/S 分级、Evidence Gate。
 
-**对象 → 方法**（skeleton §3 方法选择表「设计文档」行）：`checklist`（本文 10 维度）+ `dual-review`（异源双评 + 总结）。独立性：异源。
+**对象 → 方法**（skeleton §3 方法选择表「设计文档」行）：主方法 `checklist`（本文 10 维度，主路自审默认）；`dual-review`（异源双评 + 总结）是升档预案（skeleton §1a 命中才派）。
 
-- **分档**（skeleton §1 自动判）：设计文档涉及架构/选型/不可逆决策 → **重档**，走异源交叉；纯文案/局部澄清类轻量改动、拿不准 → **轻档** self-review（这是判档不是降档，agent 自判不需授权）。命中重档信号后要降 → 只认用户显式否定词。
-- **独立交叉**（skeleton 步骤 5 + §4.1/§4.2）：CLAIM 剥离 + Context Capsule 后把设计文档原文 + 本文维度表 + 中立事实包（已拍板决策 / 被否决方案及原因 / 非目标）交 Codex（经 `rule-codex-review`）独立评审——**不传主路结论、不传方案选择倾向**（设计评审特有：方案倾向最易污染独立路）。Codex 调用报错 → fallback 改派 general-purpose subagent 独立路单跑（标注降级，独立性记「同模型」），不自演。
+- **分档**（skeleton §1 自动判）：设计文档涉及架构/选型/不可逆决策 → **重档**（10 维度全量自审）；纯文案/局部澄清类轻量改动、拿不准 → **轻档** self-review（这是判档不是降档，agent 自判不需授权）。命中重档信号后要降 → 只认用户显式否定词。两档都不默认派独立交叉——何时派见 skeleton §1a 升档判据。
+- **独立交叉**（skeleton 步骤 5 + §4.1/§4.2，仅升档——自审后命中 §1a 判据：无法自行裁决的 finding / 结论有争议 / 用户显式要求深审）：CLAIM 剥离 + Context Capsule 后把设计文档原文 + 本文维度表 + 中立事实包（已拍板决策 / 被否决方案及原因 / 非目标）交 Codex（经 `rule-codex-review`）独立评审——**不传主路结论、不传方案选择倾向**（设计评审特有：方案倾向最易污染独立路）。Codex 调用报错 → fallback 改派 general-purpose subagent 独立路单跑（标注降级，独立性记「同模型」），不自演。
 - **分级 / 收口**（skeleton 步骤 6/7 + findings-contract）：findings 套统一 schema，C/W/S 分级，Critical 必修才放行。修完 findings 的重跑判据走 skeleton §4.6（delta review，纯修复不重跑独立路）。
 
 ## 审查维度（设计领域，框架第 3 步注入）

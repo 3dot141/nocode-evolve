@@ -3,6 +3,8 @@
 > reviewing 框架方法库 · 评审方法之一。**适合**：工件缺陷发现——设计文档 / PRD / restate / 代码 diff 的「这份东西有什么问题」类评审。**不适合**：拍板 / 选型 / 「该不该 / 选哪个」类评判（用 `red-blue-adversarial`——那是有防守方的对抗）。
 >
 > 本卡是「主路 + 异源独立路各自**中立**评审、主会话合并总结」这一模式的**单源**。四件套细则（define / prd / design / vis-review）与 dev-review 的独立交叉均指向本卡。
+>
+> **何时启用**：本卡是**升档预案**——各细则默认只跑主路自审（checklist），命中 skeleton §1a 升档判据（自审出无法自行裁决的 finding / 结论有争议 / 用户显式要求深审 / Doubt Theater）才启用本卡派独立路。
 
 ## 与 red-blue-adversarial 的分界（选错卡 = 结构错位）
 

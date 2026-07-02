@@ -93,9 +93,9 @@ agent 视角: 用户任务命中以下任一条件时, **主动调起 devflow sk
 **不含 (负例)**: 纯执行: 直接改代码而未求评审
 
 #### codex-review
-**触发**: red-blue-deep 判重档走到 Step 3 独立审查环节; 或完成分支 / 显式 review 请求; 或我卡住 / 想要第二实现 / 独立诊断 / 委派; 或 dev-design-refine 走到 review 环节. 不含: devflow Review 阶段的五轴评审 (走 dev-review skill, 不走本 rule)
+**触发**: red-blue-deep 判重档走到 Step 3 独立审查环节; 或完成分支 / 显式 review 请求; 或我卡住 / 想要第二实现 / 独立诊断 / 委派; 或各 review 细则 (dev-design-refine / dev-review / define-review / prd-review / design-review / vis-review) 自审后命中升档判据 (reviewing skeleton §1a) 派独立交叉时. 不含: 各细则的默认自审路 (自审不派本 rule); devflow Review 阶段的五轴自审 (走 dev-review skill)
 **读**: `${CLAUDE_PLUGIN_ROOT}/rules/rule-codex-review.md`
-**摘要**: 本机 Codex 当独立模型接四场景 (红蓝独立审查 / 代码 review 收尾 / 委派救援 / 设计文档审稿); 不预先探活, 真正的 review/adversarial-review/task 调用直接派 subagent 执行 (Agent() 包一层 Bash, 不在主 agent 直接 Bash 调 vendor/codex/scripts/codex-companion.mjs); 场景 1/4 默认单跑 Codex, 调用报错才 fallback 改派独立 subagent (不再并行双跑); 不可用降级自做 + 明说; 禁改 vendored 文件
+**摘要**: 本机 Codex 当独立模型接四场景 (红蓝独立审查 / 代码 review 收尾 / 委派救援 / 设计文档审稿); 各 review 细则默认自审不派本 rule, 升档 (reviewing skeleton §1a: 自审出无法裁决的 finding / 结论有争议 / 用户显式要求) 才派; 不预先探活, 真正的 review/adversarial-review/task 调用直接派 subagent 执行 (Agent() 包一层 Bash, 不在主 agent 直接 Bash 调 vendor/codex/scripts/codex-companion.mjs); 场景 1/4 默认单跑 Codex, 调用报错才 fallback 改派独立 subagent (不再并行双跑); 不可用降级自做 + 明说; 禁改 vendored 文件
 **关键约束(上浮)**: 不预先探活, 直接派 subagent 跑真正命令, 报错才降级自做 + 明说; 真正调用派 subagent 执行不直接 Bash; 禁改 vendor/codex/ 文件。
 **也属**: design
 **生命周期**: 3 评审

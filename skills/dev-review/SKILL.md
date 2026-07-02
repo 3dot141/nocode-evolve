@@ -7,7 +7,7 @@ description: Use before merging any change, after completing a feature, or when 
 
 **Iron Law: Critical 不可 override。fix 改了代码必须回 Build → Verify → 再 Review。没有"这次特殊"。**
 
-自评 + 独立交叉评 + 统一 **findings** 分级。对自己写的、另一个 agent 写的、人写的代码都适用。
+自评为主，有异议再升档独立交叉（skeleton §1a），统一 **findings** 分级。对自己写的、另一个 agent 写的、人写的代码都适用。
 
 ## 引入 reviewing 框架
 
@@ -19,7 +19,7 @@ dev-review 是 `reviewing` 框架的一个细则（评审对象 = 代码 diff）
 dev-review 在框架里的定位（其余照骨架走）：
 
 - **领域维度（框架第 3 步注入点）= 五轴**。正确性 / 可读性 / 架构 / 安全 / 性能，是 Standards 轴的领域维度，也是后续 finding 的 `axis`。Spec 轴（需求对齐）不在 dev-review 查，前移到 Design/Plan/Build 阶段（见下方"Review 的检查范围是 Standards 轴"）。
-- **选方法（框架第 4 步 selectMethods）= `[checklist（五轴逐项核查）+ dual-review（异源双评 + 总结）]`**。代码 diff 对象查骨架方法选择表正是这两个。**按对象加选 card**：审到 SQL / schema / migration → 加选 `{NOCODE_SKILL_REF}/reviewing/methods/database-method.md`；审到架构决策 → 加选 `{NOCODE_SKILL_REF}/reviewing/methods/architecture-method.md`（不经 manifest，靠 selectMethods）。
+- **选方法（框架第 4 步 selectMethods）= `checklist`（五轴逐项核查，主路默认）**；`dual-review`（异源双评）是**升档预案**——自审完成后命中 skeleton §1a 升档判据才派，不默认跑。**按对象加选 card**：审到 SQL / schema / migration → 加选 `{NOCODE_SKILL_REF}/reviewing/methods/database-method.md`；审到架构决策 → 加选 `{NOCODE_SKILL_REF}/reviewing/methods/architecture-method.md`（不经 manifest，靠 selectMethods）。
 - **findings 套统一契约**：每条 finding 走 findings-contract 的 schema；分级走 C/W/S（dev-review 原生即 C/W/S，1:1 直通 `severity`），Q/SA 走 `kind`。
 - **公共能力全走框架**：CLAIM 剥离 / codex 经 `rule-codex-review` 派 / Evidence Gate / Doubt Theater / 分档判定都在 skeleton §4，本 skill 只引用不重写。
 
@@ -73,9 +73,9 @@ Task 2: Simplification Pass
   Sub-steps: Chesterton's Fence（删前 git blame）+ dead code
   Gate: 简化项已识别
 
-Task 3: Cross-Review（dual-review · 异源双评）
-  Sub-steps: CLAIM 剥离 + Context Capsule 后派 codex 独立路（经 rule-codex-review；报错 fallback subagent 单跑并明说）
-  Gate: 两路 findings 合并或降级标注
+Task 3: Cross-Review（dual-review · 仅升档，skeleton §1a）
+  Sub-steps: 自审完成后过一遍 §1a 升档判据；命中 → CLAIM 剥离 + Context Capsule 派 codex 独立路（经 rule-codex-review；报错 fallback subagent 单跑并明说）；未命中 → 记录「未命中升档判据，自审收口」后跳过（不算跳步）
+  Gate: 升档判据已过（命中：两路 findings 合并或降级标注；未命中：跳过理由已记录）
 
 Task 4: Findings Triage（对应 Step 4）
   Sub-steps: 套统一契约 schema 分级（Critical/Warning/Suggestion + kind），过 Evidence Gate
@@ -123,9 +123,11 @@ Task 6: 硬交接 — 调用下一步 skill
 - **Dead code**：识别 → 列出 → 问用户 → 确认后再删
 - **Testability**：接受依赖不创建依赖（`processOrder(order, gateway)` 而非内部 `new`）；返回结果不副作用；接口面积小。可测的形状 = 好的形状
 
-### Step 3: Cross-Review（dual-review · 异源双评）
+### Step 3: Cross-Review（dual-review · 仅升档）
 
-这是框架第 4 步选的 `dual-review` 方法的独立路（重档），公共能力走 skeleton §4：
+**先过 skeleton §1a 升档判据**——五轴自审 + 简化 pass 完成后，命中任一信号（自审出无法自行裁决的 finding / 结论有争议 / 用户显式要求深审 / Doubt Theater）才进本步；全不命中 → 记录「未命中升档判据，自审收口」直接进 Step 4，verdict 独立性标「无（自审）」。
+
+升档后走 `dual-review` 方法的独立路，公共能力走 skeleton §4：
 
 自评有盲区——单模型 reviewer 与原作者共享同源盲点，不同架构的模型才能抓出来。**CLAIM 剥离 + Context Capsule**后（只传 diff + 约束 + 五轴维度 + 中立事实包，不传主路自评结论）派独立路，统一经 `rule-codex-review` 派 codex（不预先探活，直接派），调用报错才 fallback 改派 general-purpose subagent 单跑 + 明说，独立性声明标"同模型（降级）"（不静默跳过、不自演）。
 合并两路 findings：同 `[location, axis]` 交集 = 高置信，对称差 = 各自盲点（主会话 triage 只能滤独立路误报，补不回漏报——Capsule 打包尽量全）。

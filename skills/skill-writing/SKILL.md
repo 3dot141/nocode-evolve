@@ -261,8 +261,8 @@ Workflow skill SKILL.md must include: **Step 0 TaskCreate** (all tasks created u
 
 **第二层 · 独立交叉那一步选谁**（reviewing 框架第 5 步的载体；轻量单点自查则跳过第一层直接选）：
 - **评估/拍板类**（"这个方案行不行"）→ 指向 `Skill(nocode:red-blue-deep)`
-- **产出审查类**（"这段代码/文档有没有问题"）→ 推荐 subagent + codex 并行独立 review（参照 `rule-codex-review` 场景四）
-- **合规检查类**（"是否遵守了规则"）→ 推荐 subagent 独立检查（不需要跨模型）
+- **产出审查类**（"这段代码/文档有没有问题"）→ 推荐先自审（`{NOCODE_SKILL_REF}/reviewing/methods/self-review.md`），有异议升档单跑 codex 独立 review（参照 `rule-codex-review` 场景四 + reviewing skeleton §1a 升档判据）
+- **合规检查类**（"是否遵守了规则"）→ 推荐先自查，拿不准再派 subagent 独立检查（不需要跨模型）
 
 不加引导的步骤：纯机械验证（跑测试 / lint / 类型检查）、有客观标准的 pattern 匹配——这些不需要独立视角。
 

@@ -54,7 +54,7 @@ Task 6: 合批确认
   Gate: 用户确认（全否决 → 回 Task 2）
 
 Task 7: 自审 + prd-review
-  Sub-steps: 16 维度自审 → prd-review 异源双评（dual-review）
+  Sub-steps: 16 维度自审 → prd-review 自审（有异议升档 dual-review，skeleton §1a）
   Gate: 自审通过，无 Critical findings
 
 Task 8: 用户最终确认
@@ -358,9 +358,9 @@ research skill 的 Go/No-Go 建议基于以下判据（PRD 里引用）：
 | 技术可行 | 代码现状能支撑，或改造成本可接受 | 技术障碍大且无绕过方案 |
 | 用户需求 | 社区/市场有明确痛点信号 | 找不到痛点证据，需求是假设 |
 
-### Step 7a: prd-review（交叉审）
+### Step 7a: prd-review（自审为主，有异议升档）
 
-用户确认前，按 `{NOCODE_SKILL_REF}/prd-review.md` 做 PRD 评审。prd-review 已引入 `reviewing` 框架：Read `{NOCODE_SKILL_REF}/reviewing/skeleton.md` 套通用流程骨架（分档 → 独立交叉 → findings 分级 → 收口）+ Read `{NOCODE_SKILL_REF}/reviewing/findings-contract.md` 套 findings 契约，按 prd-review 的 PRD 8 维度（框架第 3 步）评审，档位按 skeleton §1 自动判（拿不准默认轻档）。重档走 dual-review 异源双评——Claude 主路（当前会话）、Codex 独立路（CLAIM 剥离 + Context Capsule，不传主路结论），Critical 必须修复再让用户确认。
+用户确认前，按 `{NOCODE_SKILL_REF}/prd-review.md` 做 PRD 评审。prd-review 已引入 `reviewing` 框架：Read `{NOCODE_SKILL_REF}/reviewing/skeleton.md` 套通用流程骨架（分档 → 独立交叉 → findings 分级 → 收口）+ Read `{NOCODE_SKILL_REF}/reviewing/findings-contract.md` 套 findings 契约，按 prd-review 的 PRD 8 维度（框架第 3 步）评审，档位按 skeleton §1 自动判（拿不准默认轻档）。默认主路 checklist 自审；自审后命中 skeleton §1a 升档判据（无法自行裁决的 finding / 结论有争议 / 用户显式要求深审）→ 升档走 dual-review 异源双评——Claude 主路（当前会话）、Codex 独立路（CLAIM 剥离 + Context Capsule，不传主路结论）。Critical 必须修复再让用户确认。
 
 ## Exit Gate
 
