@@ -77,6 +77,17 @@ export async function start({ serverDir, ports, killOld = false, log = console.l
   return startApp({ serverDir, appPort: ports?.server ?? 8081, graalvm, env, killOld, log });
 }
 
+// teardown 用的同步 kill 命令段（orchestrator execFileSync 逐条跑）。
+// 完整停服（pid 文件/等待释放）走 stopApp；这里是 gradlew --stop + 容器清理 + 端口兜底三层。
+export function killCommands({ ports, serverDir }) {
+  return [
+    ['sh', ['-c', `cd ${serverDir} && ./gradlew --stop || true`]],
+    // 容器模式启动的 server（.dev-start.pid='container'）gradlew/端口 kill 都够不着——幂等清理（红蓝裁决 C）
+    ['sh', ['-c', `docker rm -f dev-backend 2>/dev/null || true`]],
+    ['sh', ['-c', `lsof -ti tcp:${ports.server} | xargs kill -9 2>/dev/null || true`]],
+  ];
+}
+
 // 渐进挂载清单：T3/T4/T4b 各自补一个 case 时同步 push 自己的动词名，default 报错文案据此动态生成，
 // 避免声明未实现的假契约（红蓝裁决 A）。
 const SUPPORTED_VERBS = ['prepare'];

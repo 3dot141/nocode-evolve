@@ -1,21 +1,7 @@
 import { spawn } from 'node:child_process';
 
-// 纯函数：构造杀进程命令列表（[cmd, args[]]），按 services 裁剪。
-export function buildKillCommands({ ports, serverDir, services }) {
-  const sh = (s) => ['sh', ['-c', s]];
-  const cmds = [];
-  if (services.agents) {
-    cmds.push(['pkill', ['-f', 'telemetry/preload.ts']]);          // tsx watch 父进程，否则会重启 node
-    cmds.push(sh(`lsof -ti tcp:${ports.agents} | xargs kill -9 2>/dev/null || true`));
-  }
-  if (services.web) cmds.push(sh(`lsof -ti tcp:${ports.web} | xargs kill -9 2>/dev/null || true`));
-  if (services.server) {
-    cmds.push(sh(`cd ${serverDir} && ./gradlew --stop || true`));
-    cmds.push(sh(`lsof -ti tcp:${ports.server} | xargs kill -9 2>/dev/null || true`));
-  }
-  // docker 生命周期不在此：start 时由 docker 步骤 down→up，exit 时按 --docker-down-on-exit 处理
-  return cmds;
-}
+// 共享进程基础设施（waitHealthy/runToEnd/spawnPrefixed）。
+// per-service 杀法已下沉各 CLI 的 killCommands（agents-cli/web-cli/server-cli），此处不再持有。
 
 export async function waitHealthy(label, checkFn, opts = {}) {
   const { tries = 60, intervalMs = 1000, sleep = (ms) => new Promise((r) => setTimeout(r, ms)) } = opts;

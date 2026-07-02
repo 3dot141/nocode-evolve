@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, mkdirSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { prepare } from './server-cli.mjs';
+import { prepare, killCommands } from './server-cli.mjs';
 
 function fakeServerRepo({ withAntlrOutput = true } = {}) {
   const serverDir = mkdtempSync(join(tmpdir(), 'srv-'));
@@ -17,6 +17,14 @@ function fakeServerRepo({ withAntlrOutput = true } = {}) {
   }
   return serverDir;
 }
+
+test('killCommands 返回 gradlew --stop + 容器清理 + 端口清理三段', () => {
+  const cmds = killCommands({ ports: { server: 8081 }, serverDir: '/tmp/srv' });
+  assert.equal(cmds.length, 3);
+  assert.deepEqual(cmds[0], ['sh', ['-c', 'cd /tmp/srv && ./gradlew --stop || true']]);
+  assert.deepEqual(cmds[1], ['sh', ['-c', 'docker rm -f dev-backend 2>/dev/null || true']]);
+  assert.deepEqual(cmds[2], ['sh', ['-c', 'lsof -ti tcp:8081 | xargs kill -9 2>/dev/null || true']]);
+});
 
 test('prepare: 模块目录不存在时抛清晰错误，不静默跳过', async () => {
   const serverDir = mkdtempSync(join(tmpdir(), 'srv-'));

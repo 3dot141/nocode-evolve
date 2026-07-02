@@ -1,36 +1,49 @@
 import { fileURLToPath } from 'node:url';
-import { dirname, join } from 'node:path';
+import { dirname } from 'node:path';
 import { existsSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { createInterface } from 'node:readline/promises';
 import { parseArgs } from './lib/cli.mjs';
 import { resolveRepos, validateRepos } from './lib/paths.mjs';
-import { PORTS, buildWriteTargets } from './lib/ports.mjs';
-import { upsertEnv } from './lib/env-file.mjs';
-import { buildKillCommands, waitHealthy, runToEnd, spawnPrefixed } from './lib/proc.mjs';
+import { PORTS } from './lib/ports.mjs';
 import { tcpOpen, httpOk, pidOnPort } from './lib/probe.mjs';
+import { waitHealthy, runToEnd, spawnPrefixed } from './lib/proc.mjs';
+import * as agentsCli from './agents-cli.mjs';
+import * as webCli from './web-cli.mjs';
+import * as serverCli from './server-cli.mjs';
 
 const toolDir = dirname(fileURLToPath(import.meta.url));
 const args = parseArgs(process.argv.slice(2));
 const repos = resolveRepos({ toolDir });
 
 // ---- 运维子命令（不起服务，不要求仓路径有效）----
-// --status：各服务端口健康 + 监听 PID，一次调用替代手工 lsof/curl 轮询
+// --status：各服务端口健康 + 监听 PID，一次调用替代手工 lsof/curl 轮询。
+// 显式决策（红蓝裁决 D）：保持旧五行输出（probe+PORTS 直接投影），不改调 CLI status——
+// 行为不回归优先；CLI 的 status verb 是 standalone 视图，两者共享 lib/probe.mjs 与 PORTS
+// 单源，不构成杀法/健康语义双写。
 if (args.status) {
-  const row = async (name, port, up) =>
+  const row = (name, port, up) =>
     console.log(`[status] ${name.padEnd(6)} :${String(port).padEnd(5)} ${up ? 'UP  ' : 'DOWN'} pid=${up ? (pidOnPort(port) || '-') : '-'}`);
-  await row('web', PORTS.web, await tcpOpen(PORTS.web));
-  await row('agents', PORTS.agents, await httpOk(`http://127.0.0.1:${PORTS.agents}/health`));
-  await row('server', PORTS.server, await tcpOpen(PORTS.server));
-  await row('pg', 5432, await tcpOpen(5432));
-  await row('minio', 9000, await tcpOpen(9000));
+  row('web', PORTS.web, await tcpOpen(PORTS.web));
+  row('agents', PORTS.agents, await httpOk(`http://127.0.0.1:${PORTS.agents}/health`));
+  row('server', PORTS.server, await tcpOpen(PORTS.server));
+  row('pg', 5432, await tcpOpen(5432));
+  row('minio', 9000, await tcpOpen(9000));
   process.exit(0);
 }
+
+// 三服务 kill 段组合：per-service 杀法单源在各 CLI，这里只做拼装
+function killCommands() {
+  const cmds = [];
+  if (args.services.agents) cmds.push(...agentsCli.killCommands({ ports: PORTS }));
+  if (args.services.web) cmds.push(...webCli.killCommands({ ports: PORTS }));
+  if (args.services.server) cmds.push(...serverCli.killCommands({ ports: PORTS, serverDir: repos.SERVER_DIR }));
+  return cmds;
+}
+
 // --stop：按 --workspace 的 services 范围杀进程后退出（docker 一律不动）
 if (args.stop) {
-  for (const [cmd, a] of buildKillCommands({ ports: PORTS, serverDir: repos.SERVER_DIR, services: args.services })) {
-    await runToEnd('stop', cmd, a);
-  }
+  for (const [cmd, a] of killCommands()) await runToEnd('stop', cmd, a);
   console.log('[stop] 完成（docker 未动，需要停 docker 请显式 docker compose down）');
   process.exit(0);
 }
@@ -42,16 +55,13 @@ if (args.services.server) need.push('SERVER_DIR');
 validateRepos(repos, { need });
 
 if (args.services.agents) {
-  const cfg = join(repos.AGENTS_DIR, 'packages/server/conf/config.yaml');
+  const cfg = agentsCli.configPath(repos.AGENTS_DIR);
   if (!existsSync(cfg)) {
-    const msg = `agents config.yaml 不存在: ${cfg}\n请先 cp packages/server/conf/config.example.yaml packages/server/conf/config.yaml 并填 pg/minio/LLM`;
+    const msg = `agents config.yaml 不存在: ${cfg}\n请先 cp packages/server/conf/config.example.yaml packages/server/conf/config.yaml 并填 pg/minio/LLM（worktree 场景用 agents-cli prepare + FX_AGENTS_FROM=<主仓>）`;
     if (args.dryRun) console.warn(`[debug] ⚠️  ${msg}`);   // dry-run 只 warn，能预览计划
     else throw new Error(msg);
   }
 }
-
-const targets = buildWriteTargets({ agentsDir: repos.AGENTS_DIR, ports: PORTS });
-const webEnvFile = join(repos.WEB_DIR, 'packages/jsy-web/server/.env.local');
 
 async function confirm(q) {
   const rl = createInterface({ input: process.stdin, output: process.stdout });
@@ -66,7 +76,7 @@ function teardown(downDocker) {
   if (tearingDown) return;
   tearingDown = true;
   for (const c of children) { try { c.kill('SIGTERM'); } catch {} }
-  for (const [cmd, a] of buildKillCommands({ ports: PORTS, serverDir: repos.SERVER_DIR, services: args.services })) {
+  for (const [cmd, a] of killCommands()) {
     try { execFileSync(cmd, a); } catch {}
   }
   if (downDocker && args.services.docker) {
@@ -94,31 +104,33 @@ async function main() {
   }
 
   // ---- Step 0: 杀干净上一轮 ----
-  const killCmds = buildKillCommands({ ports: PORTS, serverDir: repos.SERVER_DIR, services: args.services });
+  const killCmds = killCommands();
   if (args.dryRun) {
     console.log('[debug] would KILL:'); killCmds.forEach((c) => console.log('   ', c[0], c[1].join(' ')));
   } else {
     for (const [cmd, a] of killCmds) await runToEnd('kill', cmd, a);
   }
 
-  // ---- 写 .env.local（匹配引擎扇出，gitignored 纯文本）----
+  // ---- 写 .env.local（per-service 知识在 web-cli）----
   if (args.dryRun) {
-    if (args.services.web) console.log('[debug] would WRITE .env.local:', targets.webEnv, '->', webEnvFile);
+    if (args.services.web) console.log('[debug] would WRITE .env.local:', JSON.stringify(webCli.buildWebEnv({ agentsDir: repos.AGENTS_DIR, ports: PORTS })), '->', webCli.envLocalPath(repos.WEB_DIR));
   } else if (args.services.web) {
-    upsertEnv(webEnvFile, targets.webEnv);
+    webCli.writeEnv({ webDir: repos.WEB_DIR, agentsDir: repos.AGENTS_DIR, ports: PORTS });
   }
 
-  // ---- CSS 产物检查 ----
-  const cssOk = existsSync(join(repos.AGENTS_DIR, 'packages/desktop/dist/style.css'))
-    && existsSync(join(repos.AGENTS_DIR, 'packages/ui/dist/agent-ui.css'));
-  if (args.services.web && !cssOk) {
-    console.log('[debug] CSS 产物缺失，跑 pnpm build:css');
-    if (!args.dryRun) await runToEnd('build:css', 'pnpm', ['build:css'], { cwd: repos.AGENTS_DIR });
+  // ---- CSS 产物检查（agents 知识在 agents-cli）----
+  if (args.services.web) {
+    await agentsCli.ensureCss({
+      agentsDir: repos.AGENTS_DIR,
+      run: args.dryRun
+        ? async () => console.log('[debug] would RUN pnpm build:css')
+        : (label, cmd, a) => runToEnd(label, cmd, a, { cwd: repos.AGENTS_DIR }),
+    });
   }
 
   if (args.dryRun) { console.log('[debug] dry-run 结束，未起任何服务'); return; }
 
-  // ---- Step 1: docker（down 旧 → up 全栈但用 --scale 不创建内置 fx-data-agents）----
+  // ---- Step 1: docker（跨服务编排知识，留 orchestrator）----
   // 不走 dockerstart.sh 的 up（它写死 up 全栈含 fx-data-agents, 且该服务 pull_policy:always 每次重拉）。
   // 这里复用 cp template + 按分支算 IMAGE_PREFIX，跳过 harbor login（依赖已缓存镜像；首次未缓存先手动 ./dockerstart.sh 拉一次）。
   if (args.services.docker) {
@@ -135,7 +147,7 @@ async function main() {
     await waitHealthy('docker', async () => (await tcpOpen(5432)) && (await tcpOpen(9000)), { tries: 60, intervalMs: 1000 });
   }
 
-  // ---- Step 2: agents + server（并行启动，分别等健康）----
+  // ---- Step 2: agents + server ----
   if (args.services.agents && !args.services.docker) {
     // ui 档不管 docker，但 agents 硬依赖 pg/minio —— 未就绪会 silent 卡到健康超时，预检 fail loud
     const pgUp = await tcpOpen(5432);
@@ -145,32 +157,21 @@ async function main() {
     }
   }
   if (args.services.agents) {
-    children.push(spawnPrefixed('agents', 'pnpm', ['dev:server'], { cwd: repos.AGENTS_DIR }));
+    children.push(agentsCli.start({ agentsDir: repos.AGENTS_DIR }));
     await waitHealthy('agents', () => httpOk(`http://127.0.0.1:${PORTS.agents}/health`), { tries: 60, intervalMs: 1000 });
   }
   if (args.services.server) {
-    // 委派 scripts/dev-start.sh app —— fx-data-server 仓的启动知识单源在该脚本：
-    // GraalVM 检测 + ZGC→G1GC patch + 代理清除 + -Drpc.host 注入 + wait_for_es + 增量编译（--no-build-cache）。
-    // 脚本自带健康等待，成功即退出；bootRun 由脚本后台脱管（PID 记 <SERVER_DIR>/.dev-start.pid，日志 dev-start.log），
-    // 不进 children —— teardown 靠 buildKillCommands（gradlew --stop + lsof kill）覆盖。
-    const devStart = join(toolDir, 'scripts', 'dev-start.sh');
-    const code = await runToEnd('server', 'bash', [devStart, 'app'], {
-      cwd: repos.SERVER_DIR,
-      env: {
-        ...process.env,
-        FX_SERVER_DIR: repos.SERVER_DIR,
-        APP_PORT: targets.serverEnv.SERVER_PORT,
-        SERVER_PORT: targets.serverEnv.SERVER_PORT,
-      },
-    });
-    if (code !== 0) throw new Error(`dev-start.sh app 失败（exit ${code}），查看 ${join(repos.SERVER_DIR, 'dev-start.log')}`);
+    // server 启动知识单源在 server-cli（原 dev-start.sh app 链的 node 重写：
+    // .env 加载 + force_local_infra + start_infra + start_app，含内部健康等待）。
+    // killOld:true = 沿用旧行为（orchestrator Step 0 已杀旧，这里是二道保险，start 内不再交互确认）。
+    await serverCli.start({ serverDir: repos.SERVER_DIR, ports: PORTS, killOld: true });
     await waitHealthy('server', () => httpOk(`http://127.0.0.1:${PORTS.server}/`), { tries: 30, intervalMs: 2000 });
   }
 
   // ---- Step 3: web ----
   if (args.services.web) {
     if (args.cssWatch) children.push(spawnPrefixed('css', 'pnpm', ['build:css:watch'], { cwd: repos.AGENTS_DIR }));
-    children.push(spawnPrefixed('web', 'pnpm', ['dev'], { cwd: repos.WEB_DIR, env: { ...process.env, JSY_DEV_MODE: 'vite' } }));
+    children.push(webCli.start({ webDir: repos.WEB_DIR }));
     await waitHealthy('web', () => tcpOpen(PORTS.web), { tries: 120, intervalMs: 1000 });
     console.log(`\n[debug] ✅ 就绪 → http://localhost:${PORTS.web}/decision/home\n`);
   }
