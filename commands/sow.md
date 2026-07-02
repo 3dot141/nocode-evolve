@@ -69,7 +69,7 @@ AI 按 intent + 会话浓度判 layer ──三档启发式 (见下方判层 exa
 
 ### 3. 单候选 + 编号确认
 
-把 candidate propose 给用户，用 `AskUserQuestion` 单选组件：
+把 candidate propose 给用户，用 `AskUserQuestion` 单选组件（下方 propose 块整体放进 question 文本或各选项 preview，不作为工具调用前的自由文本——那段文本可能被吞）：
 
 ```
 沉淀到: Memory/<layer-dir>/<yymm>/<yymmdd>-<title>.md

@@ -136,7 +136,7 @@ argument-hint: [optional-topic]
 | `rules:plugin` | 插件 rule |
 | `skip` | — |
 
-表格下方用 `AskUserQuestion` 多选组件让用户勾选要执行的编号：
+表格下方用 `AskUserQuestion` 多选组件让用户勾选要执行的编号（payload 自足：每个 option 的 label/description 自带「编号 + 摘要 + 出口/处置」——上方表格是冗余展示，工具调用间的文本可能被吞，被吞也不影响勾选）：
 
 ```
 选要执行的编号（可多选）:

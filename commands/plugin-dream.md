@@ -84,7 +84,7 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/plugin-dream-baseline.mjs" "${CLAUDE_PLUGIN_
 | 2 | skills/bar/SKILL.md | S4 description触发不准 | 建议优化(委托skill-writing) | description 缺 Use when |
 ```
 
-`AskUserQuestion` 多选让用户勾选要执行的编号。0 候选 → 报"状态良好"。
+`AskUserQuestion` 多选让用户勾选要执行的编号（每个 option 自带「编号 + 检测项 + 建议动作」，不依赖上方表格渲染——工具调用间文本可能被吞）。0 候选 → 报"状态良好"。
 
 ### Phase 3: Execute（按类型分派）
 

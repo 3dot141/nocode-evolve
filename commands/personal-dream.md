@@ -74,7 +74,7 @@ import('${CLAUDE_PLUGIN_ROOT}/scripts/personal-snapshot.mjs').then(async ({ reso
 
 ### Phase 2: Propose（呈现 + 用户确认）
 
-输出动作表格，用 AskUserQuestion 多选让用户勾选：
+输出动作表格，用 AskUserQuestion 多选让用户勾选（每个 option 自带「编号 + 动作 + 对象」，不依赖上方表格渲染——工具调用间文本可能被吞）：
 
 ```
 personal-dream 维护建议：

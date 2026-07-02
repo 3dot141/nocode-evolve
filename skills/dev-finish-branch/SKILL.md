@@ -76,6 +76,8 @@ cleanup 时识别 4 种 worktree 路径模式：
 
 ## Gate 速查
 
+**Gate 展示总则（覆盖下表全部 Gate）**：要用户确认的内容必须内嵌进 AskUserQuestion 的 payload 自足——短字段（target / title / 一行值）写进 `question` 文本（写**实际值**，不是字段名），长内容（body / Affected tree / 计划）放 `options[].preview`（每个选项带同一份，等宽多行 markdown 渲染，Gate 均单选可用）。**禁止**「以上 / 上述…确认?」这类指代前文的问法——Gate 前刚跑完 Bash 时，工具调用之间的自由文本 harness 不保证渲染，经常被吞，用户面对确认框看不到要确认的内容（生产实证）。自由文本可照发作冗余，但 payload 缺内容即违规。超长内容（数百行级，塞不进 preview）降级为纯文本 Gate：内容作为**回合末尾**文本发出后结束回合等用户打字回复，绝不「文本展示 + 同回合 ask」。（插件级总则同见 `model/agent-about.md`「常驻交互习惯」）
+
 | Gate | 位置 | 要点 |
 |---|---|---|
 | **Gate Merge** | option 1, commit 整理后 | 呈现 merge 计划（branch → base + 删 worktree + 删 branch），OK 执行 |

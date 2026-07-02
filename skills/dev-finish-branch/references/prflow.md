@@ -61,7 +61,13 @@ git diff --name-only "$(git merge-base HEAD $base_branch)..HEAD" | sort
 
 ## Gate Title-Body
 
-展示 `target`（+ 来源标注）+ title + body + **Affected**（影响文件 tree），等用户响应：
+用 AskUserQuestion 让用户确认 target / title / body / Affected，**内容内嵌 payload 自足**（Gate 展示总则见 SKILL.md「Gate 速查」）：
+
+- `question` 文本写入实际值：target（+ 来源标注）+ title 全文
+- body 全文 + Affected tree 放 `options[].preview`，**每个选项带同一份**（用户聚焦任何选项都能看到）
+- 禁止「以上…确认?」指代前文——此刻刚跑完收集 Affected 的 Bash，工具调用之间的自由文本 harness 不保证渲染，被吞后用户看不到要确认的内容
+
+选项与响应：
 - OK → 进 Step 3
 - 改 target → 更新 target，**不重生成** title/body，再 askGate
 - 改 title/body → **重生成**，再 askGate
@@ -70,7 +76,7 @@ git diff --name-only "$(git merge-base HEAD $base_branch)..HEAD" | sort
 
 ## Step 3: 构 PR 计划 + Gate PR
 
-展示计划让用户审：`push / source / target / reviewer`。用户可改任一字段（改 reviewer/target 时局部更新，不重生成 title/body）。
+用 AskUserQuestion 让用户审计划：`push / source / target / reviewer` 四字段实际值写进 `question` 文本或每个选项的 `preview`（内嵌 payload 自足，禁止「以上计划…确认?」指代，总则见 SKILL.md「Gate 速查」）。用户可改任一字段（改 reviewer/target 时局部更新，不重生成 title/body）。
 
 **项目本地 reviewer override**：仅读 `.agents-personal/rules/personal-repo-pr.md`。
 
