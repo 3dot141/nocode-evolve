@@ -9,6 +9,7 @@ import { join } from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { validateRepos } from './lib/paths.mjs';
 import { detectGraalvm } from './lib/server/graalvm.mjs';
+import { startInfra } from './lib/server/infra.mjs';
 
 const ANTLR_MODULE = 'fx-agent-workspace';
 // 新旧两代 fx-agent-workspace build.gradle.kts 接线不同，产物目录不同，两个都探测。
@@ -53,6 +54,7 @@ function dirHasFiles(dir) {
 // 渐进挂载清单：T3/T4/T4b 各自补一个 case 时同步 push 自己的动词名，default 报错文案据此动态生成，
 // 避免声明未实现的假契约（红蓝裁决 A）。
 const SUPPORTED_VERBS = ['prepare'];
+SUPPORTED_VERBS.push('infra');   // T3 挂载
 
 async function main() {
   const [verb] = process.argv.slice(2);
@@ -64,7 +66,10 @@ async function main() {
     case 'prepare':
       await prepare({ serverDir });
       break;
-    // infra / start / stop / status 由 T3 / T4 / T4b 补挂到这个 switch，并各自 SUPPORTED_VERBS.push(...)
+    case 'infra':
+      await startInfra();
+      break;
+    // start / stop / status 由 T4 / T4b 补挂到这个 switch，并各自 SUPPORTED_VERBS.push(...)
     default:
       console.error(`不支持的 verb: ${verb}（当前支持: ${SUPPORTED_VERBS.join('|')}）`);
       process.exit(1);
