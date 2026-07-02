@@ -65,7 +65,7 @@
 #### push-summary
 **触发**: 用户 push 后说「总结 push 内容 / 给标题描述 / PR description / 沉淀这个 push / 这次 push 包含什么」. 不含: 非 push 语境的一般性总结/沉淀 (走 /distill 或 /sow)
 **读**: `${CLAUDE_PLUGIN_ROOT}/rules/rule-push-summary.md`
-**摘要**: 输出 标题 + 描述, 描述 ≤200字, 含基础内容(覆盖 push range 全 commit) + 重点评测(亮点 / 风险 / 未验证项)
+**摘要**: 输出 标题 + 描述, 描述 ≤300字, 含背景(是什么/解决什么问题) + 方案(怎么解决的/重点评审哪些内容)
 **也属**: git-lifecycle
 **生命周期**: 4 收尾
 

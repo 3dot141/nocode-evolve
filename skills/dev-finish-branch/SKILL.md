@@ -72,16 +72,16 @@ cleanup 时识别 4 种 worktree 路径模式：
 
 ### PR title/body 格式（Option 2）
 
-标题 ≤50 字（提炼最大变更轴）；描述 ≤200 字（基础内容逐 commit + 重点评测），契约见 `rule-push-summary`。
+契约单源见 `rule-push-summary`（标题 + 背景/方案两段描述），不在此重复字段细节。
 
 ## Gate 速查
 
-**Gate 展示总则（覆盖下表全部 Gate）**：要用户确认的内容必须内嵌进 AskUserQuestion 的 payload 自足——短字段（target / title / 一行值）写进 `question` 文本（写**实际值**，不是字段名），长内容（body / Affected tree / 计划）放 `options[].preview`（每个选项带同一份，等宽多行 markdown 渲染，Gate 均单选可用）。**禁止**「以上 / 上述…确认?」这类指代前文的问法——Gate 前刚跑完 Bash 时，工具调用之间的自由文本 harness 不保证渲染，经常被吞，用户面对确认框看不到要确认的内容（生产实证）。自由文本可照发作冗余，但 payload 缺内容即违规。超长内容（数百行级，塞不进 preview）降级为纯文本 Gate：内容作为**回合末尾**文本发出后结束回合等用户打字回复，绝不「文本展示 + 同回合 ask」。（插件级总则同见 `model/agent-about.md`「常驻交互习惯」）
+**Gate 展示总则（覆盖下表全部 Gate）**：要用户确认的内容必须内嵌进 AskUserQuestion 的 payload 自足——短字段（target / title / 一行值）写进 `question` 文本（写**实际值**，不是字段名），长内容（body / Affected 路径列表 / 计划）放 `options[].preview`（每个选项带同一份，等宽多行 markdown 渲染，Gate 均单选可用）。**禁止**「以上 / 上述…确认?」这类指代前文的问法——Gate 前刚跑完 Bash 时，工具调用之间的自由文本 harness 不保证渲染，经常被吞，用户面对确认框看不到要确认的内容（生产实证）。自由文本可照发作冗余，但 payload 缺内容即违规。超长内容（数百行级，塞不进 preview）降级为纯文本 Gate：内容作为**回合末尾**文本发出后结束回合等用户打字回复，绝不「文本展示 + 同回合 ask」。（插件级总则同见 `model/agent-about.md`「常驻交互习惯」）
 
 | Gate | 位置 | 要点 |
 |---|---|---|
 | **Gate Merge** | option 1, commit 整理后 | 呈现 merge 计划（branch → base + 删 worktree + 删 branch），OK 执行 |
-| **Gate Title-Body** | option 2, target 解析后 | target (`<remote>/<branch>` + 来源) + title + body + **Affected**（影响文件 tree）。target/title/body 均可改 |
+| **Gate Title-Body** | option 2, target 解析后 | target (`<remote>/<branch>` + 来源) + title + body + **Affected**（变更文件路径列表）。target/title/body 均可改 |
 | **Gate PR** | option 2, Gate Title-Body 后 | push + source + target + reviewer。可改任一字段，不重生成 title/body |
 | **Gate Discard** | option 4 | 列将删内容。typed `discard` **字面**才执行，yes/OK 算否定 |
 | **PR 决策线** | option 2, 进入 PR 流程(Step 0) | 一次确认整条（提PR/后台盯/合并后清+流转）。确认①→ worktree 由 pr-watch 合并后自动清，不再单问；选③手动保留 |

@@ -31,20 +31,19 @@ PR title（≤50 字）：
 feat(search): 支持中文分词搜索
 ```
 
-PR body（基础内容 + 重点评测，`rule-push-summary` 契约）：
+PR body（背景 + 方案两段，`rule-push-summary` 契约）：
 ```markdown
-基础内容：
-- a1b2c3d feat: 搜索接口接入中文 analyzer
+## 背景
+中文查询在搜索接口里直接落空，因为分词沿用了默认英文 analyzer，无法切分中文词。
 
-重点评测：
-- a1b2c3d 亮点: 修复中文查询返回空的问题，接入 analyzer 后 p95=156ms（SC1/SC2/SC3 均达标）
+## 方案
+搜索接口接入中文 analyzer，替换原来的默认分词器。重点评审 src/search/analyzer.ts 的分词规则，p95=156ms 已跑过（SC1/SC2/SC3 均达标）。
 ```
 
 Affected（仅 Gate 展示，不进 PR body）：
 ```
-src/search/
-├── analyzer.ts
-└── query.ts
+src/search/analyzer.ts
+src/search/query.ts
 ```
 
 → 用户确认 target + title + body + Affected，进下一步。

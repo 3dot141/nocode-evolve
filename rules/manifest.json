@@ -43,7 +43,7 @@
       "triggers": ["总结.{0,4}push", "push.{0,6}(总结|包含|改了|是什么)", "pr\\s*描述", "pr\\s*description", "(push|pr|commit|提交).{0,10}(沉淀|标题|描述)", "沉淀.{0,8}(push|提交|commit)", "这次\\s*push"],
       "action": "Read rules/rule-push-summary.md",
       "read": "${CLAUDE_PLUGIN_ROOT}/rules/rule-push-summary.md",
-      "summary": "输出 标题 + 描述, 描述 ≤200字, 含基础内容(覆盖 push range 全 commit) + 重点评测(亮点 / 风险 / 未验证项)",
+      "summary": "输出 标题 + 描述, 描述 ≤300字, 含背景(是什么/解决什么问题) + 方案(怎么解决的/重点评审哪些内容)",
       "guard": "",
       "depends_on": ["dev-finish-branch"],
       "severity": "advisory",

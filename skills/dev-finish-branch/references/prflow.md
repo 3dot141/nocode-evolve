@@ -27,26 +27,21 @@ toolchain 检测（`github.com`→gh / `bitbucket.`→bkt）见 SKILL.md Step 1�
 
 ## Step 1: 生成 title + body
 
-**输出契约**引用 `rules/rule-push-summary.md`：
+**输出契约单源见** `rules/rule-push-summary.md`（标题 + 背景/方案两段描述），此处不重复字段细节，改契约只改那一处。
 
-- **标题**：≤ 50 字，提炼最大变更轴（含版本号 if any）；不逐条罗列 commit
-- **描述**：≤ 200 字（中文按字），两小节：
-  - **基础内容**：逐 commit 一行 `<short-sha> <type>: <一句话变更>`，**覆盖 push range 全部 commit**，不漏不并
-  - **重点评测**：每 commit 至少给 亮点 / 风险 / 未验证项 一类；实在没的写 `无评测 (机械修订)`
-
-确认 push range：`git log "$(git merge-base HEAD $base_branch)..HEAD" --oneline`。range 内 N 个 sha，基础内容就 N 行。
+确认 push range：`git log "$(git merge-base HEAD $base_branch)..HEAD" --oneline`，核对描述是否遗漏实质变更。
 
 （gh/bkt 无差异）
 
 ## Step 2: 收集 Affected
 
-Gate Title-Body 前拿全部变更文件，按目录层级组织成 tree 格式（`├──` `└──` `│`），列在 **Affected** 一节：
+Gate Title-Body 前拿全部变更文件，扁平路径列表（原样输出，不做目录树缩进），列在 **Affected** 一节：
 
 ```bash
 git diff --name-only "$(git merge-base HEAD $base_branch)..HEAD" | sort
 ```
 
-根目录文件直接列，目录按字母序。**Affected 只用于 Gate Title-Body 给用户一同确认，不写进 PR body**——body 只有 Step 1 的「基础内容 + 重点评测」（`rule-push-summary` 契约）。（gh/bkt 无差异）
+每行一个完整路径（如 `examples/xxx.md`、`SKILL.md`）。**Affected 只用于 Gate Title-Body 给用户一同确认，不写进 PR body**——body 内容契约单源见 `rule-push-summary.md`。（gh/bkt 无差异）
 
 ## Step 2a: 解析 PR target
 
