@@ -114,7 +114,7 @@ node "${CLAUDE_PLUGIN_ROOT}/vendor/codex/scripts/codex-companion.mjs" task --wri
 
 ## 场景 4:设计文档独立审稿
 
-**触发**:`dev-design-refine` 工作流走到 review 环节(见 `rule-superpowers-brainstorming.md` step 5 第 3 步)——**默认即触发**(交叉验证已是默认,不再限"重档")。仅琐碎 / 文案改动用户显式降档时才跳过。
+**触发**:`dev-design-refine` 工作流走到 review 环节(见 `rule-superpowers-brainstorming.md` step 5 第 3 步)且分档为**重档**(skeleton §1 自动判:跨模块 / 含架构·选型决策 → 重档;琐碎 / 文案 / 拿不准 → 轻档,不拉 codex)。命中重档后要降档,只认用户显式否定词。
 
 **做法**:独立审稿**默认单路直接交给 Codex**(不预先探活,不与 Claude `design-doc-reviewer` 并行双跑)——按「调用方式」直接派一个 `Agent()` 去 Bash 跑 Codex 审稿:
 

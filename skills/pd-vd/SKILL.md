@@ -359,7 +359,7 @@ node scripts/prototype-verify.mjs <prototype-dir> --interactions interactions.js
 
 ### 5e. 独立交叉审（低保真 / 高保真 / 完整实现）
 
-按 `{NOCODE_SKILL_REF}/vis-review.md` 做视觉交叉审。vis-review 已引入 `reviewing` 框架：Read `{NOCODE_SKILL_REF}/reviewing/skeleton.md` 套通用流程骨架（分档 → 独立交叉 → findings 分级 → 收口）+ Read `{NOCODE_SKILL_REF}/reviewing/findings-contract.md` 套 findings 契约，按 vis-review 的**视觉 9 维度**（框架第 3 步）评审 `.ix.md` + `.vd.md`。重档强制走 dual-review 异源双评——Claude 主路（当前会话）、Codex 独立路（CLAIM 剥离 + Context Capsule，不传主路结论）；Codex 调用报错 → fallback 改派 general-purpose subagent 独立路单跑（标「同模型（降级）」），不自演。
+按 `{NOCODE_SKILL_REF}/vis-review.md` 做视觉交叉审。vis-review 已引入 `reviewing` 框架：Read `{NOCODE_SKILL_REF}/reviewing/skeleton.md` 套通用流程骨架（分档 → 独立交叉 → findings 分级 → 收口）+ Read `{NOCODE_SKILL_REF}/reviewing/findings-contract.md` 套 findings 契约，按 vis-review 的**视觉 9 维度**（框架第 3 步）评审 `.ix.md` + `.vd.md`，档位按 vis-review 自动判（低保真默认轻档；高保真 / 跨页设计系统 / 关键业务路径 → 重档）。重档走 dual-review 异源双评——Claude 主路（当前会话）、Codex 独立路（CLAIM 剥离 + Context Capsule，不传主路结论）；Codex 调用报错 → fallback 改派 general-purpose subagent 独立路单跑（标「同模型（降级）」），不自演。
 
 本步把以下材料连同 `.ix.md` / `.vd.md` 一起喂给 vis-review 评审：
 - 5c/5d 矩阵完整性

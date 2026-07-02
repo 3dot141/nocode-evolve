@@ -489,7 +489,7 @@ Task N+2: 保存 + 渲染
 - **领域维度（框架第 3 步注入点）= `references/reviewer-template.md` 的 7 维度核心审查**（设计意图 / 决策 / 完整性 / 可执行 / 一致性 / 范围 / 骨架可读性）。这是 dev-design-refine 的领域判断逻辑，不在框架里——reviewer-template 同时承载 dispatch prompt 与维度单源。
 - **选方法（框架第 4 步 selectMethods）= `[checklist（reviewer-template 维度逐项核查）+ dual-review（异源双评 + 总结）]`**。设计文档对象查骨架方法选择表正是这两个。独立性：异源。
 - **公共能力全走框架**：CLAIM 剥离 / codex 经 `rule-codex-review` 派 / Evidence Gate / Doubt Theater / 分档判定都在 skeleton §4，本节只引用不重写。
-- **分档**（skeleton §1）：设计文档跨模块、含架构 / 选型决策 → 默认**重档**，独立交叉默认单跑 Codex；琐碎改动 / 文案修订 / 用户显式说「轻档」→ 降轻档，直接跳过 codex 只跑 general-purpose 一路，回复点名「轻档，跳过 codex 交叉」，独立性声明标「同模型」。
+- **分档**（skeleton §1 自动判）：设计文档跨模块、含架构 / 选型决策 → **重档**，独立交叉默认单跑 Codex；琐碎改动 / 文案修订、拿不准 → **轻档**（agent 自判，不需用户授权），直接跳过 codex 只跑 general-purpose 一路，回复点名「轻档，跳过 codex 交叉」，独立性声明标「同模型」。命中重档信号后要降 → 只认用户显式否定词。
 
 **Core Actions — 独立交叉（框架步骤 5 · 默认单路 Codex）**：默认只让 Codex 跨模型审一遍，避开「Claude 审 Claude」同源盲区；不预先探活,Codex 调用报错才 fallback 改用 general-purpose subagent 单跑，不与 Codex 并行。**CLAIM 剥离 + Context Capsule**后（只传文档原文 + 维度清单 + 中立事实包——已拍板决策 / 被否决方案及原因 / 非目标 / 预算，不传主 agent 的审查结论 / 方案倾向，skeleton §4.1）：
 

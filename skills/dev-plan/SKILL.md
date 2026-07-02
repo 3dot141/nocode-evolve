@@ -59,8 +59,8 @@ Task 5: 插 checkpoint
   Sub-steps: 每 2-3 task 一个 checkpoint
   Gate: checkpoint 边界已插
 
-Task 6: Round 1 Red-Blue Review — 骨架对抗审视
-  Sub-steps: 调 Skill(nocode:red-blue-deep) 评估骨架 → 结论中成立的质疑修正到骨架
+Task 6: Round 1 Red-Blue Review — 骨架对抗审视（轻档）
+  Sub-steps: 调 Skill(nocode:red-blue-deep)（声明轻档）评估骨架 → 结论中成立的质疑修正到骨架
   Gate: red-blue-deep 流程完成，成立的质疑已修正
 
 ═══ Round 2: 填充代码（读设计文档 + 代码库 → 写真实代码）═══
@@ -73,7 +73,7 @@ Task 7: 逐 task 填充真实代码
 ═══ 收尾 ═══
 
 Task 8: Round 2 Checklist 核查 + 窄化 Red-Blue + Plan Validation
-  Sub-steps: checklist 逐项核查（API签名/测试覆盖/设计一致/废弃接口）→ 窄化 Skill(nocode:red-blue-deep) 只评跨task一致性 → 裁决修正 → 四项自检（需求覆盖 + 路径覆盖 + 可验证 + 无环）
+  Sub-steps: checklist 逐项核查（API签名/测试覆盖/设计一致/废弃接口）→ 窄化 Skill(nocode:red-blue-deep)（强制重档）只评跨task一致性 → 裁决修正 → 四项自检（需求覆盖 + 路径覆盖 + 可验证 + 无环）
   Gate: checklist + red-blue-deep 流程完成 + 裁决修正完成 + 四项自检全过（任一不过回 Task 7 补）
 
 Task 9: 用户确认计划
@@ -142,7 +142,7 @@ Round 1 骨架完成，在填充代码前对计划骨架做对抗审视。骨架
 
 > 「这份计划的骨架合理吗？切片策略（垂直还是横切？每片独立可验证吗？）、依赖图（有没有隐式耦合遗漏？）、risk-first 排序（最不确定的真的排前面了吗？）、task 粒度（sizing 准吗？有 and 该拆的吗？）、restate 覆盖（有遗漏路径吗？）」
 
-附上完整骨架（依赖图 + task 列表含 covers/sizing/HITL-AFK + checkpoint）作为被评估对象。red-blue-deep 会自行判档位并走对应流程（第一性原理 → 蓝军 → 独立审查 → 结论）。
+附上完整骨架（依赖图 + task 列表含 covers/sizing/HITL-AFK + checkpoint）作为被评估对象。Round 1 走**轻档**——调用时声明「轻档」，red-blue-deep 给一句表态 + 关键理由（不派 subagent、不调 codex），骨架层的粗问题快速暴露即可；深审留给 Round 2 收尾（Step 8 强制重档）。
 
 **结论落地**：red-blue-deep 结论中成立的质疑修正到骨架中（回 Step 3/4/5 对应调整）。
 
@@ -218,11 +218,11 @@ Round 1 的骨架定了"改什么"，Round 2 填"怎么改"——每个 task 补
 - 实现是否和设计文档的 BF 伪代码 / 接口一致
 - 有没有引用已废弃接口
 
-**窄化 Red-Blue**（只审跨 task 一致性 / 执行顺序）：调用 `Skill(nocode:red-blue-deep)`，评估：
+**窄化 Red-Blue**（只审跨 task 一致性 / 执行顺序）：调用 `Skill(nocode:red-blue-deep)` 并声明「强制重档」——这是 plan → build 前最后一道审视，走 heavy 流程（第一性原理 → 蓝军 → 独立审查 → 结论），降档只认用户显式否定词。评估：
 
 > 「前置 task 的产出（接口/数据结构/约定）够后续 task 用吗？多个 task 之间有没有隐含冲突的假设？执行顺序对吗？」
 
-不把完整实现代码整段喂给 red-blue 走 heavy 档 codex 审查。
+重档范围仍是窄化的——喂依赖图 + 接口约定 + 假设清单，不把完整实现代码整段喂给 codex。
 
 **结论落地**：checklist 发现的问题 + red-blue 结论中成立的质疑，都修正到计划中（回 Step 7 修正对应 task）。
 
@@ -315,7 +315,7 @@ task 间依赖不成环，底层 task 排前面。循环依赖说明切片方式
 - 最不确定的部分排到了最后
 - 没读相关代码就开始写 task
 - task 缺 `covers` 字段，或汇总后有路径没被任何 task 覆盖（漏实现的早期信号）
-- red-blue-deep 被跳过或降级为轻档（计划审视是跨模块不可逆的，应该走重档）
+- Round 2 red-blue-deep 被跳过或降档（收尾审视是 plan → build 前最后一道强制重档，降档只认用户显式否定词；Round 1 轻档是设计如此，不算降档）
 - red-blue-deep 结论中成立的质疑没有落实到骨架/代码修正
 - 因"任务简单 / 还在概览 / 用户说了'继续'"跳过某 Step、不建 Step 0 TaskCreate、或漏掉最后的交接 task
 - 计划里出现"E2E 全链路验证""既有功能回归"这类整体确认性 task —— 不是 tracer bullet，违反 task 定义。应删除该 task，改为核对设计文档「汇总」节的验证策略总表是否已覆盖，交给 dev-verify 执行

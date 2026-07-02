@@ -360,7 +360,7 @@ research skill 的 Go/No-Go 建议基于以下判据（PRD 里引用）：
 
 ### Step 7a: prd-review（交叉审）
 
-用户确认前，按 `{NOCODE_SKILL_REF}/prd-review.md` 做 PRD 评审。prd-review 已引入 `reviewing` 框架：Read `{NOCODE_SKILL_REF}/reviewing/skeleton.md` 套通用流程骨架（分档 → 独立交叉 → findings 分级 → 收口）+ Read `{NOCODE_SKILL_REF}/reviewing/findings-contract.md` 套 findings 契约，按 prd-review 的 PRD 8 维度（框架第 3 步）评审。重档走 dual-review 异源双评——Claude 主路（当前会话）、Codex 独立路（CLAIM 剥离 + Context Capsule，不传主路结论），Critical 必须修复再让用户确认。
+用户确认前，按 `{NOCODE_SKILL_REF}/prd-review.md` 做 PRD 评审。prd-review 已引入 `reviewing` 框架：Read `{NOCODE_SKILL_REF}/reviewing/skeleton.md` 套通用流程骨架（分档 → 独立交叉 → findings 分级 → 收口）+ Read `{NOCODE_SKILL_REF}/reviewing/findings-contract.md` 套 findings 契约，按 prd-review 的 PRD 8 维度（框架第 3 步）评审，档位按 skeleton §1 自动判（拿不准默认轻档）。重档走 dual-review 异源双评——Claude 主路（当前会话）、Codex 独立路（CLAIM 剥离 + Context Capsule，不传主路结论），Critical 必须修复再让用户确认。
 
 ## Exit Gate
 
