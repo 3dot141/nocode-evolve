@@ -79,7 +79,7 @@ Task 8: 写设计文档
   Gate: 决策清点全 ✅ + 功能覆盖全 ✅ + 输入清单无缺失 + 文档已产出
 
 Task 9: 设计文档评审
-  Sub-steps: 六轴 review → 内部一致性核对(BF↔影响清单↔接口↔DDL↔工具集↔文本总结) → design-review 交叉审（Claude 蓝军 + Codex 红军）
+  Sub-steps: 六轴 review → 内部一致性核对(BF↔影响清单↔接口↔DDL↔工具集↔文本总结) → design-review 交叉审（Claude 主路 + Codex 独立路）
   Gate: 六轴 + 一致性 + 交叉审通过，无 Critical findings
 
 Task 10: 硬交接 — 调用下一步 skill
@@ -531,7 +531,7 @@ TO 传递给后续 Plan（指导切片 + task covers）、Build（驱动 TDD）�
 
 发现矛盾 → 修文档（以 BF 伪代码为准，其他部分对齐到 BF）。修完重新过一遍矛盾对。
 
-**design-review 交叉审**（引入 `reviewing` 框架）：方案质量审查走框架——`Read {NOCODE_SKILL_REF}/reviewing/skeleton.md` 套 7 步通用流程（分档 / 独立交叉 / 分级 / 收口）+ `Read {NOCODE_SKILL_REF}/reviewing/findings-contract.md` 套 findings 契约；设计领域的 10 项评审维度见 `{NOCODE_SKILL_REF}/design-review.md`（框架第 3 步注入点）。「设计文档」对象按 skeleton §3 选 `checklist`（10 维度）+ `red-blue-adversarial`（Codex 异源交叉，CLAIM 剥离不传蓝军结论 / 方案倾向），findings 套统一契约，Critical 必须修复。这和六轴互补——六轴是文档结构审查，内部一致性是交叉矛盾审查，design-review 是方案质量审查。
+**design-review 交叉审**（引入 `reviewing` 框架）：方案质量审查走框架——`Read {NOCODE_SKILL_REF}/reviewing/skeleton.md` 套 7 步通用流程（分档 / 独立交叉 / 分级 / 收口）+ `Read {NOCODE_SKILL_REF}/reviewing/findings-contract.md` 套 findings 契约；设计领域的 10 项评审维度见 `{NOCODE_SKILL_REF}/design-review.md`（框架第 3 步注入点）。「设计文档」对象按 skeleton §3 选 `checklist`（10 维度）+ `dual-review`（Codex 异源双评，CLAIM 剥离 + Context Capsule，不传主路结论 / 方案倾向），findings 套统一契约，Critical 必须修复。这和六轴互补——六轴是文档结构审查，内部一致性是交叉矛盾审查，design-review 是方案质量审查。
 
 **Exit Gate:**
 - [ ] 六轴 review 通过

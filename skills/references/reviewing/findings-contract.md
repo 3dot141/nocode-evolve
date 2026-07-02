@@ -22,7 +22,7 @@ finding {
   evidence  : "<代码/原文摘录>"                          // finding 的事实依据，让作者 1 跳验证
   finding   : "<问题描述>"                              // 这是什么问题
   fix       : "<可操作修法>"                            // Structural Remedy 优先（见下）
-  source    : 蓝军 | 红军(Codex) | subagent | <方法名>   // 来源标记，去重合并 + 独立性追溯用
+  source    : <路名或方法名>                             // 对抗型: 蓝军 | 红军(Codex)；双评型: 主路 | 独立路(Codex) | 独立路(subagent, 降级)；或方法名
 }
 ```
 
@@ -33,7 +33,7 @@ finding {
 - **`kind` 正交**：`normal` 是普通 finding；`open-question`（待核实事实）和 `self-audit`（自审卡点）是两类特殊性质，**与严重度独立**——一条 open-question 也可以有 `severity: suggestion`。
 - **`axis`**：评审维度名，由所选 method 的维度表给出。同 `location` + 同 `axis` 是去重键（多来源命中同一处同一维度 = 高置信交集）。
 - **`fix` — Structural Remedy 优先**：能从结构上消除问题（改设计 / 删一类用法 / 加约束让错误不可表达）的修法，优先于打补丁式的局部修补。例：与其"在 3 个调用点各加一次 null 检查"，不如"让该字段不可为 null"。
-- **`source`**：合并多路结论时标来源。蓝军（主 agent 自评）、红军(Codex)（异源攻击）、subagent（独立 general-purpose）、或方法名（如 `threat-modeling`）。同一 finding 被多源命中 → 合并并保留全部 source（置信度更高）。
+- **`source`**：合并多路结论时标来源。**对抗型**（red-blue-adversarial）用 `蓝军`（主会话防守方）/ `红军(Codex)`；**双评型**（dual-review）用 `主路`（主会话 checklist 遍历）/ `独立路(Codex)` / `独立路(subagent, 降级)`；自评类可直接标方法名（如 `threat-modeling`）。同一 finding 被多源命中 → 合并并保留全部 source（置信度更高）。
 
 ---
 

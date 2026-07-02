@@ -25,7 +25,7 @@ PBR 的核心是**分视角、各深读、取并集**。不给所有 reviewer �
 
 产出 `findings[]`，映射 `{NOCODE_SKILL_REF}/reviewing/findings-contract.md`：
 
-- 每条 finding：`axis` = 视角名（`用户视角` / `维护者视角` / `攻击者视角`……）；`location` 必填；`severity` = C/W/S；`source` = `subagent`（分视角派 subagent 时）/ `蓝军`（主 agent 自演多视角时）。
+- 每条 finding：`axis` = 视角名（`用户视角` / `维护者视角` / `攻击者视角`……）；`location` 必填；`severity` = C/W/S；`source` = `subagent`（分视角派 subagent 时）/ `主路`（主会话自演多视角时）。
 - 各视角并集去重：`dedup(by=[location, axis])`——同位置不同视角各记一条（视角不同价值不同），同位置同视角才合并。
 - 受 Evidence Gate 约束（事实类 critical 缺 location 降 open-question）。
 - `verdict.counts` 汇总。

@@ -5,7 +5,7 @@
 
 ## 引框架
 
-1. **Read `{NOCODE_SKILL_REF}/reviewing/skeleton.md`** 套通用 7 步流程。restate 属"需求 / PRD / restate"类对象，按 skeleton §3 方法选择表取 **`checklist`（领域维度）+ `red-blue-adversarial`（异源交叉）**，独立性 = 异源。
+1. **Read `{NOCODE_SKILL_REF}/reviewing/skeleton.md`** 套通用 7 步流程。restate 属"需求 / PRD / restate"类对象，按 skeleton §3 方法选择表取 **`checklist`（领域维度）+ `dual-review`（异源双评 + 总结）**，独立性 = 异源。
 2. **Read `{NOCODE_SKILL_REF}/reviewing/findings-contract.md`** 套 findings 契约（finding schema + 5→3 分级映射 + Evidence Gate + verdict）。
 
 > 流程走框架后，本细则只负责下面这张**7 维度表**——它就是 skeleton 第 3 步的 `domainAxes[]`，每个维度名 = finding 的 `axis`。
@@ -13,9 +13,9 @@
 ## 怎么走（全部引框架，本文不复述细节）
 
 - **分档**（skeleton §1）：restate 评审默认重档（需求定义的偏差不可逆、影响整个下游），走异源交叉。
-- **选方法 + 执行**（skeleton §3/步骤 4）：`checklist` 逐项遍历下面 7 维度产 finding（蓝军 / Claude 主路）。
-- **独立交叉**（skeleton 步骤 5 + §4.1/§4.2）：`red-blue-adversarial` 派 **Codex 红军**经 `rule-codex-review` 单一通道独立攻击——**CLAIM 剥离**（只传 restate 原文 + 7 维度清单 + "请按这些维度攻击这份需求定义"，不传蓝军已得结论）。Codex 不可用 → 按框架 §4.2 降级 Claude 自演红军并标"同模型（降级）"。
-- **归一分级 + 收口**（skeleton 步骤 6/7）：findings 套 contract schema，按 `[location, axis]` 去重（蓝红交集 = 高置信），分 Critical / Warning / Suggestion；**Critical 必修**再放行到下一阶段。
+- **选方法 + 执行**（skeleton §3/步骤 4）：`checklist` 逐项遍历下面 7 维度产 finding（**主路 = 当前会话，不外派**）。
+- **独立交叉**（skeleton 步骤 5 + §4.1/§4.2）：`dual-review` 派 **Codex 独立路**经 `rule-codex-review` 单一通道隔离评审——**CLAIM 剥离 + Context Capsule**（只传 restate 原文 + 7 维度清单 + 中立事实包（已拍板决策 / 被否决方案及原因 / 非目标），不传主路已得结论）。Codex 调用报错 → 按框架 §4.2 fallback 改派 general-purpose subagent 单跑，标"同模型（降级）"，不自演。
+- **归一分级 + 收口**（skeleton 步骤 6/7）：findings 套 contract schema，按 `[location, axis]` 去重（双路交集 = 高置信），分 Critical / Warning / Suggestion；**Critical 必修**再放行到下一阶段。修完 findings 的重跑判据走 skeleton §4.6（delta review，纯修复不重跑独立路）。
 
 ## 领域维度（restate 七维 — 本细则唯一职责）
 
@@ -29,4 +29,4 @@
 | scope 边界 | Out of Scope 明确吗？会不会在 Build 阶段膨胀？ |
 | 简化检查 | restate 有没有过度复杂？路径之间有没有重叠可合并？SC 有没有冗余？ |
 
-> 这 7 维度同时供蓝军（checklist 遍历）和红军（Codex 攻击的维度清单）使用——红军拿到的就是这张表 + restate 原文，自己独立判断。
+> 这 7 维度同时供主路（checklist 遍历）和独立路（Codex 评审的维度清单）使用——独立路拿到的就是这张表 + restate 原文 + Context Capsule，自己独立判断。

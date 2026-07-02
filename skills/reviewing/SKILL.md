@@ -13,12 +13,12 @@ review 这件事在仓库里被重造了十几遍：每个 review 都重新发�
 
 ```
 ① 通用流程骨架（7 步）        ② 评审方法库（method cards）
-   1 分档                        red-blue-adversarial
-   2 对象界定 + gate             checklist
-   3 评审维度 ← 细则注入点       perspective-based (PBR)
-   4 执行（从库选方法）          error-mechanism (HECR)
-   5 独立交叉                    self-review
-   6 findings + 分级             threat-modeling
+   1 分档                        red-blue-adversarial（对抗·有防守方）
+   2 对象界定 + gate             dual-review（双评+总结·无防守方）
+   3 评审维度 ← 细则注入点       checklist
+   4 执行（从库选方法）          perspective-based (PBR)
+   5 独立交叉                    error-mechanism (HECR)
+   6 findings + 分级             self-review / threat-modeling
    7 收口 / triage               （+ 4 个领域 method card）
 
 ③ 公共能力（框架级横切，不让每个方法各写一遍）
@@ -59,4 +59,4 @@ review 这件事在仓库里被重造了十几遍：每个 review 都重新发�
 
 - `{NOCODE_SKILL_REF}/reviewing/skeleton.md` — **流程骨架单源**：分档判据表 + 7 步详解 + 方法选择表 + 公共能力 how-to（CLAIM 剥离 / codex 经 `rule-codex-review` 派 / Evidence Gate / Doubt Theater / 分档）。细则 C1 引入时 Read 它。
 - `{NOCODE_SKILL_REF}/reviewing/findings-contract.md` — **findings 统一契约单源**：finding schema + verdict 层 + 5→3 分级映射表 + 三条关键约束（security High 上提 Critical / Q-SA 作 kind / Evidence Gate）。
-- `{NOCODE_SKILL_REF}/reviewing/methods/` — **评审方法库**：每个方法一份 card（维度表/思路 + 输出契约 + 派发策略）。基础方法 6 个（red-blue-adversarial / checklist / perspective-based / error-mechanism / self-review / threat-modeling）+ 领域方法 card（security-method / database-method / code-quality-method / architecture-method）。
+- `{NOCODE_SKILL_REF}/reviewing/methods/` — **评审方法库**：每个方法一份 card（维度表/思路 + 输出契约 + 派发策略）。基础方法 7 个（red-blue-adversarial / dual-review / checklist / perspective-based / error-mechanism / self-review / threat-modeling）+ 领域方法 card（security-method / database-method / code-quality-method / architecture-method）。red-blue 与 dual-review 的分界（有无防守方）见 `methods/dual-review.md`。

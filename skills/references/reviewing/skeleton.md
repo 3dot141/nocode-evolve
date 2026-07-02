@@ -48,7 +48,7 @@ review 不是越重越好。先按**评审对象的风险 + 可逆性**定深度
 | 2 | **对象界定 + 进入 gate** | 明确评什么（diff / 设计文档 / 方案 / restate）、范围边界、前置条件是否满足（如 dev-review 要求 Verify Gate 已过）。前置不满足 → 不进 review，回退 | 评审对象 + 范围 + gate 通过 |
 | 3 | **评审维度**（细则注入点） | **骨架不规定具体维度，细则在这里填自己的领域维度表**（dev-review 五轴 / define-review 7 维 / 安全 OWASP …）。维度 = 后续 finding 的 `axis` | `domainAxes[]` |
 | 4 | **执行（选方法）** | 按 §3 方法选择表 + 档位，从方法库选 1+ 种方法，逐个 Read 对应 card 执行：清单/自评类直接套维度产出 finding；对抗/PBR 类需独立交叉（进步骤 5） | 每方法的 raw findings |
-| 5 | **独立交叉**（重档） | 公共能力（见 §4）：**CLAIM 剥离**后派独立审查——codex（经 `rule-codex-review` 单一通道）+/或 独立 subagent，并行。声明独立性档位（异源 / 同模型 / 无）。codex 不可用 → 降级单路并明说 | 红军/独立路 findings + 独立性声明 |
+| 5 | **独立交叉**（重档） | 公共能力（见 §4）：**CLAIM 剥离 + Context Capsule**（§4.1）后派独立审查——默认单路 codex（经 `rule-codex-review` 单一通道），调用报错才 fallback 独立 subagent 单跑，非并行双跑。声明独立性档位（异源 / 同模型（降级） / 无） | 独立路 findings + 独立性声明 |
 | 6 | **findings 统一 schema + 分级** | 把各路 raw findings 归一到 `findings-contract.md` 的 schema：查 5→3 映射表定 `severity`（C/W/S）、Q/SA 转 `kind`、security High 上提 Critical；按 `[location, axis]` 去重（交集 = 高置信）；过 **Evidence Gate**（见 §4） | 归一 findings[] |
 | 7 | **收口 / triage / 拍板** | 排序呈现（correctness/security 优先，少而精）；**Critical 必修不可 override**；产出 verdict（approved + counts + recommendation）；交用户逐条拍板 | verdict + 用户拍板 |
 
@@ -62,14 +62,16 @@ review 不是越重越好。先按**评审对象的风险 + 可逆性**定深度
 
 | 评审对象 | 默认方法 | 备选 | 独立性 |
 |---|---|---|---|
-| **代码 diff** | `checklist`（领域维度，通用质量清单载体 = `code-quality-method`）+ `red-blue-adversarial`（异源交叉） | `error-mechanism` | 异源 |
+| **代码 diff** | `checklist`（领域维度，通用质量清单载体 = `code-quality-method`）+ `dual-review`（异源双评） | `error-mechanism` | 异源 |
 | **方案 / 决策 / 架构选型** | `red-blue-adversarial` | `perspective-based` | 异源 |
-| **设计文档** | `checklist`（领域维度）+ `red-blue-adversarial`（异源交叉） | — | 异源 |
+| **设计文档** | `checklist`（领域维度）+ `dual-review`（异源双评） | — | 异源 |
 | **安全**（外部输入 / 认证 / 敏感数据） | `threat-modeling` + `checklist`（`security-method` card · OWASP） | — | 异源 |
 | **数据库**（SQL / schema / migration） | `checklist`（`database-method` card） | — | 同模型 / 异源 |
 | **架构决策** | `checklist`（`architecture-method` card）+ `red-blue-adversarial` | — | 异源 |
-| **需求 / PRD / restate** | `checklist`（领域维度）+ `red-blue-adversarial` | — | 异源 |
+| **需求 / PRD / restate** | `checklist`（领域维度）+ `dual-review`（异源双评） | — | 异源 |
 | **轻档 / 低风险** | `self-review` | — | 无 |
+
+> **red-blue vs dual-review 分界**：`red-blue-adversarial` 是**有防守方的对抗**（蓝军防守提议、红军攻击），回答「该不该 / 选哪个」，主产物是 `verdict.recommendation`；`dual-review` **无防守方**——主路 + 独立路两路**中立**挑错后合并，回答「这份工件有什么问题」，主产物是 `findings[]`。工件缺陷发现误挂 red-blue 会诱导主路去「防守」工件（护短）；拍板题误挂 dual-review 则没人做立场论证。分界详表见 `methods/dual-review.md`。
 
 **db / architect 的"接线"就在这张表**——细则审到 SQL/migration 或架构决策时，据此选 `database-method` / `architecture-method` card，**不经 manifest 路由**（框架走 reference 不进 manifest）。"补接线" = 在本表加"对象 → card"映射，不改 manifest / generate。
 
@@ -87,18 +89,28 @@ review 不是越重越好。先按**评审对象的风险 + 可逆性**定深度
 
 ### 4.1 CLAIM 剥离（独立交叉的前提）
 
-派独立审查（codex / 独立 subagent）时，**只传"被评审对象的原文 + 约束条件 + 维度清单",绝不传蓝军（主 agent）已得出的审查结论或倾向**。
+派独立审查（codex / 独立 subagent）时，**只传"被评审对象的原文 + 约束条件 + 维度清单",绝不传主路（主会话；对抗型即蓝军）已得出的审查结论或倾向**。
 
 - ✅ 传：restate 原文 + 真约束 + "请按这些维度攻击这份需求定义"
 - ❌ 不传："我觉得 SC-3 不可测，你看对不对"——这会把独立路诱导成确认路，假独立。
 - 目的：让独立路从零形成判断，与主路的交集 = 高置信、对称差 = 各自盲点。被诱导 = 失去独立性价值。
+
+**剥结论、留事实 —— Context Capsule**：CLAIM 剥离剥的是主路的**结论与倾向**，不是事实。会话里已确立、但工件未必写全的事实，打包成中立 Context Capsule 随对象一起传：
+
+- 已拍板决策（用户确认过的选择）
+- 被否决方案 + 否决原因（防独立路把否决过的旧方案当新建议重提）
+- 非目标 / Out of Scope
+- 硬约束与预算（成本 / 时延 / 依赖 / 兼容性）
+- **已知缺失上下文声明**：明说「以上是全部已知事实约束」或列出未提供项——独立路依赖但未提供的上下文，相应判断标 `kind=open-question`，不硬上 Critical/Warning
+
+Capsule 只装**事实**（用户拍过板的、文档已确认的），不装主路分析 / 倾向 / 已得 findings——装了就把独立路诱导成确认路。上下文缺口的代价是**不对称的**：合并时 triage 能滤掉独立路的误报，补不回它因缺上下文漏掉的发现——宁可 Capsule 打包多一点。
 
 ### 4.2 codex 经 `rule-codex-review` 派（异源单一通道）
 
 异源攻击/审查**统一走 `rule-codex-review`**（`{CLAUDE_PLUGIN_ROOT}/rules/rule-codex-review.md`），不另起通道：
 
 1. **不预先探活，直接派发**：决策/选型类用 `task`（只读，传 CLAIM 剥离后的对象 + 约束 + 维度）；对应一段具体 diff 用 `adversarial-review --wait`；纯缺陷查代码用 `review`。**实际调用派 subagent 执行**（`Agent()` 包一层 Bash），不在主 agent 直接 Bash 跑这条命令——原始输出别堆进主 agent context。具体派发模板见 `rule-codex-review.md`。
-2. **降级**：subagent 返回报错（未装 / 未登录 / 其他运行时错误）→ **不静默跳过**，改 Claude 自演红军（用 red-blue 对抗框架，不走过场）+ 明说"codex 调用失败，fallback 自做"，并在独立性声明里标"同模型（降级）"而非"异源"。
+2. **降级**：subagent 返回报错（未装 / 未登录 / 其他运行时错误）→ **不静默跳过**，fallback 改派 general-purpose subagent 单跑独立路（prompt 同样 CLAIM 剥离 + Context Capsule）+ 明说"codex 调用失败，fallback 至 subagent 独立审查"，独立性声明标"同模型（降级）"而非"异源"。subagent 也不可用（极端环境）才由主会话自评替代，独立性标"无"并明说。**不许主会话"自演红军/独立路"替代隔离执行**——自攻自手下留情，隔离上下文是独立性的最低保障。
 
 > codex 是**异源独立性**的来源；它不可用时降级不阻断，但必须在 verdict 里如实标独立性档位下降。
 
@@ -121,6 +133,10 @@ review 不是越重越好。先按**评审对象的风险 + 可逆性**定深度
 ### 4.5 分档判定复用
 
 §1 的分档判据是公共件——任何细则需要"判这次 review 该多重"时引本表，不各写一套档位定义。红蓝对抗方法 card 的 `light/heavy` 档位参数与本表同源。
+
+### 4.6 Delta review（修完 findings 的重跑判据）
+
+同一工件同一轮 review 循环内，修完 findings **不重跑全量独立交叉**——主会话逐条核对 fix 落实、追加 Review Log 即可。重跑独立路仅当：**结构性变更**（新增/删除章节、方案改向、接口重定义）、用户显式要求再来一轮完整交叉、或上轮是降级单跑且本轮对象足够重。目的：防「每修一轮跑一次 codex」的流程税——分钟级等待累积会让用户绕过流程。完整判据与反例见 `methods/dual-review.md` §三。
 
 ---
 

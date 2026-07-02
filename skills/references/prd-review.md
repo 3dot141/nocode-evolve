@@ -1,7 +1,7 @@
 # prd-review — PRD 评审
 
 **评审对象**: pd-prd 的 `.prd.md` 产出
-**评审模式**: red-blue 双模型交叉审
+**评审模式**: dual-review 双重评判 + 总结（异源双评，无防守方——两路中立挑错后合并）
 
 ## 引入框架
 
@@ -10,13 +10,13 @@
 1. **Read `{NOCODE_SKILL_REF}/reviewing/skeleton.md`** —— 套通用流程骨架（分档 → 对象界定 → 评审维度 → 选方法 → 独立交叉 → findings 分级 → 收口拍板）。
 2. **Read `{NOCODE_SKILL_REF}/reviewing/findings-contract.md`** —— 套 findings 统一契约（finding/verdict schema + 5→3 分级映射 + Evidence Gate）。
 
-**对象定位**：PRD 文档 → 命中骨架方法选择表「需求 / PRD / restate」行 → 默认方法 `checklist`（下方 8 维度）+ `red-blue-adversarial`（异源交叉），独立性=异源。
+**对象定位**：PRD 文档 → 命中骨架方法选择表「需求 / PRD / restate」行 → 默认方法 `checklist`（下方 8 维度）+ `dual-review`（异源双评 + 总结），独立性=异源。
 
 **档位**：PRD 是产品方案的真值源、下游 Define/Design 据此展开，属**重档**——走完整 7 步（含独立交叉）。
 
-**独立交叉**（骨架步骤 5，重档必走）：Claude 做蓝军、Codex 做红军，经 `rule-codex-review` 单一通道派发。**CLAIM 剥离**——只传 PRD 原文 + 维度表 + "请按这些维度攻击这份 PRD"，不传蓝军结论。Codex 不可用 → 降级 Claude 自演红军（标注降级、独立性降为"同模型"）+ red-blue-deep 对抗框架，不走过场。
+**独立交叉**（骨架步骤 5，重档必走）：Claude 主路（当前会话 checklist 遍历，不外派）、Codex 独立路（隔离执行），经 `rule-codex-review` 单一通道派发。**CLAIM 剥离 + Context Capsule**——只传 PRD 原文 + 维度表 + 中立事实包（已拍板决策 / 被否决方案及原因 / 非目标），不传主路结论。Codex 调用报错 → fallback 改派 general-purpose subagent 独立路单跑（标注降级、独立性"同模型"），不自演、不走过场。
 
-**收口**（骨架步骤 7）：findings 按契约归一到 C/W/S，**Critical 必须修复**再让用户确认。
+**收口**（骨架步骤 7）：findings 按契约归一到 C/W/S，**Critical 必须修复**再让用户确认。修完 findings 的重跑判据走 skeleton §4.6（delta review，纯修复不重跑独立路）。
 
 ## 审查维度（框架第 3 步注入点 · PRD 8 维度）
 

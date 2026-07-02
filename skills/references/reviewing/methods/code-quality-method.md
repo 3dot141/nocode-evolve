@@ -130,6 +130,6 @@ const apiKey = process.env.API_KEY;  // ✓ Good
 | 模式 | 派 subagent | 调 codex | 说明 |
 |---|---|---|---|
 | **自评清单**（轻档 / 单文件可逆小改） | 否 | 否 | 主 agent 直接套四维清单逐项核查，self-review 一遍 |
-| **异源交叉**（重档：不可逆 / 跨模块 / 碰外部输入·认证·敏感数据） | **是** | **是** | 重档时 subagent + codex 独立跑四维清单，**CLAIM 剥离**（只传 diff + 维度清单，不传已发现结论），异源更易发现单模型盲区 |
+| **异源交叉**（重档：不可逆 / 跨模块 / 碰外部输入·认证·敏感数据） | 报错才 fallback | 默认单路 | 重档时独立路跑四维清单（默认 Codex 单跑，报错 fallback subagent），**CLAIM 剥离 + Context Capsule**（只传 diff + 维度清单 + 中立事实包，不传已发现结论），异源更易发现单模型盲区 |
 
-档位按 skeleton §1 分档判据定（代码 diff 默认方法集 = `checklist`（本卡）+ `red-blue-adversarial` 异源交叉，§4.3 选择表「代码 diff」行）。codex 不可用 → 单 subagent + 明说降级，独立性声明标「同模型（降级）」。碰安全敏感面时叠加 `security-method`（OWASP 全量）+ `threat-modeling`。
+档位按 skeleton §1 分档判据定（代码 diff 默认方法集 = `checklist`（本卡）+ `dual-review` 异源双评，skeleton §3 选择表「代码 diff」行）。codex 调用报错 → fallback subagent 单跑 + 明说降级，独立性声明标「同模型（降级）」。碰安全敏感面时叠加 `security-method`（OWASP 全量）+ `threat-modeling`。
