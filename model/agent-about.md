@@ -142,8 +142,8 @@ rule / skill 触发条件命中后, 要跳过 / 偏离它, **只认用户消息�
 | `{pd_vd_output}` | `docs/pd/{username}/{yymmdd}-{serial}-{topic}/{topic}.vd.md` | pd-vd |
 | `{dev_design_output}` | `docs/dev/{username}/{yymmdd}-{serial}-{topic}/{topic}-design.md` | dev-design / brainstorming |
 | `{dev_plan_output}` | `docs/dev/{username}/{yymmdd}-{serial}-{topic}/{topic}-plan.md` | dev-plan |
-| `{dev_verify_output}` | `docs/dev/{username}/{yymmdd}-{serial}-{topic}/verify-report.md` | dev-verify |
-| `{dev_review_output}` | `docs/dev/{username}/{yymmdd}-{serial}-{topic}/review-log.md` | dev-review |
+
+> dev-verify / dev-review 的产出（验收核对清单 / 分级 findings）留在会话内交付, 不落盘, 无路径变量。
 
 ## 变量解析优先级 (先命中即用, 覆盖后续)
 
