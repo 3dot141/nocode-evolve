@@ -3,12 +3,12 @@ import { dirname, join } from 'node:path';
 import { existsSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { createInterface } from 'node:readline/promises';
-import net from 'node:net';
 import { parseArgs } from './lib/cli.mjs';
 import { resolveRepos, validateRepos } from './lib/paths.mjs';
 import { PORTS, buildWriteTargets } from './lib/ports.mjs';
 import { upsertEnv } from './lib/env-file.mjs';
 import { buildKillCommands, waitHealthy, runToEnd, spawnPrefixed } from './lib/proc.mjs';
+import { tcpOpen, httpOk, pidOnPort } from './lib/probe.mjs';
 
 const toolDir = dirname(fileURLToPath(import.meta.url));
 const args = parseArgs(process.argv.slice(2));
@@ -17,12 +17,8 @@ const repos = resolveRepos({ toolDir });
 // ---- 运维子命令（不起服务，不要求仓路径有效）----
 // --status：各服务端口健康 + 监听 PID，一次调用替代手工 lsof/curl 轮询
 if (args.status) {
-  const pidOn = (port) => {
-    try { return execFileSync('sh', ['-c', `lsof -ti tcp:${port} -sTCP:LISTEN | head -1`], { encoding: 'utf8' }).trim() || '-'; }
-    catch { return '-'; }
-  };
   const row = async (name, port, up) =>
-    console.log(`[status] ${name.padEnd(6)} :${String(port).padEnd(5)} ${up ? 'UP  ' : 'DOWN'} pid=${up ? pidOn(port) : '-'}`);
+    console.log(`[status] ${name.padEnd(6)} :${String(port).padEnd(5)} ${up ? 'UP  ' : 'DOWN'} pid=${up ? (pidOnPort(port) || '-') : '-'}`);
   await row('web', PORTS.web, await tcpOpen(PORTS.web));
   await row('agents', PORTS.agents, await httpOk(`http://127.0.0.1:${PORTS.agents}/health`));
   await row('server', PORTS.server, await tcpOpen(PORTS.server));
@@ -57,17 +53,6 @@ if (args.services.agents) {
 const targets = buildWriteTargets({ agentsDir: repos.AGENTS_DIR, ports: PORTS });
 const webEnvFile = join(repos.WEB_DIR, 'packages/jsy-web/server/.env.local');
 
-function tcpOpen(port) {
-  return new Promise((res) => {
-    const s = net.connect({ host: '127.0.0.1', port }, () => { s.destroy(); res(true); });
-    s.on('error', () => res(false));
-    s.setTimeout(800, () => { s.destroy(); res(false); });
-  });
-}
-async function httpOk(url) {
-  try { const r = await fetch(url, { signal: AbortSignal.timeout(1500) }); return r.status >= 200 && r.status < 500; }
-  catch { return false; }
-}
 async function confirm(q) {
   const rl = createInterface({ input: process.stdin, output: process.stdout });
   try { const a = (await rl.question(q)).trim().toLowerCase(); return a === 'y' || a === 'yes'; }
