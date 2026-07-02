@@ -14,8 +14,8 @@ export const meta = {
 // {
 //   question: string                       — required, the research question
 //   type: 'web'|'code'|'mixed'|'custom'    — preset; bundles tool chain + iterate default
-//   depth: 'shallow' | 'deep'              — default 'shallow'
-//   iterate: number                        — max search rounds per angle; default per-type
+//   depth: 'inline'|'targeted'|'shallow'|'deep' — default 'shallow'; 'inline' errors out (caller searches directly, no workflow)
+//   iterate: number                        — max search rounds per angle; default per-type; forced to 1 by 'targeted'
 //   systemPrompt: string                   — appended after the type's tool chain (required for 'custom')
 //   angles: [{label, query, rationale?}]   — optional, skip Scope if provided
 // }
@@ -56,12 +56,20 @@ if (!QUESTION) {
 }
 
 const TYPE = TOOL_CHAINS[raw.type] !== undefined ? raw.type : 'mixed'
+const DEPTH_LEVELS = ['inline', 'targeted', 'shallow', 'deep']
 const DEPTH = raw.depth || 'shallow'
+if (!DEPTH_LEVELS.includes(DEPTH)) {
+  return { error: 'Unknown depth "' + DEPTH + '". Levels: inline | targeted | shallow | deep (see SKILL.md).' }
+}
+if (DEPTH === 'inline') {
+  return { error: 'depth=inline 不走本 workflow——主 agent 直接一次 semble-search / WebSearch 自己搜。需要多角度并行或验证时再用 targeted | shallow | deep。' }
+}
 const IS_DEEP = DEPTH === 'deep'
+const IS_TARGETED = DEPTH === 'targeted'
 const PRE_ANGLES = Array.isArray(raw.angles) && raw.angles.length > 0 ? raw.angles : null
 
-// Max search rounds per angle: explicit arg > type default > 1
-const MAX_ROUNDS = Math.max(1, Number.isInteger(raw.iterate) ? raw.iterate : TYPE_DEFAULTS[TYPE].iterate)
+// Max search rounds per angle: targeted forces 1 > explicit arg > type default
+const MAX_ROUNDS = IS_TARGETED ? 1 : Math.max(1, Number.isInteger(raw.iterate) ? raw.iterate : TYPE_DEFAULTS[TYPE].iterate)
 
 // systemPrompt = type's tool chain + caller's domain context
 const TOOL_CHAIN = TOOL_CHAINS[TYPE]
@@ -73,8 +81,7 @@ const VOTES_PER_CLAIM = 3
 const REFUTATIONS_REQUIRED = 2
 const MAX_SOURCES = IS_DEEP ? 15 : 8
 const MAX_VERIFY_CLAIMS = 25
-const ANGLE_COUNT_SHALLOW = '2-3'
-const ANGLE_COUNT_DEEP = '4-6'
+const ANGLE_COUNT = IS_DEEP ? '4-6' : IS_TARGETED ? '2' : '2-3'
 const CONVERGE_HIGH_RELEVANCE = 3
 
 // ─── Schemas ───
@@ -178,7 +185,7 @@ const scopePrompt = () =>
   '## Context\n' + SYSTEM_PROMPT + '\n\n' +
   '## Task: Decompose Research Question\n\n' +
   'Question: "' + QUESTION + '"\n\n' +
-  'Generate ' + (IS_DEEP ? ANGLE_COUNT_DEEP : ANGLE_COUNT_SHALLOW) + ' distinct search angles that together cover the question.\n' +
+  'Generate ' + ANGLE_COUNT + ' distinct search angles that together cover the question.\n' +
   'Each angle should use a different search strategy or tool.\n' +
   'The context above tells you which tools are available and what domain you\'re in — pick angles that make sense for that domain.\n' +
   'Make queries specific enough to surface high-signal results. Avoid redundancy.\n\nStructured output only.'

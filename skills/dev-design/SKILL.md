@@ -109,8 +109,11 @@ Task 10: 硬交接 — 调用下一步 skill
 委派 `research-workflow` skill（调用方式见 `skills/research-workflow/SKILL.md`），传入：
 - `question`: `<restate 关键词> 在当前代码库的已有实现、可复用 pattern、影响面`
 - `type`: `code`
-- `depth`: `shallow`
+- `depth`: `targeted`（默认——走到这里 Define/讨论已明确要看什么，3~5 个 agent 够用）
+- `angles`: 从 restate + 前面讨论提炼 2~4 个具体搜索点（`[{label, query}]`，如 已有同类实现 / 关键调用链 / 受影响 contract），跳过自动分解
 - `systemPrompt`（追加）: `不只找"有没有"，要理解"怎么做的、为什么这么做"，并标出影响面（触及哪些模块/调用链/contract）。`
+
+**升档有疑点先问用户**：觉得 targeted 不够（陌生子系统、代码库术语和预期对不上、angles 提炼不出来）→ AskUserQuestion 让用户在 `targeted` / `shallow`（迭代逼近，8~17 agent）/ `deep`（对抗验证）之间拍板，不自作主张往重档跑。
 
 从返回值的 `findings` 提取：
 - **已有实现**：解决过类似问题的代码，怎么做的、为什么
@@ -122,8 +125,11 @@ Task 10: 硬交接 — 调用下一步 skill
 委派 `research-workflow` skill，传入：
 - `question`: `<restate 关键词 + 要解决的技术问题>`
 - `type`: `mixed`
-- `depth`: `shallow`（探索阶段默认；用户说"深入调研"时改 `deep`）
+- `depth`: `targeted`（探索阶段默认；用户说"深入调研"时改 `deep`）
+- `angles`: 从要解决的技术问题提炼 2~3 个搜索点（如 成熟开源方案 / 业界模式 / 已知坑）
 - `systemPrompt`（追加）: `关注开源库/框架的成熟度和维护状态、业界架构模式和最佳实践、与现有架构的兼容性。不把搜索结果当事实——需对照本项目实际情况评估适用性。`
+
+方案空间是否真开放拿不准（方向已在讨论中定死 → 1b 价值低）→ 同样 AskUserQuestion 问用户：跳过 1b / targeted 快扫 / 升 `shallow` 或 `deep`。
 
 从返回值的 `findings` 提取：
 - **开源库/框架**：成熟度、维护状态、社区活跃度

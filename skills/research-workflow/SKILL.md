@@ -1,6 +1,6 @@
 ---
 name: research-workflow
-description: Generic research engine for any skill that needs structured search + verification. Not meant to be invoked directly by users — called by other skills (pd-research, dev-define, dev-design, brainstorming, etc.) when they need research capability. Pick a preset type (web/code/mixed) and the tool chain + iteration strategy are wired in; only custom type needs a hand-written systemPrompt. Two depth modes — shallow (fast, unverified) and deep (multi-angle + adversarial verification).
+description: Generic research engine for any skill that needs structured search + verification. Not meant to be invoked directly by users — called by other skills (pd-research, dev-define, dev-design, brainstorming, etc.) when they need research capability. Pick a preset type (web/code/mixed) and the tool chain + iteration strategy are wired in; only custom type needs a hand-written systemPrompt. Four depth levels — inline (skip the workflow, caller searches directly) / targeted (preset angles, single round) / shallow (multi-angle iterative, unverified) / deep (adversarial verification).
 ---
 
 # research-workflow — 通用研究工作流
@@ -28,7 +28,7 @@ Workflow({
   args: {
     question: '要研究的问题',
     type: 'web',          // web | code | mixed | custom
-    depth: 'shallow',     // shallow（默认）| deep
+    depth: 'shallow',     // targeted | shallow（默认）| deep；inline = 不发本 workflow（见「四档深度」）
   }
 })
 ```
@@ -43,8 +43,8 @@ Workflow({
 |---|---|---|
 | `question` | 是 | 具体问题。"React 状态管理方案对比"比"前端怎么做"好 |
 | `type` | 是 | `web` / `code` / `mixed` / `custom`，决定工具链 + 默认迭代轮数 |
-| `depth` | 否 | `shallow`（默认，快、不验证）或 `deep`（多角度 + 对抗验证） |
-| `iterate` | 否 | 最大迭代轮数，不传则跟 `type` 默认值走（web=1 / code=3 / mixed=2） |
+| `depth` | 否 | `targeted` / `shallow`（默认）/ `deep`，见「四档深度」。传 `inline` 会直接报错——那档意味着不该发本 workflow |
+| `iterate` | 否 | 最大迭代轮数，不传则跟 `type` 默认值走（web=1 / code=3 / mixed=2）。`targeted` 强制 1，传了也忽略 |
 | `systemPrompt` | 否 | 追加到类型预制 prompt 后面，补充关注维度。`custom` 类型必填 |
 | `angles` | 否 | 预设搜索角度 `[{label, query, rationale}]`，跳过自动分解 |
 
@@ -76,9 +76,32 @@ Workflow({
 - **code=3**：代码库有自己的命名习惯。你预期的术语（"auth"）和代码里实际用的（"credential" / "session" / "principal"）常常对不上，第一轮搜不到点子上是常态。迭代让搜索 agent 从第一轮的结果里学到项目的真实命名，第二、三轮换词再搜。
 - **web=1**：网络搜索的关键词通常够用——搜"React Server Components 对比"基本一轮就能命中相关文章。多搜几轮收益低，不值得多花 agent。
 
-## 两种深度
+## 四档深度
 
-### shallow（默认，秒级）
+从轻到重四档。原则：**能用轻档就用轻档**——每往上一档都是拿等待时间换覆盖度 / 可信度。agent 数按 3 个角度估算，每个 agent 都是冷启动 subagent（没有主对话上下文）。
+
+| 档位 | 管线 | agent 数 | 适用 |
+|---|---|---|---|
+| `inline` | 不走 workflow，主 agent 直接搜 | 0~1 | 已知看哪，一两个查询能答 |
+| `targeted` | Scope（预设 angles 则跳过）→ Search（每角度 1 轮）→ Synthesize | 3~5 | 知道搜什么，只要并行铺开覆盖 |
+| `shallow` | Scope → Search（每角度按 iterate 轮收敛）→ Synthesize | 8~17 | 不知道搜什么，要迭代逼近术语 |
+| `deep` | shallow + Extract → Verify（3 票对抗） | 20+ | 结论要经得住反驳、进正式报告 |
+
+**升降档有疑点不自作主张**：调用方拿不准该用哪档（要不要从 targeted 升 shallow / deep）时，AskUserQuestion 让用户拍板，不默认往重档跑。
+
+### inline —— 不调本 workflow（0~1 个 agent）
+
+这一档是给调用方的判断标准，不是 workflow 参数：主 agent 已经知道要看哪（讨论里定过方向、有明确路径或术语），一次 `Agent(nocode-evolve:semble-search)` 或一次 WebSearch 就能答——**别发 Workflow**，省掉 scope / synthesize 的固定开销。误传 `depth: 'inline'` 会直接报错提醒。
+
+### targeted —— 定向覆盖（最轻 workflow 档）
+
+每角度强制只搜 1 轮（`iterate` 传了也忽略）。推荐配合预设 `angles`（跳过 scope agent）；不预设时 scope 只分解出 2 个角度。
+
+**用于**：调用方明确知道搜什么，只是想并行铺开几个点（如 dev-design 探索——restate 已确认，搜索点直接从讨论里提炼）。
+
+**风险**：不迭代——第一轮关键词不对就搜不到。代码库术语和预期可能对不上时（陌生子系统），那是 shallow 的场景。
+
+### shallow（默认，分钟级）
 
 ```
 Scope → Search（并行，每角度按 iterate 轮收敛）→ Synthesize
@@ -90,7 +113,7 @@ Scope → Search（并行，每角度按 iterate 轮收敛）→ Synthesize
 
 **风险**：搜到的东西可能过时、有偏差、来自低质量源——shallow 不会告诉你这些。
 
-### deep（分钟级）
+### deep（分钟级到更久）
 
 ```
 Scope → Search+Extract（pipeline，无 barrier）→ Verify（3 票对抗）→ Synthesize
@@ -145,7 +168,7 @@ Scope → Search+Extract（pipeline，无 barrier）→ Verify（3 票对抗）�
 
 **为什么 code 默认 3 轮、web 默认 1 轮：** 见上文「预制类型」——代码库术语不可预期需要多轮逼近，网络关键词通常一轮够用。
 
-**何时关掉迭代（iterate=1）：** `angles` 已预设（调用方明确知道搜什么），或纯发散的 shallow 快速场景。
+**何时关掉迭代（iterate=1）：** `angles` 已预设（调用方明确知道搜什么）——这正是 `targeted` 档的预制组合，直接用 `depth: 'targeted'` 不用手动传 iterate；或纯发散的 shallow 快速场景。
 
 ## 示例
 
@@ -159,13 +182,27 @@ Scope → Search+Extract（pipeline，无 barrier）→ Verify（3 票对抗）�
 }
 ```
 
-**代码探索**（dev-define / dev-design 代码现状）：
+**代码探索**（dev-design 代码现状——搜索点已从讨论提炼，走 targeted）：
+```js
+{
+  question: '<任务关键词> 在当前代码库的已有实现和可复用 pattern',
+  type: 'code',
+  depth: 'targeted',
+  angles: [
+    { label: '已有同类实现', query: '<从 restate 提炼的具体查询>' },
+    { label: '受影响调用链', query: '<关键 caller / contract 查询>' },
+  ],
+  // 每角度 1 轮，跳过 scope，工具链自动绑 semble-search → grep → Explore
+}
+```
+
+**代码探索**（dev-define 早期理解——不知道代码里叫什么，走 shallow 迭代逼近）：
 ```js
 {
   question: '<任务关键词> 在当前代码库的已有实现和可复用 pattern',
   type: 'code',
   depth: 'shallow',
-  // iterate 自动 = 3，工具链自动绑 semble-search → grep → Explore
+  // iterate 自动 = 3，从第一轮结果学项目真实命名后换词再搜
 }
 ```
 
@@ -174,7 +211,11 @@ Scope → Search+Extract（pipeline，无 barrier）→ Verify（3 票对抗）�
 {
   question: '<要解决的技术问题> 有哪些成熟方案',
   type: 'mixed',
-  depth: 'shallow',
+  depth: 'targeted',
+  angles: [
+    { label: '成熟开源方案', query: '<技术问题> library framework' },
+    { label: '业界模式与坑', query: '<技术问题> best practice pitfalls' },
+  ],
   systemPrompt: '关注开源库的成熟度、维护状态、与现有架构的兼容性。不把搜索结果当事实——需对照本项目实际情况评估适用性。',
 }
 ```
