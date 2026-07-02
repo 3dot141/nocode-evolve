@@ -52,9 +52,10 @@
 
 1. **Step 0 TaskCreate 必须调用.** 进了 workflow skill 第一件事就是按它的 Step 0 把所有 task 建出来. 不建 = 漏步没有刹车, 后面跳了无人察觉. 跳过 TaskCreate 本身就是跳步.
 2. **走完所有 Step, 不因"轻"而省.** "任务简单 / 还在概览阶段 / 用户说了'继续'"都不是跳步授权. 快 ≠ 跳——每步可以简洁, 不能省步. Exit Gate 不看任务大小.
-3. **最后一个 task = 调用下一步要 handoff 的 skill.** workflow skill 的 task 列表最后一项, 显式写成"调用下一阶段 skill" (如 dev-plan 末尾 → 调 dev-build). 把硬交接固化成一个没勾的 task, context 丢了也不会断在原地. 终点 skill 没有下游阶段, 最后 task 写"向调用方 / 用户报告完成并交回控制"——是有实际动作的交接, 不是占位的空 task.
+3. **最后一个 task = 调用下一步要 handoff 的 skill.** workflow skill 的 task 列表最后一项, 显式写成"调用下一阶段 skill" (如 dev-plan 末尾 → 调 dev-build). 进入本阶段前这个 task 不预先勾——但**调用下一阶段 skill (或终点 skill 的完成报告) 真正执行完成后, 必须立即标 completed**, 不是留着"永远不勾"当占位符. "把硬交接固化成一个 task" 防的是断在原地, 不是防"勾上它".
+4. **收口 / 交接前跑一次 TaskList 核对, 本 skill 名下不该还有 in_progress 残留.** 调用下一阶段 skill 前, 或整个 workflow 报告完成前, 拉一次 TaskList——有 in_progress 残留 = 漏标, 先补标再交接. 收口靠记忆报账 ("应该都勾了") 是漏标的直接成因, 不能替代这一步.
 
-> **fork/subagent 例外**: 上面三条约束针对**主 agent** 进入 workflow skill 的情形. 按本文件触发协议, fork/subagent 不在其 prompt 范围外 TaskCreate / 调 workflow skill——fork 内不主动建 task、不强制交接, 不算跳步违规.
+> **fork/subagent 例外**: 上面四条约束针对**主 agent** 进入 workflow skill 的情形. 按本文件触发协议, fork/subagent 不在其 prompt 范围外 TaskCreate / 调 workflow skill——fork 内不主动建 task、不强制交接, 不算跳步违规.
 
 | 跳步的借口 | 现实 |
 |---|---|
@@ -63,6 +64,7 @@
 | "用户说了'继续', 就是让我跳到执行" | "继续"是推进**当前 Step**, 不是跳过剩余 Step. 跳步要用户显式说「跳过 X」才算授权 |
 | "TaskCreate 太啰嗦, 我记得住要做啥" | 记得住也建. task 列表是漏步的唯一刹车, 尤其 context 被压缩后 |
 | "做完实质步骤就行, 交接是多余的" | 最后那个交接 task 防的就是"做完停在原地". 硬交接固化成 task 才不会断 |
+| "这批 TaskUpdate 顺手勾了, 应该没漏" | 完成物即是产出内容时 (如某 task 的产出恰是一段分析/表格) 最容易忘记回头勾"正在完成的那个自己". 收口前跑 TaskList 核对, 不靠"应该"判断 |
 
 > ❌ 反例: dev-plan 进到一半, 判断"就是串接 4 个 API, 简单", 跳过 Step 6/8 的 red-blue-deep、Step 9 的执行模式确认, 用户说"继续"就直接改代码. 结果: 没对抗审视过、没确认覆盖路径的计划直接进了 Build.
 > ✅ 正例: 同样简单的任务, 仍走完 Step 6 骨架审视 + Step 8 自检 + Step 9 用 AskUserQuestion 确认执行模式 + 最后一个 task 调 dev-build 硬交接. 简单任务走完整流程多花几分钟, 但不会把没验过的计划往下游推.
