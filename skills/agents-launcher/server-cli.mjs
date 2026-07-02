@@ -8,7 +8,7 @@ import { existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { validateRepos } from './lib/paths.mjs';
-import { detectGraalvm } from './lib/server/graalvm.mjs';
+import { detectGraalvm, resolveJdk21ForBuild } from './lib/server/graalvm.mjs';
 import { startInfra } from './lib/server/infra.mjs';
 import { startApp } from './lib/server/boot.mjs';
 import { localInfraEnv, loadDotEnv } from './lib/server/env.mjs';
@@ -30,8 +30,13 @@ export async function prepare({ serverDir, exec = execFileSync, log = console.lo
   else if (graalvm.mode === 'container') log(`[prepare] 本地无 GraalVM，start 阶段将用容器方案（${graalvm.image}）`);
   else log(`[prepare] ⚠️ 未找到 GraalVM 且无 docker，start 阶段会失败`);
 
+  // gradle 需要兼容的 JDK（本机默认 java 可能过新，如 JDK 26 会 build 失败）——显式解析 JAVA_HOME
+  const jdk = resolveJdk21ForBuild({ graalvm, exec });
+  if (!jdk) log('[prepare] ⚠️ 未解析到 JDK 21，gradle 将用环境默认 JDK（过新版本可能失败）');
+  const gradleEnv = jdk ? { ...process.env, JAVA_HOME: jdk, PATH: `${jdk}/bin:${process.env.PATH}` } : process.env;
+
   log(`[prepare] 跑 ANTLR 语法生成（gradlew :${ANTLR_MODULE}:generateGrammarSource）...`);
-  exec('./gradlew', [`:${ANTLR_MODULE}:generateGrammarSource`], { cwd: serverDir, stdio: 'inherit' });
+  exec('./gradlew', [`:${ANTLR_MODULE}:generateGrammarSource`], { cwd: serverDir, stdio: 'inherit', env: gradleEnv });
 
   const producedDir = ANTLR_OUTPUT_DIRS.find((rel) => dirHasFiles(join(moduleDir, rel)));
   if (!producedDir) {

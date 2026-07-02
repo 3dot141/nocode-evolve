@@ -4,6 +4,7 @@ import { mkdtempSync, writeFileSync, mkdirSync, chmodSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { graalvmCandidates, isGraalvm, detectGraalvm, readJavaHomeCache, writeJavaHomeCache, GRAALVM_IMAGE } from './graalvm.mjs';
+import * as graalvmExports from './graalvm.mjs';
 
 function fakeJdk() {
   const home = mkdtempSync(join(tmpdir(), 'jdk-'));
@@ -61,6 +62,17 @@ test('detectGraalvm: 无 docker 时返回 missing', () => {
   const mockExec = () => { throw new Error('not found'); };
   const result = detectGraalvm({ serverDir, env: {}, exec: mockExec, hasDocker: false });
   assert.deepEqual(result, { mode: 'missing' });
+});
+
+test('resolveJdk21ForBuild: GraalVM local 优先', () => {
+  const { resolveJdk21ForBuild } = graalvmExports;
+  assert.equal(resolveJdk21ForBuild({ graalvm: { mode: 'local', javaHome: '/opt/graal' }, exec: () => { throw new Error('不该调'); } }), '/opt/graal');
+});
+
+test('resolveJdk21ForBuild: 无 GraalVM 时走 java_home -v 21；解析失败返回空串', () => {
+  const { resolveJdk21ForBuild } = graalvmExports;
+  assert.equal(resolveJdk21ForBuild({ graalvm: { mode: 'container' }, exec: () => '/jdk/ms-21\n' }), '/jdk/ms-21');
+  assert.equal(resolveJdk21ForBuild({ graalvm: { mode: 'container' }, exec: () => { throw new Error('no 21'); } }), '');
 });
 
 test('readJavaHomeCache/writeJavaHomeCache: 幂等读写', () => {

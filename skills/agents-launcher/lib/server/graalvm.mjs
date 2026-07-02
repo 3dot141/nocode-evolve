@@ -63,6 +63,18 @@ export function detectGraalvm({ serverDir, env = process.env, exec = execFileSyn
   return { mode: 'missing' };
 }
 
+// ANTLR 生成等纯构建动作不需要 GraalVM，但 gradle 8.5 跑不动过新的默认 JDK（本机实测 JDK 26 直接 build 失败）。
+// 解析顺序：GraalVM local → macOS /usr/libexec/java_home -v 21 → ''（沿用环境，寄望 toolchain）。
+// 对应 dev-start.sh start_sync 的 JAVA_HOME 兜底（782-792 行）。
+export function resolveJdk21ForBuild({ graalvm, exec = execFileSync } = {}) {
+  if (graalvm?.mode === 'local') return graalvm.javaHome;
+  try {
+    const out = exec('/usr/libexec/java_home', ['-v', '21'], { encoding: 'utf8' }).trim();
+    if (out) return out;
+  } catch { /* 非 macOS 或无 JDK 21 */ }
+  return '';
+}
+
 export function readJavaHomeCache(serverDir) {
   const f = join(serverDir, JAVA_HOME_CACHE_FILE);
   if (!existsSync(f)) return '';

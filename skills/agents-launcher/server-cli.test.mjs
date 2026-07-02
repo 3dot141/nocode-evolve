@@ -45,6 +45,19 @@ test('prepare: gradlew 跑完但两个候选目录都空，报错提示新 workt
   );
 });
 
+test('prepare: 无 GraalVM 时向 gradle 传 java_home -v 21 解析出的 JAVA_HOME', async () => {
+  const serverDir = fakeServerRepo({ withAntlrOutput: true });
+  let gradleEnv = null;
+  const mockExec = (cmd, args, opts) => {
+    if (cmd === '/usr/libexec/java_home') return '/jdk/ms-21\n';
+    if (cmd === './gradlew') { gradleEnv = opts.env; return ''; }
+    throw new Error('java not found');   // isGraalvm 全 miss
+  };
+  await prepare({ serverDir, exec: mockExec, log: () => {} });
+  assert.equal(gradleEnv.JAVA_HOME, '/jdk/ms-21');
+  assert.ok(gradleEnv.PATH.startsWith('/jdk/ms-21/bin:'));
+});
+
 test('prepare: 返回 graalvm 检测结果（容器降级场景）', async () => {
   const serverDir = fakeServerRepo({ withAntlrOutput: true });
   const mockExec = (cmd) => {
