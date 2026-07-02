@@ -36,7 +36,7 @@ Claude Code 插件 `nocode` 的 slash command 定义目录。每个 `.md` 文件
 | `/instinct-export` | 导出已学到的 instinct，供分享给团队或迁移到其它项目 |
 | `/instinct-import` | 从团队成员 / Skill Creator / 其它来源导入 instinct |
 | `/instinct-status` | 展示所有已学到的 instinct 及其置信度 |
-| `/eval` | （遗留、无 frontmatter，实际不出现在命令列表里）eval-driven 开发工作流管理，功能已被 `nocode:eval-harness` skill 覆盖 |
+| `/eval` | eval-driven development 工作流管理（定义/检查/生成报告/列出 eval），转发到 `Skill(nocode:eval-harness)` |
 
 ### 巡检型（scan → propose → confirm 自维护，5 个）
 

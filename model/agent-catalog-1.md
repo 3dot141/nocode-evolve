@@ -79,7 +79,7 @@ agent 视角: 用户任务命中以下任一条件时, **主动调起 devflow sk
 **主桶**: memory (完整定义见该桶)
 
 #### lark-project (跨桶)
-**触发**: 用户给 project.feishu.cn 链接（或 Meego 工作项 id）要求读取/总结/看附件/分析需求或缺陷内容; 或 PR merge 后流转飞书 issue 状态; 或用户说「流转任务/改状态/标完成/飞书项目/工作项」; 或 devflow Land 阶段 (8d. Task Transition). 注: PR 决策线内的 post-merge 流转由 dev-finish-branch 发起, 其内部会用到本 rule 能力
+**触发**: 用户给 project.feishu.cn 链接（或 Meego 工作项 id）要求读取/总结/看附件/分析需求或缺陷内容; 或 PR merge 后流转飞书 issue 状态; 或用户说「流转任务/改状态/标完成/飞书项目/工作项」; 或 devflow Land 阶段 (8d. Task Transition). 注: PR 决策线内的 post-merge 流转由 dev-finish-branch 发起, 其内部会用到本 rule 能力. 不含: 无飞书语境的通用状态改动 (如「改一下这个组件的状态」) 或本地任务标记完成 (如「这个任务标完成了」但未提飞书/工作项/meego, 走 nocode:task 或按字面执行, 不是本 rule)
 **读**: ``
 **主桶**: lark (完整定义见该桶)
 
@@ -93,7 +93,7 @@ agent 视角: 用户任务命中以下任一条件时, **主动调起 devflow sk
 **不含 (负例)**: 纯执行: 直接改代码而未求评审
 
 #### codex-review
-**触发**: red-blue-deep 判重档走到 Step 3 独立审查环节; 或完成分支 / 显式 review 请求; 或我卡住 / 想要第二实现 / 独立诊断 / 委派; 或各 review 细则 (dev-design-refine / dev-review / define-review / prd-review / design-review / vis-review) 自审后命中升档判据 (reviewing skeleton §1a) 派独立交叉时. 不含: 各细则的默认自审路 (自审不派本 rule); devflow Review 阶段的五轴自审 (走 dev-review skill)
+**触发**: red-blue-deep 判重档走到 Step 3 独立审查环节; 或完成分支 / 显式 review 请求; 或我卡住 / 想要第二实现 / 独立诊断 / 委派; 或各 review 细则 (dev-design-refine / dev-review / define-review / prd-review / design-review / vis-review) 自审后命中升档判据 (reviewing skeleton §1a) 派独立交叉时. 不含: 各细则的默认自审路 (自审不派本 rule); devflow Review 阶段的五轴自审 (走 dev-review skill). 注: triggers 正则与 dev-review 字面重叠 ("review 一下" / "帮我审"), 两条都会同时注入常驻 context, 不是 hook 强制互斥——命中哪条按当前是否在 devflow 流程语境判断: 在 devflow 里走 dev-review, 独立诊断/红军/委派场景走本条
 **读**: `${CLAUDE_PLUGIN_ROOT}/rules/rule-codex-review.md`
 **摘要**: 本机 Codex 当独立模型接四场景 (红蓝独立审查 / 代码 review 收尾 / 委派救援 / 设计文档审稿); 各 review 细则默认自审不派本 rule, 升档 (reviewing skeleton §1a: 自审出无法裁决的 finding / 结论有争议 / 用户显式要求) 才派; 不预先探活, 真正的 review/adversarial-review/task 调用直接派 subagent 执行 (Agent() 包一层 Bash, 不在主 agent 直接 Bash 调 vendor/codex/scripts/codex-companion.mjs); 场景 1/4 默认单跑 Codex, 调用报错才 fallback 改派独立 subagent (不再并行双跑); 不可用降级自做 + 明说; 禁改 vendored 文件
 **关键约束(上浮)**: 不预先探活, 直接派 subagent 跑真正命令, 报错才降级自做 + 明说; 真正调用派 subagent 执行不直接 Bash; 禁改 vendor/codex/ 文件。
@@ -112,7 +112,7 @@ agent 视角: 用户任务命中以下任一条件时, **主动调起 devflow sk
 **主桶**: git-lifecycle (完整定义见该桶)
 
 #### dev-review (跨桶)
-**触发**: devflow 路由到 Review 阶段, 或用户说「review 一下 / 看看代码 / 评审 / check the code / 审一下 / 有没有问题 / 帮我 review / code review」. 不含: 非 devflow 上下文的独立 review 请求（红军/第二实现/委派）走 codex-review
+**触发**: devflow 路由到 Review 阶段, 或用户说「review 一下 / 看看代码 / 评审 / check the code / 审一下 / 有没有问题 / 帮我 review / code review」. 不含: 非 devflow 上下文的独立 review 请求（红军/第二实现/委派）走 codex-review. 注: triggers 正则与 codex-review 字面重叠 ("review 一下" / "帮我审"), 两条都会同时注入常驻 context, 不是 hook 强制互斥——命中哪条按当前是否在 devflow 流程语境判断: 在 devflow 里走本条, 独立诊断/红军/委派场景走 codex-review
 **读**: ``
 **主桶**: workflow (完整定义见该桶)
 

@@ -1,6 +1,6 @@
 ---
 name: pdflow
-description: 产品发现工作流领航（Research → PRD · 2 场景路由）。可被 devflow 主动建议，也可用户 /调 进入。给"当前阶段判断 + 下一步建议"，用户拍板，不替执行。用于产品调研和需求定义阶段，独立于开发流 devflow。触发：用户说"pdflow/产品发现/走产品阶段/先调研再写 PRD"，或 devflow Full 场景建议先走产品流。
+description: 产品发现工作流领航（Research → PRD · 2 场景路由）。可被 devflow 主动建议，也可用户 /调 进入。给"当前阶段判断 + 下一步建议"，用户拍板，不替执行。用于产品调研和需求定义阶段，独立于开发流 devflow。触发：用户说"pdflow/产品发现/走产品阶段/先调研再写 PRD"，或 devflow Full 场景建议先走产品流。不用于已有明确 PRD 且无需调研的场景（直接进 pd-ix/pd-vd 或 devflow）。
 ---
 
 # nocode:pdflow — 产品阶段工作流领航

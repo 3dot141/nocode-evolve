@@ -1,9 +1,12 @@
 ---
 name: strategic-compact
-description: Suggests manual context compaction at logical intervals to preserve context through task phases rather than arbitrary auto-compaction.
+description: Reference/setup guide for the optional suggest-compact.sh PreToolUse hook, which suggests manual /compact at logical task boundaries instead of relying on arbitrary auto-compaction. Passive, hook-driven mechanism — not something the model performs by loading this skill in conversation, and NOT currently wired into this plugin's hooks.json (opt-in, requires manual setup). Use when the user asks how strategic/manual compaction works, wants to enable or configure the suggest-compact.sh hook, or asks why auto-compaction loses context mid-task.
+disable-model-invocation: true
 ---
 
 # Strategic Compact Skill
+
+> **当前状态：未接线。** 本插件的 `hooks/hooks.json` 并未注册 `suggest-compact.sh`，下文描述的"PreToolUse 自动建议"行为**默认不会发生**。这是一个可选的手动 hook——如果你想启用，需要按下方 [Hook Setup](#hook-setup) 自行接入；接入前，本 skill 只是说明文档，不代表功能已生效。
 
 Suggests manual `/compact` at strategic points in your workflow rather than relying on arbitrary auto-compaction.
 
@@ -21,7 +24,7 @@ Strategic compaction at logical boundaries:
 
 ## How It Works
 
-The `suggest-compact.sh` script runs on PreToolUse (Edit/Write) and:
+Once wired up (see [Hook Setup](#hook-setup) — not on by default), the `suggest-compact.sh` script runs on PreToolUse (Edit/Write) and:
 
 1. **Tracks tool calls** - Counts tool invocations in session
 2. **Threshold detection** - Suggests at configurable threshold (default: 50 calls)
@@ -29,7 +32,9 @@ The `suggest-compact.sh` script runs on PreToolUse (Edit/Write) and:
 
 ## Hook Setup
 
-Add to your `~/.claude/settings.json`:
+这个 hook 不属于插件的默认行为，需要用户自行决定是否开启（未接线进 `hooks/hooks.json`，插件不会替你自动开启）。开启方式二选一：
+
+1. **加进本插件的 `hooks/hooks.json`**（推荐，`${CLAUDE_PLUGIN_ROOT}` 在插件自身 manifest 内可正确解析，和文件里其他 hook 条目写法一致）：
 
 ```json
 {
@@ -38,12 +43,14 @@ Add to your `~/.claude/settings.json`:
       "matcher": "tool == \"Edit\" || tool == \"Write\"",
       "hooks": [{
         "type": "command",
-        "command": "~/.claude/skills/strategic-compact/suggest-compact.sh"
+        "command": "${CLAUDE_PLUGIN_ROOT}/skills/strategic-compact/suggest-compact.sh"
       }]
     }]
   }
 }
 ```
+
+2. **加进个人 `~/.claude/settings.json`**：`${CLAUDE_PLUGIN_ROOT}` 这类插件变量在个人配置里不一定能解析，需要把 `command` 换成本插件在你机器上的实际安装绝对路径（例如 `/path/to/nocode-plugin/skills/strategic-compact/suggest-compact.sh`），而不是原来失效的 `~/.claude/skills/strategic-compact/suggest-compact.sh`。
 
 ## Configuration
 

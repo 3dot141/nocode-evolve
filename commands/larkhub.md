@@ -28,7 +28,7 @@ argument-hint: <sub-action|URL> [args]
 | `project` | 飞书项目管理（MCP） | `Skill(nocode:lark-project)` |
 | `doc` | 文档读写 API | `Skill(lark-doc)` |
 | `wiki` | 知识空间管理 | `Skill(lark-wiki)` |
-| `task` | 飞书任务管理 | `Skill(lark-task)` |
+| `task` | 飞书任务管理 | **待接入/暂不可用**——`Skill(lark-task)` 当前未安装（外部 lark 系插件只提供 `lark-doc`/`lark-wiki`/`lark-shared`），命中时如实告知用户该能力暂缺，不要假装调用 |
 | `auth` | 认证/scope 配置 | `Skill(lark-shared)` |
 
 ## 执行
@@ -49,7 +49,7 @@ argument-hint: <sub-action|URL> [args]
 
 ### 子动作路由
 
-调对应的 `Skill()`，把剩余参数传进去。
+调对应的 `Skill()`，把剩余参数传进去。`task` 子动作当前无对应 skill 可转发（见上表），命中时直接告知用户"飞书任务管理暂未接入，需要先安装提供 `lark-task` 的插件"，不要尝试调用不存在的 skill。
 
 ### 无参数
 
@@ -62,7 +62,7 @@ argument-hint: <sub-action|URL> [args]
   project    飞书项目管理（MCP）
   doc        文档读写 API
   wiki       知识空间管理
-  task       飞书任务管理
+  task       飞书任务管理（待接入/暂不可用）
   auth       认证/scope 配置
 
 直接贴飞书 URL 也行，自动识别。

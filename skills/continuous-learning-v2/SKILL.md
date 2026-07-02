@@ -1,6 +1,7 @@
 ---
 name: continuous-learning-v2
-description: Instinct-based learning system that observes sessions via hooks, creates atomic instincts with confidence scoring, and evolves them into skills/commands/agents.
+disable-model-invocation: true
+description: Reference doc for the instinct-based continuous learning architecture — PreToolUse/PostToolUse hooks are auto-registered by the plugin and passively observe every tool call in the background; there is no conversational trigger to enable it. Use when the user asks how this observation/instinct system works, wants to inspect or tune its config.json, or wants architecture context before running /instinct-status, /evolve, /instinct-export, or /instinct-import. Not for day-to-day instinct operations (listing, clustering, export, import) — use those dedicated commands directly instead of this doc.
 version: 2.0.0
 ---
 
@@ -90,30 +91,15 @@ Session Activity
 
 ## Quick Start
 
-### 1. Enable Observation Hooks
+### 1. Observation Hooks — Already Wired, No Setup Needed
 
-Add to your `~/.claude/settings.json`:
+This plugin auto-registers the observation hooks — **you don't need to hand-edit `~/.claude/settings.json`**. `hooks/hooks.json` already wires `PreToolUse` and `PostToolUse` (matcher `*`) to:
 
-```json
-{
-  "hooks": {
-    "PreToolUse": [{
-      "matcher": "*",
-      "hooks": [{
-        "type": "command",
-        "command": "~/.claude/skills/continuous-learning-v2/hooks/observe.sh pre"
-      }]
-    }],
-    "PostToolUse": [{
-      "matcher": "*",
-      "hooks": [{
-        "type": "command",
-        "command": "~/.claude/skills/continuous-learning-v2/hooks/observe.sh post"
-      }]
-    }]
-  }
-}
 ```
+${CLAUDE_PLUGIN_ROOT}/skills/continuous-learning-v2/hooks/observe.sh
+```
+
+Claude Code expands `${CLAUDE_PLUGIN_ROOT}` to the real plugin install directory when it loads `hooks.json` at session start — no path substitution required on your end. Every tool call is observed from the moment the plugin is installed.
 
 ### 2. Initialize Directory Structure
 
@@ -124,11 +110,11 @@ touch ~/.claude/homunculus/observations.jsonl
 
 ### 3. Run the Observer Agent (Optional)
 
-The observer can run in the background analyzing observations:
+Background instinct analysis is **off by default** (`observer.enabled: false` in `config.json`) and must be started manually — unlike the hooks above, this step isn't auto-wired by the plugin. The script lives inside the plugin's install directory, not under `~/.claude/skills/`; substitute `<plugin-root>` with the plugin's real installed path before running (Bash does not expand `${CLAUDE_PLUGIN_ROOT}` on its own):
 
 ```bash
 # Start background observer
-~/.claude/skills/continuous-learning-v2/agents/start-observer.sh
+<plugin-root>/skills/continuous-learning-v2/agents/start-observer.sh
 ```
 
 ## Commands

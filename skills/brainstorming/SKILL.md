@@ -1,6 +1,6 @@
 ---
 name: brainstorming
-description: "You MUST use this before any creative work - creating features, building components, adding functionality, or modifying behavior. Explores user intent, requirements and design before implementation."
+description: "You MUST use this before any creative work - creating features, building components, adding functionality, or modifying behavior. Explores user intent, requirements and design before implementation. Not for trivial single-step tasks where the user has already stated and confirmed a clear mini-goal (e.g. a one-line copy/config fix) — proceed directly without a design pass."
 ---
 
 # Brainstorming Ideas Into Designs
@@ -29,7 +29,7 @@ You MUST create a task for each of these items and complete them in order:
 6. **Write design doc** — save to `docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md` and commit
 7. **Spec self-review** — quick inline check for placeholders, contradictions, ambiguity, scope (see below)
 8. **User reviews written spec** — ask user to review the spec file before proceeding
-9. **Transition to implementation** — invoke writing-plans skill to create implementation plan
+9. **Transition to implementation** — hand off to the downstream planning skill (this repo does not ship `writing-plans`; see routing note after the diagram below) to create an implementation plan
 
 ## Process Flow
 
@@ -45,7 +45,7 @@ digraph brainstorming {
     "Write design doc" [shape=box];
     "Spec self-review\n(fix inline)" [shape=box];
     "User reviews spec?" [shape=diamond];
-    "Invoke writing-plans skill" [shape=doublecircle];
+    "Hand off to downstream skill" [shape=doublecircle];
 
     "Explore project context" -> "Visual questions ahead?";
     "Visual questions ahead?" -> "Offer Visual Companion\n(own message, no other content)" [label="yes"];
@@ -59,11 +59,11 @@ digraph brainstorming {
     "Write design doc" -> "Spec self-review\n(fix inline)";
     "Spec self-review\n(fix inline)" -> "User reviews spec?";
     "User reviews spec?" -> "Write design doc" [label="changes requested"];
-    "User reviews spec?" -> "Invoke writing-plans skill" [label="approved"];
+    "User reviews spec?" -> "Hand off to downstream skill" [label="approved"];
 }
 ```
 
-**The terminal state is invoking writing-plans.** Do NOT invoke frontend-design, mcp-builder, or any other implementation skill. The ONLY skill you invoke after brainstorming is writing-plans.
+**The terminal state is handing off to the downstream planning skill.** Do NOT invoke frontend-design, mcp-builder, or any other implementation skill directly. This repo does not ship the upstream `writing-plans` skill as-is — the actual next-skill routing is defined in `rules/rule-superpowers-brainstorming.md` (as of this writing: `nocode:using-git-worktrees` → `nocode:dev-design-refine` → `dev-design-render`). Follow that rule rather than hardcoding a skill name here.
 
 ## The Process
 
@@ -138,8 +138,8 @@ Wait for the user's response. If they request changes, make them and re-run the 
 
 **Implementation:**
 
-- Invoke the writing-plans skill to create a detailed implementation plan
-- Do NOT invoke any other skill. writing-plans is the next step.
+- This repo does not ship a `writing-plans` skill (that's the upstream superpowers skill name; this repo's downstream routing differs). Hand off per the routing defined in `rules/rule-superpowers-brainstorming.md` — as of this writing: `nocode:using-git-worktrees` → `nocode:dev-design-refine` → `dev-design-render`.
+- Do NOT invoke any other implementation skill directly (e.g. frontend-design, mcp-builder). Follow the rule's routing instead of a hardcoded skill name.
 
 ## Key Principles
 

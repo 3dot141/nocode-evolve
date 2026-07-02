@@ -1,6 +1,6 @@
 ---
 name: eval-harness
-description: Formal evaluation framework for Claude Code sessions implementing eval-driven development (EDD) principles
+description: Formal evaluation framework for Claude Code sessions implementing eval-driven development (EDD) principles. Use when the user asks to define capability/regression evals before coding, run or check an eval, choose a grader type, or generate an eval report, or mentions eval-driven development, EDD, or pass@k — including `/eval define|check|report|list`. Not for general code review (use dev-review), verifying an implementation works end-to-end (use dev-verify), or generic go/no-go decisions unrelated to a defined eval (use red-blue-deep).
 tools: Read, Write, Edit, Bash, Grep, Glob
 ---
 

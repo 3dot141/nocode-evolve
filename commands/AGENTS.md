@@ -51,9 +51,9 @@ argument-hint: ...   # 多数命令有，纯占位/无参命令可省略或写 "
 ---
 ```
 
-缺了 `description` 字段，这个命令**不会出现在可用命令列表里**。本目录已有一个活生生的反例：`eval.md` 完全没有 frontmatter（连开头的 `---` 都没有），因此实际上是失效、不可键入的死文件，只是仓库里还留着没清理。
+缺了 `description` 字段，这个命令**不会出现在可用命令列表里**。历史上 `eval.md` 曾经是这条规则的活生生反例（完全没有 frontmatter，连开头的 `---` 都没有，实际失效不可键入）——2026-07-03 已修复补齐，现在仍以此为例说明后果，别再犯同样的错。
 
-- 新增命令时对照这个反例，别忘了加 frontmatter。
+- 新增命令时对照这个案例，别忘了加 frontmatter。
 - 改现有命令时如果发现某个命令"用户说找不到"，第一步就查它的 frontmatter 是否完整、`description` 是否非空。
 - `evolve.md` / `instinct-export.md` / `instinct-import.md` / `instinct-status.md` 用的是另一套 frontmatter 字段（`name` + `description` + `command` + `implementation`，没有 `argument-hint`）——这是 `continuous-learning-v2` 迁移遗留的格式，因为 `description` 字段仍在所以仍然有效，但**不要把它当新命令的模板**。新命令统一 follow `description` + `argument-hint` 两字段的标准格式（参照 `distill.md` / `project-dream.md` 等主流写法）。
 
@@ -65,8 +65,9 @@ argument-hint: ...   # 多数命令有，纯占位/无参命令可省略或写 "
 
 ## 已知漂移 / 待办（供 `/plugin-dream` 巡检参考，不代表本文件要求你主动去修）
 
-- `eval.md` 无 frontmatter，且引用路径没有走 `${CLAUDE_PLUGIN_ROOT}`，很可能是被 `skills/eval-harness`（`nocode:eval-harness`）取代后的遗留文件。若要修复，先确认是否该整体删除、把职责并入 `nocode:eval-harness`，而不是简单补一个 frontmatter 把它复活。
 - `project-init.md` 是显式 TBD 占位（`description` 里写明"待设计"），当前输出指向 `project-dream` / `project-distill` 作为替代方案；`projecthub.md` 的 `init` 子动作路由同步指向这个占位输出。改 `projecthub.md` 或补齐 `project-init` 设计时，两处要一起改，避免其中一处漂移。
+
+> `eval.md` 曾经是缺 frontmatter 的 vendor 孤儿文件（无法出现在命令列表里），2026-07-03 的 `/plugin-dream` 巡检修复：补齐 frontmatter 并改造为转发 `Skill(nocode:eval-harness)`，不再重复内联 `.claude/evals/` 那套遗留机制。
 
 ## 反模式
 
