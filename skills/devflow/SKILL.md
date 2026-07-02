@@ -216,7 +216,7 @@ Fix 类任务的 Review 通过后，问一句：**"什么能预防这个 bug？"
 
 | Sub-step | 做什么 | 决策 |
 |---|---|---|
-| 3a. 探索上下文 | Read 代码 + wiki + 已有 ADR | 标注来源 [Read]/[Doc]/[推断] |
+| 3a. 探索上下文 | 先收 Define 探索胶囊（scanBase 一致则复用、只补缺）→ Read 代码 + wiki + 已有 ADR | 标注来源 [Read]/[Doc]/[推断]/[← Define 胶囊] |
 | 3b. 提出 2-3 方案 | 差异化方案 + trade-off 表 | 推荐哪个 + 理由 |
 | 3c. 用户选方案 | AskUserQuestion | 推荐放第一；全否决回 3b 问原因 |
 | 3d. 方案←→目标对齐 | 回检 restate | 有冲突建议回 Define（最多 2 轮） |

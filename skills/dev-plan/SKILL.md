@@ -40,7 +40,7 @@ description: Use when you have defined goals and need to break work into tasks. 
 ═══ Round 1: 编排（定依赖和顺序）═══
 
 Task 1: 只读模式 — 加载上下文
-  Sub-steps: 读 restate + 设计文档（BF 伪代码 + 接口 + 单测设计）+ 测试目标 + 相关代码及测试 + 类似 pattern
+  Sub-steps: 读 restate + 设计文档（BF 伪代码 + 接口 + 单测设计）+ 测试目标 → 按「前置调研」path:line 清单定向读相关代码及测试 + 类似 pattern（清单没覆盖再补探索）
   Gate: 上下文加载完成，未碰任何代码（开始改文件 = 跳过 Plan）
 
 Task 2: 画依赖图
@@ -93,9 +93,8 @@ Task 10: 硬交接 — 调用下一步 skill
 读，不写。按以下顺序加载上下文：
 1. restate（成果物/验收标准/约束/Out of Scope）
 2. dev-design-refine 产出的设计文档（含领域划分、模块设计、接口、业务流、测试目标）
-3. 要改的文件 + 它们的测试
-4. 找一个已存在的类似 pattern 做参照
-5. 涉及的类型/接口定义
+3. **定向加载**：设计文档「前置调研」章节的 `path:line` 引用就是加载清单——要改的文件、关键 caller、pattern 参照、类型/接口定义大多已被 Design 探索过并引用，逐条定向 Read（含对应测试文件），不重新自由探索。Standard 场景（无设计文档）用 restate 附录探索胶囊的 findings sources 作加载清单，同样定向 Read
+4. 清单没覆盖、本次拆解又需要的文件，再补搜（精确匹配走 rg，语义找走 `Agent(nocode:semble-search)`）——补缺，不是重扫
 
 发现自己开始改文件 → 停——你在跳过 Plan 直接 Build。
 

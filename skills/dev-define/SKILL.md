@@ -33,8 +33,8 @@ Task 1: 场景分类 — Mini/Fix/Standard/Full
   Gate: 场景已确认（Mini 出 mini-goal 退出 / Fix 出复现定义 / Standard·Full 进 Task 2）
 
 Task 2: 探索现状 — 代码 + 网络并行
-  Sub-steps: 并行 spawn 代码探索(semble-search) + 网络探索 → 综合
-  Gate: 两路结果回来并综合（Mini 跳过）
+  Sub-steps: 并行 spawn 代码探索(targeted) + 网络探索 → 综合成探索胶囊（scanBase + findings）
+  Gate: 两路结果回来，探索胶囊产出（Mini 跳过）
 
 Task 3: 路径校验 — 路径清单 + SC 绑定（Full/Standard）
   Sub-steps: 有 PRD 搬入 / 无 PRD 现场生成 → 每条路径绑 SC
@@ -101,7 +101,10 @@ Standard/Full → 进 Step 2。
 **代码探索**（Full / Standard / Fix）：
 - `question`: `<任务描述> 在当前代码库的已有实现和 pattern`
 - `type`: `code`
-- `depth`: `shallow`
+- `depth`: `targeted`（默认——Define 只需要"有没有、在哪里"来定假设的置信度，深挖影响面是 Design Step 1a 的事，别在这里铺重档）
+- `angles`: 从任务描述提炼 2~3 个搜索点（`[{label, query}]`，如 已有同类实现 / 相关模块与调用链 / 可复用 pattern）
+
+**升档有疑点先问用户**：angles 提炼不出（任务太模糊 / 陌生子系统、术语和预期对不上）→ AskUserQuestion 让用户在 `targeted` / `shallow`（迭代逼近，agent 数翻倍以上）之间拍板，不自作主张往重档跑。
 
 **网络探索**（Full / Standard）：
 - `question`: `<任务描述> 在业界怎么定义、有没有行业标准/规范`
@@ -111,7 +114,13 @@ Standard/Full → 进 Step 2。
 
 Standard 场景网络探索可简化为 `Agent(fork)` 轻量搜一两个查询，不走 research-workflow。
 
-**综合**：两路结果回来后，输出一段简要总结（代码里已有什么 + 网上发现了什么），带入 Step 4 影响假设的置信度。
+**综合 → 探索胶囊**：两路结果回来后，产出「探索胶囊」——不把 findings 压缩成一段散文总结，下游要按证据复用它（Full 场景给 Design Step 1a，Standard 场景给 Plan Step 1）：
+
+- `scanBase`: 综合时跑 `git rev-parse --short HEAD`，记录扫描基准 commit
+- `findings`: research-workflow 返回的 findings 原样保留（claim / confidence / sources / evidence），代码类结论的 sources 必须含 `path:line`
+- `summary`: 一段简要总结（代码里已有什么 + 网上发现了什么），带入 Step 4 影响假设的置信度
+
+胶囊作为 restate 的附录随 restate 留存（格式见 `references/restate-template.md`）。胶囊不合格（sources 无 path:line / 缺 scanBase）= Design 无法判断复用还是重扫，只能从零重搜——降档省下的就全吐回去了。
 
 ### Step 3: 路径校验
 
@@ -194,7 +203,7 @@ Standard 场景网络探索可简化为 `Agent(fork)` 轻量搜一两个查询�
 
 **Collaboration Pact**：主动问"我们怎么协作？"。agent 提出：自己做什么、需要用户提供什么、中间检查点。可选引用协作指令（穷尽探索 / 信心验证循环），用户拍板。
 
-**引用探索结论**：restate 里引用 Step 2 发现的关键事实（代码里有什么、网上有什么行业标准），让 restate 有事实基础，不是空中楼阁。
+**引用探索结论 + 附探索胶囊**：restate 正文引用 Step 2 发现的关键事实（代码里有什么、网上有什么行业标准），让 restate 有事实基础，不是空中楼阁；restate 末尾附上 Step 2 产出的探索胶囊（scanBase + findings，格式见 `references/restate-template.md`），供 Design Step 1a 判断复用还是重扫。
 
 ### Step 7: 用户确认
 
@@ -216,7 +225,7 @@ Standard 场景网络探索可简化为 `Agent(fork)` 轻量搜一两个查询�
 - [ ] 场景分类已标注
 - [ ] （Full/Standard）路径清单已校验——有 PRD 则搬入并查完整性，无 PRD 则现场生成
 - [ ] （Full/Standard）每条路径至少绑定一条 SC，无裸路径也无裸 SC
-- [ ] 后续阶段输入齐全：Full → Design 可用 restate + 路径清单，Standard → Plan 可用 restate + 路径清单
+- [ ] 后续阶段输入齐全：Full → Design 可用 restate + 路径清单 + 探索胶囊（scanBase + findings 带 path:line），Standard → Plan 可用 restate + 路径清单 + 探索胶囊
 - [ ] **硬交接**：Exit Gate 全部通过后，向用户报告 Define 完成（含场景分类 + restate 摘要），并按场景建议下一阶段：Full/Standard/Fix → Env（`nocode:using-git-worktrees`），Mini → Build-lite。列出下一阶段的 sub-steps + 关键决策（devflow Step 5 格式）。等用户拍板，不自行进入下一阶段
 
 ## Common Rationalizations

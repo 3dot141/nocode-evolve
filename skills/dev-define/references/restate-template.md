@@ -67,6 +67,13 @@ Define 阶段的标准化产出格式。用户确认此 restate 后 Define 才�
 - 协作指令: [穷尽探索 / 信心验证循环 / 无]
 
 **Scenario**: Full / Standard / Fix / Mini
+
+**探索胶囊（附录，Step 2 产出；下游按 scanBase 判断复用/重扫——Full 场景 Design Step 1a，Standard 场景 Plan Step 1）**:
+- scanBase: [扫描时 `git rev-parse --short HEAD` 的值]
+- findings:
+  - [claim] — confidence: [high/medium/low] — sources: [`path:line` 或 URL] — evidence: [关键证据]
+  - ...
+- openQuestions: [探索没搞清楚的点，没有则写 无]
 ```
 
 ## Mini Restate（Mini 场景）

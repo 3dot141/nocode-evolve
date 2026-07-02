@@ -53,7 +53,7 @@ Design 全程默认由 agent 自主决策——探索、方案对比、方案选
 
 ```
 Task 1: 探索 — 三层并行
-  Sub-steps: 并行 spawn 代码 pattern(research-workflow:code) + 外部方案(research-workflow:mixed) + 已有决策对齐 → 综合
+  Sub-steps: 先收 Define 探索胶囊（比对 scanBase 定复用/重扫）→ 并行 spawn 代码 pattern(research-workflow:code，angles 只补胶囊未覆盖角度) + 外部方案(research-workflow:mixed) + 已有决策对齐 → 综合
   Gate: 三路结果回来并综合，探索总结产出
 
 Task 2: UI 设计（涉及前端时）
@@ -106,11 +106,26 @@ Task 10: 硬交接 — 调用下一步 skill
 
 #### 1a. 代码 pattern 深度分析
 
+**先收上游探索胶囊**（restate 附录，Define Step 2 产出），再决定搜什么——Define 到这里代码通常没变过，白白重扫一遍是本步最常见的浪费：
+
+```
+restate 附录有探索胶囊？
+     │
+     ├─ 有 ──→ git rev-parse --short HEAD 与胶囊 scanBase 对比
+     │         ├─ 一致 ──→ 胶囊 findings 直接作为既有事实基础（带 path:line 可引用）；
+     │         │           angles 只设 Define 未覆盖的角度（影响面 / 调用链 / contract 下钻），
+     │         │           systemPrompt 追加「以下结论已核实，勿重复搜索：<胶囊 claims 清单>」
+     │         └─ 不一致 ──→ git diff --name-only <scanBase>..HEAD 列变更文件；
+     │                       sources 命中变更文件的 findings 标 stale 重核，其余仍复用
+     │
+     └─ 无（旧 restate / Define 跳过探索 / 胶囊缺 scanBase）──→ 按下方参数从零探索
+```
+
 委派 `research-workflow` skill（调用方式见 `skills/research-workflow/SKILL.md`），传入：
 - `question`: `<restate 关键词> 在当前代码库的已有实现、可复用 pattern、影响面`
 - `type`: `code`
 - `depth`: `targeted`（默认——走到这里 Define/讨论已明确要看什么，3~5 个 agent 够用）
-- `angles`: 从 restate + 前面讨论提炼 2~4 个具体搜索点（`[{label, query}]`，如 已有同类实现 / 关键调用链 / 受影响 contract），跳过自动分解
+- `angles`: 从 restate + 前面讨论提炼 2~4 个具体搜索点（`[{label, query}]`，如 已有同类实现 / 关键调用链 / 受影响 contract），跳过自动分解；有胶囊时排除已覆盖的点（见上方决策树）
 - `systemPrompt`（追加）: `不只找"有没有"，要理解"怎么做的、为什么这么做"，并标出影响面（触及哪些模块/调用链/contract）。`
 
 **升档有疑点先问用户**：觉得 targeted 不够（陌生子系统、代码库术语和预期对不上、angles 提炼不出来）→ AskUserQuestion 让用户在 `targeted` / `shallow`（迭代逼近，8~17 agent）/ `deep`（对抗验证）之间拍板，不自作主张往重档跑。
@@ -148,7 +163,7 @@ Task 10: 硬交接 — 调用下一步 skill
 
 #### 探索综合
 
-三路结果回来后，输出一段探索总结：代码里已有什么（可复用的 / 要改的 / 会受影响的）+ 外部有什么方案（库 / 模式 / 经验）+ 已有决策里有什么约束。这段是后续提方案的事实基础。
+三路结果回来后，输出一段探索总结：代码里已有什么（可复用的 / 要改的 / 会受影响的）+ 外部有什么方案（库 / 模式 / 经验）+ 已有决策里有什么约束。这段是后续提方案的事实基础。复用自胶囊的结论标「← Define 胶囊」，和本轮新探的区分开——落到设计文档「前置调研」时保留该标注。
 
 **Exit Gate:**
 - [ ] 三路探索结果已回来并综合
