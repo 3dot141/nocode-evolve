@@ -135,3 +135,7 @@ agents/
 - **hook 截断阈值 10000 字符 per-command**:catalog 分片机制(`SHARD_LIMIT=9000`)就是为绕这个;每 segment 独立判,各自安全。
 - `version` 不写时用 git commit SHA 作版本号——每次提交都视为新版本。
 - 安装范围:`--scope user`(默认,跨项目)/ `--scope project`(团队共享,进 git)/ `--scope local`(仅本项目,gitignore)。
+
+## License
+
+本插件代码以 [MIT](./LICENSE) 授权。`vendor/` 下的第三方内容保留各自原始协议:[superpowers](https://github.com/obra/superpowers)(MIT)、[everything-claude-code](https://github.com/affaan-m/everything-claude-code)(MIT)、codex(Apache-2.0),协议全文见各目录内 LICENSE 文件。
