@@ -136,7 +136,7 @@ Four core questions:
 
 Dig into edge cases, input/output formats, success criteria, dependencies. Check available MCPs for research.
 
-**Tool-wrapping skills** (the skill wraps an external CLI / API / library / service / workflow): follow `writing-skills/target-analysis.md` — scope before analyzing, use the real target, extract capabilities in a uniform structure, plan the Failure Modes table.
+**Tool-wrapping skills** (the skill wraps an external CLI / API / library / service / workflow): follow `references/target-analysis.md` — scope before analyzing, use the real target, extract capabilities in a uniform structure, plan the Failure Modes table.
 
 **Fill the Scenario Discovery Matrix** (`writing-skills/scenario-discovery-matrix.md`): scan all 7 axes, mark applicable cells, skip cells only with a reason. The filled matrix is the input for Phase 3 scenario selection.
 

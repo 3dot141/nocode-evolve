@@ -13,6 +13,8 @@
 skill-writing/
 ├── SKILL.md              使用入口：八阶段流程
 ├── README.md             本文件
+├── references/           本仓改编的方法文档（非 vendor 快照）
+│   └── target-analysis.md             工具包装类 skill 的目标分析方法（Phase 2 引用，改编自 SkillAnything）
 ├── skill-creator/        eval 工具链
 │   ├── scripts/          Python 脚本（eval runner、benchmark、optimizer、packager）
 │   ├── agents/           subagent 指令（grader、comparator、analyzer）
@@ -24,6 +26,7 @@ skill-writing/
     ├── anthropic-best-practices.md    Anthropic 官方 skill 写作指南
     ├── persuasion-principles.md       心理学原理（anti-rationalization）
     ├── testing-skills-with-subagents.md  subagent 压力测试方法
+    ├── scenario-discovery-matrix.md   Phase 2/3 场景发现矩阵（7 轴扫描，本仓原创）
     ├── graphviz-conventions.dot       flowchart 样式规范
     ├── render-graphs.js               flowchart 渲染脚本
     └── examples/                      测试示例
@@ -41,6 +44,7 @@ skill-writing/
 | skill-creator (Anthropic marketplace) | sha `82f22ec4` | Apache 2.0 |
 | writing-skills (superpowers) | v5.1.0, commit `e4a2375c` | MIT |
 | SkillOpt (Microsoft) | 纪律概念引用，不含代码 | — |
+| SkillAnything (AgentSkillOS) | commit `0f7d527`，仅吸收目标分析方法论为 target-analysis.md，不含代码 | MIT |
 
 ## 迁移
 
