@@ -13,7 +13,7 @@
 skill-writing/
 ├── SKILL.md              使用入口：八阶段流程
 ├── README.md             本文件
-├── references/           本仓改编的方法文档（非 vendor 快照）
+├── absorbed/             外部吸收改编的方法文档（absorbed 模式：改编落地 + 注出处，不进 vendor 同步）
 │   └── target-analysis.md             工具包装类 skill 的目标分析方法（Phase 2 引用，改编自 SkillAnything）
 ├── skill-creator/        eval 工具链
 │   ├── scripts/          Python 脚本（eval runner、benchmark、optimizer、packager）
