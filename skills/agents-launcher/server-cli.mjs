@@ -12,6 +12,7 @@ import { detectGraalvm } from './lib/server/graalvm.mjs';
 import { startInfra } from './lib/server/infra.mjs';
 import { startApp } from './lib/server/boot.mjs';
 import { localInfraEnv, loadDotEnv } from './lib/server/env.mjs';
+import { stopApp, serverStatus } from './lib/server/lifecycle.mjs';
 
 const ANTLR_MODULE = 'fx-agent-workspace';
 // 新旧两代 fx-agent-workspace build.gradle.kts 接线不同，产物目录不同，两个都探测。
@@ -76,6 +77,7 @@ export async function start({ serverDir, ports, killOld = false, log = console.l
 const SUPPORTED_VERBS = ['prepare'];
 SUPPORTED_VERBS.push('infra');   // T3 挂载
 SUPPORTED_VERBS.push('start');   // T4 挂载
+SUPPORTED_VERBS.push('stop', 'status');   // T4b 挂载
 
 async function main() {
   const [verb, ...flags] = process.argv.slice(2);
@@ -93,7 +95,16 @@ async function main() {
     case 'start':
       await start({ serverDir, killOld: flags.includes('--kill-old') });
       break;
-    // stop / status 由 T4b 补挂到这个 switch，并各自 SUPPORTED_VERBS.push(...)
+    case 'stop':
+      stopApp({ serverDir });
+      break;
+    case 'status': {
+      const s = serverStatus();
+      for (const row of Object.values(s)) {
+        console.log(`[status] ${row.name.padEnd(4)} :${row.port} ${row.up ? 'UP  ' : 'DOWN'} pid=${row.pid}`);
+      }
+      break;
+    }
     default:
       console.error(`不支持的 verb: ${verb}（当前支持: ${SUPPORTED_VERBS.join('|')}）`);
       process.exit(1);
