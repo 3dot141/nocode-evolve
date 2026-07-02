@@ -167,7 +167,7 @@ DesignSync register_assets(projectId: project_id, planId, assets: [{name, path, 
 
 ### 推送大 bundle(大文件 → DesignSync)
 
-见上方「DesignSync 大文件上传流程」。这是 `/design-sync` skill 的领域,`claude-design` 只在被直接要求上传本地大文件时用这条路。
+见上方「DesignSync 大文件上传流程」。这是 `/design-sync` skill 的领域（外部 skill,不在本插件内,未安装时不可调用——那时直接用 DesignSync 工具手动走上传流程）,`claude-design` 只在被直接要求上传本地大文件时用这条路。
 
 ### .dc.html 格式要点
 
@@ -200,4 +200,4 @@ DesignSync register_assets(projectId: project_id, planId, assets: [{name, path, 
 | **pd-vd Step 4** | `claude-design <brief>` 生成原型 → 记 projectId |
 | **pd-vd Step 6** | 记录 projectId 到 .vd.md |
 | **dev-design-render** | `claude-design create` + `claude-design write` 推渲染后的设计文档 |
-| **/design-sync** | 独立 skill,推 React bundle 用 DesignSync 的 localPath;claude-design 不替代它 |
+| **/design-sync** | 外部独立 skill(不在本插件内,当前环境未安装则不可调用),推 React bundle 用 DesignSync 的 localPath;claude-design 不替代它,该 skill 不可用时直接用 DesignSync 工具走上传流程 |

@@ -532,6 +532,7 @@ Task N+2: 保存 + 渲染
 2. **AskUserQuestion：是否渲染成 HTML？**
    - 是 → 调 `Skill(nocode-evolve:dev-design-render)` 把设计文档转成可浏览的 HTML（架构图/流程图/时序图渲染为 SVG，表格可交互）
    - 否 → 设计文档（markdown）即最终交付
+3. **硬交接**：向调用方/用户报告 dev-design-refine 完成 + 文档保存路径——若由 dev-design Step 8c 调入，交回其 Step 9 继续评审；独立进入则向用户报告完成并建议下一步（评审走 dev-review / 直接进 dev-plan）
 
 **Exit Gate:**
 - [ ] 文档已保存到正确路径

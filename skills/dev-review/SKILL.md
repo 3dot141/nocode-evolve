@@ -1,6 +1,6 @@
 ---
 name: dev-review
-description: Use before merging any change, after completing a feature, or when reviewing code. Use when devflow routes to Review stage, or when the user says "review 一下/看看代码/评审/check the code/审一下/有没有问题/帮我review/code review". Also use when the user asks to review a PR or diff.
+description: Use before merging any change, after completing a feature, or when reviewing code. Use when devflow routes to Review stage, or when the user says "review 一下/看看代码/评审/check the code/审一下/有没有问题/帮我review/code review". Also use when the user asks to review a PR or diff. Not for writing or fixing code (use dev-build), or standalone red-team/second-implementation/delegation review outside devflow context (use codex-review rule).
 ---
 
 # code-review — 多维度代码评审

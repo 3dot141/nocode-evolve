@@ -1,6 +1,6 @@
 ---
 name: pd-research
-description: Use when the user wants to explore a problem space before committing to a solution. Use when the user says "调研/research/竞品分析/市场调研/看看已有方案/看看别人怎么做", or when devflow suggests running the product flow first for a Full-scene task. Also use when the user gives a vague product idea and needs to understand the landscape before defining scope.
+description: Use when the user wants to explore a problem space before committing to a solution. Use when the user says "调研/research/竞品分析/市场调研/看看已有方案/看看别人怎么做", or when devflow suggests running the product flow first for a Full-scene task. Also use when the user gives a vague product idea and needs to understand the landscape before defining scope. Not for pure technical solution comparison (use dev-design), or when a PRD already exists and scope is defined (go to pd-ix or devflow).
 ---
 
 # research — 发散探索问题空间

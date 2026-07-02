@@ -133,9 +133,9 @@ test('genWorkflowSkills: manifest.workflow_skills → {skills} 生成物 (含 15
   assert.ok(parsed.skills.every((s) => s.startsWith('nocode-evolve:')), '每个 skill 都应带 nocode-evolve: 前缀');
 });
 
-test('genWorkflowSkills: 真实 manifest 含 15 skill 名单', () => {
+test('genWorkflowSkills: 真实 manifest 含 16 skill 名单', () => {
   const parsed = JSON.parse(genWorkflowSkills(loadManifest()).text);
-  assert.equal(parsed.skills.length, 15, '真实 manifest 应含 15 个 workflow skill');
+  assert.equal(parsed.skills.length, 16, '真实 manifest 应含 16 个 workflow skill (含 dev-finish-branch)');
 });
 
 test('targets: 含 workflow-skills.json 生成物', () => {

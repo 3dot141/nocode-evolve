@@ -11,6 +11,7 @@
     "nocode-evolve:dev-verify",
     "nocode-evolve:dev-review",
     "nocode-evolve:dev-land",
+    "nocode-evolve:dev-finish-branch",
     "nocode-evolve:pd-research",
     "nocode-evolve:pd-prd",
     "nocode-evolve:pd-ix",
