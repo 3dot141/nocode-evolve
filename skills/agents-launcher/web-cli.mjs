@@ -13,8 +13,7 @@ import { resolveRepos, validateRepos } from './lib/paths.mjs';
 import { tcpOpen, pidOnPort } from './lib/probe.mjs';
 import { spawnPrefixed, runToEnd } from './lib/proc.mjs';
 import { upsertEnv } from './lib/env-file.mjs';
-
-const PORTS = { web: 10001, agents: 8070 };
+import { PORTS } from './lib/ports.mjs';   // 端口单源（Review W1）
 const COREPACK_PNPM_DIR = join(process.env.HOME || '', '.cache/node/corepack/v1/pnpm');
 
 // ---- 纯函数 ----

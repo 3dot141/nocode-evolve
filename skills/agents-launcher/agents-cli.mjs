@@ -11,8 +11,7 @@ import { existsSync, mkdirSync, copyFileSync } from 'node:fs';
 import { resolveRepos, validateRepos } from './lib/paths.mjs';
 import { httpOk, pidOnPort } from './lib/probe.mjs';
 import { spawnPrefixed, runToEnd } from './lib/proc.mjs';
-
-const PORTS = { agents: 8070 };
+import { PORTS } from './lib/ports.mjs';   // 端口单源（Review W1）
 
 // ---- 纯函数：路径/命令构造，不碰 fs/进程 ----
 

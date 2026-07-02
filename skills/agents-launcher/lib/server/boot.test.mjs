@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, writeFileSync, readFileSync } from 'node:fs';
+import { mkdtempSync, writeFileSync, readFileSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { patchGcForGraaljs, buildBootRunEnv, buildContainerRunArgs, startApp } from './boot.mjs';
@@ -66,6 +66,11 @@ test('startApp: 端口空闲时直接走本地分支 spawn bootRun', async () =>
   assert.equal(result.pid, 12345);
   assert.equal(spawned.cmd, './gradlew');
   assert.deepEqual(spawned.args, ['bootRun', '--no-build-cache']);
+  // C1 回归锚：stdout/stderr 必须接文件 fd（pipe 无人消费会 64KB 背压挂死 gradle），日志落 dev-start.log
+  assert.equal(spawned.opts.stdio[0], 'ignore');
+  assert.equal(typeof spawned.opts.stdio[1], 'number');
+  assert.equal(typeof spawned.opts.stdio[2], 'number');
+  assert.ok(existsSync(join(dir, 'dev-start.log')));
 });
 
 test('startApp: 端口被占用且 killOld=false 时 fail loud，不静默等待', async () => {

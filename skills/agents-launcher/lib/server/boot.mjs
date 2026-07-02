@@ -3,7 +3,7 @@
 // 默认 fail loud，调用方需显式传 killOld=true 才杀旧进程重启。
 // start 不内嵌 ANTLR prepare——生成 task 挂在 compileJava.dependsOn（新旧两代 build.gradle.kts
 // 均已核实），bootRun 自愈；prepare 是 IDE 场景专用入口（红蓝裁决 F，有证据驳回）。
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync, openSync, closeSync } from 'node:fs';
 import { join } from 'node:path';
 import { execFileSync, spawn as nodeSpawn } from 'node:child_process';
 import { pidOnPort } from '../probe.mjs';
@@ -110,12 +110,21 @@ export async function startApp({ serverDir, appPort = 8081, graalvm, env = proce
   // 原 526-531/612 行：S3/CDN 用宿主机 IP 兜底，rpc.host 从 polars 容器视角动态解析（写死会在 Docker Desktop 环境失联）
   const bootEnv = buildBootRunEnv({ hostIp: hostIp({ exec }), rpcHost: resolvePolarsRpcHost({ exec }), baseEnv: cleanEnv });
 
-  const child = spawn('./gradlew', ['bootRun', '--no-build-cache'], {
-    cwd: serverDir,
-    env: bootEnv,
-    stdio: ['ignore', 'pipe', 'pipe'],
-    detached: true,
-  });
+  // 原 615 行 `> dev-start.log 2>&1 &` 语义：输出必须重定向文件——pipe 无人消费会在 64KB
+  // 缓冲后背压挂死 gradle（Review C1）；detached + unref 后台脱管，launcher 退出 bootRun 继续跑
+  const logFd = openSync(join(serverDir, 'dev-start.log'), 'w');
+  let child;
+  try {
+    child = spawn('./gradlew', ['bootRun', '--no-build-cache'], {
+      cwd: serverDir,
+      env: bootEnv,
+      stdio: ['ignore', logFd, logFd],
+      detached: true,
+    });
+  } finally {
+    closeSync(logFd);   // 子进程已持有 fd 副本，父进程侧关闭
+  }
+  child.unref?.();
   writeFileSync(join(serverDir, '.dev-start.pid'), String(child.pid));
   // 原 620-661 行：等待 编译+Spring 初始化（最多 180×2s=6 分钟），进程死掉立即 fail loud
   await waitFn({ appPort, alive: () => { try { process.kill(child.pid, 0); return true; } catch { return false; } }, fetchFn, log });
