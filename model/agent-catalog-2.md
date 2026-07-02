@@ -7,9 +7,9 @@
 **不含 (负例)**: 写代码注释 / commit message / README / changelog
 
 #### superpowers-brainstorming
-**触发**: 即将执行 nocode-evolve:brainstorming skill (用户直接 /brainstorming 或 agent 主动调该 skill 时的 overlay). 不含: 用户要求写设计文档等设计阶段动作(走 design rule, 不走本 overlay)
+**触发**: 即将执行 nocode-evolve:brainstorming skill (用户直接 /brainstorming 或 agent 主动调该 skill 时的 overlay); 其「写作工作流」节同样覆盖用户直接要求写 PRD / RFC / 设计文档 / ADR (绕过 brainstorming) 的路径——两条入口走同一条 worktree → write → review → render 链
 **读**: `${CLAUDE_PLUGIN_ROOT}/rules/rule-superpowers-brainstorming.md`
-**摘要**: nocode-evolve:brainstorming 执行时的 overlay: 输出路径按 {dev_design_output} 变量 + worktree → write → review → render 四步; 仅在 brainstorming skill 已在执行时生效, 用户直接要求设计文档走 design rule
+**摘要**: brainstorming overlay + 设计文档写作工作流: 输出路径按 {dev_design_output} 变量 + worktree → write → review → render 四步; 不分入口——brainstorming step 5 或用户直接要求写 PRD/RFC/设计文档/ADR 均走同一条链
 **生命周期**: 0 设计
 
 #### dev-design
@@ -63,7 +63,7 @@
 **不含 (负例)**: 一次性事实查询
 
 #### push-summary
-**触发**: 用户 push 后说「总结 push 内容 / 给标题描述 / PR description / 沉淀这个 / 这次 push 包含什么」
+**触发**: 用户 push 后说「总结 push 内容 / 给标题描述 / PR description / 沉淀这个 push / 这次 push 包含什么」. 不含: 非 push 语境的一般性总结/沉淀 (走 /distill 或 /sow)
 **读**: `${CLAUDE_PLUGIN_ROOT}/rules/rule-push-summary.md`
 **摘要**: 输出 标题 + 描述, 描述 ≤200字, 含基础内容(覆盖 push range 全 commit) + 重点评测(亮点 / 风险 / 未验证项)
 **也属**: git-lifecycle
@@ -86,14 +86,14 @@
 **生命周期**: cross
 
 #### lark-project
-**触发**: 用户给 project.feishu.cn 链接（或 Meego 工作项 id）要求读取/总结/看附件/分析需求或缺陷内容; 或 PR merge 后流转飞书 issue 状态; 或用户说「流转任务/改状态/标完成/飞书项目/工作项」; 或 devflow Land 阶段 (8d. Task Transition)
+**触发**: 用户给 project.feishu.cn 链接（或 Meego 工作项 id）要求读取/总结/看附件/分析需求或缺陷内容; 或 PR merge 后流转飞书 issue 状态; 或用户说「流转任务/改状态/标完成/飞书项目/工作项」; 或 devflow Land 阶段 (8d. Task Transition). 注: PR 决策线内的 post-merge 流转由 dev-finish-branch 发起, 其内部会用到本 rule 能力
 **读**: ``
 **关键约束(上浮)**: 下载附件必须带 X-Meego-File-Sign header; 非组员开发状态不强行流转; 别用 WebFetch 抓 SPA 链接。
 **也属**: git-lifecycle
 **生命周期**: cross
 
 #### dev-finish-branch (跨桶)
-**触发**: 用户说「完成 worktree / 收尾 / 合并 / 提 PR / 创建 PR / 合并到 main / 删 branch / discard worktree」, 或「PR 合了 / 流转任务 / 合并后流转」(post-merge 已并入), 或 dev-land 调用
+**触发**: 用户说「完成 worktree / 收尾 / 合并 / 提 PR / 创建 PR / 合并到 main / 删 branch / discard worktree」, 或「PR 合了 / 合并后流转」(post-merge 已并入). 不含: 无合并上下文的独立飞书工作项流转 (走 lark-project); 或 dev-land 调用
 **读**: ``
 **主桶**: git-lifecycle (完整定义见该桶)
 
@@ -113,7 +113,7 @@
 **不含 (负例)**: 纯查询 / 已在某个 skill 内部执行中
 
 #### dev-define
-**触发**: 用户说「澄清需求 / 做什么 / 目标是什么 / interview me / 定义目标 / 需求不清楚」, 或 devflow 路由到 Define 阶段
+**触发**: 用户说「澄清需求 / 我们(接下来)做什么 / 目标是什么 / interview me / 定义目标 / 需求不清楚」, 或 devflow 路由到 Define 阶段. 不含: 问某段代码/函数「是做什么的」(纯代码解释, 不是需求澄清)
 **读**: ``
 **生命周期**: 0 设计
 
@@ -130,7 +130,7 @@
 **生命周期**: 0 设计
 
 #### dev-plan
-**触发**: 用户说「写计划 / 拆任务 / 怎么实现 / plan it out / 拆解一下 / 实现方案」, 或 devflow 路由到 Plan 阶段
+**触发**: 用户说「写计划 / 拆任务 / 怎么实现 / plan it out / 拆解一下 / 实现方案」, 或 devflow 路由到 Plan 阶段. 不含: 交互拆解 / IA 拆解 (走 pd-ix)
 **读**: ``
 **生命周期**: 2 实现
 

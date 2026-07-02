@@ -76,5 +76,3 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/freshness-check.mjs" --max-behind=5 --ttl=72
 ## 机制化局限 (诚实标注)
 
 本 rule 是 **behavior 触发** — "即将搜代码 / 设计"不是单条 Bash 命令, **PreToolUse 拦不到** (主搜索通道 `Agent(subagent_type: "nocode-evolve:semble-search")` 不经 Bash matcher). 主要靠 catalog Step 0 工序 + agent 自觉跑脚本. cache 机制大幅降低重复 fetch 成本 (2h 内 0 网络开销), 是性能上的兜底, 但不是触发上的硬保证.
-
-> 历史: v2.x 版本 git-freshness 只覆盖"就地设计 + 主仓"场景; v3.5.1 起扩到代码搜索 + worktree 内长期工作, base 分支推断支持非 main 派生 (eg. release). v3.9.0 加冷启动拦截 (branch+base 首次无条件 gate 一次) + cache 升级为 per-branch+base entries map (v1 单条格式作废).
