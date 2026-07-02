@@ -1,7 +1,7 @@
 .DS_Store
 *.log
 .claude/
-.agents-personal/
+.agents-personal
 docs/plans/**/*.html
 __pycache__/
 *.pyc
