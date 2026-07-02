@@ -79,8 +79,8 @@ Task 3: RED — Baseline (Phase 3)
   Gate: ≥N scenarios executed, ≥1 reproducible failure identified, failure modes labeled with matrix cells
 
 Task 4: GREEN — Write SKILL.md (Phase 4)
-  Sub-steps: write minimal SKILL.md + red-blue review + self-verification guideline check
-  Gate: SKILL.md produced, covers baseline failures, red-blue review completed, self-verification steps have independent review guidance
+  Sub-steps: write minimal SKILL.md + self-review + self-verification guideline check
+  Gate: SKILL.md produced, covers baseline failures, self-review completed, self-verification steps have independent review guidance
 
 Task 5: Eval — Run & Review (Phase 5)
   Sub-steps: create eval set + train/validation split + run evaluation
@@ -266,16 +266,20 @@ Workflow skill SKILL.md must include: **Step 0 TaskCreate** (all tasks created u
 
 不加引导的步骤：纯机械验证（跑测试 / lint / 类型检查）、有客观标准的 pattern 匹配——这些不需要独立视角。
 
-### Red-Blue Review
+### Self-Review
 
-After writing SKILL.md, call `Skill(nocode:red-blue-deep)` to review it. Input: "Review this SKILL.md — does it actually address the baseline failures? Are there loopholes, missing edge cases, or instructions that an agent could misinterpret?" red-blue-deep will determine the appropriate depth (light/heavy) on its own.
+After writing SKILL.md, self-review it — author's own pass, no subagent, no codex (method card: `{NOCODE_SKILL_REF}/reviewing/methods/self-review.md`). Check at minimum:
 
-Fix any issues found by the review before passing the Exit Gate.
+- Does it actually address every baseline failure recorded in Phase 3?
+- Are there loopholes, missing edge cases, or instructions an agent could misinterpret?
+- Method-card items: placeholder/TODO 残留、内部矛盾、歧义模糊、scope 漂移、空壳未兑现、完整性
+
+Fix issues inline before passing the Exit Gate; unfixed items must be recorded explicitly. Self-review 是最低门槛不是充分条件——发现真硬伤（critical）或对象明显高风险时，升档调 `Skill(nocode:red-blue-deep)` 补独立审查。
 
 **Exit Gate:**
 - [ ] SKILL.md produced
 - [ ] Covers every failure mode recorded in Phase 3
-- [ ] Red-blue review completed, findings addressed
+- [ ] Self-review completed, findings addressed
 - [ ] Workflow skills include Step 0 TaskCreate + Enter/Exit Gate per step
 - [ ] Self-verification steps include review methodology (reviewing framework for structured review) + independent review guidance (or confirmed no self-verification steps exist)
 - [ ] Line count ≤ 500 (overflow moved to references/)
@@ -422,7 +426,7 @@ Run `skill-creator/scripts/package_skill.py` to create a `.skill` file. Requires
 
 - [ ] Skill intent + type confirmed (Phase 1)
 - [ ] Scenario Discovery Matrix filled, baseline failures recorded with matrix labels, codex cross-model baseline done (Phase 2-3)
-- [ ] SKILL.md produced, covers failure modes, red-blue reviewed, self-verification steps have independent review guidance (Phase 4)
+- [ ] SKILL.md produced, covers failure modes, self-reviewed, self-verification steps have independent review guidance (Phase 4)
 - [ ] Eval benchmark has numeric pass_rate (Phase 5)
 - [ ] Iteration converged, no regression (Phase 6)
 - [ ] Description trigger accuracy meets threshold (Phase 7)
