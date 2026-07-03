@@ -251,6 +251,7 @@ Workflow skill SKILL.md must include: **Step 0 TaskCreate** (all tasks created u
 
 - **No weak cross-references.** Only name another skill / command when it is a hard execution dependency (handoff, required framework, routing "Not for X — use Y"); never cite another skill's internals (Step N, section titles) as a "reference pattern".
 - **Skills are self-contained — only read Skill, except Reference.** SKILL.md body and its private `references/` may only point to two things: other Skills (named handoff or `Skill()` call) and reference material (the skill's own `references/`, or the shared `skills/references/`). Never point directly at internal plugin implementation files — `rules/rule-*.md`, `model/agent-*.md`, `hooks/`, or another skill's non-reference `scripts/` — those are the routing/guardrail layer injected automatically by SessionStart/PreToolUse; a skill has no runtime reason to name them explicitly (repo `CLAUDE.md` rule 6). If a skill genuinely depends on something defined in one of those files, copy the needed bit into its own `references/` or turn the dependency into a handoff — don't reach across the layer.
+- **Reference paths: relative for your own, handoff for someone else's.** Point at your own `references/` with a relative path (`references/xxx.md`) — never an absolute `{CLAUDE_PLUGIN_ROOT}/skills/<skill-name>/references/xxx.md`; a relative path survives the whole skill directory moving, an absolute one doesn't. If the material belongs to another skill's domain — that skill has its own SKILL.md and the content is its method/process (e.g. `reviewing`) — call `Skill(nocode:<name>)` instead of pointing at its `references/` directly, even if you know the exact path. Only material with no single owning skill belongs in the shared `skills/references/` and can be pointed at directly (`{NOCODE_SKILL_REF}/xxx.md`).
 - For Anthropic's official skill authoring best practices, read `writing-skills/anthropic-best-practices.md`
 
 ### Self-Verification Guideline (independent-review guidance for produced skills)
@@ -259,23 +260,23 @@ If the skill you produce contains steps where the **agent verifies its own outpu
 
 Decision rule: a step where the agent checks something it just produced (code / design / plan / document / config) → add guidance to that step. Guidance has two layers:
 
-**Layer 1 · Structured reviews adopt the `reviewing` framework (review methodology base)**: if the review step is a **multi-dimension review** (multiple review dimensions + tiering + findings grading + wrap-up — e.g. the new skill ships its own code / design / plan review phase), guide it to adopt the `reviewing` framework instead of reinventing a review flow inside the new skill — write that step as: first `Read {NOCODE_SKILL_REF}/reviewing/skeleton.md` (7-step flow + method-library selection table + shared capabilities) + `Read {NOCODE_SKILL_REF}/reviewing/findings-contract.md` (unified findings/verdict contract), then inject the domain's review dimensions at framework step 3 and pick tactics from the method library at step 4.
+**Layer 1 · Structured reviews adopt the `reviewing` engine (review methodology base)**: if the review step is a **multi-dimension review** (multiple review dimensions + tiering + findings grading + wrap-up — e.g. the new skill ships its own code / design / plan review phase), guide it to call `Skill(nocode:reviewing)` instead of reinventing a review flow inside the new skill — write that step as: call the engine, passing the review object + this skill's own domain review dimensions (inline, or pointing at the new skill's own `references/xxx-review.md`) + an optional method. The engine is self-contained and handles tiering, method selection, escalation, and findings/verdict formatting internally — the new skill never `Read`s `reviewing`'s internal files directly, and never hardcodes a path into them.
 
-**Layer 2 · Who runs the independent cross-check** (the carrier of the reviewing framework's step 5; lightweight single-point self-checks skip Layer 1 and pick directly):
+**Layer 2 · Who runs the independent cross-check** (the carrier of the reviewing engine's step 5; lightweight single-point self-checks skip Layer 1 and pick directly):
 - **Evaluation / decision** ("is this approach sound?") → point to `Skill(nocode:red-blue-deep)`
-- **Output review** ("does this code / document have problems?") → recommend self-review first (`{NOCODE_SKILL_REF}/reviewing/methods/self-review.md`), escalating to a single codex independent review on disagreement (per `rule-codex-review` scenario 4 + reviewing skeleton §1a escalation criteria)
+- **Output review** ("does this code / document have problems?") → recommend self-review first, escalating to a single codex independent review on disagreement (per `rule-codex-review` scenario 4 + reviewing engine's escalation criteria, both reached via `Skill(nocode:reviewing)`)
 - **Compliance check** ("were the rules followed?") → recommend self-check first, dispatching an independent subagent when uncertain (no cross-model needed)
 
 Steps that need no guidance: purely mechanical verification (tests / lint / type checks) and pattern matching against objective criteria — these need no independent perspective.
 
 ### Self-Review
 
-After writing SKILL.md, self-review it — author's own pass, no subagent, no codex (method card: `{NOCODE_SKILL_REF}/reviewing/methods/self-review.md`). Check at minimum:
+After writing SKILL.md, self-review it — author's own pass, no subagent, no codex (same lightweight pattern as the `reviewing` engine's self-review method, reached via `Skill(nocode:reviewing)` if you need the full write-up). Check at minimum:
 
 - Does it actually address every baseline failure recorded in Phase 3?
 - Are there loopholes, missing edge cases, or instructions an agent could misinterpret?
 - Method-card items: leftover placeholders/TODOs, internal contradictions, ambiguity, scope drift, hollow promises never fulfilled, completeness
-- Self-loop boundary: does the skill (or its private `references/`) point directly at `rules/*.md`, `model/agent-*.md`, `hooks/`, or another skill's non-reference files? Only other Skills and reference material (own `references/` / shared `skills/references/`) are allowed cross-references.
+- Self-loop boundary: does the skill (or its private `references/`) point directly at `rules/*.md`, `model/agent-*.md`, `hooks/`, or another skill's non-reference files? Only other Skills and reference material (own `references/` / shared `skills/references/`) are allowed cross-references. Own `references/` must use relative paths, not `{CLAUDE_PLUGIN_ROOT}/skills/<skill-name>/references/...`; material owned by another skill's domain (e.g. `reviewing`) must be reached via `Skill(nocode:<name>)`, never a direct path into that skill's `references/`.
 
 Fix issues inline before passing the Exit Gate; unfixed items must be recorded explicitly. Self-review is the minimum bar, not a sufficient one — on finding a genuine critical defect, or when the subject is clearly high-risk, escalate to `Skill(nocode:red-blue-deep)` for an independent review.
 
@@ -285,7 +286,7 @@ Fix issues inline before passing the Exit Gate; unfixed items must be recorded e
 - [ ] Self-review completed, findings addressed
 - [ ] Workflow skills include Step 0 TaskCreate + Enter/Exit Gate per step
 - [ ] Self-verification steps include review methodology (reviewing framework for structured review) + independent review guidance (or confirmed no self-verification steps exist)
-- [ ] Self-loop boundary respected — no direct references to `rules/*.md`, `model/agent-*.md`, `hooks/`, or another skill's non-reference files (Reference material excepted)
+- [ ] Self-loop boundary respected — no direct references to `rules/*.md`, `model/agent-*.md`, `hooks/`, or another skill's non-reference files; own `references/` cited by relative path; another skill's owned domain content reached via `Skill(nocode:<name>)`, not a direct path
 - [ ] Line count ≤ 500 (overflow moved to references/)
 
 ## Phase 5: Eval — Run & Review

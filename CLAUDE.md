@@ -62,4 +62,8 @@ SKILL.md 正文与私有 `references/` 只允许引用两类东西：**其它 Sk
 
 不得直接指路 `rules/rule-*.md`、`model/agent-*.md`、`hooks/`、非自身的 `scripts/` 等插件内部实现文件——这些是 SessionStart / PreToolUse 自动注入的路由与护栏层，skill 运行时不需要、也不该显式指路。skill 若确有信息依赖这类文件（如某变量定义在 `model/agent-about.md`），把内容摘一份进自己的 `references/`，或改成向对应 skill 的 handoff，不要跨层直接引用。
 
+引用自己 `references/` 里的文件一律用**相对路径**（`references/xxx.md`），不要写成 `{CLAUDE_PLUGIN_ROOT}/skills/<skill-name>/references/xxx.md` 这类绝对路径——相对路径不写死这个 skill 在插件里的位置，skill 目录整体搬家时内部引用一个字都不用改。
+
+一份参考材料该放共享 `skills/references/` 还是某个 skill 自己的 `references/`，看**内容是否已归属某个具体 skill 的领域**（存在一个 skill 本身就是它的方法论/流程底座，例如 `reviewing`）：归属某个 skill → 放该 skill 自己的 `references/`，其它 skill 要用只能点名 `Skill(nocode:<name>)` 调用，不直接指路它的 `references/`（哪怕知道确切路径也不行）；真正跨领域、没有单一归属 skill 的材料才留在共享 `skills/references/`，用 `{NOCODE_SKILL_REF}/xxx.md` 直接引用。
+
 是否符合由 `/plugin-dream` 的 Layer 2 skill 对象检测项兜底扫描；`skill-writing` 在产出/编辑 skill 时按本规则自查。
