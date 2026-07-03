@@ -2,15 +2,15 @@
 
 > **定位**：本文件是 `dev-design-refine` 评审设计文档的**领域维度表**——`reviewing` 引擎的 domainAxes。通用流程 / reviewer 纪律 / Evidence Gate / Q/SA / findings 分级全由引擎承载，本文只提供设计文档专属的评审维度。
 >
-> **怎么用**：dev-design-refine 的 Review step 调 `Skill(nocode:reviewing)`，声明「对象 = 设计文档、方法 = checklist、领域维度 = 本文 7 维度 + 附带检查」。reviewer 纪律 / Evidence Gate / Self-Audit / 编号 / 分级 schema 全由 `reviewing` 引擎在调用时自带，本文不给死路径、不复述。
+> **怎么用**：dev-design-refine 的 Review step 调 `Skill(nocode:reviewing)`，声明「对象 = 设计文档、方法 = checklist、领域维度 = 本文 8 维度 + 附带检查」。reviewer 纪律 / Evidence Gate / Self-Audit / 编号 / 分级 schema 全由 `reviewing` 引擎在调用时自带，本文不给死路径、不复述。
 >
 > **评审两层**：架构骨架已在 Step 3「架构审核」过（域拆分/边界/依赖），本步（唯一全文评审）审**完整性 / 一致性 / 可执行**，不重复审纯架构骨架问题。
 >
-> **设计文档审查顺序**（领域特化，通用步骤走 skeleton）：Read 文档全文 + frontmatter + 相关 ADR/wiki → 按 scenario（feat/bug/refactor）加载检查项 → 第一遍 7 维度核心审查 + 附带检查 → Evidence Gate 核实（触发清单见引擎的 reviewer-discipline）→ 第二遍 Self-Audit 换位。
+> **设计文档审查顺序**（领域特化，通用步骤走 skeleton）：Read 文档全文 + frontmatter + 相关 ADR/wiki → 按 scenario（feat/bug/refactor）加载检查项 → 第一遍 8 维度核心审查 + 附带检查 → Evidence Gate 核实（触发清单见引擎的 reviewer-discipline）→ 第二遍 Self-Audit 换位。
 
 ## 核心审查（按重要性排序，占重点）
 
-> **同源 note**：本节 7 维度与 `SKILL.md`《写作准则（核心）》各条是同一套规则的两个视角——reviewer 视角"挑什么" vs writer 视角"做什么"。改一处务必同步检查另一处。
+> **同源 note**：本节 8 维度与 `SKILL.md`《写作准则（核心）》各条是同一套规则的两个视角——reviewer 视角"挑什么" vs writer 视角"做什么"。改一处务必同步检查另一处。
 
 ### 1. 设计意图是否清晰
 
@@ -108,6 +108,16 @@
 - **跨章重复**：同一个论点在 3+ 节复述（信号：你 ctrl-F 同一论点出现 3 次）
 
 **Critical 触发边界**：整体层问题**实际影响理解**时——关键决策段读不下去、论证链断到 reviewer 自己拼不起来、元标签 H2 让读者困惑、术语前后矛盾。纯句式累 / 段落微长 → Warning；可优化但不影响理解 → Suggestion。
+
+### 8. 方案质量与验证覆盖（并入自 dev-design 设计评审）
+
+> dev-design 拆薄协调器后评审唯一化到本步，原 dev-design 独立 design-review 的方案层维度并入这里。
+
+- **TO 覆盖**：每条路径和约束都有对应测试目标（TO）？跨域 TO 和领域 TO 不重复也不遗漏？
+- **verify 策略可行**：测试分层合理？不测项的风险评估充分？
+- **失败预演（pre-mortem）**：做了失败预演吗？top 3 失败原因在方案里有应对措施或显式接受风险？
+- **目标漂移**：方案还在服务原始目标？有没有为了方案优雅偷偷改了目标？
+- **UI 设计（涉及前端时）**：有 UI 设计节吗？组件清单 / 布局 / 交互行为 / design taste skill 引用到位？
 
 ## 附带检查（顺手做，非 Critical）
 
