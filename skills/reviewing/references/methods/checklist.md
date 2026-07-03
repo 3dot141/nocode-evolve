@@ -26,4 +26,4 @@ checklist 的核心是**一张领域维度表**——框架不规定具体维度
 - 通过项（✅）不必逐条进 findings，但**维度覆盖快照**要留（改造回归 TO-2 用：维度漏了 = 行为退化）。
 - `verdict.counts` 汇总 C/W/S；Critical 必修才放行。
 
-> **派发 / 档位 / 升档 / CLAIM 剥离 / codex 降级见 skeleton §1、§1a、§4.0–§4.2，本卡不复述。** 重档对象下，本方法按 §4.0 走双路（subagent + codex）执行，双评合并结构单源在 `dual-review.md`；同位置同维度的交集 = 高置信。
+> **场景 / 视角 / 派发 / 档位 / 升档 / CLAIM 剥离 / codex 降级见 skeleton §1–§3、§4.0–§4.2，本卡不复述。** subagent+codex 双审档下，本方法按 §4.0 走双执行位（subagent + codex）执行，仅单路命中的候选按 §4.7 Verify 走独立验证，双评合并结构单源在 `dual-review.md`；同位置同维度的交集 = 高置信。

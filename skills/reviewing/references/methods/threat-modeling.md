@@ -2,7 +2,7 @@
 
 > reviewing 框架方法库 · 评审方法之一。**适合**：涉及**外部输入 / 认证授权 / 敏感数据 / 跨信任域**的代码或设计——安全评审主方法。**不适合**：纯内部计算、无外部面的逻辑（安全 review ≠ 全量套用，按信任边界裁剪）。
 >
-> 业界证据（设计 §2.3）：安全 review 应**前移到设计阶段**做。本卡常与 `checklist`（载体 = `security-method` 卡的 OWASP Top10 清单）**配对**：threat-modeling 出威胁，OWASP 清单兜底逐项核查（§4.3 选择表「安全 → threat-modeling + checklist(security-method OWASP)」）。
+> 业界证据（设计 §2.3）：安全 review 应**前移到设计阶段**做。本卡常与 `checklist`（载体 = `security-method` 卡的 OWASP Top10 清单）**配对**：threat-modeling 出威胁，OWASP 清单兜底逐项核查（骨架 §3 场景表「安全场景 → 威胁面覆盖视角 = threat-modeling / 已知漏洞兜底视角 = checklist(security-method OWASP)」）。
 
 ## 一、维度 / 思路
 
@@ -36,6 +36,6 @@ threat-modeling 不逐行扫代码，而是**先画信任边界，再沿边界�
 - 受 Evidence Gate 约束：安全 critical 必须有 location + 攻击向量，否则降 `kind=open-question`（无 PoC 的安全指控易误报）。
 - `verdict`：有未缓解 critical → `approved=false`，安全硬伤必修才放行。
 
-> **派发 / 档位见框架，本卡不复述**：谁来审 / 轻重档 / 升档 / CLAIM 剥离 / codex 降级一律见 skeleton §1、§1a、§4.0–§4.2。信任边界 + STRIDE 建模（Step A/B）由主 agent 走、OWASP 兜底（Step C）配 `security-method` 卡——这些是本方法内在步骤，不是派发机制。
+> **场景 / 视角 / 派发 / 档位见框架，本卡不复述**：谁来审 / 分档 / 升档 / CLAIM 剥离 / codex 降级一律见 skeleton §1–§3、§4.0–§4.2。信任边界 + STRIDE 建模（Step A/B）由执行位走、OWASP 兜底（Step C）配 `security-method` 卡——这些是本方法内在步骤，不是派发机制。
 >
-> **领域档位**（skeleton §1 的安全特化）：安全对象（外部输入 / 认证 / 敏感数据）默认**重档 + 异源交叉**（独立性档 = 异源）；低风险纯内部逻辑可降为主 agent 单跑 STRIDE，但仍要标信任边界确认「确实无外部面」。
+> **本方法对应的典型档位**（不是本卡自定义的降档规则，只是 skeleton §1 判据表在安全对象上的体现）：真正涉及外部输入 / 认证 / 敏感数据的对象，本来就会命中 skeleton §1 的双审档信号，默认落到 **subagent+codex 双审档**（独立性档 = 异源+同源双路）；如果标了信任边界后确认「确实无外部面」（即压根不命中 §1 的双审档信号），走到自审档是正常判档，不是本卡额外开的降档口子——降档权仍统一归 skeleton §1「降档权」一节，本卡不重复定义。

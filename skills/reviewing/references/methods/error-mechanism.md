@@ -32,4 +32,4 @@ error-mechanism 不遍历功能维度，而遍历**人类/AI 写代码时反复�
 - **Evidence Gate 在此尤其严**：error-mechanism 的 critical/warning 必须有 `location` + 可复现的触发条件，否则降 `kind=open-question`——「猜测式指控」在错误机制里最易发生。
 - `verdict.counts` 汇总。
 
-> **派发 / 档位 / 升档 / CLAIM 剥离 / codex 降级见 skeleton §1、§1a、§4.0–§4.2，本卡不复述。** 并发 / 资源 / 状态机等高危机制密集的 diff，重档时叠加异源交叉（作为 checklist 的备选方法，见 skeleton §3 选择表「代码 diff 备选 = error-mechanism」）。
+> **场景 / 视角 / 派发 / 档位 / 升档 / CLAIM 剥离 / codex 降级见 skeleton §1–§3、§4.0–§4.2，本卡不复述。** 本方法是"代码质量"场景正确性视角下的一种打法，跟 `checklist` 不再是二选一备选，而是**可叠加**（同一份 diff 可以既过 checklist 的维度清单，又过本方法的错误机制清单，见 skeleton §3 场景表「代码 diff/代码质量」行）；并发 / 资源 / 状态机等高危机制密集的 diff，subagent+codex 双审档下叠加异源交叉，仅单路命中的候选按 §4.7 Verify 走独立验证。
