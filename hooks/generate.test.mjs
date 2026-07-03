@@ -133,9 +133,22 @@ test('genWorkflowSkills: manifest.workflow_skills → {skills} 生成物 (含 15
   assert.ok(parsed.skills.every((s) => s.startsWith('nocode:')), '每个 skill 都应带 nocode: 前缀');
 });
 
-test('genWorkflowSkills: 真实 manifest 含 16 skill 名单', () => {
+test('genWorkflowSkills: 真实 manifest 含 17 skill 名单', () => {
   const parsed = JSON.parse(genWorkflowSkills(loadManifest()).text);
-  assert.equal(parsed.skills.length, 16, '真实 manifest 应含 16 个 workflow skill (含 dev-finish-branch)');
+  assert.equal(parsed.skills.length, 17, '真实 manifest 应含 17 个 workflow skill (含 dev-finish-branch + dev-design-select)');
+});
+
+test('manifest: dev-design 三 skill 分层注册 + select↔refine 触发排他 (B3)', () => {
+  const m = loadManifest();
+  const byId = Object.fromEntries(m.rules.map((r) => [r.id, r]));
+  assert.ok(byId['dev-design'], '协调器 dev-design 应存在');
+  assert.ok(byId['dev-design-select'], 'dev-design-select 应注册');
+  assert.ok(byId['dev-design-refine'], 'dev-design-refine 应注册');
+  assert.ok(byId['dev-design-select'].triggers.some((t) => /预研/.test(t)), 'research/预研 应归 select');
+  assert.ok(byId['dev-design-refine'].triggers.some((t) => /设计文档/.test(t)), '设计文档 应归 refine');
+  const sel = new Set(byId['dev-design-select'].triggers);
+  const overlap = byId['dev-design-refine'].triggers.filter((t) => sel.has(t));
+  assert.equal(overlap.length, 0, `select↔refine 触发不应重叠: ${overlap}`);
 });
 
 test('targets: 含 workflow-skills.json 生成物', () => {

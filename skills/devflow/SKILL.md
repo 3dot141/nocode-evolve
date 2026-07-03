@@ -44,7 +44,7 @@ Define 返回后，拿到确认的 restate + 场景分类，进 Step 2。
 └─ Mini:     Build-lite → Verify-lite → Land-lite (不开 worktree)
 ```
 
-> Design 产出架构后，如果模块多/复杂度高需要拆分子任务，由 Design 内部的 Decompose 子步骤处理（见 Design sub-flow 3g）。devflow 不做独立的规模评估——以完整需求为准，不考虑人天/人力。
+> Design 产出架构后，如果模块多/复杂度高需要拆分子任务，由 Design 内部的 Decompose 子步骤处理（见 Design sub-flow 3e）。devflow 不做独立的规模评估——以完整需求为准，不考虑人天/人力。
 
 ### Step 3: TaskCreate
 
@@ -214,17 +214,17 @@ Fix 类任务的 Review 通过后，问一句：**"什么能预防这个 bug？"
 
 #### Design sub-flow
 
+> Design 阶段是**薄协调器 dev-design** 编排三个阶段 skill（重构后架构）：选方案 → 详细设计+评审 → 渲染。协调器自己不做领域工作。
+
 | Sub-step | 做什么 | 决策 |
 |---|---|---|
-| 3a. 探索上下文 | 先收 Define 探索胶囊（scanBase 一致则复用、只补缺）→ Read 代码 + wiki + 已有 ADR | 标注来源 [Read]/[Doc]/[推断]/[← Define 胶囊] |
-| 3b. 提出 2-3 方案 | 差异化方案 + trade-off 表 | 推荐哪个 + 理由 |
-| 3c. 用户选方案 | AskUserQuestion | 推荐放第一；全否决回 3b 问原因 |
-| 3d. 方案←→目标对齐 | 回检 restate | 有冲突建议回 Define（最多 2 轮） |
-| 3e. 测试目标 | 每条 SC → ≥1 测试目标 | 标可测性约束 + 层级分布 |
-| 3f. 写设计文档 | dev-design-refine | 六轴 review（可行性/清晰度/架构合理性/安全/性能/可扩展性） |
-| 3g. Decompose 判断 | 架构产出后评估是否需要拆分子任务（见下） | 不需要 → 正常进 Plan；需要 → 拆分后各子任务走独立 devflow |
+| 3a. 进 dev-design（薄协调器） | 持状态机，编排下面三阶段，自己不选方案不写文档 | 路由 select→refine→(可选)render |
+| 3b. 选方案（dev-design-select） | 探索 + 多方案差异化对比选定 + 领域覆盖(含可观测两层) + 测试目标 TO + eval | 产出 Decision Packet（含 alternatives 供 refine 反方配平） |
+| 3c. 详细设计 + 唯一评审（dev-design-refine） | 消费 Decision Packet → feat/bug/refactor 详细设计 + 架构审核前置 + 唯一评审（design-doc-review 7 维度） | 遇方案级决策 replan_required → 协调器回 select 重选 |
+| 3d.（可选）渲染（dev-design-render） | 设计文档 → HTML + render receipt，不改输入文档 | 产物关系由协调器在 final gate 报告 |
+| 3e. Decompose 判断 | 架构产出后评估是否需要拆分子任务（见下） | 不需要 → 正常进 Plan；需要 → 拆分后各子任务走独立 devflow |
 
-**3g. Decompose 判断**（Design 产出架构后执行）：
+**3e. Decompose 判断**（Design 产出架构后执行）：
 
 Design 完成方案选定 + 设计文档后，基于架构产出评估项目是否需要拆分为子任务。判断依据是**架构复杂度**（模块数、依赖深度、技术栈跨度），不是人天/人力。
 

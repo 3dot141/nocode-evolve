@@ -39,7 +39,7 @@ Task 4: 验证 + 保存
   Gate: 产出已保存
 
 Task 5: 收口 — 交回调用方
-  Sub-steps: 向 dev-design-refine / dev-design 报告渲染产出路径，交回主流程继续
+  Sub-steps: 向协调器（dev-design）返回 render receipt（产出路径 + 输入文档未改动），交回主流程；产物关系由协调器记录
   Gate: 已交回调用方（渲染是终点分支，无下游阶段 skill）
   metadata: {handoff: true}（供防跳步 Hook B 识别交接 task）
 ```
@@ -166,22 +166,28 @@ AskUserQuestion（参考 pd-vd 方案）：
 
 2. **保存**：
    - Claude Design 线：记 projectId
-   - HTML 线：保存到设计文档同目录
+   - HTML 线：保存到设计文档同目录（`<topic>-design.html`）
 
-3. **更新设计文档**：末尾追加
-   ```markdown
-   ## 可视化
-   渲染产出：`<topic>-design.html` / Claude Design projectId
+3. **产出渲染回执 render receipt**（**不碰输入文档**——设计文档在 render 之前已评审 reviewed，render 改它会破坏"已评审"不可变性，B2）：
    ```
+   RenderReceipt {
+     sourceDoc      // 输入设计文档路径（只读，未改动）
+     output         // <topic>-design.html 路径 / Claude Design projectId
+     deliveryMode   // local-html | claude-design
+     coverage       // 章节 / 图 / 表 渲染计数（完整性核对结果）
+   }
+   ```
+   **产物关系由协调器（dev-design）记录**——render 只返回 receipt，输入文档一个字不动；manifest 不承担运行产物索引。
 
 **Exit Gate:**
 - [ ] 完整性核对通过
-- [ ] 产出已保存
-- [ ] 设计文档已追加引用
+- [ ] HTML / Claude Design 产出已保存
+- [ ] render receipt 已产出，**输入设计文档 `git diff` 为空**（未改动，B2）
 
 ## Red Flags
 
 - HTML 里的章节数跟原文档对不上（漏渲染了）
 - 图渲染跟 ASCII 原文节点/连线对不上
 - 没有设计文档就直接做 HTML（设计在先，渲染在后）
+- **改了输入设计文档**（追加「## 可视化」等）——render 必须纯输出，输入文档已评审不可变，产物关系交协调器记录（B2）
 - 因"任务简单 / 还在概览 / 用户说了'继续'"跳过某 Step、不建 Step 0 TaskCreate、或漏掉最后的交接 task

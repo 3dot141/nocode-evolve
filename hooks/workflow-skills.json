@@ -4,6 +4,7 @@
     "nocode:pdflow",
     "nocode:dev-define",
     "nocode:dev-design",
+    "nocode:dev-design-select",
     "nocode:dev-design-refine",
     "nocode:dev-design-render",
     "nocode:dev-plan",

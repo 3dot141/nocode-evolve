@@ -111,4 +111,4 @@ editor 装配需要 `tenantId / userId / projectId / fineAuthToken`。
 - 下游：「实现」节的业务流（BF1/BF2/...）可以引用前置假设的字段（不需要再说"trace 从哪里来"）
 - 平级：Open Questions / 「方案选型」节的「未决决策」处理"还没定的事"，`prerequisites` 处理"已经定了的实施基底"——两者互补不重叠
 
-> 与 `references/doc-types/design-doc.md` 主骨架的关系：prerequisites 插在「目标」与「架构」之间（如有 `quick-view` 锚点节则在其后）作为**实施基底锚点节**，让「架构」与「实现」节可直接引用其字段。
+> 关系：prerequisites 插在文档靠前（「目标」之后，如有 `quick-view` 锚点节则在其后）作为**实施基底锚点节**，让后续详细设计（架构 / 域设计 / 业务流）可直接引用其字段。
