@@ -1,186 +1,173 @@
 ---
 name: claude-code-cheatsheet
-description: Use when you need to know how Claude Code's own built-in execution mechanics actually work — parallel vs serial tool calls, Bash background tasks + Monitor, permission modes, context auto-compact survival rules, subagent/fork isolation, prompt cache invalidation, or other native CLI behaviors. Also use when unsure whether something "just happens automatically" or needs an explicit action, or before declaring a background task/subagent done. Not for this plugin's own rules (see the agent-catalog routing) and not for general coding tasks unrelated to the harness's own mechanics.
+description: Use when you need to know what Claude Code itself provides and how it behaves — its config knobs (CLI flags, settings.json, env vars), its built-in slash commands, its built-in tools/functions (CronCreate, Workflow, Monitor, ScheduleWakeup, Agent/fork, ToolSearch, Task family, SendMessage, PushNotification, worktree tools), and its runtime mechanics (parallel vs serial tool calls, permission classifier, context compaction, prompt cache). Also use when unsure whether something is a config setting or a runtime capability, which built-in tool fits a job (schedule vs monitor vs background task), or before declaring a background task/subagent done. Not for this plugin's own rules and not for general coding unrelated to the harness itself.
 ---
 
-# Claude Code Cheatsheet — 默认执行速查表
+# Claude Code Cheatsheet — 默认能力速查表
 
 ## Overview
 
-Claude Code 的"默认行为"其实分三层，容易被当成一坨混着记：
+Claude Code 自己提供的东西分两层，别混着记：
 
-- **配置层**：你在会话开始前就定好的东西（CLI 参数、`settings.json`、环境变量、slash commands）——静态，改了才变。
-- **运行时层**：不管你怎么配，引擎在执行过程中自己会做的确定性机制（工具怎么调度、权限怎么兜底、上下文怎么压缩、缓存怎么失效）——这层不是"你的选择"，是"它就这么跑"。
-- **Agent 决策层**：运行时机制摆在那，但"你"（正在执行任务的 agent）该怎么判断、什么时候用哪个能力，是行为纪律问题，不是知识问题。
+- **纯配置**：会话开始前/外部定好的静态旋钮——CLI 参数、`settings.json`、环境变量。改了才变，一次定长期有效。
+- **运行时**：会话进行中你实际会触发或调用的东西——你键入的 **commands**，以及 agent 调用的 **内置功能/工具**（CronCreate、Workflow、Monitor、ScheduleWakeup、Agent、ToolSearch…）。加上引擎在执行过程中自己会跑的**机制**（并行/串行、权限、压缩、缓存），和调这些功能时该有的**判断**。
 
-**核心原则：不确定"Claude Code 默认会怎么做"时来查这里核对，先分清楚问的是哪一层，再找对应小节**，不要凭印象猜，也不要每次重新翻文档。本文内容截至 v2.1.198，来自 `code.claude.com` 官方文档 + 本地 CLI 实测（`claude auto-mode defaults/config`、`claude --help` 等）+ 3 组无 skill 基线测试。
+**核心原则：先分清问的是"配置"还是"运行时能力"，再查对应 Part。** 配置去 Part 1，要调用某个内置功能去 Part 2.2，想知道引擎自动会怎么做去 Part 2.3。内容截至 v2.1.198，来自 `code.claude.com` 官方文档 + 本地 CLI 实测 + 内置工具 schema + 无 skill 基线测试。
 
-这是关于 **Claude Code 产品本身** 的默认行为，不是本插件（nocode）自己的规则——本仓库其它规则（git-inspection、git-freshness 等）建立在这些默认行为之上，不重复。
+这是关于 **Claude Code 产品本身** 的能力，不是本插件（nocode）的规则——本仓库其它规则建立在这之上。
 
 ---
 
-## Part 1 · 配置层（静态，会话开始前定好）
+## Part 1 · 纯配置（静态旋钮）
 
 ### 1.1 CLI 启动参数（速查）
 
 | 参数 | 作用 |
 |---|---|
-| `--permission-mode <mode>` | 指定本次会话权限模式（见 Part 2.2 有哪几种） |
-| `--model <model>` / `--effort <level>` | 指定模型 / 推理强度 |
-| `-w, --worktree [name]` | 为本次会话新建 git worktree |
-| `--bg, --background` | 以后台 agent 方式启动，立即返回 |
-| `--bare` | 最小模式：跳过 hooks/LSP/插件同步/CLAUDE.md 自动发现等，仅保留显式传入的上下文 |
-| `--safe-mode` | 禁用所有自定义项（CLAUDE.md/skills/插件/hooks/MCP 等），排障用 |
-| `--add-dir <dirs...>` | 额外授权工具访问的目录 |
-| `--allowedTools` / `--disallowedTools` | 会话级工具白名单/黑名单 |
-| `--dangerously-skip-permissions` | 跳过全部权限检查（仅限隔离沙箱） |
-| `--exclude-dynamic-system-prompt-sections` | 把 cwd/git status 等易变段移出系统提示词，提高跨用户 prompt cache 复用率 |
-| `--fallback-model <models...>` | 主模型过载时按序自动切备用模型 |
+| `--permission-mode <mode>` | 本次会话权限模式（`default/acceptEdits/plan/auto/dontAsk/bypassPermissions`） |
+| `--model <model>` / `--effort <level>` | 模型 / 推理强度 |
+| `-w, --worktree [name]` / `--tmux` | 新建 worktree（可配 tmux） |
+| `--bg, --background` | 以后台 agent 启动，立即返回 |
+| `--bare` / `--safe-mode` | 最小模式 / 禁用全部自定义项（排障） |
+| `--add-dir` / `--allowedTools` / `--disallowedTools` | 授权目录 / 工具白黑名单 |
+| `--exclude-dynamic-system-prompt-sections` | 易变段移出系统提示词，提高跨用户 cache 复用 |
+| `--fallback-model` | 主模型过载时按序切备用 |
 
-完整参数清单（含 `--mcp-config`、`--plugin-dir`、`--from-pr`、`--json-schema` 等更少用但有用的）见 `references/cli-flags.md`。
+完整清单见 `references/cli-flags.md`。
 
 ### 1.2 settings.json + 环境变量（速查）
 
 | 想调什么 | 用什么 |
 |---|---|
 | 关自动压缩 | `autoCompactEnabled: false` 或 `DISABLE_AUTO_COMPACT=1` |
-| 提前/推迟自动压缩触发点 | `CLAUDE_AUTOCOMPACT_PCT_OVERRIDE`（1–100） |
-| 整体禁用后台任务 | `CLAUDE_CODE_DISABLE_BACKGROUND_TASKS=1` |
+| 压缩触发点 | `CLAUDE_AUTOCOMPACT_PCT_OVERRIDE`（1–100） |
+| 禁用后台任务 | `CLAUDE_CODE_DISABLE_BACKGROUND_TASKS=1` |
 | Bash 超时/输出上限 | `BASH_DEFAULT_TIMEOUT_MS` / `BASH_MAX_TIMEOUT_MS` / `BASH_MAX_OUTPUT_LENGTH` |
-| 覆盖 prompt cache TTL | `ENABLE_PROMPT_CACHING_1H=1` / `FORCE_PROMPT_CACHING_5M=1` |
-| 会话默认权限模式 | `permissions.defaultMode`（写用户级 `~/.claude/settings.json`；`auto` 写项目/本地级会被忽略） |
-| 子代理统一用哪个模型 | `CLAUDE_CODE_SUBAGENT_MODEL` |
-| Glob 也遵守 `.gitignore` | `CLAUDE_CODE_GLOB_NO_IGNORE=false` |
-| `!` shell 命令后不自动回复 | `respondToBashCommands: false` |
+| prompt cache TTL | `ENABLE_PROMPT_CACHING_1H=1` / `FORCE_PROMPT_CACHING_5M=1` |
+| 默认权限模式 | `permissions.defaultMode`（`auto` 只在用户级 `~/.claude/settings.json` 生效） |
+| 子代理统一模型 | `CLAUDE_CODE_SUBAGENT_MODEL` |
+| Glob 遵守 `.gitignore` | `CLAUDE_CODE_GLOB_NO_IGNORE=false` |
+| `!` 命令后不自动回复 | `respondToBashCommands: false` |
 
 完整字段/变量清单见 `references/env-and-settings.md`。
 
-### 1.3 内置 slash commands（点名的几个）
+---
+
+## Part 2 · 运行时（会话进行中触发/调用的东西）
+
+### 2.1 Commands（你键入的 slash commands）
+
+只在消息开头才被识别为命令。点名的几个：
 
 | 命令 | 一句话 |
 |---|---|
-| `/clear`（别名 `/reset` `/new`） | 清空上下文开新会话，旧对话仍可 `/resume` |
+| `/clear`（`/reset` `/new`）| 清空上下文开新会话，旧对话仍可 `/resume` |
 | `/compact [instructions]` | 总结现有对话释放上下文，可带聚焦指令 |
-| `/model` | 切模型并存为默认（会打掉 prompt cache，见 Part 2.6） |
-| `/permissions`（别名 `/allowed-tools`） | 管理 allow/ask/deny 规则 |
-| `/agents` | 管理子代理配置 |
-| `/mcp` | 管理 MCP 连接与 OAuth |
-| `/doctor` | 诊断安装/配置问题 |
-| `/config [key=value]` | 改设置；不带参数打开交互界面，带参数直接改（非交互模式也能用） |
-| `/tasks`（别名 `/bashes`） | 查看/管理全部后台任务 |
-| `/btw` | 侧向提问：不进历史、无工具权限，纯从已有上下文回答，复用父会话 cache 几乎零成本 |
+| `/model` / `/effort` / `/fast` | 切模型 / 推理强度 / 快速模式（都会打掉 cache，见 2.3） |
+| `/agents` / `/mcp` / `/permissions` | 管理子代理 / MCP / 权限规则 |
+| `/config [key=value]` | 改设置；带参数直接改（非交互模式也能用） |
+| `/tasks`（`/bashes`）| 查看/管理全部后台任务 |
+| `/btw` | 侧向提问：不进历史、无工具权限，纯从已有上下文回答，几乎零成本 |
+| `/loop` / `/schedule` / `/workflows` | 循环任务 / 云端定时 routine / 多 agent 工作流（对应 2.2 的 ScheduleWakeup / RemoteTrigger / Workflow） |
 
-完整分类清单 + 近期版本新增/废弃时间线见 `references/slash-commands.md`。
+完整分类清单 + 版本新增/废弃时间线见 `references/slash-commands.md`。
 
----
+### 2.2 内置功能/工具（agent 调用的能力）
 
-## Part 2 · 引擎运行时层（确定性机制，不受模型决策影响）
+Claude Code 内置的"功能型"工具，按用途分组。基础文件工具（`Read`/`Edit`/`Write`/`Bash`/`Glob`/`Grep`）不赘述，行为差异见 2.3。
 
-这一层的每一条都是"不管你怎么想，它就这么执行"——不是可调项，是要认识到的物理规律。
+**A. 定时与唤醒（未来某时点触发）**
 
-### 2.1 工具调度：只读并发，写操作自动串行
+| 工具 | 干嘛 | 关键点 / 坑 |
+|---|---|---|
+| `CronCreate` / `CronList` / `CronDelete` | 本会话内按 5 段 cron 定时重跑一段 prompt；`recurring:false` 做一次性"到点提醒" | **只活在本会话内存里，会话退出就没**；只在 REPL 空闲时触发；recurring 任务 7 天后自动过期；别都挑 :00/:30（全球同一时刻撞 API），近似时间挑奇数分钟 |
+| `ScheduleWakeup` | `/loop` 动态自定步时，安排下次几秒后回来继续同一任务 | **5 分钟 cache TTL 是分水岭**：<270s 保温、1200s+ 才值得付一次 cache miss，别挑正好 300s；轮询 harness 能追踪的后台工作是浪费（完成会自动重唤） |
+| `RemoteTrigger` | claude.ai 云端 routine（`/schedule` 背后），按 cron 在云上跑，**跨会话持久** | 与 `CronCreate` 的分界：这个持久、跑云端；CronCreate 只在本地本会话。别用裸 curl，token 自动注入 |
 
-同一轮请求多个工具调用时：**只读工具**（`Read` `Glob` `Grep`，以及标了 `readOnlyHint` 的 MCP 工具）**并发执行**；**会改状态的工具**（`Edit` `Write` `Bash`）**自动串行**，避免互相冲突。这是运行时规则，**settings.json 里没有对应开关**。
+**B. 编排与派发（把活分出去）**
 
-混进一个 `Write`/`Edit`/`Bash` 就不会真并行——那个操作会等其它工具跑完后单独排队执行，不是引擎的 bug，是设计如此。
+| 工具 | 干嘛 | 关键点 / 坑 |
+|---|---|---|
+| `Agent` | 派一个 subagent 干活，后台跑、完成后通知 | `subagent_type:"fork"` 继承你的完整上下文 + 复用父 cache（省钱）；其它类型是全新独立 context；隔离细节见 2.3 |
+| `Workflow` | 用 JS 脚本**确定性**编排多 agent（`pipeline`/`parallel`/fan-out），后台跑返回 task id | **要用户显式 opt-in（ultracode 等）才该调**，能烧很多 token；`pipeline` 是默认（无 barrier）、`parallel` 是 barrier；一般任务用 `Agent` 就够，别动辄上 Workflow |
 
-### 2.2 权限模式的运行时执行：分类器判断 + protected paths 硬边界
+**C. 监听与等待（盯着某件事）**
 
-**Protected paths 是跨模式硬边界**：`.git` `.claude` `.vscode` `.npmrc` `.mcp.json` 等路径的写入，除 `bypassPermissions` 外**永远要提示**——哪怕 `settings.json` 里显式写了 `Edit(.claude/**)` 也不生效，这条安全检查在 allow 规则**之前**评估，配置层管不到它。
+| 工具 | 干嘛 | 关键点 / 坑 |
+|---|---|---|
+| `Monitor` | 后台流式盯一个脚本/日志/WebSocket，每行 stdout 变一条通知 | **一次性"等到就绪"别用它**（用后台 Bash 的 `until` 循环，一条通知就结束）；无界命令（`tail -f`）才用 Monitor；filter 必须覆盖失败信号，不能只 grep 成功——静默 ≠ 成功 |
+| 后台 Bash（`run_in_background`）| 一次性长任务转后台，跑完给一条完成通知 | **启动 ≠ 完成**，见 2.4 收口纪律 |
 
-**`auto` 模式的分类器**是独立于你选的模式跑的一层判断：连续拒绝 3 次或累计拒绝 20 次后自动回退到人工确认；进入 auto 时会临时丢弃 `Bash(*)` 这类宽泛 allow 规则，退出后恢复。子代理若父会话是 `auto`，会**忽略自己 frontmatter 里设的 `permissionMode`**，统一用父会话的分类器规则跑——给子代理单独配权限模式，父会话是 auto 时不生效。
+**D. 任务追踪**
 
-`auto` 模式实际拦截什么、放行什么，是一份会随版本更新的规则集（分 allow / soft_deny / hard_deny 三层），别凭印象背——本地跑 `claude auto-mode defaults`（出厂默认）或 `claude auto-mode config`（叠加你自己 settings 后的有效规则）直接看当前版本的权威结果。
+| 工具 | 干嘛 | 关键点 |
+|---|---|---|
+| `TaskCreate` / `TaskGet` / `TaskList` / `TaskUpdate` | 会话内结构化任务清单，跟踪多步进度 | v2.1.142 起取代 `TodoWrite`；进 workflow skill 要求 Step 0 先把全部 task 建出来 |
+| `TaskStop` / `TaskOutput` | 停 / 读后台 agent 的产出 | 管后台 `Agent`/`Monitor`/`Workflow` 的生命周期 |
 
-6 种权限模式各自解锁什么、怎么设置，属于配置层，见 Part 1.1（`--permission-mode`）+ `references/env-and-settings.md`。
+**E. 通信与通知**
 
-### 2.3 后台任务的确定性行为
+| 工具 | 干嘛 | 关键点 |
+|---|---|---|
+| `SendMessage` | 给已派的 agent（或 `main`）发消息 | 你的纯文本输出别的 agent **看不到**，要通信必须用这个；按 agentId 可恢复已完成的后台 agent |
+| `PushNotification` | 拉用户注意（桌面 + 手机） | **宁可少发**：只在用户可能走开、且有值得回来的事时发；例行进度别发 |
 
-`run_in_background: true` 立即转后台执行返回任务 ID，输出落盘用 `Read` 增量取。确定性边界，跟你怎么用无关：
+**F. 工作区与模式**
 
-- 前台命令默认超时 2 分钟，可申请到 10 分钟；后台任务输出超 5GB 自动终止。
-- v2.1.193+ 起：系统内存压力 + 会话空闲 ≥30 分钟时，后台任务会被系统直接 kill。
-- 会话退出时后台任务会被清理（转入后台会话继续跑）。
+| 工具 | 干嘛 | 关键点 |
+|---|---|---|
+| `EnterWorktree` / `ExitWorktree` | 建隔离 git worktree 并把会话切进去 | **只在用户或 CLAUDE.md 明确要 worktree 时才用**；`path` 进已存在的 worktree、`name` 建新的 |
+| `EnterPlanMode` / `ExitPlanMode` | 进/出计划模式（只读探索 → 拿批准再执行） | `ExitPlanMode` 把计划提交给用户批 |
 
-### 2.4 Context 自动压缩：触发条件 + 存活表
+**G. 工具加载与产出**
 
-触发窗口由 `CLAUDE_CODE_AUTO_COMPACT_WINDOW`（token 数）和 `CLAUDE_AUTOCOMPACT_PCT_OVERRIDE`（1–100 的百分比阈值）决定，Sonnet 5 默认约在 96.7% 窗口时触发。压缩策略先清理旧工具输出，不够再总结对话；如果单个文件/工具输出太大导致压缩后立刻又填满，会在尝试几次后报 "thrashing" 错误而不是死循环。
+| 工具 | 干嘛 | 关键点 |
+|---|---|---|
+| `ToolSearch` | 按需加载 deferred 工具的完整 schema（否则只有名字，不能调） | 批量用 keyword 一次拉一组（如 `"computer-use"`），别一个个 `select:` 往返 |
+| `Artifact` | 把 HTML/MD 渲染成 claude.ai 托管网页 | 严格 CSP：所有 CSS/JS/图片必须内联；同 `file_path` 重发覆盖同一 URL |
+| `Skill` | 加载并执行一个 skill | 进了刚性 skill 要走完每个 Step |
+| `AskUserQuestion` | 结构化选项问用户 | 待确认内容要写进 payload 自足，别指代前文 |
 
-压缩后各类内容的存活情况，是写规则/文档时最容易忽略的一张表：
+### 2.3 引擎机制（不是你调的，是它自动发生的）
+
+这一层每条都是"不管你怎么想，它就这么执行"，认识到即可，不是可调项。
+
+**并行/串行调度**：同一轮多个工具调用，**只读工具**（`Read` `Glob` `Grep` + 标 `readOnlyHint` 的 MCP 工具）**并发**；**改状态的**（`Edit` `Write` `Bash`）**自动串行**避免冲突。混进一个写操作那一轮就不会真并行——要真并行的写只能拆给不同 subagent。
+
+**权限分类器 + protected paths**：`.git` `.claude` `.vscode` `.npmrc` `.mcp.json` 等路径的写入，除 `bypassPermissions` 外**永远要提示**——哪怕 `settings.json` 写了 `Edit(.claude/**)` 也不生效（安全检查在 allow 规则之前评估）。`auto` 模式的分类器连续拒 3 次或累计拒 20 次自动回退人工确认；子代理若父会话是 `auto`，会忽略自己 frontmatter 的 `permissionMode`。实际拦截清单跑 `claude auto-mode defaults`/`config` 看权威结果，别背。
+
+**Context 自动压缩存活表**（Sonnet 5 默认约 96.7% 窗口触发，thrashing 会停而非死循环）：
 
 | 内容 | 压缩后 |
 |---|---|
-| 系统提示词 / output style | 不受影响（不属于消息历史） |
-| 项目根 CLAUDE.md、未加 `paths:` 范围的 rules | 从磁盘重新注入 |
-| Auto memory | 从磁盘重新注入 |
-| 带 `paths:` frontmatter 限定路径的 rules | **丢失**，直到再次读到匹配文件 |
-| 子目录嵌套 CLAUDE.md | **丢失**，直到再次读到该目录文件 |
-| 已调用的 skill 正文 | 重新注入，但单 skill 上限 5000 token、总上限 25000 token，最老的先丢 |
-| hooks | 不受影响（是代码不是上下文） |
+| 系统提示词 / output style / hooks | 不受影响 |
+| 项目根 CLAUDE.md、无 `paths:` 的 rules、auto memory | 从磁盘重新注入 |
+| 带 `paths:` 限定的 rules、子目录嵌套 CLAUDE.md | **丢失**，直到再次读到匹配文件 |
+| 已调用的 skill 正文 | 重新注入，但单 skill ≤5000 token、总 ≤25000 token，最老先丢 |
 
-实际影响：想让一条规则在长会话压缩后依然生效，别用路径限定 scope。子代理用同一套压缩逻辑，`CLAUDE_AUTOCOMPACT_PCT_OVERRIDE` 对子代理同样生效。
+想让规则长会话压缩后仍生效，别用路径限定 scope。
 
-### 2.5 子代理 / fork：隔离粒度与深度上限
+**子代理隔离 + prompt cache 失效**：子代理拿全新 context（看不到主对话/已调 skill/已读文件），`Explore`/`Plan` 连 CLAUDE.md 都跳过；**fork 例外**（继承完整对话 + 复用父 cache）。子代理 cache 固定 5 分钟 TTL；嵌套深度**固定 5 层不可配**（第 5 层没有 `Agent` 工具）。缓存按整个请求前缀完全匹配——**切模型/切 effort/首开 fast/装卸 MCP/`/compact`/升级版本/resume 跨版本旧会话**会打掉缓存；**编辑文件/切权限模式/调 skill/`/rewind`/生成 fork** 不会。
 
-每个子代理拿到**全新独立** context window——看不到主对话历史、已调用的 skill、已读过的文件；内置的 `Explore`、`Plan` 子代理甚至跳过 CLAUDE.md 和 git status 加载以换取速度。**Fork** 是唯一例外：继承完整对话 + 复用父会话 prompt cache，且始终跑在后台。
+### 2.4 使用纪律（调 2.2 那些功能时的判断）
 
-确定性限制，容易被忽略：
+**后台任务收口：启动成功 ≠ 任务完成**。实测翻车（本 skill 编写中复现）：agent 收到"启动长任务 + 等待期做别的 + 确认完成"，前两步都对，第三步却只说"现在等待通知，完成后我会核对"就结束回合——把"安排了核实"当"已核实"报了出去。**红线**：调 `run_in_background` 或派 `Agent` 后，凡要求"确认结果/等它跑完"，必须真观察到完成信号（收到 notification、`Read` 到标志性输出、文件/进程状态被证实）才能收口。没等到就报"已完成"是头号错误。
 
-- **子代理的 prompt cache 固定 5 分钟 TTL**，即便主会话在订阅计划下能拿到 1 小时——长时间挂起的子代理重新唤醒大概率要吃一次全量重算。
-- **嵌套深度上限固定 5 层，不可配置**：第 5 层子代理不会拿到 `Agent` 工具，无法再往下派生。
-- 子代理 transcript 独立存放，主对话 `/compact` 不影响它；可用 `SendMessage` 按 agent ID 继续跑，stopped 的子代理收到消息会自动在后台恢复。
+**等待/定时怎么选**：
 
-### 2.6 Prompt Cache：什么会打掉缓存，什么不会
+```
+要"等一个终点"（就绪/跑完）        → 后台 Bash run_in_background（一条完成通知）
+要"盯过程中反复出现的变化"（日志报错/CI 状态流）→ Monitor（每次一条通知，filter 覆盖失败）
+要"未来定点/周期重跑一段 prompt"   → 本会话内 CronCreate；要跨会话持久用 RemoteTrigger（/schedule）
+要"/loop 自定步、下次几秒后回来"   → ScheduleWakeup（认准 5 分钟 cache 窗口，别挑 300s）
+```
 
-缓存按**整个请求前缀完全匹配**，前缀里任何一处变化都会导致其后全部重新计算——没有按文件/片段级别的局部缓存。Claude 订阅计划默认 1 小时 TTL（超额计费时降到 5 分钟）；API key/Bedrock/Vertex 默认 5 分钟。
-
-| 会打掉缓存 | 不会打掉缓存 |
-|---|---|
-| 切模型、切 effort level | 编辑仓库文件 |
-| 首次开 fast mode | 切换权限模式（`opusplan` 因涉及切模型除外） |
-| MCP server 连接/断开（工具 schema 加载进 prefix 时） | 调用 skill / command |
-| deny 整个工具（裸工具名或 `Bash(*)`） | `/rewind`（回退到已缓存的更早前缀） |
-| `/compact`（对话层失效，但省时因为总结请求本身复用旧前缀） | 生成 fork（复用父会话缓存） |
-| 升级 Claude Code 版本 / resume 跨版本旧会话 | CLAUDE.md / output style 中途编辑（不失效但也不生效，要等 `/clear`/`/compact`/重启） |
-
-性能意义最大的场景：长会话中途切模型/切 effort 就是在主动付一次全量重算的代价；resume 一个跨版本升级过的旧会话，第一轮响应会显著变慢变贵。可用 `cache_creation_input_tokens`（写入价计费）和 `cache_read_input_tokens`（约标准输入价 10%）监控命中率。
-
-### 2.7 零散的确定性行为差异
-
-- **Read-before-edit 不是只能用 `Read` 工具满足**：用 Bash 跑 `cat`/`head`/`tail`/`sed -n 'X,Yp'`/`grep`（对单个文件、无管道无重定向）也算"已读取"——但这只影响能否编辑，不影响 `Read`/`Edit` 各自的 deny 权限判定，两者覆盖的命令集合不完全一致。
-- **`Grep` 用 ripgrep 语法且遵守 `.gitignore`；`Glob` 默认不遵守**——两者行为不对称，用 `Glob` 找文件可能意外扫到 `node_modules/` 等本该被忽略的路径。
-- **Shell mode `!` 前缀**：命令输出落地后 Claude 会自动响应一次（等同发了一条消息，会计费），配置层可用 `respondToBashCommands: false` 关掉这个自动回复。
-
----
-
-## Part 3 · Agent 决策层（Part 2 的机制摆在那，怎么用是你的判断）
-
-### 3.1 后台任务收口纪律：启动成功 ≠ 任务完成
-
-**真实翻车模式（本 skill 编写过程中实测复现）**：一个 agent 收到"启动长任务 + 等待期间做别的事 + 确认任务已完成"的指令。前两步都做对了——正确用了 Part 2.3 的后台执行机制，也正确利用等待时间做了别的工作。到了第三步却直接结束回合，只说"现在等待完成通知，完成后我会核对"——把**"我安排了核实"**当成**"已完成核实"**汇报了出去，指令要求的确认结果这一步实际没做。
-
-**红线**：调用 `run_in_background` 或派生 `Agent` 之后，只要任务要求"确认结果 / 等它跑完"，就必须真正观察到完成信号（收到 notification、`Read` 到标志性输出、文件或进程状态被证实）才能收口。没等到就报告"已完成"是头号错误——本质是 Fail loud 原则在异步场景下最容易被绕过的一个缺口。
-
-（同一场景补上本 skill 后重测：agent 主动跑了一条有界轮询 `until [ -f marker ]; do sleep 1; done`，等到文件真实出现 + 收到系统完成通知两个独立信号都到齐才收口——这是正确姿势。）
-
-### 3.2 何时用 Monitor，何时用轮询，何时都不用
-
-- **一次性"等到跑完"**：直接用 `run_in_background` 本身的完成通知即可，不需要额外工具——启动后去做别的事，通知到了再回来收口（3.1 讲的就是这个场景）。
-- **长期"盯着某个信号变化"**：日志出现报错关键字、CI/PR 状态持续变化、文件被持续修改这类不知道什么时候会变、但变了要立刻反应的场景，用 **Monitor 工具**（v2.1.98 引入），不要手写 `sleep` 轮询循环——Monitor 专门做"后台盯着，出事才插话，不打断当前对话"这件事，v2.1.195+ 还能直接开 WebSocket 逐条推事件。
-- 判断依据：需要的是"终点"还是"过程中的变化"？只要终点用后台任务通知/一次性轮询；要盯过程用 Monitor。
-
-### 3.3 何时该拆给 fork/subagent 并行，何时不用拆
-
-- **多个独立只读操作**（互不依赖、都不改状态）：不用拆 agent，直接在同一条消息里把工具调用一次性发出，靠 2.1 的并发规则自动并行，总耗时≈最慢的一个。
-- **混了写操作 / 需要真正独立 context 判断**：Part 2.1 讲过写操作在单个 agent 内不会真并行——多个独立且包含写操作的任务，才需要拆给不同 subagent 各自跑。
-- **一次性研究/多角度调查、不需要屏蔽当前对话**：用 **fork**——继承完整上下文 + 复用 prompt cache，比新开子代理省钱（Part 2.5）。
-- **需要屏蔽当前对话噪音、要独立视角判断**（如红蓝对抗审查、避免带入当前任务的先入之见）：用**命名 subagent**，接受它是全新 context、走自己的 5 分钟 cache。
-- 拆之前先判断"这几件事之间有没有依赖/共享状态"——有依赖就不能并行，先后顺序做；这条不是技巧，是正确性前提。
+**何时拆 agent**：多个独立**只读**操作不用拆，同一条消息一次性发出靠 2.3 并发规则自动并行；含写操作或需独立视角判断才拆 subagent；一次性研究/多角度调查用 **fork**（省钱），需屏蔽当前对话噪音的独立判断用**命名 subagent**。拆之前先确认几件事之间没有依赖/共享状态——有依赖就顺序做，这是正确性前提不是技巧。
 
 ---
 
 ## 参考
 
 - `references/cli-flags.md` — CLI 启动参数完整清单
-- `references/slash-commands.md` — 内置 slash commands 完整分类清单 + 近期版本变更
+- `references/slash-commands.md` — 内置 slash commands 完整分类 + 版本变更时间线
 - `references/env-and-settings.md` — settings.json 全字段 + 环境变量完整清单
