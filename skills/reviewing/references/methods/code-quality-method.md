@@ -116,4 +116,4 @@ const apiKey = process.env.API_KEY;  // ✓ Good
 
 ---
 
-> **派发 / 档位 / 升档 / CLAIM 剥离 / codex 降级见 skeleton §1、§1a、§4.0–§4.2，本卡不复述。** 代码 diff 默认方法集 = `checklist`（本卡）+ `dual-review` 异源双评（见 skeleton §3 选择表「代码 diff」行）；碰安全敏感面（外部输入 / 认证 / 敏感数据）时叠加 `security-method`（OWASP 全量）+ `threat-modeling`。
+> **派发 / 档位 / 升档 / CLAIM 剥离 / codex 降级见 skeleton §1、§1a、§4.0–§4.2，本卡不复述。** 代码 diff 默认方法 = `checklist`（本卡，见 skeleton §3 选择表「代码 diff」行）；重档时按 §4.0 双路执行（subagent + codex，合并规则见 `dual-review.md`）；碰安全敏感面（外部输入 / 认证 / 敏感数据）时叠加 `security-method`（OWASP 全量）+ `threat-modeling`。

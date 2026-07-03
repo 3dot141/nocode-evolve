@@ -28,16 +28,16 @@ review 这件事在仓库里被重造了十几遍：每个 review 都重新发�
 
 ```
 ① 通用流程骨架（skeleton，7 步）   ② 评审方法库（methods/，method cards）
-   1 分档                             red-blue-adversarial（对抗·有防守方）
-   2 对象界定 + gate                  dual-review（双评+总结·无防守方）
-   3 评审维度 ← 调用方传入            checklist
-   4 主路 subagent 审（选方法）       perspective-based (PBR)
-   5 异源交叉（仅升档）              error-mechanism (HECR)
-   6 findings + 分级                  self-review / threat-modeling
+   1 分档（轻/中/重，起始档）          真方法（§3 按对象选）：
+   2 对象界定 + gate                    red-blue-adversarial（对抗·有防守方）
+   3 评审维度 ← 调用方传入              checklist / perspective-based (PBR)
+   4 主路审（按档位执行）              error-mechanism (HECR) / threat-modeling
+   5 升档重跑（仅轻/中档，§1a 触发）   档位默认执行形态（不入 §3，档位直派）：
+   6 findings + 分级                    self-review（轻档）/ dual-review（重档双路合并）
    7 收口 / triage                    （+ 4 个领域 method card）
 
 ③ 公共能力（框架级横切，方法不各写一遍）        ④ reviewer 纪律（reviewer-discipline）
-   主路 subagent 派发 · CLAIM 剥离 · codex 降级     Iron Law · Evidence Gate ·
+   主路派发（三档）· CLAIM 剥离 · codex 降级        Iron Law · Evidence Gate ·
    · Doubt Theater 检测 · 分档判定                  Q/SA 定义 · 编号规则
 
 ⑤ 统一 findings 契约（findings-contract）{ id, severity, kind, axis, location, evidence, finding, fix, source } + verdict
@@ -49,19 +49,19 @@ review 这件事在仓库里被重造了十几遍：每个 review 都重新发�
 
 | # | 步骤 | 做什么 |
 |---|---|---|
-| 1 | **分档** | 轻档 / 重档，按评审对象的风险定 review 深度（skeleton §1） |
+| 1 | **分档** | 轻档 / 中档 / 重档，按评审对象的风险定起始深度（skeleton §1）——只能往上升，不是判死 |
 | 2 | **对象界定 + 进入 gate** | 评什么、范围多大、前置条件是否满足 |
 | 3 | **评审维度**（调用方传入） | 引擎**不规定**具体维度——用调用方传进来的领域维度 |
-| 4 | **主路审（选方法）** | 从方法库按「对象类型 + 档位」选 1+ 种方法，按 skeleton §4.0 派主路隔离执行，带 reviewer-discipline 纪律 |
-| 5 | **异源交叉**（仅升档，skeleton §1a） | 默认不跑——主路审后有异议才派：CLAIM 剥离 + 派 codex + 独立性档位声明 |
+| 4 | **主路审（按档位执行）** | 轻档主会话按 self-review 清单自查；中/重档从方法库按「对象类型 + 档位」选 1+ 种方法，按 skeleton §4.0 派执行（重档 subagent + codex 直接双路），带 reviewer-discipline 纪律 |
+| 5 | **升档重跑**（仅轻/中档，skeleton §1a） | 执行中命中升档信号（含读到实际内容碰更高档红旗）就升，不是"审完才判断"：换到目标档位重新执行 |
 | 6 | **findings 统一 schema + 分级** | 套 findings-contract 结构 + C/W/S 三档 severity + kind（normal / open-question / self-audit） |
 | 7 | **收口 / triage / 拍板** | Critical 必修，按 verdict 呈现，交用户拍板 |
 
-> 第 4 步从方法库选打法——红蓝对抗只是**一种**方法，适合方案 / 决策，不适合逐项缺陷核查；逐项核查走 checklist。方法选择表见 skeleton §3。
+> 第 4 步从方法库选打法——红蓝对抗只是**一种**方法，适合方案 / 决策，不适合逐项缺陷核查；逐项核查走 checklist。方法选择表见 skeleton §3；self-review / dual-review 不在此表，是轻档 / 重档的默认执行形态，档位直派不用挑选。
 
 ## 引擎文件地图（全在 references/ 下，自包含）
 
 - `references/skeleton.md` — **流程骨架单源**：分档判据表 + 7 步详解 + 方法选择表 + 公共能力 how-to（主路 subagent 派发 / CLAIM 剥离 / codex 经 `rule-codex-review` 派 / Evidence Gate / Doubt Theater / 分档）。
 - `references/reviewer-discipline.md` — **reviewer 纪律单源**：Iron Law + Forbidden Language + Evidence Gate 判据 + Q/SA 定义 + 编号规则。派 reviewer 时随对象一起给。
 - `references/findings-contract.md` — **findings 契约单源**：finding schema + verdict 层 + 5→3 分级映射表 + 三条关键约束（security High 上提 Critical / Q-SA 作 kind / Evidence Gate）。
-- `references/methods/` — **评审方法库**：每个方法一份 card（维度表 / 思路 + 输出契约）。基础方法 7 个（red-blue-adversarial / dual-review / checklist / perspective-based / error-mechanism / self-review / threat-modeling）+ 领域方法 card（security-method / database-method / code-quality-method / architecture-method）。red-blue 与 dual-review 的分界（有无防守方）见 `methods/dual-review.md`。
+- `references/methods/` — **评审方法库**：真方法 5 个（red-blue-adversarial / checklist / perspective-based / error-mechanism / threat-modeling，按 §3 对象选）+ 档位默认执行形态 2 个（self-review 轻档自查 / dual-review 重档双路合并，档位直派不入 §3）+ 领域方法 card（security-method / database-method / code-quality-method / architecture-method）。red-blue 与 dual-review 的分界（有无防守方）见 `methods/dual-review.md`。
