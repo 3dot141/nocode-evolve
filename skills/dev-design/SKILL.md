@@ -66,8 +66,8 @@ Task 3-5: 多轮方案选定（从大到小循环）
   跟 PRD 功能领域交叉检查防遗漏
   Gate: 层级下钻检查全 ❌（没有更多子决策需要对比）
 
-Task 6: 对齐 + Pre-mortem + 领域覆盖检查
-  Sub-steps: 回检 restate 冲突 → pre-mortem(top 3 死因) → 8 领域逐项过 → 涉及的 Read 指南产出决策
+Task 6: 对齐 + 失败预演 + 领域覆盖检查
+  Sub-steps: 回检 restate 冲突 → 失败预演(top 3 失败原因) → 8 领域逐项过 → 涉及的 Read 指南产出决策
   Gate: 无冲突 + 领域清单逐项标 ✅/跳过
 
 Task 7: 测试与验证计划
@@ -79,7 +79,7 @@ Task 8: 写设计文档
   Gate: 决策清点全 ✅ + 功能覆盖全 ✅ + 输入清单无缺失 + 文档已产出
 
 Task 9: 设计文档评审
-  Sub-steps: 六轴 review → 内部一致性核对(BF↔影响清单↔接口↔DDL↔工具集↔文本总结) → design-review 自审（有异议升档 Codex 交叉，skeleton §1a）
+  Sub-steps: 六轴 review → 内部一致性核对(BF↔影响清单↔接口↔DDL↔工具集↔文本总结) → design-review（有异议升档 Codex 交叉，skeleton §1a）
   Gate: 六轴 + 一致性 + design-review 通过，无 Critical findings
 
 Task 10: 硬交接 — 调用下一步 skill
@@ -307,7 +307,7 @@ restate 附录有探索胶囊？
 
 ---
 
-### Step 6: 对齐 + Pre-mortem + 领域覆盖检查
+### Step 6: 对齐 + 失败预演 + 领域覆盖检查
 
 **Enter Gate:**
 - [ ] Step 5 满足（方案已选定）
@@ -316,7 +316,7 @@ restate 附录有探索胶囊？
 
 **6a. 回检 restate**：没冲突 → 继续。发现冲突（新约束/验收标准不可行）→ 告知用户，建议回 Define 修正。最多 2 轮。
 
-**6b. 轻量 pre-mortem**："假设这个方案上线 3 个月后彻底失败了，最可能的 top 3 死因是什么？"列出来，反过来检验方案——死因如果在方案里没有应对措施，要么补措施要么接受风险并标注。不是问"可能出什么错"（forward-looking），而是假设"已经死了"再回头看（backward-from-failure）——视角切换能抓到 forward-looking 漏掉的盲区。
+**6b. 轻量失败预演**："假设这个方案上线 3 个月后彻底失败了，最可能的 top 3 失败原因是什么？"列出来，反过来检验方案——失败原因如果在方案里没有应对措施，要么补措施要么接受风险并标注。不是问"可能出什么错"（forward-looking），而是假设"已经失败"再回头看（backward-from-failure）——视角切换能抓到 forward-looking 漏掉的盲区。
 
 **6c. 领域覆盖检查（逐项过，涉及的强制展开）**：选定方案后，逐项检查 8 个领域。不涉及的标"跳过"。涉及的 Read 对应指南 → **强制展开为决策清单**——每个决策点列出"决策点 / 选了什么 / 为什么 / 备选是什么"。一句话标 ✅ 不算完成。
 
@@ -366,7 +366,7 @@ Step 1 的代码探索是广度的（"有什么可复用的"），这里是深�
 
 **Exit Gate:**
 - [ ] 方案↔restate 无冲突（有冲突已回 Define）
-- [ ] Pre-mortem top 3 死因已列，各有应对或已标风险
+- [ ] 失败预演 top 3 失败原因已列，各有应对或已标风险
 - [ ] 8 领域逐项标 ✅/跳过，涉及的已强制展开为决策表（每个决策点有"选了什么/为什么/备选"）
 - [ ] 决策表中无"待确认"项——有待确认的就地 Read 代码解决，不带进 Step 7
 
@@ -454,7 +454,7 @@ TO 传递给后续 Plan（指导切片 + task covers）、Build（驱动 TDD）�
 - [ ] 前置调研（← Step 1 探索综合，含来源标注）
 - [ ] UI 设计方案（← Step 2，涉及前端时）
 - [ ] 方案对比 + 选定方案（← Step 3-5）
-- [ ] Pre-mortem 发现（← Step 6b）
+- [ ] 失败预演发现（← Step 6b）
 - [ ] 领域覆盖检查结果（← Step 6c，每个涉及领域的设计决策）
 - [ ] 测试目标 TO 表 + Verify 策略 + 路径覆盖状态表（← Step 7）
 
@@ -552,12 +552,12 @@ TO 传递给后续 Plan（指导切片 + task covers）、Build（驱动 TDD）�
 
 发现矛盾 → 修文档（以 BF 伪代码为准，其他部分对齐到 BF）。修完重新过一遍矛盾对。
 
-**design-review**（引入 `reviewing` 框架，自审为主，有异议升档）：方案质量审查走框架——`Read {NOCODE_SKILL_REF}/reviewing/skeleton.md` 套 7 步通用流程（分档 / 独立交叉 / 分级 / 收口）+ `Read {NOCODE_SKILL_REF}/reviewing/findings-contract.md` 套 findings 契约；设计领域的 10 项评审维度见 `{NOCODE_SKILL_REF}/design-review.md`（框架第 3 步注入点）。「设计文档」对象按 skeleton §3 取主方法 `checklist`（10 维度，主路自审默认）；自审后命中 skeleton §1a 升档判据（无法自行裁决的 finding / 结论有争议 / 用户显式要求深审）→ 升档 `dual-review`（Codex 异源双评，CLAIM 剥离 + Context Capsule，不传主路结论 / 方案倾向）。findings 套统一契约，Critical 必须修复。这和六轴互补——六轴是文档结构审查，内部一致性是交叉矛盾审查，design-review 是方案质量审查。
+**design-review**（调 `reviewing` 引擎）：方案质量审查——Read `references/design-review.md`（设计领域 10 维度）拿维度，然后 `Skill(nocode:reviewing)`，声明：**对象** = 设计文档；**领域维度** = 设计 10 维度；**方法** = checklist（或让引擎按对象自选）。引擎产 findings + verdict——流程 / 档位 / 主路派发 / 升档 / 降级 / 分级全由引擎承载，本节不复述。Critical 必须修复。这和六轴互补——六轴是文档结构审查，内部一致性是交叉矛盾审查，design-review 是方案质量审查。
 
 **Exit Gate:**
 - [ ] 六轴 review 通过
 - [ ] 内部一致性核对通过，无交叉矛盾
-- [ ] design-review 通过（自审为主，升档时含交叉），无 Critical findings
+- [ ] design-review 通过（升档时含交叉），无 Critical findings
 - [ ] 后续 Plan 输入齐全：restate + 设计文档 + 测试目标
 
 ## Exit Gate
@@ -572,7 +572,7 @@ TO 传递给后续 Plan（指导切片 + task covers）、Build（驱动 TDD）�
 - [ ] 决策清点表全 ✅，无待确认/未讨论项（Step 8a）
 - [ ] 功能覆盖表全 ✅，PRD 功能点均有设计落点（Step 8b）
 - [ ] 设计文档已由 dev-design-refine 产出（Step 8c）
-- [ ] 设计文档评审通过——六轴 + 内部一致性核对 + design-review（自审为主，升档时含交叉），无 Critical findings（Step 9）
+- [ ] 设计文档评审通过——六轴 + 内部一致性核对 + design-review（升档时含交叉），无 Critical findings（Step 9）
 - [ ] 后续 Plan 输入齐全：restate + 设计文档 + 测试目标
 - [ ] **硬交接**：Exit Gate 全部通过后，向用户报告 Design 完成（含方案摘要 + 关键决策清单 + 测试目标概要）——这是本轮 Design 流程唯一的整体确认窗口（Step 2/5/7 触发「用户介入原则」例外时提前问过的除外），用户可在此对任意决策提出异议要求回退重做。确认通过后建议下一阶段：Plan（`nocode:dev-plan`）。列出 Plan 阶段的 sub-steps + 关键决策（devflow Step 5 格式）。等用户拍板，不自行进入下一阶段
 
