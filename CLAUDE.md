@@ -55,3 +55,11 @@ node scripts/vendor-sync.mjs           # 执行同步（copy/extract/remove）
 Skill 的 SKILL.md 里每个步骤的编号用整数（`Step 1` / `Step 2`）或字母后缀（`Step 1a` / `6e`）。禁止用分数编号（`Step 0½` / `6d½`）——分数编号在搜索、引用、排序时都不方便。
 
 新增步骤插入已有序列时，调整后续编号保持连续；或使用字母后缀（`Step 8a`）避免大面积重编号。
+
+### 6. Skill 是自闭环单元，除 Reference 外只能读 Skill
+
+SKILL.md 正文与私有 `references/` 只允许引用两类东西：**其它 Skill**（点名 handoff 或 `Skill()` 调用）和**参考材料**（自己的 `<skill>/references/`，或共享的 `skills/references/`）。
+
+不得直接指路 `rules/rule-*.md`、`model/agent-*.md`、`hooks/`、非自身的 `scripts/` 等插件内部实现文件——这些是 SessionStart / PreToolUse 自动注入的路由与护栏层，skill 运行时不需要、也不该显式指路。skill 若确有信息依赖这类文件（如某变量定义在 `model/agent-about.md`），把内容摘一份进自己的 `references/`，或改成向对应 skill 的 handoff，不要跨层直接引用。
+
+是否符合由 `/plugin-dream` 的 Layer 2 skill 对象检测项兜底扫描；`skill-writing` 在产出/编辑 skill 时按本规则自查。

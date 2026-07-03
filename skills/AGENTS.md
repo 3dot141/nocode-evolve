@@ -22,9 +22,10 @@ Claude Code 自动发现本目录下每个含 `SKILL.md` 的子目录，**新增
 4. **workflow 类 skill**（Multi-step 顺序执行 + 排序/副作用敏感）SKILL.md 必须含：Step 0 TaskCreate（任务一次性建全）、每个 Step 的 Enter/Exit Gate、Global Exit Gate；Gate 必须客观可判（yes/no / 有无数字），不能是主观词。模板见 `skill-writing/writing-skills/workflow-skill-template.md`。
 5. skill 自评/自审步骤（review / verify / check / validate 自己刚产出的东西）要挂评审方法论：多维度结构化评审引入 `reviewing` 框架——`Read {NOCODE_SKILL_REF}/reviewing/skeleton.md` + `Read {NOCODE_SKILL_REF}/reviewing/findings-contract.md`，不要在新 skill 里重造一遍"维度清单→自评→交叉→分级→收口"流程；轻量单点自检可以只走自审（不进框架）。
 6. SKILL.md 超过 500 行时，把细节挪到 `<skill>/references/`（skill 私有参考目录，与共享的 `skills/references/` 是两回事，见下条）。若某段领域知识对 ≥2 个 skill 都有用，考虑放进共享的 `skills/references/`（走该目录自己的 AGENTS.md 流程）。
-7. **SKILL.md 给 agent，README.md 给人**：归属说明、变更历史、设计理由这类人类可读内容放该 skill 的 README.md，不要塞进 SKILL.md 污染 agent context。
-8. 改完后：升级 `.claude-plugin/plugin.json` 的 `version`（`skills/` 属于"被插件加载的文件"范围，CLAUDE.md 规则 2）——新增 skill/兼容性增强 → minor；纯 bug fix/文案修订 → patch；破坏性改名/语义反转 → major，与本次改动放同一个 commit。
-9. commit 前如果改动涉及 vendor 来源 skill，先看下一条。
+7. **Skill 是自闭环单元，除 Reference 外只能读 Skill**：SKILL.md 正文与私有 `references/` 只能引用其它 Skill（点名 handoff 或 `Skill()` 调用）或参考材料（自己的 `references/`、共享的 `skills/references/`）；不得直接指路 `rules/rule-*.md`、`model/agent-*.md`、`hooks/`、非自身 `scripts/` 等插件内部实现文件（仓库 `CLAUDE.md` 规则 6）。`/plugin-dream` 的 Layer 2 skill 对象检测会扫这一项。
+8. **SKILL.md 给 agent，README.md 给人**：归属说明、变更历史、设计理由这类人类可读内容放该 skill 的 README.md，不要塞进 SKILL.md 污染 agent context。
+9. 改完后：升级 `.claude-plugin/plugin.json` 的 `version`（`skills/` 属于"被插件加载的文件"范围，CLAUDE.md 规则 2）——新增 skill/兼容性增强 → minor；纯 bug fix/文案修订 → patch；破坏性改名/语义反转 → major，与本次改动放同一个 commit。
+10. commit 前如果改动涉及 vendor 来源 skill，先看下一条。
 
 ## vendor 来源 skill 禁手改
 
