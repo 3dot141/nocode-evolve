@@ -20,10 +20,9 @@
    - 例外：用户显式声明「在主仓写 / 不要 worktree / 就地写」→ 跳过本步，但要回复里点名告知"按你的要求跳过 worktree，直接在主仓 <branch> 写"
 
 2. **`nocode:dev-design-refine`** —— 生成 markdown 设计文档
-   - 类型选择（按业界 4 类 doc-type 主轴：PRD / RFC / Design Doc / ADR）
-   - 每个 doc-type 一套线性骨架（背景 → 目标 → ... → 后果，无元结构标签）
-   - Design Doc 骨架：背景 / 目标 / 架构（架构图 / 流程图 / 时序图 / 文本总结）/ 实现（影响 / 接口设计 / 业务流 BFx / 异常与失败模式 / 单测设计）/ 方案选型（Q→选项→定 三行）/ 其他（部署 …）
-   - Read examples + doc-types reference 学习结构
+   - 场景选择（feat / bug / refactor 三种场景模板；预研 / 技术选型走 `dev-design-select`）
+   - 每种场景一套骨架（feat：领域划分 → 交互场景 → 域设计 → 汇总；bug：现象 → 根因 → 修复 → 验证；refactor：现状 → 目标 → before/after → 迁移）
+   - Read `references/example-{feat,bug,refactor}-skeleton.md` 学习结构
    - 输出路径按 `{dev_design_output}` 变量（落在 step 1 创建的 worktree 内）
 
 3. **评审**（dev-design-refine 工作流的 Review 环节 · 自审为主，维度用 `references/reviewer-template.md`）
