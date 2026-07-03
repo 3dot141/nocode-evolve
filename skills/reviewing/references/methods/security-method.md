@@ -4,7 +4,7 @@
 >
 > 本卡由 `agents/security-reviewer.md` 转出：剥 frontmatter + 写死项目示例，**完整保留 OWASP Top10 清单 + 10 个漏洞模式 + 漏洞 category**。常与 `threat-modeling` 配对：threat-modeling 按信任边界系统性发现威胁，本卡按 OWASP / 漏洞模式逐项兜底核查（§4.3 选择表「安全 → threat-modeling + checklist(security-method OWASP)」）。
 >
-> **caller 用法**：`Read` 本卡 + `Read {NOCODE_SKILL_REF}/reviewing/skeleton.md`（套通用流程）+ `Read {NOCODE_SKILL_REF}/reviewing/findings-contract.md`（套 findings 契约）；把待审 diff 注入下方 `{DIFF}` 占位符。流程步骤（分档 / 独立交叉 / 分级 / 收口）走骨架，本卡只提供「领域维度」（骨架第 3 步）。
+> **caller 用法**：`Read` 本卡 + `Read references/skeleton.md`（套通用流程）+ `Read references/findings-contract.md`（套 findings 契约）；把待审 diff 注入下方 `{DIFF}` 占位符。流程步骤（分档 / 独立交叉 / 分级 / 收口）走骨架，本卡只提供「领域维度」（骨架第 3 步）。
 
 ---
 
@@ -166,20 +166,12 @@ console.log('User login:', { email: mask(email), passwordProvided: !!password })
 
 ## 二、输出契约
 
-产出 `findings[]`，映射 `{NOCODE_SKILL_REF}/reviewing/findings-contract.md`：
+套 `findings-contract.md` 的 schema，`axis` = OWASP 项或漏洞模式名（`Injection` / `Broken Access Control` / `SSRF`……），`fix` 优先 Structural Remedy（参数化查询消除整类注入，胜过单点转义）。
 
-- 每条 finding：`axis` = OWASP 项或漏洞模式名（`Injection` / `Broken Access Control` / `SSRF`……）；`location` = `file:line`；`evidence` = 漏洞代码摘录 + 攻击向量（构造什么输入/请求触发）；`fix` = 缓解（Structural Remedy 优先：参数化查询消除整类注入，胜过单点转义）。
-- **security 4档 → 统一 C/W/S 的关键约束**（findings-contract §4 约束①）：security 的 **High 上提 Critical**（High = "Fix Before Production" 语义近阻塞），4→3 压缩**上提不下沉**——`Critical + High → critical`，`Medium → warning`，`Low → suggestion`。绝不把 High 下沉成 warning（会让上线前必修的安全问题被当可选修）。
-- 受 **Evidence Gate** 约束：安全 critical 必须有 `location` + 攻击向量/PoC，否则降 `kind=open-question`（无证据的安全指控易误报，让作者去核而非阻塞）。
-- `verdict`：有未缓解 critical → `approved=false`；安全硬伤必修才放行（recommendation 给「N Critical 必修后可合并」式拍板建议）。
+- 4 档 → 统一 C/W/S：**High 上提 Critical，不下沉**（findings-contract §4 约束①）。
+- 受 Evidence Gate 约束：安全 critical 必须有 `location` + 攻击向量/PoC，否则降 `kind=open-question`。
+- `verdict`：有未缓解 critical → `approved=false`；安全硬伤必修才放行。
 
 ---
 
-## 三、派发策略
-
-| 模式 | 派 subagent | 调 codex | 说明 |
-|---|---|---|---|
-| **自评清单**（低风险 / 纯内部逻辑） | 否 | 否 | 主 agent 直接套 OWASP + 漏洞模式逐项核查，但仍标信任边界确认「确实无外部面」 |
-| **异源交叉**（推荐，安全默认重档） | **是** | **是** | 外部输入/认证/敏感数据 → 重档：subagent + codex 独立跑 OWASP/漏洞模式，**CLAIM 剥离**（只传 diff + 维度清单，不传已发现的漏洞结论），异源更易发现单模型盲区 |
-
-档位：安全（外部输入 / 认证 / 敏感数据 / 资金）默认 **重档 + 异源**（独立性档 = 异源，§4.3）。codex 不可用 → 单 subagent + 明说降级，独立性声明标「同模型（降级）」。配 `threat-modeling` 用：threat-modeling 出威胁 → 本卡 OWASP 兜底逐项核查。
+> **派发 / 档位 / 升档 / CLAIM 剥离 / codex 降级见 skeleton §1、§1a、§4.0–§4.2，本卡不复述。** 安全对象（外部输入 / 认证 / 敏感数据 / 资金）默认**重档 + 异源**（独立性档 = 异源）；低风险纯内部逻辑可降为主 agent 单跑，但仍需标信任边界确认「确实无外部面」。常配 `threat-modeling` 用：threat-modeling 出威胁，本卡 OWASP / 漏洞模式兜底逐项核查。

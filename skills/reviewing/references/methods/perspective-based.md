@@ -23,22 +23,11 @@ PBR 的核心是**分视角、各深读、取并集**。不给所有 reviewer �
 
 ## 二、输出契约
 
-产出 `findings[]`，映射 `{NOCODE_SKILL_REF}/reviewing/findings-contract.md`：
+产出 `findings[]`，映射 `references/findings-contract.md`：
 
-- 每条 finding：`axis` = 视角名（`用户视角` / `维护者视角` / `攻击者视角`……）；`location` 必填；`severity` = C/W/S；`source` = `subagent`（分视角派 subagent 时）/ `主路`（主会话自演多视角时）。
+- 每条 finding：`axis` = 视角名（`用户视角` / `维护者视角` / `攻击者视角`……）；`location` 必填；`severity` = C/W/S；`source` = `subagent`（每视角独立 subagent 时）/ `主路`（主路顺序戴帽时）。
 - 各视角并集去重：`dedup(by=[location, axis])`——同位置不同视角各记一条（视角不同价值不同），同位置同视角才合并。
 - 受 Evidence Gate 约束（事实类 critical 缺 location 降 open-question）。
 - `verdict.counts` 汇总。
 
-## 三、派发策略
-
-| 模式 | 派 subagent | 调 codex | 说明 |
-|---|---|---|---|
-| **轻量多视角自审** | 否 | 否 | 主 agent 顺序戴每顶帽子各深读一遍（适合 2-3 视角、低风险） |
-| **并行分工**（推荐重档） | **是**（每视角一个 general-purpose subagent）| 可选 | 视角间天然独立，并行派发避免主 agent 串行时「视角污染」（看完用户视角再看维护者会带前一顶帽子的锚定）|
-
-档位：
-- 轻档 → 主 agent 自审 2-3 视角
-- 重档 / 多利益相关者对象 → 每视角派独立 subagent 并行，**CLAIM 剥离**（只传对象 + 该视角关切点，不传其他视角发现），最后主 agent 取并集合并
-
-codex 在 PBR 中可选——若需异源独立性，让 codex 扮其中一个高价值视角（如攻击者）。codex 不可用 → 该视角降级由 subagent 扮 + 明说。
+> **派发 / 档位 / 升档 / CLAIM 剥离 / codex 降级见 skeleton §1、§1a、§4.0–§4.2，本卡不复述。** PBR 特有：重档 / 多利益相关者对象时每个视角派一个独立 subagent 并行深读，避免单 agent 串行戴多顶帽子导致「视角污染」（看完一个视角再看下一个会带前一顶帽子的锚定）；若需异源独立性，可让 codex 扮其中一个高价值视角（如攻击者）。

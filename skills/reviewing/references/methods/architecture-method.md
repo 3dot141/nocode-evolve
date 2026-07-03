@@ -40,12 +40,4 @@
 - `severity`:Tight Coupling / God Object / Big Ball of Mud 等结构性问题倾向 Critical/Warning;风格建议 Suggestion
 - `fix` 的 Structural Remedy 形态 = **ADR**(重大架构决策):`# ADR-NNN: 标题` + Context / Decision / Consequences(Positive/Negative)/ Alternatives Considered / Status / Date
 
-## 四、派发策略
-
-| 对象 | 档位 | 方法 | 独立性 |
-|---|---|---|---|
-| 架构决策(评审已有设计) | 重档 | architecture-method(本卡)+ red-blue-adversarial 异源交叉 | 异源 |
-| 架构选型 / 多方案僵持 | 重档 | red-blue-adversarial 主导(对抗思辨),本卡提供维度 | 异源 |
-| 轻量架构问题(单模块边界) | 轻档 | checklist 自评 | 无 |
-
-> 架构评审默认重档 + 异源(codex / 独立 subagent,CLAIM 剥离)。codex 不可用降级单 subagent 并标「同模型(降级)」。
+> **派发 / 档位 / 升档 / CLAIM 剥离 / codex 降级见 skeleton §1、§1a、§4.0–§4.2,本卡不复述。** 架构决策(评审已有设计)配 `red-blue-adversarial` 异源交叉;架构选型 / 多方案僵持则 `red-blue-adversarial` 主导对抗思辨,本卡提供维度;轻量架构问题(单模块边界)可降为 `checklist` 自评。

@@ -30,7 +30,7 @@
 
 "风格"三分类的具体约定（薄壳型怎么派发、自包含型怎么写、检索工具型怎么隔离）见同目录 `AGENTS.md`。
 简单说：**薄壳型**（architect/code-reviewer/database-reviewer/security-reviewer）统一派发到
-`skills/references/reviewing/` 共享评审框架，不在 agent 文件里重复内联检查清单；**自包含型**
+`skills/reviewing/references/` 共享评审框架，不在 agent 文件里重复内联检查清单；**自包含型**
 （planner/tdd-guide）把方法论完整写在 agent 文件内；**检索工具型**（semble-search/recall-search）
 职责单一、多由其他 skill/command 主动委派，而不是模型自主判断触发。
 

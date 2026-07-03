@@ -9,13 +9,11 @@ description: 评估/拍板类提问的红蓝军辩论框架。先判档位：轻
 
 本 skill 的**方法实现已抽到 reviewing 框架的方法 card，card 是单源**。本壳只保留「档位判定入口 + 调用约定」，不复述方法细则（避免双源漂移）。
 
-## 方法实现见 card（单源）
+## 方法实现走 reviewing 引擎（单源）
 
-红蓝对抗的完整方法——档位判定表与边界示例、light/heavy 两档、sequential-thinking 硬 gate、第一性原理 → 蓝军 → 独立审查 → 结论四步、CLAIM 剥离、独立审查不预先探活默认单跑 Codex + 调用报错 fallback subagent、Doubt Theater 检测、三轮收敛上限、findings/verdict 输出契约——**单源在方法 card**：
+红蓝对抗的完整方法——档位判定、light/heavy 两档、sequential-thinking 硬 gate、第一性原理 → 蓝军 → 独立审查 → 结论四步、CLAIM 剥离、独立审查默认单跑 Codex + 报错 fallback、Doubt Theater、三轮收敛、findings/verdict 契约——**单源在 reviewing 引擎的 red-blue-adversarial 方法**。
 
-**必做**：`Read {NOCODE_SKILL_REF}/reviewing/methods/red-blue-adversarial.md`，按其执行整套流程。
-
-输出契约（findings schema + verdict 层 + 5→3 分级映射）见 `Read {NOCODE_SKILL_REF}/reviewing/findings-contract.md`——red-blue 的主产物是 `verdict.recommendation`（倾向 + 关键缓解），不被 C/W/S 列表压扁。
+**必做**：判档后 `Skill(nocode:reviewing)`，声明：**对象** = 方案 / 选型 / 决策；**方法** = red-blue-adversarial；**档位** = light / heavy（见下）。引擎按红蓝对抗整套流程执行、产出 findings + verdict——red-blue 的主产物是 `verdict.recommendation`（倾向 + 关键缓解），不被 C/W/S 列表压扁。流程 / 派发 / 分级全由引擎承载。
 
 ## 档位判定入口（先判这一步）
 
@@ -31,5 +29,5 @@ description: 评估/拍板类提问的红蓝军辩论框架。先判档位：轻
 ## 调用约定（行为不变保证）
 
 - **入口不变**：`Skill(nocode:red-blue-deep)` 仍是本 skill，frontmatter `name` / `description` 未改——现有调用方的 `Skill()` 调用全部不断。
-- **行为不变**：light/heavy 档位判定、sequential-thinking 硬 gate、第一性原理四步——全部经 card 落地。独立审查派发已从「subagent + codex 并行双跑」改为「不预先探活，默认单跑 Codex，调用报错才 fallback subagent」（见 card Step 3 / 派发策略）。
+- **行为不变**：light/heavy 档位判定、sequential-thinking 硬 gate、第一性原理四步——全部经 reviewing 引擎的 red-blue-adversarial 方法落地。独立审查派发（默认单跑 Codex、报错 fallback subagent）由引擎承载。
 - **单源不双轨**：方法细则只在 card 维护，本壳不再内嵌，改方法去 card。

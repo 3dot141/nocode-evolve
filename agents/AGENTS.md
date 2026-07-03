@@ -31,13 +31,13 @@
 
 **1. 薄壳型（thin-shell）**——`architect` / `code-reviewer` / `database-reviewer` / `security-reviewer`。
 这类 agent 是 review 场景的直触入口，**不在 agent 文件内联领域清单**（检查项、漏洞模式、Trade-off 框架等），
-而是派发到 `skills/references/reviewing/` 共享框架：
+而是派发到 `skills/reviewing/references/` 共享框架：
 - `skeleton.md` —— 通用 review 流程（分档 / 对象界定 / 选方法 / 独立交叉 / 分级 / 收口）
 - `methods/<domain>-method.md` —— 领域检查清单（architecture / code-quality / database / security 等）
 - `findings-contract.md` —— 统一 findings 输出契约
 
 改这类 agent 覆盖的**评审内容**（比如新增一条安全检查项），去改
-`skills/references/reviewing/methods/*.md`，不要往 agent 文件里塞领域清单——那会破坏单源，
+`skills/reviewing/references/methods/*.md`，不要往 agent 文件里塞领域清单——那会破坏单源，
 导致同一份检查项在多处维护、彼此漂移不可控。agent 文件本身只维护"派发步骤"（读哪些 method card、
 什么条件配哪张卡、是否要求异源交叉）。`{NOCODE_SKILL_REF}` 占位符 = `skills/references`（SessionStart 写入的 env）。
 

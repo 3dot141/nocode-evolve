@@ -42,7 +42,7 @@ dev-design 选完方案（"走哪条路"），本 skill 做详细设计（"选�
 通用结构：
 Task 1: 确定场景 + 加载输入
 Task 2..N: 按场景模板的 Step（feat 最多，research 最少）
-Task N+1: Review（自审为主，有异议升档交叉 + 用户逐条确认 + Review Log）
+Task N+1: Review（引 reviewing 框架，有异议升档交叉 + 用户逐条确认 + Review Log）
 Task N+2: 保存 + 渲染
   metadata: {handoff: true}（供防跳步 Hook B 识别交接 task）
 ```
@@ -474,38 +474,20 @@ Task N+2: 保存 + 渲染
 
 ## 通用收尾：Review + 保存（所有场景）
 
-### Review（引 reviewing 框架 · 自审为主，有异议升档）
+### Review（调 reviewing 引擎 · 有异议升档）
 
 **Enter Gate:**
 - [ ] 设计文档初稿完成
 
-**引入 reviewing 框架（C1）**：本 Review 是 `reviewing` 框架的一个细则（评审对象 = 设计文档）。**进入后先 Read 框架骨架，套通用流程**，不在本 skill 重写流程 / 独立性 / 分级语义：
+**调 reviewing 引擎**：本 Review 的评审执行走 `reviewing` 引擎——Read `references/design-doc-review.md` 拿设计文档评审维度，然后 `Skill(nocode:reviewing)`，声明：
 
-1. `Read {NOCODE_SKILL_REF}/reviewing/skeleton.md` —— 套 7 步通用流程（分档 / 对象界定 / 独立交叉 / 分级 / 收口）+ 方法选择表 + 公共能力 how-to
-2. `Read {NOCODE_SKILL_REF}/reviewing/findings-contract.md` —— 套 finding / verdict schema + 5→3 分级映射 + **Q/SA 经 kind 承载（单源）** + Evidence Gate
+- **对象** = 设计文档
+- **领域维度** = design-doc-review 的 7 维度核心审查（设计意图 / 决策 / 完整性 / 可执行 / 一致性 / 范围 / 骨架可读性）+ 附带检查
+- **方法** = checklist（或让引擎按对象自选）
+- **Context Capsule** = 已拍板决策 / 被否决方案及原因 / 非目标 / 预算（不带作者对文档的预期结论）
+- **档位**（领域特化）：设计文档跨模块、含架构 / 选型决策 → 重档（7 维度全量过）；琐碎改动 / 文案修订、拿不准 → 轻档（agent 自判，命中重档信号后要降只认用户显式否定词）
 
-本 Review 在框架里的定位（其余照骨架走）：
-
-- **领域维度（框架第 3 步注入点）= `references/reviewer-template.md` 的 7 维度核心审查**（设计意图 / 决策 / 完整性 / 可执行 / 一致性 / 范围 / 骨架可读性）。这是 dev-design-refine 的领域判断逻辑，不在框架里——reviewer-template 同时承载 dispatch prompt 与维度单源。
-- **选方法（框架第 4 步 selectMethods）= `checklist`（reviewer-template 维度逐项核查，主路自审默认）**；`dual-review`（异源双评）是升档预案——自审后命中 skeleton §1a 升档判据才派，不默认跑。
-- **公共能力全走框架**：CLAIM 剥离 / codex 经 `rule-codex-review` 派 / Evidence Gate / Doubt Theater / 分档判定都在 skeleton §4，本节只引用不重写。
-- **分档**（skeleton §1 自动判）：设计文档跨模块、含架构 / 选型决策 → **重档**（7 维度全量自审）；琐碎改动 / 文案修订、拿不准 → **轻档**（agent 自判，不需用户授权，快速过维度）。两档都不默认派独立交叉——何时派见 skeleton §1a。命中重档信号后要降 → 只认用户显式否定词。
-
-**Core Actions — 主路自审（框架步骤 4 · checklist）**：当前会话按 `references/reviewer-template.md` 的 7 维度逐项核查文档，产出 raw findings，不派 subagent、不调 codex。
-
-**独立交叉（框架步骤 5 · 仅升档 · 默认单路 Codex）**：自审完成后过一遍 skeleton §1a 升档判据（自审出无法自行裁决的 finding / 结论有争议 / 用户显式要求深审 / Doubt Theater）；全不命中 → 记录「未命中升档判据，自审收口」直接进分级归一，独立性标「无（自审）」。命中 → 默认只让 Codex 跨模型审一遍，避开「Claude 审 Claude」同源盲区；不预先探活,Codex 调用报错才 fallback 改用 general-purpose subagent 单跑，不与 Codex 并行。**CLAIM 剥离 + Context Capsule**后（只传文档原文 + 维度清单 + 中立事实包——已拍板决策 / 被否决方案及原因 / 非目标 / 预算，不传主 agent 的审查结论 / 方案倾向，skeleton §4.1）：
-
-不预先探活，直接尝试：
-- **b. codex 跨模型**（dual-review 独立路，经 `rule-codex-review` 单一通道 · skeleton §4.2）：按场景 4 调 codex companion（reviewer-template 准则 + 文档路径 + Context Capsule）。
-- **调用报错**（未装 / 未登录 / 其他运行时错误）→ **fallback a. general-purpose subagent**（in-harness · checklist 维度套 reviewer-template），并明说「codex 调用失败，fallback 至 general-purpose subagent」，独立性声明标「同模型（降级）」：
-   - Read `references/reviewer-template.md`
-   - 把模板里的 `{DOC_PATH}` 替换为当前文档路径
-   - 调 Task tool（subagent_type=`general-purpose`，description=`"Review design doc"`，prompt = 替换后全文）
-
-**分级归一（框架步骤 6 · findings-contract）**：主路自审 +（升档时）独立路(Codex 或 fallback 后的 general-purpose，二选一非双跑) raw findings 归一到 findings-contract 的 schema：
-- 套五档：**C/W/S 直通 `severity`；Q/SA 经 `kind`（open-question / self-audit）承载，severity 另算（约束②）**——五档语义不丢
-- 过 **Evidence Gate**（代码事实类缺 location → 降 open-question，约束③）
-- 按 `[location, axis]` 标 `source`（主路 / Codex / general-purpose，标明各条来自哪一路）
+引擎产 findings + verdict——主路派发 / 升档异源交叉 / CLAIM 剥离 / codex 降级 / Evidence Gate / Doubt Theater / 分级归一（五档 C/W/S/Q/SA，Q/SA 经 kind 承载不丢语义）全由引擎承载，本节不复述。dev-design-refine 拿到引擎返回的 findings（五档全保留）后，做下面的收口确认。
 
 **收口 + 用户确认（框架步骤 7 · hard gate）**：
 - 把 findings 完整呈现给用户（C / W / S / **Open Questions(Q)** / **Self-Audit(SA)** 五档全保留，后两者绝不能漏）
@@ -518,11 +500,11 @@ Task N+2: 保存 + 渲染
 **修订 + Review Log**：
 - 据用户决定 in-place 改主体；不在清单里的问题不顺手修
 - 把本轮 findings 全文 + 用户决定 + 修订摘要 append 到文档末尾 `## Review Log`
-- 询问「再来一轮 review？」是 → 回 Review（**delta 判据，skeleton §4.6**：纯按 findings 修复不重跑 Codex 独立路——主会话逐条核对 fix 落实即可；结构性变更（章节增删 / 方案改向 / 接口重定义）或用户显式要求才重跑独立交叉）；否 → 保存
+- 询问「再来一轮 review？」是 → 回 Review 调引擎（是否重跑异源交叉由引擎按 delta 判据定：纯修复不重跑，结构性变更 / 用户要求才重跑）；否 → 保存
 
 **Exit Gate:**
-- [ ] 框架已引（skeleton + findings-contract 已 Read）
-- [ ] 主路自审完成（升档时独立路完成或降级明说；未升档需记录「未命中升档判据」）
+- [ ] 评审已调 reviewing 引擎（传 design-doc-review 维度）
+- [ ] 引擎返回 findings（升档时含异源交叉，或引擎记录未升档）
 - [ ] findings 套统一契约（五档；Q/SA 经 kind）
 - [ ] 用户逐条确认 fix / skip
 - [ ] 修订完成 + Review Log 已追加
@@ -545,7 +527,7 @@ Task N+2: 保存 + 渲染
 
 ## 写作准则（核心）
 
-> **同源 note**：本节准则与 `references/reviewer-template.md`《核心审查》是同一套规则的两个视角——writer 视角"做什么" vs reviewer 视角"挑什么"。改一处务必同步检查另一处。
+> **同源 note**：本节准则与 `references/design-doc-review.md`《核心审查》是同一套规则的两个视角——writer 视角"做什么" vs reviewer 视角"挑什么"。改一处务必同步检查另一处。
 
 理解原则比死守章节更重要。
 
@@ -672,6 +654,6 @@ src/services/
 
 - `references/doc-types/<type>.md` — 各 doc-type 详细骨架与写作要点（design-doc / prd / rfc / adr）
 - `references/examples/example-<type>-{dogfood,business}.md` — 填好的示例
-- `references/reviewer-template.md` — reviewer 审查准则
+- `references/design-doc-review.md` — 设计文档评审维度（调 reviewing 引擎时传入）
 - `references/cards/{quick-view,prerequisites}.md` — 骨架驱动型内容的可选锚点节
 - `Skill(nocode:dev-design-render)` — 设计文档 → HTML 可视化

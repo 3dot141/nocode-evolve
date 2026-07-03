@@ -26,21 +26,10 @@ error-mechanism 不遍历功能维度，而遍历**人类/AI 写代码时反复�
 
 ## 二、输出契约
 
-产出 `findings[]`，映射 `{NOCODE_SKILL_REF}/reviewing/findings-contract.md`：
+产出 `findings[]`，映射 `references/findings-contract.md`：
 
 - 每条 finding：`axis` = 机制名（`边界` / `并发` / `空值`……）；`location` = `file:line`（**必填**）；`evidence` = 触发该错误的具体输入/状态（招牌字段）；`severity` = C/W/S；`fix` 给 Structural Remedy（改结构消除整类错误，优先于堵单点）。
 - **Evidence Gate 在此尤其严**：error-mechanism 的 critical/warning 必须有 `location` + 可复现的触发条件，否则降 `kind=open-question`——「猜测式指控」在错误机制里最易发生。
 - `verdict.counts` 汇总。
 
-## 三、派发策略
-
-| 模式 | 派 subagent | 调 codex | 说明 |
-|---|---|---|---|
-| **自查**（默认） | 否 | 否 | 主 agent 拿机制表逐类扫 diff（`selfApply`） |
-| **异源交叉**（重档 / 关键路径） | 是 | **是** | codex 异源跑一遍机制扫描——不同模型对错误类的敏感点不同，异源交叉补盲区 |
-
-档位：
-- 轻档 / 小 diff → 自查
-- 重档 / 并发/资源/状态机这类高危机制密集的 diff → 叠加 codex 异源（作为 checklist 的备选方法，见 §4.3 选择表「代码 diff 备选 = error-mechanism」）
-
-异源走框架公共能力：CLAIM 剥离（只传 diff + 机制表，不传已发现项）、codex 不可用 → 单 subagent + 明说降级。
+> **派发 / 档位 / 升档 / CLAIM 剥离 / codex 降级见 skeleton §1、§1a、§4.0–§4.2，本卡不复述。** 并发 / 资源 / 状态机等高危机制密集的 diff，重档时叠加异源交叉（作为 checklist 的备选方法，见 skeleton §3 选择表「代码 diff 备选 = error-mechanism」）。

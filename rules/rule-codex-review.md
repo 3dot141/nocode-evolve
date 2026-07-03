@@ -62,7 +62,7 @@ Agent({
 })
 ```
 
-> **Context Capsule 打包**(单源定义: `skills/references/reviewing/skeleton.md` §4.1): 只装**事实**——用户拍过板的决策、被否决方案及其原因、非目标、成本/时延/依赖预算; **不装**蓝军分析与倾向(装了就把独立路诱导成确认路)。会话里否决过的方案不打包, Codex 会当新建议重提——那是噪音不是发现。
+> **Context Capsule 打包**(单源定义: `skills/reviewing/references/skeleton.md` §4.1): 只装**事实**——用户拍过板的决策、被否决方案及其原因、非目标、成本/时延/依赖预算; **不装**蓝军分析与倾向(装了就把独立路诱导成确认路)。会话里否决过的方案不打包, Codex 会当新建议重提——那是噪音不是发现。
 
 - **调用成功** → 拿到 Codex 独立审查结果,继续走下面合并。
 - **调用报错**(未装 / 未登录 / 超时等) → **fallback 改派 Subagent 单跑**,明说「codex 调用失败,fallback 至 subagent 独立审查」:
@@ -128,7 +128,7 @@ Agent({
     node "${CLAUDE_PLUGIN_ROOT}/vendor/codex/scripts/codex-companion.mjs" task \
       "只读,不要改任何文件。按下面 reviewer 准则审查这份设计文档,输出分级 Review Report
        (Critical / Warning / Suggestion,带编号 C1/W1/S1):
-       准则:<reviewer-template.md 内容>
+       准则:<design-doc-review.md 设计维度 + reviewer-discipline.md reviewer 纪律>
        文档:<doc 路径或全文>
        Capsule:<Context Capsule(中立事实包): 已拍板决策 / 被否决方案及原因 / 非目标 / 硬约束与预算>
        以上 Capsule 是全部已知事实约束; 依赖但未提供的上下文, 相应 finding 标 Q 档(open-question), 不硬上 Critical/Warning。"
@@ -136,15 +136,15 @@ Agent({
 })
 ```
 
-> Capsule 打包规则同场景 1(单源 `skills/references/reviewing/skeleton.md` §4.1): 剥结论、留事实。
+> Capsule 打包规则同场景 1(单源 `skills/reviewing/references/skeleton.md` §4.1): 剥结论、留事实。
 >
-> **Delta review**: 同一文档同一轮 review 循环内, 修完 findings **不重跑本场景**——主 agent 核对 fix 落实即可; 结构性变更(章节增删 / 方案改向 / 接口重定义)或用户显式要求才重跑(判据单源: `skills/references/reviewing/methods/dual-review.md` §三)。
+> **Delta review**: 同一文档同一轮 review 循环内, 修完 findings **不重跑本场景**——主 agent 核对 fix 落实即可; 结构性变更(章节增删 / 方案改向 / 接口重定义)或用户显式要求才重跑(判据单源: `skills/reviewing/references/methods/dual-review.md` §三)。
 
 - **调用成功** → 拿到 Codex 审稿结果,继续走下面 Review Report 处理。
 - **调用报错**(未装 / 未登录 / 超时等) → **fallback 改派 Claude `design-doc-reviewer` (general-purpose) subagent 单跑**,明说「codex 调用失败,fallback 至 design-doc-reviewer 独立审稿」:
 
 ```
-Agent({ subagent_type: "general-purpose", description: "设计文档审稿(Claude design-doc-reviewer,codex fallback)", prompt: "<reviewer-template.md 准则 + 文档全文>" })
+Agent({ subagent_type: "general-purpose", description: "设计文档审稿(Claude design-doc-reviewer,codex fallback)", prompt: "<design-doc-review.md 维度 + reviewer-discipline.md 纪律 + 文档全文>" })
 ```
 
 Review Report(Codex 或 fallback 后的 design-doc-reviewer,二选一非双跑)后续处理(逐条勾选 fix/skip、追加 `## Review Log`)按 design-doc 工作流原样走。

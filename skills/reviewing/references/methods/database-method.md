@@ -12,7 +12,7 @@
 {DIFF}
 ```
 
-先 `Read {NOCODE_SKILL_REF}/reviewing/skeleton.md` 套通用流程（分档/独立交叉/分级/收口），`Read {NOCODE_SKILL_REF}/reviewing/findings-contract.md` 套 findings 契约。本卡只提供第 3 步的领域维度。
+先 `Read references/skeleton.md` 套通用流程（分档/独立交叉/分级/收口），`Read references/findings-contract.md` 套 findings 契约。本卡只提供第 3 步的领域维度。
 
 ---
 
@@ -119,11 +119,10 @@
 
 ## 二、输出契约
 
-产出 `findings[]`，映射 `{NOCODE_SKILL_REF}/reviewing/findings-contract.md`：
+套 `findings-contract.md` 的 schema，`axis` = 维度名（`Query Performance` / `RLS` / `Schema Design` / `Concurrency` / `JSONB`……），`location` 必填到 `file:line`（migration 文件 / SQL 行），`fix` 优先 Structural Remedy（如「整列改 `bigint`」而非「这处转一下」）。
 
-- 每条 finding：`axis` = 维度名（`Query Performance` / `RLS` / `Schema Design` / `Concurrency` / `JSONB`……）；`location` 必填到 `file:line`（migration 文件 / SQL 行）；`evidence` = 反模式 SQL 摘录或 `EXPLAIN` 输出；`severity` = C/W/S；`fix` = Structural Remedy 优先（如「整列改 `bigint`」而非「这处转一下」）。
-- **database 原生分级 → 统一 C/W/S**（findings-contract §3）：`CRITICAL`（缺 RLS / SQL 注入 / 大表全扫）→ critical；`HIGH`/`MEDIUM`（schema 类型错、缺复合索引）→ warning；零散反模式提示 → suggestion。
-- 受 **Evidence Gate** 约束：代码事实类 critical/warning 缺 `location` → 降 `kind=open-question`（如「这表可能缺索引」无具体行 → 让作者确认）。
+- 原生分级 → 统一 C/W/S 映射见 findings-contract §3（`database` 列）。
+- 受 Evidence Gate 约束：代码事实类 critical/warning 缺 `location` → 降 `kind=open-question`。
 - `verdict`：有未处置 critical（缺 RLS、注入风险）→ `approved=false`。
 
 **Review Checklist（放行前逐项确认）**：
@@ -139,14 +138,7 @@
 
 ---
 
-## 三、派发策略
-
-| 模式 | 派 subagent | 调 codex | 说明 |
-|---|---|---|---|
-| **自评清单**（默认） | 否 | 否 | 主 agent 套上方维度逐项核查 SQL/migration |
-| **异源交叉**（schema/migration 重档） | 是 | 可选 | 独立性档 = **同模型 / 异源**（§4.3）——SQL/migration 不可逆，重档时叠加独立 reviewer 复核 |
-
-档位：任何 SQL/migration 默认**重档**（skeleton §1：「一段 SQL migration 哪怕只一行 → 重档，不可逆 + 数据风险」）。纯只读查询调优可降为自评单跑。异源交叉的 CLAIM 剥离 / codex 降级走框架公共能力（skeleton 步骤 5）。
+> **派发 / 档位 / 升档 / CLAIM 剥离 / codex 降级见 skeleton §1、§1a、§4.0–§4.2，本卡不复述。** 任何 SQL / migration 默认**重档**（skeleton §1：哪怕只一行也重档，不可逆 + 数据风险）；纯只读查询调优可降为自评单跑。
 
 **辅助诊断命令**（review 时可跑，验证假设）：
 ```bash

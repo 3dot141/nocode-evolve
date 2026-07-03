@@ -53,7 +53,7 @@ Task 6: 产出 restate
   Gate: restate 完整产出
 
 Task 7: 用户确认 — 三选 + define-review
-  Sub-steps: define-review 自审（有异议升档交叉，skeleton §1a）→ AskUserQuestion 三选（确认/修改/重来）
+  Sub-steps: define-review（有异议升档交叉，skeleton §1a）→ AskUserQuestion 三选（确认/修改/重来）
   Gate: 用户显式确认 + 无 Critical findings
 
 Task 8: 硬交接 — 调用下一步 skill
@@ -214,14 +214,14 @@ Standard 场景网络探索可简化为 `Agent(fork)` 轻量搜一两个查询�
 - "可以"/"行" → 追问"有没有要修改的？"
 - 沉默后"那开始吧" → 用户放弃了讨论，停下问是否遗漏
 
-### Step 7a: define-review（自审为主，有异议升档）
+### Step 7a: define-review（有异议升档）
 
-用户确认前做 define-review：**Read `{NOCODE_SKILL_REF}/reviewing/skeleton.md`** 套通用流程（分档 / 对象界定 / 独立交叉 / 分级 / 收口），维度用 **`{NOCODE_SKILL_REF}/define-review.md`** 的 restate 7 维度。默认主路 checklist 自审 7 维度，不拉 codex；自审后命中 skeleton §1a 升档判据（自审出无法自行裁决的 finding / 结论有争议 / 用户显式要求深审）→ 升档按 §3 选 `dual-review` 异源双评（Claude 主路 + Codex 独立路，CLAIM 剥离 + Context Capsule，不传主路结论，经框架公共能力 rule-codex-review）。findings 套 `{NOCODE_SKILL_REF}/reviewing/findings-contract.md` 归一报告，Critical 必须修复再让用户确认。
+用户确认前做 define-review：Read `references/define-review.md`（restate 7 维度）拿维度，然后 `Skill(nocode:reviewing)`，声明：**对象** = restate；**领域维度** = restate 7 维度；**方法** = checklist（或让引擎按对象自选）。引擎产 findings + verdict——流程 / 执行者 / 档位 / 升档 / 降级 / 分级全由引擎承载，本节不复述。Critical 必须修复再让用户确认。
 
 ## Exit Gate
 
 - [ ] restate 已产出，用户显式确认（AskUserQuestion 选了"确认"）
-- [ ] define-review 自审通过（无 Critical findings）
+- [ ] define-review 通过（无 Critical findings）
 - [ ] 场景分类已标注
 - [ ] （Full/Standard）路径清单已校验——有 PRD 则搬入并查完整性，无 PRD 则现场生成
 - [ ] （Full/Standard）每条路径至少绑定一条 SC，无裸路径也无裸 SC

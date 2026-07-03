@@ -54,8 +54,8 @@ Task 6: 合批确认
   Gate: 用户确认（全否决 → 回 Task 2）
 
 Task 7: 自审 + prd-review
-  Sub-steps: 16 维度自审 → prd-review 自审（有异议升档 dual-review，skeleton §1a）
-  Gate: 自审通过，无 Critical findings
+  Sub-steps: 16 维度自审 → prd-review（流程 / 执行者 / 升档全按 reviewing skeleton）
+  Gate: 自审 + prd-review 通过，无 Critical findings
 
 Task 8: 用户最终确认
   Sub-steps: AskUserQuestion 三选
@@ -323,9 +323,9 @@ DDD 域划分的正式规格，被 §4 的流程图引用。每个域围绕一�
 
 发现问题 → 修正后再进 Step 8。
 
-### Step 7a: prd-review（自审为主，有异议升档）
+### Step 7a: prd-review（有异议升档）
 
-用户确认前，按 `{NOCODE_SKILL_REF}/prd-review.md` 做 PRD 评审。prd-review 已引入 `reviewing` 框架：Read `{NOCODE_SKILL_REF}/reviewing/skeleton.md` 套通用流程骨架（分档 → 独立交叉 → findings 分级 → 收口）+ Read `{NOCODE_SKILL_REF}/reviewing/findings-contract.md` 套 findings 契约，按 prd-review 的 PRD 8 维度（框架第 3 步）评审，档位按 skeleton §1 自动判（拿不准默认轻档）。默认主路 checklist 自审；自审后命中 skeleton §1a 升档判据（无法自行裁决的 finding / 结论有争议 / 用户显式要求深审）→ 升档走 dual-review 异源双评——Claude 主路（当前会话）、Codex 独立路（CLAIM 剥离 + Context Capsule，不传主路结论）。Critical 必须修复再让用户确认。
+用户确认前做 PRD 评审：Read `references/prd-review.md`（PRD 8 维度）拿维度，然后 `Skill(nocode:reviewing)`，声明：**对象** = PRD；**领域维度** = PRD 8 维度；**方法** = checklist（或让引擎按对象自选）。引擎产 findings + verdict——流程 / 执行者 / 档位 / 升档 / 降级 / 分级全由引擎承载，本节不复述。Critical 必须修复再让用户确认。
 
 ### Step 8: 用户最终确认
 
@@ -371,7 +371,7 @@ research skill 的 Go/No-Go 建议基于以下判据（PRD 里引用）：
 - [ ] §4 ↔ §5 双向对齐（图中路径 ID 在详述中有定义，详述中路径在图中有出现）
 - [ ] 跨域路径 + 系统路径 + 约束已建模（含 ID + 状态 + US 来源）
 - [ ] 用户故事 + 路径 + 流程图已合批确认
-- [ ] prd-review 自审通过（无 Critical findings）
+- [ ] prd-review 通过（无 Critical findings）
 - [ ] 用户显式确认（AskUserQuestion 选了"确认"）
 - [ ] 文件已保存到正确路径
 

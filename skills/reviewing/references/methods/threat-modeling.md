@@ -21,7 +21,7 @@ threat-modeling 不逐行扫代码，而是**先画信任边界，再沿边界�
 | **D**enial of Service 拒绝服务 | 资源耗尽 | 无限制输入/查询？限流？放大攻击？ |
 | **E**levation of Privilege 提权 | 越权 | 授权检查每个入口都做了吗？能绕过吗？ |
 
-**Step C — OWASP 兜底**：STRIDE 出的威胁，对照 `{NOCODE_SKILL_REF}/reviewing/methods/security-method.md` 的 **OWASP Top10 清单**逐项核查（注入 / 失效认证 / 敏感数据暴露 / 访问控制失效 / SSRF……），保证不漏高发类。
+**Step C — OWASP 兜底**：STRIDE 出的威胁，对照 `references/methods/security-method.md` 的 **OWASP Top10 清单**逐项核查（注入 / 失效认证 / 敏感数据暴露 / 访问控制失效 / SSRF……），保证不漏高发类。
 
 > security-method 卡由批4 从 `agents/security-reviewer.md` 转出，保留完整 OWASP Top10 + 漏洞模式。本卡负责「按边界系统性发现威胁」，security-method 负责「按 OWASP 逐项核查」，两者互补。
 
@@ -29,18 +29,13 @@ threat-modeling 不逐行扫代码，而是**先画信任边界，再沿边界�
 
 ## 二、输出契约
 
-产出 `findings[]`，映射 `{NOCODE_SKILL_REF}/reviewing/findings-contract.md`：
+产出 `findings[]`，映射 `references/findings-contract.md`：
 
 - 每条 finding：`axis` = STRIDE 类别或 OWASP 项（`Spoofing` / `Injection` / `越权访问`……）；`location` = 边界入口 `file:line`；`evidence` = 攻击向量（构造的恶意输入/请求）；`severity` = C/W/S；`fix` = 缓解措施。
 - **security 4档 → 统一 C/W/S 的关键约束**（findings-contract）：security 的 **High 上提 Critical**（High = "Fix Before Production" 语义近阻塞），4→3 压缩时**上提不下沉**；Critical+High → critical，Medium → warning，Low → suggestion。
 - 受 Evidence Gate 约束：安全 critical 必须有 location + 攻击向量，否则降 `kind=open-question`（无 PoC 的安全指控易误报）。
 - `verdict`：有未缓解 critical → `approved=false`，安全硬伤必修才放行。
 
-## 三、派发策略
-
-| 模式 | 派 subagent | 调 codex | 说明 |
-|---|---|---|---|
-| **主 agent 建模** | 否（Step A/B 主 agent 做）| — | 信任边界 + STRIDE 由主 agent 系统性走 |
-| **异源交叉**（推荐，安全默认重档）| **是** | **是** | 安全 review 独立性档 = **异源**（§4.3）——subagent + codex 独立跑 STRIDE/OWASP，异源更可能发现单模型盲区 |
-
-档位：安全（外部输入/认证/敏感数据）默认**重档 + 异源**。CLAIM 剥离（只传代码/设计 + 信任边界，不传已发现威胁），codex 不可用 → 单 subagent + 明说降级。低风险纯内部逻辑可降为主 agent 单跑 STRIDE，但仍要标信任边界确认「确实无外部面」。
+> **派发 / 档位见框架，本卡不复述**：谁来审 / 轻重档 / 升档 / CLAIM 剥离 / codex 降级一律见 skeleton §1、§1a、§4.0–§4.2。信任边界 + STRIDE 建模（Step A/B）由主 agent 走、OWASP 兜底（Step C）配 `security-method` 卡——这些是本方法内在步骤，不是派发机制。
+>
+> **领域档位**（skeleton §1 的安全特化）：安全对象（外部输入 / 认证 / 敏感数据）默认**重档 + 异源交叉**（独立性档 = 异源）；低风险纯内部逻辑可降为主 agent 单跑 STRIDE，但仍要标信任边界确认「确实无外部面」。

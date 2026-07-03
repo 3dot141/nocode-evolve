@@ -357,9 +357,9 @@ node scripts/prototype-verify.mjs <prototype-dir> --interactions interactions.js
 
 **无截图不允许标 ✅。Gate 只认 ✅，不存在中间态通过。**
 
-### 5e. vis-review 评审（低保真 / 高保真 / 完整实现 · 自审为主）
+### 5e. vis-review 评审（低保真 / 高保真 / 完整实现）
 
-按 `{NOCODE_SKILL_REF}/vis-review.md` 做视觉评审。vis-review 已引入 `reviewing` 框架：Read `{NOCODE_SKILL_REF}/reviewing/skeleton.md` 套通用流程骨架（分档 → 独立交叉 → findings 分级 → 收口）+ Read `{NOCODE_SKILL_REF}/reviewing/findings-contract.md` 套 findings 契约，按 vis-review 的**视觉 9 维度**（框架第 3 步）评审 `.ix.md` + `.vd.md`，档位按 vis-review 自动判（低保真默认轻档；高保真 / 跨页设计系统 / 关键业务路径 → 重档，9 维度全量自审）。自审后命中 skeleton §1a 升档判据（无法自行裁决的 finding / 结论有争议 / 用户显式要求深审）→ 升档走 dual-review 异源双评——Claude 主路（当前会话）、Codex 独立路（CLAIM 剥离 + Context Capsule，不传主路结论）；Codex 调用报错 → fallback 改派 general-purpose subagent 独立路单跑（标「同模型（降级）」），不自演。
+按 `references/vis-review.md`（视觉 9 维度 + 档位判据）做视觉评审——Read 它拿维度，然后 `Skill(nocode:reviewing)`，声明：**对象** = 设计文档（`.ix.md` + `.vd.md`）；**领域维度** = vis-review 视觉 9 维度；**方法** = checklist（或让引擎按对象自选）；**档位** = 低保真默认轻档，高保真 / 跨页设计系统 / 关键业务路径 → 重档。引擎按 reviewing 流程产 findings + verdict——流程 / 执行者 / 升档 / 降级 / 分级全由引擎承载，本节不复述。
 
 本步把以下材料连同 `.ix.md` / `.vd.md` 一起喂给 vis-review 评审：
 - 5c/5d 矩阵完整性
@@ -392,7 +392,7 @@ findings 套统一契约（C/W/S），**Critical 必须全部修复后重跑 Pla
 | 页面覆盖矩阵 100%（有截图证据） | 必须 | 必须 | 必须 |
 | 交互覆盖矩阵 100%（有截图证据） | — | 必须 | 必须 |
 | PRD 路径走查 | 必须 | 必须 | 必须 |
-| vis-review 无 Critical（自审为主，升档时含交叉） | 必须 | 必须 | 必须 |
+| vis-review 无 Critical（升档时含交叉） | 必须 | 必须 | 必须 |
 
 verify-report.json errors = 0 才过 Gate。
 

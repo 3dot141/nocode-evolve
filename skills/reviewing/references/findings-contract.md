@@ -61,7 +61,7 @@ verdict {
 
 各来源的原生分级 → 统一 `severity`（`normalize` 据此压档）：
 
-| 统一档 | dev-review | reviewer-template | security（4 档） | database | dev-build |
+| 统一档 | dev-review | reviewer-discipline | security（4 档） | database | dev-build |
 |---|---|---|---|---|---|
 | **Critical**（阻塞，必修） | Critical | C | **Critical + High** | CRITICAL | `approved:false` + tag `[missing]` / `[empty-shell]` / `[design-mismatch]` |
 | **Warning**（应修） | Warning | W | Medium | HIGH / MEDIUM | tag `[cross-task]` + Important |
@@ -71,7 +71,7 @@ verdict {
 **读表说明**：
 
 - **dev-review**：原生即 C/W/S，1:1 直通。
-- **reviewer-template**：C/W/S 直通到 severity；**Q/SA 不进 severity**，转成 `kind`（见 §4 约束②）。
+- **reviewer-discipline**：C/W/S 直通到 severity；**Q/SA 不进 severity**，转成 `kind`（见 §4 约束②）。
 - **security 4 档压 3 档**：`Critical` 和 `High` **都**映射到统一 `Critical`（约束①，上提不下沉）；`Medium`→Warning；`Low`→Suggestion。
 - **database**：`CRITICAL`→Critical；`HIGH`/`MEDIUM`→Warning；零散反模式提示→Suggestion。
 - **dev-build**：以 `approved` 布尔 + tag 表达——`approved:false` 配 `[missing]`/`[empty-shell]`/`[design-mismatch]` 是阻塞类（Critical）；`[cross-task]`/Important 是应修类（Warning）；`[extra]`/Minor 是记录类（Suggestion）。dev-build 的 `approved` 直接喂 verdict 层的 `approved`，tag 进对应 finding 的 severity。
@@ -90,14 +90,14 @@ security 原生 4 档（Critical/High/Medium/Low）压成 3 档时，`High` 上�
 
 ### ② Q/SA 是 kind 不是 severity
 
-`reviewer-template` 的 **Open Questions（Q）** 和 **Self-Audit（SA）** 是 finding 的**性质**，不是严重度。压进 C/W/S 会丢失它们各自的语义：
+`reviewer-discipline` 的 **Open Questions（Q）** 和 **Self-Audit（SA）** 是 finding 的**性质**，不是严重度。压进 C/W/S 会丢失它们各自的语义：
 
 - **Q（open-question）= 待核实的事实疑问**：reviewer 无法自证（代码不在本仓 / 跨多仓 / 引用外部 SDK / 是尚未实现的代码），需作者确认或贴 `path:line` 反驳。压成 Suggestion 会丢"这需要作者回答"的语义。
 - **SA（self-audit）= 自审卡点**："假设我是不熟悉项目的工程师，能否上手？卡在哪？" SA 常是隐藏的 Critical（"实施第一行就被卡住"），与 C/W/S 平级参与用户决策。压成普通 finding 会丢"这是换位视角发现的盲区"语义。
 
 处理方式：Q/SA 转 `kind`（`open-question` / `self-audit`），`severity` 另算（按其实际阻塞程度定 C/W/S，默认 suggestion）。`id` 仍用 `Q`/`SA` 字母段供用户引用。
 
-> **Q/SA 的完整定义与判据是单源**：见 `skills/dev-design-refine/references/reviewer-template.md` 的《降级路径：Open Questions》（Q 档触发与降级）与《Self-Audit（第二遍）》（SA 编号与"与 Cx 同根"去重）。本契约只声明"Q/SA 转 kind 不进 severity"的映射规则，不复述其定义——改判据去那份文件，本文件随之对齐。
+> **Q/SA 的完整定义与判据是单源**：见 `references/reviewer-discipline.md` 的《降级路径：Open Questions》（Q 档触发与降级）与《Self-Audit（换位第二遍）》（SA 编号与"与 Cx 同根"去重）。本契约只声明"Q/SA 转 kind 不进 severity"的映射规则，不复述其定义——改判据去那份文件，本文件随之对齐。
 
 ### ③ Evidence Gate 入 schema：代码事实类缺 location 降 open-question
 
@@ -109,7 +109,7 @@ security 原生 4 档（Critical/High/Medium/Low）压成 3 档时，`High` 上�
 - ✅ `{id:"C2", severity:"critical", kind:"normal", location:"pkg/auth/session.go:42", evidence:"实际签名 CreateSession(ctx, uid)", finding:"文档少了 ctx 参数"}` —— 有 location，保留 Critical。
 - ❌ → ✅ 降级：`{... finding:"CreateSession 可能需要 ctx 参数吧？"}` 无 location → 不许上 Critical，转 `{id:"Q1", severity:"suggestion", kind:"open-question", finding:"文档列了 CreateSession，本地未核实签名——请作者确认或贴 path:line"}`。
 
-> Evidence Gate 的完整触发清单与判据同样以 `skills/dev-design-refine/references/reviewer-template.md` 的《Evidence Gate（代码事实依据）》为单源——本约束只把"缺 location → 降 open-question"固化进 schema。
+> Evidence Gate 的完整触发清单与判据同样以 `references/reviewer-discipline.md` 的《Evidence Gate（代码事实依据）》为单源——本约束只把"缺 location → 降 open-question"固化进 schema。
 
 ---
 

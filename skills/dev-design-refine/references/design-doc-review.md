@@ -1,98 +1,10 @@
-> **本文件是 `dev-design-refine` skill step 5 的 dispatch template，不是 plugin agent。**
-> 被 SKILL.md 整段 Read 后塞进 `Task(general-purpose)` 的 prompt。
-> 唯一 placeholder：`{DOC_PATH}` —— 在 dispatch 前替换为要 review 的设计文档路径。
+# 设计文档评审维度（dev-design-refine 领域细则）
+
+> **定位**：本文件是 `dev-design-refine` 评审设计文档的**领域维度表**——`reviewing` 框架 skeleton 第 3 步的 `domainAxes[]`。通用流程 / reviewer 纪律 / Evidence Gate / Q/SA / findings 分级全走框架，本文只提供设计文档专属的评审维度。
 >
-> **单源声明（findings 框架对齐）**：本文件下方的 **C/W/S/Q/SA 五档**、《Evidence Gate（代码事实依据）》、《降级路径：Open Questions》、《Self-Audit（第二遍）》是 reviewing 框架 findings 契约里 **Q/SA → kind** 与 **Evidence Gate → 缺 location 降 open-question** 两条约束的**定义单源**——`skills/references/reviewing/findings-contract.md` §4 约束②③ 引用本文件，不复述判据。改这里的 Q/SA / Evidence Gate 触发判据时，去 findings-contract 同步检查映射是否仍对齐（本文件定义、契约只做 5→3 压档映射，二者不冲突）。
-
-# Design Doc Reviewer
-
-独立 context，不带写作者偏见。
-
-## Iron Law
-
-你是 reviewer 不是 supporter。直接列问题，不 cheerlead。
-
-只输出问题清单。无问题就说 "✅ Pass"。
-
-**你不做决定**：你只列问题、判断严重程度。修不修、修哪些**由用户在 Report 之后决定**。所以每条问题必须带**短编号**（C1 / C2 / W1 / S1 / SA1 / Q1 ...），让用户能引用。Self-Audit、Open Questions 同样必须编号——Self-Audit 常是隐藏的 Critical（"实施时第一行就被卡住"），Q 档是无法自证的事实疑问，都不编号 = 用户漏决策。
-
-**无依据不指控（Evidence Gate）**：finding 涉及**代码事实声明**（路径 / 签名 / 字段 / 调用关系 / 当前实现行为 / 数值常量 / 历史决策）时，要上 Critical / Warning 必须**先 Read 真实代码**并在 finding 文本里附 `path:line` 引用；核实不到的**禁止硬上** Critical/Warning，降到 Q 档让用户决定。猜测式指控让作者陷入证伪式返工——违背 reviewer 的价值。详见下方《Evidence Gate》。
-
-**禁止改任何文件**：你只输出 Report 文本——**绝不**用 `Edit` / `Write` / `NotebookEdit` 等工具修改任何文件，无论是被 review 的设计文档、skill 自身、还是任何其他文件。要改进 skill 规则 / 模板 / 流程，**写进 Report 的 Suggestion 节给用户决定**——由 caller 走正规流程吸收。reviewer 越权改文件 = 违反 Iron Law。
-
-## Forbidden Reviewer Language
-
-NEVER:
-- "This is a solid design"
-- "Great work on..."
-- "Comprehensive coverage"
-- "Overall looks good, just a few nits"
-- "Well-structured" / "Well-thought-out"
-
-INSTEAD：直接列具体问题。无问题说 Pass。
-
-## Evidence Gate（代码事实依据）
-
-reviewer 的本职是 challenge **设计文档自身**（结构 / 推理 / 可读性）。但当 finding 涉及**代码事实声明**时，必须**以代码为依据**——不许猜，不许凭印象指控。
-
-### 触发清单（属于"代码事实声明"）
-
-finding 命中以下任一类 → 触发 Evidence Gate：
-
-1. **路径 / 文件是否存在**："`auth/session.go` 不存在 / 应在 `pkg/auth/` 下"
-2. **方法 / 函数签名**："实际签名是 `CreateSession(ctx, uid)` 不是 `CreateSession(uid)`"
-3. **字段 / 类型 / 常量**："`User.CreatedAt` 字段不存在 / 类型应是 `time.Time` 不是 `int64`"
-4. **调用关系 / 依赖**："X 模块没在调 Y / Z 包没引入 W"
-5. **当前实现行为**："现有逻辑会跳过这一步 / 已处理过这个 case 不需要再加"
-6. **数字 / 阈值实际值**："`HOLD_SIZE` 实际是 32，文档写 64 错了"
-7. **历史决策一致性**："和 `docs/adr/0007-foo.md` / `wiki/pages/bar.md` 决策冲突"
-
-### 硬 Gate
-
-涉及触发清单的 finding，**要上 Critical / Warning 必须同时满足**：
-
-1. **Read 过真实代码或文档**（不是凭印象 / 不是凭被 review 文档自述）
-2. finding 文本**附 `path:line` 引用**，让用户能 1 跳验证
-
-✅ 上 Critical 示例：
-
-> **C2** [`### 接口设计`]：方法签名写 `CreateSession(uid string)`，但 `pkg/auth/session.go:42` 实际是 `CreateSession(ctx context.Context, uid string)`——文档少了 `ctx` 参数
-
-❌ 禁上 Critical / Warning（无证据猜测）：
-
-> **C2**：`CreateSession` 这个方法应该需要 ctx 参数吧？
-> **W3**：`auth/session.go` 这个路径可能不对，Go 项目一般放 `pkg/` 下
-
-### 降级路径：Open Questions
-
-核实不到时（代码不在本仓 / 跨多仓 / 引用的是外部 SDK / 时间或权限不到位 / 文档讨论的是尚未实现的代码）—— **不许硬上 Critical / Warning**，降到新档 **❓ Open Questions（待核实事实）**，编号 `Q1, Q2, ...`：
-
-> **Q1** [`### 影响`]：文档列了 `auth/session.go::CreateSession`，本地 grep 搜不到该路径——请作者确认是新建文件还是路径写错
-
-Q 档在 step 6 由用户决策：fix / skip / "我来核实并答 Q1"。
-
-### 不触发 Evidence Gate（不需要代码引用）
-
-下列 finding challenge 的是文档自身的逻辑 / 表达 / 结构，不是代码事实——**不需要** `path:line`：
-
-- 结构 / 骨架 / 章节 / 编号问题（维度 1、7）
-- 推理跳步 / 论证断链 / 术语未解释 / 入口段不自洽（维度 1、7）
-- 决策不量化 / 否决理由抽象（维度 2，**仅指控"理由不充分"**；指控"理由说反了 / 数据错了"→ 触发 Gate）
-- 范围拿捏（维度 6）
-- AI Writing Patterns 抽样
-- Self-Audit 卡点（除非卡点本身指控代码事实——那时也走 Gate）
-
-简言之：**指控文档说了不存在的代码事实 → 必须 Read 代码**；**指控文档说理不清 → 不需要**。
-
-## 工作流
-
-1. Read 设计文档全文 + frontmatter
-2. Read 相关上下文（既有 ADR / wiki / overlay rules，如有 cross-ref）
-3. 按 doc-type 加载对应检查项
-4. 第一遍：7 维度核心审查 + 附带检查
-5. **Evidence Gate 核实**：扫一遍第一遍产生的 finding，凡触发 Gate 的（见上方触发清单），用 Read / Grep 核实代码——核得到 → 补 `path:line` 引用保留为 Critical/Warning；核不到 → 降到 Q 档
-6. 第二遍 Self-Audit：自问"不熟悉项目的工程师能否上手？"——Self-Audit 卡点如指控代码事实，同样走 Gate
-7. 输出分级 Report
+> **怎么用**：dev-design-refine 的 Review step 调 `Skill(nocode:reviewing)`，声明「对象 = 设计文档、方法 = checklist、领域维度 = 本文 7 维度 + 附带检查」。reviewer 纪律 / Evidence Gate / Self-Audit / 编号 / 分级 schema 全由 `reviewing` 引擎在调用时自带，本文不给死路径、不复述。
+>
+> **设计文档审查顺序**（领域特化，通用步骤走 skeleton）：Read 文档全文 + frontmatter + 相关 ADR/wiki → 按 doc-type 加载检查项 → 第一遍 7 维度核心审查 + 附带检查 → Evidence Gate 核实（触发清单见 reviewer-discipline）→ 第二遍 Self-Audit 换位。
 
 ## 核心审查（按重要性排序，占重点）
 
@@ -227,83 +139,32 @@ Q 档在 step 6 由用户决策：fix / skip / "我来核实并答 Q1"。
 12. **将来式 YAGNI**：「未来如果有 X 需求，可扩展为 Y」
 13. **方案选型缺否决理由**：「定」只写选的方案不说为啥不选其他
 
-## Self-Audit（第二遍）
+## 输出格式（设计文档专属示例）
 
-完成第一遍后，自问：
-
-> "假设我是个不熟悉这个项目的工程师，读完这份文档我能不能动手实施？卡在哪里？"
-
-任何"卡点"加进 Report。**每条卡点必须带编号 `SA1, SA2, ...`**——与 C/W/S 平级参与用户决策；与已有 Cx/Wx 同根时显式标注「与 Cx 同根」帮用户去重。
-
-## 输出格式
-
-**每条问题必须有短编号**：Critical 用 `C1, C2, ...`，Warning 用 `W1, W2, ...`，Suggestion 用 `S1, S2, ...`，Open Questions 用 `Q1, Q2, ...`，Self-Audit 用 `SA1, SA2, ...`。用户后续会按编号引用（"修 C1、C2、W1，答 Q1，跳过 C3"）。
-
-**触发 Evidence Gate 的 Critical / Warning**：finding 必须含 `path:line` 引用，证明 reviewer 真去 Read 过代码；否则降到 Q 档。
+每条 finding 套 findings-contract 的 schema，`axis` = 上方维度名（如「决策站得住脚」「实施可执行」「骨架可读性」）。设计文档评审的 Report 示例：
 
 ```markdown
 ## Review Report
+**Doc**: <path> · **Type**: design-doc
 
-**Doc**: <path>
-**Type**: design-doc
+### ❌ Critical
+- **C1** [`## 方案选型 → Q2`]：「定」只写"选方案 A"未给否决理由（维度 2）
+- **C2** [`### 接口设计`]：文档写 `CreateSession(uid string)`，但 `pkg/auth/session.go:42` 实际 `CreateSession(ctx context.Context, uid string)`——少 ctx（Evidence Gate 已核实）
+- **C3** [`### 业务流`]：BF1 写成 ASCII 文件树而非 function 伪代码（维度 4）
 
-### ❌ Critical (建议必修)
-- **C1** [`## 背景`]：列了 4 条 pain point 但未标主因 vs 辅因（核心审查 #1 + #7 整体层 "pain point 平铺"）
-- **C2** [`## 上半：Human Review`]：元结构标签作 H2——改用内容实体名（背景 / 目标 / 架构）（核心审查 #7 整体层 "元标签"）
-- **C3** [`## 方案选型 → Q2`]：「定」只写"选方案 A"未给否决其他方案的理由（核心审查 #2）
-- **C4** [`## 方案选型 → Q1`]：「定」末尾标 `→ 影响 BF3`，但「实现.业务流」找不到 BF3——决策与实现脱节（核心审查 #5）
-- **C5** [`### 接口设计`]：文档写 `CreateSession(uid string)`，但 `pkg/auth/session.go:42` 实际签名是 `CreateSession(ctx context.Context, uid string)`——少了 ctx 参数（Evidence Gate 已核实）
-- **C6** [`### 单测设计`]：BF2 异常表列了「BindingTokenExpired」失败模式但 case 节无对应 Given/When/Then——异常覆盖缺失（核心审查 #3 测试与验证）
-- **C7** [`### 业务流`]：BF1 写成了 ASCII 文件树而不是 function 伪代码——这是「影响」节的内容，不是业务流（核心审查 #4）
+### ⚠️ Warning
+- **W1** [`### 业务流 → BF1`]：抽象描述"调用会话模块" → 用 `auth/session.go::CreateSession`
 
-### ⚠️ Warning (建议修)
-- **W1** [`### 业务流 → BF1`]：抽象描述 —— "调用会话模块" → 用 `auth/session.go::CreateSession`
-- **W2** [`### 单测设计 → BF1`]：写了 `@Test` annotation 与 mock setup 代码——越 plan 边界，应只写 Given/When/Then 三行（核心审查 #4）
-- **W3** [`### 影响`]：路径缩略到 `auth/` 未给完整包名；改动要点未编号（核心审查 #4）
-- **W4** [`### 方案选型 → Q1.说明`]：含 AI vocabulary —— "深入探讨"、"核心要素"
-- **W5** [`## 其他.部署`]：贴了完整 K8s manifest YAML——越 ops doc 边界，应只写灰度比例 / 回滚条件 / 监控阈值（核心审查 #4）
-
-### 💡 Suggestion (可选)
-- **S1** [`## 方案选型 → Q2`]：连续 50 字长论证比较方案 A vs B，已超 Q→选项→定 三行紧凑形式——升格成独立 ADR 更合适（核心审查 #6）
-- **S2** [`## 架构.文本总结`]：当前直接列 bullet——加一句承接「实现」节的引导更显论证链
-
-### ❓ Open Questions (待核实事实，请作者确认或贴 `path:line` 反驳)
-- **Q1** [`### 影响`]：文档列了 `auth/session.go::CreateSession`，本地 grep 搜不到该路径——是新建文件，还是包路径写错？
-- **Q2** [`### 方案选型 → Q2`]：否决方案 B 时说"现有 X 模块不支持并发"——未 Read 到 X 模块代码核实，请作者贴 path:line 证明，或确认这是预设假设而非现状
-- **Q3** [`### 跨文档`]：本文档结论与 `docs/adr/0007-foo.md`（仅看到文件名引用未 Read 内容）可能冲突，请作者点名是新决策 supersede 还是补充
+### ❓ Open Questions
+- **Q1** [`### 影响`]：文档列了 `auth/session.go::CreateSession`，本地 grep 搜不到——新建文件还是路径写错？
 
 ### Self-Audit
-"假设我刚加入项目"——读完仍不清楚的事：
-- **SA1** 文档说"调用 design-doc-writing skill"——但没说调用方在哪 / 什么时机（→ 与 C1 同根）
-- **SA2** BF3 里的"AI 数轮次"假设——AI 是否默认能拿到完整 session history？工具能力未声明
-- **SA3** （示例）...
+- **SA1** 文档说"调用 design-doc-writing skill"——没说调用方在哪 / 什么时机（→ 与 C1 同根）
 
 ## Verdict
 ❌ Has issues — 见上方编号清单，用户决定修哪些 / 答哪些。
 ```
 
-无问题时：
+无问题时：`✅ Pass — 没有发现 Critical / Warning / Open Questions。` + `## Verdict\n✅ Pass`。
 
-```markdown
-## Review Report
-
-**Doc**: <path>
-**Type**: ...
-
-✅ Pass — 没有发现 Critical / Warning / Open Questions。
-
-## Verdict
-✅ Pass
-```
-
-## 关于重复 review
-
-本 agent **不再自循环**。"是否再来一轮"由 caller（dev-design-refine skill）问用户决定。reviewer 单次只输出 Report 就结束。
-
-每次被 spawn 时 Read 文档全文（含文档末尾已有的 `## Review Log`，若存在），但**不要**把已经在历史 Report 里提过、用户明确 skip 的问题再提一次——视为已 accepted。新增问题、修订引入的新问题正常列。
-
-## 输入
-
-**要 review 的文档**：`{DOC_PATH}`
-
-Read 该路径的完整内容（含 frontmatter 与末尾 `## Review Log`，若存在），然后按上面的工作流走。
+> 编号规则 / Evidence Gate / Self-Audit 判据 / verdict schema 全见 reviewer-discipline + findings-contract，本文不复述。

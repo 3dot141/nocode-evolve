@@ -1,6 +1,8 @@
 # reviewing 流程骨架 — 通用 review 的"怎么走一遍"
 
-> 这是 `reviewing` 框架的**被引用件**。各专项 review 细则（dev-review / define-review / design-review / prd-review / vis-review / dev-design-refine / dev-build per-task / brainstorming self-review 等）在自己 SKILL.md 里 `Read {NOCODE_SKILL_REF}/reviewing/skeleton.md`，按本文照做，**只在第 3 步填自己的领域维度**。骨架管"怎么走"，方法库管"用什么打法"，findings 契约管"产出长什么样"。
+> 这是 `reviewing` 引擎的**流程骨架**。引擎（被 `Skill(nocode:reviewing)` 调用）按本文走 7 步流程；调用方只传第 3 步的领域维度，不 Read 本文。骨架管"怎么走"，方法库管"用什么打法"，findings 契约管"产出长什么样"。
+>
+> **单一源契约（多对一）**：review 怎么执行——档位深度（§1）、升档判据（§1a）、主路执行方式（§4.0：轻档就地 / 重档 subagent）、异源派发与降级链（§4.2）——**只在本文定义**。任何细则 / 调用方 skill / rule 涉及 review，一律写「按 reviewing skeleton 流程走」+ 自己的领域维度 / 材料 / Gate，**不复述执行机制**（模型、升档信号、降级链等不出现在本文以外）。要改默认行为（换 reviewer 模型、改升档阈值）**只改本文**——别处是引用不是副本，改了本文就全生效。
 >
 > **本文是给 agent 照做的判据，不是可执行代码。** 文中的 `classify / selectMethods / dispatchIndependent / evidenceGate` 是 review 的逻辑环节名，对应下面的判据表和 how-to —— agent 读完照判据自己做，不是调函数。
 
@@ -10,9 +12,9 @@
 
 | 件 | 路径 | 管什么 |
 |---|---|---|
-| 本骨架 | `{NOCODE_SKILL_REF}/reviewing/skeleton.md` | 7 步流程 + 分档 + 方法选择 + 公共能力 |
-| findings 契约 | `{NOCODE_SKILL_REF}/reviewing/findings-contract.md` | finding/verdict schema + 5→3 分级映射 + Evidence Gate 入 schema |
-| 方法 card | `{NOCODE_SKILL_REF}/reviewing/methods/<method>.md` | 每个评审方法的维度表/输出契约/派发策略 |
+| 本骨架 | `references/skeleton.md` | 7 步流程 + 分档 + 方法选择 + 公共能力 |
+| findings 契约 | `references/findings-contract.md` | finding/verdict schema + 5→3 分级映射 + Evidence Gate 入 schema |
+| 方法 card | `references/methods/<method>.md` | 每个评审方法的维度表/输出契约/派发策略 |
 
 ---
 
@@ -22,8 +24,8 @@ review 不是越重越好。先按**评审对象的风险 + 可逆性**定深度
 
 | 信号（任一命中） | 档位 | 含义 |
 |---|---|---|
-| **可逆** + **单文件 / 单点** + **易回滚**（命名、文案、风格、内部小改） | **轻档** | self-review 一遍即可，不派 subagent、不拉 codex |
-| **不可逆** / **跨模块** / **涉及外部输入·认证·敏感数据** / **架构或选型决策** / **数据库 schema·migration** / **多方案僵持** / 用户显式说"深度 / 仔细审 / 红蓝军" | **重档** | 领域维度 checklist **全量自审**；异源交叉不默认跑，自审后命中升档判据（§1a）才派 |
+| **可逆** + **单文件 / 单点** + **易回滚**（命名、文案、风格、内部小改） | **轻档** | 主路 subagent（§4.0）过 self-review 维度一遍，不拉 codex |
+| **不可逆** / **跨模块** / **涉及外部输入·认证·敏感数据** / **架构或选型决策** / **数据库 schema·migration** / **多方案僵持** / 用户显式说"深度 / 仔细审 / 红蓝军" | **重档** | 主路 subagent（§4.0）按领域维度 checklist **全量审**；异源交叉不默认跑，主路审完命中升档判据（§1a）才派 |
 
 **模糊时默认轻档**：判据表未命中、或拿不准是否命中 → 轻档。"能否 5 分钟内回滚"只作辅助——明确回滚不了 = 命中"不可逆"走重档；只是拿不准 ≠ 命中。
 
@@ -36,20 +38,20 @@ review 不是越重越好。先按**评审对象的风险 + 可逆性**定深度
 - 调一个内部函数命名 → **轻档**
 - 一段 SQL migration（哪怕只一行） → **重档**（不可逆 + 数据风险）
 
-> 档位是**深度旋钮**，只管自审深度——轻档 self-review 一遍，重档领域维度 checklist 全量过。**异源交叉那一路不随档位自动启用**，何时派见 §1a。
+> 档位是**深度旋钮**，只管主路 subagent 的审查深度——轻档 self-review 维度过一遍，重档领域维度 checklist 全量过。**异源交叉那一路不随档位自动启用**，何时派见 §1a。主路怎么派见 §4.0。
 
-## 1a. 升档判据（独立交叉何时派）
+## 1a. 升档判据（异源交叉何时派）
 
-**先自审，有异议再升档**——不论轻重档，主路自审（步骤 4）先走完；独立交叉（步骤 5：codex / 独立 subagent）默认不跑，自审完成后命中任一信号才派：
+**先主路 subagent 审，有异议再升档**——不论轻重档，主路 subagent 审（步骤 4，执行者定义见 §4.0）先走完；异源交叉（步骤 5：codex）默认不跑，主路审完命中任一信号才派：
 
 | 升档信号 | 说明 |
 |---|---|
-| **自审出无法自行裁决的 finding** | Critical 拿不准是否成立、或 open-question 堆积且作者裁决不了——需要独立视角定夺 |
-| **结论有争议** | 多方案僵持、主路自己都不确定、或用户/调用方对自审结论提出异议 |
+| **主路审出无法裁决的 finding** | Critical 拿不准是否成立、或 open-question 堆积且主会话/作者裁决不了——需要异源视角定夺 |
+| **结论有争议** | 多方案僵持、主路结论主会话自己都不确定、或用户/调用方对主路结论提出异议 |
 | **用户显式要求** | 「深审 / 仔细审 / 红蓝军 / 找 codex 看看 / 异源交叉」 |
-| **Doubt Theater 命中**（§4.4） | 连续 2+ 轮有发现但 0 条 actionable——换独立源正是它的升级出口 |
+| **Doubt Theater 命中**（§4.4） | 连续 2+ 轮有发现但 0 条 actionable——换异源正是它的升级出口 |
 
-- 全不命中 → 直接自审收口（步骤 6/7），verdict 独立性标「无（自审）」——这是默认路径，不算偷工。
+- 全不命中 → 主路收口（步骤 6/7），verdict 独立性标「同源隔离（主路 subagent）」——这是默认路径，不算偷工。
 - 信号命中后要跳过升档 → 只认用户显式否定词（同 §1 降档权），agent 不许自行找理由（"应该没事"）压掉信号。
 - 升档动作 = 进入步骤 5：CLAIM 剥离 + Context Capsule（§4.1）+ 经 `rule-codex-review` 派（§4.2）。
 - 自带完整对抗流程的 skill（red-blue-deep / dev-plan Step 8）不经本判据，按其自身流程派发。
@@ -65,18 +67,18 @@ review 不是越重越好。先按**评审对象的风险 + 可逆性**定深度
 | 1 | **分档** | 按 §1 判据表定轻/重档 | `depth = light \| heavy` |
 | 2 | **对象界定 + 进入 gate** | 明确评什么（diff / 设计文档 / 方案 / restate）、范围边界、前置条件是否满足（如 dev-review 要求 Verify Gate 已过）。前置不满足 → 不进 review，回退 | 评审对象 + 范围 + gate 通过 |
 | 3 | **评审维度**（细则注入点） | **骨架不规定具体维度，细则在这里填自己的领域维度表**（dev-review 五轴 / define-review 7 维 / 安全 OWASP …）。维度 = 后续 finding 的 `axis` | `domainAxes[]` |
-| 4 | **执行（选方法）** | 按 §3 方法选择表 + 档位，从方法库选 1+ 种方法，逐个 Read 对应 card 执行：清单/自评类直接套维度产出 finding；对抗/PBR 类需独立交叉（进步骤 5） | 每方法的 raw findings |
-| 5 | **独立交叉**（升档，§1a） | 仅 §1a 升档判据命中时进入。公共能力（见 §4）：**CLAIM 剥离 + Context Capsule**（§4.1）后派独立审查——默认单路 codex（经 `rule-codex-review` 单一通道），调用报错才 fallback 独立 subagent 单跑，非并行双跑。声明独立性档位（异源 / 同模型（降级） / 无） | 独立路 findings + 独立性声明 |
+| 4 | **主路 subagent 审（选方法）** | 按 §3 方法选择表 + 档位选 1+ 种方法，逐个 Read 对应 card；把评审对象原文 + 领域维度 + Context Capsule 打包，**按 §4.0 派主路 subagent 隔离执行**产出 finding；对抗/PBR 类需异源交叉（进步骤 5） | 主路 raw findings |
+| 5 | **异源交叉**（升档，§1a） | 仅 §1a 升档判据命中时进入。公共能力（见 §4）：**CLAIM 剥离 + Context Capsule**（§4.1）后派异源审查——默认单路 codex（经 `rule-codex-review` 单一通道），调用报错才 fallback 独立 subagent 单跑，非并行双跑。声明独立性档位（异源 / 同模型（降级） / 同源隔离 / 无） | 独立路 findings + 独立性声明 |
 | 6 | **findings 统一 schema + 分级** | 把各路 raw findings 归一到 `findings-contract.md` 的 schema：查 5→3 映射表定 `severity`（C/W/S）、Q/SA 转 `kind`、security High 上提 Critical；按 `[location, axis]` 去重（交集 = 高置信）；过 **Evidence Gate**（见 §4） | 归一 findings[] |
 | 7 | **收口 / triage / 拍板** | 排序呈现（correctness/security 优先，少而精）；**Critical 必修不可 override**；产出 verdict（approved + counts + recommendation）；交用户逐条拍板 | verdict + 用户拍板 |
 
-> 轻档：步骤 1→2→3→4（self-review）→7，6 退化为一句表态。重档：1→2→3→4→6→7（checklist 全量自审）。**步骤 5 两档都默认跳过**，仅 §1a 升档判据命中时插入。
+> 轻档：步骤 1→2→3→4（subagent 过 self-review 维度）→7，6 退化为一句表态。重档：1→2→3→4→6→7（subagent checklist 全量审）。**步骤 5 两档都默认跳过**，仅 §1a 升档判据命中时插入。
 
 ---
 
 ## 3. 方法选择表（步骤 4 = `selectMethods`）
 
-**两维判据**：① **评审对象**定主方法；② **档位**（§1）定自审深度。表内的异源交叉方法是**升档预案**（§1a 命中才派），不随重档自动启用。
+**两维判据**：① **评审对象**定主方法；② **档位**（§1）定主路 subagent 审查深度。表内的异源交叉方法是**升档预案**（§1a 命中才派），不随重档自动启用。
 
 | 评审对象 | 默认方法 | 备选 | 独立性 |
 |---|---|---|---|
@@ -87,7 +89,7 @@ review 不是越重越好。先按**评审对象的风险 + 可逆性**定深度
 | **数据库**（SQL / schema / migration） | `checklist`（`database-method` card） | — | 同模型 / 异源 |
 | **架构决策** | `checklist`（`architecture-method` card）+ `red-blue-adversarial` | — | 异源 |
 | **需求 / PRD / restate** | `checklist`（领域维度）+ `dual-review`（异源双评） | — | 异源 |
-| **轻档 / 低风险** | `self-review` | — | 无 |
+| **轻档 / 低风险** | `self-review` | — | 同源隔离 |
 
 > **red-blue vs dual-review 分界**：`red-blue-adversarial` 是**有防守方的对抗**（蓝军防守提议、红军攻击），回答「该不该 / 选哪个」，主产物是 `verdict.recommendation`；`dual-review` **无防守方**——主路 + 独立路两路**中立**挑错后合并，回答「这份工件有什么问题」，主产物是 `findings[]`。工件缺陷发现误挂 red-blue 会诱导主路去「防守」工件（护短）；拍板题误挂 dual-review 则没人做立场论证。分界详表见 `methods/dual-review.md`。
 
@@ -95,9 +97,9 @@ review 不是越重越好。先按**评审对象的风险 + 可逆性**定深度
 
 **怎么用**：
 1. 定对象类型 → 查表取默认方法集。
-2. 看档位：轻档 → 只跑主方法的 self-review 形态；重档 → checklist 领域维度全量自审。表内异源交叉方法（`dual-review` / `red-blue-adversarial` 的 heavy 派发）**默认不跑**，仅 §1a 升档判据命中时启用。
+2. 看档位：轻档 → 主路 subagent 只过主方法的 self-review 维度；重档 → 主路 subagent 按 checklist 领域维度全量过。表内异源交叉方法（`dual-review` / `red-blue-adversarial` 的 heavy 派发）**默认不跑**，仅 §1a 升档判据命中时启用。
 3. 一个对象可命中多行（如"代码 diff 且碰认证" → 同时取代码行 + 安全行的 card）。
-4. 逐方法 `Read {NOCODE_SKILL_REF}/reviewing/methods/<method>.md`，card 内有该方法的维度/输出契约/派发策略（是否要 subagent、是否拉 codex、档位参数）。
+4. 逐方法 `Read references/methods/<method>.md`，card 内有该方法的维度/输出契约/派发策略（是否要 subagent、是否拉 codex、档位参数）。
 
 ---
 
@@ -105,9 +107,29 @@ review 不是越重越好。先按**评审对象的风险 + 可逆性**定深度
 
 这些是横切关注点，骨架统一定义，方法 card 和细则直接引用。
 
-### 4.1 CLAIM 剥离（独立交叉的前提）
+### 4.0 主路 subagent 派发（默认路，步骤 4 的执行方式）
 
-派独立审查（codex / 独立 subagent）时，**只传"被评审对象的原文 + 约束条件 + 维度清单",绝不传主路（主会话；对抗型即蓝军）已得出的审查结论或倾向**。
+> **本节是主路执行者的唯一定义点（default 单源）**——细则与方法卡只写「执行者见 skeleton §4.0」，不复述执行者 / 模型 / 派发参数；要换默认 reviewer（如 sonnet → 其他模型），只改本节。
+
+**主路审查不由主会话自己做**——主会话多半就是工件作者，自己审自己看不出自己的假设错，盲区结构性存在，轻重档都在。步骤 4 默认把审查派给一个隔离 subagent 执行：
+
+```
+Agent({
+  subagent_type: "general-purpose",
+  model: "sonnet",
+  description: "主路评审（sonnet subagent）",
+  prompt: "<评审对象原文 + 领域维度表（步骤 3 注入）+ Context Capsule（§4.1）+ findings 契约要点（location + evidence + severity 建议）>"
+})
+```
+
+- **prompt 同样吃 §4.1 CLAIM 剥离**：只传对象原文 + 约束 + 维度 + 中立事实包，不传作者的预期结论 / "我觉得没问题的地方"——主路 subagent 的价值就是不带作者视角。
+- **档位进 prompt**：轻档让它过 self-review 维度一遍；重档让它按领域维度 checklist 全量逐项过。
+- **返回物**：raw findings（每条带 location + evidence + severity 建议）。主会话收回后做步骤 6 归一——只做 schema 归一 / 去重 / Evidence Gate，**不复审改写 findings 内容**（改写 = 作者视角回灌，主路白派）。成立性拿不准的条目留给步骤 7 用户拍板或走 §1a 升档，不由主会话单方压掉。
+- **降级**：subagent 派不出去（极端环境）→ 主会话自审替代，独立性标「无（自审）」并明说降级——这是唯一允许主会话自审收口的情形。
+
+### 4.1 CLAIM 剥离（隔离审查的前提）
+
+派隔离审查（重档主路 subagent / 升档 codex / fallback subagent）时，**只传"被评审对象的原文 + 约束条件 + 维度清单",绝不传派发方（主会话＝作者；对抗型即蓝军）已得出的审查结论或倾向**。（轻档就地自查不隔离、不涉及本节。）
 
 - ✅ 传：restate 原文 + 真约束 + "请按这些维度攻击这份需求定义"
 - ❌ 不传："我觉得 SC-3 不可测，你看对不对"——这会把独立路诱导成确认路，假独立。

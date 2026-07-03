@@ -54,7 +54,7 @@ sequential-thinking 允许回退重拆，最多 3 轮。第 3 轮仍不收敛 = 
 
 ## 二、输出契约
 
-产出 `findings[] + verdict`，映射 `{NOCODE_SKILL_REF}/reviewing/findings-contract.md`：
+产出 `findings[] + verdict`，映射 `references/findings-contract.md`：
 
 - **light**：不强制结构化 findings——一句表态即可。如调用方要求结构化，记一条 `kind=normal` 的 suggestion 承载理由。
 - **heavy**：独立审查的每条成立发现 → 一条 finding。
@@ -64,19 +64,10 @@ sequential-thinking 允许回退重拆，最多 3 轮。第 3 轮仍不收敛 = 
   - 弱点类 finding 若是代码/事实声明，受 Evidence Gate 约束（缺 location 的 critical 降级 `kind=open-question`）
 - **verdict**：`{ approved, counts, recommendation }`，其中 `recommendation` = Step 4 结论原文（倾向 + 关键理由 + 真问题 + 缓解）。**verdict 是 red-blue 的主产物**——findings 是支撑，结论的「倾向 + 缓解」不能被 C/W/S 列表压扁。
 
-## 三、派发策略
+## 三、派发要点（其余见 skeleton）
 
-| 档位 | 派 subagent | 调 codex | sequential-thinking |
-|---|---|---|---|
-| light | 否 | 否 | 否 |
-| heavy | **仅 codex 调用报错时 fallback**（general-purpose，独立 review 单跑）| **默认单路**（不与 subagent 并行）| **必开（硬 gate）** |
+- **light**：不派 subagent、不调 codex。
+- **heavy**：sequential-thinking 硬 gate（§一）+ 蓝军由主 agent 做（**不外派**，防守论证需完整会话上下文）+ 红军独立审查默认单跑 Codex。
+- 独立审查派发 / codex 报错 fallback / 降级链见 skeleton §4.2，本卡不复述。sequential-thinking 不可用 → 明说后仍进 Step 1。
 
-**heavy 独立审查默认单跑 Codex**（单源在 `rule-codex-review` 场景 1，本卡不重复派发细节，只提两点）：
-1. 默认只派一路给 Codex，传方案 + 约束 + Step 1 真约束，做完整独立 review（`Agent()` 包一层 Bash，不在主 agent 直接 Bash 调 `codex-companion.mjs`）。
-2. Codex 调用报错（不预先探活） → fallback 改派 Subagent（`Agent` general-purpose）单跑独立 review，不与 Codex 同时发——具体派发模板见 `rule-codex-review.md` 场景 1。
-
-**降级**：
-- codex 调用报错 → **fallback 改派 subagent 单跑 + 明说**「codex 调用失败，fallback 至 subagent 独立审查」→ 合并两路（蓝军 + subagent，不阻断）
-- sequential-thinking 不可用 → 明说后仍进 Step 1（见上）
-
-**反例**：轻档强走重档（噪音）/ 重档降轻档（架构一句话表态 = 失职）/ 跳过第一性原理（在错假设上辩论）/ 只蓝军独白跳过独立审查（销售）/ 主 agent 自演红军（手下留情）/ 独立审查传了倾向（reviewer 被锚定）/ 发现了盲区结论没体现（做了等于没做）/ codex 调用成功时还硬派 subagent 并行陪跑（默认已改单路，冗余烧额度）。
+**反例**：轻档强走重档（噪音）/ 重档降轻档（架构一句话表态 = 失职）/ 跳过第一性原理（在错假设上辩论）/ 只蓝军独白跳过独立审查（销售）/ 主 agent 自演红军（手下留情）/ 独立审查传了倾向（reviewer 被锚定）/ 发现了盲区结论没体现（做了等于没做）。

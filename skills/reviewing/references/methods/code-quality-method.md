@@ -4,7 +4,7 @@
 >
 > 本卡由 `agents/code-reviewer.md` 转出：剥 frontmatter + 写死示例，**完整保留 安全 / 代码质量 / 性能 / 最佳实践四组清单 + 审查清单 + 审批判据**。与 `security-method` 的分工：本卡是**通用四维兜底**（安全只到「高发硬伤」层），涉及外部输入/认证/敏感数据的专项深审切 `security-method`（OWASP Top10 全量）。
 >
-> **caller 用法**：`Read` 本卡 + `Read {NOCODE_SKILL_REF}/reviewing/skeleton.md`（套通用流程）+ `Read {NOCODE_SKILL_REF}/reviewing/findings-contract.md`（套 findings 契约）；把待审 diff 注入下方 `{DIFF}` 占位符。流程步骤（分档 / 独立交叉 / 分级 / 收口）走骨架，本卡只提供「领域维度」（骨架第 3 步）。
+> **caller 用法**：`Read` 本卡 + `Read references/skeleton.md`（套通用流程）+ `Read references/findings-contract.md`（套 findings 契约）；把待审 diff 注入下方 `{DIFF}` 占位符。流程步骤（分档 / 独立交叉 / 分级 / 收口）走骨架，本卡只提供「领域维度」（骨架第 3 步）。
 
 ---
 
@@ -98,9 +98,7 @@
 
 ## 二、输出契约
 
-产出 `findings[]`，映射 `{NOCODE_SKILL_REF}/reviewing/findings-contract.md`：
-
-- 每条 finding：`axis` = 四维之一或具体子项（`安全` / `代码质量` / `性能` / `最佳实践`，或 `SQL 注入` / `超大函数` 等）；`location` = `file:line`；`evidence` = 问题代码摘录；`fix` = 具体修法，**带改前/改后对照**（Structural Remedy 优先），形如：
+套 `findings-contract.md` 的 schema，`axis` = 四维之一或具体子项（`安全` / `代码质量` / `性能` / `最佳实践`，或 `SQL 注入` / `超大函数` 等），`fix` 带改前/改后对照（Structural Remedy 优先），形如：
 
 ```
 [CRITICAL] 硬编码 API key
@@ -112,24 +110,10 @@ const apiKey = "sk-abc123";          // ❌ Bad
 const apiKey = process.env.API_KEY;  // ✓ Good
 ```
 
-- **四维原生分级 → 统一 C/W/S 映射**（与 findings-contract §3 同源）：
-  - 原生 **CRITICAL（安全组）+ HIGH（质量组）→ 统一 `critical`**（阻塞，必修）。依据：本卡审批判据「Approve 要求无 CRITICAL **且**无 HIGH」「Block 触发于 CRITICAL **或** HIGH」——HIGH 在原语义里即阻塞，故上提 critical 不下沉。
-  - 原生 **MEDIUM（性能 / 最佳实践组）→ 统一 `warning`**（应修）。
-  - 零散 nit / 风格建议 → 统一 `suggestion`（记录）。
-- 受 **Evidence Gate** 约束：代码事实类 finding（具体行/签名/调用）上 critical/warning 必须有 `location` + evidence，否则降 `kind=open-question`（让作者去核，防猜测式指控）。
-- **verdict 映射审批判据**（原生 Approve / Warning / Block → `verdict.approved`）：
-  - ✅ **Approve**：无 critical（无原生 CRITICAL/HIGH）→ `approved=true`。
-  - ⚠️ **Warning**：仅 warning（仅 MEDIUM）→ `approved=true`，recommendation 标「可谨慎合并」。
-  - ❌ **Block**：存在 critical（原生 CRITICAL/HIGH）→ `approved=false`，recommendation 给「N Critical 必修后可合并」。
-  - `counts` 按 §一 各维计入对应档；Critical 必修不可 override（fix 后回 Build→Verify→再 Review）。
+- 四维原生分级 → 统一 C/W/S 映射见 findings-contract §3：原生 CRITICAL（安全组）+ HIGH（质量组）→ critical（本卡审批判据里 HIGH 即阻塞，上提不下沉）；MEDIUM（性能/最佳实践组）→ warning；零散 nit → suggestion。
+- 受 Evidence Gate 约束：代码事实类 critical/warning 缺 `location` → 降 `kind=open-question`。
+- `verdict.approved`：无 critical → true；仅 warning → true（recommendation 标「可谨慎合并」）；有 critical → false（recommendation 给「N Critical 必修后可合并」）。Critical 必修不可 override。
 
 ---
 
-## 三、派发策略
-
-| 模式 | 派 subagent | 调 codex | 说明 |
-|---|---|---|---|
-| **自评清单**（轻档 / 单文件可逆小改） | 否 | 否 | 主 agent 直接套四维清单逐项核查，self-review 一遍 |
-| **异源交叉**（重档：不可逆 / 跨模块 / 碰外部输入·认证·敏感数据） | 报错才 fallback | 默认单路 | 重档时独立路跑四维清单（默认 Codex 单跑，报错 fallback subagent），**CLAIM 剥离 + Context Capsule**（只传 diff + 维度清单 + 中立事实包，不传已发现结论），异源更易发现单模型盲区 |
-
-档位按 skeleton §1 分档判据定（代码 diff 默认方法集 = `checklist`（本卡）+ `dual-review` 异源双评，skeleton §3 选择表「代码 diff」行）。codex 调用报错 → fallback subagent 单跑 + 明说降级，独立性声明标「同模型（降级）」。碰安全敏感面时叠加 `security-method`（OWASP 全量）+ `threat-modeling`。
+> **派发 / 档位 / 升档 / CLAIM 剥离 / codex 降级见 skeleton §1、§1a、§4.0–§4.2，本卡不复述。** 代码 diff 默认方法集 = `checklist`（本卡）+ `dual-review` 异源双评（见 skeleton §3 选择表「代码 diff」行）；碰安全敏感面（外部输入 / 认证 / 敏感数据）时叠加 `security-method`（OWASP 全量）+ `threat-modeling`。
