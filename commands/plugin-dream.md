@@ -1,5 +1,5 @@
 ---
-description: 插件仓库自维护巡检——客观漂移(4项) + 边界符合性(19项)两层检测，候选清单+用户勾选+执行修复
+description: 插件仓库自维护巡检——客观漂移(4项) + 边界符合性(20项)两层检测，候选清单+用户勾选+执行修复
 argument-hint: (无参数)
 ---
 
@@ -66,12 +66,13 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/plugin-dream-baseline.mjs" "${CLAUDE_PLUGIN_
 | workflow 防跳步登记 | workflow 类 skill 是否登记在 `rules/manifest.json` 的 `workflow_skills` |
 | 引用路径有效 | `{NOCODE_SKILL_REF}`/references/rule 文件引用不悬空 |
 | 硬交接完整 | workflow skill 末步有 handoff 调下一阶段 |
+| 自闭环边界 | SKILL.md 正文/私有 `references/` 是否直接指路 `rules/rule-*.md`、`model/agent-*.md`、`hooks/`、非自身 `scripts/` 等插件内部实现文件（自身/共享 `references/` 除外，`CLAUDE.md` 规则6） |
 
 **command 对象**（逐个 `commands/*.md`）：命名惯例（`*hub`/`*flow`/`xx-yy`）/ 模式边界（hub 只转发不写业务逻辑）。
 
 **通用**（跨对象）：版本联动（改了插件加载文件但 `plugin.json` 没升）/ 内容 stale（引用路径或机制已变没跟着更新）。
 
-> 语义检测规模提示：本仓 skill 数量较多，逐 skill 跑满 8 项判断成本不低——可按对象类型分组跑（先 rule 组，再 skill 组），或用户指定范围（如"只查 rule"/"只查 skill"）缩小单次扫描面，不强制全量。
+> 语义检测规模提示：本仓 skill 数量较多，逐 skill 跑满 9 项判断成本不低——可按对象类型分组跑（先 rule 组，再 skill 组），或用户指定范围（如"只查 rule"/"只查 skill"）缩小单次扫描面，不强制全量。
 
 ### Phase 2: Propose（呈现候选 + 用户确认）
 

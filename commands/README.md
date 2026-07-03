@@ -44,7 +44,7 @@ Claude Code 插件 `nocode` 的 slash command 定义目录。每个 `.md` 文件
 
 | 命令 | 一句话用途 |
 |---|---|
-| `/plugin-dream` | 插件仓库自维护巡检——客观漂移（4 项：生成物/vendor/manifest 路径/孤儿 rule）+ 边界符合性（19 项：rule/skill/command 三类对象语义检查）两层检测 |
+| `/plugin-dream` | 插件仓库自维护巡检——客观漂移（4 项：生成物/vendor/manifest 路径/孤儿 rule）+ 边界符合性（20 项：rule/skill/command 三类对象语义检查）两层检测 |
 | `/personal-dream` | `.agents-personal/` 的自主维护：stale 检测 / prune / merge / promote / archive |
 | `/project-dream` | 递归扫描选定目录树，为每个有意义的子目录批量生成/更新 AGENTS.md + README.md |
 | `/personal-lint` | 检查当前项目 `.agents-personal/` 的健康状态（wiki 结构 + rules 完整性 + AGENTS.md 变量对齐） |

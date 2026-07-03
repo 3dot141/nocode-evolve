@@ -250,6 +250,7 @@ Workflow skill SKILL.md must include: **Step 0 TaskCreate** (all tasks created u
 ```
 
 - **No weak cross-references.** Only name another skill / command when it is a hard execution dependency (handoff, required framework, routing "Not for X — use Y"); never cite another skill's internals (Step N, section titles) as a "reference pattern".
+- **Skills are self-contained — only read Skill, except Reference.** SKILL.md body and its private `references/` may only point to two things: other Skills (named handoff or `Skill()` call) and reference material (the skill's own `references/`, or the shared `skills/references/`). Never point directly at internal plugin implementation files — `rules/rule-*.md`, `model/agent-*.md`, `hooks/`, or another skill's non-reference `scripts/` — those are the routing/guardrail layer injected automatically by SessionStart/PreToolUse; a skill has no runtime reason to name them explicitly (repo `CLAUDE.md` rule 6). If a skill genuinely depends on something defined in one of those files, copy the needed bit into its own `references/` or turn the dependency into a handoff — don't reach across the layer.
 - For Anthropic's official skill authoring best practices, read `writing-skills/anthropic-best-practices.md`
 
 ### Self-Verification Guideline (independent-review guidance for produced skills)
@@ -274,6 +275,7 @@ After writing SKILL.md, self-review it — author's own pass, no subagent, no co
 - Does it actually address every baseline failure recorded in Phase 3?
 - Are there loopholes, missing edge cases, or instructions an agent could misinterpret?
 - Method-card items: leftover placeholders/TODOs, internal contradictions, ambiguity, scope drift, hollow promises never fulfilled, completeness
+- Self-loop boundary: does the skill (or its private `references/`) point directly at `rules/*.md`, `model/agent-*.md`, `hooks/`, or another skill's non-reference files? Only other Skills and reference material (own `references/` / shared `skills/references/`) are allowed cross-references.
 
 Fix issues inline before passing the Exit Gate; unfixed items must be recorded explicitly. Self-review is the minimum bar, not a sufficient one — on finding a genuine critical defect, or when the subject is clearly high-risk, escalate to `Skill(nocode:red-blue-deep)` for an independent review.
 
@@ -283,6 +285,7 @@ Fix issues inline before passing the Exit Gate; unfixed items must be recorded e
 - [ ] Self-review completed, findings addressed
 - [ ] Workflow skills include Step 0 TaskCreate + Enter/Exit Gate per step
 - [ ] Self-verification steps include review methodology (reviewing framework for structured review) + independent review guidance (or confirmed no self-verification steps exist)
+- [ ] Self-loop boundary respected — no direct references to `rules/*.md`, `model/agent-*.md`, `hooks/`, or another skill's non-reference files (Reference material excepted)
 - [ ] Line count ≤ 500 (overflow moved to references/)
 
 ## Phase 5: Eval — Run & Review
