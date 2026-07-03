@@ -196,10 +196,9 @@ Round 1 的骨架定了"改什么"，Round 2 填"怎么改"——每个 task 补
 - [ ] Step 4: 跑测试确认通过
   Run: <具体命令>
   Expected: PASS
-
-- [ ] Step 5: Commit
-  git add <files> && git commit -m "<message>"
 ```
+
+**不按 task 拆 commit**：commit 挪到 Build 阶段任务循环结束后统一处理一次（见 devflow Build sub-flow 5d），dev-plan 的 task 模板不再包含 commit 步骤。
 
 **禁占位符**：`<your code here>` / `TODO` / `...` / "类似这样" / "参考 Task N"（重复写，执行者可能乱序读）。写不出真实代码 = 没想清楚，回 Step 1 重新读代码。
 

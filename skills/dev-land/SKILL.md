@@ -17,7 +17,7 @@ description: "Use when Review is complete and you need to land the work. Orchest
 ## Enter Gate
 
 - [ ] Review Gate 已过（Critical 全 fix + 用户 approve）
-- [ ] 工作目录干净（无未 commit 的改动）
+- [ ] 无需额外处理的未提交改动（Verify/Review 阶段产生的改动会在 Step 1 统一 commit 一次）
 - [ ] 分支与 base 无重大冲突（behind ≤ 阈值，或已 rebase）
 
 ## 协议
@@ -28,7 +28,7 @@ description: "Use when Review is complete and you need to land the work. Orchest
 
 ```
 Task 1: Pre-flight
-  Gate: Review 状态 + 工作目录干净 + 分支新鲜度
+  Gate: Review 状态 + 统一 commit 尾款改动 + 分支新鲜度
 
 Task 2: Finish-branch
   Gate: dev-finish-branch 完成（PR 已创建 / 已合并 / keep / discard）
@@ -49,7 +49,7 @@ Task 4: 收口 — 报告完成并交回
 Enter Gate 三项逐条检查：
 
 - [ ] **Review 状态**：Review task 标完成 + 无未解决 Critical
-- [ ] **工作目录**：`git status` 干净。有未 commit 改动 → 停手告知，不替用户 commit
+- [ ] **工作目录**：`git status` 检查改动来源——若可归因于 Build 之后 Verify/Review 阶段产生的改动 → 在本步统一 commit 一次（message 概括本轮修复内容）；若改动来源不明或与本次任务无关 → 仍停手告知，不代理处理
 - [ ] **分支新鲜度**：调 `rule-git-freshness` 检查 behind 差距。behind 大 → 建议先 rebase，但用户决定
 
 三项全过 → 进 Step 2。任一不满足 → 报告具体状态 + 建议动作，不自行修复。

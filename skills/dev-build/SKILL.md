@@ -55,6 +55,10 @@ Task 3: 硬交接 — 调用下一步 skill
 3. **spec 核对（抽查）**：`subagent` 协议下抽查 1-2 个 task 的 spec reviewer 判断是否站得住；`executing` 协议下抽查 1-2 个 task 的实现是否匹配 plan 声明的验收标准
 4. **空壳扫描（确定性脚本，非 LLM 判断）**：用 grep/AST 模式匹配扫全量 diff——空函数体、placeholder 注释（`// TODO`、`// implement`）、`throw new Error('not implemented')`、只有类型签名没有逻辑的方法。lint + typecheck 通过不代表功能完整，空函数合法但无用。发现空壳 → 视为 task 未完成，重新处理
 
+### Step 3: 统一 Commit
+
+编排者验证通过后，一次性 commit 覆盖本轮 Build 全部 task 改动——一条 message 概括整体功能，不按 task 拆分。
+
 ## 异常路径（编排者层面）
 
 | 触发 | 处理 |
@@ -71,6 +75,7 @@ Task 3: 硬交接 — 调用下一步 skill
 - [ ] 零空壳：无空函数体、无 TODO/implement placeholder、无 `throw not implemented`
 - [ ] 全部测试通过（整个相关套件，不只新写的）
 - [ ] build 通过
+- [ ] 统一 commit 已完成
 - [ ] 后续 Verify 可开始
 - [ ] **硬交接**：Exit Gate 全部通过后，向用户报告 Build 完成（含完成 task 数 + 测试通过状态 + build 状态），建议下一阶段：Verify（`nocode:dev-verify`）。列出 Verify 阶段的 sub-steps + 关键决策（devflow Step 5 格式）。等用户拍板，不自行进入下一阶段
 

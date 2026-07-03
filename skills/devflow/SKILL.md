@@ -318,8 +318,9 @@ PDCA 循环：
 | Sub-step | 做什么 | 决策 |
 |---|---|---|
 | 5a. 加载计划 | 读 Plan 任务序列 + 测试目标 | — |
-| 5b. 逐 task slice 循环 | 每 task: Scope Lock → Test First → Implement → Verify & Commit | ≤5 文件否则回 Plan；HITL 停等用户 |
+| 5b. 逐 task slice 循环 | 每 task: Scope Lock → Test First → Implement → Verify | ≤5 文件否则回 Plan；HITL 停等用户 |
 | 5c. Gate 检查 | 全 task 完成 + 测试通过 + build 通过 | 同测试修 3 次失败 → Debug 横切 |
+| 5d. 统一 Commit | Gate 通过后一次性 commit 覆盖全部 task 改动，不按 task 拆分 | — |
 
 #### Verify sub-flow
 
@@ -345,7 +346,7 @@ PDCA 循环：
 
 | Sub-step | 做什么 | 决策 |
 |---|---|---|
-| 8a. Pre-flight | 确认 Review Gate + 工作目录干净 + 分支新鲜度 | 任一不满足 → 报告 + 建议动作，不自行修复 |
+| 8a. Pre-flight | 确认 Review Gate + 统一 commit 尾款改动 + 分支新鲜度 | 任一不满足 → 报告 + 建议动作，不自行修复 |
 | 8b. Disposition | 呈现 4 选项（merge/PR/keep/discard），用户选路径 | 有 reviewer/CI → 建议 PR；个人快修 → 建议 Merge |
 | 8c. Plan + Execute | 按路径呈现计划（PR: title/body + target + reviewer；Merge: merge 计划），Gate 确认后执行（push + create PR + add reviewer） | Gate Title-Body → Gate PR → 执行 |
 | 8d. Poll & Merge | PR 路径：pr-watch(run_in_background)后台盯直到合并、退出 re-invoke；Merge 路径：本地合并后直接过 | merge 成功（PR 路径由 pr-watch 自动盯，无超时上限） |
