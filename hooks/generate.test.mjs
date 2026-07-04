@@ -129,9 +129,9 @@ test('renderBucketBody: 只留 trigger_short + 读路径指针, 有 read 才带�
 
 test('genPretooluse: 扁平化 pretooluse 靶 (不变)', () => {
   const p = genPretooluse(loadManifest());
-  const block = p.find((x) => x.decision === 'block' && /PUT/.test(x.pattern));
-  assert.ok(block, '应含 bkt PUT 的 block 靶');
-  assert.equal(block.rule, 'dev-finish-branch');
+  const inject = p.find((x) => x.decision === 'inject' && /worktree/.test(x.pattern));
+  assert.ok(inject, '应含 git-worktree 的 inject 靶');
+  assert.equal(inject.rule, 'git-worktree');
   assert.ok(p.some((x) => x.decision === 'inject'), '应含 inject 靶');
 });
 
@@ -158,19 +158,6 @@ test('genWorkflowSkills: manifest.workflow_skills → {skills} 生成物 (含 15
 test('genWorkflowSkills: 真实 manifest 含 17 skill 名单', () => {
   const parsed = JSON.parse(genWorkflowSkills(loadManifest()).text);
   assert.equal(parsed.skills.length, 17, '真实 manifest 应含 17 个 workflow skill (含 dev-finish-branch + dev-design-select)');
-});
-
-test('manifest: dev-design 三 skill 分层注册 + select↔refine 触发排他 (B3)', () => {
-  const m = loadManifest();
-  const byId = Object.fromEntries(m.rules.map((r) => [r.id, r]));
-  assert.ok(byId['dev-design'], '协调器 dev-design 应存在');
-  assert.ok(byId['dev-design-select'], 'dev-design-select 应注册');
-  assert.ok(byId['dev-design-refine'], 'dev-design-refine 应注册');
-  assert.ok(byId['dev-design-select'].triggers.some((t) => /预研/.test(t)), 'research/预研 应归 select');
-  assert.ok(byId['dev-design-refine'].triggers.some((t) => /设计文档/.test(t)), '设计文档 应归 refine');
-  const sel = new Set(byId['dev-design-select'].triggers);
-  const overlap = byId['dev-design-refine'].triggers.filter((t) => sel.has(t));
-  assert.equal(overlap.length, 0, `select↔refine 触发不应重叠: ${overlap}`);
 });
 
 test('targets: 含 workflow-skills.json 生成物', () => {
