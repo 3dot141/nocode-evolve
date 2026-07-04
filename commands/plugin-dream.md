@@ -63,7 +63,6 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/plugin-dream-baseline.mjs" "${CLAUDE_PLUGIN_
 | 专业/非空壳 | 内容非敷衍占位 |
 | description 触发准确 | `Use when` + 反例（Not for）齐全 |
 | Step 编号规范 | 整数或字母后缀，禁分数编号（CLAUDE.md 规则5） |
-| workflow 防跳步登记 | workflow 类 skill 是否登记在 `rules/manifest.json` 的 `workflow_skills` |
 | 引用路径有效 | `{NOCODE_SKILL_REF}`/references/rule 文件引用不悬空 |
 | 硬交接完整 | workflow skill 末步有 handoff 调下一阶段 |
 | 自闭环边界 | SKILL.md 正文/私有 `references/` 是否直接指路 `rules/rule-*.md`、`model/agent-*.md`、`hooks/`、非自身 `scripts/` 等插件内部实现文件（自身/共享 `references/` 除外，`CLAUDE.md` 规则6） |

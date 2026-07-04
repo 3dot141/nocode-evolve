@@ -113,18 +113,9 @@ export function genPretooluse(m) {
   );
 }
 
-// 防跳步 hook: manifest.workflow_skills → hooks/workflow-skills.json (Hook A 消费的 15 skill 名单).
-export function genWorkflowSkills(m) {
-  return {
-    file: path.join(ROOT, 'hooks/workflow-skills.json'),
-    text: JSON.stringify({ skills: m.workflow_skills }, null, 2) + '\n',
-  };
-}
-
 function targets(m) {
   return [
     { file: path.join(ROOT, 'hooks/pretooluse-rules.json'), text: JSON.stringify(genPretooluse(m), null, 2) + '\n' },
-    genWorkflowSkills(m),
     ...genCatalogSharded(m),
   ];
 }

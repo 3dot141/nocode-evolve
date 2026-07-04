@@ -4,15 +4,9 @@
 
 > 范围说明：`skills/.claude/` 是隐藏目录，与本插件无关，不管；`skills/references/` 是被多个 skill 共享引用的领域指南库，本身**不是 skill**（没有 SKILL.md），有自己独立的 AGENTS.md/README.md，见仓库内 `skills/references/AGENTS.md`。
 
-## 目录自动发现，但 workflow 类要登记
+## 目录自动发现，不需要额外注册
 
-Claude Code 自动发现本目录下每个含 `SKILL.md` 的子目录，**新增 skill 不需要额外注册**。
-
-例外：如果新 skill 是 **workflow 类**（承载 devflow/pdflow 的某个阶段，或本身就是流程领航入口），必须在 `rules/manifest.json` 顶层的 `workflow_skills` 数组里登记 `nocode:<skill-name>`，然后跑 `node hooks/generate.mjs` 重新生成 `hooks/workflow-skills.json`（防跳步 Hook A 消费的白名单，同样是生成物，禁手改）。
-
-当前登记的 16 个 workflow 类 skill：`nocode:devflow`、`nocode:pdflow`（两个流程领航入口）+ 10 个 `dev-*` 阶段 skill（dev-define / dev-design / dev-design-refine / dev-design-render / dev-plan / dev-build / dev-verify / dev-review / dev-land / dev-finish-branch）+ 4 个 `pd-*` 阶段 skill（pd-research / pd-prd / pd-ix / pd-vd）。
-
-不登记的情况：工具类、方法论类 skill，以及 `reviewing`（它是被各专项 review `Read` 引入的方法论底座，不进 manifest、不抢触发，见其 SKILL.md 里的边界说明）。
+Claude Code 自动发现本目录下每个含 `SKILL.md` 的子目录，**新增 skill 不需要额外注册**——包括 devflow/pdflow 及其阶段 skill（dev-define / dev-design / dev-plan / dev-build / dev-verify / dev-review / dev-land / dev-finish-branch / pd-research / pd-prd / pd-ix / pd-vd 等），Claude Code 原生的 skill description 已经承载路由信息，插件层不再维护一份独立的 workflow skill 白名单。
 
 ## 新增 / 修改 skill 的工序
 

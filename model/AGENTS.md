@@ -27,11 +27,11 @@
 **禁止直接 Edit 这些文件。** 正确流程：
 
 1. 改 `rules/manifest.json`（唯一真值源：`buckets` + `rules`，每条 rule 含 `bucket` / `triggers` / `summary` / `guard` / `pretooluse` 等字段）。
-2. 跑 `node hooks/generate.mjs` 重新生成 `model/agent-catalog-N.md` 分片 + `hooks/pretooluse-rules.json` + `hooks/workflow-skills.json`（三者同源，一次生成全部覆盖）。
+2. 跑 `node hooks/generate.mjs` 重新生成 `model/agent-catalog-N.md` 分片 + `hooks/pretooluse-rules.json`（两者同源，一次生成全部覆盖）。
 3. 跑 `node --test 'hooks/*.test.mjs'` 验证。
 4. 同一 commit 里升级 `plugin.json` 的 version（manifest 属于 `rules/`，生成物属于 `model/`，两者都在插件加载范围内，改动要合并进同一次版本升级，不要拆两次 commit 各升一次）。
 
-`generate.mjs` 按"桶"（bucket）切分完整路由，桶是最小切分粒度、不会切断单条 rule；单片字符数超过 `SHARD_LIMIT`（9000）就自动开新片。片数超过 `MAX_CATALOG_SHARDS`（当前 5）会直接 throw 报错——这种情况要先在 `hooks/hooks.json` + `hooks/inject-rules.sh` 里加一个新的 `model-catalog-N` segment，再调高 `MAX_CATALOG_SHARDS` 常量。当前仓库只用到 `agent-catalog-1.md` / `agent-catalog-2.md` 两片，`-3/-4/-5` 是预留位，文件不存在时 `inject-rules.sh` 静默跳过（不报错、不 warn）。
+`generate.mjs` 按"桶"（bucket）切分完整路由，桶是最小切分粒度、不会切断单条 rule；单片字符数超过 `SHARD_LIMIT`（9000）就自动开新片。片数超过 `MAX_CATALOG_SHARDS`（当前 5）会直接 throw 报错——这种情况要先在 `hooks/hooks.json` + `hooks/inject-rules.sh` 里加一个新的 `model-catalog-N` segment，再调高 `MAX_CATALOG_SHARDS` 常量。当前仓库只用到 `agent-catalog-1.md` 一片，`-2/-3/-4/-5` 是预留位，文件不存在时 `inject-rules.sh` 静默跳过（不报错、不 warn）。
 
 一致性有兜底但不阻断：SessionStart 第一个 segment 里会跑 `node hooks/generate.mjs --check`，manifest 与生成物不一致只 `warn`，不会挡住会话——**不要依赖这个兜底代替手动跑 generate**，warn 出现说明已经有人忘了重新生成。
 

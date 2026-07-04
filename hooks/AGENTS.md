@@ -4,12 +4,11 @@
 
 ## 动手前必须知道
 
-1. **两个文件是生成物，禁止手改**：
+1. **一个文件是生成物，禁止手改**：
    - `hooks/pretooluse-rules.json`
-   - `hooks/workflow-skills.json`（注意：CLAUDE.md 只点名了前者和 `model/agent-catalog-*.md`，但代码上 `generate.mjs` 的 `targets()` 把这个文件和另两类一起生成——同样禁手改）
    - 以及不在本目录、但同一条生成链的 `model/agent-catalog-*.md`
 
-   唯一真值源是 `rules/manifest.json`。改规则触发词 / PreToolUse 拦截靶 / 防跳步 skill 名单 → 改 manifest → 跑 `node hooks/generate.mjs` 重新生成。直接手改上述生成物会被下次 generate 覆盖，且会被 SessionStart 首个 segment 自动跑的 `generate.mjs --check` 报 drift（只 warn 不阻断 session，但提交前应清干净）。
+   唯一真值源是 `rules/manifest.json`。改规则触发词 / PreToolUse 拦截靶 → 改 manifest → 跑 `node hooks/generate.mjs` 重新生成。直接手改上述生成物会被下次 generate 覆盖，且会被 SessionStart 首个 segment 自动跑的 `generate.mjs --check` 报 drift（只 warn 不阻断 session，但提交前应清干净）。
 
 2. **hook 执行逻辑（各 `*.mjs` / `inject-rules.sh`）不受 manifest 单源约束**——直接改源文件即可，manifest 单源只管"规则数据"，不管"hook 怎么跑"。
 
@@ -34,7 +33,6 @@
 |---|---|
 | 新增/改/删一条 rule（触发词、摘要、guard） | 改 `rules/manifest.json` → `node hooks/generate.mjs` |
 | 新增一个 PreToolUse 危险命令拦截靶（deny/inject） | 在 manifest 对应 rule 的 `pretooluse[]` 加 `{pattern, action, note}` → generate |
-| 新增一个"防跳步"workflow skill（进入即提醒） | manifest 顶层 `workflow_skills[]` 加 skill 全名 → generate（自动同步 `workflow-skills.json`） |
 | 新增一个 SessionStart 常驻注入段（非 catalog 分片） | `model/*.md` 新增文件 → `inject-rules.sh` 的 `seg_file()` 加映射 → `hooks.json` 的 SessionStart 数组加对应 command |
 | 排查 SessionStart 注入是否与源漂移 | `node hooks/generate.mjs --check`（SessionStart 首段也会自动跑一次，只 warn） |
 | 单独调试某个 hook 的行为 | 各 hook 都是 stdin JSON → stdout JSON 的纯函数封装，可直接 `echo '<json>' \| node hooks/xxx.mjs`，或在对应 `.test.mjs` 里加用例（内部函数已 `export`） |

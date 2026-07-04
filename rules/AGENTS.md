@@ -2,8 +2,7 @@
 
 `rules/manifest.json` 是本目录的**唯一真值源**。`model/agent-catalog-*.md`（catalog 分片）和
 `hooks/pretooluse-rules.json` 是**生成物，禁止手改**——手改会在下次 `generate.mjs` 或
-SessionStart 的 `--check` 时被覆盖 / 报漂移。`hooks/workflow-skills.json` 同样是生成物（源自
-manifest 的 `workflow_skills` 字段）。
+SessionStart 的 `--check` 时被覆盖 / 报漂移。
 
 ## 增删改一条 rule 的标准工序
 
@@ -11,7 +10,7 @@ manifest 的 `workflow_skills` 字段）。
    `summary` / `guard` / `pretooluse` 等字段，完整字段见 README）；新增 rule 需要正文内容时，
    同时加 `rules/rule-<slug>.md`（`<slug>` 与 manifest 里的 `id` 一致）。
 2. **跑生成器**：`node hooks/generate.mjs`——重新生成 `model/agent-catalog-N.md` 分片 +
-   `hooks/pretooluse-rules.json` + `hooks/workflow-skills.json`。不要跳过这一步，否则常驻
+   `hooks/pretooluse-rules.json`。不要跳过这一步，否则常驻
    context 里的路由表和 PreToolUse 拦截规则会与 manifest 脱节。
 3. **测试**：`node --test 'hooks/*.test.mjs'`（尤其 `hooks/generate.test.mjs` /
    `hooks/manifest.test.mjs`）。
@@ -24,7 +23,7 @@ manifest 的 `workflow_skills` 字段）。
 ## 硬约束
 
 - **禁止手改生成物**：`model/agent-catalog-1.md` / `model/agent-catalog-2.md`（及未来可能新增的
-  分片）、`hooks/pretooluse-rules.json`、`hooks/workflow-skills.json`。这几个文件顶部都标注了
+  分片）、`hooks/pretooluse-rules.json`。这几个文件顶部都标注了
   「本文件由 `hooks/generate.mjs` 生成，禁手改」。真要改内容，改 `manifest.json` 再重新生成。
 - **manifest 是 buckets + rules 的唯一结构**：不要在别处（例如某个 rule-*.md 顶部）重新定义
   bucket 归属或触发词——那些信息只活在 manifest 里，rule-*.md 只放规则正文。
@@ -74,4 +73,4 @@ manifest 的 `workflow_skills` 字段）。
 - [ ] `node hooks/generate.mjs --check` exit 0（生成物与 manifest 一致）
 - [ ] `node --test 'hooks/*.test.mjs'` 通过
 - [ ] `.claude-plugin/plugin.json` 的 `version` 已按 SemVer 升级，且和本次改动在同一个 commit
-- [ ] 没有手改 `model/agent-catalog-*.md` / `hooks/pretooluse-rules.json` / `hooks/workflow-skills.json`
+- [ ] 没有手改 `model/agent-catalog-*.md` / `hooks/pretooluse-rules.json`

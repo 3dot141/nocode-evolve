@@ -16,9 +16,8 @@ Claude Code 插件的 `CLAUDE.md`（挂在插件根目录下）不会被自动�
 | `agent-personal.md` | 项目本地 `.agents-personal/` 的检索约定（wiki 何时查、AGENTS.md+rules 何时查）+ 删除护栏（`.agents-personal/` 和 `$USER_VAULT_PATH` 下 rm/mv/覆盖前必须二次确认，不可恢复） | 手工维护 |
 | `agent-karpathy.md` | 12 条工程准则模板（Think Before Coding / Simplicity First / Surgical Changes / Goal-Driven Execution / Fail Loud 等），`agent-about.md` 声明"行为基线遵循本文件" | 手工维护 |
 | `agent-catalog-using.md` | Skill 调用纪律 + Step 0 触发协议（吸收自 superpowers `using-superpowers` skill，融合 nocode catalog 触发协议）——命中桶后怎么 `Read` rule、多 skill 命中的调用顺序（流程类先/实现类后）、"进了 skill 就走完不跳步"的三条硬约束、用户指令优先级 | **手工维护**（文件名含 "catalog" 但不是生成物，见下方说明） |
-| `agent-catalog-1.md` | catalog 分片 1：Step 0 触发协议头 + 何时主动调 `/devflow` + 何时建议 `/distill`·`/sow`·`/task` + **桶: Git 生命周期**（完整）+ **桶: 评审**（完整） | **生成物**，源 = `rules/manifest.json` |
-| `agent-catalog-2.md` | catalog 分片 2（续片）：**桶: 设计与文档**（完整）+ **桶: 记忆与沉淀**+ **桶: 飞书/Lark** + **桶: Figma 设计稿读取** + **桶: 工程流程**（各自完整） | **生成物**，同上 |
-| `agent-catalog-3.md` / `-4.md` / `-5.md` | 预留分片，路由内容超过单片 `SHARD_LIMIT`（9000 字符）时由 `generate.mjs` 自动新开，当前不存在 | 生成物（按需生成） |
+| `agent-catalog-1.md` | catalog 唯一分片（体量小，当前不需要续片）：Step 0 触发协议头 + 何时主动调 `/devflow` + 何时建议 `/distill`·`/sow`·`/task` + 6 个桶（Git 生命周期 / 评审 / 设计与文档 / 记忆与沉淀 / 飞书Lark / Figma），每条 rule 只有一行索引（`trigger_short` + 读路径指针），不是完整展开 | **生成物**，源 = `rules/manifest.json` |
+| `agent-catalog-2.md` / `-3.md` / `-4.md` / `-5.md` | 预留分片，路由内容超过单片 `SHARD_LIMIT`（9000 字符）时由 `generate.mjs` 自动新开，当前不存在 | 生成物（按需生成） |
 
 ## 生成物与手工文件的分界
 
@@ -28,10 +27,8 @@ Claude Code 插件的 `CLAUDE.md`（挂在插件根目录下）不会被自动�
 
 ```
 rules/manifest.json  ──node hooks/generate.mjs──▶  model/agent-catalog-1.md
-   (单一真值源)                                      model/agent-catalog-2.md
-                                                      ...（按需 -3/-4/-5）
+   (单一真值源)                                      ...（按需 -2/-3/-4/-5）
                                                       hooks/pretooluse-rules.json
-                                                      hooks/workflow-skills.json
 ```
 
 一致性由 SessionStart 时的 `node hooks/generate.mjs --check` 兜底：manifest 和生成物一旦漂移只 `warn`，不阻断 session（把决定权留给维护者，不强制卡住每次开局）。
@@ -47,7 +44,7 @@ rules/manifest.json  ──node hooks/generate.mjs──▶  model/agent-catalog
 | 3 | `model-karpathy` | `model/agent-karpathy.md` |
 | 4 | `model-catalog-using` | `model/agent-catalog-using.md` |
 | 5 | `model-catalog-1` | `model/agent-catalog-1.md` |
-| 6 | `model-catalog-2` | `model/agent-catalog-2.md` |
+| 6 | `model-catalog-2` | `model/agent-catalog-2.md`（不存在，静默跳过） |
 | 7 | `model-catalog-3` | `model/agent-catalog-3.md`（不存在，静默跳过） |
 | 8 | `model-catalog-4` | `model/agent-catalog-4.md`（不存在，静默跳过） |
 | 9 | `model-catalog-5` | `model/agent-catalog-5.md`（不存在，静默跳过） |
@@ -66,7 +63,7 @@ rules/manifest.json  ──node hooks/generate.mjs──▶  model/agent-catalog
 ## 与其他目录的关系
 
 - `rules/manifest.json` —— catalog 分片的唯一真值源，改路由从这里改，不改 `model/agent-catalog-*.md`。
-- `hooks/generate.mjs` —— 单源生成器：manifest → catalog 分片 + `pretooluse-rules.json` + `workflow-skills.json`；也是 SessionStart `--check` 漂移检查用的同一份脚本。
+- `hooks/generate.mjs` —— 单源生成器：manifest → catalog 分片 + `pretooluse-rules.json`；也是 SessionStart `--check` 漂移检查用的同一份脚本。
 - `hooks/inject-rules.sh` —— 本目录内容注入 session 的执行脚本，`seg_file()` 是 segment → 文件的映射单源。
 - `hooks/hooks.json` —— 声明 `SessionStart` 的 segment 调用顺序（以及 `PreToolUse` / `PostToolUse` 等其他 hook 事件，不在本目录范围）。
 - `rules/rule-*.md` —— 按需 `Read` 的具体规则内容，不常驻 context；`agent-catalog-*.md` 分片里的每条 rule 命中后才指向对应的 `rules/rule-*.md`。
