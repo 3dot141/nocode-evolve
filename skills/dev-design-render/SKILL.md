@@ -7,8 +7,6 @@ description: Render design documents (from dev-design-refine) into styled intera
 
 把设计文档（markdown）转成可浏览的 HTML 页面。不只是图——整个文档都渲染：标题变导航、表格变交互表、ASCII 图变 Canvas/SVG、代码块加语法高亮。
 
-参考 pd-vd 的双线方案：Claude Design 或本地 HTML，用户选。
-
 ## 非本 skill 请求
 
 UI 原型 → pd-vd。写设计文档 → dev-design-refine。
@@ -51,30 +49,7 @@ Task 5: 收口 — 交回调用方
 
 **Core Actions:**
 
-读设计文档，提取：
-
-```
-章节树（生成导航用）：
-  ## 背景
-  ## 前置调研
-  ## 资源域
-    ### 模块关系图
-    ### ImportParser
-    ### Validator
-  ## Agent 域
-  ...
-
-图清单（需特殊渲染）：
-  | 位置 | 类型 | 渲染方式 |
-  |---|---|---|
-  | ## 领域划分 | 域关系图 | Canvas/SVG 交互图 |
-  | ## 资源域 | 模块关系图 | SVG |
-  | ## 资源域.BF1 | 流程图 | SVG 流程 |
-  | ## 跨域交互 | 时序图 | SVG 时序 |
-
-表格清单（交互增强）：
-  接口表、TO 表、文件影响表 → 可排序/可筛选 HTML 表格
-```
+读设计文档，提取三项：章节树（生成导航用）、图清单（每张图标注类型+渲染方式，如域关系图→Canvas/SVG 交互图）、表格清单（接口表/TO 表/文件影响表等标记为可排序/可筛选 HTML 表格）。
 
 **Exit Gate:**
 - [ ] 章节树提取完成
@@ -127,10 +102,7 @@ AskUserQuestion（参考 pd-vd 方案）：
 - 引用块 → 样式化侧边栏
 
 **图渲染**（ASCII → Canvas/SVG）：
-- 架构图 / 域关系图 → SVG 方框 + 箭头连线
-- 流程图 → SVG 节点 + 箭头串联
-- 时序图 → SVG 生命线 + 横向消息箭头
-- 状态机 → SVG 圆角节点 + 标条件的转换箭头
+- 架构图/域关系图→SVG 方框+箭头连线；流程图→SVG 节点串联；时序图→SVG 生命线+横向消息箭头；状态机→SVG 圆角节点+标条件转换箭头
 - 每张图保留可折叠的 ASCII 原文（`<details>`）
 
 **表格渲染**：
@@ -138,10 +110,7 @@ AskUserQuestion（参考 pd-vd 方案）：
 - 文件影响表 → 可折叠目录树
 - 覆盖状态表 → 带颜色标记（✅ 绿 / ❌ 红）
 
-**交互增强**（可选）：
-- 搜索（Ctrl+F 全文搜索）
-- 暗色模式切换
-- 图的缩放/平移
+**交互增强**（可选）：全文搜索（Ctrl+F）、暗色模式切换、图缩放/平移。
 
 **产出路径**：设计文档同目录 `<topic>-design.html`
 
@@ -159,16 +128,16 @@ AskUserQuestion（参考 pd-vd 方案）：
 **Core Actions:**
 
 1. **内容完整性核对**：
-   - [ ] 章节数量：HTML 章节数 = 原文档章节数
-   - [ ] 图数量：渲染的图数 = ASCII 图数
-   - [ ] 表格数量：HTML 表格数 = 原文档表格数
-   - [ ] 文字内容：抽查 3-5 段，渲染结果 vs 原文一致
+   - [ ] 章节数：HTML = 原文档
+   - [ ] 图数：渲染图 = ASCII 图
+   - [ ] 表格数：HTML = 原文档
+   - [ ] 文字：抽查 3-5 段，渲染结果 vs 原文一致
 
 2. **保存**：
    - Claude Design 线：记 projectId
    - HTML 线：保存到设计文档同目录（`<topic>-design.html`）
 
-3. **产出渲染回执 render receipt**（**不碰输入文档**——设计文档在 render 之前已评审 reviewed，render 改它会破坏"已评审"不可变性，B2）：
+3. **产出渲染回执 render receipt**（不改输入文档，理由见 Red Flags，B2）：
    ```
    RenderReceipt {
      sourceDoc      // 输入设计文档路径（只读，未改动）
@@ -177,7 +146,7 @@ AskUserQuestion（参考 pd-vd 方案）：
      coverage       // 章节 / 图 / 表 渲染计数（完整性核对结果）
    }
    ```
-   **产物关系由协调器（dev-design）记录**——render 只返回 receipt，输入文档一个字不动；manifest 不承担运行产物索引。
+   **产物关系由协调器（dev-design）记录**——manifest 不承担运行产物索引。
 
 **Exit Gate:**
 - [ ] 完整性核对通过

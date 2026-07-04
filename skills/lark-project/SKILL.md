@@ -1,6 +1,6 @@
 ---
 name: lark-project
-description: "飞书项目管理（FeishuProjectMcp）。当用户给 project.feishu.cn 链接、提到 Meego 工作项、或需要读取/创建/更新/流转飞书项目工作项时使用。覆盖工作项读取（含附件）、状态流转、搜索、创建更新。不负责飞书云文档（走 lark-doc）、飞书任务（走 lark-task）。"
+description: 飞书项目管理（FeishuProjectMcp）。当用户给 project.feishu.cn 链接、提到 Meego 工作项、或需要读取/创建/更新/流转飞书项目工作项时使用。覆盖工作项读取（含附件）、状态流转、搜索、创建更新。不负责飞书云文档（走 lark-doc）、飞书任务（走 lark-task）。
 metadata:
   requires:
     mcp: ["FeishuProjectMcp"]
@@ -15,17 +15,10 @@ metadata:
 FeishuProjectMcp 工具是 deferred 的，操作前先用 ToolSearch 加载需要的工具：
 
 ```
-# 读取工作项
-select:mcp__FeishuProjectMcp__get_workitem_brief,mcp__FeishuProjectMcp__get_download_url,mcp__FeishuProjectMcp__list_workitem_comments
-
-# 流转状态
-select:mcp__FeishuProjectMcp__update_field,mcp__FeishuProjectMcp__get_transitable_states,mcp__FeishuProjectMcp__get_transition_required,mcp__FeishuProjectMcp__transition_state
-
-# 搜索
-select:mcp__FeishuProjectMcp__search_by_mql,mcp__FeishuProjectMcp__search_project_info
-
-# 创建/更新
-select:mcp__FeishuProjectMcp__create_workitem,mcp__FeishuProjectMcp__update_field
+读取:select:mcp__FeishuProjectMcp__get_workitem_brief,mcp__FeishuProjectMcp__get_download_url,mcp__FeishuProjectMcp__list_workitem_comments
+流转:select:mcp__FeishuProjectMcp__update_field,mcp__FeishuProjectMcp__get_transitable_states,mcp__FeishuProjectMcp__get_transition_required,mcp__FeishuProjectMcp__transition_state
+搜索:select:mcp__FeishuProjectMcp__search_by_mql,mcp__FeishuProjectMcp__search_project_info
+创建/更新:select:mcp__FeishuProjectMcp__create_workitem,mcp__FeishuProjectMcp__update_field
 ```
 
 按需加载，不要一次全 load。
@@ -57,7 +50,6 @@ select:mcp__FeishuProjectMcp__create_workitem,mcp__FeishuProjectMcp__update_fiel
 2. `get_transition_required` 查必填字段
 3. `update_field` 填必填项（`field_ecff7b` 默认自关联）
 4. `transition_state` 执行流转
-5. 非「组员开发」状态不强行流转
 
 ## 搜索工作项
 
@@ -65,10 +57,7 @@ select:mcp__FeishuProjectMcp__create_workitem,mcp__FeishuProjectMcp__update_fiel
 search_by_mql(project_key, mql, work_item_type)
 ```
 
-MQL 语法示例：
-- `status = "组员开发"` — 按状态筛选
-- `assignee = "xxx"` — 按负责人筛选
-- `created_at > "2024-01-01"` — 按时间筛选
+MQL 语法示例：`status = "组员开发"`（按状态）等
 
 不确定 MQL 语法时，先 `search_project_info` 了解项目结构。
 
@@ -86,8 +75,4 @@ update_field(work_item_id, project_key, fields)
 
 ## 不要
 
-- 不要用 WebFetch 抓 project.feishu.cn — SPA 拿不到正文
-- 不要下载附件漏 `X-Meego-File-Sign` header
-- 不要 simple_name 撞多空间时反复传 simple_name — 改传真实 project_key
-- 不要非「组员开发」状态时强行流转 — 报告让用户决定
-- 不要猜测填充未知关联字段
+不要：WebFetch 抓 project.feishu.cn（SPA 拿不到正文）；非「组员开发」状态强行流转（报告用户决定）；猜测填充未知关联字段

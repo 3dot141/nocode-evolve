@@ -9,10 +9,7 @@ Create, test, iterate, and publish agent skills through a TDD-driven workflow wi
 
 **Core principle:** If you didn't watch an agent fail without the skill, you don't know if the skill teaches the right thing.
 
-This skill fuses three approaches:
-- **TDD methodology** (writing-skills): RED baseline before writing → GREEN minimal skill → REFACTOR to close loopholes
-- **Eval infrastructure** (skill-creator): quantitative benchmarks, eval viewer, description optimizer, packager
-- **SkillOpt discipline** (Microsoft): train/validation split, validation gate, bounded edits, aggregate reflect
+This skill fuses TDD (RED baseline → GREEN minimal skill → REFACTOR loopholes), eval infrastructure (benchmarks, viewer, description optimizer, packager), and SkillOpt discipline (train/validation split, validation gate, bounded edits, aggregate reflect).
 
 ## Iron Law
 
@@ -239,19 +236,10 @@ Workflow skill SKILL.md must include: **Step 0 TaskCreate** (all tasks created u
 - Keep SKILL.md under 500 lines; overflow goes to references/
 - Only address failures observed in baseline — no speculative additions
 - **SKILL.md for agents, README.md for humans** — SKILL.md contains only what the agent needs to execute. Attribution, changelogs, design rationale, and methodology context go in the skill's README.md for human readers
-- **Fallback paths use ASCII decision trees.** When a skill has a preferred path + fallback (CLI vs subagent, API vs scraping, etc.), write it as an ASCII decision tree — not parallel bullet points. Parallel bullets let the agent pick the easy path; a decision tree forces it to try the preferred path first and only fall back on concrete failure. Pattern:
-
-```
-[probe command]
-     │
-     ├─ success ──→ preferred path
-     │
-     └─ fail (specific error) ──→ fallback path + report reason
-```
+- **Fallback paths use ASCII decision trees**, not parallel bullet points (CLI vs subagent, API vs scraping, etc.) — bullets let the agent pick the easy path, while a tree forces it to try the preferred path first and fall back only on concrete failure.
 
 - **No weak cross-references.** Only name another skill / command when it is a hard execution dependency (handoff, required framework, routing "Not for X — use Y"); never cite another skill's internals (Step N, section titles) as a "reference pattern".
-- **Skills are self-contained — only read Skill, except Reference.** SKILL.md body and its private `references/` may only point to two things: other Skills (named handoff or `Skill()` call) and reference material (the skill's own `references/`, or the shared `skills/references/`). Never point directly at internal plugin implementation files — `rules/rule-*.md`, `model/agent-*.md`, `hooks/`, or another skill's non-reference `scripts/` — those are the routing/guardrail layer injected automatically by SessionStart/PreToolUse; a skill has no runtime reason to name them explicitly (repo `CLAUDE.md` rule 6). If a skill genuinely depends on something defined in one of those files, copy the needed bit into its own `references/` or turn the dependency into a handoff — don't reach across the layer.
-- **Reference paths: relative for your own, handoff for someone else's.** Point at your own `references/` with a relative path (`references/xxx.md`) — never an absolute `{CLAUDE_PLUGIN_ROOT}/skills/<skill-name>/references/xxx.md`; a relative path survives the whole skill directory moving, an absolute one doesn't. If the material belongs to another skill's domain — that skill has its own SKILL.md and the content is its method/process (e.g. `reviewing`) — call `Skill(nocode:<name>)` instead of pointing at its `references/` directly, even if you know the exact path. Only material with no single owning skill belongs in the shared `skills/references/` and can be pointed at directly (`{NOCODE_SKILL_REF}/xxx.md`).
+- **Skills are self-contained — only read Skill, except Reference.** SKILL.md body and its private `references/` may only point to other Skills (named handoff or `Skill()` call) or reference material — own `references/` via relative path (`references/xxx.md`, never absolute `{CLAUDE_PLUGIN_ROOT}/...`), another skill's owned domain (e.g. `reviewing`) via `Skill(nocode:<name>)` not its `references/` directly, unowned material via shared `skills/references/` (`{NOCODE_SKILL_REF}/xxx.md`) — never directly at `rules/rule-*.md`, `model/agent-*.md`, `hooks/`, or another skill's non-reference `scripts/` (the auto-injected routing/guardrail layer; repo `CLAUDE.md` rule 6). If a skill depends on something in those files, copy the needed bit into its own `references/` or turn it into a handoff.
 - For Anthropic's official skill authoring best practices, read `writing-skills/anthropic-best-practices.md`
 
 ### Self-Verification Guideline (independent-review guidance for produced skills)
@@ -276,7 +264,7 @@ After writing SKILL.md, self-review it — author's own pass, no subagent, no co
 - Does it actually address every baseline failure recorded in Phase 3?
 - Are there loopholes, missing edge cases, or instructions an agent could misinterpret?
 - Method-card items: leftover placeholders/TODOs, internal contradictions, ambiguity, scope drift, hollow promises never fulfilled, completeness
-- Self-loop boundary: does the skill (or its private `references/`) point directly at `rules/*.md`, `model/agent-*.md`, `hooks/`, or another skill's non-reference files? Only other Skills and reference material (own `references/` / shared `skills/references/`) are allowed cross-references. Own `references/` must use relative paths, not `{CLAUDE_PLUGIN_ROOT}/skills/<skill-name>/references/...`; material owned by another skill's domain (e.g. `reviewing`) must be reached via `Skill(nocode:<name>)`, never a direct path into that skill's `references/`.
+- Self-loop boundary: same rule as the General Guidelines cross-reference bullets above — verify it's respected (no direct `rules/*.md` / `model/agent-*.md` / `hooks/` refs; own `references/` via relative path; other skills' domains via `Skill(nocode:<name>)`, not a direct path).
 
 Fix issues inline before passing the Exit Gate; unfixed items must be recorded explicitly. Self-review is the minimum bar, not a sufficient one — on finding a genuine critical defect, or when the subject is clearly high-risk, escalate to `Skill(nocode:red-blue-deep)` for an independent review.
 
@@ -286,7 +274,7 @@ Fix issues inline before passing the Exit Gate; unfixed items must be recorded e
 - [ ] Self-review completed, findings addressed
 - [ ] Workflow skills include Step 0 TaskCreate + Enter/Exit Gate per step
 - [ ] Self-verification steps include review methodology (reviewing framework for structured review) + independent review guidance (or confirmed no self-verification steps exist)
-- [ ] Self-loop boundary respected — no direct references to `rules/*.md`, `model/agent-*.md`, `hooks/`, or another skill's non-reference files; own `references/` cited by relative path; another skill's owned domain content reached via `Skill(nocode:<name>)`, not a direct path
+- [ ] Self-loop boundary respected (per General Guidelines rules above)
 - [ ] Line count ≤ 500 (overflow moved to references/)
 
 ## Phase 5: Eval — Run & Review
@@ -461,12 +449,3 @@ Run `skill-creator/scripts/package_skill.py` to create a `.skill` file. Requires
 | "One big rewrite will fix it" | Bounded edits. 3 changes max per iteration. |
 | "Validation gate is too strict" | It's the only thing preventing overfit regression. |
 | "This is obviously clear" | Clear to you ≠ clear to other agents. |
-
-## Common Mistakes
-
-- Writing description that summarizes workflow → Claude follows description, skips skill body
-- Skipping baseline for "simple" skills → skill addresses wrong problems
-- Large rewrites per iteration → uncontrolled regression, no rollback point
-- Showing validation set in viewer → contaminates held-out gate
-- Forcing assertions on subjective output → noise in benchmark
-- Putting human-facing context (attribution, changelog, design rationale) in SKILL.md → noise in agent context; put in README.md

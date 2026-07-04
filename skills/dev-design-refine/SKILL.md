@@ -11,14 +11,6 @@ dev-design-select 选完方案（"走哪条路"，产出 Decision Packet），�
 
 > Leading word: **领域设计**。所有细化收敛到一份按 DDD 组织的设计文档。
 
-## DDD 基础原则（贯穿全 skill）
-
-- **域 = 围绕业务实体的边界**（名词不是动词）。"订单域 / Agent 域"，不是"创建 / 同步"
-- **高内聚**：每个域 / 模块自包含——接口 + 业务流 + 文件影响 + 验证 + 安全/性能 都在自己的章节里
-- **低耦合**：域间通过接口交互，边界显式标出
-- **总分结构**：先总图（全局一屏看完）再分（各域 / 模块展开）。先图后文
-- **接口四层**：对外 API / 类接口 / 事件接口 / 数据契约——按需展开，不只有 HTTP
-
 ## 非本 skill 请求
 
 - 没有选定方案（无 Decision Packet），要先探索 / 选方案 → 回 `nocode:dev-design-select`
@@ -36,13 +28,11 @@ dev-design-select 选完方案（"走哪条路"，产出 Decision Packet），�
 - [ ] dev-design-select 已完成（Decision Packet：选定方案 + 探索结论 + 测试目标），或用户直接要求写设计文档并已说清要做什么
 - [ ] 场景类型已确定（feat / bug / refactor）
 
-> 端到端示例见 `references/example-feat-skeleton.md`（feat）+ `example-bug-skeleton.md` / `example-refactor-skeleton.md`。
-
 ## 协议
 
 > **消费 Decision Packet**：refine 是决策包的**消费方**——dev-design-select 产出、经协调器传入。schema（含 requiredFields / 条件必填 / replan envelope）单源在 `dev-design-select` SKILL 的「收尾」节，本 skill 只按它校验、映射、消费，不重复定义。
 
-> **内部 Step 编号统一**（解决 P1）：通用流程步 **Step 0-5** 与场景模板 detail 步 **Step 4a/4b/…** 连续编号，不再各自从 Step 2 重启——历史上"通用 Step2 章节大纲 vs 场景 Step2 领域划分"的撞车就此消除。
+> **内部 Step 编号统一**：通用流程步 **Step 0-5** 与场景模板 detail 步 **Step 4a/4b/…** 连续编号，不再各自从 Step 2 重启。
 
 ### Step 0: TaskCreate
 
@@ -218,20 +208,6 @@ feat 的结构骨架 = **领域划分 + 总图**：
    - **单域** → 域内模块关系图：节点 = 模块，边 = 调用 / 依赖
 3. **总图 = 产品设计全貌**。每条边是表现层（用户看到的流程），每条边应对应 PRD 一条使用路径。
 
-```
-多域总图示例（节点=域，边=用户流程）：
-┌──────────┐   导入流程    ┌──────────┐
-│  资源域   │ ───────────→ │ Agent 域  │
-│ Resource │ ←─────────── │  Agent   │
-└────┬─────┘   同步状态     └──────────┘
-     │ 预设管理
-     ↓
-┌──────────┐
-│  预设域   │
-│  Preset  │
-└──────────┘
-```
-
 产出标准：域划分完成（每域标核心实体 + 拆分理由）+ 总图（先图后文）+ 每条边对应 PRD 使用路径。→ 交 Step 2 确认、Step 3 架构审核。
 
 ### Step 4a: 交互场景设计（边 / 表现层）
@@ -343,33 +319,6 @@ bug 的结构骨架 = **问题现象 + 复现 + 影响范围**：
 ## refactor 模板
 
 > 从 A 状态到 B 状态。形状：现状 → 目标 → before/after → 迁移。
-
-**refactor 产出骨架示例**：
-
-```
-# Refactor: 资源同步从轮询改为事件驱动
-
-## 现状分析
-  现状结构图 + DDD 问题诊断
-  问题：SyncService 轮询所有 Agent，耦合重、延迟高
-
-## 目标设计
-  Before                          After
-  ┌─────────────┐                ┌─────────────┐
-  │ SyncService │                │ SyncService │
-  │ poll(all)   │     →          │ onEvent()   │
-  │ 轮询全部     │                │ 事件驱动     │
-  └─────────────┘                └─────────────┘
-  变更理由 + 每个变更点说明
-
-## 迁移策略
-  Step 1: 加事件基础设施（可回滚）
-  Step 2: 双写（轮询 + 事件并行）
-  Step 3: 关闭轮询（一键回退到 Step 2）
-  每步文件影响 + 验证 + 回滚方案
-
-## 汇总
-```
 
 ### 结构骨架（喂 Step 2 → Step 3 架构审核）
 
@@ -524,9 +473,6 @@ refactor 的结构骨架 = **现状结构 + 目标结构（before/after）**：
 
 把读者当成完全没看过项目的小黄鸭——每个决策、每个数字都要 explain。遇到「显然」「众所周知」→ 信号说明跳步了，回去补"为什么"。数字 / 阈值 / 模块名 / 行号 都要交代来源，不允许 magic number。
 
-> ✅「`HOLD_SIZE = 64` 字符。来源：最长入口点 30 字符 + LLM chunk 容差 → 64 字符滑窗才能稳定捕获跨 chunk 拼接。」
-> ❌「`HOLD_SIZE = 64`（显然够用）。」
-
 ### 6. 直白讲 + 项目术语首次解释
 
 一句话讲不清的概念说明你没真懂，回去搞懂再写。先讲直觉再补细节，不堆术语，不硬塞类比。项目内自创词 / 缩写首次出现一句话 inline 解释；业界通用名词（HTTP / TDD / retry）不解释。
@@ -555,7 +501,7 @@ refactor 的结构骨架 = **现状结构 + 目标结构（before/after）**：
 ### 10. 可观测分两层 + AI 功能带 eval（⑥③）
 
 **可观测分两层，不再一刀切**：
-- **基础日志（默认必写）**：关键路径 / 异常分支 / 模块出入口都要打 log，是每个功能的默认项，不设"要不要上监控"的条件。来源 Decision Packet 的 `domainDecisions.observability.basicLogging`。（⑥ 的根因：基础日志落在门槛之下成三不管地带 = "很多 `logger.info` 都没有"。）
+- **基础日志（默认必写）**：关键路径 / 异常分支 / 模块出入口都要打 log，是每个功能的默认项，不设"要不要上监控"的条件。来源 Decision Packet 的 `domainDecisions.observability.basicLogging`。
 - **生产监控（按需触发）**：Metrics / 告警 / Trace 三支柱，功能上生产、需整体健康度 / 告警 / 链路追踪时才展开。小改动 / 内部工具可不展开。
 
 **AI 功能类带 eval 设计节（③）**：LLM 生成 / 分类 / 抽取 / Agent 决策等"对错单测覆盖不了"的功能，必须有一节 eval 设计——评估维度 / 指标 + baseline / 用例集 / 分级判定 L1-L4。来源 Decision Packet 的 `evalSpec`（select 在 AI 场景产出，refine 展开为设计节）。非 AI 功能此节省略。
@@ -616,9 +562,9 @@ src/services/
 - ❌ **把 plan 内容塞进来**：class 内部 / TDD 步骤 / 具体 catch 块写法
 - ❌ 因"任务简单 / 还在概览 / 用户说了'继续'"跳过某 Step、不建 Step 0 TaskCreate、或漏掉收尾交接——进了 skill 就走完所有 Step（详见 agent-catalog-using.md「进了 skill 就走完」）
 
-## 看 example skeleton 学结构，不照搬措辞
+## Example 用法：学骨架不照搬
 
-`references/example-{feat,bug,refactor}-skeleton.md` 三种场景各一份骨架示例。**看 example 学骨架，不照搬措辞 / 不套业务情境**。措辞按你的语境调；决策数量按设计复杂度（核心只有 1 个关键决策就写 1 个，不硬凑）；伪代码注释密度按复杂度（简单流程不必每行讲来源）。
+只学骨架和颗粒度，不照搬措辞 / 业务情境；决策数量、伪代码注释密度按设计复杂度自行增减，不硬凑。
 
 ## 状态机 + 文档生命周期（②）
 

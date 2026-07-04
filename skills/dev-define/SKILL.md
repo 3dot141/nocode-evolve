@@ -1,6 +1,6 @@
 ---
 name: dev-define
-description: Use when starting any non-trivial task, when requirements are unclear ("build me X" without "for whom" or "why now"), when the user says "澄清需求 / 做什么 / 目标是什么 / interview me / 定义目标", or when devflow routes to Define stage. Also use when a task description is missing who/why/what-success-looks-like. Not for tasks with an already-confirmed restate, or pure factual questions.
+description: Use when starting any non-trivial task with unclear requirements (missing who/why/what-success-looks-like), when the user says "澄清需求 / 做什么 / 目标是什么 / interview me / 定义目标", or when devflow routes to Define stage. Not for tasks with an already-confirmed restate, or pure factual questions.
 ---
 
 # define — 从模糊到明确
@@ -18,8 +18,6 @@ description: Use when starting any non-trivial task, when requirements are uncle
 ## Enter Gate
 
 - [ ] 用户有任务描述或意图
-
-> 端到端示例（模糊需求 → 确认 restate）见 `references/examples/example-define-session.md`
 
 ## 协议
 
@@ -57,7 +55,7 @@ Task 7: 用户确认 — 三选 + define-review
   Gate: 用户显式确认 + 无 Critical findings
 
 Task 8: 硬交接 — 调用下一步 skill
-  Sub-steps: 按 Exit Gate 硬交接报告 Define 完成（场景分类 + restate 摘要）→ 按场景建议下一步：Full/Standard/Fix → Env（调 Skill(nocode:using-git-worktrees)）；Mini → Build-lite → 等用户拍板
+  Sub-steps: 按 Exit Gate 完成硬交接（报告完成 + 建议下一阶段）→ 等用户拍板
   Gate: 用户拍板进入下一阶段（这一步不勾，Define 不算收尾）
   metadata: {handoff: true}（供防跳步 Hook B 识别交接 task）
 ```
@@ -85,7 +83,7 @@ Standard/Full → 进 Step 2。
 
 ### Step 2: 探索现状
 
-**先看世界再形成判断。**探索在假设之前——不是先猜答案再找支撑，是先了解现状再说话。
+**先看世界再形成判断，探索在假设之前。**
 
 按场景裁剪探索深度：
 
@@ -236,16 +234,14 @@ Standard 场景网络探索可简化为 `Agent(fork)` 轻量搜一两个查询�
 | "问太多浪费时间" | 4-6 个问题用几分钟，建错东西用几小时 |
 | "做着做着就明白了" | 实现中的发现是返工，不是发现 |
 | "先给几个选项让用户挑" | 用户还不知道自己要什么，提问缩小空间比列选项扩大空间有效 |
-| "不用探索，我知道代码里有什么" | 你上次看可能是 N 轮工具调用之前，隔了就重新过一遍 |
-| "这个改动简单，跳过某 Step 或不建 TaskCreate" | 进了 skill 就走完所有 Step。"简单"是你的判断，不是跳 Gate 的授权（详见 agent-catalog-using.md「进了 skill 就走完」） |
+| "这个改动简单，跳过某 Step 或不建 TaskCreate" | 进了 skill 就走完所有 Step。"简单"是你的判断，不是跳 Gate 的授权 |
 
 ## Red Flags
 
 - 置信度 < 70% 不附理由
 - 3 轮后置信度没明显上升——在问错误的问题
 - 启用了"穷尽探索"但只试 1-2 种方法
-- 跳过了 Step 2 探索就直接形成假设——凭印象不是凭事实
-- Full/Standard 场景没做代码探索就出 restate——可能遗漏已有实现
+- 跳过 Step 2 探索就形成假设或出 restate——凭印象不是凭事实，可能遗漏已有实现
 - Full/Standard 场景 restate 没有路径清单——用户使用场景没建模，下游无完整性骨架
 - 路径清单里有路径没绑任何 SC，或有 SC 不对应任何路径——绑定断裂
 - 因"任务简单 / 还在概览 / 用户说了'继续'"跳过某 Step、不建 Step 0 TaskCreate、或漏掉最后的交接 task

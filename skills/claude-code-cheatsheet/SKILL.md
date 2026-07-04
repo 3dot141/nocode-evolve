@@ -10,9 +10,9 @@ description: Use when you need to know what Claude Code itself provides and how 
 Claude Code 自己提供的东西分两层，别混着记：
 
 - **纯配置**：会话开始前/外部定好的静态旋钮——CLI 参数、`settings.json`、环境变量。改了才变，一次定长期有效。
-- **运行时**：会话进行中你实际会触发或调用的东西——你键入的 **commands**，以及 agent 调用的 **内置功能/工具**（CronCreate、Workflow、Monitor、ScheduleWakeup、Agent、ToolSearch…）。加上引擎在执行过程中自己会跑的**机制**（并行/串行、权限、压缩、缓存），和调这些功能时该有的**判断**。
+- **运行时**：会话进行中你实际会触发或调用的东西——你键入的 **commands**、agent 调用的 **内置功能/工具**，加上引擎自己会跑的**机制**（并行/串行、权限、压缩、缓存），和调这些功能时该有的**判断**。
 
-**核心原则：先分清问的是"配置"还是"运行时能力"，再查对应 Part。** 配置去 Part 1，要调用某个内置功能去 Part 2.2，想知道引擎自动会怎么做去 Part 2.3。内容截至 v2.1.198，来自 `code.claude.com` 官方文档 + 本地 CLI 实测 + 内置工具 schema + 无 skill 基线测试。
+**核心原则：先分清问的是"配置"还是"运行时能力"，再查对应 Part。** 配置去 Part 1，要调用某个内置功能去 Part 2.2，想知道引擎自动会怎么做去 Part 2.3。
 
 这是关于 **Claude Code 产品本身** 的能力，不是本插件（nocode）的规则——本仓库其它规则建立在这之上。
 
@@ -82,20 +82,20 @@ Claude Code 内置的"功能型"工具，按用途分组。基础文件工具（
 |---|---|---|
 | `CronCreate` / `CronList` / `CronDelete` | 本会话内按 5 段 cron 定时重跑一段 prompt；`recurring:false` 做一次性"到点提醒" | **只活在本会话内存里，会话退出就没**；只在 REPL 空闲时触发；recurring 任务 7 天后自动过期；别都挑 :00/:30（全球同一时刻撞 API），近似时间挑奇数分钟 |
 | `ScheduleWakeup` | `/loop` 动态自定步时，安排下次几秒后回来继续同一任务 | **5 分钟 cache TTL 是分水岭**：<270s 保温、1200s+ 才值得付一次 cache miss，别挑正好 300s；轮询 harness 能追踪的后台工作是浪费（完成会自动重唤） |
-| `RemoteTrigger` | claude.ai 云端 routine（`/schedule` 背后），按 cron 在云上跑，**跨会话持久** | 与 `CronCreate` 的分界：这个持久、跑云端；CronCreate 只在本地本会话。别用裸 curl，token 自动注入 |
+| `RemoteTrigger` | claude.ai 云端 routine（`/schedule` 背后），按 cron 在云上跑，**跨会话持久** | 别用裸 curl，token 自动注入 |
 
 **B. 编排与派发（把活分出去）**
 
 | 工具 | 干嘛 | 关键点 / 坑 |
 |---|---|---|
-| `Agent` | 派一个 subagent 干活，后台跑、完成后通知 | `subagent_type:"fork"` 继承你的完整上下文 + 复用父 cache（省钱）；其它类型是全新独立 context；隔离细节见 2.3 |
+| `Agent` | 派一个 subagent 干活，后台跑、完成后通知 | 隔离/cache 规则见 2.3（fork 复用父上下文，其余独立） |
 | `Workflow` | 用 JS 脚本**确定性**编排多 agent（`pipeline`/`parallel`/fan-out），后台跑返回 task id | **要用户显式 opt-in（ultracode 等）才该调**，能烧很多 token；`pipeline` 是默认（无 barrier）、`parallel` 是 barrier；一般任务用 `Agent` 就够，别动辄上 Workflow |
 
 **C. 监听与等待（盯着某件事）**
 
 | 工具 | 干嘛 | 关键点 / 坑 |
 |---|---|---|
-| `Monitor` | 后台流式盯一个脚本/日志/WebSocket，每行 stdout 变一条通知 | **一次性"等到就绪"别用它**（用后台 Bash 的 `until` 循环，一条通知就结束）；无界命令（`tail -f`）才用 Monitor；filter 必须覆盖失败信号，不能只 grep 成功——静默 ≠ 成功 |
+| `Monitor` | 后台流式盯一个脚本/日志/WebSocket，每行 stdout 变一条通知 | 无界命令（`tail -f`）才用 Monitor；filter 必须覆盖失败信号，不能只 grep 成功——静默 ≠ 成功 |
 | 后台 Bash（`run_in_background`）| 一次性长任务转后台，跑完给一条完成通知 | **启动 ≠ 完成**，见 2.4 收口纪律 |
 
 **D. 任务追踪**
@@ -151,7 +151,7 @@ Claude Code 内置的"功能型"工具，按用途分组。基础文件工具（
 
 ### 2.4 使用纪律（调 2.2 那些功能时的判断）
 
-**后台任务收口：启动成功 ≠ 任务完成**。实测翻车（本 skill 编写中复现）：agent 收到"启动长任务 + 等待期做别的 + 确认完成"，前两步都对，第三步却只说"现在等待通知，完成后我会核对"就结束回合——把"安排了核实"当"已核实"报了出去。**红线**：调 `run_in_background` 或派 `Agent` 后，凡要求"确认结果/等它跑完"，必须真观察到完成信号（收到 notification、`Read` 到标志性输出、文件/进程状态被证实）才能收口。没等到就报"已完成"是头号错误。
+**后台任务收口：启动成功 ≠ 任务完成**。**红线**：调 `run_in_background` 或派 `Agent` 后，凡要求"确认结果/等它跑完"，必须真观察到完成信号（收到 notification、`Read` 到标志性输出、文件/进程状态被证实）才能收口。没等到就报"已完成"是头号错误。
 
 **等待/定时怎么选**：
 
@@ -163,11 +163,3 @@ Claude Code 内置的"功能型"工具，按用途分组。基础文件工具（
 ```
 
 **何时拆 agent**：多个独立**只读**操作不用拆，同一条消息一次性发出靠 2.3 并发规则自动并行；含写操作或需独立视角判断才拆 subagent；一次性研究/多角度调查用 **fork**（省钱），需屏蔽当前对话噪音的独立判断用**命名 subagent**。拆之前先确认几件事之间没有依赖/共享状态——有依赖就顺序做，这是正确性前提不是技巧。
-
----
-
-## 参考
-
-- `references/cli-flags.md` — CLI 启动参数完整清单
-- `references/slash-commands.md` — 内置 slash commands 完整分类 + 版本变更时间线
-- `references/env-and-settings.md` — settings.json 全字段 + 环境变量完整清单

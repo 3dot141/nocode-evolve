@@ -71,10 +71,7 @@ Workflow({
 | `mixed` | semble-search + WebSearch / Exa | WebFetch → ScraplingServer；deepwiki | 2 | 技术选型（既看代码又看外部方案） |
 | `custom` | 调用方在 systemPrompt 里自定义 | 调用方定义 | 1 | 不属于上述任何一类的特殊场景 |
 
-**为什么 code 默认 iterate=3，web 默认 1：**
-
-- **code=3**：代码库有自己的命名习惯。你预期的术语（"auth"）和代码里实际用的（"credential" / "session" / "principal"）常常对不上，第一轮搜不到点子上是常态。迭代让搜索 agent 从第一轮的结果里学到项目的真实命名，第二、三轮换词再搜。
-- **web=1**：网络搜索的关键词通常够用——搜"React Server Components 对比"基本一轮就能命中相关文章。多搜几轮收益低，不值得多花 agent。
+**为什么 code 默认 iterate=3、web 默认 1**：code 库命名习惯常与预期术语不符（如"auth"对"credential"/"session"），需迭代换词学习真实命名；web 关键词通常一轮就够，多搜收益低。
 
 ## 四档深度
 
@@ -166,8 +163,6 @@ Scope → Search+Extract（pipeline，无 barrier）→ Verify（3 票对抗）�
 
 **为什么搜索和评估分给两个 agent：** 搜索 agent 会倾向于觉得自己搜到的东西不错（self-serving bias）——让它自己判断"够不够"，它几乎总会说"够了"。独立的评估 agent 没有这个偏见，它只看结果质量，该说不够就说不够。这是迭代真正起作用的关键，不是多跑几轮就行。
 
-**为什么 code 默认 3 轮、web 默认 1 轮：** 见上文「预制类型」——代码库术语不可预期需要多轮逼近，网络关键词通常一轮够用。
-
 **何时关掉迭代（iterate=1）：** `angles` 已预设（调用方明确知道搜什么）——这正是 `targeted` 档的预制组合，直接用 `depth: 'targeted'` 不用手动传 iterate；或纯发散的 shallow 快速场景。
 
 ## 示例
@@ -217,15 +212,5 @@ Scope → Search+Extract（pipeline，无 barrier）→ Verify（3 票对抗）�
     { label: '业界模式与坑', query: '<技术问题> best practice pitfalls' },
   ],
   systemPrompt: '关注开源库的成熟度、维护状态、与现有架构的兼容性。不把搜索结果当事实——需对照本项目实际情况评估适用性。',
-}
-```
-
-**用户信号**（pd-research 用户信号切面）：
-```js
-{
-  question: '<产品领域> 用户的真实痛点和需求信号',
-  type: 'web',
-  depth: 'shallow',
-  systemPrompt: '重点搜 Reddit、HN、知乎、GitHub Issues、论坛、G2 / ProductHunt / App Store 评价。提取痛点、需求信号、用户原话。',
 }
 ```

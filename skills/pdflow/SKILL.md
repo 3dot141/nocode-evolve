@@ -11,10 +11,7 @@ description: 产品发现工作流领航（Research → PRD · 2 场景路由）
 
 ## 协议
 
-> **顺序推进纪律（硬约束）**：禁止自动跳步。推进只有一条路：todo 写好流程 → 进入当前节点 → 顺序执行子步骤 → 逐条验证 Gate → 全部通过 → 报告用户 → 等用户拍板 → 才进下一阶段。agent 不得自行跳过、合并、快进任何阶段。"这步简单直接过" / "上一轮做过" 都不是跳步的理由。
-
-> ❌ 反例：PRD 阶段判断"需求简单"，跳过用户确认直接快进交互设计——没确认的需求带着错误往下游设计流。
-> ✅ 正例：简单需求也走完每个子步骤 + Gate + 等拍板；每阶段 todo 的最后一项是"调用下一阶段 skill"（如 Research 末尾 → 调 `nocode:pd-prd`）。（防跳步通则详见 `agent-catalog-using.md`「进了 skill 就走完」）
+> **顺序推进纪律（硬约束）**：禁止自动跳步。推进只有一条路：todo 写好流程 → 进入当前节点 → 顺序执行子步骤 → 逐条验证 Gate → 全部通过 → 报告用户 → 等用户拍板 → 才进下一阶段。agent 不得自行跳过、合并、快进任何阶段。
 
 ### Step 1: 判断场景
 
@@ -68,71 +65,32 @@ Task 5: Handoff — 衔接开发流
   Gate: 用户决定是否进 devflow
 ```
 
-**Light 场景**：
-```
-Task 1: PRD — 收敛成文档
-  Sub-steps: ⓪ Skill(nocode:pd-prd) → 读 memo + clarify → 写 .prd.md
-  Gate: .prd.md 产出 + 用户确认
-
-Task 2: 交互设计 — 界面结构 + 交互流（无界面需求可跳过）
-  Sub-steps: ⓪ Skill(nocode:pd-ix) → 起点 → 竞品+交互拆解 → IA批准 → 产出 .ix.md
-  Gate: .ix.md 产出 + 用户确认 IA
-
-Task 3: 视觉设计 — 视觉方向 + 原型（无界面需求可跳过）
-  Sub-steps: ⓪ Skill(nocode:pd-vd) → 视觉探索 → 保真度+交付+方向 → DS → 原型 → 产出 .vd.md
-  Gate: .vd.md 产出 + 用户确认方向
-
-Task 4: Handoff — 衔接开发流
-  Gate: 用户决定是否进 devflow
-```
+**Light 场景**：同 Full 去掉 Task 1（Research），其余 Task / Sub-steps / Gate 原样保留，编号 1~4 依次为 PRD → 交互设计 → 视觉设计 → Handoff。
 
 ### Step 3: 推进阶段
 
 每个阶段严格按以下 5 步执行，不跳不并行，缺任一步 = 跳步 bug：
 
-1. **加载 skill（硬 Gate）**：标 in_progress 后的第一个动作必须是 `Skill(nocode:pd-research)` / `Skill(nocode:pd-prd)` / `Skill(nocode:pd-ix)` / `Skill(nocode:pd-vd)`。没看到 Skill 调用回执，不许执行任何 sub-step——task description 里的 sub-steps 是地图，skill 内才有 clarify gate / 文档结构 / 标注约定这些详图。
+1. **加载 skill（硬 Gate）**：标 in_progress 后的第一个动作必须是 `Skill(nocode:pd-research)` / `Skill(nocode:pd-prd)` / `Skill(nocode:pd-ix)` / `Skill(nocode:pd-vd)`。没看到 Skill 调用回执，不许执行任何 sub-step。
 2. **顺序执行 sub-steps**：按 task description 中的子步骤链逐个执行，每个子步骤完成后确认其条件满足再进下一个。
 3. **Gate 证据点名**：所有子步骤完成后，逐条核对 Gate 条件 + 具体证据。任一条不满足 = 不标 completed。
 4. **标 completed + 停下报告**：向用户报告本阶段完成情况 + 建议下一步。**不自动进入下一阶段。**
 5. **等用户拍板**：用户明确说 OK / 继续，才标下一阶段 in_progress 并进入。
 
-**Research → PRD 衔接**：Research 完成（Go）后，自动建议进 PRD：
-> "调研完成，Go 已确认。建议下一步写 PRD，把调研结论收敛成需求文档。"
+**阶段衔接**（完成后自动建议下一步，用户拍板才进入）：
 
-**PRD → 交互设计 衔接**：PRD 完成后，若需求涉及界面，自动建议进 pd-ix：
-> "PRD 已就绪。建议下一步做交互设计，把需求落成界面结构 + 交互流。纯后端 / 无界面需求可跳过，直接 Handoff。"
-
-**交互设计 → 视觉设计 衔接**：pd-ix 完成后，若需求涉及界面，自动建议进 pd-vd：
-> "交互设计已就绪（`.ix.md`）。建议下一步做视觉设计，把交互骨架落成视觉方向 + 原型（默认低保真 wireframe，可升档）。只需交互规范的可跳过，直接 Handoff。"
-
-**Research No-Go**：用户在 Research 阶段选了 No-Go → pdflow 结束，不进 PRD：
-> "调研结论是 No-Go。产品流结束。如果要重新评估，可以再次调起 pdflow。"
+| 完成阶段 | 建议进入 | 条件 |
+|---|---|---|
+| Research（Go） | PRD | 收敛调研结论成需求文档 |
+| Research（No-Go） | 结束 pdflow | 不进 PRD |
+| PRD | 交互设计 | 涉及界面时，否则跳过 |
+| 交互设计 | 视觉设计 | 涉及界面时，否则跳过 |
 
 ### Step 4: Handoff — 衔接开发流
 
 视觉设计完成后（或无界面需求跳过 pd-ix/pd-vd 后），提示用户下一步选择：
 
-用 AskUserQuestion 三选：
-
-1. **进 devflow** — "PRD + 设计已就绪，进入开发流。devflow 的 Define/Design 会以 PRD（做什么）+ design（长什么样）为输入。"
-2. **先沉淀** — "PRD 先放着，不急开发。可以用 `/distill` 沉淀这次讨论。"
-3. **结束** — "产品流结束。后续随时可以调 devflow 开始开发。"
-
-## 全景图
-
-```
-                       pdflow (产品流)                               devflow (开发流)
-┌──────────────────────────────────────────────────────────┐   ┌──────────────────────────────┐
-│                                                          │   │                              │
-│  ┌────────┐  ┌────────┐  ┌──────────┐  ┌──────────┐   │   │  Define → Env → Design →    │
-│  │Research │─▶│  PRD   │─▶│ 交互设计  │─▶│ 视觉设计  │───┼──▶│  Plan → Build → Verify →   │
-│  │ (发散)  │  │ (收敛) │  │ (pd-ix)  │  │ (pd-vd)  │   │   │  Review → Land              │
-│  └────────┘  └────────┘  └──────────┘  └──────────┘   │   │                              │
-│                                                          │   │                              │
-│  产出: research-report.md  .prd.md  .ix.md  .vd.md       │   │  输入: .prd.md + .ix.md + .vd.md │
-│                                                          │   │                              │
-└──────────────────────────────────────────────────────────┘   └──────────────────────────────┘
-```
+用 AskUserQuestion 三选：**进 devflow**（PRD/设计已就绪，作为 Define/Design 输入）／**先沉淀**（`/distill` 沉淀讨论）／**结束**（后续可再调 devflow）。
 
 ## 场景差异速查
 
@@ -165,7 +123,7 @@ Task 4: Handoff — 衔接开发流
 
 - **不替用户执行** — 给建议后停下，等用户拍板
 - **不自动进入下一阶段** — 标 completed 后停下报告，等用户说"继续"才进下一阶段。"已经做完了直接走下一步" = 自动跳步
-- **不照 todo 裸跑** — 进入 Research / PRD 阶段，标 in_progress 后第一个动作先 `Skill()` 加载该阶段 skill，再走 sub-steps。只跑 todo 不加载 skill = 丢失 skill 内的 clarify gate / 文档结构 / 标注约定
+- **不照 todo 裸跑** — 标 in_progress 后第一个动作必须先 `Skill()` 加载该阶段 skill，再走 sub-steps（规则见 Step 3）
 - **不自行跳 Research** — Full 场景不跳 Research，除非用户显式说"跳过调研"
 - **交互/视觉设计按需跳** — 纯后端 / 无界面需求可跳过 pd-ix/pd-vd，但有界面时不省略（界面结构留空 = 开发瞎猜）
 - **不在 pdflow 内做技术设计** — 技术设计是 devflow Design 的事（pd-ix/pd-vd 只做界面交互 + 视觉，不碰技术架构 / API）

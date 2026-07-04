@@ -1,11 +1,9 @@
 ---
 name: reviewing
-description: 通用 review 引擎，被 `Skill(nocode:reviewing)` 调用。调用方传「评审对象 + 领域维度 + 可选方法」，引擎套通用流程（场景识别 → 分档 → 执行(打包进执行位) → Verify(场景内) → 总结）+ 评审方法库（红蓝对抗 / 清单 / 视角分工 / 错误机制 / 回归检查 / 跨文件影响 / 自查 / 威胁建模）+ reviewer 纪律 + 统一 findings 契约，产出 findings + verdict。分两条线：缺陷发现（文档 / PRD / diff，问「有什么问题」，走场景/视角/方法 + 场景内独立验证）、对抗决策（方案 / 选型，问「该不该 / 选哪个」，走红蓝对抗，完全独立于前者、不进宽度/Verify 体系）。各专项 review（dev-review / 四件套 / 嵌入式自审）不再各抄一遍流程，直接调本引擎 + 只描述自己的领域维度。审代码 diff / 方案 / 设计文档 / 安全 / 数据库 / 架构 / 需求都用它。本引擎只统一「怎么审」，领域维度由调用方传入；不是用户直触入口（用户直接要 review 走 dev-review / red-blue-deep，它们内部调本引擎）。
+description: frontmatter description 原文 + 正文全文 + 关键事实 + 触发/不触发场景
 ---
 
 # Reviewing — 通用 review 引擎
-
-review 这件事在仓库里被重造了十几遍：每个 review 都重新发明一遍「维度清单 → 主路审 → 异源交叉 → findings → 分级 → 收口」。本引擎把那个反复出现的范式做成**一个自包含、可调用的 skill**——各专项 review 直接 `Skill(nocode:reviewing)` 调它、只描述自己的领域维度，不再各抄一份流程。
 
 > 边界：`reviewing` 是**被调用的 review 引擎**，与 `dev-review`（开发流里的 review 阶段，调本引擎）、`red-blue-deep`（用户直触的对抗评估入口，也调本引擎）区分。引擎自包含——所有实现件在 `references/` 下：场景/视角/方法三层、执行者 / 档位 / 升档 / 降级 / Verify 单源在 `skeleton.md`；reviewer 纪律 / Evidence Gate / Q-SA 判据单源在 `reviewer-discipline.md`；分级单源在 `findings-contract.md`。调用方不 Read 这些内部文件，只调本 skill。
 
@@ -20,9 +18,7 @@ review 这件事在仓库里被重造了十几遍：每个 review 都重新发�
 | **方法** | 否 | 点名 `checklist` / `red-blue-adversarial` / …；**不指定则引擎按场景表自选**（skeleton §3 场景表）。也可描述自定义评审思路 |
 | **Context Capsule** | 建议 | 已拍板决策 / 硬约束 / 非目标——剥结论留事实（skeleton §4.1），随对象传给隔离 reviewer |
 
-引擎返回 `findings[]` + `verdict`（若命中决策类场景，另有独立的 `verdict.recommendation` 并列返回），套 `references/findings-contract.md` 的统一 schema。**本次调用契约不变**——参数个数和名称与此前完全一致。
-
-> **自定义**：方法和维度都可自定义——调用方传自己领域的维度即可，不必用内置的；方法不点名时引擎自选，也可显式指定或描述一套自定义评审思路。引擎负责「怎么审」，调用方负责「审什么维度」。
+引擎返回 `findings[]` + `verdict`（若命中决策类场景，另有独立的 `verdict.recommendation` 并列返回），套 `references/findings-contract.md` 的统一 schema。
 
 ## 引擎内部：四层结构
 
@@ -60,7 +56,7 @@ review 这件事在仓库里被重造了十几遍：每个 review 都重新发�
 | 5 | **findings 统一 schema + 分级** | 套 findings-contract 结构 + C/W/S 三档 severity + kind（normal / open-question / self-audit） |
 | 6 | **收口 / triage / 拍板** | Critical 必修，按 verdict 呈现（决策类场景的 `recommendation` 并列呈现），交用户拍板 |
 
-> 步骤 3 从方法库选打法——红蓝对抗是**独立于本流程**的决策类方法，命中即在步骤 1 摘出，不进步骤 2-4；逐项缺陷核查走 checklist / error-mechanism 等。场景表（含哪个场景配哪些视角/方法）见 skeleton §3；self-review / dual-review 不在此表，是自审档 / 双审档的默认执行形态，档位直派不用挑选。
+> 步骤 3 从方法库选打法——红蓝对抗是**独立于本流程**的决策类方法，命中即在步骤 1 摘出，不进步骤 2-4；逐项缺陷核查走 checklist / error-mechanism 等。场景表（含哪个场景配哪些视角/方法）见 skeleton §3（self-review / dual-review 属档位默认执行形态，不在此表）。
 
 ## 引擎文件地图（全在 references/ 下，自包含）
 

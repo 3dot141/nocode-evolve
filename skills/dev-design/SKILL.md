@@ -5,28 +5,9 @@ description: Use when Define is complete and devflow routes to the Design stage,
 
 # dev-design — 设计流程协调器
 
-**Iron Law: 协调器只编排，不做任何阶段的领域工作。选方案在 select，写文档 + 评审在 refine，渲染在 render——协调器一个字的领域内容都不产出。**
+**Iron Law: 协调器只编排，不做任何阶段的领域工作。**
 
-dev-design 是设计流程的**薄协调器**：持有总流程图 / 阶段状态机 / 路由 / 全流程确认策略 / 异常回退 / handoff。三段领域工作各归其位——决策形成 → `dev-design-select`，文档产出 + 唯一评审 → `dev-design-refine`，渲染（可选终点）→ `dev-design-render`。
-
-> Leading word: **协调**。协调是横切关注点（状态机 / 路由 / 确认 / 回退），和任何具体阶段的收敛工作分层——二者纠缠正是重构前"选方案 worker 和流程 coordinator 塞一个 skill"的病根。
-
-## 新架构总图
-
-```
-                        ┌───────────────────────────────────────┐
-   用户 / devflow ───→  │  dev-design（薄协调器）                 │
-                        │  持: 总流程图 / 状态机 / 路由 /          │
-                        │      全流程确认策略 / 异常回退 / handoff │
-                        └──┬──────────┬──────────┬───────────────┘
-              调用 + 收结果 │          │          │
-                 ┌──────────▼──┐ ┌─────▼──────┐ ┌─▼──────────────┐
-                 │select       │ │refine      │ │render          │
-                 │选方案        │ │详细设计 +  │ │纯渲染           │
-                 │→ Decision   │ │文档 + 唯一 │ │→ HTML + receipt │
-                 │   Packet    │ │评审(verdict)│ │(不改输入文档)   │
-                 └─────────────┘ └────────────┘ └────────────────┘
-```
+dev-design 是设计流程的**薄协调器**：持有总流程图 / 阶段状态机 / 路由 / 全流程确认策略 / 异常回退 / handoff。
 
 ## 阶段状态机
 
@@ -92,7 +73,7 @@ final gate = 本轮设计流程的**计划内总确认窗口**：向用户报告
 
 ## 确认策略（单一所有者：协调器）
 
-P5 的"唯一确认窗口"承诺兜不住（阶段 skill 内部本就有确认点）。改为**协调器持有一张确认点清单**，诚实列举，不假装只有一个：
+协调器持有一张确认点清单（阶段 skill 内部本就有确认点），诚实列举：
 
 1. **计划内总窗口**：Step 4 final gate（方案摘要 + 关键决策 + 测试目标 + 文档，一次性过目）。
 2. **列举的阶段内确认**（协调器已知、不隐藏）：refine 的文档结构确认（Step 2 章节大纲 + 结构骨架）、refine 唯一评审的 findings 逐条 fix/skip、render 的"是否渲染"选择。
@@ -110,7 +91,7 @@ refine 在信息补全遇**方案级决策**（改数据流 / 模块边界 / 外
 
 ## 产物记录（B2）
 
-render 纯输出、不碰输入文档；**产物关系由协调器在 final gate 报告里给出**（会话内交付，不落盘、不改已评审文档、不进 manifest——manifest 不承担运行产物索引）。报告内容 = render receipt 的 `sourceDoc`（未改动）↔ `output`（HTML 路径 / Claude Design projectId）↔ `deliveryMode` 映射。这是会话级记录，不是持久化索引——要持久化产物索引是另一个 feature，本次不做。
+render 纯输出、不碰输入文档；**产物关系由协调器在 final gate 报告里给出**（会话内交付，不落盘、不进 manifest）：render receipt 的 `sourceDoc`（未改动）↔ `output`（HTML 路径 / Claude Design projectId）↔ `deliveryMode`。
 
 ## Exit Gate
 
@@ -119,7 +100,7 @@ render 纯输出、不碰输入文档；**产物关系由协调器在 final gate
 - [ ] replan（如有）已处理：旧 Packet 留痕 + revision 递增 + 回 select 重选完成
 - [ ] render（如选）receipt 已收，输入文档未被改动（B2），产物关系已在 final gate 报告 `sourceDoc`↔`output` 映射
 - [ ] 全流程确认按「确认策略」清单落实（总窗口 + 列举确认 + 异常统一弹），无阶段 skill 自行弹确认
-- [ ] **硬交接**：final gate 通过后向用户报告 Design 完成（方案摘要 + 关键决策 + 测试目标 + 文档路径），建议进 Plan（`nocode:dev-plan`），列出 Plan sub-steps。等用户拍板，不自行进入下一阶段
+- [ ] **硬交接**：final gate 通过后按 Step 4 内容向用户报告 Design 完成，建议进 Plan（`nocode:dev-plan`），列出 Plan sub-steps。等用户拍板，不自行进入下一阶段
 
 ## Red Flags
 
