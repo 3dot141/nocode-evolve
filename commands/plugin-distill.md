@@ -47,12 +47,15 @@ argument-hint: <描述> | (被 /distill 传结构化候选)
    ```json
    {
      "id": "<slug>", "bucket": "<bucket-id>",
+     "trigger_short": "<一行索引提示，实际渲染进常驻 catalog 的就是这一句>",
      "trigger_desc": "<具体到能自识别的触发条件，不写\"看情况/需要时\">",
      "read": "${CLAUDE_PLUGIN_ROOT}/rules/rule-<slug>.md",
      "summary": "<一句话核心动作>"
    }
    ```
-   > 实际 manifest schema 比这更完整（还有 `also_buckets`/`trigger_type`/`triggers`/`action`/`depends_on`/`severity`/`lifecycle_stage`），新写条目必填上面 5 个字段（对齐既有 `/distill` 行为，不扩大改动面），其余字段留空或按新增内容合理推断——这是继承自既有实现的字段覆盖范围，不在本次修正。
+   > `trigger_short` **必填**——`generate.mjs` 渲染 catalog 时直接用这个字段，漏填会在常驻文本里
+   > 印出字面 `undefined`。实际 manifest schema 还有 `also_buckets`/`action`/`depends_on`（`depends_on`
+   > 引用的 id 会被 `hooks/manifest.test.mjs` 校验存在，其余字段留空或按新增内容合理推断）。
    跑 `node hooks/generate.mjs`，再跑 `node hooks/generate.mjs --check` 验零漂移
 3. **升版本**：新增 rule → `minor`（默认）；语义反转既有规则 → `major`（需会话里明确出现"反转既有规则"信号）；纯文案 → `patch`（少见）。判据现读 `${NOCODE_EVOLVE_REPO}/CLAUDE.md` 规则2 原文，不自行发明或简化。Read `.claude-plugin/plugin.json` → bump → Write 回
 

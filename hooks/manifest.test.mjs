@@ -20,7 +20,7 @@ test('manifest: 每条 rule 的 bucket / also_buckets 都在 buckets 里存在',
 test('manifest: 必填字段齐全', () => {
   const m = loadManifest();
   for (const r of m.rules) {
-    for (const f of ['id', 'bucket', 'trigger_type', 'action', 'read', 'summary']) {
+    for (const f of ['id', 'bucket', 'action', 'read', 'summary']) {
       assert.ok(r[f] !== undefined, `rule ${r.id} 缺字段 ${f}`);
     }
   }
@@ -34,16 +34,11 @@ test('manifest: 每个 bucket 有 trigger_summary + negatives', () => {
   }
 });
 
-test('manifest: schema 扩字段齐全 (depends_on / severity / lifecycle_stage)', () => {
+test('manifest: schema 扩字段齐全 (depends_on)', () => {
   const m = loadManifest();
-  const SEV = new Set(['advisory', 'warn', 'block']);
   for (const r of m.rules) {
-    for (const f of ['depends_on', 'severity', 'lifecycle_stage']) {
-      assert.ok(r[f] !== undefined, `rule ${r.id} 缺字段 ${f}`);
-    }
+    assert.ok(r.depends_on !== undefined, `rule ${r.id} 缺字段 depends_on`);
     assert.ok(Array.isArray(r.depends_on), `rule ${r.id} depends_on 应是数组`);
-    assert.ok(SEV.has(r.severity), `rule ${r.id} severity 值不合法 (${r.severity}); 必须 advisory/warn/block`);
-    assert.ok(typeof r.lifecycle_stage === 'string' && r.lifecycle_stage.length > 0, `rule ${r.id} lifecycle_stage 应是非空字符串`);
   }
 });
 

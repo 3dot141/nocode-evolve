@@ -19,7 +19,7 @@ Claude Code 插件生命周期 hook 的注册与实现：SessionStart 规则注�
 |---|---|
 | `generate.mjs` | 单源生成器：`rules/manifest.json` → `model/agent-catalog-N.md`（按桶切片常驻注入，单片 ≤9000 字符 `SHARD_LIMIT`，最多 5 片 `MAX_CATALOG_SHARDS`）+ `hooks/pretooluse-rules.json`。`node hooks/generate.mjs` 写文件（并清理残留旧分片）；`--check` 只比对生成物与源是否一致，不一致则打印 drift 列表并 `exit 1`。 |
 | `pretooluse-rules.json` | **生成物，禁手改**。`pretooluse-guard.mjs` 的拦截靶数据：`{rule, pattern, decision, reason}[]`，源自各 rule 的 `pretooluse[]` 字段。 |
-| `manifest.test.mjs` | 校验 `rules/manifest.json` 自身完整性：rule id 唯一、`bucket`/`also_buckets` 均在 `buckets` 里存在、必填字段齐全、schema 扩展字段（`depends_on`/`severity`/`lifecycle_stage`）齐全等，纯校验不落盘。 |
+| `manifest.test.mjs` | 校验 `rules/manifest.json` 自身完整性：rule id 唯一、`bucket`/`also_buckets` 均在 `buckets` 里存在、必填字段齐全、`depends_on` 引用的 rule id 不悬空等，纯校验不落盘。 |
 | `generate.test.mjs` | 校验 `generate.mjs` 的切片/渲染逻辑：当前 manifest 分片在阈值内、首片含头部指令、超长 manifest 切多片但桶不被切断、跨桶 rule（`also_buckets`）在目标桶可发现、`guard`/`summary` 全文不进常驻正文（已下沉到对应 rule 文件或 skill 自身文档）等。 |
 
 **PreToolUse hook**

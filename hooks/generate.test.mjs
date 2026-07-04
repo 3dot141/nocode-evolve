@@ -50,10 +50,8 @@ test('genCatalogSharded: 构造超长 manifest 切多片, 桶不被切断 (在 M
     rules: subset.map((b, i) => ({
       id: `r${i}`,
       bucket: b.id,
-      trigger_type: 'regex',
       trigger_desc: 'x'.repeat(200),
       trigger_short: big,
-      triggers: [],
       action: '',
       read: 'rules/rule-test.md',
       summary: 'unused',
@@ -114,9 +112,9 @@ test('renderBucketBody: 只留 trigger_short + 读路径指针, 有 read 才带�
   const m = {
     buckets: [{ id: 'b1', title: 'B1', trigger_summary: 't', negatives: ['n'] }],
     rules: [
-      { id: 'rule-with-file', bucket: 'b1', trigger_type: 'regex', trigger_desc: 'td', trigger_short: 'SHORT_A', triggers: [], action: '', read: 'rules/rule-x.md', summary: 'RULE_SUMMARY', guard: 'RULE_GUARD', pretooluse: [], also_buckets: [] },
-      { id: 'skill-no-file', bucket: 'b1', trigger_type: 'skill', trigger_desc: 'td', trigger_short: 'SHORT_B', triggers: [], action: '', read: '', summary: 'SKILL_SUMMARY', guard: '', pretooluse: [], also_buckets: [] },
-      { id: 'skill-marker', bucket: 'b1', trigger_type: 'skill', trigger_desc: 'td', trigger_short: 'SHORT_C', triggers: [], action: '', read: '(skill, 无 rule 文件)', summary: 'MARKER_SUMMARY', guard: '', pretooluse: [], also_buckets: [] },
+      { id: 'rule-with-file', bucket: 'b1', trigger_desc: 'td', trigger_short: 'SHORT_A', action: '', read: 'rules/rule-x.md', summary: 'RULE_SUMMARY', guard: 'RULE_GUARD', pretooluse: [], also_buckets: [] },
+      { id: 'skill-no-file', bucket: 'b1', trigger_desc: 'td', trigger_short: 'SHORT_B', action: '', read: '', summary: 'SKILL_SUMMARY', guard: '', pretooluse: [], also_buckets: [] },
+      { id: 'skill-marker', bucket: 'b1', trigger_desc: 'td', trigger_short: 'SHORT_C', action: '', read: '(skill, 无 rule 文件)', summary: 'MARKER_SUMMARY', guard: '', pretooluse: [], also_buckets: [] },
     ],
   };
   const body = renderBucketBody(m);
@@ -161,10 +159,8 @@ test('genCatalogSharded: 超 MAX_CATALOG_SHARDS 时 throw (防静默漏注入)',
     rules: Array.from({ length: 7 }, (_, i) => ({
       id: `r${i}`,
       bucket: `b${i}`,
-      trigger_type: 'regex',
       trigger_desc: 'x'.repeat(200),
       trigger_short: 'x'.repeat(5500),
-      triggers: [],
       action: '',
       read: 'rules/rule-test.md',
       summary: 'unused',

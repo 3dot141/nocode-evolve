@@ -61,22 +61,18 @@
 | `bucket` | 所属主桶 |
 | `also_buckets` | 该规则同时挂到的其他桶（跨桶可路由，catalog 里会在那些桶下重复渲染同一行索引） |
 | `trigger_short` | 一行索引提示，**实际渲染进常驻 catalog 的就是这一句**（仿 personal wiki `index.md` 的极简度） |
-| `trigger_type` | `regex` / `regex+skill` / `skill` / `behavior`——触发判断的性质，纯 authoring 元数据，不参与生成 |
 | `trigger_desc` | 中文长描述，说明触发/不触发的边界（含具体反例），纯 authoring 元数据，不进常驻文本 |
-| `triggers` | 正则数组，用于自动化 eval（如 `nocode:rule-eval`）估算触发率，不是 hook 强制匹配，也不参与生成 |
 | `action` | agent 命中后应该做的具体动作：`Read rules/rule-x.md`，或 `Skill(nocode:xxx)`，或直接内联指令 |
 | `read` | 要 Read 的文件路径（`${CLAUDE_PLUGIN_ROOT}/rules/rule-x.md`）；为空表示没有独立正文文件，`trigger_short` 之外的信息住在触发它的 skill 自身 description/SKILL.md 里 |
 | `summary` | 一句话摘要，**不进常驻正文**，只是 manifest 内的 authoring 文档，供人读懂这条 rule 讲什么 |
 | `guard` | 关键约束，**不进常驻正文**——已确认这条约束要么在对应 `rules/rule-*.md` 详情文件里，要么在触发它的 skill 自身 SKILL.md 里，要么在同一条 rule 的 `pretooluse[].note` 里，本字段只是留个 authoring 摘要，避免重复维护三份地方都改 |
-| `depends_on` | 依赖的其他 rule id——**语义关联，非强制顺序**；`hooks/manifest.test.mjs` 会校验这里引用的 id 必须存在 |
-| `severity` | `advisory` / `warn` / `block`——规则重要度分级，纯 authoring 元数据，不参与生成（不代表实际 PreToolUse 是否拦截，实际拦截行为看 `pretooluse[].action`） |
-| `lifecycle_stage` | `0 设计` / `1 隔离` / `2 实现` / `3 评审` / `4 收尾` / `cross`（跨阶段），纯 authoring 元数据，不参与生成 |
+| `depends_on` | 依赖的其他 rule id——**语义关联，非强制顺序**；`hooks/manifest.test.mjs` 会校验这里引用的 id 必须存在，是唯一还在被工具消费的扩展字段 |
 | `pretooluse` | 数组，每项 `{ pattern, action, note }`——`pattern` 是匹配 Bash 命令的正则，`action` 是 `block`（硬拦截）或 `inject`（提醒但放行），`note` 是展示给 agent 的理由文案，扁平化进 `hooks/pretooluse-rules.json` |
 
-> `trigger_type`/`triggers`/`severity`/`lifecycle_stage`/`depends_on` 目前没有任何生成逻辑读取
-> （`renderBucketBody` 只用 `id`/`trigger_short`/`read`/`bucket`/`also_buckets`；`genPretooluse`
-> 只用 `id`/`pretooluse`），纯粹是 authoring 阶段留下的字段。新增 rule 时可以照抄现有条目填，
-> 但不要指望它们驱动任何行为。
+> 2026-07 精简：`trigger_type`/`triggers`（正则数组）/`severity`/`lifecycle_stage` 四个字段已从
+> schema 里删除——排查确认没有任何生成逻辑、测试或工具读取它们，纯粹是早期版本留下的
+> authoring 字段，删除前专门核实过没有隐藏消费者（包括曾经怀疑的 `/rule-eval` 本地 dev 命令，
+> 实际读的是渲染后的 catalog 文本，不读 manifest 的 `triggers` 数组，见下方「相关命令」）。
 
 ## 生成链路
 
@@ -142,5 +138,6 @@ session）；commit 前建议手动跑一遍确保为 0 drift。
 - `node hooks/generate.mjs --check` —— 只校验一致性，不写文件，drift 则 exit 1
 - `node --test 'hooks/*.test.mjs'` —— 跑全部 hooks 测试（含 `generate.test.mjs` /
   `manifest.test.mjs`，直接覆盖本目录生成逻辑）
-- `nocode:rule-eval` skill —— 用 manifest 里每条 rule 的 `triggers` 正则跑触发率 eval（route-recall
-  + 混淆矩阵），评估规则路由质量
+- `/rule-eval`（`.claude/commands/rule-eval.md`，**仓库本地 dev 工具，gitignored，不随插件分发**）
+  —— 派 clean-room subagent 读渲染后的 `model/agent-catalog-*.md` 全文 + 行为基线，judged 该走哪条
+  rule，跑 route-recall / 混淆矩阵，评估规则路由质量；不读 manifest 的字段，只认渲染产物
