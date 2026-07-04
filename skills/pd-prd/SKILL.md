@@ -1,6 +1,6 @@
 ---
 name: pd-prd
-description: Use when the user wants to write a product requirements document, says "写 PRD/产品需求/产品设计/产品 brief/写需求文档", or after research skill completes and wants to synthesize findings into a document. Also use when devflow Full-scene suggests running the product flow. Not for technical design docs (use nocode:dev-design-refine) or code comments/README.
+description: Use when the user wants to write a product requirements document. Use when the user says "写 PRD/产品需求/产品设计/产品 brief/写需求文档", or after research skill completes and the user wants to synthesize findings into a document. Also use when devflow Full-scene suggests running the product flow. Not for technical design docs (use nocode:dev-design-refine) or code comments/README.
 ---
 
 # prd — 收敛成产品需求文档
@@ -94,7 +94,7 @@ Task 10: 硬交接 — 调用下一步 skill
 
 有 research-report 时默认值来自调研结论；没有时 AI 根据用户描述推断，标 `[ASSUMED]`。
 
-**调研依据落盘**：Clarify Gate 过程中做的每个判断（为什么选这个目标用户、为什么不做 X）及其依据，必须写进 PRD 对应字段的标注里，不只活在对话里。例：`[CONFIRMED — 基于 research-report 用户信号: 38% 工单提到共享需求]`。
+**调研依据落盘**：Clarify Gate 过程中做的每个判断（为什么选这个目标用户、为什么不做 X）及其依据，必须写进 PRD 对应字段的标注里，不只活在对话里。例：`[CONFIRMED — 基于 research-report 用户信号: 38% 工单提到共享需求]`。下游的 Define/Design 看不到这段对话，只看 `.prd.md` 文件。
 
 ### Step 3: 领域与路径建模
 
@@ -108,10 +108,14 @@ User Stories 是意图（一句话），使用路径是把意图展开成"谁、
 
    **按实体/边界上下文分，不按能力/动作分**。判断标准：域名应该是名词（"订单"、"Agent"、"会话"），不是动词（"创建"、"装配"、"更新"）。如果多个"域"都在操作同一个实体，它们应该合并成一个域。
 
+   反例 → 正例：
+   - ❌ 创建/装配/更新/消费/反馈（5 个动词域）→ 同一个实体被拆成 5 份，每份都重复描述它的结构
+   - ✅ Agent/会话/记忆/市场（4 个实体域）→ Agent 域包含创建、装配、更新的完整生命周期
+
    每个域路径 ID 格式：`{域名}.P{N}`（如 `Agent.P1`、`会话.P2`）。
 
 2. **展开使用路径**：每个领域下，每条相关 User Story 至少展开一条使用路径。路径是 outcome 级别（"用户能取消未发货订单并收到退款"），**不写交互步骤**（点哪个按钮是 vis 的事）。每条标 `来源: US-{X}`。
-   **情境锚定**：核心路径可补 Job Story（"When [情境], I want [动机], so that [结果]"）补充"何时/为何"，不替换 US。
+   **情境锚定**：对核心路径补 Job Story 视角——"When [用户在什么情境下触发], I want [动机], so that [结果]"。User Story 的 persona 告诉你"谁"，Job Story 的情境告诉你"什么时候、为什么"——后者更能驱动差异化设计。不替换 US，作为情境补充。
 3. **识别跨领域路径**：串联多个领域的端到端链路（如"下单→支付→发货→签收"穿订单/支付/物流），用 `跨域.{N}` 单独管理，不拆回各领域重复计。**跨域流程不是独立域**——反馈迭代、端到端创建发布等串联多个域的过程应作为跨域路径，不是新增一个域。
 4. **识别系统路径**：没有用户入口但有系统行为的场景——webhook 回调、定时同步、批处理、缓存失效、降级恢复。这些常是事故来源，容易被 User Story 漏掉。
 5. **提取约束**：跨路径的业务不变量（"退款 ≤ 实付"、"库存 ≥ 0"、"订单关闭后不可发货"）。不是某条 path，是所有 path 都要遵守的硬规则。
@@ -127,6 +131,7 @@ User Stories 是意图（一句话），使用路径是把意图展开成"谁、
 4. **约束必须体现**：流程中受约束影响的节点标 `[约束.N]`，指向 §7 约束列表
 
 **图的原则**：
+- 图说"怎么流转"（§4），领域能力图说"结构是什么"（§5），路径文本说"精确定义"（§5）——三层不重复，互相引用
 - 用 ASCII art（终端友好、版本控制可 diff）
 - 图中标路径 ID，读者一眼知道这个节点的规格在哪看
 - 一张图不超过 15 个节点——太大就拆
@@ -196,6 +201,16 @@ User Stories 是意图（一句话），使用路径是把意图展开成"谁、
 [ASCII flowchart — 端到端场景流程]
 [正常路径标 [路径ID]，异常分支标 [路径ID 异常]，约束点标 [约束.N]]
 [流程末尾展示产出物（这个流程完成后产出什么）]
+[示例:]
+[  用户提交 → 系统校验 [约束.1]        ]
+[       |                              ]
+[   +---+---+                          ]
+[   | 通过  | 失败                      ]
+[   v       v                          ]
+[  [域.P1]  [域.P1 异常] 提示XX         ]
+[   |                                  ]
+[   v                                  ]
+[  产出物: {流程产出的实体/状态}         ]
 ```
 
 ## 5. 领域模型
@@ -339,7 +354,13 @@ DDD 域划分的正式规格，被 §4 的流程图引用。每个域围绕一�
 
 ## Go/No-Go 判据（从 research 传递）
 
-research skill 的判据：竞品覆盖（有无差异化空间）、技术可行（能否支撑或绕过障碍）、用户需求（有无痛点证据）。PRD 直接引用其结论，无需重复展开信号细节。
+research skill 的 Go/No-Go 建议基于以下判据（PRD 里引用）：
+
+| 判据 | Go 信号 | No-Go 信号 |
+|---|---|---|
+| 竞品覆盖 | 竞品未完全覆盖，有差异化空间 | 已有成熟竞品完全覆盖且无差异化角度 |
+| 技术可行 | 代码现状能支撑，或改造成本可接受 | 技术障碍大且无绕过方案 |
+| 用户需求 | 社区/市场有明确痛点信号 | 找不到痛点证据，需求是假设 |
 
 ## Exit Gate
 

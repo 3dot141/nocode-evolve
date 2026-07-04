@@ -1,6 +1,6 @@
 ---
 name: pd-ix
-description: Use when the user wants to design interaction structure after the PRD is defined, says "交互设计/信息架构/页面流/交互拆解/IA/用户流程", or when pdflow routes to the interaction design stage. Produces a .ix.md (interaction spec with IA, page flow, and interaction breakdown). Not for visual design (use nocode:pd-vd), technical architecture (use nocode:dev-design), or production component code (use devflow Build).
+description: Use when the user wants to design the interaction structure of a product after the PRD is defined. Use when the user says "交互设计/信息架构/页面流/交互拆解/IA/用户流程", or when pdflow routes to the interaction design stage after PRD. Produces a .ix.md (interaction spec with IA, page flow, and interaction breakdown). Not for visual design (use nocode:pd-vd), technical architecture (use nocode:dev-design), or production component code (use devflow Build).
 ---
 
 # pd-ix — 交互设计
@@ -8,6 +8,16 @@ description: Use when the user wants to design interaction structure after the P
 **Iron Law: PRD 说"做什么"，没说"怎么走"。交互结构不定，视觉只是贴皮。**
 
 独立于 devflow 的产品流交互设计阶段。产出 `.ix.md`，作为视觉设计（pd-vd）和开发的输入。
+
+## 渐进式披露
+
+交互阶段的产出是完整交付物，不是半成品。用户拿到 `.ix.md` 可以直接进开发，也可以继续进 pd-vd 加视觉。
+
+```
+pd-ix → ASCII 线框 + IA + 交互流    → 可交付 ✓
+         ↓ 要视觉？
+pd-vd → 低保真 / 高保真 / 完整实现   → 可交付 ✓
+```
 
 ## 边界
 
@@ -31,15 +41,19 @@ description: Use when the user wants to design interaction structure after the P
 
 ```
 Task 1: 确定起点 — 读 PRD + 查 .ix.md
+  Sub-steps: 读 PRD 提取路径 → 查已有 .ix.md → 定起点
   Gate: 起点已确认（复用/自填/从零）
 
 Task 2: 竞品探索 + 逐交互拆解
+  Sub-steps: 并行竞品+现状 → 提交互清单 → 逐交互四块 → 用户校验
   Gate: 交互清单覆盖全路径，每个交互锁定
 
 Task 3: IA 汇总 + 用户批准
+  Sub-steps: 汇总 IA → approve gate → 写 .ix.md
   Gate: IA 经批准，.ix.md 已写入
 
 Task 4: 保存 + Handoff
+  Sub-steps: 保存 .ix.md → 提示下一步：有界面 → 调 Skill(nocode:pd-vd)；否则进 devflow
   Gate: 文件保存，全部 Task 更新
   metadata: {handoff: true}（供防跳步 Hook B 识别交接 task）
 ```
@@ -117,6 +131,13 @@ Task 4: 保存 + Handoff
 
 ---
 
+## Exit Gate (Global)
+
+- [ ] PRD 已读，路径清单已提取
+- [ ] 交互清单覆盖全部使用路径，每个交互锁定
+- [ ] IA 经用户批准
+- [ ] `.ix.md` 已保存到 `{pd_ix_output}`
+
 ## AI 能力边界
 
 | AI 能做 | AI 不能做（标 `[ASSUMED]`） |
@@ -133,6 +154,7 @@ Task 4: 保存 + Handoff
 | "先拍个 IA 再补交互" | IA 是从交互拆解汇总出来的 |
 | "交互太简单不用拆" | 简单的交互也有 empty/loading/error 态 |
 | "直接出视觉更快" | 没批准交互就出视觉 = 在未验证的骨架上贴皮 |
+| "这个改动简单，跳过某 Step 或不建 TaskCreate" | 进了 skill 就走完所有 Step。"简单"是你的判断，不是跳 Gate 的授权（详见 agent-catalog-using.md「进了 skill 就走完」） |
 
 ## Red Flags
 

@@ -1,13 +1,13 @@
 ---
 name: dev-land
-description: description="Use when Review is complete and you need to land the work. Orchestrates pre-flight checks and dev-finish-branch (PR/merge mechanics + post-merge flow). Use when devflow routes to Land stage, or when user says \"land/着陆/准备着陆/走land阶段\". Note: standalone \"提PR/合并/merge\" without devflow context should use dev-finish-branch directly, not this skill."
+description: "Use when Review is complete and you need to land the work. Orchestrates pre-flight checks and dev-finish-branch (PR/merge mechanics + post-merge flow). Use when devflow routes to Land stage, or when user says \"land/着陆/准备着陆/走land阶段\". Note: standalone \"提PR/合并/merge\" without devflow context should use dev-finish-branch directly, not this skill."
 ---
 
 # land — 选路着陆，干净收场
 
 **Iron Law: 先确认 Review Gate 已过，再选着陆路径。没过 Review 的代码不着陆。**
 
-编排层：pre-flight → dev-finish-branch（PR/merge 机制 + post-merge 流转，已并入本 skill，不再独立）。
+编排层：pre-flight → dev-finish-branch（PR/merge 机制 + post-merge 流转）。post-merge 流转已并入 dev-finish-branch（`references/post-merge.md`），不再是独立 skill。
 
 ## 非本 skill 请求
 
@@ -68,18 +68,20 @@ Enter Gate 三项逐条检查：
 **发布策略**（Option 1/2 选定后、执行前追问——仅对生产改动）：
 > "这次改动的发布策略？全量 / 灰度（canary %）/ dark launch（flag 默认关）"
 >
-> 用户选了灰度/dark launch → 提醒确认 flag 已就位；纯内部工具/无生产影响 → 跳过。
+> AI 不执行部署，但把决策点暴露给用户——merge 和 release 是两个动作。用户选了灰度/dark launch → 提醒确认 flag 已就位。纯内部工具/无生产影响 → 跳过。
 
 **PR body 回链**（Option 2，Gate Title-Body 时）：PR body 除了 dev-finish-branch 的标准格式，额外包含：
 - **Requirements Addressed**：引用 Define 的 restate Success Criteria 编号，逐条说明满足
 - **Verification Evidence**：引用 Verify 阶段的关键证据（测试命令+结果摘要）
+
+这样 reviewer 看到 PR 就能追溯"为什么做"和"怎么证明做完了"。
 
 **Exit Gate:**
 - [ ] dev-finish-branch 完成（PR 已创建 + worktree 状态确认 / 已合并 / keep / discard）
 
 ### Step 3: Post-merge
 
-Read `dev-finish-branch/references/post-merge.md` 执行合并后流转。
+合并后流转已并入 dev-finish-branch——Read `dev-finish-branch/references/post-merge.md` 执行（原独立 dev-post-merge skill 已降级为该 reference）。
 
 - **Option 1 (Merge)**：Step 2 合并成功后即执行
 - **Option 2 (PR)**：pr-watch 盯到合并、退出 re-invoke 后触发；或后续会话用户说"PR 合了"时
@@ -88,6 +90,11 @@ Read `dev-finish-branch/references/post-merge.md` 执行合并后流转。
 **Exit Gate:**
 - [ ] post-merge 流转完成或已跳过
 
+## Exit Gate（全局）
+
+- [ ] dev-finish-branch 完成
+- [ ] post-merge 流转完成或已跳过（合并后）
+
 ## 场景差异
 
 | | Full / Standard / Fix | Mini |
@@ -95,6 +102,8 @@ Read `dev-finish-branch/references/post-merge.md` 执行合并后流转。
 | Pre-flight | 完整 Enter Gate | commit only |
 | Finish-branch | dev-finish-branch 完整 | 跳过（Mini 不开 worktree） |
 | Post-merge | 合并后按需 | 跳过 |
+
+Mini 场景的 Land-lite：确认 commit 已完成即可，不进完整 Step 1-3。
 
 ## Common Rationalizations
 
@@ -105,6 +114,7 @@ Read `dev-finish-branch/references/post-merge.md` 执行合并后流转。
 | "worktree 保着占空间，顺手删了" | Gate Worktree-Cleanup 让用户选。用户可能要 iterate on PR feedback |
 | "任务号懒得填" | 流转闭环是 Land 的一部分，不是可选 |
 | "force push 一下就好" | force push 是高风险操作，有专门的 Gate |
+| "这个改动简单，跳过某 Step 或不建 TaskCreate" | 进了 skill 就走完所有 Step。"简单"是你的判断，不是跳 Gate 的授权（详见 agent-catalog-using.md「进了 skill 就走完」） |
 
 ## Red Flags
 
@@ -112,4 +122,5 @@ Read `dev-finish-branch/references/post-merge.md` 执行合并后流转。
 - 跳过 Gate Title-Body 直接 `gh pr create`——Gate 存在就是为了拦这个
 - PR 创建后立刻 merge 不等 review——option 2 终态是 PR 提交，不是合并
 - 清理 worktree 但没 ExitWorktree——先退出再清理
+- Option 2 选了 PR 路径又说"还是本地 merge 吧"——回 Step 2 重选，不混搭
 - 因"任务简单 / 还在概览 / 用户说了'继续'"跳过某 Step、不建 Step 0 TaskCreate、或漏掉最后的交接 task

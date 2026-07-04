@@ -98,6 +98,8 @@ Time range, output, and auth options:
 | `--request-type <type>` | `time_series` | SQL/file result type: `time_series`, `scalar`, `raw`, or `trace` |
 | `--format <format>` | `json` | Output: `json`, `table`, or `text` |
 
+> `--url` and `--token` flags are available on all commands for per-invocation auth override.
+
 > **Duration = "ago"**: `--since 1h` means "1 hour ago". `--until 1d` means "1 day ago" (not "for 1 day"). So `--since 7d --until 1d` queries from 7 days ago to 1 day ago.
 
 > **SQL time injection**: Use `{{start_ms}}`/`{{end_ms}}` (milliseconds), `{{start_ns}}`/`{{end_ns}}` (nanoseconds), or `{{start_s}}`/`{{end_s}}` (seconds) in your SQL. These are replaced with the values from `--since`/`--until` before the query is sent.
@@ -120,6 +122,15 @@ signoz metrics | jq '.[] | select(.promql == "no")'  # Show Delta-only metrics
 ```bash
 # OTel metric with dot-separated name (Cumulative — works)
 signoz query --promql '{__name__="http.client.request.duration.bucket"}' --since 1h
+
+# Prometheus-style metric (if Cumulative)
+signoz query --promql 'rate(http_requests_total[5m])' --since 1h
+
+# Table output for quick scan
+signoz query --promql '{__name__="db.client.connections.usage"}' --format table
+
+# From a specific start date to now (Asia/Shanghai, see Timezone section)
+signoz query --promql 'process_cpu_seconds_total' --since 2024-01-15T00:00:00+08:00
 ```
 
 #### ClickHouse SQL examples
@@ -135,13 +146,47 @@ signoz query --since 24h --sql "
   GROUP BY ts ORDER BY ts
 "
 
+# Recent raw log rows as a readable table
+signoz query --since 1h --request-type raw --format table --sql "
+  SELECT timestamp, severity_text, body, trace_id, span_id
+  FROM signoz_logs.distributed_logs_v2
+  WHERE timestamp >= {{start_ns}} AND timestamp <= {{end_ns}}
+    AND ts_bucket_start >= {{start_s}} - 1800 AND ts_bucket_start <= {{end_s}}
+  ORDER BY timestamp DESC LIMIT 20
+"
+
+# Metric samples over the last hour
+signoz query --since 1h --sql "
+  SELECT toStartOfInterval(toDateTime(intDiv(unix_milli, 1000), 'Asia/Shanghai'), INTERVAL 1 MINUTE) AS ts,
+         avg(value) AS value
+  FROM signoz_metrics.distributed_samples_v4
+  WHERE metric_name = 'signoz_calls_total'
+    AND unix_milli >= {{start_ms}} AND unix_milli < {{end_ms}}
+  GROUP BY ts ORDER BY ts
+"
+
 # Load a saved query from file with custom time range
 signoz query -f my-query.json --since 7d --until 1d
 ```
 
 #### File format for `-f`
 
-The JSON file should follow the SigNoz v5 `query_range` body format (`schemaVersion`/`requestType`/`compositeQuery.queries[]`, each query having `type` + `spec`). The `start` and `end` fields are overridden by `--since`/`--until`.
+The JSON file should follow the SigNoz v5 `query_range` body format. The `start` and `end` fields are overridden by `--since`/`--until`:
+
+```json
+{
+  "schemaVersion": "v1",
+  "requestType": "time_series",
+  "compositeQuery": {
+    "queries": [
+      {
+        "type": "promql",
+        "spec": { "name": "A", "query": "rate(http_requests_total[5m])", "step": 60, "disabled": false, "stats": false }
+      }
+    ]
+  }
+}
+```
 
 ### metrics — Discover available metrics
 
@@ -189,7 +234,16 @@ SigNoz uses a custom auth header `SIGNOZ-API-KEY` (not `Authorization: Bearer`).
 
 ## Duration Format
 
-Units: `s`/`m`/`h`/`d`（秒/分/时/天），语义均为 "X ago from now"（同上）。ISO 8601 也可用，见 Timezone 节。
+Relative durations for `--since` and `--until` always mean **"X ago from now"**:
+
+| Unit | Example | Meaning |
+|------|---------|---------|
+| `s` | `30s` | 30 seconds ago |
+| `m` | `15m` | 15 minutes ago |
+| `h` | `2h` | 2 hours ago |
+| `d` | `7d` | 7 days ago |
+
+ISO 8601 dates are also accepted: `2024-01-15T00:00:00+08:00` (Asia/Shanghai 默认, 见 Timezone 节).
 
 ## ClickHouse SQL Reference for SigNoz
 

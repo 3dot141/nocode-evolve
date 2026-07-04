@@ -9,6 +9,9 @@ description: Use when Define is complete and you need to explore and pick an app
 
 select 回答"走哪条路"——探索 approach、多方案差异化对比后选一个，产出结构化 **决策包 Decision Packet** 交给 `dev-design-refine` 写详细设计。本 skill 只做决策,不写文档、不评审。
 
+> Leading word: **approach**。没对比过的 approach 就没有设计,只有假设。
+> **决策包 Decision Packet** = select 产出、refine 消费的结构化交接契约(带 required 字段 + 版本),schema 见「收尾」节。
+
 ## 两种模式
 
 - **方案选择**(feat / bug / refactor 前置):为一个待实现的需求选架构方向,产出 Decision Packet → `dev-design-refine`。
@@ -31,7 +34,7 @@ select 全程默认 agent 自主决策——探索、方案对比、方案选定
 - [ ] Define restate 存在且用户已确认(方案选择模式),或有明确预研主题(research 模式)
 - [ ] 场景分类 = Full(方案选择),或独立预研请求
 
-> 端到端示例见 `references/example-design-session.md`；预研骨架见 `references/example-research-skeleton.md`。
+> 端到端示例（restate → 方案对比 → 选定 → Decision Packet）见 `references/example-design-session.md`；预研模式骨架见 `references/example-research-skeleton.md`。
 
 ## 协议
 
@@ -145,7 +148,8 @@ NeedsUserInput {
 
 ### Step 9: 硬交接
 
-按「两种模式」分流:方案选择 → 返回 Decision Packet 给协调器,转交 `dev-design-refine`;research → 直接交付终止,报告结论 + 建议下一步`[假定:终止而非续 refine]`
+- **方案选择模式** → 返回 Decision Packet 给协调器(`dev-design`),由其调 `dev-design-refine` 写详细设计
+- **独立预研 research 模式** → **直接交付 research Decision Packet 终止**,向用户报告预研结论 + 建议下一步(进 design / plan / 放弃),不自动进 refine `[假定:终止而非续 refine]`
 
 ## Exit Gate
 
@@ -155,4 +159,4 @@ NeedsUserInput {
 - [ ] TO 覆盖每条路径和约束,5 维自审通过
 - [ ] 决策清点全 ✅,功能覆盖全 ✅
 - [ ] Decision Packet 产出,requiredFields 齐
-- [ ] **硬交接**已按「两种模式」分流完成(细节见 Step 9)
+- [ ] **硬交接**:方案选择→交 Packet 给协调器进 refine;research→直接交付终止

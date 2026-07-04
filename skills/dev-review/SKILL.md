@@ -30,7 +30,7 @@ dev-review 的评审执行走 `reviewing` 引擎——本 skill 只管 workflow 
 
 ## 非本 skill 请求
 
-写代码/解释函数/需求判断 → 非 review（无 diff）：分别转 Build/直接答/Define。
+"写代码" / "解释函数" / "需求合不合理" → 不是 review。没有 diff 就没有 evidence，无法 review。写代码 → Build，解释 → 直接答，需求判断 → Define。
 
 ## Enter Gate
 
@@ -40,7 +40,7 @@ dev-review 的评审执行走 `reviewing` 引擎——本 skill 只管 workflow 
 
 ## 领域维度来源（评审时按需取）
 
-安全 / 架构 / 数据库维度由引擎承载（声明对象特征即可，详见上文"调 reviewing 引擎"）；其余轴按需 Read dev-review 自己的 guide：
+**安全 / 架构 / 数据库维度由引擎承载**——调引擎时声明对象特征（碰安全面 / 架构决策 / SQL·schema·migration），引擎自动加对应领域 method。其余轴按需 Read dev-review 自己的 guide：
 
 | 轴 / 检查 | 取什么 | 用来做什么 |
 |---|---|---|
@@ -92,7 +92,7 @@ Task 6: 硬交接 — 调用下一步 skill
 
 调 `Skill(nocode:reviewing)` 传 diff 范围 + 五轴维度 + Context Capsule（已拍板决策 / 非目标 / 约束，不带预期结论），引擎按 checklist 逐轴过 diff、每轴显式标 ✅/⚠️/❌（五轴详细检查点见 `references/five-axis-guide.md`，随声明给引擎）：
 
-**打包前先读 Build 各 task 的 Quality Review verdict**：可读性/架构/正确性（对应 Conventions/Structure/Quality）不再通读全部文件，只找合并后才出现的增量问题（循环依赖/重复抽象/职责重叠），per-task 已挑过的不重复记。**安全/性能轴仍全量强制检查**——Build 未覆盖这两维，这里是唯一一次系统检查。
+**打包前先读 Build 各 task 的 Quality Review verdict（有则读，增量提示写进 prompt）**：可读性/架构/正确性（对应 Build Quality Review 的 Conventions/Structure/Quality）这三轴不再从零通读全部文件——Build per-task 已经查过一遍，这里只找"合并后才出现"的增量问题（多个 task 各自看都合规、合起来才暴露的循环依赖/重复抽象/职责重叠），已经被 per-task 挑过的同类问题不重复记 finding。**安全轴 / 性能轴仍是全量强制检查**——Build 的 Quality Review 没有这两个维度，这里是它们第一次、也是唯一一次被系统性检查。
 
 | 轴 | 核心问题 | 高频缺陷 |
 |---|---|---|
@@ -101,6 +101,8 @@ Task 6: 硬交接 — 调用下一步 skill
 | 架构 | 职责分对了吗？依赖方向？ | 循环依赖 / 与现有 pattern 不一致 |
 | 安全 | 信任边界守住了吗？ | OWASP Top 10 / 注入 / 密钥硬编码 |
 | 性能 | 不必要的开销？ | N+1 / unbounded fetch / 缺分页 |
+
+安全 / 架构轴由引擎的领域 method 承载（声明对象特征即可）。性能详见 `{NOCODE_SKILL_REF}/performance-guide.md`。
 
 **Review 中测试评估**：测试是否会在重构中存活？重命名内部函数测试就挂 = 测的是实现不是行为。
 
@@ -118,13 +120,13 @@ Task 6: 硬交接 — 调用下一步 skill
 
 ### Step 3: 升档异源交叉（引擎判）
 
-主路审完，是否派异源交叉由引擎按升档判据决定（判据/CLAIM剥离/降级细节见上文"调 reviewing 引擎"，不复述）。dev-review 只需把五轴维度 + Context Capsule 传全（Capsule 尽量全——triage 能滤独立路误报，补不回漏报）。引擎回：是否升档 + 合并后 findings + 独立性档位声明。
+主路审完，引擎按升档判据决定是否派异源交叉——升档信号 / CLAIM 剥离 / codex 降级 / Doubt Theater 检测全由 reviewing 引擎承载，本 skill 不复述。dev-review 只需调引擎时把五轴维度 + Context Capsule 传全（Capsule 尽量全——triage 能滤独立路误报，补不回漏报）。引擎回：是否升档 + 合并后 findings + 独立性档位声明。
 
 ### Step 4: Findings Triage
 
 引擎返回的每条 finding 套统一契约 schema（id / severity / kind / axis=五轴名 / location / evidence / finding / fix / source）——字段定义单源在引擎 findings-contract，本 skill 不复述。dev-review 拿到 findings 后做下面的 triage。
 
-> `action`(C/W/S) 即 `severity`，1:1 直通；顶层加 `verdict{approved, counts, recommendation}`，有未处置 Critical 则 `approved:false`。
+> 原 `action`（Critical/Warning/Suggestion）语义即 `severity`——dev-review 原生就是 C/W/S，1:1 直通，无需映射。最上层加一个 `verdict { approved, counts, recommendation }`：存在未处置 Critical → `approved:false`。
 
 **Evidence Gate 由引擎把关**：代码事实类 finding 缺 `location` 已被引擎降 `open-question`——dev-review 直接用引擎给的分级，不重判。
 

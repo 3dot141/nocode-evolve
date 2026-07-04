@@ -1,13 +1,15 @@
 ---
 name: dev-plan
-description: Use when you have defined goals and need to break work into tasks — when devflow routes to Plan stage, when the user says "写计划/拆任务/怎么实现/plan it out", or when a task feels too large to start or parallel work is possible. Not for writing code (use dev-build), clarifying unclear requirements (use dev-define), or interaction breakdown/交互拆解 (use pd-ix).
+description: Use when you have defined goals and need to break work into tasks. Use when devflow routes to Plan stage, or when the user says "写计划/拆任务/怎么实现/plan it out". Use when a task feels too large to start or when parallel work is possible. Not for writing code (use dev-build), clarifying unclear requirements (use dev-define), or interaction breakdown/交互拆解 (use pd-ix).
 ---
 
 # plan — 把目标拆成任务序列
 
 **Iron Law: 计划里贴的是真实代码和命令，不是占位符。写不出真实代码 = 还没想清楚。**
 
-计划的价值不在"列出步骤"，在让执行变成机械动作，拿到就能照做，不需要边做边想"这里该怎么写"。
+计划的价值不在"列出步骤"，在让执行变成机械动作。每个任务是一根 **tracer bullet**——穿透所有层的端到端垂直切片。好计划拿到就能照做，不需要边做边想"这里该怎么写"。
+
+> Leading word: **tracer bullet**。每个 task 切一条窄但完整的端到端路径，不按层横切。
 
 输入：Define 的 restate + dev-design-refine 的设计文档（含领域划分、模块设计、接口、业务流、测试目标）（Full 场景）。
 输出：用户确认的任务序列。
@@ -24,7 +26,7 @@ description: Use when you have defined goals and need to break work into tasks �
 
 **Plan 的两种合法产出**：
 - **完整计划**（Standard/Full）：依赖图 + 任务序列 + checkpoint
-- **验收标准只**（Mini/太小不拆）：一句话说清"怎么算做完了" + 指出前置确认项（如 i18n/定位）。不拆 ≠ 不定义完成标准。
+- **验收标准只**（Mini/太小不拆）：一句话说清"怎么算做完了" + 指出前置确认项（如 i18n/定位）。不拆 ≠ 不定义完成标准。两者都是 Plan 的正当输出。
 
 > 端到端示例（header + 依赖图 + task + checkpoint + Plan Validation）见 `references/examples/example-plan-output.md`
 
@@ -133,11 +135,11 @@ Round 1 写骨架——定清楚**改什么、覆盖什么、谁做**，代码�
 
 ### Step 6: Round 1 Red-Blue Review
 
-Round 1 骨架完成，在填充代码前对计划骨架做对抗审视。
+Round 1 骨架完成，在填充代码前对计划骨架做对抗审视。骨架阶段发现的问题修正成本低，填充完再改代价翻倍。
 
 调用 `Skill(nocode:red-blue-deep)`，评估问题：
 
-> 「这份计划的骨架合理吗？切片策略、依赖图、risk-first 排序、task 粒度、restate 覆盖是否都经得起推敲？」
+> 「这份计划的骨架合理吗？切片策略（垂直还是横切？每片独立可验证吗？）、依赖图（有没有隐式耦合遗漏？）、risk-first 排序（最不确定的真的排前面了吗？）、task 粒度（sizing 准吗？有 and 该拆的吗？）、restate 覆盖（有遗漏路径吗？）」
 
 附上完整骨架（依赖图 + task 列表含 covers/sizing/HITL-AFK + checkpoint）作为被评估对象。Round 1 走**轻档**——调用时声明「轻档」，red-blue-deep 给一句表态 + 关键理由（不派 subagent、不调 codex），骨架层的粗问题快速暴露即可；深审留给 Round 2 收尾（Step 8 强制重档）。
 
@@ -159,7 +161,7 @@ Round 1 的骨架定了"改什么"，Round 2 填"怎么改"——每个 task 补
 5. **Plan Round 1 骨架** — 本 task 改哪些文件、covers 哪些路径
 6. **最新代码库** — 现有代码长什么样、import 怎么写、风格怎么跟
 
-缺任何一份都可能写出不准确的代码。
+5 份文档提供"做什么 + 长什么样 + 怎么验收 + 怎么做"，代码库提供"代码风格 + 现有 API"。缺任何一份都可能写出不准确的代码。
 
 **领域指南消费（判断类，写代码前按场景 Read）**：这里写的是最终真实代码，判断该用什么模式/怎么防护/怎么分层，要在这一刻做，不是留给 Build 阶段：
 
@@ -214,7 +216,7 @@ Round 1 的骨架定了"改什么"，Round 2 填"怎么改"——每个 task 补
 - 实现是否和设计文档的 BF 伪代码 / 接口一致
 - 有没有引用已废弃接口
 
-**窄化 Red-Blue**（只审跨 task 一致性 / 执行顺序）：调用 `Skill(nocode:red-blue-deep)` 并声明「强制重档」——这是 plan → build 前最后一道审视，降档只认用户显式否定词。评估：
+**窄化 Red-Blue**（只审跨 task 一致性 / 执行顺序）：调用 `Skill(nocode:red-blue-deep)` 并声明「强制重档」——这是 plan → build 前最后一道审视，走 heavy 流程（第一性原理 → 蓝军 → 独立审查 → 结论），降档只认用户显式否定词。评估：
 
 > 「前置 task 的产出（接口/数据结构/约定）够后续 task 用吗？多个 task 之间有没有隐含冲突的假设？执行顺序对吗？」
 

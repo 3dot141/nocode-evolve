@@ -15,7 +15,8 @@ description: 工程任务流程领航（8 阶段 · 4 场景路由）。可被 m
 
 > **顺序推进纪律（硬约束）**：禁止自动跳步。推进只有一条路：todo 写好流程 → 进入当前节点 → 顺序执行子步骤 → 逐条验证 Gate → 全部通过 → 报告用户 → 等用户拍板 → 才进下一阶段。agent 不得自行跳过、合并、快进任何阶段或子步骤。"这步简单直接过" / "上一轮做过" / "用户说快点" / "用户说自主执行到 land" 都不是跳步的理由——快≠跳，可以每步简洁，不能省步骤。用户授权自主推进免除的是等待拍板的时间，不是阶段本身。
 
-> 例：todo 每阶段末项固化为"调用下一阶段 skill"（如 Plan 末尾 → 调 `nocode:dev-build`），交接不靠记忆，context 丢了也能接续（详见 `agent-catalog-using.md`「进了 skill 就走完」）。
+> ❌ 反例：进了某阶段判断"任务简单"，跳过该阶段的对抗审视 / 用户确认，用户一句"继续"就快进下一阶段——没走完 Gate 的产出直接往下游流。
+> ✅ 正例：简单任务也逐子步骤走完 + 逐条验证 Gate + 等用户拍板；每阶段 todo 的最后一项是"调用下一阶段 skill"（如 Plan 末尾 → 调 `nocode:dev-build`），把交接固化成一个没勾的 task，context 丢了也不断在原地。（防跳步通则详见 `agent-catalog-using.md`「进了 skill 就走完」）
 
 ### Step 1: 调 Define 判断场景
 
@@ -53,6 +54,13 @@ Define 返回后，拿到确认的 restate + 场景分类，进 Step 2。
 2. **Sub-steps 序列**：从下方「Phase sub-flows」抄该阶段的子步骤编号链，**链首固定是 `⓪ Skill(...)`**——把"加载该阶段 skill"写成显式第 0 步，进入阶段第一眼就看到
 3. **末阶段 handoff 标记**：最后一个阶段 task（交接/收口阶段，如 Land）建 TaskCreate 时带 `metadata: {handoff: true}`——供防跳步 Hook B 识别交接 task
 
+示例：
+```
+TaskCreate(subject: "阶段 8: Land",
+           description: "调用: nocode:dev-land / Gate: PR merged + 任务流转 + worktree 清理
+Sub-steps: ⓪ Skill(nocode:dev-land) → 8a.Pre-flight → 8b.Finish-branch(dev-finish-branch) → 8c.Post-merge(dev-finish-branch 的 post-merge.md)")
+```
+
 Sub-steps 写进 description 是为了**进入阶段时一眼看到完整步骤序列**——防止跳步遗漏。链首的 `⓪ Skill(...)` 是为了把"加载 skill"钉成每个阶段的第一个动作——**sub-steps 是地图，skill 才是详图**，照地图裸跑会丢掉 skill 内的模板 / Iron Law / 格式约束。
 
 ### Step 4: 推进阶段
@@ -65,6 +73,18 @@ Sub-steps 写进 description 是为了**进入阶段时一眼看到完整步骤�
 4. **Gate 证据点名**：所有子步骤完成后，逐条核对 Gate 条件 + 满足它的具体证据。任一条不满足 = 不标 completed。
 5. **TaskUpdate completed + 停下报告**：标 completed 后**停下**，向用户报告本阶段完成情况 + 下一步建议（格式见 Step 5）。**不自动进入下一阶段。**
 6. **等用户拍板**：用户明确说 OK / 继续 / 下一步，才标下一阶段 in_progress 并进入。
+
+**两条强制工序**：
+
+- **加载 skill 是硬 Gate**——task description 抄了 sub-steps，不等于可以照着裸跑。sub-steps 只列"做什么"，skill 内才有"怎么做"（模板 / Iron Law / 格式约束 / Gate 细节）。跳过 `Skill()` = 丢掉一半指令，这正是本 todo 流程要防的 bug。
+- **Gate 证据是强制工序**——"大概过了 / 应该没问题"不算证据。拿不出证据 = 不标 completed = 不进下一阶段。
+
+**反例**（触发本次强化的 bug）：
+```
+❌ 进入 Build 阶段，看到 task description 里已有 "5a.Scope Lock → 5b.Test First → ..."，
+   直接照着写代码——没调 Skill(nocode:dev-build)，丢了 TDD Iron Law 和 slice 循环约束。
+```
+正确做法：标 in_progress → 先 `Skill(nocode:dev-build)` 拿到完整指令 → 再按 sub-steps 推进。
 
 ### Step 5: 输出建议 + 等用户拍板
 
@@ -84,6 +104,12 @@ Sub-steps 写进 description 是为了**进入阶段时一眼看到完整步骤�
 ```
 
 **建议要具体**——列出子步骤让用户看到完整路径，不是一句话糊弄。理由越具体，用户拍板越快。
+
+**反例**（触发本次优化的真实 bug）：
+```
+❌ 建议下一步: Land — push 到远端 + 写任务日志
+```
+Land 有 5 个子步骤（8a Create PR → 8b ... → 8e Cleanup），只说"push"跳过了 Create PR，导致遗漏 PR 流程。正确做法是列出 8a-8e 全部子步骤。
 
 **不自动执行**。等用户说 "OK" 或调整方向。
 
@@ -227,7 +253,23 @@ Design 完成方案选定 + 设计文档后，基于架构产出评估项目是�
 
 **拆分后的执行模型（PDCA + 依赖驱动并行）**：
 
-每个子任务继承全局 Design，走独立 devflow（Plan → Build → Verify → Review → Land）。基于依赖图决定串行还是并行（无依赖的子任务间并行，有依赖则串行、底层先行）：
+每个子任务继承全局 Design，走独立 devflow（Plan → Build → Verify → Review → Land）。基于依赖图决定串行还是并行：
+
+```
+依赖图示例：
+
+  子任务₁ (数据层)
+      ↓ 依赖
+  子任务₂ (API 层)  ←── 子任务₃ (AI 模块)  ← 无依赖，与₂并行
+      ↓ 依赖
+  子任务₄ (前端)
+
+执行：
+  ₁ 串行先做（底层）
+  → ₂ 和 ₃ 并行（workflow/subagent，各自独立 worktree）
+  → ₄ 串行最后（依赖 ₂₃）
+  → 全局集成验证
+```
 
 **并行执行**（无依赖关系的子任务）：
 - 用 Workflow `pipeline`/`parallel` 或多个 Agent（subagent_type 按需选）同时推进
@@ -238,7 +280,24 @@ Design 完成方案选定 + 设计文档后，基于架构产出评估项目是�
 - 前置子任务 Land 后才启动后续子任务
 - PDCA 检查点：每个子任务 Land 后回检 master todo + 后续子任务是否受影响
 
-PDCA 循环：Plan(依赖图+并行/串行分组) → Do(并行组同时推进/串行组按依赖顺序推进) → Check(每个子任务 Land 后回检 master todo+接口契约+后续影响) → Act(调整后续子任务 scope/顺序/新增/取消→用户确认) → 全局集成验证(所有子任务 Land 后跨子任务集成测试+E2E走查)
+```
+PDCA 循环：
+
+  Plan   依赖图 + 并行/串行分组
+           │
+           ▼
+  Do     并行组内 workflow/subagent 同时推进
+         串行组按依赖顺序逐个推进
+           │
+           ▼
+  Check  每个子任务 Land 后：回检 master todo + 接口契约 + 后续影响
+           │
+           ▼
+  Act    调整后续子任务（scope/顺序/新增/取消）→ 用户确认
+           │
+           ▼
+  全局集成验证（所有子任务 Land 后：跨子任务集成测试 + E2E 走查）
+```
 
 子任务不再经过 Define/Design（全局已做），各自建独立 worktree + 独立 PR。
 
@@ -327,7 +386,7 @@ PDCA 循环：Plan(依赖图+并行/串行分组) → Do(并行组同时推进/�
 - **不替用户执行** — 给建议后停下，等用户拍板
 - **不自行跳过阶段** — 跳过需用户显式授权
 - **不自动进入下一阶段** — 标 completed 后停下报告，等用户说"继续"才进下一阶段。"已经做完了直接走下一步" = 自动跳步
-- **用户授权自主推进 ≠ 跳步许可**（同上文「顺序推进纪律」）——只免等待拍板，不免 sub-steps / Gate / skill 加载
+- **用户授权自主推进（"我会离开 / 执行到 land / 全部跑完"）≠ 跳步许可** — 授权免除的是"等用户拍板"的等待，不是阶段本身。每个阶段的 sub-steps、Gate 检查、skill 加载一个不少，只是不停下来问用户"继续吗"。快速推进 = 每步简洁但完整执行；跳步 = 省掉步骤。前者合法，后者违规
 - **不跳过 TaskCreate** — 进入 devflow 必须建 todo
 - **不无证据标 completed** — Gate 证据点名是前置工序
 - **不把 skill 实现细节抄进 devflow** — devflow 列子步骤序列和决策点（防跳步），不抄 skill 内部的具体做法/模板/格式要求（那些进入 skill 后自然加载）
