@@ -10,8 +10,8 @@ Claude Code 插件生命周期 hook 的注册与实现：SessionStart 规则注�
 
 | 文件 | 作用 |
 |---|---|
-| `hooks.json` | hook 注册总表：SessionStart（11 条 command）、PreToolUse（`Bash` / `*` 两个 matcher）、PostToolUse（`*` / `Read` 两个 matcher）、Stop（`*`）。Claude Code 按约定自动读取本文件，`.claude-plugin/plugin.json` 不需要显式声明 hooks 路径。 |
-| `inject-nocode.sh` | SessionStart 注入脚本，按位置参数 `$1`（segment：`model-about` / `model-personal` / `model-karpathy` / `model-catalog-using` / `model-rule-catalog-1`~`model-rule-catalog-5` / `project`）读取对应文件，包一层 `hookSpecificOutput.additionalContext` JSON 输出。每个 segment（= 每个 command）独立判 10000 字符阈值（hook 官方硬编码截断线），避免旧版"合并输出"整坨超限被截断。首个 segment（`model-about`）额外跑一次 sanity check：两条 compile 脚本各自的生成物 drift、`model/*.md` 孤儿段（有文件无 segment 映射）、`rules/rule-*.md` 未被任一 catalog 分片引用、`skill-integration-map.md` 的 `last_verified` 是否超 90 天。 |
+| `hooks.json` | hook 注册总表：SessionStart（10 条 command）、PreToolUse（`Bash` / `*` 两个 matcher）、PostToolUse（`*` / `Read` 两个 matcher）、Stop（`*`）。Claude Code 按约定自动读取本文件，`.claude-plugin/plugin.json` 不需要显式声明 hooks 路径。 |
+| `inject-nocode.sh` | SessionStart 注入脚本，按位置参数 `$1`（segment：`model-about` / `model-personal` / `model-karpathy` / `model-rule-catalog-1`~`model-rule-catalog-5` / `project`）读取对应文件，包一层 `hookSpecificOutput.additionalContext` JSON 输出。每个 segment（= 每个 command）独立判 10000 字符阈值（hook 官方硬编码截断线），避免旧版"合并输出"整坨超限被截断。首个 segment（`model-about`）额外跑一次 sanity check：两条 compile 脚本各自的生成物 drift、`model/*.md` 孤儿段（有文件无 segment 映射）、`rules/rule-*.md` 未被任一 catalog 分片引用、`skill-integration-map.md` 的 `last_verified` 是否超 90 天。 |
 
 **规则生成链（两条独立链）**
 
@@ -52,8 +52,8 @@ Claude Code 插件生命周期 hook 的注册与实现：SessionStart 规则注�
 `hooks.json` 是 Claude Code 插件的标准 hook 清单，四类事件：
 
 ```
-SessionStart  → 10× inject-nocode.sh <segment>
-                  (model-about / model-personal / model-karpathy / model-catalog-using /
+SessionStart  → 9× inject-nocode.sh <segment>
+                  (model-about / model-personal / model-karpathy /
                    model-rule-catalog-1 ~ model-rule-catalog-5 / project)
               → 1× node scripts/personal-snapshot.mjs
 PreToolUse    → matcher=Bash   → pretooluse-guard.mjs          (危险命令 deny/inject)

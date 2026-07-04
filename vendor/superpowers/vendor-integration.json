@@ -8,12 +8,8 @@
   },
   "skills": {
     "using-superpowers": {
-      "action": "absorb",
-      "reason": "Red Flags + 调用纪律 + 指令优先级融入 agent-catalog-using.md",
-      "absorb_into": "model/agent-catalog-using.md",
-      "how": "提取 Red Flags 表（12 种跳过 skill 的心理借口）、skill 调用纪律（1% 就调）、指令优先级（用户>skill>默认）、skill 类型（刚性/弹性），融入 catalog-using.md",
-      "done": true,
-      "done_reason": "已创建 model/agent-catalog-using.md，含完整 Red Flags 表 + 调用纪律 + 优先级 + Step 0 工序"
+      "action": "skip",
+      "reason": "曾 absorb 进 model/agent-catalog-using.md（Red Flags 表 + 调用纪律 + 指令优先级），该文件已在 260704 model/*.md 内容精简中被删除；absorb 目标不存在，暂不重新吸收，如需恢复触发协议/调用纪律内容需重新评估落点"
     },
     "brainstorming": {
       "action": "keep-as-skill",

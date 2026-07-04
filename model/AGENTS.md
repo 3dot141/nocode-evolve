@@ -9,14 +9,13 @@
 | `agent-about.md` | 手工维护 | 直接 Edit |
 | `agent-personal.md` | 手工维护 | 直接 Edit |
 | `agent-karpathy.md` | 手工维护 | 直接 Edit |
-| `agent-catalog-using.md` | 手工维护（**注意：文件名带 "catalog" 但不是生成物**；当前文件不存在） | 直接 Edit |
 | `agent-rule-catalog-1.md` / `agent-rule-catalog-2.md` / …`-5.md` | **生成物，禁手改** | 改对应 `rules/rule-*.md` 的 frontmatter → 跑 `node scripts/compile.rule.js` |
 
-`agent-catalog-using.md` 是本目录唯一容易踩坑的命名——名字里有 "catalog"，容易被当成路由分片之一，但它讲的是"skill 调用纪律 + Step 0 触发协议"，是纯手写文档。`compile.rule.js` 判断生成物的正则是 `agent-(rule-)?catalog(-\d+)?\.md`（纯数字后缀），`-using` 后缀不匹配，永远不会被脚本生成或清理。改它就跟改 `agent-about.md` 一样，直接 Edit 即可。
+> 曾经的 `agent-catalog-using.md`（Skill 调用纪律 + Step 0 触发协议）已在 260704 内容精简中删除，对应 `model-catalog-using` segment 也已从 `hooks.json`/`inject-nocode.sh` 移除。它是本目录曾经唯一容易踩坑的命名——名字里有 "catalog"，容易被当成路由分片之一，但它讲的是纯手写文档，后缀 `-using` 不匹配 `agent-(rule-)?catalog(-\d+)?\.md` 这条生成物正则，永远不会被脚本生成或清理。以后新增手工文件避免蹭 `agent-catalog` 前缀，减少这种混淆。
 
 反过来，`agent-rule-catalog-1.md`、`agent-rule-catalog-2.md`（以及未来可能出现的 `-3/-4/-5`）是各 `rules/rule-*.md` frontmatter 经 `node scripts/compile.rule.js` 渲染出来的路由分片，文件头部都带"本文件由脚本生成，禁手改"的标记。**任何时候不要直接 Edit 这些文件**——下次跑 compile（或 SessionStart 的 `--check` 漂移告警提示后手动跑）会覆盖你的手改，改动无声丢失。
 
-## 改手工文件（about / personal / karpathy / catalog-using）
+## 改手工文件（about / personal / karpathy）
 
 1. 直接 Edit 目标文件。
 2. 改完必须升级 `.claude-plugin/plugin.json` 的 `version`——`model/` 整个目录都在插件 SessionStart 加载范围内，任何改动都算插件更新（仓库根 `CLAUDE.md` 规则 2，按 SemVer：patch=文案修订，minor=新增行为条款，major=语义反转）。纯文档/元数据修订除外。
@@ -49,7 +48,6 @@
 
 - 不手改任何 `agent-rule-catalog-<数字>.md`——对应 `rules/rule-*.md` 的 frontmatter 才是源，手改会在下次 compile 时被静默覆盖。
 - 不要因为"只是文档小改"跳过版本升级——`model/` 全目录都在插件加载范围内，规则 2 没有例外（纯文档/元数据修订除外，参照仓库根 `CLAUDE.md`）。
-- 不要假设 `agent-catalog-using.md` 是生成物而不敢手改，或反过来跑 compile 想"顺便"更新它——它不受 `scripts/compile.rule.js` 管理，改了不会被覆盖，也不会被自动同步。
 - 加新 segment 只改 `seg_file()` 不改 `hooks.json`（或反之）——两处必须同步改，漏一处等于文件写了也永远注入不进去，且不会有报错提示（孤儿检查只 warn）。
 - rule frontmatter 变了但没跑 `node scripts/compile.rule.js`——不要直接 commit，commit 前确认生成物已同步（`--check` 干净）。
 - PreToolUse pattern 变了但没跑 `node scripts/compile.hooks.js`——同上，这是另一条独立链，`compile.rule.js --check` 干净不代表这条也干净。

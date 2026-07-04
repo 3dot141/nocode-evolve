@@ -18,10 +18,6 @@
           },
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/inject-nocode.sh model-catalog-using"
-          },
-          {
-            "type": "command",
             "command": "${CLAUDE_PLUGIN_ROOT}/hooks/inject-nocode.sh model-rule-catalog-1"
           },
           {

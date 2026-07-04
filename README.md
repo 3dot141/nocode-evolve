@@ -9,15 +9,14 @@ Harrison 的 Claude Code 个人插件。架构(**两类知识分离 + 每文件�
 
 ## 规则注入顺序
 
-每次 SessionStart,hook 跑 10 次 `inject-nocode.sh` 调用(各段独立判 **10000 字符**截断阈值):
+每次 SessionStart,hook 跑 9 次 `inject-nocode.sh` 调用(各段独立判 **10000 字符**截断阈值):
 
 1. `model-about`          —— 角色 / 输出语言 / 红蓝军触发 / git behavior / 全局占位符
 2. `model-personal`       —— 项目本地 `.agents-personal/` 检索约定 + 删除护栏
 3. `model-karpathy`       —— 12 条工程准则
-4. `model-catalog-using`  —— Skill 调用纪律 + Step 0 触发协议(手工维护,非生成物)
-5. `model-rule-catalog-1` —— catalog 分片 1(完整 rule 路由,**frontmatter 生成,禁手改**)
-6. `model-rule-catalog-2` ~ `-5` —— catalog 续片(预留,空段静默)
-7. `project`              —— `<project>/.agents-personal/AGENTS.md`(存在才注入)
+4. `model-rule-catalog-1` —— catalog 分片 1(完整 rule 路由,**frontmatter 生成,禁手改**)
+5. `model-rule-catalog-2` ~ `-5` —— catalog 续片(预留,空段静默)
+6. `project`              —— `<project>/.agents-personal/AGENTS.md`(存在才注入)
 
 `rules/rule-*.md` 触发式规则**不**进开局 context;agent 看 catalog 分片命中后按需 Read。
 
@@ -42,7 +41,6 @@ nocode/
 │   ├── agent-about.md                        # 角色 + 行为基线 + git behavior
 │   ├── agent-personal.md                     # .agents-personal 检索 + 删除护栏
 │   ├── agent-karpathy.md                     # 12 工程准则
-│   ├── agent-catalog-using.md                # Skill 调用纪律 (手工维护, 非生成物)
 │   └── agent-rule-catalog-1.md               # catalog 分片 1 (生成物, 完整 rule 路由)
 │                                             # (agent-rule-catalog-2~5.md 按需生成)
 ├── rules/                                    # 按需 Read (catalog 路由)

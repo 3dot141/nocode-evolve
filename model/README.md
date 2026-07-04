@@ -15,15 +15,16 @@ Claude Code 插件的 `CLAUDE.md`（挂在插件根目录下）不会被自动�
 | `agent-about.md` | 角色设定 + 本插件工作模型总览 + 输出语言（全程中文，含思考）+ 行为基线（陌生代码先 zoom-out / 推理外化 rubber-duck / 语气规范 / 方案类工作核对真实代码 / 评估类提问调红蓝军 / 代码搜索走 semble-search / 常驻 git 习惯 / 偏离 rule 需显式授权 / 用户离场信号 / AskUserQuestion payload 自足）+ 全局占位符（`{username}` 等）+ 文档产出路径变量 + 变量解析优先级 | 手工维护 |
 | `agent-personal.md` | 项目本地 `.agents-personal/` 的检索约定（wiki 何时查、AGENTS.md+rules 何时查）+ 删除护栏（`.agents-personal/` 和 `$USER_VAULT_PATH` 下 rm/mv/覆盖前必须二次确认，不可恢复） | 手工维护 |
 | `agent-karpathy.md` | 12 条工程准则模板（Think Before Coding / Simplicity First / Surgical Changes / Goal-Driven Execution / Fail Loud 等），`agent-about.md` 声明"行为基线遵循本文件" | 手工维护 |
-| `agent-catalog-using.md` | Skill 调用纪律 + Step 0 触发协议（吸收自 superpowers `using-superpowers` skill，融合 nocode catalog 触发协议）——命中规则后怎么 `Read`、多 skill 命中的调用顺序（流程类先/实现类后）、"进了 skill 就走完不跳步"的三条硬约束、用户指令优先级 | **手工维护**（文件名含 "catalog" 但不是生成物）。**当前状态**：本文件已被移除（正在做 model/*.md 内容精简，见下方口径差异说明），对应 SessionStart segment 会静默注入空内容 |
 | `agent-rule-catalog-1.md` | catalog 唯一分片（体量小，当前不需要续片）：扁平表格，每行一条规则（文件相对地址 + description），不再分桶 | **生成物**，源 = 各 `rules/rule-*.md` 顶部 frontmatter |
 | `agent-rule-catalog-2.md` / `-3.md` / `-4.md` / `-5.md` | 预留分片，路由内容超过单片 `SHARD_LIMIT`（9000 字符）时由 `scripts/compile.rule.js` 自动新开，当前不存在 | 生成物（按需生成） |
+
+> `agent-catalog-using.md`（Skill 调用纪律 + Step 0 触发协议，吸收自 superpowers `using-superpowers` skill）已在 260704 model/*.md 内容精简中删除，对应 SessionStart segment 也已一并移除（不再是"静默注入空内容"，而是彻底不调用）。`vendor/superpowers/vendor-integration.json` 里 `using-superpowers` 的分发规则已同步改成 `action: skip` 并注明这段历史。
 
 ## 生成物与手工文件的分界
 
 一句话判断法：文件名是否匹配正则 `agent-(rule-)?catalog(-\d+)?\.md`（纯数字后缀，如 `-1` `-2`）。匹配 → 生成物，源头是各 `rules/rule-*.md` 的 frontmatter，只能通过 `node scripts/compile.rule.js` 改动；不匹配 → 手工文件，直接 Edit。
 
-`agent-catalog-using.md` 是这条规则里唯一反直觉的例子——名字里有 "catalog"，容易被误认成路由分片的一员，但它的后缀是 `-using` 不是数字，天然不匹配上面的正则，`compile.rule.js` 从不生成它也从不删它。它是一份纯手写的 skill 使用纪律文档，历史上蹭了 "catalog" 前缀的命名习惯，实质和 `agent-about.md` 这类文件同级。
+> 命名陷阱提醒：曾经的 `agent-catalog-using.md` 就是这条规则里的反直觉例子——名字里有 "catalog"，容易被误认成路由分片的一员，但它的后缀是 `-using` 不是数字，天然不匹配上面的正则，脚本从不生成它也从不删它，是一份纯手写文档。以后新增手工文件时避免蹭 `agent-catalog` 前缀命名，减少这种混淆。
 
 ```
 rules/rule-*.md 各自的 frontmatter  ──node scripts/compile.rule.js──▶  model/agent-rule-catalog-1.md
@@ -45,17 +46,16 @@ scripts/compile.hooks.js 内硬编码的规则数组 (独立链，不读 rules/ 
 | 1 | `model-about` | `model/agent-about.md` |
 | 2 | `model-personal` | `model/agent-personal.md` |
 | 3 | `model-karpathy` | `model/agent-karpathy.md` |
-| 4 | `model-catalog-using` | `model/agent-catalog-using.md`（当前文件不存在，静默跳过） |
-| 5 | `model-rule-catalog-1` | `model/agent-rule-catalog-1.md` |
-| 6 | `model-rule-catalog-2` | `model/agent-rule-catalog-2.md`（不存在，静默跳过） |
-| 7 | `model-rule-catalog-3` | `model/agent-rule-catalog-3.md`（不存在，静默跳过） |
-| 8 | `model-rule-catalog-4` | `model/agent-rule-catalog-4.md`（不存在，静默跳过） |
-| 9 | `model-rule-catalog-5` | `model/agent-rule-catalog-5.md`（不存在，静默跳过） |
-| 10 | `project` | `<project>/.agents-personal/AGENTS.md`（存在才注入；这是被打开项目的本地文件，不属于本目录，`$CLAUDE_PROJECT_DIR` 决定项目根，取不到则回退 `$PWD`） |
+| 4 | `model-rule-catalog-1` | `model/agent-rule-catalog-1.md` |
+| 5 | `model-rule-catalog-2` | `model/agent-rule-catalog-2.md`（不存在，静默跳过） |
+| 6 | `model-rule-catalog-3` | `model/agent-rule-catalog-3.md`（不存在，静默跳过） |
+| 7 | `model-rule-catalog-4` | `model/agent-rule-catalog-4.md`（不存在，静默跳过） |
+| 8 | `model-rule-catalog-5` | `model/agent-rule-catalog-5.md`（不存在，静默跳过） |
+| 9 | `project` | `<project>/.agents-personal/AGENTS.md`（存在才注入；这是被打开项目的本地文件，不属于本目录，`$CLAUDE_PROJECT_DIR` 决定项目根，取不到则回退 `$PWD`） |
 
 之后 `hooks.json` 还会额外跑一条 `node scripts/personal-snapshot.mjs`，那是独立脚本、不经过 `inject-nocode.sh`，不属于本目录的注入链，此处不展开。
 
-> **与仓库根 `README.md` 的口径差异**：根 README 的 segment 列表描述可能与本文件存在滞后——以本文件和 `hooks/hooks.json` / `hooks/inject-nocode.sh` 的实际内容为准。当前是 10 次 `inject-nocode.sh` 调用（9 个 `model-*` segment + 1 个 `project` segment），catalog 分片 segment 已从 `model-catalog-N` 改名为 `model-rule-catalog-N`。
+> **与仓库根 `README.md` 的口径差异**：根 README 的 segment 列表描述可能与本文件存在滞后——以本文件和 `hooks/hooks.json` / `hooks/inject-nocode.sh` 的实际内容为准。当前是 9 次 `inject-nocode.sh` 调用（8 个 `model-*` segment + 1 个 `project` segment），catalog 分片 segment 已从 `model-catalog-N` 改名为 `model-rule-catalog-N`，`model-catalog-using` segment 随 `agent-catalog-using.md` 删除已一并移除。
 
 `inject-nocode.sh` 在第一个 segment（`model-about`）里顺带做三件事，只执行一次、不在后续 segment 重复：
 
@@ -74,4 +74,4 @@ scripts/compile.hooks.js 内硬编码的规则数组 (独立链，不读 rules/ 
 
 ## 改动须知
 
-改本目录任何文件都算插件更新，按仓库根 `CLAUDE.md` 规则升级 `.claude-plugin/plugin.json` 的 `version`。手工文件（`agent-about.md` / `agent-personal.md` / `agent-karpathy.md` / `agent-catalog-using.md`）直接 Edit；`agent-rule-catalog-N.md` 数字分片改对应 `rules/rule-*.md` 的 frontmatter 后跑 `node scripts/compile.rule.js` 重新生成，不手改。详细操作步骤（含红线清单）见同目录 `AGENTS.md`。
+改本目录任何文件都算插件更新，按仓库根 `CLAUDE.md` 规则升级 `.claude-plugin/plugin.json` 的 `version`。手工文件（`agent-about.md` / `agent-personal.md` / `agent-karpathy.md`）直接 Edit；`agent-rule-catalog-N.md` 数字分片改对应 `rules/rule-*.md` 的 frontmatter 后跑 `node scripts/compile.rule.js` 重新生成，不手改。详细操作步骤（含红线清单）见同目录 `AGENTS.md`。
