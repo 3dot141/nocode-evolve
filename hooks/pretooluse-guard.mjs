@@ -4,7 +4,7 @@
 // 避免命令片段隐式持久化 (cmd.slice(0,200) 可能含 token / URL / 路径等敏感信息).
 // 启用后供 eval / 人工复核——验主因假设:
 // "深度负载下 agent 真的会走绕过点而没先加载 rule" 的发生率。
-// 靶来自 hooks/pretooluse-rules.json (由 manifest 生成, 禁手改)。
+// 靶来自 hooks/pretooluse-rules.json (由 scripts/compile.hooks.js 生成, 禁手改)。
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';

@@ -5,12 +5,12 @@ argument-hint: <描述> | (被 /distill 传结构化候选)
 
 # /plugin-distill：plugin rule / skill 写入
 
-统一入口，处理两类插件自维护写入：新增/融合一条 `rules/manifest.json` 登记的 plugin rule，或委托优化一个 `skills/` 下的 skill。被 `/distill` 的 `rules:plugin` 出口调用（传结构化候选），也可独立调用（传 NL 描述）。
+统一入口，处理两类插件自维护写入：新增/融合一条 `rules/rule-<slug>.md`（frontmatter 自带触发定义）登记的 plugin rule，或委托优化一个 `skills/` 下的 skill。被 `/distill` 的 `rules:plugin` 出口调用（传结构化候选），也可独立调用（传 NL 描述）。
 
 ## 用法
 
 `/plugin-distill <描述>` — 独立调用，NL 描述你要新增/优化的 rule 或 skill
-被 `/distill` 调用时接收结构化候选 `{summary, disposition, target?, body, bucket?, triggerDesc?, ...}`
+被 `/distill` 调用时接收结构化候选 `{summary, disposition, target?, body, description?, ...}`
 
 ## 权威依据
 
@@ -33,38 +33,35 @@ argument-hint: <描述> | (被 /distill 传结构化候选)
 目标可能是顶层 `rules/rule-<x>.md`，也可能是门面的子文件 `rules/rule-references/<x>/<子文件>.md`。
 
 1. Read 目标文件全文 → 把 body 融进合适章节（不是末尾 paste，必要时改章节结构）
-2. manifest 处理：
-   - 顶层 rule，触发/摘要仍准确 → 不动
-   - 顶层 rule，本次融合扩了触发范围 → 改 manifest 里那条的 `triggers`/`trigger_desc`，不新增条目；改后跑 `node hooks/generate.mjs`
-   - `rule-references/` 子文件 → 不动（门面 rule 已路由）
+2. frontmatter 处理：
+   - 顶层 rule，触发边界仍准确 → 不动
+   - 顶层 rule，本次融合扩了触发范围 → 改该文件自身 frontmatter 的 `description`（把新边界写进同一句话）；改后跑 `node scripts/compile.rule.js`
+   - `rule-references/` 子文件 → 不动（门面 rule 已路由，子文件没有独立 frontmatter）
 3. 升 `plugin.json` 版本：融合通常 `minor`（扩了能力）或 `patch`（纯文案）——判据现读 CLAUDE.md 规则2，不自行发明
-4. 报告：`融进 <目标路径>，manifest [未动 / 已更新条目 <slug> 并 generate 重新生成 catalog 分片]，版本 x → y`
+4. 报告：`融进 <目标路径>，frontmatter [未动 / 已更新 description 并 compile.rule.js 重新生成 catalog]，版本 x → y`
 
 ### 三步联动（disposition=新建，或独立调用判定为新建 rule）
 
-1. **写 rule 文件**：`slug` 从描述/候选提取；`filePath = ${NOCODE_EVOLVE_REPO}/rules/rule-<slug>.md`。冲突检查须覆盖两层——manifest 已登记同名，**或** 文件系统里已存在 `rule-<slug>.md`（哪怕未登记，即孤儿 rule，`/plugin-dream` 的 O4 检测对象）：任一命中 → 不 abort、不静默覆盖，`AskUserQuestion`：融进已有 `rule-<slug>.md` / 改名新建。仅当两层都未命中才 `Write(filePath, body)`（Review P2：原逻辑只查 manifest，会静默覆盖孤儿 rule 文件内容，是真实数据丢失风险）
-2. **改 `rules/manifest.json` + 重新生成**：数组末尾新增一条：
-   ```json
-   {
-     "id": "<slug>", "bucket": "<bucket-id>",
-     "trigger_short": "<一行索引提示，实际渲染进常驻 catalog 的就是这一句>",
-     "trigger_desc": "<具体到能自识别的触发条件，不写\"看情况/需要时\">",
-     "read": "${CLAUDE_PLUGIN_ROOT}/rules/rule-<slug>.md",
-     "summary": "<一句话核心动作>"
-   }
+1. **写 rule 文件（含 frontmatter）**：`slug` 从描述/候选提取；`filePath = ${NOCODE_EVOLVE_REPO}/rules/rule-<slug>.md`。冲突检查：文件系统里已存在 `rule-<slug>.md` → 不 abort、不静默覆盖，`AskUserQuestion`：融进已有文件 / 改名新建。未命中才 `Write`，内容顶部带 frontmatter：
+   ```yaml
+   ---
+   name: <slug>
+   description: >-
+     <具体到能自识别的触发条件 + 不触发边界，不写"看情况/需要时">
+   skip: false
+   ---
    ```
-   > `trigger_short` **必填**——`generate.mjs` 渲染 catalog 时直接用这个字段，漏填会在常驻文本里
-   > 印出字面 `undefined`。实际 manifest schema 还有 `also_buckets`/`action`/`depends_on`（`depends_on`
-   > 引用的 id 会被 `hooks/manifest.test.mjs` 校验存在，其余字段留空或按新增内容合理推断）。
-   跑 `node hooks/generate.mjs`，再跑 `node hooks/generate.mjs --check` 验零漂移
+   > `description` **必填**且要自成一句——它同时是渲染进常驻 catalog 表格的唯一内容（不再有单独的
+   > `trigger_short`/`trigger_desc` 两层），漏写或写得太粗会让 catalog 那一行失去筛选价值。
+2. **跑生成器**：`node scripts/compile.rule.js`，再跑 `node scripts/compile.rule.js --check` 验零漂移。
 3. **升版本**：新增 rule → `minor`（默认）；语义反转既有规则 → `major`（需会话里明确出现"反转既有规则"信号）；纯文案 → `patch`（少见）。判据现读 `${NOCODE_EVOLVE_REPO}/CLAUDE.md` 规则2 原文，不自行发明或简化。Read `.claude-plugin/plugin.json` → bump → Write 回
 
 三步契约：必须按顺序；任一步失败后续不执行；三步内不回滚已成功步（文件保留比删了更易恢复）；commit/push 不进本逻辑。
 
 报告：
 ```
-已写入 plugin rule: rule-<slug>.md
-manifest+generate: rules/manifest.json 已加条目, node hooks/generate.mjs 重新生成 catalog 分片
+已写入 plugin rule: rule-<slug>.md（含 frontmatter）
+compile: node scripts/compile.rule.js 重新生成 catalog
 版本: <old> → <new> (<bumpLevel>)
 请到 nocode 仓 review + commit，push 需询问。
 ```
@@ -87,5 +84,5 @@ manifest+generate: rules/manifest.json 已加条目, node hooks/generate.mjs 重
 - rules 永远新建——强相关先融合
 - 弱相关点名其他 skill / command / rule——仅执行链硬依赖（handoff / 必须调用的框架 / 路由消歧「X 不归本条,走 Y」）才点名；不引用对方内部结构（Step 编号 / 小节名）当"参考模式"
 - 末尾 paste——融进合适章节
-- 忘了登记 manifest 或忘升版本
+- 忘了写 frontmatter 或忘升版本
 - skill 委托后无条件升版本——必须 gate 在"确有改动"

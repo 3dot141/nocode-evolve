@@ -72,7 +72,7 @@ cleanup 时识别 4 种 worktree 路径模式：
 
 ### PR title/body 格式（Option 2）
 
-契约单源见 `rule-push-summary`（标题 + 背景/方案两段描述），不在此重复字段细节。
+契约单源见 `references/pr-body-contract.md`（标题 + 背景/方案两段描述），不在此重复字段细节。
 
 ## Gate 速查
 

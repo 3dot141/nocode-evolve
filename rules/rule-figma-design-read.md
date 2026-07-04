@@ -1,3 +1,13 @@
+---
+name: figma-design-read
+description: >-
+  用户给 figma.com/design 或 figma.com/file 链接, 要求读取设计稿、提取
+  设计值 (字号/颜色/间距/圆角)、对齐 UI 实现、检查样式差异时触发——走
+  Figma REST API, 不依赖 MCP/agent-browser 登录。不触发: 只看用户贴的
+  设计稿截图 (不需要 API)、Figma 原型预览链接 (无 inspect 需求)。
+skip: false
+---
+
 # 读取 Figma 设计稿节点属性的标准流程
 
 用户给 Figma 链接要求提取设计值（字号 / 颜色 / 间距 / 圆角等）时，走 Figma REST API，不依赖 Figma MCP server 或 agent-browser 登录。

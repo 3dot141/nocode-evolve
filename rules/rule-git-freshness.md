@@ -1,3 +1,15 @@
+---
+name: git-freshness
+description: >-
+  设计性动作 (设计文档/PRD/RFC/ADR/方案对比/技术选型/重构方案/架构设计)
+  前, 或代码搜索 (semble-search / grep -r / rg / find / Explore) 前, 或
+  ≥3 文件 Read 探源做方案分析前触发——跑 scripts/freshness-check.mjs 确认
+  当前分支未过时于 base, 落后 ≥5 commit 或首次冷启动则停手三选。不触发:
+  开 worktree 那一刻 (由 git-worktree 覆盖)、已知精确路径读单文件、单行
+  literal grep/文件名 find、用户显式跳过、2h 内已查过缓存命中。
+skip: false
+---
+
 # git-freshness — 设计 / 方案 / 代码搜索前确保基于最新远程
 
 设计 / 方案 / 选型 / 重构 / **多文件代码搜索做方案分析**, 若建立在过时代码上 → 方案与现状脱节, 落地返工 / 搜索结果可能引用已删 / 重构代码. 动手前先用 `scripts/freshness-check.mjs` 一句拿差距, 必要时 gate 用户.

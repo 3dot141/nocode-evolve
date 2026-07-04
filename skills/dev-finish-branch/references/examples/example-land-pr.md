@@ -31,7 +31,7 @@ PR title（≤50 字）：
 feat(search): 支持中文分词搜索
 ```
 
-PR body（背景 + 方案两段，`rule-push-summary` 契约）：
+PR body（背景 + 方案两段，`pr-body-contract.md` 契约）：
 ```markdown
 ## 背景
 中文查询在搜索接口里直接落空，因为分词沿用了默认英文 analyzer，无法切分中文词。

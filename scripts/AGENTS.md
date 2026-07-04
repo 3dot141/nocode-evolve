@@ -9,8 +9,10 @@
 
 | 脚本 | 调用方 | 调用方式 |
 |---|---|---|
+| `compile.rule.js` | `hooks/inject-nocode.sh`（SessionStart `--check`）、`commands/plugin-distill.md`（新增/融合 rule 后重新生成）、`commands/plugin-dream.md`（Layer1 客观漂移） | CLI |
+| `compile.hooks.js` | `hooks/inject-nocode.sh`（SessionStart `--check`）、`commands/plugin-dream.md`（Layer1 客观漂移）；与 `compile.rule.js` 互不依赖，独立编译 `hooks/pretooluse-rules.json` | CLI |
 | `vendor-sync.mjs` | CLAUDE.md（commit 前工作流）、`commands/nocodehub.md`、`commands/plugin-dream.md`（Layer1 客观漂移） | CLI |
-| `freshness-check.mjs` | `hooks/pretooluse-rules.json`、`rules/rule-git-freshness.md`、`model/agent-about.md` + `agent-catalog-1/2.md`、`rules/rule-git-worktree.md`（写入 git config 供其读取）、`skills/dev-finish-branch` | CLI |
+| `freshness-check.mjs` | `hooks/pretooluse-rules.json`、`rules/rule-git-freshness.md`、`model/agent-about.md` + `agent-rule-catalog-1/2.md`、`rules/rule-git-worktree.md`（写入 git config 供其读取）、`skills/dev-finish-branch` | CLI |
 | `plugin-dream-baseline.mjs` | `commands/plugin-dream.md`（Layer0 判范围 + Layer2 `--set` 推进 baseline） | CLI；内部 import `git-exec.mjs` |
 | `dream-baseline.mjs` | `commands/personal-dream.md`、`commands/project-dream.md` | 动态 `import()`；内部依赖 `repo-lock.mjs` + `git-exec.mjs` |
 | `project-tree-detect.mjs` | `commands/project-dream.md` | CLI（`detect` / `find-root` / `ref-name` 三子命令） |
@@ -38,6 +40,8 @@
 
 | 脚本 | 测试文件 | 命令 |
 |---|---|---|
+| `compile.rule.js` | `hooks/compile.rule.test.mjs` | `node --test hooks/compile.rule.test.mjs` |
+| `compile.hooks.js` | `hooks/compile.hooks.test.mjs` | `node --test hooks/compile.hooks.test.mjs` |
 | `git-exec.mjs` | `hooks/git-exec.test.mjs` | `node --test hooks/git-exec.test.mjs` |
 | `repo-lock.mjs` | `hooks/repo-lock.test.mjs` | `node --test hooks/repo-lock.test.mjs` |
 | `dream-baseline.mjs` | `hooks/dream-baseline.test.mjs` | `node --test hooks/dream-baseline.test.mjs` |

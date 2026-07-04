@@ -9,7 +9,7 @@
 //   与 rule-git-worktree.md 已验证的 branch.<branch>.nocode-base 模式一致）.
 //
 // 监控范围（红军 W7 修复，从"只列 generate.mjs/vendor-sync.mjs 两个文件"放宽到整个 hooks/ scripts/ 目录）:
-//   rules/ skills/ commands/ hooks/ scripts/ rules/manifest.json .claude-plugin/plugin.json
+//   rules/ skills/ commands/ hooks/ scripts/ .claude-plugin/plugin.json
 //
 // Review 复审 C1 修复：分支名允许包含 `$`/`;` 等 shell 元字符（git check-ref-format 只禁空格/
 // 控制字符等），此前这里用字符串拼接 `branch.${branch}...` 塞进 execSync 的 shell 命令，
@@ -29,7 +29,6 @@ export const MONITORED_PATHS = [
   'commands/',
   'hooks/',
   'scripts/',
-  'rules/manifest.json',
   '.claude-plugin/plugin.json',
 ];
 

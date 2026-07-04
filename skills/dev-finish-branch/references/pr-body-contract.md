@@ -1,12 +1,12 @@
-# git push 后总结的输出格式
+# PR title/body 内容契约
 
-> 单源: 本文件是「标题+描述」内容契约的唯一定义处. `dev-finish-branch` 的 PR title/body 生成 (`references/prflow.md` Step 1) 只引用本文件, 不重复字段细节——改契约只改本文件.
+> 单源：本文件是 `dev-finish-branch` Option 2（PR）生成 title/body 的唯一定义处，`references/prflow.md` Step 1、`references/examples/example-land-pr.md` 只引用本文件，不重复字段细节——改契约只改本文件。
 
-## 触发
+## 适用场景
 
-用户 push 后说「总结 push 内容 / 给标题描述 / PR description / 沉淀这个 / 这次 push 包含什么」类指令时, 或 dev-finish-branch Option 2 (PR) 生成 title/body 时. 中英文同义说法等价适用.
+`dev-finish-branch` Option 2（Push + 建 PR）Step 1 生成 title/body 时；或用户在本 skill 流程内显式要求「总结 push 内容 / 给标题描述 / PR description」。
 
-**不触发**: 单纯问"push 完了吗 / push 成功没"等状态查询.
+**不适用**：单纯问"push 完了吗 / push 成功没"等状态查询。
 
 ## 输出结构
 

@@ -9,6 +9,8 @@ nocode 插件的可执行脚本层。以 `.mjs`（ESM，`node --test` 原生测�
 
 | 脚本 | 用途 | 调用方 | 测试文件 |
 |---|---|---|---|
+| `compile.rule.js` | 单源生成器：glob `rules/rule-*.md` 的 frontmatter（`name`/`description`/`skip`）→ 编译扁平版 `model/agent-rule-catalog-N.md` | `hooks/inject-nocode.sh`（SessionStart `--check`）、`commands/plugin-distill.md`、`commands/plugin-dream.md` | `hooks/compile.rule.test.mjs` |
+| `compile.hooks.js` | 独立生成器：规则硬编码在脚本内 → 编译 `hooks/pretooluse-rules.json`，与 `compile.rule.js` 那条链完全独立 | `hooks/inject-nocode.sh`（SessionStart `--check`）、`commands/plugin-dream.md` | `hooks/compile.hooks.test.mjs` |
 | `vendor-sync.mjs` | 按 `vendor-integration.json` 把 vendor 内容同步到 `skills/`/`agents/`/`commands/`/`references/`（copy/extract/absorb/skip 四种分发规则） | CLAUDE.md（commit 前）、`commands/nocodehub.md`、`commands/plugin-dream.md` | 无专属单测，`--check` 自检 |
 | `freshness-check.mjs` | 检查当前分支与 base（`nocode-base` config → upstream → `origin/HEAD` → `origin/main`）的 behind/ahead，供 `rule-git-freshness` gate | `hooks/pretooluse-rules.json`、`rules/rule-git-freshness.md`、`model/agent-about.md` | 无专属单测 |
 | `plugin-dream-baseline.mjs` | `/plugin-dream` 的增量 baseline 判断（git config 按分支隔离存储上次巡检点） | `commands/plugin-dream.md` | `hooks/plugin-dream-baseline.test.mjs` |
@@ -31,6 +33,12 @@ nocode 插件的可执行脚本层。以 `.mjs`（ESM，`node --test` 原生测�
 ## 常用命令
 
 ```bash
+# rule catalog / PreToolUse 规则两条独立编译链
+node scripts/compile.rule.js --check
+node scripts/compile.rule.js
+node scripts/compile.hooks.js --check
+node scripts/compile.hooks.js
+
 # 跑本目录脚本相关的全部单测（hooks/ + scripts/ 两处）
 node --test hooks/*.test.mjs scripts/*.test.mjs
 

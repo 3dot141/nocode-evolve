@@ -79,9 +79,9 @@ default_intent:
 负样本要求**每种分型标签 ≥2 条**（设计文档 W3 项）。`## positive` / `## negative` 下面
 每条都是纯文本话术，不要额外套 JSON 或加序号。
 
-## 重要漂移：fixture 里的 `primary_route` 已经和 `rules/manifest.json` 对不上
+## 重要漂移：fixture 里的 `primary_route` 已经和 `rules/rule-*.md（原 rules/manifest.json，已废弃改为逐文件 frontmatter）` 对不上
 
-`rules/manifest.json` 当前 24 条 rule 的 id 已全部改成 `dev-*` 前缀
+`rules/rule-*.md（原 rules/manifest.json，已废弃改为逐文件 frontmatter）` 当前 24 条 rule 的 id 已全部改成 `dev-*` 前缀
 （`dev-define` / `dev-design` / `dev-plan` / `dev-build` / `dev-verify` /
 `dev-finish-branch` 等，`model/agent-catalog-*.md` 里展示的 section 标题也是这些
 `dev-*` 名字）。但 `eval/cases/` 下现存的 6 个 fixture——`build.md` / `define.md` /
@@ -98,7 +98,7 @@ subagent 实际会吐出什么 id**（读一遍 `model/agent-catalog-*.md` 对�
 
 ## 覆盖缺口
 
-`rules/manifest.json` 里有 24 条 rule，`eval/cases/` 只覆盖 6 条（约 25%）：
+`rules/rule-*.md（原 rules/manifest.json，已废弃改为逐文件 frontmatter）` 里有 24 条 rule，`eval/cases/` 只覆盖 6 条（约 25%）：
 build / define / design / finish-branch / plan / verify。其余 18 条（如
 `push-summary` / `codex-review` / `git-worktree` / `pd-research` / `pd-prd` /
 `pd-ix` / `pd-vd` / `dev-land` / `dev-review` 等）都没有 fixture。`--all` 模式

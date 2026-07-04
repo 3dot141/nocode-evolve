@@ -35,7 +35,7 @@ exact-match 判分"这套流程。
    intent-signal（意图信号，非真遵守）
 5. 出报告：分 rule 列 route-recall / steal / intent-signal + 逐 miss 证据
 
-> 已知漂移：`rules/manifest.json` 现在用 `dev-*` 前缀命名 rule（如 `dev-build`），但
+> 已知漂移：`rules/rule-*.md（原 rules/manifest.json，已废弃改为逐文件 frontmatter）` 现在用 `dev-*` 前缀命名 rule（如 `dev-build`），但
 > `eval/cases/` 里的 6 个 fixture 还是旧的短 id（`build`）。用之前先核对
 > `model/agent-catalog-*.md` 里当前的真实 rule id，必要时同步更新 fixture，否则判分会
 > 假阴性。详见 `AGENTS.md`。
@@ -50,5 +50,5 @@ exact-match 判分"这套流程。
    列不该触发的话术，每种分型至少 2 条。
 3. 如需新的情境铺垫，在 `eval/preambles/` 加一份，并在 fixture 的 `preamble_profiles`
    里登记。
-4. 当前只覆盖了 `rules/manifest.json` 24 条规则中的 6 条（build / define / design /
+4. 当前只覆盖了 `rules/rule-*.md（原 rules/manifest.json，已废弃改为逐文件 frontmatter）` 24 条规则中的 6 条（build / define / design /
    finish-branch / plan / verify）；给新规则或改动较大的规则补 fixture 是欢迎的。

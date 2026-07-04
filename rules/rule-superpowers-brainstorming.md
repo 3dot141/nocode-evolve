@@ -1,3 +1,13 @@
+---
+name: superpowers-brainstorming
+description: >-
+  即将执行 nocode:brainstorming skill, 或用户直接要求写 PRD/RFC/设计
+  文档/ADR (绕过 brainstorming) 时触发——两条入口都走同一条 worktree →
+  write → review → render 四步链, 本文件覆盖 skill 内默认值 (冲突以本
+  文件为准)。
+skip: false
+---
+
 # superpowers skill 行为覆盖
 
 执行下列 superpowers skill 时，本文规则覆盖 skill 内默认值。

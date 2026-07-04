@@ -77,7 +77,7 @@ argument-hint: [optional-topic]
 | `wiki:project` | `wiki/index.md`（全局索引） | 现有 `pages/<x>.md` 或 `draft/<x>.md` |
 | `rules:project` | `AGENTS.md` 触发表 | 现有 `rules/<x>.md` |
 | `agents:project` | `AGENTS.md` 各分节标题 | 已有分节（融合）或新增分节 |
-| `rules:plugin` | `rules/manifest.json` 规则清单（单源） | 现有 `rules/rule-<x>.md`，**或其 `rule-references/<x>/<子文件>.md`** |
+| `rules:plugin` | `rules/rule-*.md` 清单（每文件顶部 frontmatter 自带触发定义，无 manifest 中转） | 现有 `rules/rule-<x>.md`，**或其 `rule-references/<x>/<子文件>.md`** |
 
 ```
 ┌─ 强相关 + 补充（不推翻原有决策）       → disposition=融合→<现有文件>
@@ -197,7 +197,7 @@ no → 整次 distill 终止；yes → 进入分发。
 
 #### `rules:plugin` 出口（委托 plugin-distill）
 
-调 `Skill(nocode:plugin-distill)`，传入本出口的候选列表（含 disposition / body / target / bucket / triggerDesc 等）。plugin-distill 负责完整的融合判断 + 三步联动写入协议（rule 文件 + manifest 登记 + generate + 版本升级），本文件不再重复维护该逻辑。
+调 `Skill(nocode:plugin-distill)`，传入本出口的候选列表（含 disposition / body / target / description 等）。plugin-distill 负责完整的融合判断 + 三步联动写入协议（rule 文件 frontmatter + compile.rule.js + 版本升级），本文件不再重复维护该逻辑。
 
 #### `skip` 出口
 
@@ -217,10 +217,10 @@ no → 整次 distill 终止；yes → 进入分发。
   ✓ skip: 一次性 bug 修复（原因：无沉淀价值）
   📋 wiki/index.md 已更新, wiki/log.md 已追加 3 条
 
-⚠ 融进 plugin rule（经 plugin-distill）: rules/rule-push-summary.md
-  manifest: 已更新 push-summary 条目 triggers（本次融合扩了触发范围）并 generate 重新生成 catalog 分片  版本: 1.3.1 → 1.4.0 (minor)
+⚠ 融进 plugin rule（经 plugin-distill）: rules/rule-git-freshness.md
+  frontmatter: 已更新 description（本次融合扩了触发范围）并跑 compile.rule.js 重新生成 catalog  版本: 1.3.1 → 1.4.0 (minor)
 ⚠ 跨仓新建 plugin rule（经 plugin-distill）: ~/AI/nocode-evolve/rules/rule-distill-extension.md
-  manifest+generate: rules/manifest.json 已加条目, generate 重新生成 catalog 分片  版本: 1.4.0 → 1.5.0 (minor)
+  frontmatter+compile: 新文件加 name/description/skip frontmatter, compile.rule.js 重新生成 catalog  版本: 1.4.0 → 1.5.0 (minor)
   请到 nocode 仓 review + commit + 询问是否 push。
 
 ℹ 健康检查（personal-lint）：0 error / 1 warn
@@ -246,10 +246,10 @@ no → 整次 distill 终止；yes → 进入分发。
 
 - ❌ **AI 自判直接写**——必须经过候选呈现 + 用户勾选
 - ❌ **rules 永远新建**：明明是现有 rule 的延伸还新建 `rule-<slug>.md` + 加 catalog 条目 → catalog 膨胀 + 触发条件碎片化。强相关先融合（含融进 `rule-references/` 子文件）
-- ❌ **融合还新增 catalog 条目**：融进现有 rule 时门面条目已覆盖，无脑再加一条 = 重复路由
+- ❌ **融合还新建 rule 文件**：融进现有 rule 时改它自己的 frontmatter 就够，无脑再新建一个 = 重复路由
 - ❌ **末尾 paste**：整合 wiki 已有页 / 融进现有 rule 时不把新内容堆到 `## YYMMDD Update` 节——融进合适章节
 - ❌ **跨仓写入不二次确认**：cwd ≠ nocode 仓而要写 plugin rule 时，不弹二次确认就动手
-- ❌ **写 plugin rule 但忘了登记进 rules/manifest.json 并 generate 重新生成**——sanity check 警告等于白沉淀
+- ❌ **写 plugin rule 但忘了跑 `node scripts/compile.rule.js` 重新生成 catalog**——sanity check 警告等于白沉淀
 - ❌ **写 plugin rule 但忘升 version**——CLAUDE.md 硬约束
 - ❌ **AGENTS.md 加触发条件含糊**："需要时读 rules/foo.md" 等于没触发
 - ❌ **agents:project 和 rules:project 混淆**：变量/语气/命名惯例/协作约定 → `agents:project`（写 AGENTS.md 分节）；触发条件/工作流指令 → `rules:project`（写 rules/ 文件 + AGENTS.md 触发条目）。区分标准：前者是偏好/配置，后者是 agent 行为指令

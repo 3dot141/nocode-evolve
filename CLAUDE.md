@@ -8,7 +8,7 @@
 
 ### 1. 完成任务后 commit，并询问是否 push
 
-每次任务执行完毕后：
+每次任务执行完毕后, 询问用户是否 commit：
 
 - 复核 `git status` / `git diff`，创建 commit（message 参考 `git log` 历史风格）。
 - **不要自动 push**——commit 后向用户明确询问是否需要 `git push`，由用户确认后再执行。
@@ -26,13 +26,13 @@
 
 纯文档/元数据修订（README、本文件、AGENTS.md 等）不需要升版本，但仍遵守规则 1。
 
-### 3. rule 改动走 manifest 单源
+### 3. rule 改动：每文件自带 frontmatter，两条独立生成链
 
-`model/agent-catalog-*.md`（catalog 分片）、`hooks/pretooluse-rules.json` 已是**生成物，禁手改**。增删改 rule：
+`model/agent-rule-catalog-*.md`（catalog 分片）、`hooks/pretooluse-rules.json` 已是**生成物，禁手改**。没有 manifest.json 这层中转——两条链各自独立单源：
 
-- 改 `rules/manifest.json`（唯一真值源：buckets + rules，每条 rule 含 bucket / triggers / summary / guard / pretooluse）
-- 跑 `node hooks/generate.mjs` 重新生成生成物（catalog 分片 + pretooluse-rules）
-- 一致性由 SessionStart 的 `node hooks/generate.mjs --check` 兜底报警（漂移只 warn 不阻断 session）
+- **触发路由**（catalog 里的一行）：改对应 `rules/rule-<id>.md` 顶部 frontmatter（`name` / `description` / `skip`，新增规则则新建文件）→ 跑 `node scripts/compile.rule.js` 重新生成 `model/agent-rule-catalog-*.md`
+- **PreToolUse 硬拦截**（Bash 命令级拦截，与上面那条完全独立）：改 `scripts/compile.hooks.js` 内硬编码的规则数组 → 跑 `node scripts/compile.hooks.js` 重新生成 `hooks/pretooluse-rules.json`
+- 一致性由 SessionStart 的 `node scripts/compile.rule.js --check` + `node scripts/compile.hooks.js --check` 兜底报警（漂移只 warn 不阻断 session）
 - 测试：`node --test 'hooks/*.test.mjs'`
 
 ### 4. vendor 同步（commit 前）
@@ -66,4 +66,3 @@ SKILL.md 正文与私有 `references/` 只允许引用两类东西：**其它 Sk
 
 一份参考材料该放共享 `skills/references/` 还是某个 skill 自己的 `references/`，看**内容是否已归属某个具体 skill 的领域**（存在一个 skill 本身就是它的方法论/流程底座，例如 `reviewing`）：归属某个 skill → 放该 skill 自己的 `references/`，其它 skill 要用只能点名 `Skill(nocode:<name>)` 调用，不直接指路它的 `references/`（哪怕知道确切路径也不行）；真正跨领域、没有单一归属 skill 的材料才留在共享 `skills/references/`，用 `{NOCODE_SKILL_REF}/xxx.md` 直接引用。
 
-是否符合由 `/plugin-dream` 的 Layer 2 skill 对象检测项兜底扫描；`skill-writing` 在产出/编辑 skill 时按本规则自查。

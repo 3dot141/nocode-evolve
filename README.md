@@ -1,25 +1,25 @@
 # nocode
 
-Harrison 的 Claude Code 个人插件。架构(**两类知识分离 + 单一真值源**):
+Harrison 的 Claude Code 个人插件。架构(**两类知识分离 + 每文件自带单源**):
 
-- **规则知识 (reactive)**:SessionStart 注入**完整 rule 路由**(catalog 分片常驻 context,必在、无软触发漏);agent 命中桶后按需 `Read` 对应 `rules/rule-*.md`。
+- **规则知识 (reactive)**:SessionStart 注入**完整 rule 路由**(catalog 分片常驻 context,必在、无软触发漏);agent 命中后按需 `Read` 对应 `rules/rule-*.md`。
 - **编排知识 (proactive)**:`nocode:devflow` 可被 model 主动调起,也可用户 `/调` 进入,给「当前阶段判断 + 下一步建议 + 备选」,**用户拍板,不替执行**。
 - **硬拦截**:`PreToolUse` hook 对危险 Bash 命令(`bkt PUT` / 裸 curl 等)`deny` / `inject`,唯一的确定性机制。
-- **单源生成**:`rules/manifest.json` → `hooks/generate.mjs` → `model/agent-catalog-*.md` 分片 + `hooks/pretooluse-rules.json`。
+- **两条独立生成链**:`rules/rule-*.md`(每文件自带 `name`/`description`/`skip` frontmatter)→ `scripts/compile.rule.js` → `model/agent-rule-catalog-*.md` 分片;`scripts/compile.hooks.js`(规则硬编码在脚本内)→ `hooks/pretooluse-rules.json`。两条链互不耦合,没有共享的 manifest 中转层。
 
 ## 规则注入顺序
 
-每次 SessionStart,hook 跑 7 个 segment(各段独立判 **10000 字符**截断阈值):
+每次 SessionStart,hook 跑 10 次 `inject-nocode.sh` 调用(各段独立判 **10000 字符**截断阈值):
 
-1. `model-about`     —— 角色 / 输出语言 / 红蓝军触发 / git behavior / 全局占位符
-2. `model-personal`  —— 项目本地 `.agents-personal/` 检索约定 + 删除护栏
-3. `model-karpathy`  —— 12 条工程准则
-4. `model-catalog-1` —— catalog 分片 1(完整 rule 路由,**manifest 生成,禁手改**)
-5. `model-catalog-2` —— catalog 分片 2(预留,空段静默)
-6. `model-catalog-3` —— catalog 分片 3(预留,空段静默)
-7. `project`         —— `<project>/.agents-personal/AGENTS.md`(存在才注入)
+1. `model-about`          —— 角色 / 输出语言 / 红蓝军触发 / git behavior / 全局占位符
+2. `model-personal`       —— 项目本地 `.agents-personal/` 检索约定 + 删除护栏
+3. `model-karpathy`       —— 12 条工程准则
+4. `model-catalog-using`  —— Skill 调用纪律 + Step 0 触发协议(手工维护,非生成物)
+5. `model-rule-catalog-1` —— catalog 分片 1(完整 rule 路由,**frontmatter 生成,禁手改**)
+6. `model-rule-catalog-2` ~ `-5` —— catalog 续片(预留,空段静默)
+7. `project`              —— `<project>/.agents-personal/AGENTS.md`(存在才注入)
 
-`rules/rule-*.md` 触发式规则**不**进开局 context;agent 看 catalog 分片命中桶后按需 Read。
+`rules/rule-*.md` 触发式规则**不**进开局 context;agent 看 catalog 分片命中后按需 Read。
 
 > 项目根由 `$CLAUDE_PROJECT_DIR` 决定(不存在则回退到 `$PWD`)。
 > 给某个工程定制规则,只需在该工程根目录建 `.agents-personal/AGENTS.md` 即可,无需改插件。
@@ -33,22 +33,22 @@ nocode/
 │   ├── plugin.json                           # 插件清单
 │   └── marketplace.json                      # GitHub marketplace 描述
 ├── hooks/
-│   ├── hooks.json                            # SessionStart 7 segment + PreToolUse (Bash 拦截)
-│   ├── inject-rules.sh                       # 注入脚本 (每 segment 独立判 10000 阈值)
-│   ├── generate.mjs                          # manifest → catalog 分片 + pretooluse-rules.json
+│   ├── hooks.json                            # SessionStart 10 段 + PreToolUse (Bash 拦截)
+│   ├── inject-nocode.sh                      # 注入脚本 (每 segment 独立判 10000 阈值)
 │   ├── pretooluse-guard.mjs                  # PreToolUse 硬拦截 (危险 Bash 命令)
-│   ├── pretooluse-rules.json                 # PreToolUse 规则 (生成物)
+│   ├── pretooluse-rules.json                 # 生成物 (源=scripts/compile.hooks.js)
 │   └── *.test.mjs                            # 单测
 ├── model/                                    # 会话开局常驻注入
 │   ├── agent-about.md                        # 角色 + 行为基线 + git behavior
 │   ├── agent-personal.md                     # .agents-personal 检索 + 删除护栏
 │   ├── agent-karpathy.md                     # 12 工程准则
-│   └── agent-catalog-1.md                    # catalog 分片 1 (生成物, 完整 rule 路由)
-│                                             # (agent-catalog-2/3.md 按需生成)
+│   ├── agent-catalog-using.md                # Skill 调用纪律 (手工维护, 非生成物)
+│   └── agent-rule-catalog-1.md               # catalog 分片 1 (生成物, 完整 rule 路由)
+│                                             # (agent-rule-catalog-2~5.md 按需生成)
 ├── rules/                                    # 按需 Read (catalog 路由)
-│   ├── manifest.json                         # ★ 单一真值源
-│   └── rule-*.md ×7                          # git-worktree / git-inspection / git-freshness /
-│                                             # codex-review / push-summary / superpowers-brainstorming /
+│   └── rule-*.md ×6                          # 每文件顶部自带 name/description/skip frontmatter:
+│                                             # git-worktree / git-inspection / git-freshness /
+│                                             # codex-review / superpowers-brainstorming /
 │                                             # figma-design-read
 ├── skills/                                   # Claude Code skill
 │   ├── devflow/                              # 流程领航 (model 可主动调起)
@@ -64,7 +64,7 @@ nocode/
 ├── agents/
 │   └── semble-search.md                      # 代码搜索 subagent
 ├── vendor/codex/                             # codex companion (跨模型 review)
-├── scripts/                                  # worktree-setup / statusline
+├── scripts/                                  # compile.rule.js / compile.hooks.js / worktree-setup / statusline
 ├── eval/cases · eval/preambles               # rule-eval fixture
 └── examples/agents-personal/                 # 项目本地 .agents-personal/ 模板
 ```
@@ -112,10 +112,10 @@ skills/
 ```
 安装后调用名为 `/nocode:my-skill`。手动入口型(用户主动调,不自动触发)加 `disable-model-invocation: true`。
 
-### 加 Rules(走 manifest 单源)
-1. 改 `rules/manifest.json`(加 rule 定义:bucket / triggers / summary / guard / pretooluse)
-2. 跑 `node hooks/generate.mjs` 重新生成 catalog 分片 + pretooluse-rules.json
-3. 加 rule 内容文件 `rules/rule-<slug>.md`
+### 加 Rules(每文件自带 frontmatter,无 manifest 中转)
+1. 新建 `rules/rule-<slug>.md`,顶部加 frontmatter:`name: <slug>` / `description: >- <触发条件+不触发边界>` / `skip: false`
+2. 跑 `node scripts/compile.rule.js` 重新生成 catalog 分片
+3. 若需要 PreToolUse 硬拦截:改 `scripts/compile.hooks.js` 内规则数组,跑 `node scripts/compile.hooks.js`(独立于上面那条链)
 
 ### 加 Agents(子代理)
 ```

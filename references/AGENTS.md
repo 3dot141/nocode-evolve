@@ -6,7 +6,7 @@
 
 - **共享 reference**：内容会被 2 个以上 skill 引用的材料放这里，避免同一段规则在多个 SKILL.md 里重复维护、各自漂移。
 - **vendor 抽取物**：`vendor/superpowers/vendor-integration.json` 里 `action: "extract-references"` 的条目，由 `scripts/vendor-sync.mjs` 同步落到这里（机制见 `vendor/AGENTS.md`）。这部分文件的"真值源"在 vendor 侧，本目录只是分发落点，手改会在下次跑 sync 脚本时被上游覆盖。
-- 本目录**不进 SessionStart 常驻注入**——内容不会自动进 agent context，只有被某个 SKILL.md 显式 `Read` 引用时才加载（progressive disclosure）。唯一的部分例外：`skill-integration-map.md` 的 `last_verified` frontmatter 字段会被 `hooks/inject-rules.sh` 在 SessionStart 读取做"超 90 天未核验"的过期告警，但只读这一个字段，不注入正文。
+- 本目录**不进 SessionStart 常驻注入**——内容不会自动进 agent context，只有被某个 SKILL.md 显式 `Read` 引用时才加载（progressive disclosure）。唯一的部分例外：`skill-integration-map.md` 的 `last_verified` frontmatter 字段会被 `hooks/inject-nocode.sh` 在 SessionStart 读取做"超 90 天未核验"的过期告警，但只读这一个字段，不注入正文。
 
 ## 改动前必查引用方
 
@@ -27,7 +27,7 @@ rg -l "<不带扩展名的文件名>" --glob '!references/*' -g '!.git' -g '!ven
 | 文件 | 谁在读 | 活跃度 |
 |---|---|---|
 | `debug-protocol.md` | `skills/devflow/SKILL.md`（Debug 阶段路由表） | 活跃 |
-| `skill-integration-map.md` | `skills/devflow/SKILL.md`（skill 集成映射脚注）+ `hooks/inject-rules.sh`（SessionStart 只读 `last_verified` frontmatter 做过期 warn） | 活跃；改动时注意维护/更新文件头的 `last_verified: <yymmdd>` 字段 |
+| `skill-integration-map.md` | `skills/devflow/SKILL.md`（skill 集成映射脚注）+ `hooks/inject-nocode.sh`（SessionStart 只读 `last_verified` frontmatter 做过期 warn） | 活跃；改动时注意维护/更新文件头的 `last_verified: <yymmdd>` 字段 |
 | `testing-anti-patterns.md` | `skills/systematic-debugging/SKILL.md` | 活跃；同时是 vendor 同步管理（来自 superpowers `test-driven-development`） |
 | `code-reviewer-prompt.md` | 无活跃引用方 | vendor 同步管理（来自 superpowers `requesting-code-review`），仅供参考，dev-review 现走的是 ECC `agents/code-reviewer.md` |
 | `plan-document-reviewer-prompt.md` | 无活跃引用方 | vendor 同步管理（来自 superpowers `writing-plans`），dev-plan 未引用 |

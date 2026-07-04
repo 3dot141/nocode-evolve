@@ -1,3 +1,15 @@
+---
+name: git-worktree
+description: >-
+  新建分支 / 开 worktree 时触发——原则: 所有分支都走 worktree, 不在主仓裸开
+  branch。也触发于: worktree 内跑命令报 env/config 缺失需要从主仓 cp
+  gitignored 文件; agent 在 worktree 里找不到项目本地 .agents-personal/
+  路由; 从当前仓库进入另一个物理 git repo 去改文件 (关联仓库场景, 用相同
+  分支名建 worktree, 已有同名分支则复用)。不触发: 已有的 main/master
+  主干上工作。
+skip: false
+---
+
 # nocode:using-git-worktrees 行为覆盖
 
 执行 `nocode:using-git-worktrees` skill 时，本文规则覆盖 skill 内默认值。

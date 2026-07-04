@@ -27,7 +27,7 @@ toolchain 检测（`github.com`→gh / `bitbucket.`→bkt）见 SKILL.md Step 1�
 
 ## Step 1: 生成 title + body
 
-**输出契约单源见** `rules/rule-push-summary.md`（标题 + 背景/方案两段描述），此处不重复字段细节，改契约只改那一处。
+**输出契约单源见** `references/pr-body-contract.md`（标题 + 背景/方案两段描述），此处不重复字段细节，改契约只改那一处。
 
 确认 push range：`git log "$(git merge-base HEAD $base_branch)..HEAD" --oneline`，核对描述是否遗漏实质变更。
 
@@ -41,7 +41,7 @@ Gate Title-Body 前拿全部变更文件，扁平路径列表（原样输出，�
 git diff --name-only "$(git merge-base HEAD $base_branch)..HEAD" | sort
 ```
 
-每行一个完整路径（如 `examples/xxx.md`、`SKILL.md`）。**Affected 只用于 Gate Title-Body 给用户一同确认，不写进 PR body**——body 内容契约单源见 `rule-push-summary.md`。（gh/bkt 无差异）
+每行一个完整路径（如 `examples/xxx.md`、`SKILL.md`）。**Affected 只用于 Gate Title-Body 给用户一同确认，不写进 PR body**——body 内容契约单源见 `references/pr-body-contract.md`。（gh/bkt 无差异）
 
 ## Step 2a: 解析 PR target
 

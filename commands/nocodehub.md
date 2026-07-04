@@ -53,11 +53,11 @@ argument-hint: <sub-action> [args]
 内联执行，输出插件当前状态概览：
 
 1. 读 `.claude-plugin/plugin.json` 的 `version`（精确）
-2. 读 `rules/manifest.json` 的 `rules` 数组长度（精确，rule 数）
+2. 统计 `rules/rule-*.md` 文件数（精确，rule 数）
 3. 统计 `skills/*/SKILL.md` 数量（精确，skill 数）
 4. 跑 `node scripts/vendor-sync.mjs --check`（展示级，人工核验）
 5. 跑 `node --test 'hooks/*.test.mjs'`（展示级，测试通过/失败数）
-6. 跑 `node hooks/generate.mjs --check`（展示级，漂移状态）
+6. 跑 `node scripts/compile.rule.js --check` + `node scripts/compile.hooks.js --check`（展示级，漂移状态）
 
 输出格式：
 

@@ -1,3 +1,14 @@
+---
+name: codex-review
+description: >-
+  red-blue-deep 判重档走到独立审查环节; 或完成分支/显式 review 请求; 或
+  卡住/想要第二实现/独立诊断/委派; 或各 review 细则主路审后命中升档判据
+  要派异源交叉时触发——派本机 Codex (报错则 fallback subagent) 当独立
+  模型接手。不触发: 各细则默认的主路评审 (主路 subagent 审, 不派本
+  rule)、devflow Review 阶段的五轴主路评审 (走 dev-review)。
+skip: false
+---
+
 # codex 交接 — 红蓝红军 / review 收尾 / 委派救援
 
 把本机 Codex 当**独立模型**接进三类场景:跨模型攻击 / review,避开同源自评的盲区(自己 review 自己看不出自己的假设错)。

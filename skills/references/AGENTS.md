@@ -4,7 +4,7 @@
 
 ## `{NOCODE_SKILL_REF}` 占位符怎么生效
 
-- SessionStart 时 `hooks/inject-rules.sh` 把本目录的绝对路径写入 `NOCODE_SKILL_REF` 环境变量（默认值 `${CLAUDE_PLUGIN_ROOT}/skills/references`，可被外部环境覆盖），随后在往 context 注入各 skill/agent/command 正文时，把文本里字面出现的 `${NOCODE_SKILL_REF}` 占位符替换成这个实际路径（`hooks/inject-rules.sh` 内两处：一处写变量本身，一处做占位符替换）。
+- SessionStart 时 `hooks/inject-nocode.sh` 把本目录的绝对路径写入 `NOCODE_SKILL_REF` 环境变量（默认值 `${CLAUDE_PLUGIN_ROOT}/skills/references`，可被外部环境覆盖），随后在往 context 注入各 skill/agent/command 正文时，把文本里字面出现的 `${NOCODE_SKILL_REF}` 占位符替换成这个实际路径（`hooks/inject-nocode.sh` 内两处：一处写变量本身，一处做占位符替换）。
 - 所以 skill 正文里引用本目录文件一律写 **`` `{NOCODE_SKILL_REF}/xxx.md` `` **（花括号占位符语法），不要写死绝对路径，也不要写相对路径（skill 目录和本目录不一定有固定相对位置关系）。
 
 ## 改动前先找引用方

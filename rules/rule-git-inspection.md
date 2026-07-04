@@ -1,3 +1,13 @@
+---
+name: git-inspection
+description: >-
+  连续要跑 ≥2 个 git 只读命令 (status/diff/log/show/branch/ls-files/
+  remote -v 等) 时触发, 默认用 && 串成一个 Bash call, 减少 turn 浪费。
+  不触发: 命令间有运行时依赖、需要看到中间失败步骤之后的输出、步骤之间
+  需要用户决策。
+skip: false
+---
+
 # git inspection — 多步合一
 
 ## 原则
