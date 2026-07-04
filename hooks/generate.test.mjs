@@ -12,7 +12,7 @@ test('genCatalogSharded: 当前 manifest 分片 — 每片在阈值内, 文件�
   });
 });
 
-test('genCatalogSharded: 首片含头部指令, 分片合集含 4 桶 + 每条 rule + 触发/读', () => {
+test('genCatalogSharded: 首片含头部指令, 分片合集含各非空桶 + 每条非 skip_catalog rule 的一行索引', () => {
   const m = loadManifest();
   const shards = genCatalogSharded(m);
   const [first] = shards;
@@ -21,14 +21,19 @@ test('genCatalogSharded: 首片含头部指令, 分片合集含 4 桶 + 每条 r
   assert.match(first.text, /Step 0/, '应有 Step 0 扫桶硬指令');
   assert.match(first.text, /\/devflow/, '应提示 devflow 入口');
   const full = shards.map((s) => s.text).join('\n');
+  const bucketHasContent = (b) =>
+    m.rules.some((r) => !r.skip_catalog && (r.bucket === b.id || (r.also_buckets || []).includes(b.id)));
   for (const b of m.buckets) {
+    if (!bucketHasContent(b)) continue;
     assert.match(full, new RegExp(`### 桶: ${b.title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`));
   }
   for (const r of m.rules) {
-    assert.ok(full.includes(r.id), `缺 rule ${r.id}`);
+    if (r.skip_catalog) {
+      assert.ok(!full.includes(`**${r.id}**`), `skip_catalog rule ${r.id} 不应渲染索引行`);
+      continue;
+    }
+    assert.match(full, new RegExp(`- \\*\\*${r.id}\\*\\*: ${r.trigger_short.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`), `缺 rule ${r.id} 的一行索引`);
   }
-  assert.match(full, /\*\*触发\*\*/);
-  assert.match(full, /\*\*读\*\*/);
 });
 
 test('genCatalogSharded: 构造超长 manifest 切多片, 桶不被切断 (在 MAX 内)', () => {
@@ -47,10 +52,11 @@ test('genCatalogSharded: 构造超长 manifest 切多片, 桶不被切断 (在 M
       bucket: b.id,
       trigger_type: 'regex',
       trigger_desc: 'x'.repeat(200),
+      trigger_short: big,
       triggers: [],
       action: '',
       read: 'rules/rule-test.md',
-      summary: big,
+      summary: 'unused',
       guard: '',
       pretooluse: [],
       also_buckets: [],
@@ -68,41 +74,57 @@ test('genCatalogSharded: 构造超长 manifest 切多片, 桶不被切断 (在 M
   }
 });
 
-test('genCatalogSharded: 跨桶 rule (also_buckets) 在目标桶可发现', () => {
+test('genCatalogSharded: 跨桶 rule (also_buckets) 在每个所属桶都能发现同一行索引', () => {
   const m = loadManifest();
   const full = genCatalogSharded(m).map((s) => s.text).join('\n');
-  // push-summary also_buckets=git-lifecycle → 应在 git-lifecycle 桶以(跨桶)出现
-  assert.match(full, /#### push-summary \(跨桶\)/);
-  // codex-review also_buckets=design → 应在 design 桶以(跨桶)出现
-  assert.match(full, /#### codex-review \(跨桶\)/);
+  const bucketSections = Object.fromEntries(
+    full.split(/(?=### 桶:)/).filter((s) => s.trim()).map((s) => [/### 桶: [^(]+\(([^)]+)\)/.exec(s)?.[1], s]),
+  );
+  // push-summary: bucket=memory, also_buckets=[git-lifecycle] → 两个桶都应出现
+  assert.match(bucketSections['memory'] || '', /\*\*push-summary\*\*/);
+  assert.match(bucketSections['git-lifecycle'] || '', /\*\*push-summary\*\*/);
+  // codex-review: bucket=review, also_buckets=[design] → 两个桶都应出现
+  assert.match(bucketSections['review'] || '', /\*\*codex-review\*\*/);
+  assert.match(bucketSections['design'] || '', /\*\*codex-review\*\*/);
 });
 
-test('genCatalogSharded: 有 guard 的 rule 上浮 guard 行', () => {
+test('genCatalogSharded: guard 内容不进常驻文本 (已确认被 pretooluse/skill 自身文档覆盖, 全部下沉)', () => {
   const m = loadManifest();
   const full = genCatalogSharded(m).map((s) => s.text).join('\n');
-  assert.match(full, /\*\*关键约束\(上浮\)\*\*: Bitbucket 用 bkt/, 'dev-finish-branch guard 应上浮');
+  for (const r of m.rules) {
+    if (!r.guard) continue;
+    assert.ok(!full.includes(r.guard), `rule ${r.id} 的 guard 文本不应出现在常驻 catalog 里 (应已下沉到 pretooluse/skill/rule 文件)`);
+  }
+  assert.ok(!full.includes('关键约束'), 'catalog 不应再有「关键约束(上浮)」这类字段');
 });
 
-test('renderBucketBody: 复用同一渲染逻辑', () => {
+test('renderBucketBody: 复用同一渲染逻辑, skip_catalog rule 不渲染索引行', () => {
   const m = loadManifest();
   const body = renderBucketBody(m);
-  // body 不含头部, 但所有桶/rule 应在
-  for (const r of m.rules) assert.ok(body.includes(r.id));
+  for (const r of m.rules) {
+    if (r.skip_catalog) {
+      assert.ok(!body.includes(`**${r.id}**`), `skip_catalog rule ${r.id} 不应渲染`);
+      continue;
+    }
+    assert.ok(body.includes(`- **${r.id}**: ${r.trigger_short}`), `缺 rule ${r.id} 的一行索引`);
+  }
 });
 
-test('renderBucketBody: skill 类条目 (read 为空) 不输出摘要行', () => {
+test('renderBucketBody: 只留 trigger_short + 读路径指针, 有 read 才带箭头, summary/guard 不进正文', () => {
   const m = {
     buckets: [{ id: 'b1', title: 'B1', trigger_summary: 't', negatives: ['n'] }],
     rules: [
-      { id: 'rule-with-file', bucket: 'b1', trigger_type: 'regex', trigger_desc: 'td', triggers: [], action: '', read: 'rules/rule-x.md', summary: 'RULE_SUMMARY', guard: '', pretooluse: [], also_buckets: [] },
-      { id: 'skill-no-file', bucket: 'b1', trigger_type: 'skill', trigger_desc: 'td', triggers: [], action: '', read: '', summary: 'SKILL_SUMMARY', guard: '', pretooluse: [], also_buckets: [] },
-      { id: 'skill-marker', bucket: 'b1', trigger_type: 'skill', trigger_desc: 'td', triggers: [], action: '', read: '(skill, 无 rule 文件)', summary: 'MARKER_SUMMARY', guard: '', pretooluse: [], also_buckets: [] },
+      { id: 'rule-with-file', bucket: 'b1', trigger_type: 'regex', trigger_desc: 'td', trigger_short: 'SHORT_A', triggers: [], action: '', read: 'rules/rule-x.md', summary: 'RULE_SUMMARY', guard: 'RULE_GUARD', pretooluse: [], also_buckets: [] },
+      { id: 'skill-no-file', bucket: 'b1', trigger_type: 'skill', trigger_desc: 'td', trigger_short: 'SHORT_B', triggers: [], action: '', read: '', summary: 'SKILL_SUMMARY', guard: '', pretooluse: [], also_buckets: [] },
+      { id: 'skill-marker', bucket: 'b1', trigger_type: 'skill', trigger_desc: 'td', trigger_short: 'SHORT_C', triggers: [], action: '', read: '(skill, 无 rule 文件)', summary: 'MARKER_SUMMARY', guard: '', pretooluse: [], also_buckets: [] },
     ],
   };
   const body = renderBucketBody(m);
-  assert.ok(body.includes('RULE_SUMMARY'), 'rule 类条目应有摘要');
-  assert.ok(!body.includes('SKILL_SUMMARY'), 'skill 类条目 (read="") 不应有摘要');
-  assert.ok(!body.includes('MARKER_SUMMARY'), 'skill 类条目 (read="(...)") 不应有摘要');
+  assert.match(body, /- \*\*rule-with-file\*\*: SHORT_A → 读 `rules\/rule-x\.md`/, '有 read 的 rule 应带 → 读 指针');
+  assert.match(body, /- \*\*skill-no-file\*\*: SHORT_B\n/, 'read="" 的 rule 不应带 → 读 指针');
+  assert.match(body, /- \*\*skill-marker\*\*: SHORT_C\n/, 'read="(...)" 的 rule 不应带 → 读 指针');
+  assert.ok(!body.includes('RULE_SUMMARY') && !body.includes('SKILL_SUMMARY') && !body.includes('MARKER_SUMMARY'), 'summary 不应进正文');
+  assert.ok(!body.includes('RULE_GUARD'), 'guard 不应进正文');
 });
 
 test('genPretooluse: 扁平化 pretooluse 靶 (不变)', () => {
@@ -184,10 +206,11 @@ test('genCatalogSharded: 超 MAX_CATALOG_SHARDS 时 throw (防静默漏注入)',
       bucket: `b${i}`,
       trigger_type: 'regex',
       trigger_desc: 'x'.repeat(200),
+      trigger_short: 'x'.repeat(5500),
       triggers: [],
       action: '',
       read: 'rules/rule-test.md',
-      summary: 'x'.repeat(5500),
+      summary: 'unused',
       guard: '',
       pretooluse: [],
       also_buckets: [],
