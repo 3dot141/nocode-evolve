@@ -36,4 +36,5 @@ commit 前跑 `node scripts/vendor-sync.mjs --check` 确认一致（不一致 ex
 ## 与 commands/、agents/ 的关系
 
 - `commands/*.md` 是用户 `/slash` 命令入口，很多命令是某个 skill 的显式触发面（例：`/nocodehub` 聚合本仓自维护相关 skill 的动作，`/distill` 分流到对应 distill 类 skill）。skill 是能力实现，command 是可选的用户显式入口——skill 本身也能被 model 通过 description 里的触发词自动调起，不依赖 command 存在。
+- **`*hub` 聚合入口是载体无关的角色**：多数 hub 是 command（`nocodehub` / `personalhub` / `projecthub`），但 skill 也可承载（`larkhub` = `skills/larkhub/SKILL.md`）。skill 形态的 hub 同样遵守「只转发不写业务逻辑」约束，由 `/plugin-dream` 跨 command/skill 的 hub 检测统一覆盖（惯例权威定义见 `commands/AGENTS.md`）。选 skill 形态的动机通常是要挂 `references/` 等目录特性；否则 command 单文件更轻。
 - `agents/*.md` 是 subagent 定义（`architect`、`code-reviewer`、`database-reviewer`、`security-reviewer`、`planner`、`tdd-guide` 等），被部分 skill（`dev-review`、`dev-design`、`dev-plan`、`dev-build`）用 Agent/Task 工具派发调用，属于 skill 执行时使用的资源，不是 skill 本身。

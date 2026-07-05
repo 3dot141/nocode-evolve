@@ -69,9 +69,9 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/plugin-dream-baseline.mjs" "${CLAUDE_PLUGIN_
 | 硬交接完整 | workflow skill 末步有 handoff 调下一阶段 |
 | 自闭环边界 | SKILL.md 正文/私有 `references/` 是否直接指路 `rules/rule-*.md`、`model/agent-*.md`、`hooks/`、非自身 `scripts/` 等插件内部实现文件（自身/共享 `references/` 除外，`CLAUDE.md` 规则6） |
 
-**command 对象**（逐个 `commands/*.md`）：命名惯例（`*hub`/`*flow`/`xx-yy`）/ 模式边界（hub 只转发不写业务逻辑）。
+**command 对象**（逐个 `commands/*.md`）：命名惯例（`*hub`/`*flow`/`xx-yy`）/ 模式边界（如 `*flow` 只属 skills 层）。hub 的「只转发」约束不在这里判——见下方「通用」节，它按 `*hub` 命名跨 command/skill 统一施加。
 
-**通用**（跨对象）：版本联动（改了插件加载文件但 `plugin.json` 没升）/ 内容 stale（引用路径或机制已变没跟着更新）。
+**通用**（跨对象）：版本联动（改了插件加载文件但 `plugin.json` 没升）/ 内容 stale（引用路径或机制已变没跟着更新）/ **hub 模式边界**（按 `*hub` 命名识别，command 与 skill 两种载体统一判：只转发不写业务逻辑——文件内容只能是「解析子动作 → 路由表 → 转发 `Skill()`」或纯只读统计的几行内联，整合判断/校验分支/写入协议都必须留在被转发的 Skill 里。CC 已合并 command≡skill，hub 是载体无关的角色，故此项跨对象判、不因载体漏检——现存 skill 形态 hub：`skills/larkhub/`）。
 
 > 语义检测规模提示：本仓 skill 数量较多，逐 skill 跑满 9 项判断成本不低——可按对象类型分组跑（先 rule 组，再 skill 组），或用户指定范围（如"只查 rule"/"只查 skill"）缩小单次扫描面，不强制全量。
 
