@@ -19,7 +19,7 @@ export function resolveRepos({ toolDir, env = process.env } = {}) {
 
 const MARKERS = {
   AGENTS_DIR: 'packages/server/conf/config.example.yaml',
-  WEB_DIR: 'packages/jsy-web/server/config.ts',
+  WEB_DIR: 'packages/jsy-web/src/entry/config.ts',
   SERVER_DIR: 'gradlew',
 };
 const OVERRIDE_HINT = { AGENTS_DIR: 'FX_AGENTS_DIR', WEB_DIR: 'FX_WEB_DIR', SERVER_DIR: 'FX_SERVER_DIR' };
