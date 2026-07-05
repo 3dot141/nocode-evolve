@@ -1,12 +1,12 @@
 # commands/
 
-Claude Code 插件 `nocode` 的 slash command 定义目录。每个 `.md` 文件对应一个 `/<文件名>` 命令：frontmatter 声明 `description`（多数还带 `argument-hint`），命令体是写给 Claude 的执行指令。全目录共 25 个命令 + 1 个子目录 `sow-reference/`（`/sow` 专属的 Python 辅助脚本）。
+Claude Code 插件 `nocode` 的 slash command 定义目录。每个 `.md` 文件对应一个 `/<文件名>` 命令：frontmatter 声明 `description`（多数还带 `argument-hint`），命令体是写给 Claude 的执行指令。全目录共 24 个命令 + 1 个子目录 `sow-reference/`（`/sow` 专属的 Python 辅助脚本）。
 
 命名遵循三类惯例（`*hub` 聚合入口 / `*flow` 阶段制工作流 / `xx-yy` 子命令），详细的模式边界和写作约束见 `AGENTS.md`；本文件只给概览。
 
 ## 命令清单
 
-### Hub（聚合入口，4 个）
+### Hub（聚合入口，3 个）
 
 统一入口，把子动作转发给对应 Skill 或独立命令；也可以跳过 hub 直接用独立命令。
 
@@ -15,7 +15,8 @@ Claude Code 插件 `nocode` 的 slash command 定义目录。每个 `.md` 文件
 | `/nocodehub` | nocode 插件自维护聚合入口，分发 `write` / `dream` / `status` 3 个子动作 |
 | `/personalhub` | `.agents-personal/` 管理聚合入口，分发 `init` / `write` / `search` / `check` / `tidy` / `snap` / `status` 7 个子动作 |
 | `/projecthub` | 项目子目录 AGENTS.md + README.md 管理聚合入口，分发 `write` / `dream` / `search` / `check` / `init` / `status` 6 个子动作 |
-| `/larkhub` | 飞书（Lark）工具集聚合入口，按 URL pattern 或意图关键词分发到 `read` / `project` / `doc` / `wiki` / `task` / `auth` 子 skill |
+
+> 注：飞书聚合入口 `larkhub` 已于 260705 迁为 skill 形态（`skills/larkhub/`），`/larkhub` 显式调用或被 Claude 主动路由均照旧，不再是 command。
 
 ### 操作型（直接执行写入/查询，16 个）
 
@@ -60,4 +61,4 @@ Claude Code 插件 `nocode` 的 slash command 定义目录。每个 `.md` 文件
 
 ## 与其它目录的关系
 
-`commands/` 是用户可直接键入的入口层。多数命令的业务逻辑委托给 `skills/` 下的对应 Skill（如 `larkhub` → `skills/lark-*`、`personalhub init` → `Skill(nocode:personal-init)`）；但也有一部分体量较大的命令（`distill` / `sow` / `plugin-dream` / `project-dream` / `plugin-distill` / `personal-dream` 等）本身就是权威实现，`skills/` 下没有同名目录——这是有意为之，不是引用悬空。
+`commands/` 是用户可直接键入的入口层。多数命令的业务逻辑委托给 `skills/` 下的对应 Skill（如 `personalhub init` → `Skill(nocode:personal-init)`）；但也有一部分体量较大的命令（`distill` / `sow` / `plugin-dream` / `project-dream` / `plugin-distill` / `personal-dream` 等）本身就是权威实现，`skills/` 下没有同名目录——这是有意为之，不是引用悬空。

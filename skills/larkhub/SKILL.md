@@ -1,11 +1,11 @@
 ---
-description: Lark/飞书工具集聚合入口，按 URL 或意图分发到子 skill（read/project/doc/wiki/task/auth）
-argument-hint: <sub-action|URL> [args]
+name: larkhub
+description: "Lark/飞书工具集聚合入口，按 URL 或意图分发到子 skill（read/project/doc/wiki/task/auth）"
 ---
 
-# /larkhub：飞书工具集聚合入口
+# larkhub：飞书工具集聚合入口
 
-统一入口，按 URL pattern 或意图关键词分发到对应的 Lark 子 skill。
+统一入口，按 URL pattern 或意图关键词分发到对应的 Lark 子 skill。可由用户 `/larkhub` 显式调用，也可被 Claude 识别到飞书链接 / 意图时主动调起。
 
 ## 用法
 
@@ -35,9 +35,11 @@ argument-hint: <sub-action|URL> [args]
 
 ### 解析输入
 
-1. `$ARGUMENTS` 是 URL → 按 URL pattern 路由
-2. `$ARGUMENTS` 第一个词匹配子动作 → 按子动作路由
-3. 无参数或不识别 → 输出用法表格
+两种进入方式归一到「识别 URL/意图 → 按路由表分发」：
+
+1. 用户 `/larkhub <参数>` 显式调用 → `$ARGUMENTS` 是 URL 按 URL pattern 路由；第一个词匹配子动作则按子动作路由
+2. Claude 主动调起（识别到对话里的飞书链接 / 意图）→ 从当前上下文取该 URL / 意图，按同一张路由表分发
+3. 无参数且上下文无飞书线索 → 输出用法表格
 
 ### URL 路由
 

@@ -10,17 +10,19 @@
 
 | 模式 | 命名 | 含义 | 本目录现存 | 模式边界（硬约束） |
 |---|---|---|---|---|
-| `*hub` | 领域名 + hub（无连字符） | 聚合入口：flat 意图分发 | `nocodehub` / `personalhub` / `projecthub` / `larkhub` | **只转发，不写业务逻辑**：文件内容只能是「解析子动作 → 路由表 → 转发 `Skill()`」，或对纯只读统计（如 `status` 子动作）内联执行几行查询/展示代码。任何整合判断、校验分支、写入协议都必须留在被转发的 Skill/命令里，不要往 hub 文件里塞。`plugin-dream.md` 的 Layer2「command 对象」检测已经把这条编进巡检规则，改 hub 文件越界会被巡检出来。 |
+| `*hub` | 领域名 + hub（无连字符） | 聚合入口：flat 意图分发 | `nocodehub` / `personalhub` / `projecthub`（`larkhub` 已迁为 skill，见下） | **只转发，不写业务逻辑**：文件内容只能是「解析子动作 → 路由表 → 转发 `Skill()`」，或对纯只读统计（如 `status` 子动作）内联执行几行查询/展示代码。任何整合判断、校验分支、写入协议都必须留在被转发的 Skill/命令里，不要往 hub 文件里塞。`plugin-dream.md` 的 Layer2「command 对象」检测已经把这条编进巡检规则，改 hub 文件越界会被巡检出来。 |
 | `*flow` | 领域名 + flow（无连字符） | 工作流：阶段制 sequential | **本目录目前没有任何 `*flow` 命令文件** | `devflow` / `pdflow` 只存在于 `skills/`，不要因为看到这两个名字就在 `commands/` 下新建 `devflow.md` / `pdflow.md`。如果确实需要给某个 flow 加一个用户可直接键入的入口，先确认是不是真的该独立成 command，还是复用 `Skill()` 引用即可。 |
 | `xx-yy` | 连字符 | 子 skill / 子命令，domain-action 结构 | 数量最多：`personal-distill` / `personal-dream` / `personal-init` / `personal-lint` / `personal-recall`、`project-distill` / `project-dream` / `project-init` / `project-lint` / `project-recall`、`plugin-distill` / `plugin-dream`、`instinct-export` / `instinct-import` / `instinct-status` | domain 前缀要和它所属的 hub 对应（`personal-*` ↔ `personalhub`，`project-*` ↔ `projecthub`，`plugin-*` ↔ `nocodehub`）。新增某个 domain 下的子命令时，记得同步在对应 hub 的路由表里加一行。 |
 
 **例外——无连字符的顶层通用命令**：`distill` / `sow` / `task` / `recall` / `eval` / `evolve` 六个不挂靠任何 domain 前缀。这是刻意的：它们是用户最高频直接键入的入口（`/distill`、`/sow` 等），不算三类命名惯例的违例。新增顶层命令前先确认它是否真的该独立于所有 domain，而不是该塞进某个 `xx-yy` 或已有 `*hub` 的子动作。
 
+**特例——`larkhub` 是 skill 形态的 hub**：飞书工具集聚合入口 `larkhub` 于 260705 从 `commands/larkhub.md` 迁到 `skills/larkhub/SKILL.md`。Claude Code 已把 command 与 skill 合并为同一套调用机制，二者触发能力与常驻 token 开销等价，迁移仅为形态统一、不改对外调用（`/larkhub` 显式调用与 `Skill(nocode:larkhub)` 主动路由均照旧）。它仍遵守 hub「只转发不写业务逻辑」的约束，但作为 skill 由 `/plugin-dream` 的 **skill 对象**检测覆盖，不再走 command 对象检测——`*hub` 惯例目前只有它一个 skill 形态例外。新增 hub 默认仍走 command（除非确有挂 `references/` 等 skill 目录特性的需求）。
+
 ## command 与 skill 的分工
 
 command（`.md`，frontmatter 至少含 `description`）是**用户键入的入口**。body 该做的事只有三种：
 
-1. **转发到 `Skill(nocode:xxx)`**——绝大多数 hub / 操作型 / 巡检型命令走这条（`larkhub.md`/`distill.md`/`personalhub.md`/`projecthub.md`/`nocodehub.md`/`plugin-dream.md`/`plugin-distill.md`/`personal-dream.md`/`personal-distill.md` 等文件里都能看到 `Skill(...)` 调用）。
+1. **转发到 `Skill(nocode:xxx)`**——绝大多数 hub / 操作型 / 巡检型命令走这条（`distill.md`/`personalhub.md`/`projecthub.md`/`nocodehub.md`/`plugin-dream.md`/`plugin-distill.md`/`personal-dream.md`/`personal-distill.md` 等文件里都能看到 `Skill(...)` 调用）。
 2. **内联执行简单只读逻辑**——如各 hub 的 `status` 子动作（读文件统计、跑只读检查命令）、`personalhub` 的 `snap` 直接跑 `scripts/personal-snapshot.mjs`。
 3. **遗留例外**：`evolve.md` / `instinct-export.md` / `instinct-import.md` / `instinct-status.md` 直接 shell 出 `skills/continuous-learning-v2/scripts/instinct-cli.py`，不经过 `Skill()`。这是 `continuous-learning-v2` vendor 集成留下的历史写法，**新命令不要模仿**，新增分发一律走 `Skill()`。
 

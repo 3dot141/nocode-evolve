@@ -12,6 +12,7 @@ nocode 插件的可执行脚本层。以 `.mjs`（ESM，`node --test` 原生测�
 | `compile.rule.js` | 单源生成器：glob `rules/rule-*.md` 的 frontmatter（`name`/`description`/`skip`）→ 编译扁平版 `model/agent-rule-catalog-N.md` | `hooks/inject-nocode.sh`（SessionStart `--check`）、`commands/plugin-distill.md`、`commands/plugin-dream.md` | `hooks/compile.rule.test.mjs` |
 | `compile.hooks.js` | 独立生成器：规则硬编码在脚本内 → 编译 `hooks/pretooluse-rules.json`，与 `compile.rule.js` 那条链完全独立 | `hooks/inject-nocode.sh`（SessionStart `--check`）、`commands/plugin-dream.md` | `hooks/compile.hooks.test.mjs` |
 | `vendor-sync.mjs` | 按 `vendor-integration.json` 把 vendor 内容同步到 `skills/`/`agents/`/`commands/`/`references/`（copy/extract/absorb/skip 四种分发规则） | CLAUDE.md（commit 前）、`commands/nocodehub.md`、`commands/plugin-dream.md` | 无专属单测，`--check` 自检 |
+| `check-skills.mjs` | 静态检查 `skills/` + `commands/`：路由断链（`Skill(nocode:X)` 目标在 skill∪command 命名空间不存在）、私有 reference 断链、description 污染（JSON Schema 关键词 / 片段泄漏，防自动化压缩写坏）、self-loop 越界（warn）。skill 折叠前护栏 + commit 前 lint；不覆盖共享/根级 references 与外部 skill（见脚本头注盲区说明） | CLAUDE.md（commit 前 lint）；`hooks/check-skills.test.mjs` 内 `checkAll` 现状守护随全量测试跑 | `hooks/check-skills.test.mjs` |
 | `freshness-check.mjs` | 检查当前分支与 base（`nocode-base` config → upstream → `origin/HEAD` → `origin/main`）的 behind/ahead，供 `rule-git-freshness` gate | `hooks/pretooluse-rules.json`、`rules/rule-git-freshness.md`、`model/agent-about.md` | 无专属单测 |
 | `plugin-dream-baseline.mjs` | `/plugin-dream` 的增量 baseline 判断（git config 按分支隔离存储上次巡检点） | `commands/plugin-dream.md` | `hooks/plugin-dream-baseline.test.mjs` |
 | `dream-baseline.mjs` | 通用 git baseline diff 库，供 `/personal-dream` `/project-dream` 共用 | `commands/personal-dream.md`、`commands/project-dream.md` | `hooks/dream-baseline.test.mjs` |
@@ -48,6 +49,9 @@ node --test hooks/git-exec.test.mjs
 # vendor 同步检查（commit 前）
 node scripts/vendor-sync.mjs --check
 node scripts/vendor-sync.mjs
+
+# skill 路由/断链/污染检查（折叠前护栏 + commit 前 lint）
+node scripts/check-skills.mjs
 
 # 分支新鲜度检查
 node scripts/freshness-check.mjs --max-behind=5 --ttl=7200

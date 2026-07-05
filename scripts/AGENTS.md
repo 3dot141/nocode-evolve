@@ -12,6 +12,7 @@
 | `compile.rule.js` | `hooks/inject-nocode.sh`（SessionStart `--check`）、`commands/plugin-distill.md`（新增/融合 rule 后重新生成）、`commands/plugin-dream.md`（Layer1 客观漂移） | CLI |
 | `compile.hooks.js` | `hooks/inject-nocode.sh`（SessionStart `--check`）、`commands/plugin-dream.md`（Layer1 客观漂移）；与 `compile.rule.js` 互不依赖，独立编译 `hooks/pretooluse-rules.json` | CLI |
 | `vendor-sync.mjs` | CLAUDE.md（commit 前工作流）、`commands/nocodehub.md`、`commands/plugin-dream.md`（Layer1 客观漂移） | CLI |
+| `check-skills.mjs` | CLAUDE.md（commit 前 lint）；无自动调用方（独立护栏工具），`hooks/check-skills.test.mjs` 内 `checkAll` 现状守护随全量测试跑 | CLI + library（`checkAll`/`checkSkillText`/`extractRoutes` 等被单测 import） |
 | `freshness-check.mjs` | `hooks/pretooluse-rules.json`、`rules/rule-git-freshness.md`、`model/agent-about.md` + `agent-rule-catalog-1/2.md`、`rules/rule-git-worktree.md`（写入 git config 供其读取）、`skills/dev-finish-branch` | CLI |
 | `plugin-dream-baseline.mjs` | `commands/plugin-dream.md`（Layer0 判范围 + Layer2 `--set` 推进 baseline） | CLI；内部 import `git-exec.mjs` |
 | `dream-baseline.mjs` | `commands/personal-dream.md`、`commands/project-dream.md` | 动态 `import()`；内部依赖 `repo-lock.mjs` + `git-exec.mjs` |
@@ -50,6 +51,7 @@
 | `personal-migrate.mjs` | `hooks/personal-migrate.test.mjs` | `node --test hooks/personal-migrate.test.mjs` |
 | `personal-snapshot.mjs` | `hooks/personal-snapshot.test.mjs` | `node --test hooks/personal-snapshot.test.mjs` |
 | `worktree-setup.mjs` | `scripts/worktree-setup.test.mjs` | `node --test scripts/worktree-setup.test.mjs` |
+| `check-skills.mjs` | `hooks/check-skills.test.mjs` | `node --test hooks/check-skills.test.mjs` |
 | `vendor-sync.mjs` | 无专属单测，自带 `--check` 自检 | `node scripts/vendor-sync.mjs --check` |
 | `freshness-check.mjs` / `personal-lint.mjs` / `prototype-verify.mjs` / `context-bar.sh` | 无自动化测试 | 人工验证 |
 
