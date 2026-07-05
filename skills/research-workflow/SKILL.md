@@ -1,6 +1,6 @@
 ---
 name: research-workflow
-description: Generic research engine for any skill that needs structured search + verification. Not meant to be invoked directly by users — called by other skills (pd-research, dev-define, dev-design, brainstorming, etc.) when they need research capability. Pick a preset type (web/code/mixed) and the tool chain + iteration strategy are wired in; only custom type needs a hand-written systemPrompt. Four depth levels — inline (skip the workflow, caller searches directly) / targeted (preset angles, single round) / shallow (multi-angle iterative, unverified) / deep (adversarial verification).
+description: Generic research engine (structured search + verification) for other skills that need research capability — called by pd-research, dev-define, dev-design, brainstorming, etc., not invoked directly by users.
 ---
 
 # research-workflow — 通用研究工作流

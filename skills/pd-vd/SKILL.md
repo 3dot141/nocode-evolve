@@ -1,6 +1,6 @@
 ---
 name: pd-vd
-description: Use when the user wants to design the visual direction and produce prototypes after interaction design is complete. Use when the user says "视觉设计/视觉方向/配色/原型/wireframe/线框图/设计稿/长什么样/出个原型", or when pdflow routes to the visual design stage after pd-ix, or when upgrading fidelity of an existing design. Produces a .vd.md (visual spec) + optional .prototype.html. Requires .ix.md as input. Not for interaction design (use nocode:pd-ix), technical architecture (use nocode:dev-design), or production component code (use devflow Build).
+description: Use when the user wants to design the visual direction and produce prototypes after interaction design. Use when the user says "视觉设计/视觉方向/配色/原型/wireframe/线框图/设计稿/长什么样/出个原型", or when pdflow routes to the visual design stage after pd-ix, or when upgrading fidelity of an existing design. Produces .vd.md + optional .prototype.html (requires .ix.md). Not for interaction design (use nocode:pd-ix), technical architecture (use nocode:dev-design), or production component code (use devflow Build).
 ---
 
 # pd-vd — 视觉设计

@@ -1,6 +1,6 @@
 ---
 name: dev-finish-branch
-description: "Use when implementation is complete and you need to finish a branch — merge locally, create a PR, keep, or discard. Handles toolchain detection (gh/bkt), commit tidy, PR creation with Gate sequence, worktree cleanup, and remote branch cleanup. Use when devflow Land routes here (via dev-land), or standalone when user says \"提PR/收尾/合并/创建PR/完成worktree/discard worktree\". Not for: PR review (dev-review), work-in-progress pushes, or git queries."
+description: "Use when implementation is complete and you need to finish a branch — merge locally, create a PR, keep, or discard. Use when devflow Land routes here (via dev-land), or standalone when user says \"提PR/收尾/合并/创建PR/完成worktree/discard worktree\". Not for: PR review (dev-review), work-in-progress pushes, or git queries."
 ---
 
 # dev-finish-branch — commit, PR, 分支收场

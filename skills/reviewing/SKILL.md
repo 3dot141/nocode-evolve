@@ -1,6 +1,6 @@
 ---
 name: reviewing
-description: 通用 review 引擎，被 `Skill(nocode:reviewing)` 调用。调用方传「评审对象 + 领域维度 + 可选方法」，引擎套通用流程（场景识别 → 分档 → 执行(打包进执行位) → Verify(场景内) → 总结）+ 评审方法库（红蓝对抗 / 清单 / 视角分工 / 错误机制 / 回归检查 / 跨文件影响 / 自查 / 威胁建模）+ reviewer 纪律 + 统一 findings 契约，产出 findings + verdict。分两条线：缺陷发现（文档 / PRD / diff，问「有什么问题」，走场景/视角/方法 + 场景内独立验证）、对抗决策（方案 / 选型，问「该不该 / 选哪个」，走红蓝对抗，完全独立于前者、不进宽度/Verify 体系）。各专项 review（dev-review / 四件套 / 嵌入式自审）不再各抄一遍流程，直接调本引擎 + 只描述自己的领域维度。审代码 diff / 方案 / 设计文档 / 安全 / 数据库 / 架构 / 需求都用它。本引擎只统一「怎么审」，领域维度由调用方传入；不是用户直触入口（用户直接要 review 走 dev-review / red-blue-deep，它们内部调本引擎）。
+description: 通用 review 引擎，被其它 skill 以 `Skill(nocode:reviewing)` 调用。审代码 diff / 方案 / 设计文档 / 安全 / 数据库 / 架构 / 需求都走它。不是用户直触入口——用户要 review 走 dev-review / red-blue-deep，它们内部调本引擎。
 ---
 
 # Reviewing — 通用 review 引擎

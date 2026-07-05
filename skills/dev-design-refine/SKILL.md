@@ -1,6 +1,6 @@
 ---
 name: dev-design-refine
-description: 详细设计——把 dev-design-select 选定的方案（Decision Packet）细化为领域设计、模块设计、接口、业务流，产出设计文档并做唯一评审。feat / bug / refactor 三种场景，基于 DDD 高内聚低耦合。由 dev-design 协调器在方案选定后调用，或用户直接要求把已定方案写成详细设计文档时进入。Not for 选方案/技术选型/预研（use nocode:dev-design-select），渲染 HTML（use nocode:dev-design-render），code comments, PR descriptions, commit messages, or READMEs.
+description: 详细设计——把 dev-design-select 的方案（Decision Packet）细化为设计文档并做唯一评审，feat / bug / refactor 三场景。由 dev-design 协调器在方案选定后调用，或用户直接要求把已定方案写成详细设计文档时进入。Not for 选方案/技术选型/预研（use nocode:dev-design-select），渲染 HTML（use nocode:dev-design-render），code comments, PR descriptions, commit messages, or READMEs.
 ---
 
 # dev-design-refine — 设计完善

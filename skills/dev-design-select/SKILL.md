@@ -1,6 +1,6 @@
 ---
 name: dev-design-select
-description: Use when Define is complete and you need to explore and pick an approach before writing a detailed design — 选方案/技术选型/方案对比/怎么做/出方案/预研/调研/看看别人怎么做. Explores multiple differentiated approaches, picks one, and produces a Decision Packet consumed by dev-design-refine. Use when devflow routes to Design (select stage). Not for writing the detailed design document (use nocode:dev-design-refine), interaction/visual design (use pd-ix/pd-vd), or writing code (use dev-build).
+description: Use when Define is complete and you need to explore and pick an approach before writing a detailed design — 选方案/技术选型/方案对比/怎么做/出方案/预研/调研/看看别人怎么做. Produces a Decision Packet consumed by dev-design-refine. Use when devflow routes to Design (select stage). Not for writing the detailed design document (use nocode:dev-design-refine), interaction/visual design (use pd-ix/pd-vd), or writing code (use dev-build).
 ---
 
 # select — 选方案 + 预研，产出决策包

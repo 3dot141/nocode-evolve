@@ -1,6 +1,6 @@
 ---
 name: dev-land
-description: "Use when Review is complete and you need to land the work. Orchestrates pre-flight checks and dev-finish-branch (PR/merge mechanics + post-merge flow). Use when devflow routes to Land stage, or when user says \"land/着陆/准备着陆/走land阶段\". Note: standalone \"提PR/合并/merge\" without devflow context should use dev-finish-branch directly, not this skill."
+description: "Use when Review is complete and you need to land the work (pre-flight checks + dev-finish-branch). Use when devflow routes to Land stage, or when user says \"land/着陆/准备着陆/走land阶段\". Note: standalone \"提PR/合并/merge\" without devflow context should use dev-finish-branch directly, not this skill."
 ---
 
 # land — 选路着陆，干净收场

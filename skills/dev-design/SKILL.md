@@ -1,6 +1,6 @@
 ---
 name: dev-design
-description: Use when Define is complete and devflow routes to the Design stage, or the user wants the full design flow end-to-end (选方案 → 详细设计 → 渲染). Thin coordinator — routes to dev-design-select (选方案/产出 Decision Packet) → dev-design-refine (写详细设计文档 + 唯一评审) →（可选）dev-design-render (渲染 HTML)，持状态机 / 路由 / 全流程确认策略 / replan 回退 / handoff。本 skill 自身不选方案、不写文档、不评审。Not for picking an approach directly (use nocode:dev-design-select), writing the design doc (use nocode:dev-design-refine), code comments, README, or commit messages.
+description: Use when Define is complete and devflow routes to the Design stage, or the user wants the full design flow end-to-end (选方案 → 详细设计 → 渲染). Thin coordinator routing dev-design-select → dev-design-refine →（可选）dev-design-render；本 skill 自身不选方案、不写文档、不评审。Not for picking an approach directly (use nocode:dev-design-select), writing the design doc (use nocode:dev-design-refine), code comments, README, or commit messages.
 ---
 
 # dev-design — 设计流程协调器

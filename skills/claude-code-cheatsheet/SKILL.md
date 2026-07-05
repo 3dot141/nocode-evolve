@@ -1,6 +1,6 @@
 ---
 name: claude-code-cheatsheet
-description: Use when you need to know what Claude Code itself provides and how it behaves — its config knobs (CLI flags, settings.json, env vars), its built-in slash commands, its built-in tools/functions (CronCreate, Workflow, Monitor, ScheduleWakeup, Agent/fork, ToolSearch, Task family, SendMessage, PushNotification, worktree tools), and its runtime mechanics (parallel vs serial tool calls, permission classifier, context compaction, prompt cache). Also use when unsure whether something is a config setting or a runtime capability, which built-in tool fits a job (schedule vs monitor vs background task), or before declaring a background task/subagent done. Not for this plugin's own rules and not for general coding unrelated to the harness itself.
+description: Use when you need to know what Claude Code itself provides and how it behaves — its config (CLI flags, settings.json, env vars), built-in slash commands, built-in tools/functions (CronCreate, Workflow, Monitor, Agent/fork, Task family, etc.), and runtime mechanics (parallel vs serial tool calls, permission classifier, context compaction, prompt cache). Also use when unsure whether something is config or a runtime capability, which built-in tool fits a job, or before declaring a background task/subagent done. Not for this plugin's own rules or general coding unrelated to the harness.
 ---
 
 # Claude Code Cheatsheet — 默认能力速查表

@@ -1,6 +1,6 @@
 ---
 name: dev-design-render
-description: Render design documents (from dev-design-refine) into styled interactive HTML. Converts the full markdown document into a browsable HTML page — ASCII diagrams become Canvas/SVG, code blocks get syntax highlighting, sections become navigable. Delivery via Claude Design or local HTML (references pd-vd's dual-track approach). Not for UI prototypes (use pd-vd).
+description: Render design documents (from dev-design-refine) into styled interactive HTML — a browsable page with rendered diagrams, syntax-highlighted code, navigable sections. Delivery via Claude Design or local HTML. Not for UI prototypes (use pd-vd).
 ---
 
 # dev-design-render — 设计文档 → HTML

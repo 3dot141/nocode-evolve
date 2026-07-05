@@ -1,6 +1,6 @@
 ---
 name: red-blue-deep
-description: 评估/拍板类提问的红蓝军辩论框架。先判档位：轻档一句表态、重档完整四步（sequential-thinking 强制 gate → 第一性原理 → 蓝军 → 独立审查 → 结论）。Use this skill whenever the user asks evaluative questions like 「X 怎么样 / 行不行 / 合适吗 / 值得吗 / 会不会有问题 / 选 A 还是 B / 哪个方案更好 / 靠谱吗」, "what do you think about X / should we use Y / is X a good idea / which is better", or hesitates between options——even if they don't explicitly ask for a "debate" or "evaluation". 不要用于纯事实查询「X 是什么 / 在哪里」、纯执行「把 X 改成 Y」、纯检索。
+description: 评估/拍板类提问的红蓝军辩论框架。Use this skill whenever the user asks evaluative questions like 「X 怎么样 / 行不行 / 合适吗 / 值得吗 / 会不会有问题 / 选 A 还是 B / 哪个方案更好 / 靠谱吗」, "what do you think about X / should we use Y / is X a good idea / which is better", or hesitates between options——even if they don't explicitly ask for a "debate" or "evaluation". 不要用于纯事实查询「X 是什么 / 在哪里」、纯执行「把 X 改成 Y」、纯检索。
 ---
 
 # 红蓝军辩论
