@@ -36,7 +36,7 @@ remote_url=$(git -C "$MAIN_ROOT" remote get-url origin)
 
 - gh：`gh pr view --json state`（自动按当前分支解析；报 "no pull requests found" → 无 PR，静默继续）
 - bkt：按分支搜（命令见 `pr-flow-bkt.md`「按分支搜 PR」；查不到 → 静默继续）
-- state == MERGED 且 worktree 还在 → 询问「上次 PR 已合并，worktree 未清，现在清理吗？」，确认后清；commit 有任务号 → Read `references/post-merge.md` 流转
+- state == MERGED 且 worktree 还在 → 询问补做收尾（一次问清，列出实际值）：「上次 PR 已合并未收尾。补做：清 worktree <path> + 删本地 branch <branch>；远程 <remote>/<branch> 删除还是保留（上个会话的选择已丢失）？」确认后按 cron MERGED 轮同款三件套执行（顺序与护栏见 `prflow.md` Step 6 收尾 a-c）；commit 有任务号 → Read `references/post-merge.md` 流转
 - 其它状态 / 主仓内 → 静默进 Step 2
 
 ## Step 2: 意图推定
