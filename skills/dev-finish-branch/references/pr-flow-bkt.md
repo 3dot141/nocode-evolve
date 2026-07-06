@@ -18,7 +18,17 @@ source_project="$SOURCE_PROJECT"; target_project="$TARGET_PROJECT"
 if [ "$source_project" = "$target_project" ]; then workflow="A"; else workflow="B"; fi
 ```
 
-## 建 PR（prflow Step 6）
+## 按分支查 PR（SKILL.md Step 1 补清检测）
+
+```bash
+# direction=OUTGOING 相对被查 repo = source 侧; cross-fork 查 source repo（personal fork）
+bkt api "/rest/api/1.0/projects/<SOURCE_KEY>/repos/<slug>/pull-requests?direction=OUTGOING&at=refs/heads/<branch>&state=ALL&limit=5" \
+  --json --jq '.values[0] | {id, state}'
+```
+
+取最新一条（API newest first）：`state=MERGED` → 补清场景；`OPEN`/查不到 → 静默继续主流程。
+
+## 建 PR（prflow Step 4）
 
 ### Workflow A: 单仓 / personal repo
 
@@ -66,7 +76,7 @@ rm /tmp/pr-body.json
 - fork 关系错配（fromRef slug/project 与 remote 不一致）→ 报错重审 source
 - **绝不带 `reviewers` 字段** — 单 user 大小写/无权限错整个 PR 建不出来（409）
 
-## default reviewer + 加 reviewer（prflow Step 3 / Step 7）
+## default reviewer + 加 reviewer（prflow Step 1 / Step 5）
 
 ### Workflow A: 跳整段
 
@@ -84,7 +94,7 @@ bkt api "/rest/default-reviewers/1.0/projects/${target_project}/repos/${repo_slu
   --json --jq '.[].name'
 ```
 
-**(b) Gate PR 预览阶段（push 前，PR 未建）** → `/reviewers` 会 404（source ref 不存在）。改用 `/conditions`（不依赖 source ref），repo id 从 repo endpoint 取：
+**(b) 全景计划材料收集阶段（push 前，PR 未建）** → `/reviewers` 会 404（source ref 不存在）。改用 `/conditions`（不依赖 source ref），repo id 从 repo endpoint 取：
 ```bash
 src_repo_id=$(bkt api "/rest/api/1.0/projects/${source_project}/repos/${repo_slug}" --json --jq '.id')
 tgt_repo_id=$(bkt api "/rest/api/1.0/projects/${target_project}/repos/${repo_slug}" --json --jq '.id')
@@ -117,25 +127,32 @@ fi
 ```
 最后报告漏哪几个。
 
-## 起 pr-watch（prflow Step 8 决策线①）
+## pr-check 调用（prflow Step 6 cron 轮）
 
 ```bash
-node "<REF>/pr-watch.mjs" --toolchain bkt --pr <pr-id> \
-  --worktree "<worktree_path>" --main-root "<MAIN_ROOT>" \
-  --target-project "<PROJECT_KEY>" --repo-slug "<repo_slug>" \
-  --interval 300 --tasks "<任务号,逗号分隔,无则省>"
+node "<REF>/pr-check.mjs" --toolchain bkt --pr <pr-id> \
+  --target-project "<PROJECT_KEY>" --repo-slug "<repo_slug>"
 ```
 
-查状态命令：`bkt api ".../pull-requests/<id>" --json` 的 `.state`（OPEN/MERGED/DECLINED）+ `.../pull-requests/<id>/merge` 的 `.canMerge`（归一化见 `pr-watch.mjs` `normalizeBkt`：DECLINED→CLOSED）。
+输出 `PR_CHECK state=<S> mergeable=<M> approved=<A>`（归一化见 `pr-check.mjs` `normalizeBkt`：DECLINED→CLOSED；mergeable=`/merge` 的 `.canMerge`；approved=`.reviewers[].approved` 任一 true）。
 
-## 远程分支清理（prflow Step 8）
+## 合并 PR（prflow Step 6 自动合并分支）
 
+```bash
+# version 必须现取——PR 每次变更(加 reviewer/push)都会递增, 旧 version POST 会 409
+version=$(bkt api "/rest/api/1.0/projects/<KEY>/repos/<slug>/pull-requests/<id>" --json --jq '.version')
+bkt api "/rest/api/1.0/projects/<KEY>/repos/<slug>/pull-requests/<id>/merge?version=${version}" --method POST
 ```
-PR 合并后清理远程分支:
-  - Bitbucket PR 页面: 合并时勾选 "Delete source branch after merging"
-  - 或命令行: git push origin --delete <remote_branch>
-  - 或 repo Settings → Merge strategies → 勾选 "Auto delete branch on merge"
-```
+
+- 合并策略走仓库默认（DC 端配置），不在命令侧选
+- 失败（409 version 过期 → 重取一次再试；conflict / veto / 权限 → 通知转人工 + 删 cron，不重试）
+
+## 远程分支清理（prflow Step 6 MERGED 收尾 c）
+
+全景默认删：cron MERGED 轮内 `git push origin --delete <remote_branch>`。
+
+- 仓库配了 "Auto delete branch on merge" → 报 ref 不存在 = 平台已删，当成功
+- protected / 权限不足 → 报原因不阻塞收尾
 
 ## bkt 坑表（不要重撞）
 

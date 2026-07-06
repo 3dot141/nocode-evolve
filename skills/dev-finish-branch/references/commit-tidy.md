@@ -1,112 +1,82 @@
-# Commit 整理建议 (option 1 + 2 共用)
+# Commit 整理建议 (Merge + PR 路径共用，全景计划的材料提供者)
 
-PR / merge 前给用户列 commit 整理建议 + 完整命令, 用户**自跑或跳过**. agent 不自动跑 rebase (per spec Q4 决策).
+在材料收集阶段（SKILL.md Step 4）被读，产出「整理建议 + 完整命令」作为**全景计划的一行**；不自带等待点——用户在全景回「我先整理 commit」才进入等待。agent 不自动跑 rebase (per spec Q4 决策)。
 
-## 触发
-
-被 `dev-finish-branch` skill 在 option 1 (merge) 或 option 2 (push+PR) 流程内调用. 进入 Gate Merge / Gate Title-Body 前.
-
-## 主流程
+## 定位
 
 ```
-1. 列 push range commit         agent 跑 git log
-2. 按判定规则给建议             agent 判定 + 列建议
-3. 给完整命令                   agent 输出 (用户复制运行)
-4. 等用户响应                   "已整理" / "跳过"
-5. 进 Gate Merge / Gate Title-Body         门面流程接管
+材料收集: 列 push range → 按判定规则产出建议行        （本文件 Step 1-2）
+全景计划: 「1. commit 整理  <建议行>（默认: 跳过）」    （嵌入展示, 无等待）
+用户回「我先整理」: 贴完整命令 → 等「好了」→ 重收材料   （本文件 Step 3-4）
+用户回「OK」: 建议不执行, commit 原样进 merge / PR
 ```
 
 ## Step 1: 列 push range commit
 
 ```bash
-# 在 worktree 内执行
-base_branch="${BASE_BRANCH:-main}"   # 一般是 main / master / release
+# base_branch 由 SKILL.md Step 4 单源解析
 git log --oneline "$(git merge-base HEAD $base_branch)..HEAD"
 ```
 
-## Step 2: squash 判定规则
+## Step 2: 判定规则 → 建议行
 
-agent 扫每个 commit 的 subject (短 sha 后第一行), 按下列规则建议:
+agent 扫每个 commit 的 subject (短 sha 后第一行)，按下列规则产出建议；**单 commit 命中多条时按 fixup > squash > reword 取更具体的一条**：
 
 | 模式 | 建议 |
 |---|---|
-| 连续 ≥2 个 commit 含关键字 `wip` / `tmp` / `fixup` / `fix typo` / `wip:` / `tmp:` / `WIP` / `TMP` (大小写不敏感) | **squash** 这一串合一个 |
-| 单个 commit message 不符合 conventional commits (无 `<type>(<scope>):` 前缀, 如 `<type>` 为 `feat`/`fix`/`docs`/`refactor`/`test`/`chore`) | **reword** 改成规范格式 |
-| 某 commit subject 是 "fix typo in X" / "address review comment Y" 且引用之前的 commit | **fixup** 到目标 commit |
-| 都不命中 (commit 全部规范且独立有意义) | **不建议整理** — 不强迫 reword 一切 |
+| 某 commit subject 是 "fix typo in X" / "address review comment Y" 且引用之前的 commit | **fixup** 到被引用的目标 commit |
+| 连续 ≥2 个 commit 含关键字 `wip` / `tmp` / `fixup` / `fix typo` (大小写不敏感) | **squash** 这一串合并进它们之前最近的一个实质 commit |
+| 单个 commit message 不符合 conventional commits (无 `<type>(<scope>):` 前缀) | **reword** 改成规范格式 |
+| 都不命中 (commit 全部规范且独立有意义) | **无建议** — 全景该行写「无建议」，不强迫 reword 一切 |
 
-## Step 3: 给完整命令模板
+## Step 3: 用户回「我先整理」→ 贴完整命令
 
 ### 命令: squash 连续 N 个 WIP commit
 
 ```bash
 # 假设最近 4 个 commit 是 ["feat: 主体", "wip: 1", "wip: 2", "wip: 3"]
-# 想把 3 个 wip 合到主体
 git rebase -i HEAD~4
 # 编辑器内:
 #   pick   <sha1> feat: 主体
 #   squash <sha2> wip: 1     ← pick → squash
-#   squash <sha3> wip: 2     ← pick → squash
-#   squash <sha4> wip: 3     ← pick → squash
+#   squash <sha3> wip: 2
+#   squash <sha4> wip: 3
 # 保存后弹出 message 编辑界面, 删 wip 行只留主体 message
 ```
 
 ### 命令: autosquash (commit 已用 `--fixup` 标记)
 
 ```bash
-# 创 fixup commit 标记
 git add <changes>
 git commit --fixup=<sha-of-target>
-
-# 一次性 autosquash (无需手编辑 instruction)
 git rebase -i --autosquash HEAD~N
-# GIT_SEQUENCE_EDITOR=true 可以全自动接受默认 instructions (注意: 仍可能弹 message edit)
 ```
 
 ### 命令: reword 单个 commit
 
 ```bash
 git rebase -i HEAD~N
-# 编辑器内找到目标 commit 行:
-#   reword <sha> 原 message       ← pick → reword
-# 保存后弹出 message 编辑界面, 改写
+# 编辑器内目标行: pick → reword, 保存后改写 message
 ```
 
-### 命令: 列已 push 的 commit 仍在 origin (避免误改 published commit)
+### 命令: 区分已 push / 未 push (避免误改 published commit)
 
 ```bash
-git log origin/<branch>..HEAD --oneline    # 仅本地未 push 的 commit, 这些可以安心 rebase
-git log "$(git merge-base HEAD $base)..HEAD" --oneline   # PR range 全部, 含已 push (改了要 force-push)
+git log origin/<branch>..HEAD --oneline    # 仅本地未 push 的, 可安心 rebase
+git log "$(git merge-base HEAD $base)..HEAD" --oneline   # 全 range, 含已 push (改了要 force-push)
 ```
 
-> 若 commit 已 push 到 remote 然后 rebase 改了, 重 push 需要 `--force-with-lease` (Option 2 push 步会撞 non-ff, 走 Gate force-push 流程).
+> 已 push 的 commit rebase 后重 push 会撞 non-ff → 走 typed `force` 安全例外 (prflow Step 3)。
 
-## Step 4: 输出 + 等用户响应
+## Step 4: 等「好了」→ 重收材料
 
-agent 输出格式:
-
-```
-当前 push range N 个 commit:
-  abc123 feat: 主体
-  def456 wip: 1
-  ghi789 wip: 2
-
-建议整理:
-  - squash def456 + ghi789 合并到 abc123 (2 个 wip 触发判定)
-
-复制运行:
-  git rebase -i HEAD~3
-  (编辑器内把 def456/ghi789 的 pick 改成 squash, 保存)
-
-完成后回我 "好了" / "跳过", 进 [Gate Merge / Gate Title-Body].
-```
-
-等用户响应 "已整理 / 整理完成 / OK / 跳过 / 不动" 之一, 再进下一步.
+用户响应「好了 / 已整理 / 整理完成」→ push range 已变，重收 title/body/Affected 相关材料 → 重展全景计划。
 
 ## 不要
 
-- **不要 agent 自动跑 rebase** — 交互式 rebase fail 会破坏 history; `GIT_SEQUENCE_EDITOR=true` 自动模式遇到 conflict 也会 hang, agent 没人工干预能力. 给命令让用户跑.
-- **不要强迫用户整理** — "跳过 / 不整理" 是合法响应, agent 不二次劝诱
-- **不要建议 reword "一切不符合 conventional commits 的 commit"** — 只对明显问题 commit (含 wip / typo / 引用之前) 建议; 其他 message 即便不规范也是历史现实, 让用户自己决定
-- **不要在 commit-tidy 阶段加额外 lint** (commit-msg hook / branch name 校验等) — 那是 pre-commit hook 的事, 不在本流程
-- **不要建议 squash 已 push 到 remote 的 commit** 除非 toolchain 是单仓直推且 force-push 安全 — 跨 fork PR (Bitbucket 上游 / GitHub PR) 已 push 的 commit rebase 会要求 force-push, 增加 Gate PR 复杂度. 建议: 整理只针对**未 push** 的 commit, 已 push 的留给 reviewer comment 触发的修订.
+- **不要 agent 自动跑 rebase** — 交互式 rebase fail 会破坏 history; `GIT_SEQUENCE_EDITOR=true` 遇 conflict 会 hang, agent 没人工干预能力。给命令让用户跑
+- **不要把整理建议做成独立等待点** — 建议只是全景计划的一行, 默认跳过; 用户主动说「我先整理」才等待（旧版独立等待与「全景确认后全自动」承诺冲突, 已废弃）
+- **不要强迫用户整理** — 「OK」直接过 = 合法, 不二次劝诱
+- **不要建议 reword 一切不规范 commit** — 只对明显问题 commit 建议; 其余是历史现实, 用户自己决定
+- **不要在 commit-tidy 阶段加额外 lint** (commit-msg hook / branch name 校验) — 那是 pre-commit hook 的事
+- **不要建议 squash 已 push 的 commit** 除非单仓直推且 force-push 安全 — 跨 fork PR 已 push 的 rebase 会逼 force-push; 整理只针对**未 push** 的, 已 push 的留给 review comment 触发的修订

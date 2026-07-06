@@ -2,7 +2,15 @@
 
 配合 `prflow.md` 骨架用——本文件只给 **gh 特有命令**，按主题组织，**不带 Step 编号**（Step 骨架在 prflow.md）。前置：`gh` CLI 可用（`gh --version`），toolchain 检测 = `github.com`。
 
-## default reviewer（prflow Step 3）
+## 按分支查 PR（SKILL.md Step 1 补清检测）
+
+```bash
+gh pr view --json state,url          # 不带 PR 号，自动按当前分支解析
+```
+
+报 `no pull requests found for branch ...` = 该分支无 PR → 静默继续主流程。
+
+## default reviewer（prflow Step 1 材料收集）
 
 按优先级查：
 
@@ -14,15 +22,15 @@ gh api "repos/<owner>/<repo>/branches/$base_branch/protection" \
 # 2: CODEOWNERS (agent parse 第一行匹配 path 的 owner)
 test -f .github/CODEOWNERS && cat .github/CODEOWNERS
 
-# 3: 无 → 空列表 (用户在 Gate PR 可补)
+# 3: 无 → 空列表 (用户在全景计划可补)
 ```
 
-## 建 PR（prflow Step 6）
+## 建 PR（prflow Step 4）
 
 ```bash
 gh pr create \
-  --title "<title from Gate Title-Body>" \
-  --base "<target_branch from Gate PR>" \
+  --title "<title from 全景计划>" \
+  --base "<target_branch from 全景计划>" \
   --body "$(cat <<'EOF'
 <完整 body markdown>
 EOF
@@ -33,38 +41,42 @@ EOF
 - 成功返 PR URL，抓 number：`--json number --jq '.number'`
 - 失败：rate limit → 报错等 retry（不自动）；auth → `gh auth login`；body 格式（含特殊字符）→ 报错让用户改。不进 reviewer 阶段，worktree 保留，从这步重跑
 
-## 加 reviewer（prflow Step 7）
+## 加 reviewer（prflow Step 5）
 
 ```bash
 gh pr edit <pr-number> --add-reviewer "alice,bob,charlie"
 ```
 
-- 整体成功（exit 0）→ 完成，报告 PR URL
+- 整体成功（exit 0）→ 完成
 - 整体 fail（rate limit/auth）→ 报错 + 不 retry
 - 单个 fail（"user X not found" / "X cannot be added as reviewer"）→ GitHub **无大小写坑**（不需要 case fallback），单个 = 无 read 权限 / 不存在 → 跳过该 reviewer 不阻断，最后报 "PR <url> 创建成功, reviewer X 添加失败已跳过"
 
-## 起 pr-watch（prflow Step 8 决策线①）
+## pr-check 调用（prflow Step 6 cron 轮）
 
 ```bash
-node "<REF>/pr-watch.mjs" --toolchain gh --pr <pr-number> \
-  --worktree "<worktree_path>" --main-root "<MAIN_ROOT>" \
-  --interval 300 --tasks "<commit 提取的任务号,逗号分隔,无则省>"
+node "<REF>/pr-check.mjs" --toolchain gh --pr <pr-number>
 ```
 
-查状态命令：`gh pr view <n> --json state,mergeStateStatus,mergeable`（归一化见 `pr-watch.mjs` `normalizeGh`：state=OPEN/MERGED/CLOSED，mergeable = MERGEABLE 且 mergeStateStatus=CLEAN）。
+输出 `PR_CHECK state=<S> mergeable=<M> approved=<A>`（归一化：mergeable = `MERGEABLE` 且 mergeStateStatus=`CLEAN`；approved = reviewDecision=`APPROVED`）。
 
-## 远程分支清理（prflow Step 8）
+## 合并 PR（prflow Step 6 自动合并分支）
 
+```bash
+gh pr merge <pr-number> --merge      # 策略按全景选择: --merge / --squash / --rebase
 ```
-PR 合并后清理远程分支:
-  - GitHub PR 页面: 合并后点 "Delete branch" 按钮
-  - 或命令行: git push origin --delete <remote_branch>
-  - 或 repo Settings → General → 勾选 "Automatically delete head branches"
-```
+
+- 失败（并发 push / branch protection 变化 / 权限）→ 通知转人工 + 删 cron，不重试
+
+## 远程分支清理（prflow Step 6 MERGED 收尾 c）
+
+全景默认删：cron MERGED 轮内 `git push origin --delete <remote_branch>`。
+
+- 仓库配了 "Automatically delete head branches" → 报 `remote ref does not exist` = 平台已删，当成功
+- protected branch / 权限不足 → 报原因不阻塞收尾
 
 ## 不要（gh 特有）
 
 - **不要 `gh pr create` 时塞 `--reviewer`** — 见「建 PR」
-- **不要假设 default reviewer 一定有** — branch protection 没配 / CODEOWNERS 不存在 = 空列表，正常进 Gate PR，用户手填
-- **不要在主流程同步等 GitHub Actions / CI** — 同步阻塞等 CI 不在本流程 scope；PR 决策线选①的 pr-watch 是后台异步盯（run_in_background），不算同步等
-- **不要 PR 创建完立刻关 / merge** — 终态是 PR 提交并加 reviewer，后续 review / merge 走 GitHub UI 或另一轮 dev-finish-branch（选 option 1 本地 merge）
+- **不要 `gh pr merge` 不带策略 flag** — 非交互环境会失败/挂起，cron 轮里必须显式 `--merge`/`--squash`/`--rebase`
+- **不要假设 default reviewer 一定有** — branch protection 没配 / CODEOWNERS 不存在 = 空列表，全景计划里用户手补
+- **不要在主流程同步阻塞等 GitHub Actions / CI** — cron 轮询是异步盯，不算同步等

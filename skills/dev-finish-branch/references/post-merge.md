@@ -1,33 +1,29 @@
 # post-merge — 合并后流转（原 dev-post-merge，已并入 dev-finish-branch）
 
-代码合并后的收尾动作。原独立 skill `dev-post-merge` 并入本 reference，由 dev-finish-branch 在合并后调用，或用户直接说「PR 合了 / 流转任务」时进入。
+代码合并后的收尾动作。当前：飞书任务流转。预留：通知、changelog、部署触发。
 
-当前：飞书任务流转。预留：通知、changelog、部署触发。
+## 何时读本文件（两个时机）
 
-## 何时进入
+1. **材料收集阶段**（SKILL.md Step 4）：有任务号时读，拿「典型流转映射」+ 查当前状态 → **推定目标状态写进全景计划**（PR 路径同时写死进 cron prompt），合并后不再问
+2. **合并后执行**：Merge 路径 merge 成功后 / PR 路径 cron 的 MERGED 轮 / 用户直接说「PR 合了 / 流转任务 / 任务状态改一下」
 
-- **Option 1（本地 merge）**：merge 成功后，commit range 有任务号
-- **Option 2（PR 路径）**：pr-watch 输出 `PR_WATCH_RESULT merged worktree=<p> tasks=<ids>`，`tasks` 非空
-- **用户直接说**「PR 合了 / 流转任务 / 合并后流转 / 任务状态改一下」
-
-## Step 1: 提取任务号
+## Step 1: 任务号来源
 
 飞书任务号格式：`#f-xxx` / `#g-xxx` / `#m-xxx`（Meego 工作项 ID）。
 
-- **PR 路径**：pr-watch 已从 commit 提取并传在 `PR_WATCH_RESULT ... tasks=<ids>`（逗号分隔），直接用
-- **Merge 路径**：从 merge range 提取
+- **PR 路径**：cron prompt 里已写死（材料收集时提取），直接用
+- **Merge 路径**：材料收集时从 push range 提取
   ```bash
-  git log "<base>..<merged-head>" --format=%B | grep -oE '#[fgm]-[a-z0-9]+' | sort -u
+  git log "<base>..HEAD" --format=%B | grep -oE '#[fgm]-[a-z0-9]+' | sort -u
   ```
-- 没有任务号 → 报告"未找到任务号"，跳过 Step 2
+- 没有任务号 → 全景计划写「无流转」，合并后跳过 Step 2
 
 ## Step 2: Lark 任务流转
 
-调 `nocode:lark-project`，按 `lark-project/references/transition.md` 流转状态到**决策线定死的目标状态**（PR 路径在 prflow Step 0 决策线已确认；典型流转：组员开发 → 研发已改待BUILD）。
+调 `Skill(nocode:lark-project)` 把任务流转到**全景计划定死的目标状态**。
 
-**前置条件**：有 Step 1 提取到的任务号 + FeishuProjectMcp 可用。
-
-不满足 → 跳过，报告原因，不报错。
+- 典型流转映射（材料收集阶段推定用）：缺陷/任务类 `组员开发 → 研发已改待BUILD`
+- **前置条件**：有任务号 + FeishuProjectMcp 可用。不满足 → 跳过，报告原因，不报错
 
 ## Step 3: 其他 post-merge 动作（预留）
 
@@ -35,6 +31,7 @@
 
 ## 不要
 
-- 不要在 merge 前进入本流程 — 这是 post-merge 动作
+- 不要在 merge 前进入执行段 — 这是 post-merge 动作（材料收集阶段只读映射做推定，不执行）
 - 不要因 MCP 不可用报错阻塞 — 跳过 + 报告，不影响收尾
-- 不要对非组员开发状态的任务强行流转 — 状态不对时报告让用户判断
+- 不要对非「组员开发」状态的任务强行流转 — 状态不对时报告让用户判断
+- 不要对典型映射覆盖不了的工作项类型硬套流程 — 需求（story）走节点流而非缺陷状态流，且同一任务号可能挂着多支未合分支，推进节点会虚报进度（生产实证）→ 停手报告「需人工判断」，交用户决定
