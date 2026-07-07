@@ -84,7 +84,7 @@ Task 9: 硬交接 — 交付 Decision Packet(方案选择模式→refine;researc
 - **6a 回检 restate**:无冲突继续;有冲突建议回 Define 修正(最多 2 轮)
 - **6b Pre-mortem(事前验尸)**:"假设这方案上线 3 个月后彻底失败,top 3 死因是什么?" 反向检验,死因无应对就补措施或标风险
 - **6c 领域覆盖检查**:8 领域(架构/测试/安全/API/性能/前端/**可观测**/迁移)逐项过,涉及的强制展开为决策表(决策点/选了什么/为什么/备选)。
-  - **可观测性分两层**(⑥):**基础日志**(关键路径 / 异常分支 / 模块出入口打 log)是**每个功能默认必过项**,不设条件;**生产监控**(Metrics/告警/Trace)按需触发。基础日志决策落 Decision Packet 的 `domainDecisions.observability.basicLogging`
+  - **可观测性分两层**:**基础日志**(关键路径 / 异常分支 / 模块出入口打 log)是**每个功能默认必过项**,不设条件——历史教训是基础日志落在"要不要上监控"门槛之下成三不管地带;**生产监控**(Metrics/告警/Trace)按需触发。基础日志决策落 Decision Packet 的 `domainDecisions.observability.basicLogging`
   - 决策表是 Decision Packet `domainDecisions{}` 的直接来源（按领域 keyed）
   - **数据库场景速查**(方案涉及时 Read)：PostgreSQL（有 `.sql`/migrations 或连 PG/Supabase）→ `references/postgres-patterns.md`；ClickHouse（做分析）→ `references/clickhouse-patterns.md`
 
@@ -107,7 +107,7 @@ DecisionPacket {
   alternatives[]     // 备选 + 否决理由(refine 决策章节做反方配平要用)
   constraints[]      // 约束
   isAIFeature        // bool:是否 AI 功能类(LLM生成/分类/抽取/Agent决策);gate evalSpec 条件必填
-  domainDecisions{}  // 领域覆盖决策(按领域 keyed,非数组):domainDecisions.observability.basicLogging 必填(⑥);其余 architecture/security/api/... 按需
+  domainDecisions{}  // 领域覆盖决策(按领域 keyed,非数组):domainDecisions.observability.basicLogging 必填(基础日志是默认必过项);其余 architecture/security/api/... 按需
   openQuestions[]    // 未决项(允许空数组)
   testObjectives[]   // TO 表
   verifyStrategy     // 验证策略
@@ -120,7 +120,7 @@ requiredFields = [version, selectedApproach, alternatives, constraints, domainDe
 **阶段返回 StageResult** = `completed | needs_user_input`(select 是首阶段,只这两态;`replan_required` 是 refine 的返回态,select 不产出——下方 replan envelope schema 在此定义,仅供 refine 单源引用)。
 
 **条件必填规则**(refine 校验 Packet 时按此判缺失,不是只看字段名在不在):
-- `domainDecisions.observability.basicLogging`:涉及运行时逻辑的功能**必填**(⑥)
+- `domainDecisions.observability.basicLogging`:涉及运行时逻辑的功能**必填**(基础日志不设"要不要上监控"的条件)
 - `evalSpec`:`isAIFeature=true` 时**必填**
 - 空数组 / 空对象 / 空占位**视为缺失**(报缺,不放行)
 - 不支持的 `version`:refine **返回错误**,不静默降级
@@ -155,7 +155,7 @@ NeedsUserInput {
 
 - [ ] 方案已选定(agent 自主 + 理由入决策表;例外时用户确认)
 - [ ] Pre-mortem top 3 死因已列 + 应对
-- [ ] 8 领域逐项 ✅/跳过,可观测基础日志层已决策(⑥)
+- [ ] 8 领域逐项 ✅/跳过,可观测基础日志层已决策
 - [ ] TO 覆盖每条路径和约束,5 维自审通过
 - [ ] 决策清点全 ✅,功能覆盖全 ✅
 - [ ] Decision Packet 产出,requiredFields 齐

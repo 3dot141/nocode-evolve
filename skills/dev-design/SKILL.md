@@ -37,7 +37,7 @@ select ──Decision Packet──→ refine ──reviewed doc + verdict──�
 ```
 
 - **阶段 skill 只返回结果**（Decision Packet / reviewed doc + verdict / render receipt），不自行管流程、不自行弹确认。
-- **协调器只验结果、不重做领域工作**：refine 返回 review verdict，协调器**只验 verdict 是否 approved，不重新评审**（评审的唯一所有者是 refine，P3）。
+- **协调器只验结果、不重做领域工作**：refine 返回 review verdict，协调器**只验 verdict 是否 approved，不重新评审**（评审的唯一所有者是 refine——历史上协调器与 refine 各审一遍，重复且结论可能冲突）。
 
 ## 非本 skill 请求
 
@@ -83,7 +83,7 @@ Task 4: final gate + 硬交接 dev-plan
 ### Step 3:（可选）路由 → render
 
 用户在 refine 收尾选了渲染 → 调 `Skill(nocode:dev-design-render)`。收回 **render receipt**：
-- render **不改输入文档**（评审后不可变，B2）；协调器**记录产物关系**（见「产物记录」）。
+- render **不改输入文档**（已评审文档不可变——render 回写会让评审结论不再覆盖当前内容）；协调器**记录产物关系**（见「产物记录」）。
 - 用户不渲染 → 跳过，markdown 即最终交付。
 
 ### Step 4: final gate + 硬交接
@@ -92,7 +92,7 @@ final gate = 本轮设计流程的**计划内总确认窗口**：向用户报告
 
 ## 确认策略（单一所有者：协调器）
 
-P5 的"唯一确认窗口"承诺兜不住（阶段 skill 内部本就有确认点）。改为**协调器持有一张确认点清单**，诚实列举，不假装只有一个：
+早期设计承诺的"全流程唯一确认窗口"兜不住（阶段 skill 内部本就有确认点）。改为**协调器持有一张确认点清单**，诚实列举，不假装只有一个：
 
 1. **计划内总窗口**：Step 4 final gate（方案摘要 + 关键决策 + 测试目标 + 文档，一次性过目）。
 2. **列举的阶段内确认**（协调器已知、不隐藏）：refine 的文档结构确认（Step 2 章节大纲 + 结构骨架）、refine 唯一评审的 findings 逐条 fix/skip、render 的"是否渲染"选择。
@@ -104,11 +104,11 @@ P5 的"唯一确认窗口"承诺兜不住（阶段 skill 内部本就有确认�
 
 refine 在信息补全遇**方案级决策**（改数据流 / 模块边界 / 外部契约 / 关键约束）→ 返回 `replan_required`（envelope 单源见 select SKILL）。协调器：
 1. **覆盖旧 Decision Packet + 递增 revision**（`originalPacketRevision` + 1）。
-2. **保留决策历史**（旧 Packet 不删，留痕供审计，与 ② 文档生命周期同理）。
+2. **保留决策历史**（旧 Packet 不删，留痕供审计——与设计文档 superseded 留痕同理：旧版不删、指向新版）。
 3. 按 `resumeState` **回退到 select 对应阶段重选**，带上 `invalidatedDecision` + `evidence`，select 不从零重来。
 4. 重选产出新 Packet → 回 Step 2 refine。
 
-## 产物记录（B2）
+## 产物记录（已评审文档不可变）
 
 render 纯输出、不碰输入文档；**产物关系由协调器在 final gate 报告里给出**（会话内交付，不落盘、不改已评审文档、不进 manifest——manifest 不承担运行产物索引）。报告内容 = render receipt 的 `sourceDoc`（未改动）↔ `output`（HTML 路径 / Claude Design projectId）↔ `deliveryMode` 映射。这是会话级记录，不是持久化索引——要持久化产物索引是另一个 feature，本次不做。
 
@@ -117,15 +117,15 @@ render 纯输出、不碰输入文档；**产物关系由协调器在 final gate
 - [ ] select 产出合法 Decision Packet（requiredFields 齐），协调器已校验
 - [ ] refine 返回 reviewed 文档 + review verdict（`approved`），协调器只验未重审
 - [ ] replan（如有）已处理：旧 Packet 留痕 + revision 递增 + 回 select 重选完成
-- [ ] render（如选）receipt 已收，输入文档未被改动（B2），产物关系已在 final gate 报告 `sourceDoc`↔`output` 映射
+- [ ] render（如选）receipt 已收，输入文档未被改动，产物关系已在 final gate 报告 `sourceDoc`↔`output` 映射
 - [ ] 全流程确认按「确认策略」清单落实（总窗口 + 列举确认 + 异常统一弹），无阶段 skill 自行弹确认
 - [ ] **硬交接**：final gate 通过后向用户报告 Design 完成（方案摘要 + 关键决策 + 测试目标 + 文档路径），建议进 Plan（`nocode:dev-plan`），列出 Plan sub-steps。等用户拍板，不自行进入下一阶段
 
 ## Red Flags
 
 - 协调器自己选方案 / 自己写文档 / 自己评审——领域工作全在阶段 skill，协调器越界就是重构前的病复发
-- 收到 refine 的 verdict 又重新评审一遍——协调器只验 verdict，重审 = P3 回潮
+- 收到 refine 的 verdict 又重新评审一遍——协调器只验 verdict，重审 = "双所有者各审一遍"的历史病灶回潮
 - 阶段 skill 自行弹确认而不返回 `needs_user_input`——确认的单一所有者是协调器
 - replan 时直接让 select 从零重来 / 不保留旧 Packet——丢了 `invalidatedDecision + evidence` 和决策历史
-- render 改了输入设计文档 / 协调器不记录产物关系（B2）
+- render 改了输入设计文档 / 协调器不记录产物关系——已评审文档不可变，产物映射只在 final gate 报告里给
 - 因"任务简单 / 用户说了'继续'"跳过某阶段路由、不建 Step 0 TaskCreate、或漏掉最后的交接 task
