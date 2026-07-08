@@ -95,7 +95,7 @@ final gate = 本轮设计流程的**计划内总确认窗口**：向用户报告
 早期设计承诺的"全流程唯一确认窗口"兜不住（阶段 skill 内部本就有确认点）。改为**协调器持有一张确认点清单**，诚实列举，不假装只有一个：
 
 1. **计划内总窗口**：Step 4 final gate（方案摘要 + 关键决策 + 测试目标 + 文档，一次性过目）。
-2. **列举的阶段内确认**（协调器已知、不隐藏）：select 的 L1 架构方向确认（Step 4a——两回合展示方案对比,用户拍方向）与 Decision Packet 终审（Step 8a——Packet 写文件 → 用户逐条编辑 → 读回应用）,两处每次必过、由 select 自行执行；refine 的文档结构确认（Step 2 章节大纲 + 结构骨架）、refine 唯一评审的 findings 逐条 fix/skip、render 的"是否渲染"选择。
+2. **列举的阶段内确认**（协调器已知、不隐藏）：select 的每轮方案确认（Step 4a——每个决策层级 L1/L2/L3 两回合展示方案对比,用户拍方向）与 Decision Packet 终审（Step 8a——Packet 写文件 → 用户逐条编辑 → 读回应用）,每次必过、由 select 自行执行；refine 的文档结构确认（Step 2 章节大纲 + 结构骨架）、refine 唯一评审的 findings 逐条 fix/skip、render 的"是否渲染"选择。
 3. **异常确认**：阶段 skill 返回 `needs_user_input`（打平手 / 冲突需拍板 / 信息缺口 / 不可逆 + 高影响）时，**协调器统一弹**（阶段 skill 不自行弹）——同一 `dedupeKey` 的确认不重复弹。
 
 **单一所有者** = 协调器。阶段 skill 被协调器调用时遇确认返回 `needs_user_input`，不自行承诺"唯一窗口"、不自行弹。
