@@ -1,11 +1,12 @@
 ---
 name: codex-review
 description: >-
-  red-blue-deep 判重档走到独立审查环节; 或完成分支/显式 review 请求; 或
+  red-blue 判中档/重档走到独立对抗环节; 或完成分支/显式 review 请求; 或
   卡住/想要第二实现/独立诊断/委派; 或各 review 细则中用户显式要求派异源
   交叉时触发——派本机 Codex (报错则 fallback subagent) 当独立模型接手。
   不触发: 各细则默认的主会话自查 (devflow review 默认自审, 不派本
-  rule)、devflow Review 阶段的五轴自查 (走 dev-review)。
+  rule)、red-blue 自查档 (默认档不拉 codex)、devflow Review 阶段的
+  五轴自查 (走 dev-review)。
 skip: false
 ---
 
@@ -47,11 +48,11 @@ Agent({
 
 `<verb>`:`review`(缺陷) / `adversarial-review`(挑方案,可带 focus text) / `task`(通用,默认只读,加 `--write` 才改代码)。改动大或任务重 → 在 subagent 的 prompt 里让它自己用 `run_in_background: true` 起、`Monitor`/`BashOutput` 等到完成再返回,不要把这层轮询甩回主 agent。
 
-## 场景 1:红蓝重档·独立审查默认交给 Codex
+## 场景 1:红蓝中档/重档·独立对抗交给 Codex
 
-**触发**:`red-blue-deep` 判为**重档**、走到 Step 3 独立审查环节。**轻档不触发**(命名 / 文案 / 单点小改不拉 codex)。
+**触发**:`red-blue-adversarial` 判为**中档**(红军单路)或**重档**(双路完整对抗)、走到独立对抗环节。**自查档(默认)不触发**——默认主会话红蓝自查不拉 codex;升档仅用户显式要求或敏感面建议后用户点头,三档判据单源在方法卡 `red-blue-adversarial.md`。
 
-**做法**:不自己演红军,独立审查**默认单路直接交给 Codex**(不预先探活,不与 Subagent 并行双跑)——按「调用方式」直接派一个 `Agent()` 去 Bash 跑 Codex:
+**做法(中档)**:不自己演红军,红军**单路交给 Codex**(不预先探活,不与 Subagent 并行双跑)——按「调用方式」直接派一个 `Agent()` 去 Bash 跑 Codex:
 
 ```
 Agent({
@@ -84,7 +85,9 @@ Agent({ subagent_type: "general-purpose", description: "独立审查(Subagent �
 
 > 用 `task` 不用 `adversarial-review`:红蓝多是**设计 / 选型决策**,未必有 git diff;`adversarial-review` 针对代码改动。若该决策恰好对应一段具体改动,可改用 `adversarial-review --wait`。
 
-独立审查结果(Codex 或 fallback 后的 Subagent,二选一非双跑)与主 agent 蓝军合并两路,折进 Step 4 结论。
+中档合并:独立红军结果(Codex 或 fallback 后的 Subagent,二选一非双跑)与主 agent 蓝军合并两路,折进结论。
+
+**做法(重档)**:Codex 这一路的 prompt 换成方法卡给的**完整对抗任务包**(先第一性原理拆解 → 内部蓝军防守 → 内部红军攻击 → 给出倾向 + 缓解的结论;CLAIM 剥离 + Capsule 同上),派发模板同上;同时由方法卡另派一路隔离 Subagent 跑同一份任务包(不走本规则通道)。**重档双路是方法卡的设计**,不违反"不并行双跑"(那条针对中档红军单路)。Codex 报错 → 剩 Subagent 单路,独立性标「同源单路(降级)」明说,不静默当双路。
 
 ## 场景 2:代码 review 收尾
 
@@ -162,10 +165,10 @@ Review Report(Codex 或 fallback 后的 design-doc-reviewer,二选一非双跑)�
 
 ## 不要
 
-- 轻档红蓝 / 简单任务也拉 codex —— 噪音 + 烧额度。
+- 自查档(默认档)红蓝 / 简单任务也拉 codex —— 噪音 + 烧额度;升档权在用户。
 - 先跑一次 `setup --json` 探活再决定调不调 —— 本规则已改为不预先探活,直接派 subagent 跑真正命令,报错才降级,别多加一层探测往返。
-- 在主 agent 里直接 Bash 跑 `review`/`adversarial-review`/`task` —— 必须派 subagent 执行,原始输出别堆进主 agent context;场景 1/4 默认单路交给 Codex,不再需要与 Subagent 同一条消息并行发出。
-- codex 调用成功时还额外并派一路 Subagent 跟它同跑 —— 场景 1/4 已改为默认单路,Subagent 只在 codex 调用报错时才作为 fallback 派发,不是常态双跑。
+- 在主 agent 里直接 Bash 跑 `review`/`adversarial-review`/`task` —— 必须派 subagent 执行,原始输出别堆进主 agent context。
+- codex 调用成功时还额外并派一路 Subagent 跟它同跑 —— 场景 1 中档 / 场景 4 是单路,Subagent 只在 codex 调用报错时才作为 fallback 派发;唯一例外是场景 1 **重档**的双路完整对抗(方法卡设计,subagent 一路不走本规则通道)。
 - codex 报错后不判断就当成功继续往下走 —— 必须读 subagent 返回内容确认是否报错,报错就按场景降级,不能假装 codex 跑通了。
 - codex 不可用时静默卡住或假装调了 —— 必须降级自做 + 明说 fallback。
 - 改 `vendor/codex/` 里的文件 —— 那是上游镜像,改了 re-sync 会冲突;接口要变只改本规则。

@@ -7,7 +7,7 @@
 
 | 文件相对地址 | 描述 |
 |---|---|
-| rules/rule-codex-review.md | red-blue-deep 判重档走到独立审查环节; 或完成分支/显式 review 请求; 或 卡住/想要第二实现/独立诊断/委派; 或各 review 细则中用户显式要求派异源 交叉时触发——派本机 Codex (报错则 fallback subagent) 当独立模型接手。 不触发: 各细则默认的主会话自查 (devflow review 默认自审, 不派本 rule)、devflow Review 阶段的五轴自查 (走 dev-review)。 |
+| rules/rule-codex-review.md | red-blue 判中档/重档走到独立对抗环节; 或完成分支/显式 review 请求; 或 卡住/想要第二实现/独立诊断/委派; 或各 review 细则中用户显式要求派异源 交叉时触发——派本机 Codex (报错则 fallback subagent) 当独立模型接手。 不触发: 各细则默认的主会话自查 (devflow review 默认自审, 不派本 rule)、red-blue 自查档 (默认档不拉 codex)、devflow Review 阶段的 五轴自查 (走 dev-review)。 |
 | rules/rule-figma-design-read.md | 用户给 figma.com/design 或 figma.com/file 链接, 要求读取设计稿、提取 设计值 (字号/颜色/间距/圆角)、对齐 UI 实现、检查样式差异时触发——走 Figma REST API, 不依赖 MCP/agent-browser 登录。不触发: 只看用户贴的 设计稿截图 (不需要 API)、Figma 原型预览链接 (无 inspect 需求)。 |
 | rules/rule-git-freshness.md | 设计性动作 (设计文档/PRD/RFC/ADR/方案对比/技术选型/重构方案/架构设计) 前, 或代码搜索 (semble-search / grep -r / rg / find / Explore) 前, 或 ≥3 文件 Read 探源做方案分析前触发——跑 scripts/freshness-check.mjs 确认 当前分支未过时于 base, 落后 ≥5 commit 或首次冷启动则停手三选。不触发: 开 worktree 那一刻 (由 git-worktree 覆盖)、已知精确路径读单文件、单行 literal grep/文件名 find、用户显式跳过、2h 内已查过缓存命中。 |
 | rules/rule-git-inspection.md | 连续要跑 ≥2 个 git 只读命令 (status/diff/log/show/branch/ls-files/ remote -v 等) 时触发, 默认用 && 串成一个 Bash call, 减少 turn 浪费。 不触发: 命令间有运行时依赖、需要看到中间失败步骤之后的输出、步骤之间 需要用户决策。 |
