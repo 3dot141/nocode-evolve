@@ -59,9 +59,9 @@ Task 5: 插 checkpoint
   Sub-steps: 每 2-3 task 一个 checkpoint
   Gate: checkpoint 边界已插
 
-Task 6: Round 1 Red-Blue Review — 骨架对抗审视（轻档）
-  Sub-steps: 调 Skill(nocode:red-blue-deep)（声明轻档）评估骨架 → 结论中成立的质疑修正到骨架
-  Gate: red-blue-deep 流程完成，成立的质疑已修正
+Task 6: Round 1 骨架自查
+  Sub-steps: 主会话按骨架自查清单过一遍（切片/依赖/排序/粒度/覆盖）→ 成立的质疑修正到骨架
+  Gate: 骨架自查完成，成立的质疑已修正
 
 ═══ Round 2: 填充代码（读设计文档 + 代码库 → 写真实代码）═══
 
@@ -72,9 +72,9 @@ Task 7: 逐 task 填充真实代码
 
 ═══ 收尾 ═══
 
-Task 8: Round 2 Checklist 核查 + 窄化 Red-Blue + Plan Validation
-  Sub-steps: checklist 逐项核查（API签名/测试覆盖/设计一致/废弃接口）→ 窄化 Skill(nocode:red-blue-deep)（强制重档）只评跨task一致性 → 裁决修正 → 四项自检（需求覆盖 + 路径覆盖 + 可验证 + 无环）
-  Gate: checklist + red-blue-deep 流程完成 + 裁决修正完成 + 四项自检全过（任一不过回 Task 7 补）
+Task 8: Round 2 Checklist 核查 + 跨 task 一致性自查 + Plan Validation
+  Sub-steps: checklist 逐项核查（API签名/测试覆盖/设计一致/废弃接口）→ 跨 task 一致性自查（接口衔接/隐含假设/执行顺序）→ 修正 → 四项自检（需求覆盖 + 路径覆盖 + 可验证 + 无环）
+  Gate: checklist + 一致性自查完成 + 修正完成 + 四项自检全过（任一不过回 Task 7 补）
 
 Task 9: 用户确认计划
   Sub-steps: 完整呈现计划 → AskUserQuestion 确认
@@ -133,21 +133,21 @@ Round 1 写骨架——定清楚**改什么、覆盖什么、谁做**，代码�
 
 每 2-3 个 task 一个 checkpoint = 全测试通过 + build 通过 + 用户 review。checkpoint 是 rollback 边界。
 
-### Step 6: Round 1 Red-Blue Review
+### Step 6: Round 1 骨架自查
 
-Round 1 骨架完成，在填充代码前对计划骨架做对抗审视。骨架阶段发现的问题修正成本低，填充完再改代价翻倍。
+Round 1 骨架完成，在填充代码前对计划骨架做一遍自查。骨架阶段发现的问题修正成本低，填充完再改代价翻倍。
 
-调用 `Skill(nocode:red-blue-deep)`，评估问题：
+**主会话就地自问自答**（不调 red-blue-deep、不派 subagent/Codex），逐条过：
 
 > 「这份计划的骨架合理吗？切片策略（垂直还是横切？每片独立可验证吗？）、依赖图（有没有隐式耦合遗漏？）、risk-first 排序（最不确定的真的排前面了吗？）、task 粒度（sizing 准吗？有 and 该拆的吗？）、restate 覆盖（有遗漏路径吗？）」
 
-附上完整骨架（依赖图 + task 列表含 covers/sizing/HITL-AFK + checkpoint）作为被评估对象。Round 1 走**轻档**——调用时声明「轻档」，red-blue-deep 给一句表态 + 关键理由（不派 subagent、不调 codex），骨架层的粗问题快速暴露即可；深审留给 Round 2 收尾（Step 8 强制重档）。
+自查纪律：放下"当时为什么这么排"的推理，只看骨架本身现在站不站得住；每条给一句判断 + 依据，不是走过场打勾。用户显式要求对抗审视（「红蓝军 / 深审」）才调 `Skill(nocode:red-blue-deep)`。
 
-**结论落地**：red-blue-deep 结论中成立的质疑修正到骨架中（回 Step 3/4/5 对应调整）。
+**结论落地**：自查中成立的质疑修正到骨架中（回 Step 3/4/5 对应调整）。
 
 **Exit Gate:**
-- [ ] red-blue-deep 流程完成
-- [ ] 结论中成立的质疑已落实到骨架修正
+- [ ] 骨架自查清单逐条过完（每条有判断 + 依据）
+- [ ] 成立的质疑已落实到骨架修正
 
 ### Step 7: 填充真实代码（Round 2）
 
@@ -204,11 +204,11 @@ Round 1 的骨架定了"改什么"，Round 2 填"怎么改"——每个 task 补
 
 **并行填充**：无依赖的 task 可并行填充（spawn subagent 各自读设计文档 + 代码库 → 写代码）。
 
-### Step 8: Round 2 Red-Blue Review + Plan Validation
+### Step 8: Round 2 自查 + Plan Validation
 
-填充完成，代码和测试都写好了，在交用户确认前做最后一轮对抗审视 + 清单自检。
+填充完成，代码和测试都写好了，在交用户确认前做最后一轮自查 + 清单自检。
 
-#### 8a. Checklist 核查 + 窄化 Red-Blue
+#### 8a. Checklist 核查 + 跨 task 一致性自查
 
 **Checklist 核查**（逐项过，不派 codex）：
 - API 签名 / import 路径是否与当前代码库一致（读最新代码库核实，不凭记忆）
@@ -216,13 +216,13 @@ Round 1 的骨架定了"改什么"，Round 2 填"怎么改"——每个 task 补
 - 实现是否和设计文档的 BF 伪代码 / 接口一致
 - 有没有引用已废弃接口
 
-**窄化 Red-Blue**（只审跨 task 一致性 / 执行顺序）：调用 `Skill(nocode:red-blue-deep)` 并声明「强制重档」——这是 plan → build 前最后一道审视，走 heavy 流程（第一性原理 → 蓝军 → 独立审查 → 结论），降档只认用户显式否定词。评估：
+**跨 task 一致性自查**（只审跨 task 一致性 / 执行顺序，主会话就地自问自答）：
 
 > 「前置 task 的产出（接口/数据结构/约定）够后续 task 用吗？多个 task 之间有没有隐含冲突的假设？执行顺序对吗？」
 
-重档范围仍是窄化的——喂依赖图 + 接口约定 + 假设清单，不把完整实现代码整段喂给 codex。
+对着依赖图 + 接口约定 + 假设清单逐条核，每条给判断 + 依据。**升审只在两种情况**：① 用户显式要求（「红蓝军 / 深审 / 找 codex」）→ 调 `Skill(nocode:red-blue-deep)` 重档，喂依赖图 + 接口约定 + 假设清单（不喂完整实现代码）；② 计划命中敏感面（认证 / 敏感数据 / schema·migration / 资金 / 跨模块接口 / 不可逆动作）→ 向用户**一句话建议**升审，用户点头才调，不自动派发。
 
-**结论落地**：checklist 发现的问题 + red-blue 结论中成立的质疑，都修正到计划中（回 Step 7 修正对应 task）。
+**结论落地**：checklist 发现的问题 + 自查中成立的质疑，都修正到计划中（回 Step 7 修正对应 task）。
 
 #### 8b. 需求覆盖
 
@@ -241,8 +241,8 @@ restate 的每条 Success Criteria 至少被一个 task 覆盖。逐条核对，
 task 间依赖不成环，底层 task 排前面。循环依赖说明切片方式有问题。
 
 **Exit Gate:**
-- [ ] red-blue-deep 流程完成
-- [ ] 结论中成立的质疑已修正到计划中
+- [ ] 跨 task 一致性自查完成（用户显式要求时为 red-blue-deep 流程完成）
+- [ ] 成立的质疑已修正到计划中
 - [ ] 8b 需求覆盖：每条 SC 被 ≥1 task 覆盖
 - [ ] 8c 路径覆盖：路径→task 映射表产出，无漏路径
 - [ ] 8d 可验证：每 task 有验证命令
@@ -287,8 +287,8 @@ task 间依赖不成环，底层 task 排前面。循环依赖说明切片方式
 - [ ] 每个 task 标了 HITL/AFK
 - [ ] 每个 task 标了 `covers`，所有 task 汇总覆盖 restate 每条路径（路径→task 映射表已产出）
 - [ ] 测试目标已分配到 slice
-- [ ] Round 1 red-blue-deep 通过 + 骨架已修正（Step 6）
-- [ ] Round 2 checklist 核查 + 窄化 red-blue-deep + Plan Validation 通过（Step 8）
+- [ ] Round 1 骨架自查通过 + 骨架已修正（Step 6）
+- [ ] Round 2 checklist 核查 + 跨 task 一致性自查 + Plan Validation 通过（Step 8）
 - [ ] 用户显式确认计划（两回合：末尾文本完整展示 → 用户回应决策）
 - [ ] 执行方式已选定（`Execution: subagent-lite | subagent-full | executing`），写入 Plan Document Header
 - [ ] 后续 Build 输入齐全：任务序列 + 测试目标 + Execution 字段
@@ -308,7 +308,7 @@ task 间依赖不成环，底层 task 排前面。循环依赖说明切片方式
 | "横着按层做更整齐" | 整齐但不可验证。垂直每片做完都能跑能回滚 |
 | "简单的先做，难的留后面" | risk-first：不确定性留到投入最大时暴露更贵 |
 | "checkpoint 太频繁拖节奏" | checkpoint 是 rollback 边界。省掉它出问题只能回退整个计划 |
-| "red-blue-deep 太重了" | 骨架改一行 vs 填充完改十行。前置审视省的是后面的返工 |
+| "自查走个形式就行" | 骨架改一行 vs 填充完改十行。前置自查省的是后面的返工——每条要有判断 + 依据，不是打勾 |
 | "这个改动简单，跳过某 Step 或不建 TaskCreate" | 进了 skill 就走完所有 Step。"简单"是你的判断，不是跳 Gate 的授权（详见 agent-catalog-using.md「进了 skill 就走完」） |
 
 ## Red Flags
@@ -319,7 +319,7 @@ task 间依赖不成环，底层 task 排前面。循环依赖说明切片方式
 - 最不确定的部分排到了最后
 - 没读相关代码就开始写 task
 - task 缺 `covers` 字段，或汇总后有路径没被任何 task 覆盖（漏实现的早期信号）
-- Round 2 red-blue-deep 被跳过或降档（收尾审视是 plan → build 前最后一道强制重档，降档只认用户显式否定词；Round 1 轻档是设计如此，不算降档）
-- red-blue-deep 结论中成立的质疑没有落实到骨架/代码修正
+- Round 2 的 checklist 核查 / 跨 task 一致性自查被跳过（这是 plan → build 前最后一道审视；自查是默认档不可省，升审派独立路仅用户显式要求）
+- 自查（或升审）结论中成立的质疑没有落实到骨架/代码修正
 - 因"任务简单 / 还在概览 / 用户说了'继续'"跳过某 Step、不建 Step 0 TaskCreate、或漏掉最后的交接 task
 - 计划里出现"E2E 全链路验证""既有功能回归"这类整体确认性 task —— 不是 tracer bullet，违反 task 定义。应删除该 task，改为核对设计文档「汇总」节的验证策略总表是否已覆盖，交给 dev-verify 执行

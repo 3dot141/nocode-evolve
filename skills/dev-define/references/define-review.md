@@ -5,9 +5,9 @@
 
 ## 怎么用
 
-dev-define 的 define-review step Read 本文拿维度，调 `Skill(nocode:reviewing)`，声明：对象 = restate；方法 = checklist；领域维度 = 下面 7 维度。流程 / 选方法 / 异源交叉 / 分级 / 收口全由引擎承载。
+dev-define 的 define-review step Read 本文拿维度，**默认主会话就地逐维自查**（不调 reviewing 引擎、不派 subagent/Codex），Critical 级问题修复后再交用户确认。用户显式要求升审时才调 `Skill(nocode:reviewing)`，声明：对象 = restate；方法 = checklist；领域维度 = 下面 7 维度。
 
-**领域档位**（帮引擎判档）：restate 评审默认**轻档**（用户在场，偏差当场可纠、延迟≈0）；需求含多角色 / 权限 / 计费 / 数据迁移等不可逆面 → **重档**（7 维度全量过）。
+**敏感面提醒**：需求含多角色 / 权限 / 计费 / 数据迁移等不可逆面 → 向用户一句话建议升审（7 维度独立全量过），用户点头才调，不自动派发。
 
 ## 领域维度（restate 七维 — 本细则唯一职责）
 

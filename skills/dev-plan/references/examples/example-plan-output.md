@@ -78,15 +78,15 @@ router.get('/export', requireOrderRead, async (req, res) => {  // 复用列表�
 
 T1+T2 完成后插 checkpoint：两个工具单测通过 + build 通过 → 再做 T3/T4（rollback 边界）。
 
-## Step 6: Round 1 Red-Blue Review
+## Step 6: Round 1 骨架自查
 
-调用 `Skill(nocode:red-blue-deep)` 评估骨架。
+主会话按骨架自查清单逐条过（不调 red-blue-deep、不派 subagent/Codex）。
 
-**评估问题**：「这份计划的骨架合理吗？切片策略、依赖图、risk-first 排序、task 粒度、restate 覆盖？」
+**自查问题**：「这份计划的骨架合理吗？切片策略、依赖图、risk-first 排序、task 粒度、restate 覆盖？」
 
-**red-blue-deep 结论**（示例摘要）：
+**自查结论**（示例摘要）：
 
-> **倾向当前骨架基本合理** —— 垂直切片 T1→T4 各自可独立验证，依赖方向清晰；但承认两个真问题：
+> **骨架基本合理** —— 垂直切片 T1→T4 各自可独立验证，依赖方向清晰；但发现两个真问题：
 > 1. T1 `escapeCell` 对 null/Date 类型没有测试覆盖，T3 集成时才暴露 → 骨架补一条 T1 测试路径
 > 2. T3 `unbounded: true` 全量查询无内存/超时限制，是隐藏风险点 → T3 标为 risk，备注流式写入/分批查询备选
 >
@@ -94,21 +94,21 @@ T1+T2 完成后插 checkpoint：两个工具单测通过 + build 通过 → 再�
 
 **结论落地**：质疑 1、2 已修正到骨架。
 
-## Step 8: Round 2 Red-Blue Review + Plan Validation
+## Step 8: Round 2 自查 + Plan Validation
 
-#### 8a. Red-Blue Review
+#### 8a. Checklist 核查 + 跨 task 一致性自查
 
-调用 `Skill(nocode:red-blue-deep)` 评估完整计划。
+主会话就地核查完整计划（用户显式要求「红蓝军 / 深审」时才调 `Skill(nocode:red-blue-deep)`）。
 
-**评估问题**：「这份填充了真实代码的计划拿去执行可行吗？代码/测试/设计一致性/执行顺序？」
+**自查问题**：「这份填充了真实代码的计划拿去执行可行吗？代码/测试/设计一致性/执行顺序？」
 
-**red-blue-deep 结论**（示例摘要）：
+**自查结论**（示例摘要）：
 
-> **倾向计划可行** —— API 签名、import 路径、测试命令均核对通过；但承认一个真问题：
+> **计划可行** —— API 签名、import 路径、测试命令均核对通过；但发现一个真问题：
 > T1 `escapeCell` 实现没处理 `undefined`——`r[c]` 不存在时 `.toString()` 会报错
 > → 修正为 `(r[c] ?? '').toString()`
 >
-> 独立审查另提两条质疑（parseFilter 额外参数 / buildQuery 签名变更影响）反驳成立：parseFilter 用白名单 pick，opts 可选参数不影响现有 caller。
+> 另两条候选质疑（parseFilter 额外参数 / buildQuery 签名变更影响）核对后不成立：parseFilter 用白名单 pick，opts 可选参数不影响现有 caller。
 
 **结论落地**：质疑 1 已修正到 T1 代码。
 
@@ -123,4 +123,4 @@ T1+T2 完成后插 checkpoint：两个工具单测通过 + build 通过 → 再�
 
 ---
 
-**这个示例的关键点**：每个 task 贴真实代码不是伪代码；sizing 全 ≤M；HITL（权限）vs AFK（工具）分清；每 task 有可跑的验证命令；两轮 red-blue-deep 审视计划决策质量（第一性原理 → 蓝军 → 独立审查 → 结论），结论中成立的质疑落实到骨架/代码修正；Plan Validation 四项逐条核对到具体 task。
+**这个示例的关键点**：每个 task 贴真实代码不是伪代码；sizing 全 ≤M；HITL（权限）vs AFK（工具）分清；每 task 有可跑的验证命令；两轮自查审视计划决策质量（每条给判断 + 依据，成立的质疑落实到骨架/代码修正；用户显式要求才升 red-blue-deep）；Plan Validation 四项逐条核对到具体 task。

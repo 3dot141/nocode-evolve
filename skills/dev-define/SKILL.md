@@ -214,14 +214,16 @@ Standard 场景网络探索可简化为 `Agent(fork)` 轻量搜一两个查询�
 - "可以"/"行" → 追问"有没有要修改的？"
 - 沉默后"那开始吧" → 用户放弃了讨论，停下问是否遗漏
 
-### Step 7a: define-review（有异议升档）
+### Step 7a: define-review（默认自查）
 
-用户确认前做 define-review：Read `references/define-review.md`（restate 7 维度）拿维度，然后 `Skill(nocode:reviewing)`，声明：**对象** = restate；**领域维度** = restate 7 维度；**方法** = checklist（或让引擎按对象自选）。引擎产 findings + verdict——流程 / 执行者 / 档位 / 升档 / 降级 / 分级全由引擎承载，本节不复述。Critical 必须修复再让用户确认。
+用户确认前做 define-review：Read `references/define-review.md`（restate 7 维度）拿维度，**主会话就地逐维自查**——不调 reviewing 引擎、不派 subagent/Codex。发现的问题按 Critical / Warning / Suggestion 粗分，Critical 级必须修复再让用户确认。
+
+**升审只在两种情况**：① 用户显式要求（「审一下 / 深审 / 独立审」）→ 调 `Skill(nocode:reviewing)` 传 7 维度；② restate 命中敏感面（权限 / 计费 / 数据迁移 / 对外接口 / 不可逆）→ 向用户**一句话建议**升审，用户点头才调，不自动派发。
 
 ## Exit Gate
 
 - [ ] restate 已产出，用户显式确认（AskUserQuestion 选了"确认"）
-- [ ] define-review 通过（无 Critical findings）
+- [ ] define-review 自查通过（无未修复的 Critical 级问题）
 - [ ] 场景分类已标注
 - [ ] （Full/Standard）路径清单已校验——有 PRD 则搬入并查完整性，无 PRD 则现场生成
 - [ ] （Full/Standard）每条路径至少绑定一条 SC，无裸路径也无裸 SC

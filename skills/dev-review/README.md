@@ -1,6 +1,6 @@
 # dev-review
 
-devflow 第 7 阶段——五轴代码评审 + 异源交叉，产出分级 findings，Critical 不可 override。
+devflow 第 7 阶段——五轴代码评审（默认主会话自查，独立交叉仅用户显式要求），产出分级 findings，Critical 不可 override。
 
 ## 在 devflow 中的位置
 
@@ -28,6 +28,21 @@ devflow 第 7 阶段——五轴代码评审 + 异源交叉，产出分级 findi
 **原来的设计**：Build per-task Quality Review（Structure/Quality/Testing/Conventions）和 Review 阶段 Five-Axis（正确性/可读性/架构/安全/性能）字面定义高度重叠，两次都是"读代码挑结构/风格问题"，同源双审，边际检出率低。
 
 **现在怎么办**：Five-Axis 进入前先读 Build 各 task 的 Quality Review verdict——可读性/架构/正确性这三轴只找"合并后才出现"的增量问题（跨 task 才暴露的循环依赖/重复抽象），已经被 per-task 挑过的同类问题不重复记 finding。安全轴、性能轴维持全量强制检查——这两个维度 Build 的 Quality Review 完全没有，是净增量。
+
+## 设计决策：devflow 全链路 review 默认自审，升审仅用户显式要求（跨 skill 策略，记录在此）
+
+`260708` 用户拍板的策略反转，波及 dev-define / dev-design-refine / dev-plan / dev-review / devflow / rule-superpowers-brainstorming / rule-codex-review。
+
+**原来的设计**：各阶段 review 由引擎/规则自动判档——define-review 调 reviewing 引擎、design 唯一评审重档默认单路 Codex、plan 两轮 red-blue（Round 2 无条件强制重档 Codex）、dev-review 走引擎 §1a 升档判据自动派异源交叉、Decompose 覆盖验证强制 red-blue 重档。
+
+**为什么改**：红蓝军评审 devflow review 密度（`260708`）量化出——自动升档的分钟级异源审查是固定延迟税且与内容风险相关性弱（Design/Plan 两次 Codex 审的是同一抽象层）；~21 个阻塞点使 gate 疲劳成点击仪式。用户拍板：把「审多深」的决策权收回给人。
+
+**现在怎么办**（三条通则，各 skill 内自包含复述）：
+1. **默认自查**：各阶段 review 步骤保留（hard gate 不可跳），执行形态改为主会话就地过领域维度清单——不调 reviewing / red-blue-deep 引擎、不派 subagent/Codex。findings 编号、C/W/S 分级、Evidence 纪律（缺 location 不上 C/W）照旧。
+2. **升审仅用户显式要求**（「审一下 / 深审 / 独立审 / 红蓝军 / 找 codex」）→ 调对应引擎（reviewing / red-blue-deep），派发/CLAIM 剥离/降级仍由引擎单源承载。引擎与方法卡本身不改——它们从"默认流程件"变成"按需调用件"。
+3. **敏感面只建议不自动派**：命中外部输入/认证/敏感数据/schema·migration/并发/资金/跨模块接口/不可逆 → 向用户一句话建议升审，用户点头才派。这是「用户会忘记喊审」的唯一兜底，代价是一句话，不是一次派发。
+
+**代价（显式承认）**：作者盲区在默认路径上无独立视角兜底——自查漏报率高于异源交叉，尤其安全/数据面。缓解依赖第 3 条敏感面提醒 + Build lite 档风险 task 仍派 reviewer + Verify 证据链。若实际漏网缺陷增多，回调方向是扩大敏感面自动建议清单，而不是回到全自动升档。
 
 ## 上游生产者
 

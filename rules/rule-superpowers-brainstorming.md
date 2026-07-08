@@ -36,12 +36,11 @@ skip: false
    - 输出路径按 `{dev_design_output}` 变量（落在 step 1 创建的 worktree 内）
 
 3. **评审**（dev-design-refine 工作流的 Review 环节，维度用 `references/design-doc-review.md`）
-   - 评审：调 `Skill(nocode:reviewing)` 声明对象 = 设计文档、维度 = design-doc-review 7 维度核心审查（含「骨架可读性」）+ AI patterns 附带检查 + Self-Audit；流程 / 派发 / 分级由引擎承载
+   - 评审：**默认主会话逐维自查**（design-doc-review 维度核心审查 + AI patterns 附带检查 + Self-Audit），不调 reviewing 引擎、不派 subagent/Codex；用户显式要求（「审一下 / 深审 / 独立审」）才调 `Skill(nocode:reviewing)`；文档命中敏感面（认证 / 数据迁移 / 资金 / 对外接口 / 不可逆决策）→ 一句话建议升审，用户点头才派
    - 输出分级 Review Report（Critical / Warning / Suggestion），每条带短编号（C1/W1/S1...）
    - **不自动循环修订**：Report 原样呈现给用户，逐条勾选 fix / skip（也可一键全修/全跳过/自由指示）
    - 据用户决定修订主体后，**本轮 Report 全文 + 用户决定 + 修订摘要 append 到文档末尾 `## Review Log`**
    - 是否再来一轮 review 由用户决定，不再有"最多 3 轮"硬限制
-   - **升档交叉验证**：由引擎按 §1a 升档判据决定是否派异源交叉（codex 单跑 / 报错 fallback 由引擎承载）。Report 分级 / 逐条确认 / Review Log 流程不变
 
 4. **`dev-design-render`** (见 `skills/dev-design-render/SKILL.md`) —— 把设计文档 ASCII 图渲染成 HTML 可视化
    - 输入：reviewer 通过的 markdown
@@ -49,4 +48,4 @@ skip: false
    - HTML 含 TOC / 折叠 / 暗黑模式 / 代码高亮 / 回到顶部 5 个交互
 
 四步都要走：开 worktree → 写 → 评审 + **用户逐条确认** + 追加 Review Log → 渲染。
-不要省略 worktree（除非用户显式弃用），不要省略评审（主路评审是最低门槛），不要代用户拍板 issue 修不修，不要绕过这些 skill 直接写。
+不要省略 worktree（除非用户显式弃用），不要省略评审（默认自查是最低门槛，跳过的是"自动派独立 reviewer"不是评审本身），不要代用户拍板 issue 修不修，不要绕过这些 skill 直接写。

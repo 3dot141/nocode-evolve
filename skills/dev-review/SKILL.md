@@ -7,18 +7,17 @@ description: Use before merging any change, after completing a feature, or when 
 
 **Iron Law: Critical 不可 override。fix 改了代码必须回 Build → Verify → 再 Review。没有"这次特殊"。**
 
-自评为主，有异议再升档独立交叉（skeleton §1a），统一 **findings** 分级。对自己写的、另一个 agent 写的、人写的代码都适用。
+默认**主会话五轴自查**，独立交叉仅用户显式要求才派，统一 **findings** 分级。对自己写的、另一个 agent 写的、人写的代码都适用。
 
-## 调 reviewing 引擎
+## 评审执行方式（默认自查 · 显式要求才升审）
 
-dev-review 的评审执行走 `reviewing` 引擎——本 skill 只管 workflow 编排（Gate / 五轴维度 / 简化 / 交接），评审的流程 / 独立性 / 分级 / 派发全交引擎。评审步骤（Step 1 / 3 / 4）里 `Skill(nocode:reviewing)`，声明：
+**默认（主路）**：主会话就地按五轴 checklist 逐轴过 diff——不调 reviewing 引擎、不派 subagent/Codex。维度 = 五轴（正确性 / 可读性 / 架构 / 安全 / 性能），是后续 finding 的 `axis`；五轴详细检查点见 `references/five-axis-guide.md`。Spec 轴（需求对齐）不在 dev-review 查，前移到 Design/Plan/Build（见"Review 的检查范围是 Standards 轴"）。自查纪律：放下写代码时的推理，只看 diff 本身站不站得住；代码事实类 finding 必须带 file:line + 摘录，缺 location 不上 Critical/Warning（降 open-question）。
 
-- **对象** = 代码 diff
-- **领域维度** = 五轴（正确性 / 可读性 / 架构 / 安全 / 性能），是后续 finding 的 `axis`。Spec 轴（需求对齐）不在 dev-review 查，前移到 Design/Plan/Build（见"Review 的检查范围是 Standards 轴"）
-- **方法** = checklist（五轴逐项核查）；碰到 **SQL / schema / migration** 或 **架构决策** 时在声明里点出对象特征，引擎自动加对应领域 method（database / architecture）
-- **Context Capsule** = 已拍板决策 / 非目标 / 约束（不带主会话对改动的预期结论）
+**升审只在两种情况**：
+- **用户显式要求**（「深审 / 独立审 / 找 codex / 红蓝军」）→ 调 `Skill(nocode:reviewing)`，声明：对象 = 代码 diff；领域维度 = 五轴；Context Capsule = 已拍板决策 / 非目标 / 约束（不带主会话对改动的预期结论）——派发 / CLAIM 剥离 / 降级由引擎承载
+- **diff 命中敏感面**（外部输入 / 认证 / 敏感数据 / SQL·schema·migration / 并发 / 资金 / 不可逆）→ 向用户**一句话建议**升审，用户点头才调，不自动派发
 
-引擎回 findings + verdict（统一 schema，C/W/S 分级，Q/SA 走 kind）——升档异源交叉 / CLAIM 剥离 / Evidence Gate / Doubt Theater / 分档全由引擎承载，本 skill 不复述。
+findings 统一 schema（C/W/S 分级，Q/SA 走 kind），来源标注「自审」或独立路。
 
 > Leading word: **findings**。每条 finding 有 id + axis + evidence + fix。没有 evidence 的 finding 是直觉不是评审。
 
@@ -40,11 +39,13 @@ dev-review 的评审执行走 `reviewing` 引擎——本 skill 只管 workflow 
 
 ## 领域维度来源（评审时按需取）
 
-**安全 / 架构 / 数据库维度由引擎承载**——调引擎时声明对象特征（碰安全面 / 架构决策 / SQL·schema·migration），引擎自动加对应领域 method。其余轴按需 Read dev-review 自己的 guide：
+自查时按需 Read 对应领域 guide（升审时这些维度由 reviewing 引擎的领域 method 承载，不需要传）：
 
 | 轴 / 检查 | 取什么 | 用来做什么 |
 |---|---|---|
-| **安全 / 架构 / 数据库轴** | 声明对象特征，引擎自选领域 method | OWASP / Deep-Shallow / SQL 反模式·RLS 等由引擎 method 承载 |
+| 安全轴 | Read `{NOCODE_SKILL_REF}/security-guide.md` | OWASP / 注入 / 信任边界 |
+| 架构轴 | Read `{NOCODE_SKILL_REF}/architecture-principles.md` | Deep-Shallow / 依赖方向 / seam |
+| 数据库（SQL/schema/migration） | 敏感面——自查基础反模式 + 一句话建议升审 | migration 本身命中敏感面提醒 |
 | 性能轴 | Read `{NOCODE_SKILL_REF}/performance-guide.md` | N+1 / 重渲染 / bundle 反模式 |
 | 测试质量 | Read `{NOCODE_SKILL_REF}/testing-guide.md` | DAMP / 替身偏好序 / 金字塔 |
 | UI 代码 | Read `{NOCODE_SKILL_REF}/frontend-guide.md` | 组件模式 / Avoid AI Aesthetic / WCAG |
@@ -57,20 +58,20 @@ dev-review 的评审执行走 `reviewing` 引擎——本 skill 只管 workflow 
 
 ```
 Task 0: 准备评审上下文
-  Sub-steps: 确定 diff 范围 + 五轴维度 + Context Capsule（评审执行调 Skill(nocode:reviewing)，档位/流程引擎判）
-  Gate: diff 范围 + 五轴维度 + Capsule 就绪
+  Sub-steps: 确定 diff 范围 + 五轴维度 + Build 审查覆盖清单（增量/全量判定输入）
+  Gate: diff 范围 + 五轴维度 + 覆盖清单就绪
 
-Task 1: Five-Axis Review（调 reviewing 引擎）
-  Sub-steps: Skill(nocode:reviewing) 传 diff + 五轴维度 + Capsule，引擎按 checklist 逐轴过（碰 SQL/架构声明对象特征，引擎加 method）
+Task 1: Five-Axis Review（主会话自查）
+  Sub-steps: 主会话按 checklist 逐轴过 diff（five-axis-guide 检查点；敏感面命中 → 一句话建议升审）
   Gate: 五轴逐轴过，每轴至少一条 finding
 
 Task 2: Simplification Pass
   Sub-steps: Chesterton's Fence（删前 git blame）+ dead code
   Gate: 简化项已识别
 
-Task 3: 升档异源交叉（引擎判）
-  Sub-steps: 引擎按升档判据决定是否派异源交叉；升档 / CLAIM 剥离 / codex 降级全由引擎承载，本 skill 不复述
-  Gate: 引擎给出是否升档 + 独立性档位声明
+Task 3: 独立交叉（仅用户显式要求）
+  Sub-steps: 默认跳过并记录「未派独立交叉（默认自审）」；用户显式要求 → Skill(nocode:reviewing) 派独立路
+  Gate: 已记录跳过，或独立路 findings 已合并 + 独立性声明
 
 Task 4: Findings Triage（对应 Step 4）
   Sub-steps: 套统一契约 schema 分级（Critical/Warning/Suggestion + kind），过 Evidence Gate
@@ -90,7 +91,7 @@ Task 6: 硬交接 — 调用下一步 skill
 
 ### Step 1: Five-Axis Review（checklist 方法 · 主路）
 
-调 `Skill(nocode:reviewing)` 传 diff 范围 + 五轴维度 + Context Capsule（已拍板决策 / 非目标 / 约束，不带预期结论），引擎按 checklist 逐轴过 diff、每轴显式标 ✅/⚠️/❌（五轴详细检查点见 `references/five-axis-guide.md`，随声明给引擎）：
+主会话按 checklist 逐轴过 diff、每轴显式标 ✅/⚠️/❌（五轴详细检查点见 `references/five-axis-guide.md`；用户显式要求升审时改调 `Skill(nocode:reviewing)` 传 diff 范围 + 五轴维度 + Context Capsule）：
 
 **打包前先读 Build 的 Quality Review verdict（per-task 或 checkpoint 批量，有则读，增量提示写进 prompt）**：可读性/架构/正确性（对应 Build Quality Review 的 Conventions/Structure/Quality）这三轴，对**已有 Quality Review 覆盖的 task** 不再从零通读——只找"合并后才出现"的增量问题（多个 task 各自看都合规、合起来才暴露的循环依赖/重复抽象/职责重叠），已经被挑过的同类问题不重复记 finding；**无 Quality Review 覆盖的 task**（`subagent-lite` 跳过审查的非风险 task / `executing` 模式全部 task）这三轴保持全量检查，不按增量处理——覆盖情况以 Build 收尾报告的审查覆盖清单为准。**安全轴 / 性能轴对所有 task 仍是全量强制检查**——Build 的 Quality Review 没有这两个维度，这里是它们第一次、也是唯一一次被系统性检查。
 
@@ -102,7 +103,7 @@ Task 6: 硬交接 — 调用下一步 skill
 | 安全 | 信任边界守住了吗？ | OWASP Top 10 / 注入 / 密钥硬编码 |
 | 性能 | 不必要的开销？ | N+1 / unbounded fetch / 缺分页 |
 
-安全 / 架构轴由引擎的领域 method 承载（声明对象特征即可）。性能详见 `{NOCODE_SKILL_REF}/performance-guide.md`。
+安全 / 架构轴自查时 Read 上表对应 guide。性能详见 `{NOCODE_SKILL_REF}/performance-guide.md`。
 
 **Review 中测试评估**：测试是否会在重构中存活？重命名内部函数测试就挂 = 测的是实现不是行为。
 
@@ -118,17 +119,17 @@ Task 6: 硬交接 — 调用下一步 skill
 - **Dead code**：识别 → 列出 → 问用户 → 确认后再删
 - **Testability**：接受依赖不创建依赖（`processOrder(order, gateway)` 而非内部 `new`）；返回结果不副作用；接口面积小。可测的形状 = 好的形状
 
-### Step 3: 升档异源交叉（引擎判）
+### Step 3: 独立交叉（仅用户显式要求）
 
-主路审完，引擎按升档判据决定是否派异源交叉——升档信号 / CLAIM 剥离 / codex 降级 / Doubt Theater 检测全由 reviewing 引擎承载，本 skill 不复述。dev-review 只需调引擎时把五轴维度 + Context Capsule 传全（Capsule 尽量全——triage 能滤独立路误报，补不回漏报）。引擎回：是否升档 + 合并后 findings + 独立性档位声明。
+**默认跳过本步**，记录一行「未派独立交叉（默认自审）」。仅当用户显式要求（「深审 / 独立审 / 找 codex / 红蓝军」）才调 `Skill(nocode:reviewing)` 派独立路——派发 / CLAIM 剥离 / codex 降级由引擎承载，调用时把五轴维度 + Context Capsule 传全（Capsule 尽量全——triage 能滤独立路误报，补不回漏报）。diff 命中敏感面时在 Step 1 已向用户建议过升审，用户点头即视为显式要求。
 
 ### Step 4: Findings Triage
 
-引擎返回的每条 finding 套统一契约 schema（id / severity / kind / axis=五轴名 / location / evidence / finding / fix / source）——字段定义单源在引擎 findings-contract，本 skill 不复述。dev-review 拿到 findings 后做下面的 triage。
+自查（或独立交叉）产出的每条 finding 套统一 schema（id / severity / kind / axis=五轴名 / location / evidence / finding / fix / source=自审或独立路）。dev-review 拿到 findings 后做下面的 triage。
 
 > 原 `action`（Critical/Warning/Suggestion）语义即 `severity`——dev-review 原生就是 C/W/S，1:1 直通，无需映射。最上层加一个 `verdict { approved, counts, recommendation }`：存在未处置 Critical → `approved:false`。
 
-**Evidence Gate 由引擎把关**：代码事实类 finding 缺 `location` 已被引擎降 `open-question`——dev-review 直接用引擎给的分级，不重判。
+**Evidence Gate**：代码事实类 finding 缺 `location`（file:line）不许上 Critical/Warning，降 `open-question`——自查产出同样受此约束，没有 evidence 的 finding 是直觉不是评审。
 
 **Structural Remedies**：fix 字段不只指出问题，要给出具体重构动作——"replace conditionals with typed dispatcher" 比 "consider refactoring" 有用。具体到"把什么移到哪，怎么改调用方"。几条高置信度的 Structural Remedies 胜过一长串 nit。
 

@@ -2,10 +2,10 @@
 name: codex-review
 description: >-
   red-blue-deep 判重档走到独立审查环节; 或完成分支/显式 review 请求; 或
-  卡住/想要第二实现/独立诊断/委派; 或各 review 细则主路审后命中升档判据
-  要派异源交叉时触发——派本机 Codex (报错则 fallback subagent) 当独立
-  模型接手。不触发: 各细则默认的主路评审 (主路 subagent 审, 不派本
-  rule)、devflow Review 阶段的五轴主路评审 (走 dev-review)。
+  卡住/想要第二实现/独立诊断/委派; 或各 review 细则中用户显式要求派异源
+  交叉时触发——派本机 Codex (报错则 fallback subagent) 当独立模型接手。
+  不触发: 各细则默认的主会话自查 (devflow review 默认自审, 不派本
+  rule)、devflow Review 阶段的五轴自查 (走 dev-review)。
 skip: false
 ---
 
@@ -125,7 +125,7 @@ node "${CLAUDE_PLUGIN_ROOT}/vendor/codex/scripts/codex-companion.mjs" task --wri
 
 ## 场景 4:设计文档独立审稿
 
-**触发**:`dev-design-refine` 工作流走到 review 环节(见 `rule-superpowers-brainstorming.md` step 5 第 3 步)且分档为**重档**(skeleton §1 自动判:跨模块 / 含架构·选型决策 → 重档;琐碎 / 文案 / 拿不准 → 轻档,不拉 codex)。命中重档后要降档,只认用户显式否定词。
+**触发**:`dev-design-refine` 工作流走到 review 环节(见 `rule-superpowers-brainstorming.md` step 5 第 3 步)且**用户显式要求独立审稿**(「审一下 / 深审 / 独立审 / 找 codex」,或对敏感面建议升审后用户点头)。默认的主会话 8 维自查不触发本场景,不拉 codex。
 
 **做法**:独立审稿**默认单路直接交给 Codex**(不预先探活,不与 Claude `design-doc-reviewer` 并行双跑)——按「调用方式」直接派一个 `Agent()` 去 Bash 跑 Codex 审稿:
 

@@ -125,7 +125,7 @@ Land 有 5 个子步骤（8a Create PR → 8b ... → 8e Cleanup），只说"pus
 | 4 | **Plan** | `nocode:dev-plan` | — | 计划已产出 + 所有 task ≤ M + 用户确认 |
 | 5 | **Build** | `nocode:dev-build` | — | 所有 task 完成 + 测试通过 + build 通过 |
 | 6 | **Verify** | `nocode:dev-verify` | — | 验收标准逐条通过 + 证据收集 |
-| 7 | **Review** | `nocode:dev-review` | `rule-codex-review` | Critical 全 fix + 用户 approve |
+| 7 | **Review** | `nocode:dev-review` | — | Critical 全 fix + 用户 approve（默认主会话五轴自查；独立交叉仅用户显式要求） |
 | 8 | **Land** | `nocode:dev-land` | — | 意图推定 → 全景计划 → 全自动执行(PR/merge/keep/discard + post-merge) |
 
 ### 共享词汇（跨 skill leading words）
@@ -165,8 +165,8 @@ Define → Design → Plan 尽量保持在同一个上下文窗口——设计�
 | 能力 | 调用 | 触发时机 | 优先级（冲突时） |
 |---|---|---|---|
 | **Debug** | `../../references/debug-protocol.md` | Build/Verify 遇阻（测试失败/卡住） | bug/失败 → 优先 Debug |
-| **Red-Blue-Deep** | `nocode:red-blue-deep` | 决策分歧（选 A 还是 B？） | 决策前 → 优先 Red-Blue |
-| **Doubt-Driven** | spawn 独立 reviewer（偏向证伪不是批准） | 非平凡决策（跨模块/不可逆/安全敏感） | 决策后验证 → 优先 Doubt |
+| **Red-Blue-Deep** | `nocode:red-blue-deep` | 仅用户显式要求（「红蓝军 / 深度评估 / 仔细想」） | 用户要求 → 优先 Red-Blue |
+| **Doubt-Driven** | spawn 独立 reviewer（偏向证伪不是批准） | 仅用户显式要求；敏感面（跨模块/不可逆/安全）命中时 agent 一句话建议、不自动派 | 用户要求 → 优先 Doubt |
 | **Context Engineering** | 主动建议 `/distill` + 新会话 | 长会话（多轮工具调用/跨子任务） | 上下文风险 → 建议收尾 |
 | **Git Freshness** | `rule-git-freshness` | 设计/搜索/多文件 Read 前 | 自动触发 |
 | **Git Inspection** | `rule-git-inspection` | ≥2 git 只读命令 | 自动合并 |
@@ -247,7 +247,7 @@ Design 完成方案选定 + 设计文档后，基于架构产出评估项目是�
      4. 验收标准:  可验证的完成条件
      5. 交付物:    代码 / 文档 / 接口 / 配置
    ```
-3. **覆盖验证**：`red-blue-deep` 强制重档——子任务∪ = 全部需求？缺口 → 补任务，重叠 → 明确边界
+3. **覆盖验证**：主会话自查——子任务∪ = 全部需求？缺口 → 补任务，重叠 → 明确边界；用户显式要求才调 `red-blue-deep`（拆分属跨模块敏感面，向用户一句话建议升审，点头才派）
 4. **依赖排序**：拓扑排序 + 风险优先（无依赖的高风险排前）
 5. **用户确认**：确认拆分 + 排序 + 第一个启动
 
@@ -338,7 +338,7 @@ PDCA 循环：
 |---|---|---|
 | 7a. Five-Axis Self-Review | 先读测试再读实现，五轴逐轴过 | 每轴至少一条 finding |
 | 7b. Simplification Pass | Chesterton's Fence（删前 git blame） | Dead code 问用户确认后删 |
-| 7c. Cross-Review（仅升档） | 自审有异议才派 codex（skeleton §1a，经 rule-codex-review，不预先探活） | 未命中升档判据记录后跳过；调用报错降级自评 + 明说 |
+| 7c. Cross-Review（仅用户显式要求） | 用户显式要求才派独立路（经 rule-codex-review）；敏感面命中仅一句话建议 | 默认记录「未派（默认自审）」后跳过；调用报错降级自评 + 明说 |
 | 7d. Findings Triage | 统一 schema，分类优先级 | Contract misread 最高优先 |
 | 7e. 用户 approve | Critical 全 fix，Warning 逐条拍板 | fix 改了代码须回 Build→Verify→再 Review |
 

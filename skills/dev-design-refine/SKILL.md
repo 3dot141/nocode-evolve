@@ -52,7 +52,7 @@ Task 2: 文档结构确认——章节大纲 + 结构骨架，用户确认（步
 Task 3: 架构审核——审结构骨架的域拆分/边界/依赖（步 9）
 Task 4: 信息补全——按场景模板 4a/4b 逐节补全，遇新决策套 replan 判据（步 10）
 Task 5: 汇总——文件影响总表 + 验证策略总表（步 11）
-Task 6: Review（唯一评审：调 reviewing 引擎、有异议升档交叉 + 用户逐条确认 + Review Log）（步 12）
+Task 6: Review（唯一评审：默认主会话 8 维自查，用户显式要求才调 reviewing 引擎 + 用户逐条确认 + Review Log）（步 12）
 Task 7: 保存 + 渲染确认 + handoff（步 13-14）
   metadata: {handoff: true}（供防跳步 Hook B 识别交接 task）
 ```
@@ -182,22 +182,20 @@ Task 7: 保存 + 渲染确认 + handoff（步 13-14）
 
 ## 通用收尾：Review + 保存（所有场景）
 
-### Review（唯一评审 · 调 reviewing 引擎 · 有异议升档）
+### Review（唯一评审 · 默认自查 · 显式要求才升审）
 
 > **本 Review 是整份设计文档的唯一一次全文评审**——历史上 dev-design 协调器与 refine 收尾各审一遍，重复且结论可能冲突；现在全文评审只在本步做，协调器只验证本步返回的**标准化 review verdict**、不重审。与 Step 3 架构审核**不重叠**：Step 3 是早层（结构定型时审架构骨架的域拆分/边界/依赖），本 Review 是晚层（全文写完时审完整性/一致性/可执行）。
 
 **Enter Gate:**
 - [ ] 设计文档初稿完成（含 Step 5 汇总）
 
-**调 reviewing 引擎**：本 Review 的评审执行走 `reviewing` 引擎——Read `references/design-doc-review.md` 拿设计文档评审维度，然后 `Skill(nocode:reviewing)`，声明：
+**默认自查（主路）**：Read `references/design-doc-review.md` 拿设计文档评审维度，**主会话就地逐维过全文**——不调 reviewing 引擎、不派 subagent/Codex。自查纪律：放下写作过程中的推理，只看文档本身现在站不站得住；发现的问题产出 findings（五档 C/W/S/Q/SA，短编号 `C1/W1/S1/Q1/SA1`），代码/事实类 finding 要带章节锚点 + 原文摘录，缺锚点的降 Q 档不硬上 Critical/Warning。
 
-- **对象** = 设计文档
-- **领域维度** = design-doc-review 的 8 维度核心审查（设计意图 / 决策 / 完整性 / 可执行 / 一致性 / 范围 / 骨架可读性 / 方案质量与验证覆盖）+ 附带检查
-- **方法** = checklist（或让引擎按对象自选）
-- **Context Capsule** = 已拍板决策 / 被否决方案及原因 / 非目标 / 预算（不带作者对文档的预期结论）
-- **档位**（领域特化）：设计文档跨模块、含架构 / 选型决策 → 重档（7 维度全量过）；琐碎改动 / 文案修订、拿不准 → 轻档（agent 自判，命中重档信号后要降只认用户显式否定词）
+**升审只在两种情况**：
+- **用户显式要求**（「审一下 / 深审 / 独立审 / 找 codex」）→ 调 `Skill(nocode:reviewing)`，声明：对象 = 设计文档；领域维度 = design-doc-review 8 维；Context Capsule = 已拍板决策 / 被否决方案及原因 / 非目标 / 预算（不带作者预期结论）——派发 / CLAIM 剥离 / 降级由引擎承载
+- **文档命中敏感面**（认证 / 敏感数据 / schema·migration / 资金 / 对外接口 / 不可逆决策）→ 向用户**一句话建议**升审，用户点头才调，不自动派发
 
-引擎产 findings + verdict——主路派发 / 升档异源交叉 / CLAIM 剥离 / codex 降级 / Evidence Gate / Doubt Theater / 分级归一（五档 C/W/S/Q/SA，Q/SA 经 kind 承载不丢语义）全由引擎承载，本节不复述。dev-design-refine 拿到引擎返回的 findings（五档全保留）后，做下面的收口确认。
+自查（或升审后引擎返回）的 findings 进下面的收口确认。
 
 **收口 + 用户确认（hard gate）**：
 - 把 findings 完整呈现给用户（C / W / S / **Open Questions(Q)** / **Self-Audit(SA)** 五档全保留，后两者绝不能漏）
@@ -210,14 +208,13 @@ Task 7: 保存 + 渲染确认 + handoff（步 13-14）
 **修订 + Review Log**：
 - 据用户决定 in-place 改主体；不在清单里的问题不顺手修
 - 把本轮 findings 全文 + 用户决定 + 修订摘要 append 到文档末尾 `## Review Log`
-- 询问「再来一轮 review？」是 → 回 Review 调引擎（是否重跑异源交叉由引擎按 delta 判据定：纯修复不重跑，结构性变更 / 用户要求才重跑）；否 → 保存
+- 询问「再来一轮 review？」是 → 回 Review 重新自查（纯修复只核对 fix 落实；结构性变更才全文重过；用户显式要求才派独立路）；否 → 保存
 
 **返回标准化 review verdict（交协调器）**：本 Review 收口后向协调器返回 verdict（`approved: true|false` + 未决 Open Questions + 剩余风险），schema 套 `findings-contract` 的 verdict 层。**协调器只验这个 verdict、不重新评审**——评审的唯一所有者是本步。
 
 **Exit Gate:**
-- [ ] 评审已调 reviewing 引擎（传 design-doc-review 维度）
-- [ ] 引擎返回 findings（升档时含异源交叉，或引擎记录未升档）
-- [ ] findings 套统一契约（五档；Q/SA 经 kind）
+- [ ] 8 维自查完成（design-doc-review 维度逐维过；用户显式要求时改为已调 reviewing 引擎）
+- [ ] findings 已产出（五档 C/W/S/Q/SA；升审时含独立路来源标注）
 - [ ] 用户逐条确认 fix / skip
 - [ ] 修订完成 + Review Log 已追加
 - [ ] 标准化 review verdict 已产出（交协调器，供其验证不重审）
@@ -276,7 +273,7 @@ Task 7: 保存 + 渲染确认 + handoff（步 13-14）
 - ❌ **接口只写 HTTP**：类怎么协作、数据怎么存只字未提
 - ❌ **章节空话**：「需要保证安全性、性能」「未来可扩展」——无具体内容的填充
 - ❌ **不读场景模板就写**：主文件没有 4a/4b 场景内容，凭大纲硬写 = 跳过了 detail 子步的 Enter/Exit Gate
-- ❌ **跳过 reviewer**：不调 reviewing 引擎直接交付——review 是 hard gate
+- ❌ **跳过 Review**：不做 8 维自查直接交付——review 是 hard gate（默认自查也不可跳；跳过的是"自动派独立 reviewer"，不是评审本身）
 - ❌ **代用户拍板**：拿到 findings 自己挑修哪些——用户确认是 hard gate
 - ❌ **吞 Review Log**：只改主体不 append Review Log——审计轨迹断
 - ❌ **把 plan 内容塞进来**：class 内部 / TDD 步骤 / 具体 catch 块写法
@@ -291,6 +288,6 @@ Task 7: 保存 + 渲染确认 + handoff（步 13-14）
 - `references/template-{feat,bug,refactor}.md` — 三种场景模板（结构骨架产出标准 + Step 4a/4b detail 子步），Step 1 按场景必 Read
 - `references/example-{feat,bug,refactor}-skeleton.md` — 三种场景的骨架示例，随场景模板一起 Read
 - `references/writing-principles.md` — 写作准则 12 条全文 + 文件影响硬格式 + 文档生命周期，Step 1 必 Read
-- `references/design-doc-review.md` — 设计文档评审维度（调 reviewing 引擎时传入）
+- `references/design-doc-review.md` — 设计文档评审维度（默认自查的维度单源；用户显式要求升审时随声明传入 reviewing 引擎）
 - `references/cards/{quick-view,prerequisites}.md` — 骨架驱动型内容的可选锚点节
 - `Skill(nocode:dev-design-render)` — 设计文档 → HTML 可视化

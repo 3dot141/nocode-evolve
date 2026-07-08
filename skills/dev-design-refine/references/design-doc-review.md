@@ -2,7 +2,7 @@
 
 > **定位**：本文件是 `dev-design-refine` 评审设计文档的**领域维度表**——`reviewing` 引擎的 domainAxes。通用流程 / reviewer 纪律 / Evidence Gate / Q/SA / findings 分级全由引擎承载，本文只提供设计文档专属的评审维度。
 >
-> **怎么用**：dev-design-refine 的 Review step 调 `Skill(nocode:reviewing)`，声明「对象 = 设计文档、方法 = checklist、领域维度 = 本文 8 维度 + 附带检查」。reviewer 纪律 / Evidence Gate / Self-Audit / 编号 / 分级 schema 全由 `reviewing` 引擎在调用时自带，本文不给死路径、不复述。
+> **怎么用**：dev-design-refine 的 Review step Read 本文拿维度，**默认主会话就地逐维自查**（不调 reviewing 引擎、不派 subagent/Codex）；用户显式要求升审时才调 `Skill(nocode:reviewing)`，声明「对象 = 设计文档、方法 = checklist、领域维度 = 本文 8 维度 + 附带检查」（此时 reviewer 纪律 / Evidence Gate / 分级 schema 由引擎自带）。自查时的编号（C/W/S/Q/SA）与 Evidence 纪律见 SKILL.md Review 节。
 >
 > **评审两层**：架构骨架已在 Step 3「架构审核」过（域拆分/边界/依赖），本步（唯一全文评审）审**完整性 / 一致性 / 可执行**，不重复审纯架构骨架问题。
 >
