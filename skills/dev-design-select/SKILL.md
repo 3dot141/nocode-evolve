@@ -21,7 +21,9 @@ select 回答"走哪条路"——探索 approach、多方案差异化对比后�
 
 select 全程默认 agent 自主决策——探索、方案对比、方案选定、测试计划都不因"要不要问用户"而停顿,决策连同理由 + 备选记入决策表,留到 Decision Packet 一并交付。
 
-**触发停下来问,仅限**:① 打平手(权衡相当,取决于用户主观优先级)② 冲突需拍板(与已有 ADR/wiki 决策冲突)③ 信息缺口(需 agent 拿不到的外部信息)④ 不可逆 + 高影响。
+**例行确认**:Step 8a——Packet 产出后写入文件,用户逐条审核编辑,改完 agent 读回应用。每次必过,不是例外触发。
+
+**异常停下来问,仅限**:① 打平手(权衡相当,取决于用户主观优先级)② 冲突需拍板(与已有 ADR/wiki 决策冲突)③ 信息缺口(需 agent 拿不到的外部信息)④ 不可逆 + 高影响。
 
 **协调模式区分**:被 `dev-design`(协调器)调用时,遇上述例外返回 `needs_user_input`(由协调器统一弹确认,不自行弹);独立运行时用本地 AskUserQuestion。
 
@@ -49,6 +51,7 @@ Task 3-5: 多轮方案选定(从大到小:L1 架构 → L2 组件 → L3 细节)
 Task 6: 对齐 + Pre-mortem + 领域覆盖检查(含可观测性)
 Task 7: 测试目标 TO
 Task 8: 落笔前核对 + 产出 Decision Packet(决策清点 + 功能覆盖 → Packet 完整性)
+Task 8a: 用户审核 Decision Packet(写文件 → 用户编辑 → 读回比对应用)
 Task 9: 硬交接 — 交付 Decision Packet(方案选择模式→refine;research 模式→直接交付终止)
   metadata: {handoff: true}
 ```
@@ -146,6 +149,23 @@ NeedsUserInput {
 }
 ```
 
+### Step 8a: 用户审核 Decision Packet
+
+将 Packet 以 markdown 格式写入文件（与 `{dev_design_output}` 同目录,文件名 `{topic}-decision-packet.md`）。格式要求：
+
+- 每个 requiredField 独立章节（selectedApproach / alternatives / constraints / domainDecisions / testObjectives / verifyStrategy）
+- 决策点标注当前状态（`[已定]` / `[假定]`）
+- domainDecisions 按领域分小节,每条决策带「决策点 / 选了什么 / 为什么 / 备选」
+- openQuestions 单独章节（空则标"无"）
+
+告知用户文件路径,请用户直接在编辑器中审核、修改、批注。用户确认改完后 Read 文件,与原 Packet **逐字段比对**,识别变更:
+
+- **方案级变更**（selectedApproach 改变 / 架构方向推翻）→ 回 Step 3 重选,用户修改作为新约束带入
+- **领域/细节调整**（domainDecisions / testObjectives / constraints / verifyStrategy 等）→ 直接更新 Packet,不回选
+- **无实质修改** → 进 Step 9
+
+本步是**例行确认**,无论独立运行还是被协调器调用都由 select 自行执行（不返回 `needs_user_input`——这不是异常确认,是流程内置步骤）。
+
 ### Step 9: 硬交接
 
 - **方案选择模式** → 返回 Decision Packet 给协调器(`dev-design`),由其调 `dev-design-refine` 写详细设计
@@ -159,4 +179,5 @@ NeedsUserInput {
 - [ ] TO 覆盖每条路径和约束,5 维自审通过
 - [ ] 决策清点全 ✅,功能覆盖全 ✅
 - [ ] Decision Packet 产出,requiredFields 齐
+- [ ] Step 8a 用户审核通过（文件已写 → 用户已编辑 → 变更已读回应用;方案级变更已回 Step 3 重选）
 - [ ] **硬交接**:方案选择→交 Packet 给协调器进 refine;research→直接交付终止
