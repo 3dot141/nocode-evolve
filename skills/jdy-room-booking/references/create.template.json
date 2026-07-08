@@ -1,0 +1,263 @@
+{
+  "values": {
+    "_widget_1751441495763": {
+      "data": 1783267200000,
+      "visible": true
+    },
+    "_widget_1751441495764": {
+      "data": [
+        "无锡"
+      ],
+      "visible": true
+    },
+    "_widget_1751441495766": {
+      "data": [
+        "上午"
+      ],
+      "visible": true
+    },
+    "_widget_1749693313879": {
+      "data": [
+        "09:00:00-09:30:00",
+        "09:30:00-10:00:00"
+      ],
+      "visible": true
+    },
+    "_widget_1751447818262": {
+      "data": "其他",
+      "visible": true
+    },
+    "_widget_1768295547899": {
+      "visible": true
+    },
+    "_widget_1756890937921": {
+      "data": "否",
+      "visible": true
+    },
+    "_widget_1779758815741": {
+      "data": "否",
+      "visible": false
+    },
+    "_widget_1757302106755": {
+      "data": "是",
+      "visible": true
+    },
+    "_widget_1756358032276": {
+      "data": "Harrison预约的其他会议",
+      "visible": true
+    },
+    "_widget_1751448393888": {
+      "data": [
+        "5aa5e8ebdc5ab1a754eae049"
+      ],
+      "visible": true
+    },
+    "_widget_1756363701613": {
+      "data": "1",
+      "visible": false
+    },
+    "_widget_1751941817767": {
+      "visible": false
+    },
+    "_widget_1751941961167": {
+      "data": 1,
+      "visible": false
+    },
+    "_widget_1751941961168": {
+      "data": 999,
+      "visible": false
+    },
+    "_widget_1757302644947": {
+      "visible": false
+    },
+    "_widget_1757302644948": {
+      "visible": false
+    },
+    "_widget_1749693313887": {
+      "data": [
+        {
+          "_widget_1751441495761": {
+            "data": {
+              "id": "6918a47017a1e9b83d39a9eb"
+            }
+          },
+          "_widget_1751448519016": {
+            "data": "202"
+          },
+          "_widget_1751448519017": {
+            "data": "09:00:00-09:30:00"
+          },
+          "_widget_1751446908955": {
+            "data": "202@2026-07-06@09:00:00-09:30:00"
+          },
+          "_widget_1755504491241": {
+            "data": [
+              {
+                "_id": "69153924a4f660e2de8a0b36",
+                "name": "e0c053f0cdd65a239e8abd5ee06af933_origin(1).jpg",
+                "size": 5231370,
+                "key": "cfe11556-5cd4-4213-ad77-27e66dec387c",
+                "qnKey": "cfe11556-5cd4-4213-ad77-27e66dec387c",
+                "mime": "image/jpeg",
+                "uploadTime": "2025-11-13T01:49:24.069Z",
+                "bucket": "jdy-file",
+                "uploader": "67c817f9dea3eb0a9e4bd853",
+                "url": "https://files.jiandaoyun.com/cfe11556-5cd4-4213-ad77-27e66dec387c?e=1783328399&token=[REDACTED]",
+                "downloadUrl": "https://files.jiandaoyun.com/cfe11556-5cd4-4213-ad77-27e66dec387c?attname=e0c053f0cdd65a239e8abd5ee06af933_origin(1).jpg&e=1783328399&token=[REDACTED]",
+                "previewUrl": "https://files.jiandaoyun.com/cfe11556-5cd4-4213-ad77-27e66dec387c?imageMogr2/auto-orient%7CimageView2/2/w/1200/h/1200&e=1783328399&token=[REDACTED]",
+                "thumbUrl": "https://files.jiandaoyun.com/cfe11556-5cd4-4213-ad77-27e66dec387c?imageMogr2/auto-orient%7CimageView2/1/w/150/h/150&e=1783328399&token=[REDACTED]",
+                "thumbUrlMedium": "https://files.jiandaoyun.com/cfe11556-5cd4-4213-ad77-27e66dec387c?imageMogr2/auto-orient%7CimageView2/0/w/320/h/320&e=1783328399&token=[REDACTED]"
+              }
+            ]
+          },
+          "_widget_1756104767053": {
+            "data": null
+          },
+          "_widget_1756109883141": {
+            "data": 1783299600000
+          },
+          "_widget_1756109883142": {
+            "data": 1783301400000
+          },
+          "_widget_1761722131488": {
+            "data": "14664715"
+          }
+        }
+      ],
+      "visible": true
+    },
+    "_widget_1756104767076": {
+      "data": "",
+      "visible": false
+    },
+    "_widget_1757051649763": {
+      "data": "202",
+      "visible": false
+    },
+    "_widget_1756191293418": {
+      "visible": false
+    },
+    "_widget_1756377633747": {
+      "visible": false
+    },
+    "_widget_1756377633748": {
+      "visible": false
+    },
+    "_widget_1755251152710": {
+      "data": "https://pe9qbh7c.shuzhiniao.com/web/#/h5/business/brd?spaceId=4851",
+      "visible": true
+    },
+    "_widget_1755502183616": {
+      "data": "1",
+      "visible": false
+    },
+    "_widget_1751447818257": {
+      "data": "5aa5e8ebdc5ab1a754eae049",
+      "visible": false
+    },
+    "_widget_1751447818265": {
+      "data": "69a8742230beb863854569ad",
+      "visible": false
+    },
+    "_widget_1751447818266": {
+      "visible": false
+    },
+    "_widget_1753259192825": {
+      "data": "1",
+      "visible": false
+    },
+    "_widget_1754031562407": {
+      "data": "{\"rel\": \"and\", \"cond\": [ { \"field\": \"date\", \"type\":\"text\", \"method\":\"eq\",\"value\":[\"2026-07-06\"]} ,{ \"field\": \"time\",\"type\":\"text\",\"method\":\"in\", \"value\":[\"09:00:00-09:30:00\",\"09:30:00-10:00:00\"]},{\"field\": \"key2\",\"type\":\"text\",\"method\":\"not_empty\"} ]}",
+      "visible": false
+    },
+    "_widget_1753423730606": {
+      "data": "FRTV2,403,303,506,301,大培训室,11-新街口,302,电211,电418,电417,101(客户接待室),703,文化茶馆,502,903,907（原人资办公室）,505,电811,6B-南大鼓楼,2-南京博物院,电611,6A-南大仙林,201,12-栖霞山,501(大培训室),电712,电420,10-紫金山,404,805,电414,电419,5-莫愁湖,203,401,402,901,电214,1-玄武湖",
+      "visible": false
+    },
+    "_widget_1753423730610": {
+      "data": [
+        "FRTV2",
+        "403",
+        "303",
+        "506",
+        "301",
+        "大培训室",
+        "11-新街口",
+        "302",
+        "电211",
+        "电418",
+        "电417",
+        "101(客户接待室)",
+        "703",
+        "文化茶馆",
+        "502",
+        "903",
+        "907（原人资办公室）",
+        "505",
+        "电811",
+        "6B-南大鼓楼",
+        "2-南京博物院",
+        "电611",
+        "6A-南大仙林",
+        "201",
+        "12-栖霞山",
+        "501(大培训室)",
+        "电712",
+        "电420",
+        "10-紫金山",
+        "404",
+        "805",
+        "电414",
+        "电419",
+        "5-莫愁湖",
+        "203",
+        "401",
+        "402",
+        "901",
+        "电214",
+        "1-玄武湖"
+      ],
+      "visible": false
+    },
+    "_widget_1753425690896": {
+      "data": "09:00:00-09:30:00,09:30:00-10:00:00",
+      "visible": false
+    },
+    "_widget_1754035505149": {
+      "data": "无锡上午09:00:00-09:30:00,09:30:00-10:00:00",
+      "visible": false
+    },
+    "_widget_1753424333496": {
+      "data": [
+        "09:00:00-09:30:00",
+        "09:30:00-10:00:00"
+      ],
+      "visible": false
+    },
+    "_widget_1755581891409": {
+      "data": "Harrison",
+      "visible": false
+    },
+    "_widget_1756109883139": {
+      "data": "2026-07-06 09:00:00",
+      "visible": false
+    },
+    "_widget_1756109883143": {
+      "data": "2026-07-06 09:30:00",
+      "visible": false
+    },
+    "_widget_1761722131489": {
+      "data": "14664715",
+      "visible": false
+    },
+    "_widget_1764034321571": {
+      "visible": false
+    }
+  },
+  "appId": "67e6429f68271e5234cce133",
+  "entryId": "684a3381d76c39b14ae9c1c6",
+  "formId": "684a3381d76c39b14ae9c1c6",
+  "hasResult": true,
+  "dataOpId": "997f64d7-de7e-4eb8-ab28-89d709d5837e",
+  "authGroupId": -1
+}
