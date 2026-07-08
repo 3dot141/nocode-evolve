@@ -252,7 +252,12 @@ task 间依赖不成环，底层 task 排前面。循环依赖说明切片方式
 
 ### Step 9: 用户确认计划 + 选执行方式
 
-计划完整呈现后用 AskUserQuestion 让用户确认，同时选执行方式：
+拆两回合，**计划内容禁塞 AskUserQuestion**（塞 `question` 挤成密集段落、塞 `preview` 被终端折叠 `N lines hidden`，用户什么都没看清就被要求确认）：
+
+- **展示回合**：计划全景作为**回合末尾文本**完整输出——plan 文件路径 + per-task 清单（有序列表，一行一个：编号 / 标题 / 一句验证方式）+ 对抗审视结论一行；末尾问两件事：「计划确认吗？Build 执行方式选哪种？」并给出两种方式一行说明。**结束回合，不接任何工具调用**。
+- **确认回合**：用户回应通常已是决策（确认 + 执行方式 / 具体修改意见）→ 直接采纳；要改 → 改后重走展示回合；回应只确认了计划没选执行方式 → AskUserQuestion 只补问执行方式（question 写 plan 路径 + task 数一行摘要，不复述计划）。
+
+执行方式二选一：
 
 - **`subagent`**（推荐）——主 agent 顺序派发独立 subagent，per-task 走 implement → spec review → quality review 三阶段独立审查
 - **`executing`**——主 agent 自己顺序执行 plan 已写好的代码，不派 subagent、无独立 review，靠后续 dev-verify/dev-review 兜底
@@ -283,7 +288,7 @@ task 间依赖不成环，底层 task 排前面。循环依赖说明切片方式
 - [ ] 测试目标已分配到 slice
 - [ ] Round 1 red-blue-deep 通过 + 骨架已修正（Step 6）
 - [ ] Round 2 checklist 核查 + 窄化 red-blue-deep + Plan Validation 通过（Step 8）
-- [ ] 用户显式确认计划（AskUserQuestion）
+- [ ] 用户显式确认计划（两回合：末尾文本完整展示 → 用户回应决策）
 - [ ] 执行方式已选定（`Execution: subagent | executing`），写入 Plan Document Header
 - [ ] 后续 Build 输入齐全：任务序列 + 测试目标 + Execution 字段
 - [ ] **硬交接**：Exit Gate 全部通过后，向用户报告 Plan 完成（含 task 数量 + 首个 slice 概要），建议下一阶段：Build（`nocode:dev-build`）。列出 Build 阶段的 sub-steps + 关键决策（devflow Step 5 格式）。等用户拍板，不自行进入下一阶段
