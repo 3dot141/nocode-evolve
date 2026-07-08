@@ -118,7 +118,7 @@ remote_url=$(git -C "$MAIN_ROOT" remote get-url origin)
 <...>
 
 --- Affected（仅展示，不进 body）---
-<扁平路径列表>
+<Affected 目录树>
 
 回「OK」全自动到底；或直接说改哪项。
 ```

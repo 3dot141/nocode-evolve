@@ -35,9 +35,11 @@ Step 4 材料收集: base=main(nocode-base) · push range 3 commits · 整理建
 搜索索引与查询链路接入 ik analyzer；配置集中在 src/search/analyzer.ts。重点评审：
 ik 词典加载时机（冷启动首查延迟）与旧索引兼容性——旧索引需重建，本 PR 未含重建脚本。
 --- Affected（仅此处展示，不进 body）---
-src/search/analyzer.ts
-src/search/query.ts
-test/search-zh.test.ts
+src/search/
+├── analyzer.ts
+└── query.ts
+test/
+└── search-zh.test.ts (新)
 
 回「OK」全自动到底；或直接说改哪项。
 ```

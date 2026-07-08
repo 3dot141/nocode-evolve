@@ -11,7 +11,7 @@ toolchain 检测（`github.com`→gh / `bitbucket.`→bkt）与 base 解析见 S
 1. **push range**：`git log "$(git merge-base HEAD $base_branch)..HEAD" --oneline`
 2. **commit 整理建议**：按 `commit-tidy.md` 判定规则产出「建议 + 完整命令」，只作为全景计划一行展示，**不在此等待用户**
 3. **title + body**：契约单源见 `pr-body-contract.md`（标题 + 背景/方案两段），核对 push range 无遗漏实质变更
-4. **Affected**：`git diff --name-only "$(git merge-base HEAD $base_branch)..HEAD" | sort`——扁平路径列表，每行一个完整路径，不做目录树缩进。只进全景计划展示，**不写进 PR body**
+4. **Affected**：`git diff --name-status "$(git merge-base HEAD $base_branch)..HEAD" | sort -k2`——按目录聚合成**目录树**展示：目录作节点（同链单子目录合并成 `a/b/c/` 一行），文件作叶用 `├──`/`└──` 连线；状态只标非修改项——新增 `(新)`、删除 `(删)`、改名 `(← 旧路径)`；同目录同类批量文件（如 i18n 语言包）折叠为一行 `<模式> ×N`。禁止扁平路径列表或 ` / ` 单行串接。只进全景计划展示，**不写进 PR body**
 5. **target 解析**：`base_branch` 已由 SKILL.md Step 2e 单源解析；映射 `target_remote` + `target_branch`（fork 场景 `origin/<branch>`→`upstream/<base>`；单仓 `origin/<base>`）。项目本地 override 仅读 `.agents-personal/rules/personal-repo-pr.md`，不存在即无约定
 6. **default reviewer** → 见 `pr-flow-gh`「default reviewer」/ `pr-flow-bkt`「default reviewer」（gh 走 branch protection/CODEOWNERS，bkt 走 default-reviewers API）
 7. **任务号 + 目标状态**：SKILL.md Step 2e 已提取推定（有任务号时已 Read `post-merge.md` 拿映射），直接引用结果
@@ -33,7 +33,7 @@ toolchain 检测（`github.com`→gh / `bitbucket.`→bkt）与 base 解析见 S
 --- body ---
 <body 全文>
 --- Affected（仅此处展示，不进 body）---
-<扁平路径列表>
+<Affected 目录树，规格见 Step 1 第 4 项>
 
 回「OK」全自动到底；或直接说改哪项（target / title / body / reviewer / 合并方式 / 远程分支处置 / 目标状态）。
 回「我先整理 commit」暂停整理；回「分步确认」降级逐项确认。
