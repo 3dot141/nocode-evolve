@@ -12,7 +12,7 @@
 **Tech Stack**: Express + 现有 orders/query.ts + csv-stringify
 **Design Doc**: N/A (Standard 场景)
 **Test Objectives**: 跨页导出全量 / UTF-8 BOM 不乱码 / 权限复用列表页
-**Execution**: subagent
+**Execution**: subagent-lite
 ```
 
 ## 依赖图

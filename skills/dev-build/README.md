@@ -1,6 +1,6 @@
 # dev-build
 
-devflow 第 5 阶段——读 Plan 的 `Execution` 字段，分发到 `dev-build-subagent`（顺序派发独立 subagent，per-task 三阶段验证：implement → spec review → quality review）或 `dev-build-executing`（主 agent 自己顺序执行 plan 已写代码）。Build skill 本身是编排入口，不执行实现代码，具体协议见对应 reference。
+devflow 第 5 阶段——读 Plan 的 `Execution` 字段，分发到 `dev-build-subagent`（顺序派发独立 subagent，审查按 `subagent-lite` / `subagent-full` 分档）或 `dev-build-executing`（主 agent 自己顺序执行 plan 已写代码）。Build skill 本身是编排入口，不执行实现代码，具体协议见对应 reference。
 
 ## 在 devflow 中的位置
 
@@ -63,7 +63,20 @@ devflow 第 5 阶段——读 Plan 的 `Execution` 字段，分发到 `dev-build
 - 新建 `references/dev-build-executing.md`（对应上游 `executing-plans`）：主 agent 自己顺序执行 plan 已写代码，不派 subagent、无独立 review，靠后续 dev-verify/dev-review 兜底；收尾对接 devflow 的 Verify 阶段，不像上游那样接到已被 nocode 替换掉的 `finishing-a-development-branch`
 - `implementer-prompt.md` 去掉技术栈配方按需注入（已移 Plan 阶段消费）
 
+## 设计决策：subagent 协议审查分档（lite/full），Quality Review 改 checkpoint 批量
+
+`260708` 红蓝军评审（devflow review 密度）后改。
+
+**原来的设计**：`Execution: subagent` 单档——per-task 固定派 Spec Reviewer + Quality Reviewer 两个隔离 subagent，review 数随 task 数线性增长（10 task = 20 次隔离 review）。
+
+**为什么改**：红蓝军对 devflow 全链路 review 密度的评审量化出——per-task 双 review 占全链路重触点墙钟的 70-85%，是最大的速度税；且执行方式只有「per-task 双审」和「executing 零审」两端，用户嫌重时唯一退路是掉到零审裸奔，形成断崖。这是对上面「Review Tier 移除」决策的**部分回调**——当时为贴近上游删掉了批量审查，本次以真实墙钟成本为据重新引入，但形态更轻：不复活 Plan 侧 per-task Tier 字段和 tag→severity 映射，风险判定由 Build 编排者按敏感面清单就地做。
+
+**现在怎么办**：
+- `Execution` 三值：`subagent-lite`（默认推荐：implementer per-task，仅风险 task 派 spec+quality）/ `subagent-full`（spec per-task 不变，quality 改 checkpoint 批量，尾巴批收尾前必补）/ `executing`（不变）；旧值 `subagent` 按 `subagent-full` 兼容
+- 风险 task 判定内联在 `dev-build-subagent.md`（外部输入/认证/敏感数据/schema·migration/并发/资金/跨模块接口/不可逆），拿不准按命中处理
+- 审查覆盖如实上报进 Build 收尾报告；`dev-review` 五轴对无 Quality Review 覆盖的 task 恢复全量检查（增量假设只对已覆盖 task 成立），拦截面不破洞
+
 ## 下游消费者
 
 - `dev-verify` — 消费 Build 的测试/build 通过状态
-- `dev-review` — Five-Axis 读取各 task 的 Quality Review verdict 避免重复扫描
+- `dev-review` — Five-Axis 读取 Build 的 Quality Review verdict（per-task 或 checkpoint 批量）+ 审查覆盖清单，已覆盖 task 走增量、未覆盖 task 走全量

@@ -92,7 +92,7 @@ Task 6: 硬交接 — 调用下一步 skill
 
 调 `Skill(nocode:reviewing)` 传 diff 范围 + 五轴维度 + Context Capsule（已拍板决策 / 非目标 / 约束，不带预期结论），引擎按 checklist 逐轴过 diff、每轴显式标 ✅/⚠️/❌（五轴详细检查点见 `references/five-axis-guide.md`，随声明给引擎）：
 
-**打包前先读 Build 各 task 的 Quality Review verdict（有则读，增量提示写进 prompt）**：可读性/架构/正确性（对应 Build Quality Review 的 Conventions/Structure/Quality）这三轴不再从零通读全部文件——Build per-task 已经查过一遍，这里只找"合并后才出现"的增量问题（多个 task 各自看都合规、合起来才暴露的循环依赖/重复抽象/职责重叠），已经被 per-task 挑过的同类问题不重复记 finding。**安全轴 / 性能轴仍是全量强制检查**——Build 的 Quality Review 没有这两个维度，这里是它们第一次、也是唯一一次被系统性检查。
+**打包前先读 Build 的 Quality Review verdict（per-task 或 checkpoint 批量，有则读，增量提示写进 prompt）**：可读性/架构/正确性（对应 Build Quality Review 的 Conventions/Structure/Quality）这三轴，对**已有 Quality Review 覆盖的 task** 不再从零通读——只找"合并后才出现"的增量问题（多个 task 各自看都合规、合起来才暴露的循环依赖/重复抽象/职责重叠），已经被挑过的同类问题不重复记 finding；**无 Quality Review 覆盖的 task**（`subagent-lite` 跳过审查的非风险 task / `executing` 模式全部 task）这三轴保持全量检查，不按增量处理——覆盖情况以 Build 收尾报告的审查覆盖清单为准。**安全轴 / 性能轴对所有 task 仍是全量强制检查**——Build 的 Quality Review 没有这两个维度，这里是它们第一次、也是唯一一次被系统性检查。
 
 | 轴 | 核心问题 | 高频缺陷 |
 |---|---|---|

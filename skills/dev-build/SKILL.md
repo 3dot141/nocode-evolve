@@ -5,7 +5,7 @@ description: Use when executing implementation tasks from a plan, writing new co
 
 # build — 读 plan 执行方式，走对应协议
 
-Build 是编排入口：读 Plan 阶段用户选定的 `Execution` 字段，走对应的执行协议——`subagent`（顺序派发独立 subagent，per-task 三阶段验证）或 `executing`（主 agent 自己顺序执行 plan 已写代码）。Build skill 本身只负责 devflow 阶段编排（Enter/Exit Gate、里程碑、硬交接），具体执行细节在对应 reference 文件里。
+Build 是编排入口：读 Plan 阶段用户选定的 `Execution` 字段，走对应的执行协议——`subagent-lite`（顺序派发 implementer，仅风险 task 派审查）、`subagent-full`（per-task spec review + checkpoint 批量 quality review）或 `executing`（主 agent 自己顺序执行 plan 已写代码）。Build skill 本身只负责 devflow 阶段编排（Enter/Exit Gate、里程碑、硬交接），具体执行细节在对应 reference 文件里。
 
 ## 非本 skill 请求
 
@@ -14,7 +14,7 @@ Build 是编排入口：读 Plan 阶段用户选定的 `Execution` 字段，走�
 ## Enter Gate
 
 - [ ] Plan 任务序列已产出且用户确认
-- [ ] Plan 已标注 `Execution` 字段（`subagent` / `executing`）
+- [ ] Plan 已标注 `Execution` 字段（`subagent-lite` / `subagent-full` / `executing`；旧计划的 `subagent` 按 `subagent-full` 处理）
 - [ ] Full 场景：Design 测试目标可用（指导 TDD 写什么测试）
 
 ## 协议
@@ -43,7 +43,7 @@ Task 3: 硬交接 — 调用下一步 skill
 ### Step 1: 读 Execution 字段，分发执行
 
 1. 读 Plan 文档 header 的 `Execution` 字段
-2. `Execution: subagent` → Read `references/dev-build-subagent.md`，按其协议主 agent 用 `Agent()` 逐个 task 顺序派发独立 subagent
+2. `Execution: subagent-lite` / `subagent-full`（旧值 `subagent` 按 `subagent-full` 处理）→ Read `references/dev-build-subagent.md`，按其协议主 agent 用 `Agent()` 逐个 task 顺序派发独立 subagent，审查密度按档位分叉（lite：仅风险 task 派审查；full：per-task spec + checkpoint 批量 quality）
 3. `Execution: executing` → Read `references/dev-build-executing.md`，主 agent 自己顺序执行 plan 已写的代码，不派 subagent
 
 ### Step 2: 编排者验证（两种协议跑完后统一执行）
@@ -52,7 +52,7 @@ Task 3: 硬交接 — 调用下一步 skill
 
 1. **独立查 diff**：Read 改动的文件，确认 scope 未越界
 2. **独立跑测试**：跑完整测试套件，不只依赖执行方的测试输出
-3. **spec 核对（抽查）**：`subagent` 协议下抽查 1-2 个 task 的 spec reviewer 判断是否站得住；`executing` 协议下抽查 1-2 个 task 的实现是否匹配 plan 声明的验收标准
+3. **spec 核对（抽查）**：`subagent-lite/full` 协议下抽查 1-2 个 task 的 spec reviewer 判断是否站得住（lite 档跳过审查的 task 优先抽）；`executing` 协议下抽查 1-2 个 task 的实现是否匹配 plan 声明的验收标准
 4. **空壳扫描（确定性脚本，非 LLM 判断）**：用 grep/AST 模式匹配扫全量 diff——空函数体、placeholder 注释（`// TODO`、`// implement`）、`throw new Error('not implemented')`、只有类型签名没有逻辑的方法。lint + typecheck 通过不代表功能完整，空函数合法但无用。发现空壳 → 视为 task 未完成，重新处理
 
 ### Step 3: 统一 Commit
@@ -66,7 +66,7 @@ Task 3: 硬交接 — 调用下一步 skill
 | task 卡住无法推进 | 收集 blocker 信息，提供更多 context 重新执行；或升级到更强 model；或回 Plan 拆分 |
 | 多个 task 互相冲突 | 停手报告，可能需要回 Plan 调整依赖图 |
 
-`subagent` 协议内部的 spec/quality review 循环见 `references/dev-build-subagent.md`。
+`subagent-lite/full` 协议内部的 spec/quality review 循环与分档判定见 `references/dev-build-subagent.md`。
 
 ## Exit Gate
 
@@ -77,7 +77,7 @@ Task 3: 硬交接 — 调用下一步 skill
 - [ ] build 通过
 - [ ] 统一 commit 已完成
 - [ ] 后续 Verify 可开始
-- [ ] **硬交接**：Exit Gate 全部通过后，向用户报告 Build 完成（含完成 task 数 + 测试通过状态 + build 状态），建议下一阶段：Verify（`nocode:dev-verify`）。列出 Verify 阶段的 sub-steps + 关键决策（devflow Step 5 格式）。等用户拍板，不自行进入下一阶段
+- [ ] **硬交接**：Exit Gate 全部通过后，向用户报告 Build 完成（含完成 task 数 + 测试通过状态 + build 状态 + 各 task 审查覆盖情况——spec/quality 已审或 lite 跳过，供 Review 阶段决定增量/全量），建议下一阶段：Verify（`nocode:dev-verify`）。列出 Verify 阶段的 sub-steps + 关键决策（devflow Step 5 格式）。等用户拍板，不自行进入下一阶段
 
 **"lint + typecheck 通过" ≠ 完成。** 空函数体、未填充的方法、placeholder 注释都能过 lint 和 typecheck。Exit Gate 必须独立确认每个 task 的功能已实现，不只是语法合法。
 

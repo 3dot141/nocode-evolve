@@ -257,9 +257,10 @@ task 间依赖不成环，底层 task 排前面。循环依赖说明切片方式
 - **展示回合**：计划全景作为**回合末尾文本**完整输出——plan 文件路径 + per-task 清单（有序列表，一行一个：编号 / 标题 / 一句验证方式）+ 对抗审视结论一行；末尾问两件事：「计划确认吗？Build 执行方式选哪种？」并给出两种方式一行说明。**结束回合，不接任何工具调用**。
 - **确认回合**：用户回应通常已是决策（确认 + 执行方式 / 具体修改意见）→ 直接采纳；要改 → 改后重走展示回合；回应只确认了计划没选执行方式 → AskUserQuestion 只补问执行方式（question 写 plan 路径 + task 数一行摘要，不复述计划）。
 
-执行方式二选一：
+执行方式三选一：
 
-- **`subagent`**（推荐）——主 agent 顺序派发独立 subagent，per-task 走 implement → spec review → quality review 三阶段独立审查
+- **`subagent-lite`**（推荐默认）——主 agent 顺序派发独立 implementer subagent；仅**风险 task**（外部输入/认证/敏感数据/schema·migration/并发/资金/跨模块接口/不可逆）派 spec + quality review，其余 task 只实现不派审查
+- **`subagent-full`**——per-task spec review + checkpoint 批量 quality review（每个 plan checkpoint 批审一次），留给跨模块 / 高风险 / 数据敏感的计划
 - **`executing`**——主 agent 自己顺序执行 plan 已写好的代码，不派 subagent、无独立 review，靠后续 dev-verify/dev-review 兜底
 
 选定后写入 Plan Document Header 的 `Execution` 字段，Build 阶段读这个字段决定走哪条协议。
@@ -276,7 +277,7 @@ task 间依赖不成环，底层 task 排前面。循环依赖说明切片方式
 **Tech Stack**: [关键技术/库]
 **Design Doc**: [路径（Full 场景）]
 **Test Objectives**: [测试目标摘要]
-**Execution**: [subagent | executing]
+**Execution**: [subagent-lite | subagent-full | executing]
 ```
 
 ## Exit Gate
@@ -289,7 +290,7 @@ task 间依赖不成环，底层 task 排前面。循环依赖说明切片方式
 - [ ] Round 1 red-blue-deep 通过 + 骨架已修正（Step 6）
 - [ ] Round 2 checklist 核查 + 窄化 red-blue-deep + Plan Validation 通过（Step 8）
 - [ ] 用户显式确认计划（两回合：末尾文本完整展示 → 用户回应决策）
-- [ ] 执行方式已选定（`Execution: subagent | executing`），写入 Plan Document Header
+- [ ] 执行方式已选定（`Execution: subagent-lite | subagent-full | executing`），写入 Plan Document Header
 - [ ] 后续 Build 输入齐全：任务序列 + 测试目标 + Execution 字段
 - [ ] **硬交接**：Exit Gate 全部通过后，向用户报告 Plan 完成（含 task 数量 + 首个 slice 概要），建议下一阶段：Build（`nocode:dev-build`）。列出 Build 阶段的 sub-steps + 关键决策（devflow Step 5 格式）。等用户拍板，不自行进入下一阶段
 
