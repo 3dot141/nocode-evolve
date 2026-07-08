@@ -14,12 +14,13 @@ function fakeJdk() {
   return home;
 }
 
-test('graalvmCandidates: 含 8 条固定路径 + userprofile 时追加 2 条', () => {
+test('graalvmCandidates: 含 12 条固定路径 + userprofile 时追加 2 条', () => {
   const base = graalvmCandidates({ home: '/h' });
-  assert.equal(base.length, 8);
+  assert.equal(base.length, 12);
   assert.ok(base[0].includes('.jdks/graalvm-21/Contents/Home'));
+  assert.ok(base.some((p) => p.includes('.local/share/mise/installs/java/')));
   const withUp = graalvmCandidates({ home: '/h', userprofile: '/up' });
-  assert.equal(withUp.length, 10);
+  assert.equal(withUp.length, 14);
 });
 
 test('isGraalvm: -version 输出含 graalvm 关键字返回 true（注入 mock exec）', () => {

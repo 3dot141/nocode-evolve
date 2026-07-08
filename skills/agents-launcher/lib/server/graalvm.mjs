@@ -2,7 +2,7 @@
 // bootRun 需要 GraalVM（EnableJVMCI），本地没有则可选容器方案（server-cli start 时机再决定是否真的走容器）。
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 import { homedir } from 'node:os';
 
 export const GRAALVM_IMAGE = 'eclipse-temurin:21-jdk';
@@ -16,6 +16,11 @@ export function graalvmCandidates({ home = homedir(), userprofile = process.env.
     join(home, '.jdks/graalvm-ce-21'),
     '/usr/lib/jvm/graalvm-21',
     join(home, '.sdkman/candidates/java/current'),
+    // mise (https://mise.jdx.dev) 安装路径
+    join(home, '.local/share/mise/installs/java/oracle-graalvm-21/Contents/Home'),
+    join(home, '.local/share/mise/installs/java/oracle-graalvm-21'),
+    join(home, '.local/share/mise/installs/java/graalvm-community-21/Contents/Home'),
+    join(home, '.local/share/mise/installs/java/graalvm-community-21'),
     '/c/Program Files/Java/graalvm-21',
     '/c/Program Files/Java/graalvm-ce-21',
     '/c/Java/graalvm-21',
@@ -24,22 +29,24 @@ export function graalvmCandidates({ home = homedir(), userprofile = process.env.
 }
 
 // 某 JAVA_HOME 下的 java 是否是 GraalVM（对应 -version 输出里 grep graalvm）。
-export function isGraalvm(javaHome, { exec = execFileSync } = {}) {
+export function isGraalvm(javaHome, { exec } = {}) {
   const javaBin = join(javaHome, 'bin/java');
   if (!existsSync(javaBin)) return false;
   try {
-    const out = exec(javaBin, ['-version'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).toLowerCase();
-    return out.includes('graalvm') || out.includes('oracle graalvm');
+    // java -version 输出在 stderr；spawnSync 能同时捕获 stdout + stderr
+    const r = (exec || spawnSync)(javaBin, ['-version'], { encoding: 'utf8' });
+    // spawnSync 返回 { stdout, stderr }，execFileSync 返回 string
+    const out = (typeof r === 'string' ? r : `${r.stdout || ''}${r.stderr || ''}`).toLowerCase();
+    return out.includes('graalvm');
   } catch (e) {
-    // java -version 把版本信息打到 stderr，execFileSync 在非零退出码时把 stdout/stderr 一起挂在 e.stdout/e.stderr
     const out = `${e.stdout || ''}${e.stderr || ''}`.toLowerCase();
-    return out.includes('graalvm') || out.includes('oracle graalvm');
+    return out.includes('graalvm');
   }
 }
 
 // 综合检测：已设置 JAVA_HOME → 缓存文件 → 候选路径表 → 容器降级。
 // 返回 { mode: 'local', javaHome } | { mode: 'container', image } | { mode: 'missing' }
-export function detectGraalvm({ serverDir, env = process.env, exec = execFileSync, hasDocker = true } = {}) {
+export function detectGraalvm({ serverDir, env = process.env, exec, hasDocker = true } = {}) {
   if (env.JAVA_HOME && isGraalvm(env.JAVA_HOME, { exec })) {
     writeJavaHomeCache(serverDir, env.JAVA_HOME);
     return { mode: 'local', javaHome: env.JAVA_HOME };
