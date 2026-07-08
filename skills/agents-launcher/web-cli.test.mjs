@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import {
   envLocalPath, buildWebEnv, prepare, pkgmgrCheck, pkgmgrPatch,
-  alignCheck, alignReset, killCommands,
+  alignCheck, alignReset, killCommands, viteCacheDir, cleanViteCache,
 } from './web-cli.mjs';
 // 旧导出将在 T8 删除；动态 import + skip 让回归锚在删除后自动跳过而非 import 失败
 const legacyPorts = await import('./lib/ports.mjs');
@@ -122,6 +122,30 @@ test('alignReset: 调用 git reset --hard <targetSha>（注入 exec，验证参�
   let called = null;
   alignReset({ webDir: '/fake', targetSha: 'abc123', exec: (cmd, args) => { called = [cmd, args]; return ''; } });
   assert.deepEqual(called, ['git', ['-C', '/fake', 'reset', '--hard', 'abc123']]);
+});
+
+test('viteCacheDir 指向 packages/jsy-web/node_modules/.vite', () => {
+  assert.equal(viteCacheDir('/repo'), '/repo/packages/jsy-web/node_modules/.vite');
+});
+
+test('cleanViteCache: 缓存存在 → 删除后 action=removed', () => {
+  const dir = makeWebDir();
+  const cacheDir = join(dir, 'packages/jsy-web/node_modules/.vite/deps');
+  try {
+    mkdirSync(cacheDir, { recursive: true });
+    writeFileSync(join(cacheDir, '@lexical_list.js'), 'stale');
+    const r = cleanViteCache({ webDir: dir });
+    assert.equal(r.action, 'removed');
+    assert.ok(!existsSync(join(dir, 'packages/jsy-web/node_modules/.vite')));
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('cleanViteCache: 缓存不存在 → action=none', () => {
+  const dir = makeWebDir();
+  try {
+    const r = cleanViteCache({ webDir: dir });
+    assert.equal(r.action, 'none');
+  } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
 test('killCommands 只清 web 端口，不碰 agents/server', () => {

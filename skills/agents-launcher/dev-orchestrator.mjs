@@ -170,6 +170,8 @@ async function main() {
 
   // ---- Step 3: web ----
   if (args.services.web) {
+    const vc = webCli.cleanViteCache({ webDir: repos.WEB_DIR });
+    if (vc.action === 'removed') console.log(`[debug] 已清 Vite 预构建缓存: ${vc.path}`);
     if (args.cssWatch) children.push(spawnPrefixed('css', 'pnpm', ['build:css:watch'], { cwd: repos.AGENTS_DIR }));
     children.push(webCli.start({ webDir: repos.WEB_DIR }));
     await waitHealthy('web', () => tcpOpen(PORTS.web), { tries: 120, intervalMs: 1000 });

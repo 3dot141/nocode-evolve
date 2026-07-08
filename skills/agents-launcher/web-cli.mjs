@@ -7,7 +7,7 @@
 // 用法: FX_WEB_DIR=<repo> [FX_AGENTS_DIR=<repo>] node web-cli.mjs {prepare|env|pkgmgr|align|start|stop|status}
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { dirname, join } from 'node:path';
-import { existsSync, mkdirSync, copyFileSync, readFileSync, writeFileSync, readdirSync } from 'node:fs';
+import { existsSync, mkdirSync, copyFileSync, readFileSync, writeFileSync, readdirSync, rmSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { resolveRepos, validateRepos } from './lib/paths.mjs';
 import { tcpOpen, pidOnPort } from './lib/probe.mjs';
@@ -31,6 +31,17 @@ export function buildWebEnv({ agentsDir, ports = PORTS }) {
     AGENTS_LOCAL_SRC: agentsDir,
     DEV_SERVER_PORT: String(ports.web),
   };
+}
+
+export function viteCacheDir(webDir) {
+  return join(webDir, 'packages/jsy-web/node_modules/.vite');
+}
+
+export function cleanViteCache({ webDir, fs: _fs = { existsSync, rmSync } } = {}) {
+  const dir = viteCacheDir(webDir);
+  if (!_fs.existsSync(dir)) return { action: 'none', path: dir };
+  _fs.rmSync(dir, { recursive: true, force: true });
+  return { action: 'removed', path: dir };
 }
 
 export function killCommands({ ports = PORTS } = {}) {
