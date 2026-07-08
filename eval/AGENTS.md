@@ -83,7 +83,7 @@ default_intent:
 
 `rules/rule-*.md（原 rules/manifest.json，已废弃改为逐文件 frontmatter）` 当前 24 条 rule 的 id 已全部改成 `dev-*` 前缀
 （`dev-define` / `dev-design` / `dev-plan` / `dev-build` / `dev-verify` /
-`dev-finish-branch` 等，`model/agent-catalog-*.md` 里展示的 section 标题也是这些
+`dev-land` 等，`model/agent-catalog-*.md` 里展示的 section 标题也是这些
 `dev-*` 名字）。但 `eval/cases/` 下现存的 6 个 fixture——`build.md` / `define.md` /
 `design.md` / `finish-branch.md` / `plan.md` / `verify.md`——里的 `primary_route`
 字段写的还是旧的短 id（`build` / `define` / `design` / `finish-branch` / `plan` /

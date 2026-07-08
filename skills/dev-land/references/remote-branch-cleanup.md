@@ -8,7 +8,7 @@
 - **PR 路径不用本文件** → 远程处置在 `prflow.md`（默认**删除**——source 分支专为 PR 而生，平台 PR 页面永久保留分支记录）
 - `rule-git-worktree.md` 的 worktree 移除（目录名冲突清残 / 通用销毁）只删 worktree 保留 branch —— 远程处置是"删 branch"的附属动作，不适用
 
-## 材料收集阶段（SKILL.md Step 4，删任何东西之前）
+## 材料收集阶段（SKILL.md Step 2e，删任何东西之前）
 
 ### 捕获远程坐标
 

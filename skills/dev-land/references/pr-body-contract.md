@@ -1,10 +1,10 @@
 # PR title/body 内容契约
 
-> 单源：本文件是 `dev-finish-branch` Option 2（PR）生成 title/body 的唯一定义处，`references/prflow.md` Step 1、`references/examples/example-land-pr.md` 只引用本文件，不重复字段细节——改契约只改本文件。
+> 单源：本文件是 `dev-land` PR 路径生成 title/body 的唯一定义处，`references/prflow.md` Step 1、`references/examples/example-land-pr.md` 只引用本文件，不重复字段细节——改契约只改本文件。
 
 ## 适用场景
 
-`dev-finish-branch` Option 2（Push + 建 PR）Step 1 生成 title/body 时；或用户在本 skill 流程内显式要求「总结 push 内容 / 给标题描述 / PR description」。
+`dev-land` PR 路径 Step 2e 材料收集生成 title/body 时；或用户在本 skill 流程内显式要求「总结 push 内容 / 给标题描述 / PR description」。
 
 **不适用**：单纯问"push 完了吗 / push 成功没"等状态查询。
 

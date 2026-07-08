@@ -6,7 +6,7 @@
 
 ## 目录自动发现，不需要额外注册
 
-Claude Code 自动发现本目录下每个含 `SKILL.md` 的子目录，**新增 skill 不需要额外注册**——包括 devflow/pdflow 及其阶段 skill（dev-define / dev-design / dev-plan / dev-build / dev-verify / dev-review / dev-land / dev-finish-branch / pd-research / pd-prd / pd-ix / pd-vd 等），Claude Code 原生的 skill description 已经承载路由信息，插件层不再维护一份独立的 workflow skill 白名单。
+Claude Code 自动发现本目录下每个含 `SKILL.md` 的子目录，**新增 skill 不需要额外注册**——包括 devflow/pdflow 及其阶段 skill（dev-define / dev-design / dev-plan / dev-build / dev-verify / dev-review / dev-land / dev-land / pd-research / pd-prd / pd-ix / pd-vd 等），Claude Code 原生的 skill description 已经承载路由信息，插件层不再维护一份独立的 workflow skill 白名单。
 
 ## 新增 / 修改 skill 的工序
 

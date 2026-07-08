@@ -24,9 +24,9 @@
 | 14 | `code-simplification` | **Review** | 子流程吸收 | Chesterton's Fence+Rule of 500+dead code，融入 code-review skill 的 simplification pass |
 | 15 | `security-and-hardening` | **Review** | 子流程吸收 | OWASP+三层边界+STRIDE+AI/LLM 安全，融入 code-review skill 的安全轴 |
 | 16 | `performance-optimization` | **Verify** + **Review** | 双阶段集成 | Verify 做度量/profiling，Review 做 review 轴检查 |
-| 17 | `git-workflow-and-branching` | **Land** | 已覆盖 | trunk-based 等已由 dev-finish-branch 覆盖 |
+| 17 | `git-workflow-and-branching` | **Land** | 已覆盖 | trunk-based 等已由 dev-land 覆盖 |
 | 18 | `ci-cd-and-automation` | **Land** | 不吸收 | 各项目 CI 差异大，通用 skill 用处有限 |
-| 19 | `shipping-and-launch` | **Land** | 已覆盖 | dev-finish-branch + Gate 体系已更强 |
+| 19 | `shipping-and-launch` | **Land** | 已覆盖 | dev-land + Gate 体系已更强 |
 | 20 | `migrations-and-deprecation` | **Design** | 低优先级 reference | 迁移策略，`design-doc-writing/references/migration-guide.md`（后续添加） |
 | 21 | `context-engineering` | **横切** | 行为规则 | 长会话管理+何时建议新会话，加入 `model/agent-about.md` |
 | 22 | `web-performance-auditor` | **Verify** | 可选 agent persona | 有性能需求时在 Verify 阶段调用 |
@@ -127,8 +127,8 @@
 
 | 集成 Skill | 来源 | 集成方式 |
 |---|---|---|
-| `finishing-a-development-branch` | superpowers | **已吸收**: 拆为独立 skill `dev-finish-branch`(v4.0.0) + Gate 体系，vendor skill 标 skip |
-| `git-workflow-and-branching` | agent-skills | **已覆盖**: trunk-based 等由 dev-finish-branch 覆盖 |
+| `finishing-a-development-branch` | superpowers | **已吸收**: 拆为独立 skill `dev-land`(v4.0.0) + Gate 体系，vendor skill 标 skip |
+| `git-workflow-and-branching` | agent-skills | **已覆盖**: trunk-based 等由 dev-land 覆盖 |
 
 ### 横切能力
 

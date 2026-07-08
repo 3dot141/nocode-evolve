@@ -2,7 +2,7 @@
 
 PR disposition 的完整流程骨架。**Step 编号只在本文件**——gh / bkt 各自的命令实现见 `pr-flow-gh.md` / `pr-flow-bkt.md`（按主题组织，不重复 Step 编号）。
 
-toolchain 检测（`github.com`→gh / `bitbucket.`→bkt）与 base 解析见 SKILL.md Step 1 / Step 4。多数 Step 对 gh/bkt 无差异（直接写在本文件）；有差异的（查 reviewer / 建 PR / 加 reviewer / 查 PR 状态）标注「→ 见 pr-flow-gh / pr-flow-bkt」。
+toolchain 检测（`github.com`→gh / `bitbucket.`→bkt）与 base 解析见 SKILL.md Step 2a / Step 2e。多数 Step 对 gh/bkt 无差异（直接写在本文件）；有差异的（查 reviewer / 建 PR / 加 reviewer / 查 PR 状态）标注「→ 见 pr-flow-gh / pr-flow-bkt」。
 
 ## Step 1: 材料收集（无交互，为全景计划备料）
 
@@ -12,14 +12,14 @@ toolchain 检测（`github.com`→gh / `bitbucket.`→bkt）与 base 解析见 S
 2. **commit 整理建议**：按 `commit-tidy.md` 判定规则产出「建议 + 完整命令」，只作为全景计划一行展示，**不在此等待用户**
 3. **title + body**：契约单源见 `pr-body-contract.md`（标题 + 背景/方案两段），核对 push range 无遗漏实质变更
 4. **Affected**：`git diff --name-only "$(git merge-base HEAD $base_branch)..HEAD" | sort`——扁平路径列表，每行一个完整路径，不做目录树缩进。只进全景计划展示，**不写进 PR body**
-5. **target 解析**：`base_branch` 已由 SKILL.md Step 4 单源解析；映射 `target_remote` + `target_branch`（fork 场景 `origin/<branch>`→`upstream/<base>`；单仓 `origin/<base>`）。项目本地 override 仅读 `.agents-personal/rules/personal-repo-pr.md`，不存在即无约定
+5. **target 解析**：`base_branch` 已由 SKILL.md Step 2e 单源解析；映射 `target_remote` + `target_branch`（fork 场景 `origin/<branch>`→`upstream/<base>`；单仓 `origin/<base>`）。项目本地 override 仅读 `.agents-personal/rules/personal-repo-pr.md`，不存在即无约定
 6. **default reviewer** → 见 `pr-flow-gh`「default reviewer」/ `pr-flow-bkt`「default reviewer」（gh 走 branch protection/CODEOWNERS，bkt 走 default-reviewers API）
-7. **任务号 + 目标状态**：SKILL.md Step 4 已提取推定（有任务号时已 Read `post-merge.md` 拿映射），直接引用结果
+7. **任务号 + 目标状态**：SKILL.md Step 2e 已提取推定（有任务号时已 Read `post-merge.md` 拿映射），直接引用结果
 8. **远程坐标**（合并后清理用，此刻捕获写死进 cron prompt——删 branch 后 `branch.<name>.remote/merge` 配置即消失）：`remote=$(git config branch.<current>.remote)`（空则 origin）+ `remote_branch=$(git config branch.<current>.merge | sed 's|^refs/heads/||')`（空则同名）
 
 ## Step 2: 全景计划展示 + 确认
 
-呈现机制与回应处理的总则见 SKILL.md Step 5（回合末尾文本，禁止「工具调用间文本 + 同回合 ask」）。PR 版模板：
+呈现机制与回应处理的总则见 SKILL.md Step 2 展示段（回合末尾文本，禁止「工具调用间文本 + 同回合 ask」）。PR 版模板：
 
 ```
 [全景计划] <branch> → PR → <target_remote>/<target_branch>（来源: <解析来源>），确认后全自动:
@@ -105,7 +105,7 @@ git_dir=$(git rev-parse --git-dir); common_dir=$(git rev-parse --git-common-dir)
 
 注册后报告「PR 已创建 <url>，已注册 cron 监控（每 5min，**本会话内有效**）：approve 后自动合并 → 清 worktree → 流转」，本轮结束。
 
-> **会话级边界（如实告知用户）**：CronCreate 的 job 只活在本会话内存，关掉 Claude Code 即失效（recurring 亦有 7 天上限）——跨会话由 SKILL.md Step 1 的补清检测兜底。不要用 `run_in_background` 常驻脚本替代 cron 轮：常驻脚本动作硬编码，撞上合并冲突 / 流转失败无法处置；cron 每轮 agent 在场，意外当场处理。
+> **会话级边界（如实告知用户）**：CronCreate 的 job 只活在本会话内存，关掉 Claude Code 即失效（recurring 亦有 7 天上限）——跨会话由 SKILL.md Step 2b 的补清检测兜底。不要用 `run_in_background` 常驻脚本替代 cron 轮：常驻脚本动作硬编码，撞上合并冲突 / 流转失败无法处置；cron 每轮 agent 在场，意外当场处理。
 
 ### 全景选了「只盯不合」→ cron prompt 去掉 auto-merge 分支
 

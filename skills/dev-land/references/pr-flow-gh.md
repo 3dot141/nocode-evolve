@@ -2,7 +2,7 @@
 
 配合 `prflow.md` 骨架用——本文件只给 **gh 特有命令**，按主题组织，**不带 Step 编号**（Step 骨架在 prflow.md）。前置：`gh` CLI 可用（`gh --version`），toolchain 检测 = `github.com`。
 
-## 按分支查 PR（SKILL.md Step 1 补清检测）
+## 按分支查 PR（SKILL.md Step 2b 补清检测）
 
 ```bash
 gh pr view --json state,url          # 不带 PR 号，自动按当前分支解析

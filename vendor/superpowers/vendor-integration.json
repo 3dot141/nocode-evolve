@@ -17,7 +17,7 @@
     },
     "finishing-a-development-branch": {
       "action": "skip",
-      "reason": "已拆为独立 skill dev-finish-branch (v4.0.0), 不再依赖 vendor sp skill + overlay 模式"
+      "reason": "已吸收进 dev-land (v4.0.0 拆出, v11.0.0 并回), 不再依赖 vendor sp skill + overlay 模式"
     },
     "using-git-worktrees": {
       "action": "keep-as-skill",

@@ -1,6 +1,6 @@
 # Commit 整理建议 (Merge + PR 路径共用，全景计划的材料提供者)
 
-在材料收集阶段（SKILL.md Step 4）被读，产出「整理建议 + 完整命令」作为**全景计划的一行**；不自带等待点——用户在全景回「我先整理 commit」才进入等待。agent 不自动跑 rebase (per spec Q4 决策)。
+在材料收集阶段（SKILL.md Step 2e）被读，产出「整理建议 + 完整命令」作为**全景计划的一行**；不自带等待点——用户在全景回「我先整理 commit」才进入等待。agent 不自动跑 rebase (per spec Q4 决策)。
 
 ## 定位
 
@@ -14,7 +14,7 @@
 ## Step 1: 列 push range commit
 
 ```bash
-# base_branch 由 SKILL.md Step 4 单源解析
+# base_branch 由 SKILL.md Step 2e 单源解析
 git log --oneline "$(git merge-base HEAD $base_branch)..HEAD"
 ```
 

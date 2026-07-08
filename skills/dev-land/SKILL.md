@@ -1,107 +1,235 @@
 ---
 name: dev-land
-description: "Use when Review is complete and you need to land the work (pre-flight checks + dev-finish-branch). Use when devflow routes to Land stage, or when user says \"land/着陆/准备着陆/走land阶段\". Note: standalone \"提PR/合并/merge\" without devflow context should use dev-finish-branch directly, not this skill."
+description: "Use when implementation is complete and you need to land the work — merge locally, create a PR, keep, or discard. Use when devflow routes to Land stage, or when user says \"land/着陆/提PR/收尾/合并/创建PR/完成worktree/discard worktree/PR合了/流转任务\". Not for: PR review (dev-review), work-in-progress pushes, or git queries."
 ---
 
-# land — 选路着陆，干净收场
+# land — 3 步着陆，干净收场
 
-**Iron Law: 先确认 Review Gate 已过，再选着陆路径。没过 Review 的代码不着陆。**
+**Iron Law: 意图 → 全景 → 全自动。用户只在全景确认介入一次。**
 
-编排层：pre-flight → dev-finish-branch（PR/merge 机制 + post-merge 流转）。post-merge 流转已并入 dev-finish-branch（`references/post-merge.md`），不再是独立 skill。
+## 触发
 
-## 非本 skill 请求
+- devflow 路由到 Land 阶段
+- 用户直接说「提 PR / 创建 PR / push 提 PR / 合并 / merge 到 main/release / discard / 丢弃 / keep / 先放着 / 收尾 / 完成 worktree / 着陆 / 准备着陆 / 走 land 阶段」
+- 用户说「PR 合了 / 流转任务 / 合并后流转 / 任务状态改一下」（合并后流转，见 `references/post-merge.md`）
 
-"帮我看看代码" → Review，不是 Land。"写完了" → 先 Verify 再 Review 再 Land。
-单独说"提 PR" / "删 worktree"且不在 devflow 上下文 → 直接 `dev-finish-branch`。
+**不触发**:
+- 纯查询（"我在哪个 branch / worktree 状态 / 当前 PR 列表"）
+- PR review 中（走 dev-review）
+- "帮我看看代码" → Review，不是 Land
+- "写完了" → 先 Verify 再 Review 再 Land
 
-## Enter Gate
+---
 
-- [ ] Review Gate 已过（Critical 全 fix + 用户 approve）
-- [ ] 无需额外处理的未提交改动（Verify/Review 阶段产生的改动会在 Step 1 统一 commit 一次）
-- [ ] 分支与 base 无重大冲突（behind ≤ 阈值，或已 rebase）
+## Step 1: 意图推定
 
-## 协议
+disposition 直接从入口语读，读得出就**不出菜单**：
 
-### Step 0: TaskCreate
+| 入口语 | disposition |
+|---|---|
+| 提 PR / 创建 PR / push 提 PR | **PR** |
+| 合并 / merge 到 main/release | **Merge** |
+| discard / 丢弃 / 不要了 | **Discard** |
+| keep / 先放着 / 留着分支 | **Keep** |
+| 收尾 / 完成 worktree / land / devflow 路由未带意图 | 推不定 → AskUserQuestion 四选一菜单 |
 
-**进入后第一件事**，创建以下 task：
+- 菜单是全景确认之外**唯一**使用 AskUserQuestion 的点（纯单选，选项 label 写实际分支名与 base）
+- detached HEAD → 菜单去掉 Merge
+
+---
+
+## Step 2: 全景计划
+
+### 准备段（自动跑完，不停）
+
+#### 2a. 工具栈检测
+
+```bash
+MAIN_ROOT=$(git -C "$(git rev-parse --git-common-dir)/.." rev-parse --show-toplevel)
+remote_url=$(git -C "$MAIN_ROOT" remote get-url origin)
+```
+
+| remote_url 含 | toolchain |
+|---|---|
+| `"bitbucket."` | `bkt` |
+| `"github.com"` | `gh` |
+| 否则 | askUser "工具栈不确定, 选 [gh / bkt / 跳过 PR]" |
+
+#### 2b. 补清检测
+
+上次会话 cron 中断的兜底——跨会话唯一恢复点，不可删。当前在 worktree 时查当前分支对应 PR：
+
+- gh：`gh pr view --json state`（报 "no pull requests found" → 无 PR，静默继续）
+- bkt：按分支搜（见 `references/pr-flow-bkt.md`「按分支搜 PR」）
+- state == MERGED 且 worktree 还在 → 询问补做收尾（一次问清）
+- 其它状态 / 主仓内 → 静默继续
+
+#### 2c. 信息收集
+
+以下三项收集为**信息**，不阻塞——有风险的在全景里标出，用户自己决定：
+
+- **Review 状态**（仅 devflow 路由入口）：Review task 是否标完成 + 无未解决 Critical
+- **工作目录**：`git status`——可归因于 Build/Verify/Review 的改动 → 统一 commit；来源不明 → 标为风险项
+- **分支新鲜度**：behind base 差距
+
+#### 2d. Verify Tests（仅 PR / Merge）
+
+- Keep / Discard → **跳过**
+- 项目有测试 → 跑一遍。fail → 标为风险项（全景展示），不阻塞
+
+#### 2e. 材料收集（无交互）
+
+**base 解析（单源）**，按优先级取第一个命中：
+1. `git config branch.<current>.nocode-base`（worktree 创建时写入）
+2. `@{upstream}`
+3. `origin/HEAD` → fallback `origin/main`
+
+按 disposition 读 reference 收材料：
+
+| disposition | Read | 收集项 |
+|---|---|---|
+| **PR** | `references/prflow.md` + `references/pr-flow-<gh\|bkt>.md` + `references/pr-body-contract.md` + `references/commit-tidy.md` | push range、整理建议、target/title/body/Affected、default reviewer |
+| **Merge** | `references/commit-tidy.md` + `references/remote-branch-cleanup.md` | push range、整理建议、merge 计划、远程坐标 + 独有 commit |
+| **Discard** | `references/remote-branch-cleanup.md` | 将删清单、远程坐标 + 独有 commit |
+| **Keep** | （无） | 直接一行报告现状，结束 |
+
+- **任务号 + 目标状态**（PR / Merge）：`git log <base>..HEAD --format=%B | grep -oE '#[fgm]-[a-z0-9]+' | sort -u`；有任务号 → Read `references/post-merge.md` 拿典型流转映射 + 查当前状态 → 推定目标状态
+- **远程坐标必须此刻捕获**——删 branch 后 `branch.<name>.remote/merge` 配置即消失（见 `references/remote-branch-cleanup.md`）
+
+### 展示：全景一屏
+
+把整条线一屏展给用户，**回合末尾文本展示**，等用户自由回应。不用 AskUserQuestion。红线：**禁止「工具调用间文本展示 + 同回合 ask」**。
+
+**PR 版模板**（详见 `references/prflow.md`）：
 
 ```
-Task 1: Pre-flight
-  Gate: Review 状态 + 统一 commit 尾款改动 + 分支新鲜度
+[全景计划] <branch> → PR → <target>，确认后全自动:
+  ⚠ <风险项：Review 未过 / tests fail / behind N commits>   ← 有才展示
+  1. commit 整理   <建议内容>（默认: 跳过）
+  2. push + 建 PR  title「<title>」; reviewer: <名单 or 空>
+  3. 合并方式      approve 后自动合并（默认）; cron 每 5min（本会话有效）
+  4. 合并后清理    worktree + branch + 远程: 删除（默认）
+  5. 合并后流转    #<task>: <当前> → <目标>
 
-Task 2: Finish-branch
-  Gate: dev-finish-branch 完成（PR 已创建 / 已合并 / keep / discard）
+--- body ---
+## 背景
+<...>
+## 方案
+<...>
 
-Task 3: Post-merge
-  Gate: post-merge 流转完成（dev-finish-branch 的 post-merge.md，或标注跳过）
+--- Affected（仅展示，不进 body）---
+<扁平路径列表>
 
-Task 4: 收口 — 报告完成并交回
-  Sub-steps: 向用户 / devflow 导航报告 Land 完成（合并状态 + 任务流转结果）→ 交回控制
-  Gate: 已报告完成（devflow 流程末端，无下游阶段 skill）
-  metadata: {handoff: true}（供防跳步 Hook B 识别交接 task）
+回「OK」全自动到底；或直接说改哪项。
 ```
 
-每完成一个标 done。
+**Merge 版模板**：
 
-### Step 1: Pre-flight
+```
+[全景计划] <branch> → 本地 merge 回 <base>，确认后全自动:
+  ⚠ <风险项>
+  1. commit 整理   <建议>（默认: 跳过）
+  2. merge         <branch> → <base>（<N> 个 commit）
+  3. 清理          worktree + 本地 branch
+  4. 远程分支      <remote>/<branch>: 保留（默认）；改「删」则删（<独有 commit 文案>）
+  5. 合并后流转    #<task>: <当前> → <目标>
+回「OK」全自动到底；或直接说改哪项。
+```
 
-Enter Gate 三项逐条检查：
+**Discard 版模板**：
 
-- [ ] **Review 状态**：Review task 标完成 + 无未解决 Critical
-- [ ] **工作目录**：`git status` 检查改动来源——若可归因于 Build 之后 Verify/Review 阶段产生的改动 → 在本步统一 commit 一次（message 概括本轮修复内容）；若改动来源不明或与本次任务无关 → 仍停手告知，不代理处理
-- [ ] **分支新鲜度**：调 `rule-git-freshness` 检查 behind 差距。behind 大 → 建议先 rebase，但用户决定
+```
+[全景计划·Discard] 将删除以下内容，不可恢复:
+  - worktree: <path>
+  - 本地 branch: <branch>（<N> 个未合并 commit）
+  - 远程分支 <remote>/<branch>: 保留（默认）
+确认删除请回复字面 `discard`；yes / OK 均视为取消。
+```
 
-三项全过 → 进 Step 2。任一不满足 → 报告具体状态 + 建议动作，不自行修复。
+**回应处理**：
+- 「OK / 确认」→ Step 3 全自动到底
+- 「改 X 为 Y」→ 局部更新，两行复述
+- 「我先整理 commit」→ 贴出整理命令（`references/commit-tidy.md`）等「好了」，重收材料重展全景
+- 「分步确认」→ 降级逐项确认
+- 「先去 Review」→ 暂停，交回 dev-review
+- **Discard 特例**：只认字面 `discard`，其它一律取消
 
-**Exit Gate:**
-- [ ] Review 状态确认
-- [ ] 工作目录干净
-- [ ] 分支新鲜度确认
+**非 worktree 场景**：去掉 worktree 与本地 branch 清理行（当前分支删不了），**其余全部照走**——全景计划 / PR body 契约 / reviewer / cron / 任务流转一项不省。
 
-### Step 2: Finish-branch
+**devflow 路由入口额外约束**（仅对生产改动）：
 
-调 `Skill(nocode:dev-finish-branch)`，它处理全部 commit/PR/merge/discard 机制（disposition 菜单、Gate 序列、worktree 清理）。
+发布策略（全景确认前追问）：
+> "这次改动的发布策略？全量 / 灰度 / dark launch"
 
-**Land 在 dev-finish-branch 之上的额外约束**：
+PR body 回链：Requirements Addressed（引用 Define 的 restate）+ Verification Evidence（引用 Verify 证据）。
 
-**发布策略**（Option 1/2 选定后、执行前追问——仅对生产改动）：
-> "这次改动的发布策略？全量 / 灰度（canary %）/ dark launch（flag 默认关）"
->
-> AI 不执行部署，但把决策点暴露给用户——merge 和 release 是两个动作。用户选了灰度/dark launch → 提醒确认 flag 已就位。纯内部工具/无生产影响 → 跳过。
+---
 
-**PR body 回链**（Option 2，Gate Title-Body 时）：PR body 除了 dev-finish-branch 的标准格式，额外包含：
-- **Requirements Addressed**：引用 Define 的 restate Success Criteria 编号，逐条说明满足
-- **Verification Evidence**：引用 Verify 阶段的关键证据（测试命令+结果摘要）
+## Step 3: 全自动执行（含 post-merge）
 
-这样 reviewer 看到 PR 就能追溯"为什么做"和"怎么证明做完了"。
+| disposition | 自动段 | 安全例外 |
+|---|---|---|
+| **PR** | push → 建 PR → 加 reviewer → 注册 cron 监控 → (cron 合并后) 三件套清理 → 任务流转 → cron 自删 | non-ff → typed `force` |
+| **Merge** | merge → 三件套清理 → 任务流转 | 无 |
+| **Discard** | 清 worktree → `branch -D` → (全景选删) 删远程 | 无（字面确认已在 Step 2） |
+| **Keep** | 一行报告现状 | 无 |
 
-**Exit Gate:**
-- [ ] dev-finish-branch 完成（PR 已创建 + worktree 状态确认 / 已合并 / keep / discard）
+执行失败 → 停在失败步报告，不静默跳过、不回滚已成功步。
 
-### Step 3: Post-merge
+### 三件套清理
 
-合并后流转已并入 dev-finish-branch——Read `dev-finish-branch/references/post-merge.md` 执行（原独立 dev-post-merge skill 已降级为该 reference）。
+合并后收尾 = worktree + 本地 branch + 远程分支，只清 worktree 留 branch 是残留。
 
-- **Option 1 (Merge)**：Step 2 合并成功后即执行
-- **Option 2 (PR)**：pr-watch 盯到合并、退出 re-invoke 后触发；或后续会话用户说"PR 合了"时
-- **Option 3/4**：跳过
+- 顺序：先 `cd "$MAIN_ROOT"` → `git worktree remove` → `git worktree prune` → 删本地 branch → (全景选删) 删远程
+- PR 路径 MERGED 后用 `-D`（squash/rebase 下 `-d` 误报 not merged）；Merge 路径用 `-d`
+- 长期分支（main / master / release / develop）→ 永不删
+- 未提交改动 → remove 报错，不加 `--force`
+- 识别 4 种 worktree 路径模式：`.worktrees/` / `worktrees/` / `~/.config/superpowers/worktrees/` / 插件平级路径
+- 非 worktree → 跳过 worktree remove 和本地 branch delete，只处置远程
 
-**Exit Gate:**
-- [ ] post-merge 流转完成或已跳过
+### PR 路径 cron 监控
 
-## Exit Gate（全局）
+用 `CronCreate` 注册轮询（`cron: "2-59/5 * * * *"`），prompt 必须自足——PR 号 / worktree / MAIN_ROOT / 任务号 / 目标状态 / 合并方式全部写进 prompt 字面值。详见 `references/prflow.md` Step 6。
 
-- [ ] dev-finish-branch 完成
-- [ ] post-merge 流转完成或已跳过（合并后）
+会话级边界如实告知：CronCreate 的 job 随会话消亡，跨会话由 Step 2b 补清检测兜底。
+
+### 合并后流转
+
+合并后调 `Skill(nocode:lark-project)` 把任务流转到全景计划定好的目标状态。详见 `references/post-merge.md`。
+
+- 前置：有任务号 + FeishuProjectMcp 可用。不满足 → 跳过，报告原因
+- 典型映射：缺陷/任务类 `组员开发 → 研发已改待BUILD`
+
+---
+
+## 安全例外表
+
+全景确认后**只有**这些情形允许再拦：
+
+| 例外 | 触发 | 防什么 |
+|---|---|---|
+| typed `force` | push 撞 non-fast-forward | 自动 force push 覆盖远端历史 |
+| typed `discard` | Discard 全景确认 | 误丢弃整支工作 |
+| tests fail 标注 | Step 2d | 带病 merge / PR（全景标风险，用户决定） |
+| toolchain askUser | 私域 git host | 瞎猜工具栈 |
+| 补清询问 | Step 2b 检测到 PR 已合并未清 | 上个会话的决策不能代表本会话 |
+
+除表内情形，全景确认后新增任何交互都是 bug。
+
+## Worktree 清理安全规则
+
+- Merge / Discard → 必清理 worktree；PR → cron 合并后自动清；Keep → 不清理
+- 先 remove worktree 再删 branch（反了 `branch -d` 会 fail）
+- `git worktree remove` 前必须 cd 到主仓根（在 worktree 内跑会静默失败）
+- 未提交改动 → remove 报错，不加 `--force`，用户先 stash
 
 ## 场景差异
 
 | | Full / Standard / Fix | Mini |
 |---|---|---|
-| Pre-flight | 完整 Enter Gate | commit only |
-| Finish-branch | dev-finish-branch 完整 | 跳过（Mini 不开 worktree） |
-| Post-merge | 合并后按需 | 跳过 |
+| 意图推定 | 完整 | commit only |
+| 全景计划 | 完整 | 跳过 |
+| 执行 | 完整 | 确认 commit 即完成 |
 
 Mini 场景的 Land-lite：确认 commit 已完成即可，不进完整 Step 1-3。
 
@@ -109,18 +237,32 @@ Mini 场景的 Land-lite：确认 commit 已完成即可，不进完整 Step 1-3
 
 | 借口 | 现实 |
 |---|---|
-| "Review 差不多了，先 push 再改" | Review Gate 没过就不着陆。"差不多"不是"过了" |
-| "先合了再跑 CI" | CI 是 PR 流程的一部分，不是合后补丁 |
-| "worktree 保着占空间，顺手删了" | Gate Worktree-Cleanup 让用户选。用户可能要 iterate on PR feedback |
-| "任务号懒得填" | 流转闭环是 Land 的一部分，不是可选 |
-| "force push 一下就好" | force push 是高风险操作，有专门的 Gate |
-| "这个改动简单，跳过某 Step 或不建 TaskCreate" | 进了 skill 就走完所有 Step。"简单"是你的判断，不是跳 Gate 的授权（详见 agent-catalog-using.md「进了 skill 就走完」） |
+| "Review 差不多了，先 push 再改" | 全景会标 Review 状态，用户自己决定 |
+| "先合了再跑 CI" | CI 是 PR 流程的一部分 |
+| "worktree 保着占空间，顺手删了" | 全景让用户选 |
+| "任务号懒得填" | 流转闭环是 Land 的一部分 |
+| "force push 一下就好" | 安全例外，typed `force` 字面才执行 |
+| "不在 worktree 里，全景/PR契约/reviewer/cron 不适用" | **非 worktree 只影响清理项，其余全部照走** |
+| "用户说了提PR，直接 push + 建 PR 就行" | 「提PR」是 Step 1 意图推定的输入，不是跳过全景的授权 |
+| "这个改动简单，跳过某 Step" | 进了 skill 就走完。"简单"不是跳 Step 的授权 |
 
 ## Red Flags
 
-- 还没进 Review 就说"land 一下"——Review 和 Land 是两个阶段
-- 跳过 Gate Title-Body 直接 `gh pr create`——Gate 存在就是为了拦这个
-- PR 创建后立刻 merge 不等 review——option 2 终态是 PR 提交，不是合并
+- 还没出全景就执行了 push / PR / merge
+- 跳过 body 生成直接 `gh pr create` / `bkt pr create`
+- PR 创建后立刻 merge 不等 review
 - 清理 worktree 但没 ExitWorktree——先退出再清理
-- Option 2 选了 PR 路径又说"还是本地 merge 吧"——回 Step 2 重选，不混搭
-- 因"任务简单 / 还在概览 / 用户说了'继续'"跳过某 Step、不建 Step 0 TaskCreate、或漏掉最后的交接 task
+- 因"非 worktree"跳过全景计划
+- 因"任务简单 / 用户催了"跳过全景
+
+## 不要
+
+- 不要跳过全景计划直接执行 — 全景是唯一授权点
+- 不要在全景确认后新增计划外交互 — 安全例外表之外再问 = bug
+- 不要自动 force push — typed `force` 字面才执行
+- 不要在 approve 前 merge — 判据 = 平台可合并 + ≥1 approve
+- 不要假设 toolchain — 私域 git host 必须 askUser
+- 不要在 worktree 内跑 `git worktree remove` — 先 cd 到 `$MAIN_ROOT`
+- 不要删 branch 前没 remove worktree
+- cron 只用 CronCreate 轮询 — 不要 `run_in_background`，不要 ScheduleWakeup
+- gh / bkt 特有坑 → 见 `references/pr-flow-gh.md` / `references/pr-flow-bkt.md`

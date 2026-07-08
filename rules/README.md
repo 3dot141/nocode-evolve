@@ -73,11 +73,11 @@ skip: false
 `superpowers-brainstorming`（最后一条是覆盖 vendor 进来的 superpowers skill 默认行为）。
 
 > `push-summary`（PR title/body 内容契约）已迁出本目录，内容搬到
-> `skills/dev-finish-branch/references/pr-body-contract.md`——它只在 `dev-finish-branch` 这一个
+> `skills/dev-land/references/pr-body-contract.md`——它只在 `dev-land` 这一个
 > skill 的流程内使用，不是通用的插件级触发规则，不适合再放在这里跟全局路由绑在一起。
 
 > 曾经 `dev-define`/`dev-design`/`dev-plan`/`dev-build`/`dev-verify`/`dev-land`/`dev-review`/
-> `dev-finish-branch`/`pd-*`/`pdflow`/`red-blue-deep`/`lark-read`/`lark-project`/
+> `dev-land`/`pd-*`/`pdflow`/`red-blue-deep`/`lark-read`/`lark-project`/
 > `personal-deletion-guard` 等条目也在旧 manifest 里，但它们要么纯重复 skill 自身 description，
 > 要么根本不该走「按需触发」这条编译链——已在历次改动中从这份清单里彻底删除（`personal-deletion-guard`
 > 的 PreToolUse pattern 仍在，只是搬到了 `scripts/compile.hooks.js` 独立维护）。

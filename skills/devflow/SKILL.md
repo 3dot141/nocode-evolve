@@ -58,7 +58,7 @@ Define 返回后，拿到确认的 restate + 场景分类，进 Step 2。
 ```
 TaskCreate(subject: "阶段 8: Land",
            description: "调用: nocode:dev-land / Gate: PR merged + 任务流转 + worktree 清理
-Sub-steps: ⓪ Skill(nocode:dev-land) → 8a.Pre-flight → 8b.Finish-branch(dev-finish-branch) → 8c.Post-merge(dev-finish-branch 的 post-merge.md)")
+Sub-steps: ⓪ Skill(nocode:dev-land) → 1.意图推定 → 2.全景计划 → 3.全自动执行(含 post-merge)")
 ```
 
 Sub-steps 写进 description 是为了**进入阶段时一眼看到完整步骤序列**——防止跳步遗漏。链首的 `⓪ Skill(...)` 是为了把"加载 skill"钉成每个阶段的第一个动作——**sub-steps 是地图，skill 才是详图**，照地图裸跑会丢掉 skill 内的模板 / Iron Law / 格式约束。
@@ -126,7 +126,7 @@ Land 有 5 个子步骤（8a Create PR → 8b ... → 8e Cleanup），只说"pus
 | 5 | **Build** | `nocode:dev-build` | — | 所有 task 完成 + 测试通过 + build 通过 |
 | 6 | **Verify** | `nocode:dev-verify` | — | 验收标准逐条通过 + 证据收集 |
 | 7 | **Review** | `nocode:dev-review` | `rule-codex-review` | Critical 全 fix + 用户 approve |
-| 8 | **Land** | `nocode:dev-land` | — | dev-finish-branch(PR/merge/keep/discard + post-merge 任务流转) |
+| 8 | **Land** | `nocode:dev-land` | — | 意图推定 → 全景计划 → 全自动执行(PR/merge/keep/discard + post-merge) |
 
 ### 共享词汇（跨 skill leading words）
 

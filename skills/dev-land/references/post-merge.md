@@ -1,10 +1,10 @@
-# post-merge — 合并后流转（原 dev-post-merge，已并入 dev-finish-branch）
+# post-merge — 合并后流转（已并入 dev-land Step 3）
 
 代码合并后的收尾动作。当前：飞书任务流转。预留：通知、changelog、部署触发。
 
 ## 何时读本文件（两个时机）
 
-1. **材料收集阶段**（SKILL.md Step 4）：有任务号时读，拿「典型流转映射」+ 查当前状态 → **推定目标状态写进全景计划**（PR 路径同时写死进 cron prompt），合并后不再问
+1. **材料收集阶段**（SKILL.md Step 2e）：有任务号时读，拿「典型流转映射」+ 查当前状态 → **推定目标状态写进全景计划**（PR 路径同时写死进 cron prompt），合并后不再问
 2. **合并后执行**：Merge 路径 merge 成功后 / PR 路径 cron 的 MERGED 轮 / 用户直接说「PR 合了 / 流转任务 / 任务状态改一下」
 
 ## Step 1: 任务号来源

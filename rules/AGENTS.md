@@ -60,8 +60,8 @@ rule-*.md 正文内部格式。但保持结构一致有助于新规则被快速�
 `rule-references/` 是给**单条 rule 内容过大、需要拆成多个子文件**时用的预留目录（镜像 skill 的
 `references/` 模式）。历史上 `rule-references/rule-finishing-branch/` 存过
 `pr-flow-gh.md` / `pr-flow-bkt.md` / `prflow.md` 等子文件，随着该 rule 在
-`1ba0052`（feat!: Land 拆分）中升级为独立 skill `nocode:dev-finish-branch`，这些内容已迁移到
-`skills/dev-finish-branch/references/`，`rule-references/` 目前为空（只剩 `.DS_Store`）。
+`1ba0052`（feat!: Land 拆分）中升级为独立 skill，后又并回 `nocode:dev-land`（v11.0.0），这些内容已迁移到
+`skills/dev-land/references/`，`rule-references/` 目前为空（只剩 `.DS_Store`）。
 
 - 该目录当前**没有被任何生成逻辑读取**（`compile.rule.js` 不扫描它），纯粹是未来复杂 rule 的
   预留落点。

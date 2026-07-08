@@ -18,7 +18,7 @@ source_project="$SOURCE_PROJECT"; target_project="$TARGET_PROJECT"
 if [ "$source_project" = "$target_project" ]; then workflow="A"; else workflow="B"; fi
 ```
 
-## 按分支查 PR（SKILL.md Step 1 补清检测）
+## 按分支查 PR（SKILL.md Step 2b 补清检测）
 
 ```bash
 # direction=OUTGOING 相对被查 repo = source 侧; cross-fork 查 source repo（personal fork）

@@ -28,8 +28,7 @@ skills/
 | `dev-build` | 按 plan 执行实现（顺序派发 subagent 或主 agent 直接执行两种协议） |
 | `dev-verify` | 端到端验证实现是否真的可用（先跑起来看证据，不靠读代码推断） |
 | `dev-review` | 代码 / diff 评审（五轴 + reviewing 方法库，主路评审 + 升档异源双评） |
-| `dev-land` | Review 完成后编排收尾（对接 dev-finish-branch 的 PR/merge 机制） |
-| `dev-finish-branch` | 分支收尾：merge / 创建 PR / worktree 清理 / 远程分支清理 |
+| `dev-land` | 着陆收尾：意图推定 → 全景计划 → 全自动执行（PR/merge/keep/discard + post-merge） |
 
 ### 产品阶段（pd-*，pdflow 编排）
 

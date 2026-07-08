@@ -79,6 +79,6 @@ PR 合并，worktree / 本地 branch / 远程分支三件套全清，任务已�
 
 ## 变体提醒
 
-- 用户中途关会话 → cron job 消失；下次进 dev-finish-branch 由 Step 1 补清检测兜底
+- 用户中途关会话 → cron job 消失；下次进 dev-land 由 Step 2b 补清检测兜底
 - tests fail + 用户说「提 PR」→ hard stop 不进全景；用户说「discard」→ 不跑 tests 直接走 Discard 全景
 - PR 被 reviewer 关闭 → cron 轮报告「PR 被关未合，全部保留」+ 自删
