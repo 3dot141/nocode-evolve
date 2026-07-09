@@ -153,15 +153,17 @@ Round 1 骨架完成，在填充代码前对计划骨架做一遍自查。骨架
 
 Round 1 的骨架定了"改什么"，Round 2 填"怎么改"——每个 task 补上 TDD steps 真实代码。
 
-**每个 task 完整读 5 份上游文档 + 代码库**：
-1. **PRD**（`.prd.md`）— 业务是什么，这条路径的业务规则
-2. **UI / 原型**（`.ix.md` + `.vd.md` / prototype）— 界面长什么样，交互怎么走。有 `.ix.md` 时：IA 页面结构作为前端任务拆分参照（一个 IA 页面 ≈ 一个前端 task），`data-testid` 命名写进 task 的接口约束，`interactions.json` 路径记入 task 备注供 dev-verify 复用
-3. **restate** — 验收标准（SC），怎么算做完
-4. **设计文档**（dev-design-refine 产出）— BF 伪代码 + 类接口 + 单测设计 Given/When/Then
-5. **Plan Round 1 骨架** — 本 task 改哪些文件、covers 哪些路径
-6. **最新代码库** — 现有代码长什么样、import 怎么写、风格怎么跟
+**每个 task 必读 3 份**：
+1. **设计文档**（dev-design-refine 产出）— BF 伪代码 + 类接口 + 单测设计 Given/When/Then（业务规则已被蒸馏在这里）
+2. **Plan Round 1 骨架** — 本 task 改哪些文件、covers 哪些路径
+3. **最新代码库** — 现有代码长什么样、import 怎么写、风格怎么跟
 
-5 份文档提供"做什么 + 长什么样 + 怎么验收 + 怎么做"，代码库提供"代码风格 + 现有 API"。缺任何一份都可能写出不准确的代码。
+**条件读**（伪代码没覆盖某条业务规则时才回溯，读完要回填设计文档）：
+- **PRD**（`.prd.md`）— 伪代码未覆盖的业务边界 / 验收标准细节
+- **UI / 原型**（`.ix.md` + `.vd.md` / prototype）— 伪代码未描述的交互细节。有 `.ix.md` 时：IA 页面结构作为前端任务拆分参照（一个 IA 页面 ≈ 一个前端 task），`data-testid` 命名写进 task 的接口约束，`interactions.json` 路径记入 task 备注供 dev-verify 复用
+- **restate** — 伪代码未映射的验收标准（SC）
+
+设计文档是上游蒸馏的终点——PRD / UI / restate 的业务规则应已进入伪代码和 Given/When/Then。写码时回读原始文档说明设计文档蒸馏不够，正确做法是**补设计文档**再继续，不是把重读 PRD 当常驻义务。
 
 **领域指南消费（判断类，写代码前按场景 Read）**：这里写的是最终真实代码，判断该用什么模式/怎么防护/怎么分层，要在这一刻做，不是留给 Build 阶段：
 
