@@ -1,7 +1,7 @@
 ---
 name: agents-launcher
 disable-model-invocation: true
-description: 本仓 fx-data-agents 三服务 (web :10001 / agents Hono :8070 / server Spring :8081) 的本地 dev 启停编排. 逻辑全在脚本 (dev-orchestrator.mjs 编排 + server-cli/web-cli/agents-cli 三个 per-service CLI), skill 只做路由与 askUser gate. 主仓启动直接执行 orchestrator; worktree 启动按 仓况盘点 → per-service prepare → 联调对齐 → 执行 orchestrator 四步走. server 由 server-cli 承载 (ANTLR 预热/GraalVM 检测/ZGC patch/代理清除/基础设施容器/bootRun). 查状态 --status, 停服 --stop. 关键决策点 (缺 worktree 时建/混搭/跳过 / prepare cp / 改 .env.local / reset worktree / 重启已在跑的服务 / 升档全栈 / 替换主仓 agents) 用 askUser 显式 gate, 不擅自动.
+description: 本仓 fx-data-agents 三服务 (web :10001 / agents Hono :8070 / server Spring :8081) 的本地 dev 启停编排. 逻辑全在脚本 (dev-orchestrator.mjs 编排 + server-cli/web-cli/agents-cli 三个 per-service CLI), skill 只做路由与决策分级. 主仓启动直接执行 orchestrator; worktree 启动按 仓况盘点 → per-service prepare → 联调对齐 → 执行 orchestrator 四步走. server 由 server-cli 承载 (ANTLR 预热/GraalVM 检测/ZGC patch/代理清除/基础设施容器/bootRun). 查状态 --status, 停服 --stop. 决策按可逆性分级: 无损动作 (复用已有同名/base worktree / prepare cp / 改 worktree 内 .env.local / pkgmgr patch) 自动做并入完成汇报; 不可逆或碰共享状态的动作 (reset / 改主仓文件 / 重启已在跑的服务 / 升档全栈 / 替换主仓 agents / 同名和 base worktree 全无时的建/混搭/跳过) 才 askUser gate.
 ---
 
 # agents-launcher — 本地 dev 服务启停
@@ -24,7 +24,14 @@ description: 本仓 fx-data-agents 三服务 (web :10001 / agents Hono :8070 / s
 - 跳过 Step 2 → 浏览器加载主仓代码, worktree 改动不可见, 或跨仓 API 漂移浏览器报错
 - 跳过 Step 3 预检 → 跑空轮询超时浪费 60-120s
 
-**关键决策点用 askUser 显式 gate**, 不擅自动. 涉及 缺 worktree 时建/混搭/跳过 / cp 多个文件 / 改用户 `.env.local` / 改 `package.json` / `git reset` / 重启已在跑服务 / 升档全栈 / 替换主仓 agents 等动作前先问. 模糊信号 (用户没明说) → askUser, 别替用户判断.
+**决策按可逆性分级**, 不是一律 askUser:
+
+| 级别 | 动作 | 处理 |
+|---|---|---|
+| 无损 (幂等 / worktree 局部 / 随 worktree 销毁) | 复用已有同名或 base worktree / Step 1 cp (已存在则跳过) / 改 **worktree 内** `.env.local` / pkgmgr patch worktree `package.json` | **自动做**, 逐项列入完成汇报 (3.4), 不问 |
+| 不可逆 / 碰共享状态 | `git reset` / 改**主仓**文件 (混搭时的 `.env.local` 等) / 重启已在跑服务 / 升档全栈 / 替换主仓 agents / 同名和 base worktree 全无时的 建/混搭/跳过 | **askUser gate**, 模糊信号别替用户判断 |
+
+用户已经建好 worktree 就是「用它」的显式信号——为无损的准备动作再逐个确认是决策噪音, 用户只能机械点推荐项.
 
 ## 脚本与命令
 
@@ -80,7 +87,7 @@ FX_WEB_DIR=<web 仓根> FX_AGENTS_DIR=<agents 仓根> node ${CLAUDE_PLUGIN_ROOT}
 FX_AGENTS_DIR=<agents 仓根> FX_AGENTS_FROM=<主仓根> node ${CLAUDE_PLUGIN_ROOT}/skills/agents-launcher/agents-cli.mjs prepare
 ```
 
-CLI 全部非交互——破坏性动作（align --reset / 改 .env.local）由本 skill 的 Gate 问过用户后才调, CLI 只认显式 flag。
+CLI 全部非交互, 只认显式 flag。不可逆动作（align --reset / 改**主仓**文件）由本 skill 的 Gate 问过用户后才调; worktree 内的 prepare cp / env upsert 无损, 按 launch plan 自动调。
 
 ### server (Spring) 由 server-cli 承载
 
@@ -116,32 +123,52 @@ Step 1 的 cp 模板和 Step 2.2 的对齐检查都预设「目标仓的 worktre
 
 目标 `<branch>` 来自用户指定或当前所在 worktree 的 `git branch --show-current`——**不得按目录名或相似分支名猜**, 拿不到先问.
 
+### base 分支推断 (目录命名剥离)
+
+worktree 目录命名惯例 `<repo>-<base>-<branch-slug>` (slug = 分支名的 `/` 全换 `_`) 编码了 base. 从当前 worktree 推断:
+
+```
+rest = 当前 worktree 目录名去掉 "<repo>-" 前缀
+slug = <branch> 的 "/" 全部换 "_"
+rest 以 slug 结尾 → base = rest 剥掉尾部 slug 再剥尾部 "-"
+```
+
+例: 目录 `fx-data-agents-release-design_scene-agent-restructure-method3` + 分支 `design/scene-agent-restructure-method3` → base = `release`.
+
+- **校验**: 剥出的 base 必须在目标仓真实存在 (`git branch --list <base>` 非空或 worktree list 里可见), 否则视为推断失败.
+- **推断失败** (目录没编码 base / 校验不过): 不猜——配套仓解析跳过下表第 2/3 层, 直接落 Gate 0, 提问时顺带让用户确认 base, 答案记入 launch plan.
+
 盘点范围按 workspace 档: `ui` 盘 fx-data-agents + fx-data-web; `full` 加 fx-data-server. 对**每个目标仓**执行同一组只读命令 (可 && 串成一次调用):
 
 ```bash
-git -C <repo 主仓> worktree list --porcelain            # 有没有挂 <branch> 的 worktree
-git -C <repo 主仓> branch --list <branch>               # 本地分支存在性
+git -C <repo 主仓> worktree list --porcelain            # 有没有挂 <branch> 或 <base> 的 worktree
+git -C <repo 主仓> branch --list <branch> <base>        # 本地分支存在性
 git -C <repo 主仓> branch -r --list "origin/<branch>"   # 远端分支存在性
 ```
 
-每个目标仓按盘点结果三态路由:
+每个目标仓按下列顺序解析 `FX_*_DIR`, **先命中即用, 第 1–3 层命中都不问**:
 
-| 该仓状态 | 处理 |
-|---|---|
-| 同名分支 worktree 已存在 | 复用, `FX_*_DIR` 指向它, 不问 (无歧义) |
-| 分支存在 (本地/远端) 但没挂 worktree | **Gate 0 askUser**, 推荐「挂现有分支」(移交 using-git-worktrees 复用该分支, 不新开) |
-| 分支和 worktree 都没有 | **Gate 0 askUser**, 推荐按改动位置判断 (该仓有改动 → 建 worktree; 无改动 → 混搭主仓) |
+| 层 | 条件 | 处理 |
+|---|---|---|
+| 1. 同名 worktree | 挂 `<branch>` 的 worktree 已存在 | 复用, `FX_*_DIR` 指向它 (无歧义) |
+| 2. base worktree | 挂 `<base>` 的 worktree 已存在 (该仓无本分支改动时的天然对齐目标) | 复用, 来源类型 = base worktree, 完成汇报标注 |
+| 3. 主仓在 base | 主仓 `git branch --show-current` = `<base>` | 混搭主仓 (不切分支), 按「来源类型 = 主仓」限制处理 |
+| 4. 全落空 | 以上皆无 (或 base 推断失败) | **Gate 0 askUser** |
 
-确定每个 `FX_*_DIR` 后, 核对该目录 `git branch --show-current` = 目标 `<branch>` (混搭主仓的仓除外)——launcher 的 validateRepos 只认标志文件不认分支, `FX_*_DIR` 指到错误分支的 worktree 它**不会报错**.
+第 2 层的前提是**该仓没有本分支的改动**——改动所在仓 (通常就是当前所在 worktree 的仓) 永远走第 1 层; 若某配套仓也需要本分支改动却只有 base worktree, 属于「分支存在但没挂 worktree」的 Gate 0 情形, 推荐「挂现有分支」(移交 using-git-worktrees 复用该分支, 不新开).
 
-### Gate 0 — 有仓缺 worktree 时 askUser
+确定每个 `FX_*_DIR` 后, 核对该目录 `git branch --show-current` = 目标 `<branch>` (base worktree 核对 = `<base>`; 混搭主仓的仓除外)——launcher 的 validateRepos 只认标志文件不认分支, `FX_*_DIR` 指到错误分支的 worktree 它**不会报错**.
+
+### Gate 0 — 解析四层全落空时 askUser
+
+**只在第 1–3 层全落空 (或 base 推断失败) 时触发**——同名或 base worktree 存在时直接复用, 不进本 gate. 提问必须带推断上下文 (目标分支 / 推断出的 base / 各层为何落空), 不让用户自己回忆仓况:
 
 ```
-"fx 仓况盘点:
+"fx 仓况盘点 (目标分支 <branch>, base 推断 = <base 或 推断失败>):
   fx-data-agents: worktree <路径>@<branch> ✓
-  fx-data-web:    无 <branch> worktree (本地分支: <有/无>)
+  fx-data-web:    无 <branch> worktree, 无 <base> worktree, 主仓在 <主仓分支> ≠ <base>
   [fx-data-server: ... — 仅 full 档列出]
-<缺仓> 没有 <branch> 的 worktree, 怎么处理?"
+<缺仓> 怎么处理?"
 选项:
   - 建/挂同名 worktree (停本 skill, 移交 using-git-worktrees; 分支已存在则挂现有分支不新开; launcher 不直接跑 git worktree add) — 该仓有改动时必选
   - 混搭主仓 (仅该仓无改动可行; 会弄脏主仓: web = 改主仓 .env.local + 可能改 package.json, server = patch 主仓 build.gradle.kts + .java-home / .dev-start.pid / dev-start.log)
@@ -149,16 +176,20 @@ git -C <repo 主仓> branch -r --list "origin/<branch>"   # 远端分支存在�
   - 我自己处理后再继续
 ```
 
-- 用户选「建/挂 worktree」→ 移交 `using-git-worktrees` skill 建 (fetch + 基于 base 最新 + worktree-setup.mjs 补齐), 建完回到 Step 1. **建 worktree 不是 launcher 的活**, 本 skill 只盘点 + 路由.
-- 混搭的适用判断同 Gate 3.2: 改 `packages/desktop` 可混搭主仓 agents; 改 `packages/server` / `packages/shared` 的仓**必须**有自己的 worktree. fx-data-server 无改动时混搭主仓 server 合理, 但仍走 Gate 0 前置披露, 不许拍板后只在 3.4 事后标注.
+**不要为凑对齐让主仓切分支**——主仓不在 base 上时, 正确出路是给该仓挂一个 base worktree (纯增量, 不动主仓现场 / 未提交改动 / 在跑进程), 而不是问「主仓切到 <base>?」. 该选项可并入 Gate 0 作推荐项.
 
-Gate 0 走完, 先产出 **launch plan** 再进 Step 1——后续 Step 1/2/3 全按此表条件化执行, 不再逐步临时判断:
+- 用户选「建/挂 worktree」→ 移交 `using-git-worktrees` skill 建 (fetch + 基于 base 最新 + worktree-setup.mjs 补齐), 建完回到 Step 1. **建 worktree 不是 launcher 的活**, 本 skill 只盘点 + 路由.
+- 混搭的适用判断同 Gate 3.2: 改 `packages/desktop` 可混搭主仓 agents; 改 `packages/server` / `packages/shared` 的仓**必须**有自己的 worktree. 无改动仓混搭主仓合理——主仓已在 base 时走 Step 0 第 3 层不问, 但 launch plan 必须把「来源类型 = 主仓」及连带弄脏项 (web: `.env.local` / `package.json`; server: `build.gradle.kts` patch) 前置标出, 不许只在 3.4 事后标注.
+
+解析完成 (多数场景不经过 Gate 0), 先产出 **launch plan** 再进 Step 1——后续 Step 1/2/3 全按此表条件化执行, 不再逐步临时判断:
 
 | 仓 | 来源路径 | 来源类型 | branch | 后续动作 |
 |---|---|---|---|---|
-| fx-data-agents | <路径> | worktree / 主仓 / 跳过 | <branch> | cp config.yaml / 起服务 / --no-agents |
-| fx-data-web | <路径> | worktree / 主仓 / 跳过 | <branch> | cp .env.local / 改 AGENTS_LOCAL_SRC / reset 对齐 / --no-web |
-| fx-data-server (仅 full) | <路径> | worktree / 主仓 / 跳过 | <branch> | 传 FX_SERVER_DIR / --no-server |
+| fx-data-agents | <路径> | worktree / base worktree / 主仓 / 跳过 | <branch> | cp config.yaml / 起服务 / --no-agents |
+| fx-data-web | <路径> | worktree / base worktree / 主仓 / 跳过 | <branch 或 base> | cp .env.local / 改 AGENTS_LOCAL_SRC / reset 对齐 / --no-web |
+| fx-data-server (仅 full) | <路径> | worktree / base worktree / 主仓 / 跳过 | <branch 或 base> | 传 FX_SERVER_DIR / --no-server |
+
+**来源类型 = base worktree 的仓**: Step 1 cp / Step 2.1 env upsert 照常自动做 (worktree 内文件, 无损); 但它是**长期共享**的 worktree——Gate 2.2 **禁止对它 reset --hard** (同主仓待遇, 以其 HEAD 参与对齐判断); `.env.local` 的 `AGENTS_LOCAL_SRC` 指向本次联调目标后会残留到下次, 接受残留不做还原, 由每次启动的幂等 upsert 覆盖, 完成汇报标注当前指向.
 
 **来源类型 = 主仓 的仓**: 跳过 Step 1 cp (禁止往 `<*-worktree>` 占位路径 cp); Gate 1.5 / Gate 2.1 涉及它时提问文案必须点明「改的是主仓文件, 测完需还原」; Gate 2.2 以主仓 HEAD 参与对齐判断, **禁止对主仓 reset --hard**; 完成汇报 (3.4) 必须列「主仓被改文件还原 / 勿提交」清单.
 
@@ -178,46 +209,36 @@ worktree-setup.mjs 自动补齐 IDE / node_modules / symlink personal, 但下列
 | fx-data-agents | `packages/server/conf/config.yaml` | agents 配置 (pg/minio/LLM) | launcher 报 "agents config.yaml 不存在" 启动失败 |
 | fx-data-web | `packages/jsy-web/server/.env.local` | web 联调入口 + AGENTS_LOCAL_SRC | vite 起得来但跑 registry 版 desktop, worktree 改动不可见 |
 
-### Gate 1 — cp 前 askUser
+**cp 自动执行, 不 askUser**——目标是 worktree 内 gitignored 文件, CLI 幂等 (已存在则跳过不覆盖), 随 worktree 销毁, 无损. 按 launch plan 对来源类型 = worktree / base worktree 的仓执行, 完成汇报 (3.4) 逐项列出 cp 了什么. 来源类型 = 主仓 的仓跳过本步.
 
-```
-"Worktree 启动需要从主仓 cp 以下 gitignored 文件 (worktree-setup 扫不到):
-  1. <agents-main>/packages/server/conf/config.yaml      → <agents-worktree>/packages/server/conf/config.yaml
-  2. <web-main>/packages/jsy-web/server/.env.local       → <web-worktree>/packages/jsy-web/server/.env.local
-确认 cp 吗?"
-选项:
-  - 全部 cp (推荐)
-  - 只 cp agents config (仅起 agents 不起 web)
-  - 只 cp web .env.local (仅起 web 复用主仓 agents)
-  - 我自己 cp / 跳过
-```
-
-cp 命令（gate 确认后执行, CLI 已存在则跳过不覆盖）:
+cp 命令:
 
 ```bash
 FX_AGENTS_DIR=<agents-worktree> FX_AGENTS_FROM=<agents-main> node <插件根>/skills/agents-launcher/agents-cli.mjs prepare
 FX_WEB_DIR=<web-worktree> FX_WEB_FROM=<web-main> node <插件根>/skills/agents-launcher/web-cli.mjs prepare
 ```
 
-### Gate 1.5 — corepack cache 不全时 askUser 改 package.json
+### Gate 1.5 — corepack cache 不全时 patch package.json (worktree 自动 / 主仓 askUser)
 
 fx-data-web `package.json` 的 `packageManager` 字段若锁着 corepack cache 没有的版本 (e.g. `pnpm@10.10.0` 但本机只缓存 `10.33.0`), launcher 起 vite 时 corepack 试着下 → `EHOSTUNREACH` (墙 / 离线). **仅在 cache 不全时触发**:
 
+- web 来源类型 = worktree / base worktree → **自动 patch**, 完成汇报点名「packageManager 已改成 pnpm@<Y>, 勿把该改动误提交」
+- web 来源类型 = 主仓 → askUser (改的是主仓文件, 测完需还原):
+
 ```
-"本机 corepack 没缓存 web 仓需要的 `pnpm@<X>`. 在 worktree (不动主仓) 改 `package.json`
-packageManager 字段成本机已缓存的版本 `pnpm@<Y>`?
-(worktree 销毁时改动一起没)"
+"本机 corepack 没缓存 web 仓需要的 `pnpm@<X>`. 改**主仓** `package.json`
+packageManager 字段成本机已缓存的版本 `pnpm@<Y>`? (测完需还原)"
 选项:
   - 改成 pnpm@<已缓存版本>
   - 我自己装 pnpm@<X> 后重试
   - 跳过 (会启动失败)
 ```
 
-检测与执行都用 web-cli（检测不带 flag 只报告; gate 确认后带 `--patch` 执行）:
+检测与执行都用 web-cli（检测不带 flag 只报告; 带 `--patch` 执行）:
 
 ```bash
 FX_WEB_DIR=<web-worktree> node <插件根>/skills/agents-launcher/web-cli.mjs pkgmgr                    # 检测: 输出 locked/cached/needsPatch
-FX_WEB_DIR=<web-worktree> node <插件根>/skills/agents-launcher/web-cli.mjs pkgmgr --patch=<Y>       # gate 确认后: 定向替换 packageManager 字段
+FX_WEB_DIR=<web-worktree> node <插件根>/skills/agents-launcher/web-cli.mjs pkgmgr --patch=<Y>       # 定向替换 packageManager 字段
 ```
 
 ## Step 2 — 联调对齐 (worktree 专属)
@@ -230,21 +251,24 @@ worktree 启动测前端 / 联调前必须保证两件事: `.env.local` 指向 w
 
 web vite 通过 `AGENTS_LOCAL_SRC` 决定加载哪份 fx-data-agents (详见 `LOCAL-DEBUG-WITH-FX-DATA-WEB.md`). worktree 联调必改成 agents **worktree** 绝对路径——不改 → 加载主仓 → worktree 改动对浏览器**不可见**.
 
-### Gate 2.1 — 改 .env.local 前 askUser
+### Gate 2.1 — 改 .env.local (worktree 自动 / 主仓 askUser)
 
-目标文件永远是 `<FX_WEB_DIR>/packages/jsy-web/server/.env.local`. web 来源类型 = 主仓 (Gate 0 混搭) 时, 下面文案里的「web worktree」换成「web **主仓**」并点明测完需还原.
+目标文件永远是 `<FX_WEB_DIR>/packages/jsy-web/server/.env.local`:
+
+- web 来源类型 = worktree / base worktree → **自动 upsert**, 不问——worktree 内文件, `web-cli env` 幂等, `AGENTS_LOCAL_SRC` 语义就是「最近一次联调的目标」; 完成汇报标注当前指向 (base worktree 会残留到下次, 见 Step 0「来源类型 = base worktree」段)
+- web 来源类型 = 主仓 (Gate 0 混搭) → askUser (改的是主仓文件, 测完需还原):
 
 ```
-"把 web worktree `.env.local` 的 `AGENTS_LOCAL_SRC` 改成 `<agents-worktree-path>`?
+"把 web **主仓** `.env.local` 的 `AGENTS_LOCAL_SRC` 改成 `<agents-worktree-path>`?
 当前值: `<existing-value>`
-不改 → vite 加载主仓 desktop, worktree 改动浏览器看不到."
+不改 → vite 加载主仓 desktop, worktree 改动浏览器看不到. 改的是主仓文件, 测完需还原."
 选项:
   - 改成 worktree 路径 (推荐, 测前端联调必选)
   - 保留主仓 (只测后端 / 不测 desktop 改动)
   - 跳过
 ```
 
-gate 确认后执行（写 AGENTS_LOCAL_SRC 等四键, 幂等 upsert）:
+执行命令（写 AGENTS_LOCAL_SRC 等四键, 幂等 upsert）:
 
 ```bash
 FX_WEB_DIR=<web 仓> FX_AGENTS_DIR=<agents-worktree> node <插件根>/skills/agents-launcher/web-cli.mjs env
@@ -262,7 +286,7 @@ rule-git-worktree 默认 "fetch + 静默基于 upstream 最新" 建分支. 两�
 
 ### Gate 2.2 — fork 时间不对齐时 askUser reset
 
-**仅在两仓 fork 时间不一致时触发**. 混搭主仓的仓以主仓 HEAD 参与对齐判断; reset 选项只适用于 worktree, **禁止对主仓 reset --hard**. 下面模板预设 web worktree 是刚建的空分支——若它挂的是**已有分支且自带配套 commit** (Gate 0 挂现有分支路径), reset 会把分支自身 commit 一起冲掉 (可能正是要联调的改动): 文案必须披露该后果, 此情形默认推荐改为「不 reset」:
+**仅在两仓 fork 时间不一致时触发**. reset 是不可逆动作, **无论目标是谁都 askUser**. 混搭主仓 / base worktree 的仓以各自 HEAD 参与对齐判断; reset 选项只适用于**本分支专属 worktree**, **禁止对主仓和 base worktree reset --hard** (base worktree 长期共享, 冲掉别人 / 下次要用的状态)——不齐时选项只剩「不 reset 接受漂移」或「我自己处理」. 下面模板预设 web worktree 是刚建的空分支——若它挂的是**已有分支且自带配套 commit** (Gate 0 挂现有分支路径), reset 会把分支自身 commit 一起冲掉 (可能正是要联调的改动): 文案必须披露该后果, 此情形默认推荐改为「不 reset」:
 
 ```
 "web worktree HEAD = `<web-worktree-sha>` (来自 origin/release 最新)
@@ -276,7 +300,7 @@ fx-data-agents worktree base = `<agents-worktree-base-sha>` (跟 web 主仓时�
   - 跳过
 ```
 
-检查与 reset 都用 web-cli（检查不带 flag; gate 确认后带 `--reset`, 仅限 worktree, **禁止对主仓用**）:
+检查与 reset 都用 web-cli（检查不带 flag; gate 确认后带 `--reset`, 仅限本分支专属 worktree, **禁止对主仓 / base worktree 用**）:
 
 ```bash
 FX_WEB_DIR=<web-worktree> node <插件根>/skills/agents-launcher/web-cli.mjs align <web-main-HEAD-sha>            # 检查对齐状态
@@ -385,7 +409,8 @@ launcher 内部已按服务等健康(agents `/health`、web/server 端口), 全�
    | agents | :8070 | 46239 | 主仓 fx-data-agents |
    ```
 5. 提示: `tsx watch` 已开热重载, 改 TS 文件**不用再重启**
-6. Gate 0 有仓混搭主仓时: 列「主仓被改文件还原 / 勿提交」清单 (web: `.env.local` / `package.json`; server: `build.gradle.kts` patch 等)
+6. 有仓混搭主仓时 (经由 Step 0 第 3 层或 Gate 0): 列「主仓被改文件还原 / 勿提交」清单 (web: `.env.local` / `package.json`; server: `build.gradle.kts` patch 等)
+7. Step 1/2 自动做过的无损动作逐项列出: cp 了哪些文件 / `AGENTS_LOCAL_SRC` 当前指向 / pkgmgr patch 与否; 来源含 base worktree 时标注「`.env.local` 指向会残留到下次, 由下次启动幂等覆盖」
 
 ## 停止动作
 
@@ -425,9 +450,9 @@ cd ../fx-data-server && docker compose down
 4. 杀 `tsx watch` 要杀父进程 (`telemetry/preload.ts` 关键词), 不是杀子 node — `--stop` 已内置
 5. 后台 task ID 必须记录告知用户; 丢了用 `--stop --workspace=<范围>` 兜底
 6. launcher 内置 `buildKillCommands` — 启动会先 kill 旧, 别在 skill 里又叠一层手工清理
-7. worktree 启动必须按 Step 0 → 1 → 2 → 3 顺序, 不能跳过 仓况盘点 / cp / 联调对齐; 有仓缺 worktree 走 Gate 0, 不臆造路径、不主仓 checkout、不擅自混搭
+7. worktree 启动必须按 Step 0 → 1 → 2 → 3 顺序, 不能跳过 仓况盘点 / cp / 联调对齐; 缺同名 worktree 先找 base worktree (Step 0 第 2 层), 四层全落空才 Gate 0——不臆造路径、不主仓 checkout / 切分支、不擅自混搭
 8. worktree `reset` / `git pull` 后, Gate 1.5 改的 `package.json` packageManager 改动会被冲掉, **需要重做**
-9. 关键决策点 (缺 worktree 处置 / cp / 改 .env.local / reset / 重启已在跑 / 升档全栈 / 替换主仓 agents) **必须 askUser**, 不擅自动
+9. askUser 只留给不可逆 / 碰共享状态的动作 (reset / 改主仓文件 / 重启已在跑 / 升档全栈 / 替换主仓 agents / Gate 0 处置); 无损动作 (复用已有 worktree / cp / worktree 内 env upsert / pkgmgr patch) **自动做但必须逐项列入完成汇报**——静默做了不报等于没做
 10. launcher 在插件目录不在 fx 仓 → `FX_*_DIR` 主仓 / worktree 启动都强制, 漏了必报 validateRepos 错; `${CLAUDE_PLUGIN_ROOT}` Bash 不展开, 先换绝对路径
 11. 单独重启 sync 容器 (如 `test-sync`) 必须连带重启 `sync-polars-localhost` — socat sidecar 共享 sync 网络栈, 主容器重启后绑定失效, Excel 导入静默写空表 (表还标 valid, 无报错)
 12. server-cli 有副作用: 会 patch server 仓 `build.gradle.kts` (ZGC→G1GC, 幂等) 且不还原, **勿把该改动误提交**; server 日志在 `<FX_SERVER_DIR>/dev-start.log` 不在 launcher stdout
@@ -446,8 +471,8 @@ cd ../fx-data-server && docker compose down
 - 不要去 fx 仓 (主仓 / worktree) 里找 launcher — 它随插件分发, 真实路径在 `${CLAUDE_PLUGIN_ROOT}/skills/agents-launcher/`, fx 仓的 `.claude/skills/` 是空的
 - 不要把 `${CLAUDE_PLUGIN_ROOT}` 原样塞进 Bash 命令 — Bash 工具不展开它, 先换成插件真实绝对路径再跑
 - 不要漏 `FX_*_DIR` env (主仓 / worktree 启动都要) — launcher 在插件目录, 不传则 auto-resolve 落到插件父目录非 fx 仓, validateRepos 直接报错
-- 不要在主仓 checkout feature 分支来凑 `FX_*_DIR`, 也不要臆造不存在的 worktree 路径 — 缺 worktree 走 Gate 0 (建 / 混搭 / 跳过), 建 worktree 移交 using-git-worktrees
-- 不要绕过 askUser gate 自己做关键决策 — 缺 worktree 处置 / cp / 改 env / reset / 替换 agents 都先问
+- 不要在主仓 checkout / 切分支来凑 `FX_*_DIR` 或凑 base 对齐, 也不要臆造不存在的 worktree 路径 — 缺 worktree 按 Step 0 四层解析, 全落空走 Gate 0 (建 / 混搭 / 跳过), 建 worktree 移交 using-git-worktrees
+- 不要把决策分级两头做反 — 无损动作 (复用已有 worktree / cp / worktree env upsert) 拿去 askUser 是决策噪音; 不可逆动作 (reset / 改主仓文件 / 替换在跑 agents) 自动做是事故
 
 ## 范例
 
@@ -456,9 +481,10 @@ cd ../fx-data-server && docker compose down
 | "重启服务" (主仓) | Step 3: 预检 + 后台启 + 轮询, Gate 3.1 幂等 / Gate 3.2 worktree 替换不触发 |
 | "起 dev 全栈" | Step 3: `--workspace=full --yes` |
 | "只起 agents" | Step 3: `--workspace=ui --no-web --yes` |
-| "在 worktree 内起 dev 测前端改动" | Step 0 (盘点) → Step 1 (Gate 1 cp) → Step 2 (Gate 2.1 改 AGENTS_LOCAL_SRC, Gate 2.2 reset 对齐) → Step 3 (Gate 3.2 复用主仓 agents) |
+| "在 worktree 内起 dev 测前端改动" | Step 0 (盘点+解析) → Step 1 (自动 cp) → Step 2 (自动 upsert AGENTS_LOCAL_SRC; Gate 2.2 不齐才问) → Step 3 (Gate 3.2 复用主仓 agents) |
 | "在 worktree 内起 dev 测后端改动" | Step 0 → Step 1 → Step 2 → Step 3 (Gate 3.2 替换主仓 agents 成 worktree agents) |
-| "在 worktree 起 dev" 但 web 仓没有同名 worktree | Step 0 盘点发现缺 → Gate 0 (建 worktree / 混搭主仓 / --no-web), 不臆造路径不主仓 checkout |
+| "在 worktree 起 dev" 但 web 仓没有同名 worktree | Step 0 剥目录名推 base → web 有 base worktree (如 fx-data-web-release) → 直接用, 不问; base worktree 也没有才 Gate 0 (建 / 混搭 / --no-web), 不臆造路径不主仓 checkout |
+| 配套仓主仓停在别的分支 (如 persist-ai) | 不问「主仓切到 <base>?」——有 base worktree 直接用; 没有则 Gate 0 推荐挂 base worktree, 主仓现场 (未提交改动 / 在跑进程) 一概不动 |
 | "停服" | `TaskStop <已知 task ID>`; 未知则 fallback `--stop --workspace=<范围>` |
 | "看服务状态" | `--status` (web/agents/server/pg/minio 端口 + PID, 一次调用) |
 | "重启 docker" | **不进 skill** — 是 docker compose 的事 |
