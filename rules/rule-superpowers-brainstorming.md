@@ -42,10 +42,10 @@ skip: false
    - 据用户决定修订主体后，**本轮 Report 全文 + 用户决定 + 修订摘要 append 到文档末尾 `## Review Log`**
    - 是否再来一轮 review 由用户决定，不再有"最多 3 轮"硬限制
 
-4. **`dev-design-render`** (见 `skills/dev-design-render/SKILL.md`) —— 把设计文档 ASCII 图渲染成 HTML 可视化
+4. **`dev-design-render`** (见 `skills/dev-design-render/SKILL.md`) —— 把设计文档渲染成 Artifact 页面
    - 输入：reviewer 通过的 markdown
-   - 输出：同目录、同名、换后缀 `.html`
-   - HTML 含 TOC / 折叠 / 暗黑模式 / 代码高亮 / 回到顶部 5 个交互
+   - 输出：同目录 `<topic>-design.html`（Artifact 源文件）+ 发布后的 Artifact URL
+   - 页面含导航 / 双主题 / 代码高亮 / 图 DOM 排版，视觉由 artifact-design 现场设计
 
 四步都要走：开 worktree → 写 → 评审 + **用户逐条确认** + 追加 Review Log → 渲染。
 不要省略 worktree（除非用户显式弃用），不要省略评审（默认自查是最低门槛，跳过的是"自动派独立 reviewer"不是评审本身），不要代用户拍板 issue 修不修，不要绕过这些 skill 直接写。

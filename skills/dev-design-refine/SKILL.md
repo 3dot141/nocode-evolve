@@ -223,8 +223,8 @@ Task 7: 保存 + 渲染确认 + handoff（步 13-14）
 
 **Core Actions:**
 1. 保存到 `{dev_design_output}`（文档产出路径变量，项目本地 AGENTS.md / CLAUDE.md 可覆盖）
-2. **AskUserQuestion：是否渲染成 HTML？**
-   - 是 → 调 `Skill(nocode:dev-design-render)` 把设计文档转成可浏览的 HTML（架构图/流程图/时序图渲染为 SVG，表格可交互）
+2. **AskUserQuestion：是否渲染成 Artifact 页面？**
+   - 是 → 调 `Skill(nocode:dev-design-render)` 把设计文档渲染成 Artifact 页面（图用 DOM 排版、表格可交互、可分享 URL）
    - 否 → 设计文档（markdown）即最终交付
 3. **硬交接**：向调用方/用户报告 dev-design-refine 完成 + 文档保存路径 + **review verdict**——若由协调器（dev-design）调入，返回 reviewed 文档 + verdict，协调器**只验 verdict 不重审**，继续状态机（→ render / final gate）；独立进入则向用户报告完成并建议下一步（评审已在本步做过，不再走 dev-review；直接进 dev-plan）
 
@@ -290,4 +290,4 @@ Task 7: 保存 + 渲染确认 + handoff（步 13-14）
 - `references/writing-principles.md` — 写作准则 12 条全文 + 文件影响硬格式 + 文档生命周期，Step 1 必 Read
 - `references/design-doc-review.md` — 设计文档评审维度（默认自查的维度单源；用户显式要求升审时随声明传入 reviewing 引擎）
 - `references/cards/{quick-view,prerequisites}.md` — 骨架驱动型内容的可选锚点节
-- `Skill(nocode:dev-design-render)` — 设计文档 → HTML 可视化
+- `Skill(nocode:dev-design-render)` — 设计文档 → Artifact 页面

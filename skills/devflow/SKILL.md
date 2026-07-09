@@ -221,7 +221,7 @@ Fix 类任务的 Review 通过后，问一句：**"什么能预防这个 bug？"
 | 3a. 进 dev-design（薄协调器） | 持状态机，编排下面三阶段，自己不选方案不写文档 | 路由 select→refine→(可选)render |
 | 3b. 选方案（dev-design-select） | 探索 + 多方案差异化对比选定 + 领域覆盖(含可观测两层) + 测试目标 TO + eval | 产出 Decision Packet（含 alternatives 供 refine 反方配平） |
 | 3c. 详细设计 + 唯一评审（dev-design-refine） | 消费 Decision Packet → feat/bug/refactor 详细设计 + 架构审核前置 + 唯一评审（design-doc-review 8 维度） | 遇方案级决策 replan_required → 协调器回 select 重选 |
-| 3d.（可选）渲染（dev-design-render） | 设计文档 → HTML + render receipt，不改输入文档 | 产物关系由协调器在 final gate 报告 |
+| 3d.（可选）渲染（dev-design-render） | 设计文档 → Artifact 页面 + render receipt，不改输入文档 | 产物关系由协调器在 final gate 报告 |
 | 3e. Decompose 判断 | 架构产出后评估是否需要拆分子任务（见下） | 不需要 → 正常进 Plan；需要 → 拆分后各子任务走独立 devflow |
 
 **3e. Decompose 判断**（Design 产出架构后执行）：

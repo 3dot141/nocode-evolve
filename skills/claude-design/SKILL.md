@@ -1,6 +1,6 @@
 ---
 name: claude-design
-description: Use when operating on Claude Design projects from the terminal — creating projects, generating designs from a brief, reading/writing files, previewing, managing design systems, sharing, or member management. Use when the user says "claude-design", "设计项目", "创建设计", "预览设计", "设计系统", "分享项目", or when pd-vd/dev-design-render routes to Claude Design delivery. Also use when the user provides a claude.ai/design URL.
+description: Use when operating on Claude Design projects from the terminal — creating projects, generating designs from a brief, reading/writing files, previewing, managing design systems, sharing, or member management. Use when the user says "claude-design", "设计项目", "创建设计", "预览设计", "设计系统", "分享项目", or when pd-vd routes to Claude Design delivery. Also use when the user provides a claude.ai/design URL.
 ---
 
 # claude-design — Claude Design 终端操作
@@ -199,5 +199,4 @@ DesignSync register_assets(projectId: project_id, planId, assets: [{name, path, 
 | **pd-vd Step 3** | `claude-design systems` 搜已有 → `claude-design create` 建设计系统项目 → `claude-design write` 推组件 |
 | **pd-vd Step 4** | `claude-design <brief>` 生成原型 → 记 projectId |
 | **pd-vd Step 6** | 记录 projectId 到 .vd.md |
-| **dev-design-render** | `claude-design create` + `claude-design write` 推渲染后的设计文档 |
 | **/design-sync** | 外部独立 skill(不在本插件内,当前环境未安装则不可调用),推 React bundle 用 DesignSync 的 localPath;claude-design 不替代它,该 skill 不可用时直接用 DesignSync 工具走上传流程 |
