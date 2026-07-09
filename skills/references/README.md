@@ -8,7 +8,7 @@
 |---|---|---|
 | `api-design-guide.md` | API / 接口设计（REST、GraphQL、模块边界、组件 props），核心是"让正确的事容易做、错误的事难做" | dev-design、dev-review |
 | `architecture-principles.md` | 架构原则：deep modules、Hyrum's Law、简单性判据、命名原则、code smell 检测 | dev-design、dev-review |
-| `claude-design-hub.md` | Claude Design 三套接口（`/design` 命令 / claude-design skill / MCP）的分工说明 | pd-vd、dev-design-render、claude-design |
+| `claude-design-hub.md` | Claude Design 三套接口（`/design` 命令 / claude-design skill / MCP）的分工说明 | pd-vd、claude-design |
 | `frontend-guide.md` | 前端 / UI 工程指南：组件架构、可访问性、避免"AI 美学" | dev-build、dev-review、pd-vd |
 | `migration-guide.md` | 迁移与废弃纪律：代码是负债，拆比造更少组织擅长 | dev-design、dev-review |
 | `observability-guide.md` | 可观测性指南：先定义"working"再埋点，埋点与功能同批写 | dev-build、dev-design |

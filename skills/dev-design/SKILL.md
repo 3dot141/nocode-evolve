@@ -110,7 +110,7 @@ refine 在信息补全遇**方案级决策**（改数据流 / 模块边界 / 外
 
 ## 产物记录（已评审文档不可变）
 
-render 纯输出、不碰输入文档；**产物关系由协调器在 final gate 报告里给出**（会话内交付，不落盘、不改已评审文档、不进 manifest——manifest 不承担运行产物索引）。报告内容 = render receipt 的 `sourceDoc`（未改动）↔ `output`（HTML 路径 / Claude Design projectId）↔ `deliveryMode` 映射。这是会话级记录，不是持久化索引——要持久化产物索引是另一个 feature，本次不做。
+render 纯输出、不碰输入文档；**产物关系由协调器在 final gate 报告里给出**（会话内交付，不落盘、不改已评审文档、不进 manifest——manifest 不承担运行产物索引）。报告内容 = render receipt 的 `sourceDoc`（未改动）↔ `htmlFile`（页面文件路径）+ `artifactUrl`（Artifact 页面 URL）映射。这是会话级记录，不是持久化索引——要持久化产物索引是另一个 feature，本次不做。
 
 ## Exit Gate
 

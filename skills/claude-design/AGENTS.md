@@ -24,4 +24,3 @@
 
 - `skills/references/claude-design-hub.md` — 三套接口(`/design` hub / DesignSync / 网页端)的分工总览
 - pd-vd Step 3/4/6 调本 skill 生成原型
-- dev-design-render 调本 skill 推渲染后的设计文档
