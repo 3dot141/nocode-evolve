@@ -41,10 +41,13 @@
 
 ## Checkpoint 模板
 
-每 2-3 个 task 插一个。
+风险驱动 + fallback 插入：风险 task 后必插，连续 3 个 task 无 checkpoint 时 fallback 插入。
 
 ```markdown
 ## ✅ Checkpoint [C]: [覆盖 Task X-Y]
+
+**触发原因**: [风险触发：Task N 命中风险信号 #X（简述）] 或 [fallback：连续 3 task 无 checkpoint]
+
 **全部测试**:
 - `npm test`                        # 预期: all passing
 
@@ -57,6 +60,16 @@
 
 **Rollback 点**: 此 checkpoint 之前所有 task 已各自 commit，出问题回退到这里。
 ```
+
+风险信号清单（判定"这个 task 是否风险 task"只看此表，单源在 SKILL.md Step 5）：
+1. 外部输入（用户输入 / API 请求体 / 文件上传）
+2. 认证 / 授权
+3. 敏感数据（PII / 密钥 / token）
+4. schema migration / 数据迁移
+5. 并发 / 竞态
+6. 资金 / 计费
+7. 跨模块接口（改的接口有 ≥2 个调用方）
+8. 不可逆操作（删除 / 发送 / 发布）
 
 ---
 
@@ -91,8 +104,8 @@
 ...
 
 ## 退出条件
-- [ ] 所有 task ≤ M
+- [ ] 所有 task 过粒度三重约束（≤5 文件 + 一个逻辑动作 + 2-5 分钟节奏）
 - [ ] 每个 task 零占位符，贴了真实代码 / 命令 / 预期输出
-- [ ] 每 2-3 task 有 checkpoint
+- [ ] checkpoint 风险驱动插入（风险 task 后必有）+ fallback 3 无遗漏
 - [ ] 用户已确认
 ```

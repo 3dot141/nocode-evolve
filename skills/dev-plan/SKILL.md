@@ -53,11 +53,11 @@ Task 3: 垂直切片 — risk-first
 
 Task 4: 写 task 骨架
   Sub-steps: 每 task 标 Files + covers + HITL/AFK + UI 设计源（代码留空，Round 2 填）
-  Gate: 每 task ≤5 文件，骨架完整
+  Gate: 每 task 过粒度三重约束（≤5 文件 + 一个逻辑动作 + 2-5 分钟节奏），骨架完整
 
-Task 5: 插 checkpoint
-  Sub-steps: 每 2-3 task 一个 checkpoint
-  Gate: checkpoint 边界已插
+Task 5: 插 checkpoint（风险驱动 + fallback）
+  Sub-steps: 风险 task 后必插 + 连续 3 task 无 checkpoint 时 fallback 插入
+  Gate: checkpoint 边界已插，风险 task 后均有 checkpoint
 
 Task 6: Round 1 骨架自查
   Sub-steps: 主会话按骨架自查清单过一遍（切片/依赖/排序/粒度/覆盖）→ 成立的质疑修正到骨架
@@ -125,13 +125,33 @@ Round 1 写骨架——定清楚**改什么、覆盖什么、谁做**，代码�
 - **设计文档段落**：指向 dev-design-refine 的哪个域/模块/BF（Round 2 读这里写代码）
 - **HITL / AFK**
 - **UI 设计源**（涉及 UI 时）
-- **Sizing ≤ M**（≤5 文件），超了拆
+- **粒度三重约束**（三条同时守，任一违反就拆）：
+  - **≤5 文件**（爆炸半径硬 gate）——超了必拆
+  - **一个 task 一个逻辑动作**（原子化）——标题出现 "and" 或描述含两个独立动词 → 拆
+  - **2-5 分钟一个 action**（节奏参照）——task 拆到一个 TDD 红绿循环能做完的粒度
 - **Rollback-friendly**：每 task 独立可回滚
 - **描述 durable 化**：用行为意图（"用户创建记录时验证必填字段"），不用易腐行号
 
-### Step 5: 插 checkpoint
+### Step 5: 插 checkpoint（风险驱动 + fallback）
 
-每 2-3 个 task 一个 checkpoint = 全测试通过 + build 通过 + 用户 review。checkpoint 是 rollback 边界。
+checkpoint = 全测试通过 + build 通过 + 用户 review。checkpoint 是 rollback 边界。
+
+**插入规则**（两条同时满足取更早的）：
+- **风险 task 后 → 必插**：task 命中以下任一风险信号，完成后立即插 checkpoint
+- **fallback → 连续 3 个 task 无 checkpoint 时插入**：保证不会长段无检查
+
+**风险信号清单**（单源，判定"这个 task 是否风险 task"只看此表）：
+
+| # | 风险信号 |
+|---|---|
+| 1 | 外部输入（用户输入 / API 请求体 / 文件上传） |
+| 2 | 认证 / 授权 |
+| 3 | 敏感数据（PII / 密钥 / token） |
+| 4 | schema migration / 数据迁移 |
+| 5 | 并发 / 竞态 |
+| 6 | 资金 / 计费 |
+| 7 | 跨模块接口（改的接口有 ≥2 个调用方） |
+| 8 | 不可逆操作（删除 / 发送 / 发布） |
 
 ### Step 6: Round 1 骨架自查
 
@@ -285,7 +305,7 @@ task 间依赖不成环，底层 task 排前面。循环依赖说明切片方式
 ## Exit Gate
 
 - [ ] 计划已产出（依赖图 + 任务序列 + checkpoint）
-- [ ] 所有 task ≤ M，零占位符
+- [ ] 所有 task 过粒度三重约束（≤5 文件 + 一个逻辑动作 + 2-5 分钟节奏），零占位符
 - [ ] 每个 task 标了 HITL/AFK
 - [ ] 每个 task 标了 `covers`，所有 task 汇总覆盖 restate 每条路径（路径→task 映射表已产出）
 - [ ] 测试目标已分配到 slice
@@ -298,8 +318,8 @@ task 间依赖不成环，底层 task 排前面。循环依赖说明切片方式
 
 ## 核心规则（when X → do Y）
 
-- **When** 某 task 涉及 > 5 文件 → **必须再拆**。L 任务把多个设计决策压成一句话
-- **When** task 标题里出现 "and" → 大概率该拆成两个 task
+- **When** 某 task 违反粒度三重约束任一条（>5 文件 / 多个逻辑动作 / 超出一个 TDD 红绿循环）→ **必须再拆**
+- **When** task 标题里出现 "and" 或描述含两个独立动词 → 拆成两个 task
 - **When** 冒出跨切片的整体验证（全链路 E2E、既有功能回归、冒烟）→ **不拆成 task**。它不是一根 tracer bullet（Iron Law），不满足 task 定义；这类验证属于设计文档「汇总」节的验证策略总表，原样留给 dev-verify 读取执行（`skills/dev-verify/SKILL.md` Enter Gate），不进 plan 任务序列
 
 ## Common Rationalizations
@@ -309,7 +329,7 @@ task 间依赖不成环，底层 task 排前面。循环依赖说明切片方式
 | "先写框架，代码执行时再填" | 写不出真实代码 = 没想清楚。占位符藏的是设计决策 |
 | "横着按层做更整齐" | 整齐但不可验证。垂直每片做完都能跑能回滚 |
 | "简单的先做，难的留后面" | risk-first：不确定性留到投入最大时暴露更贵 |
-| "checkpoint 太频繁拖节奏" | checkpoint 是 rollback 边界。省掉它出问题只能回退整个计划 |
+| "checkpoint 太频繁拖节奏" | 风险驱动 + fallback 3 已经降频了。省掉它出问题只能回退整个计划 |
 | "自查走个形式就行" | 骨架改一行 vs 填充完改十行。前置自查省的是后面的返工——每条要有判断 + 依据，不是打勾 |
 | "这个改动简单，跳过某 Step 或不建 TaskCreate" | 进了 skill 就走完所有 Step。"简单"是你的判断，不是跳 Gate 的授权（详见 agent-catalog-using.md「进了 skill 就走完」） |
 
@@ -317,7 +337,8 @@ task 间依赖不成环，底层 task 排前面。循环依赖说明切片方式
 
 - 计划里出现 `<...>` / `TODO` / "调用相关方法"
 - 某 task 写不出具体改哪几个文件
-- 连续 4+ task 没有 checkpoint
+- 风险 task 后没有 checkpoint（对照风险信号清单 8 项）
+- 连续 4+ task 没有 checkpoint（fallback 上限 3，超过就是漏了）
 - 最不确定的部分排到了最后
 - 没读相关代码就开始写 task
 - task 缺 `covers` 字段，或汇总后有路径没被任何 task 覆盖（漏实现的早期信号）
