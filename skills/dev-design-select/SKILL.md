@@ -1,6 +1,6 @@
 ---
 name: dev-design-select
-description: Use when Define is complete and you need to explore and pick an approach before writing a detailed design — 选方案/技术选型/方案对比/怎么做/出方案/预研/调研/看看别人怎么做. Produces a Decision Packet consumed by dev-design-refine. Use when devflow routes to Design (select stage). Not for writing the detailed design document (use nocode:dev-design-refine), interaction/visual design (use pd-ix/pd-vd), or writing code (use dev-build).
+description: "Use when you need to explore and pick an approach before writing a detailed design — 选方案/技术选型/方案对比/怎么做/出方案/预研/调研/看看别人怎么做/哪种方式好/有几种做法/对比一下/评估方案/explore options/which approach. Also triggers when devflow or dev-design routes to select stage, or when a non-trivial task has no chosen approach yet. Does NOT require Define to be complete — select handles missing context by scoping inline. Produces a Decision Packet consumed by dev-design-refine. Not for writing the detailed design document (use nocode:dev-design-refine), interaction/visual design (use pd-ix/pd-vd), or writing code (use dev-build)."
 ---
 
 # select — 选方案 + 预研，产出决策包
@@ -35,10 +35,15 @@ select 回答"走哪条路"——**先扩散再收敛**:探索 approach、多方
 
 写详细设计文档 → `dev-design-refine`。写代码 → `dev-build`。Define 未完成(无 restate)→ 回 Define。交互/视觉设计 → `pd-ix` / `pd-vd`。
 
-## Enter Gate
+## Enter Gate（宽进严出）
 
-- [ ] Define restate 存在且用户已确认(方案选择模式),或有明确预研主题(research 模式)
-- [ ] 场景分类 = Full(方案选择),或独立预研请求
+**宽进**：有方案探索意图即可进入——不要求 Define 完成、不要求场景 = Full。
+
+- [ ] 有方案探索意图（用户要选方案 / 对比方案 / 预研），或由 dev-design 协调器路由进入
+
+**缺上下文时的入口处理**（select 在 Step 1 探索前就地补全，不踢回 Define）：
+- 无 restate → 从用户描述 / 对话上下文提取目标 + 范围 + 约束，作为探索基础；探索中发现范围模糊再追问，不前置 block
+- 有 restate → 按原流程消费
 
 > 端到端示例（restate → 方案对比 → 选定 → Decision Packet）见 `references/example-design-session.md`；预研模式骨架见 `references/example-research-skeleton.md`。
 

@@ -1,6 +1,6 @@
 ---
 name: dev-design
-description: Use when Define is complete and devflow routes to the Design stage, or the user wants the full design flow end-to-end (选方案 → 详细设计 → 渲染). Thin coordinator routing dev-design-select → dev-design-refine →（可选）dev-design-render；本 skill 自身不选方案、不写文档、不评审。Not for picking an approach directly (use nocode:dev-design-select), writing the design doc (use nocode:dev-design-refine), code comments, README, or commit messages.
+description: "Use when the user wants to design how to build something — 设计/怎么设计/技术设计/详细设计/写设计文档/出方案再写设计/设计一下/先设计/要不要先设计/需要设计吗/走设计流程/design it/how should we build this/let's design this. Also triggers when devflow routes to Design stage, when the task is non-trivial and no design exists yet, or when the user asks 怎么做/怎么实现 for a multi-module change. Does NOT require Define to be complete — handles missing context internally. Thin coordinator routing dev-design-select → dev-design-refine →（可选）dev-design-render；本 skill 自身不选方案、不写文档、不评审。Not for code comments, README, commit messages; to jump directly into sub-stages use dev-design-select (选方案/预研) or dev-design-refine (写设计文档)."
 ---
 
 # dev-design — 设计流程协调器
@@ -44,12 +44,16 @@ select ──Decision Packet──→ refine ──reviewed doc + verdict──�
 - 选方案 / 技术选型 / 方案对比 / 预研 → `dev-design-select`（直接要选方案，不必经协调器）
 - 写详细设计文档 / 已有选定方案要落文档 → `dev-design-refine`
 - 设计文档渲染成 HTML → `dev-design-render`
-- Define 未完成（无 restate）→ 回 Define；Mini / Standard 场景跳 Design 直接进 Plan
 
-## Enter Gate
+## Enter Gate（宽进严出）
 
-- [ ] Define restate 存在且用户已确认
-- [ ] 场景分类 = Full
+**宽进**：有设计意图即可进入——不要求 Define 完成、不要求场景 = Full。1% 沾"设计"就触发。
+
+- [ ] 用户有设计意图（显式说"设计/方案/怎么做"，或任务复杂度需要设计）
+
+**缺上下文时的入口处理**（协调器在 Step 0 之前就地补全，不踢回 Define）：
+- 无 restate → 协调器用 1-2 轮快速澄清（目标 + 范围 + 约束），形成 **轻量 restate** 后进 select；不走完整 Define 流程
+- 场景不明 / Mini / Standard → 协调器判断是否真需设计（跨模块 / 多决策点 / 有架构影响 → 需要，进 select；单文件单决策 → 建议直接进 Plan/Build，用户坚持则仍进 select）
 
 ## 协议
 
