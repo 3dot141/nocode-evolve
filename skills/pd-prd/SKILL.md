@@ -1,6 +1,6 @@
 ---
 name: pd-prd
-description: Use when the user wants to write a product requirements document. Use when the user says "写 PRD/产品需求/产品设计/产品 brief/写需求文档", or after research skill completes and the user wants to synthesize findings into a document. Also use when devflow Full-scene suggests running the product flow. Not for technical design docs (use nocode:dev-design-refine) or code comments/README.
+description: Use when the user wants to write a product requirements document. Use when the user says "写 PRD/产品需求/产品设计/产品 brief/写需求文档", or after research skill completes and the user wants to synthesize findings into a document. Also use when devflow Full-scene suggests running the product flow. Not for technical design docs (use nocode:dev-design) or code comments/README.
 ---
 
 # prd — 收敛成产品需求文档
@@ -14,7 +14,7 @@ description: Use when the user wants to write a product requirements document. U
 ## 非本 skill 请求
 
 纯调研不写文档 → 走 `nocode:pd-research`。
-技术设计文档 / RFC / ADR → 走 `nocode:dev-design-refine`。
+技术设计文档 / RFC / ADR → 走 `nocode:dev-design`。
 已有 PRD 直接进开发 → 走 devflow Define。
 改 README / commit message → 不进本 skill。
 

@@ -2,7 +2,7 @@
 
 骨架速查 reference——把整个系统/管线/矩阵/状态机的**整体结构**摆在文档前部，让读者前 3 屏就能 grasp"这个东西长什么样"，再看后续章节的决策推演和实施细节。
 
-> 本 reference 是 `dev-design-refine` 的**可选增强**——适合骨架驱动型内容（矩阵/管线/状态机/协议），与现有 doc-type 主轴正交（Design Doc / RFC 类型可在「目标」节后加 quick-view 锚点节）。**不替代 doc-type 选择**，只在合适时加为一个章节。
+> 本 reference 是 dev-design writing 阶段的**可选增强**——适合骨架驱动型内容（矩阵/管线/状态机/协议），与现有 doc-type 主轴正交（Design Doc / RFC 类型可在「目标」节后加 quick-view 锚点节）。**不替代 doc-type 选择**，只在合适时加为一个章节。
 
 ## 何时用这个 reference
 

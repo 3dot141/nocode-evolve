@@ -1,17 +1,14 @@
----
-name: dev-design-refine
-description: 详细设计——把 dev-design-select 的方案（Decision Packet）细化为设计文档并做唯一评审，feat / bug / refactor 三场景。由 dev-design 协调器在方案选定后调用，或用户直接要求把已定方案写成详细设计文档时进入。Not for 选方案/技术选型/预研（use nocode:dev-design-select），渲染 HTML（use nocode:dev-design-render），code comments, PR descriptions, commit messages, or READMEs.
----
+# writing — 设计完善
 
-# dev-design-refine — 设计完善
+> dev-design 内部协议，不独立注册。由 dev-design 协调器在 writing 阶段 Read 并执行。
 
 **Iron Law: 详细设计不是"写文档"——领域怎么拆、模块怎么组织、接口长什么样，这些是设计决策。文档只是这些决策的载体。**
 
-dev-design-select 选完方案（"走哪条路"，产出 Decision Packet），本 skill 做详细设计（"选定的路怎么走"）：领域划分、模块设计、接口设计、业务流、文件影响。设计文档是详细设计的自然产出物，不是额外"写"出来的。
+decision 阶段选完方案（"走哪条路"，产出 Decision Packet），本阶段做详细设计（"选定的路怎么走"）：领域划分、模块设计、接口设计、业务流、文件影响。设计文档是详细设计的自然产出物，不是额外"写"出来的。
 
 > Leading word: **领域设计**。所有细化收敛到一份按 DDD 组织的设计文档。
 
-## DDD 基础原则（贯穿全 skill）
+## DDD 基础原则（贯穿本阶段）
 
 - **域 = 围绕业务实体的边界**（名词不是动词）。"订单域 / Agent 域"，不是"创建 / 同步"
 - **高内聚**：每个域 / 模块自包含——接口 + 业务流 + 文件影响 + 验证 + 安全/性能 都在自己的章节里
@@ -19,26 +16,20 @@ dev-design-select 选完方案（"走哪条路"，产出 Decision Packet），�
 - **总分结构**：先总图（全局一屏看完）再分（各域 / 模块展开）。先图后文
 - **接口四层**：对外 API / 类接口 / 事件接口 / 数据契约——按需展开，不只有 HTTP
 
-## 非本 skill 请求
+## 确认与回退
 
-- 没有选定方案（无 Decision Packet），要先探索 / 选方案 → 回 `nocode:dev-design-select`
-- 写代码注释 / PR 描述 / commit message / README / changelog → 不进
-- 纯执行不需设计 → 直接做
-
-## 协调模式：确认与回退
-
-- **确认点**（Step 2 文档结构确认 / Review findings 逐条 fix-skip / 是否渲染）：被 `dev-design` 协调器调用时**返回 `needs_user_input`** 交协调器统一弹（envelope 单源见 select SKILL「收尾」节）；独立运行时用本地 AskUserQuestion。
-- **方案级决策变更**（改数据流 / 模块边界 / 外部契约 / 关键约束）：返回 `replan_required` 回 select 重选（不是 needs_user_input）——方案级决策的唯一所有者是 select，refine 擅自改会让文档与已确认的 Decision Packet 漂移。
-- **StageResult** = `completed | needs_user_input | replan_required`（refine 向协调器返回的三态，与 select 对齐）。
+- **确认点**（Step 2 文档结构确认 / Review findings 逐条 fix-skip / 是否渲染）：由协调器统一弹确认（envelope 单源见 `decision/SKILL.md`「收尾」节）。
+- **方案级决策变更**（改数据流 / 模块边界 / 外部契约 / 关键约束）：返回 `replan_required` 回 decision 重选（不是 needs_user_input）——方案级决策的唯一所有者是 decision，writing 擅自改会让文档与已确认的 Decision Packet 漂移。
+- **StageResult** = `completed | needs_user_input | replan_required`（writing 向协调器返回的三态）。
 
 ## Enter Gate
 
-- [ ] dev-design-select 已完成（Decision Packet：选定方案 + 探索结论 + 测试目标），或用户直接要求写设计文档并已说清要做什么
+- [ ] decision 阶段已完成（Decision Packet：选定方案 + 探索结论 + 测试目标），或用户直接要求写设计文档并已说清要做什么
 - [ ] 场景类型已确定（feat / bug / refactor）
 
 ## 协议
 
-> **消费 Decision Packet**：refine 是决策包的**消费方**——dev-design-select 产出、经协调器传入。schema（含 requiredFields / 条件必填 / replan envelope）单源在 `dev-design-select` SKILL 的「收尾」节，本 skill 只按它校验、映射、消费，不重复定义。
+> **消费 Decision Packet**：writing 是决策包的**消费方**——decision 产出、经协调器传入。schema（含 requiredFields / 条件必填 / replan envelope）单源在 `decision/SKILL.md` 的「收尾」节，本阶段只按它校验、映射、消费，不重复定义。
 
 > **内部 Step 编号统一**：通用流程步 **Step 0-5** 与场景模板 detail 步 **Step 4a/4b/…** 连续编号，不各自从 Step 2 重启——历史上"通用 Step2 章节大纲 vs 场景 Step2 领域划分"曾因各自编号撞车，统一编号后消除。
 
@@ -54,7 +45,7 @@ Task 4: 信息补全——按场景模板 4a/4b 逐节补全，遇新决策套 r
 Task 5: 汇总——文件影响总表 + 验证策略总表（步 11）
 Task 6: Review（唯一评审：默认主会话 8 维自查，用户显式要求才调 reviewing 引擎 + 用户逐条确认 + Review Log）（步 12）
 Task 7: 保存 + 渲染确认 + handoff（步 13-14）
-  metadata: {handoff: true}（供防跳步 Hook B 识别交接 task）
+  metadata: {handoff: true}
 ```
 
 每完成一个标 done。
@@ -66,13 +57,13 @@ Task 7: 保存 + 渲染确认 + handoff（步 13-14）
 > 对应 14 步流程线的 **步 7 落笔前核对**。落笔前先校验上游交接契约完整，再确定场景、加载场景模板与输入。
 
 **Enter Gate:**
-- [ ] 能拿到设计输入（dev-design-select 的 Decision Packet，或用户直接描述）
+- [ ] 能拿到设计输入（decision 阶段的 Decision Packet，或用户直接描述）
 
 **Core Actions:**
 
-1. **消费 + 校验 Decision Packet**（经协调器从 select 传入时必做；用户直接描述、无 Packet 时跳过校验、从描述提取）：
+1. **消费 + 校验 Decision Packet**（经协调器从 decision 传入时必做；用户直接描述、无 Packet 时跳过校验、从描述提取）：
    - **校验 version**：不支持的 schema version → **返回错误**，不静默按当前版本硬解析（防上下游字段漂移）
-   - **校验 requiredFields**（**清单单源见 `dev-design-select` SKILL「收尾」节的 schema**，本 skill 不复述字段名以防漂移）：缺任一 → 报缺、回协调器补，不带缺口硬写
+   - **校验 requiredFields**（**清单单源见 `decision/SKILL.md`「收尾」节的 schema**，本阶段不复述字段名以防漂移）：缺任一 → 报缺、回协调器补，不带缺口硬写
    - **条件必填校验**：`isAIFeature=true` 时 `evalSpec` 必填；涉及运行时逻辑时 `domainDecisions.observability.basicLogging` 必填。**空数组 / 空占位视为缺失**，不放行
    - **字段映射到文档章节**：`selectedApproach + alternatives → 决策章节`（反方配平用 `alternatives`）、`constraints → 约束`、`domainDecisions → 领域/架构设计`（含可观测基础日志层）、`openQuestions → 未决项`（进信息补全消解，遗留则进 Review 的 Open Questions）、`testObjectives + verifyStrategy → 验证策略`、`evalSpec → eval 设计节`、`sources → 前置调研`
 
@@ -86,7 +77,7 @@ Task 7: 保存 + 渲染确认 + handoff（步 13-14）
 
    - **场景模板必 Read**——Step 2 的结构骨架产出标准和 Step 4 的 detail 子步（4a/4b）只存在于模板文件里，不读模板就没有可执行的场景内容。
    - **骨架示例必 Read**——学骨架和颗粒度，不照搬措辞；决策数量按设计复杂度（核心只有 1 个关键决策就写 1 个，不硬凑）；伪代码注释密度按复杂度。
-   - 预研 / 技术选型 / 调研（research）→ 不在本 skill，走 `dev-design-select` 的预研模式。refine 只做 feat / bug / refactor 三种详细设计。
+   - 预研 / 技术选型 / 调研（research）→ 不在本阶段，走 decision 的预研模式。writing 只做 feat / bug / refactor 三种详细设计。
 
 3. **Read `references/writing-principles.md`**（写作准则全文 12 条 + 文件影响硬格式 + 文档生命周期）——Step 2 起所有产出按它写，本文末尾只留索引。
 
@@ -107,7 +98,7 @@ Task 7: 保存 + 渲染确认 + handoff（步 13-14）
 
 **Core Actions:**
 
-1. **章节大纲**：基于场景模板的「章节大纲示例」生成本次文档的章节列表，展示给用户。
+1. **章节大纲**：基于场景模板的「章节大纲示例」生成本次文档的章节列表，展示给用户。所有场景的大纲均包含「方案决策」章节（承载 decision 产出的 Decision Packet 完整内容，位于概述之后）。
 2. **结构骨架**（架构审核的对象，先图后文，产出标准见场景模板「结构骨架」节）：
    - **feat** → 域划分 + 域关系总图
    - **bug** → 现象 + 复现 + 影响范围（问题位置图在 Step 4a 根因分析里补细）
@@ -132,7 +123,7 @@ Task 7: 保存 + 渲染确认 + handoff（步 13-14）
 - 审 Step 2 结构骨架：**域拆分按实体（名词非动词）** / **模块边界清晰** / **依赖方向单向无环** / **高内聚低耦合**
 - 对照 Decision Packet 的 `selectedApproach` + `domainDecisions`：结构是否忠实落地选定方案，无偏离
 - **场景轻重**：feat / refactor 重点审（域/模块拆分是架构核心）；**bug 局部修复通常无跨模块架构影响 → 快速确认影响范围不跨模块即轻过**
-- 发现架构级问题（域拆错 / 边界错位 / 依赖成环）→ 就地修正结构骨架、回 Step 2 重新确认；若问题触及**方案级决策**（改数据流 / 模块边界 / 外部契约 / 关键约束）→ 按 Step 4 replan 判据返回 `replan_required` 回 select
+- 发现架构级问题（域拆错 / 边界错位 / 依赖成环）→ 就地修正结构骨架、回 Step 2 重新确认；若问题触及**方案级决策**（改数据流 / 模块边界 / 外部契约 / 关键约束）→ 按 Step 4 replan 判据返回 `replan_required` 回 decision
 
 **Exit Gate:**
 - [ ] 结构骨架架构审核通过（域拆分/边界/依赖方向），或轻过（bug 无架构影响）
@@ -151,9 +142,9 @@ Task 7: 保存 + 渲染确认 + handoff（步 13-14）
 - 图标路径 ID / BF / 约束，文本引用 ID，互相跳转
 - 每个域/场景章节自包含（接口+业务流+文件影响+验证+安全/性能）
 
-**每遇新决策 → 套「局部 vs 方案级」判据**（方案级决策的唯一所有者是 select——refine 在补全中自行改方案级决策，文档会和已确认的 Decision Packet 漂移，评审和实现就会各信一边）：
-- 改动**数据流 / 模块边界 / 外部契约 / 关键约束**任一 → **方案级决策**：停下，返回结构化 `replan_required`（含 `originalPacketRevision / invalidatedDecision / evidence / affectedSections[] / resumeState`，envelope 单源见 select SKILL），由协调器回 select 重选，不带方案级变更硬写
-- 都没改（接口参数 / 命名 / 模块内部实现）→ **局部决策**：refine 自己定，小问题 AskUserQuestion 当场确认，不中断
+**每遇新决策 → 套「局部 vs 方案级」判据**（方案级决策的唯一所有者是 decision——writing 在补全中自行改方案级决策，文档会和已确认的 Decision Packet 漂移，评审和实现就会各信一边）：
+- 改动**数据流 / 模块边界 / 外部契约 / 关键约束**任一 → **方案级决策**：停下，返回结构化 `replan_required`（含 `originalPacketRevision / invalidatedDecision / evidence / affectedSections[] / resumeState`，envelope 单源见 `decision/SKILL.md`），由协调器回 decision 重选，不带方案级变更硬写
+- 都没改（接口参数 / 命名 / 模块内部实现）→ **局部决策**：writing 自己定，小问题 AskUserQuestion 当场确认，不中断
 
 **Exit Gate:**
 - [ ] 场景模板各 detail 子步（4a/4b/…）完成
@@ -184,7 +175,7 @@ Task 7: 保存 + 渲染确认 + handoff（步 13-14）
 
 ### Review（唯一评审 · 默认自查 · 显式要求才升审）
 
-> **本 Review 是整份设计文档的唯一一次全文评审**——历史上 dev-design 协调器与 refine 收尾各审一遍，重复且结论可能冲突；现在全文评审只在本步做，协调器只验证本步返回的**标准化 review verdict**、不重审。与 Step 3 架构审核**不重叠**：Step 3 是早层（结构定型时审架构骨架的域拆分/边界/依赖），本 Review 是晚层（全文写完时审完整性/一致性/可执行）。
+> **本 Review 是整份设计文档的唯一一次全文评审**——协调器只验证本步返回的**标准化 review verdict**、不重审。与 Step 3 架构审核**不重叠**：Step 3 是早层（结构定型时审架构骨架的域拆分/边界/依赖），本 Review 是晚层（全文写完时审完整性/一致性/可执行）。
 
 **Enter Gate:**
 - [ ] 设计文档初稿完成（含 Step 5 汇总）
@@ -224,9 +215,9 @@ Task 7: 保存 + 渲染确认 + handoff（步 13-14）
 **Core Actions:**
 1. 保存到 `{dev_design_output}`（文档产出路径变量，项目本地 AGENTS.md / CLAUDE.md 可覆盖）
 2. **AskUserQuestion：是否渲染成 Artifact 页面？**
-   - 是 → 调 `Skill(nocode:dev-design-render)` 把设计文档渲染成 Artifact 页面（图用 DOM 排版、表格可交互、可分享 URL）
+   - 是 → 进入 render 阶段（Read `render/SKILL.md` 执行），把设计文档渲染成 Artifact 页面（图用 DOM 排版、表格可交互、可分享 URL）
    - 否 → 设计文档（markdown）即最终交付
-3. **硬交接**：向调用方/用户报告 dev-design-refine 完成 + 文档保存路径 + **review verdict**——若由协调器（dev-design）调入，返回 reviewed 文档 + verdict，协调器**只验 verdict 不重审**，继续状态机（→ render / final gate）；独立进入则向用户报告完成并建议下一步（评审已在本步做过，不再走 dev-review；直接进 dev-plan）
+3. **硬交接**：向协调器报告 writing 阶段完成 + 文档保存路径 + **review verdict**，协调器**只验 verdict 不重审**，继续状态机（→ render / final gate）
 
 **Exit Gate:**
 - [ ] 文档已保存到正确路径
@@ -277,7 +268,7 @@ Task 7: 保存 + 渲染确认 + handoff（步 13-14）
 - ❌ **代用户拍板**：拿到 findings 自己挑修哪些——用户确认是 hard gate
 - ❌ **吞 Review Log**：只改主体不 append Review Log——审计轨迹断
 - ❌ **把 plan 内容塞进来**：class 内部 / TDD 步骤 / 具体 catch 块写法
-- ❌ 因"任务简单 / 还在概览 / 用户说了'继续'"跳过某 Step、不建 Step 0 TaskCreate、或漏掉收尾交接——进了 skill 就走完所有 Step
+- ❌ 因"任务简单 / 还在概览 / 用户说了'继续'"跳过某 Step、不建 Step 0 TaskCreate、或漏掉收尾交接——进了流程就走完所有 Step
 
 ## 输出路径
 
@@ -290,4 +281,4 @@ Task 7: 保存 + 渲染确认 + handoff（步 13-14）
 - `references/writing-principles.md` — 写作准则 12 条全文 + 文件影响硬格式 + 文档生命周期，Step 1 必 Read
 - `references/design-doc-review.md` — 设计文档评审维度（默认自查的维度单源；用户显式要求升审时随声明传入 reviewing 引擎）
 - `references/cards/{quick-view,prerequisites}.md` — 骨架驱动型内容的可选锚点节
-- `Skill(nocode:dev-design-render)` — 设计文档 → Artifact 页面
+- `render/SKILL.md` — 设计文档 → Artifact 页面（内部协议）

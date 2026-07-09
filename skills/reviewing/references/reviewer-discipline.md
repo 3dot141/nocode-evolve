@@ -4,7 +4,7 @@
 >
 > **被谁用**：skeleton §4.0 派主路 subagent、或 §4.2 异源交叉派 codex/subagent 时，把本文纪律随评审对象一起交给 reviewer；`findings-contract.md` §4 约束②③ 引用本文作为 **Evidence Gate / Q/SA 的判据定义单源**（契约只做 5→3 压档映射，不复述判据）。改 Q/SA / Evidence Gate 判据只改本文，findings-contract 随之对齐。
 >
-> 原内嵌在 `dev-design-refine` 的 reviewer-template，现抽出为框架通用件——这些纪律适用任何 reviewer。
+> 原内嵌在 dev-design 的 reviewer-template，现抽出为框架通用件——这些纪律适用任何 reviewer。
 
 ## Iron Law
 

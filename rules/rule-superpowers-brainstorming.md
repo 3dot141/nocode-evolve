@@ -29,20 +29,21 @@ skip: false
    - 后续 write / review / render 三步都在新 worktree 内执行——主仓 working tree 不被设计文档草稿污染，便于并行多份设计 / 多 IDE 窗口对照
    - 例外：用户显式声明「在主仓写 / 不要 worktree / 就地写」→ 跳过本步，但要回复里点名告知"按你的要求跳过 worktree，直接在主仓 <branch> 写"
 
-2. **`nocode:dev-design-refine`** —— 生成 markdown 设计文档
-   - 场景选择（feat / bug / refactor 三种场景模板；预研 / 技术选型走 `dev-design-select`）
-   - 每种场景一套骨架（feat：领域划分 → 交互场景 → 域设计 → 汇总；bug：现象 → 根因 → 修复 → 验证；refactor：现状 → 目标 → before/after → 迁移）
+2. **`nocode:dev-design`** —— 设计流程协调器（decision → writing → render 三阶段）
+   - decision 阶段：探索 + 多方案对比 + 领域覆盖 + 测试目标 → 产出 Decision Packet
+   - writing 阶段：消费 Packet → feat/bug/refactor 详细设计 + 唯一评审
+   - 场景选择（feat / bug / refactor 三种场景模板）
    - Read `references/example-{feat,bug,refactor}-skeleton.md` 学习结构
    - 输出路径按 `{dev_design_output}` 变量（落在 step 1 创建的 worktree 内）
 
-3. **评审**（dev-design-refine 工作流的 Review 环节，维度用 `references/design-doc-review.md`）
+3. **评审**（dev-design writing 阶段的 Review 环节，维度用 `references/design-doc-review.md`）
    - 评审：**默认主会话逐维自查**（design-doc-review 维度核心审查 + AI patterns 附带检查 + Self-Audit），不调 reviewing 引擎、不派 subagent/Codex；用户显式要求（「审一下 / 深审 / 独立审」）才调 `Skill(nocode:reviewing)`；文档命中敏感面（认证 / 数据迁移 / 资金 / 对外接口 / 不可逆决策）→ 一句话建议升审，用户点头才派
    - 输出分级 Review Report（Critical / Warning / Suggestion），每条带短编号（C1/W1/S1...）
    - **不自动循环修订**：Report 原样呈现给用户，逐条勾选 fix / skip（也可一键全修/全跳过/自由指示）
    - 据用户决定修订主体后，**本轮 Report 全文 + 用户决定 + 修订摘要 append 到文档末尾 `## Review Log`**
    - 是否再来一轮 review 由用户决定，不再有"最多 3 轮"硬限制
 
-4. **`dev-design-render`** (见 `skills/dev-design-render/SKILL.md`) —— 把设计文档渲染成 Artifact 页面
+4. **render 阶段**（dev-design 内部） —— 把设计文档渲染成 Artifact 页面
    - 输入：reviewer 通过的 markdown
    - 输出：同目录 `<topic>-design.html`（Artifact 源文件）+ 发布后的 Artifact URL
    - 页面含导航 / 双主题 / 代码高亮 / 图 DOM 排版，视觉由 artifact-design 现场设计

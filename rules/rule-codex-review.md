@@ -128,7 +128,7 @@ node "${CLAUDE_PLUGIN_ROOT}/vendor/codex/scripts/codex-companion.mjs" task --wri
 
 ## 场景 4:设计文档独立审稿
 
-**触发**:`dev-design-refine` 工作流走到 review 环节(见 `rule-superpowers-brainstorming.md` step 5 第 3 步)且**用户显式要求独立审稿**(「审一下 / 深审 / 独立审 / 找 codex」,或对敏感面建议升审后用户点头)。默认的主会话 8 维自查不触发本场景,不拉 codex。
+**触发**:`dev-design` 的 writing 阶段走到 review 环节(见 `rule-superpowers-brainstorming.md` step 5 第 3 步)且**用户显式要求独立审稿**(「审一下 / 深审 / 独立审 / 找 codex」,或对敏感面建议升审后用户点头)。默认的主会话 8 维自查不触发本场景,不拉 codex。
 
 **做法**:独立审稿**默认单路直接交给 Codex**(不预先探活,不与 Claude `design-doc-reviewer` 并行双跑)——按「调用方式」直接派一个 `Agent()` 去 Bash 跑 Codex 审稿:
 

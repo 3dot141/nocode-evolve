@@ -1,4 +1,4 @@
-# 设计文档写作准则（dev-design-refine）
+# 设计文档写作准则（dev-design writing）
 
 > 主 SKILL.md Step 1 强制 Read 本文件。理解原则比死守章节更重要。
 

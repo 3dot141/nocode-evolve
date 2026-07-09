@@ -1,6 +1,6 @@
 # feat 模板（DDD 全流程，最完整）
 
-> dev-design-refine 的场景模板。主 SKILL.md Step 1 按场景路由到本文件；覆盖 Step 2 结构骨架的产出标准 + Step 4 的 detail 子步（4a/4b）。新功能 / 产品设计场景使用。
+> dev-design writing 阶段的场景模板。主 SKILL.md Step 1 按场景路由到本文件；覆盖 Step 2 结构骨架的产出标准 + Step 4 的 detail 子步（4a/4b）。新功能 / 产品设计场景使用。
 
 按 DDD 组织：总图（域关系）→ 边（交互场景 / 表现层）→ 节点（域设计 / 领域层）→ 汇总。
 

@@ -11,7 +11,7 @@ description: Use when you have defined goals and need to break work into tasks. 
 
 > Leading word: **tracer bullet**。每个 task 切一条窄但完整的端到端路径，不按层横切。
 
-输入：Define 的 restate + dev-design-refine 的设计文档（含领域划分、模块设计、接口、业务流、测试目标）（Full 场景）。
+输入：Define 的 restate + dev-design 的设计文档（含领域划分、模块设计、接口、业务流、测试目标）（Full 场景）。
 输出：用户确认的任务序列。
 
 ## 非本 skill 请求
@@ -92,7 +92,7 @@ Task 10: 硬交接 — 调用下一步 skill
 
 读，不写。按以下顺序加载上下文：
 1. restate（成果物/验收标准/约束/Out of Scope）
-2. dev-design-refine 产出的设计文档（含领域划分、模块设计、接口、业务流、测试目标）
+2. dev-design 产出的设计文档（含领域划分、模块设计、接口、业务流、测试目标）
 3. **定向加载**：设计文档「前置调研」章节的 `path:line` 引用就是加载清单——要改的文件、关键 caller、pattern 参照、类型/接口定义大多已被 Design 探索过并引用，逐条定向 Read（含对应测试文件），不重新自由探索。Standard 场景（无设计文档）用 restate 附录探索胶囊的 findings sources 作加载清单，同样定向 Read
 4. 清单没覆盖、本次拆解又需要的文件，再补搜（精确匹配走 rg，语义找走 `Agent(nocode:semble-search)`）——补缺，不是重扫
 
@@ -122,7 +122,7 @@ Round 1 写骨架——定清楚**改什么、覆盖什么、谁做**，代码�
 
 - **Files**：Create / Modify / Test 精确路径
 - **covers（必填）**：覆盖 restate 哪些路径/约束 ID
-- **设计文档段落**：指向 dev-design-refine 的哪个域/模块/BF（Round 2 读这里写代码）
+- **设计文档段落**：指向 dev-design 的哪个域/模块/BF（Round 2 读这里写代码）
 - **HITL / AFK**
 - **UI 设计源**（涉及 UI 时）
 - **粒度三重约束**（三条同时守，任一违反就拆）：
@@ -174,7 +174,7 @@ Round 1 骨架完成，在填充代码前对计划骨架做一遍自查。骨架
 Round 1 的骨架定了"改什么"，Round 2 填"怎么改"——每个 task 补上 TDD steps 真实代码。
 
 **每个 task 必读 3 份**：
-1. **设计文档**（dev-design-refine 产出）— BF 伪代码 + 类接口 + 单测设计 Given/When/Then（业务规则已被蒸馏在这里）
+1. **设计文档**（dev-design 产出）— BF 伪代码 + 类接口 + 单测设计 Given/When/Then（业务规则已被蒸馏在这里）
 2. **Plan Round 1 骨架** — 本 task 改哪些文件、covers 哪些路径
 3. **最新代码库** — 现有代码长什么样、import 怎么写、风格怎么跟
 

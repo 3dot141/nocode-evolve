@@ -21,9 +21,7 @@ skills/
 |---|---|
 | `devflow` | 工程任务流程领航，8 阶段 4 场景路由，给"当前阶段判断 + 下一步建议"，用户拍板不代执行 |
 | `dev-define` | 需求定义澄清（restate 目标 / 为谁 / 为何现在 / 成功标准） |
-| `dev-design` | 架构 / 技术方案设计与选型对比 |
-| `dev-design-refine` | 把选定方案细化为领域设计、模块设计、接口、业务流，产出设计文档 |
-| `dev-design-render` | 把设计文档渲染成可浏览页面并经 Artifact 发布（图用 DOM 排版、代码高亮、可导航、可分享 URL） |
+| `dev-design` | 设计流程协调器（decision 选方案 → writing 详细设计+评审 → render 渲染），三阶段内部协议不独立注册 |
 | `dev-plan` | 把已定义目标拆成可执行任务计划 |
 | `dev-build` | 按 plan 执行实现（顺序派发 subagent 或主 agent 直接执行两种协议） |
 | `dev-verify` | 端到端验证实现是否真的可用（先跑起来看证据，不靠读代码推断） |

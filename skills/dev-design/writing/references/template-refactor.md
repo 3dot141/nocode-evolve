@@ -1,6 +1,6 @@
 # refactor 模板
 
-> dev-design-refine 的场景模板。主 SKILL.md Step 1 按场景路由到本文件；覆盖 Step 2 结构骨架的产出标准 + Step 4 的 detail 子步（4a/4b）。重构 / 重组 / 迁移场景使用。
+> dev-design writing 阶段的场景模板。主 SKILL.md Step 1 按场景路由到本文件；覆盖 Step 2 结构骨架的产出标准 + Step 4 的 detail 子步（4a/4b）。重构 / 重组 / 迁移场景使用。
 
 从 A 状态到 B 状态。形状：现状 → 目标 → before/after → 迁移。
 

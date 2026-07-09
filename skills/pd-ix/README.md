@@ -28,4 +28,4 @@ pd-ix 和 pd-vd 由原 pd-ui skill 拆分而来（260630）。拆分原因：交
 - `pd-vd` — 以 `.ix.md` 为输入做视觉设计
 - `dev-design` — Step 2 读 `.ix.md` 理解 UI 需求
 - `dev-review` — 以 `.ix.md` 的覆盖矩阵对照前端实现完整度
-- `dev-design-refine` — 交互设计 → 细化为前端组件
+- `dev-design` — 交互设计 → 细化为前端组件

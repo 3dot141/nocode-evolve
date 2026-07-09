@@ -63,7 +63,7 @@ digraph brainstorming {
 }
 ```
 
-**The terminal state is handing off to the downstream planning skill.** Do NOT invoke frontend-design, mcp-builder, or any other implementation skill directly. This repo does not ship the upstream `writing-plans` skill as-is — the actual next-skill routing is defined in `rules/rule-superpowers-brainstorming.md` (as of this writing: `nocode:using-git-worktrees` → `nocode:dev-design-refine` → `dev-design-render`). Follow that rule rather than hardcoding a skill name here.
+**The terminal state is handing off to the downstream planning skill.** Do NOT invoke frontend-design, mcp-builder, or any other implementation skill directly. This repo does not ship the upstream `writing-plans` skill as-is — the actual next-skill routing is defined in `rules/rule-superpowers-brainstorming.md` (as of this writing: `nocode:using-git-worktrees` → `nocode:dev-design`). Follow that rule rather than hardcoding a skill name here.
 
 ## The Process
 
@@ -134,7 +134,7 @@ Wait for the user's response. If they request changes, make them and re-run the 
 
 **Implementation:**
 
-- This repo does not ship a `writing-plans` skill (that's the upstream superpowers skill name; this repo's downstream routing differs). Hand off per the routing defined in `rules/rule-superpowers-brainstorming.md` — as of this writing: `nocode:using-git-worktrees` → `nocode:dev-design-refine` → `dev-design-render`.
+- This repo does not ship a `writing-plans` skill (that's the upstream superpowers skill name; this repo's downstream routing differs). Hand off per the routing defined in `rules/rule-superpowers-brainstorming.md` — as of this writing: `nocode:using-git-worktrees` → `nocode:dev-design`.
 - Do NOT invoke any other implementation skill directly (e.g. frontend-design, mcp-builder). Follow the rule's routing instead of a hardcoded skill name.
 
 ## Key Principles

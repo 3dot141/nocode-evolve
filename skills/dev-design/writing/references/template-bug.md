@@ -1,6 +1,6 @@
 # bug 模板
 
-> dev-design-refine 的场景模板。主 SKILL.md Step 1 按场景路由到本文件；覆盖 Step 2 结构骨架的产出标准 + Step 4 的 detail 子步（4a/4b）。bug 修复场景使用。
+> dev-design writing 阶段的场景模板。主 SKILL.md Step 1 按场景路由到本文件；覆盖 Step 2 结构骨架的产出标准 + Step 4 的 detail 子步（4a/4b）。bug 修复场景使用。
 
 根因分析 + 修复方案。形状：现象 → 根因 → 修复 → 影响 → 验证。
 

@@ -31,7 +31,7 @@ devflow 第 7 阶段——五轴代码评审（默认主会话自查，独立交
 
 ## 设计决策：devflow 全链路 review 默认自审，升审仅用户显式要求（跨 skill 策略，记录在此）
 
-`260708` 用户拍板的策略反转，波及 dev-define / dev-design-refine / dev-plan / dev-review / devflow / rule-superpowers-brainstorming / rule-codex-review。
+`260708` 用户拍板的策略反转，波及 dev-define / dev-design / dev-plan / dev-review / devflow / rule-superpowers-brainstorming / rule-codex-review。
 
 **原来的设计**：各阶段 review 由引擎/规则自动判档——define-review 调 reviewing 引擎、design 唯一评审重档默认单路 Codex、plan 两轮 red-blue（Round 2 无条件强制重档 Codex）、dev-review 走引擎 §1a 升档判据自动派异源交叉、Decompose 覆盖验证强制 red-blue 重档。
 

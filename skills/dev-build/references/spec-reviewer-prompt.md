@@ -8,7 +8,7 @@ Build 编排者在 implementer 完成后派发此 prompt，验证实现是否匹
 
 1. **原始 task 文本**（从 Plan 提取）
 2. **implementer 的 report**（status + 改动文件 + 自述）
-3. **设计文档**（dev-design-refine 产出）— 接口定义、领域模型、业务流、测试目标
+3. **设计文档**（dev-design 产出）— 接口定义、领域模型、业务流、测试目标
 4. **Plan 全局视图** — 依赖图 + 全部 task 列表（让 reviewer 知道本 task 在整体中的位置）
 5. **前置 task 产出摘要** — 本 task 依赖的 task 改了哪些文件、暴露了哪些接口（跨 task 一致性）
 

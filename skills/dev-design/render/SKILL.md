@@ -1,21 +1,14 @@
----
-name: dev-design-render
-description: Render design documents (from dev-design-refine) into a styled interactive page published via the Artifact tool — browsable sections, rendered diagrams, shareable URL. Not for UI prototypes (use pd-vd).
----
+# render — 设计文档 → Artifact 页面
 
-# dev-design-render — 设计文档 → Artifact 页面
+> dev-design 内部协议，不独立注册。由 dev-design 协调器在 render 阶段 Read 并执行。
 
 把设计文档（markdown）渲染成可浏览的页面，经 CC 内置 `Artifact` 工具发布为可分享 URL。不只是图——整个文档都渲染：标题变导航、表格变交互表、图有统一渲染约定、代码块等宽排版。
 
 **设计能力来自 artifact-design**：渲染前调用 CC 内置的 `Skill(artifact-design)`（原则型设计指导：角色锚定 / token 双主题 / 反模板化负面清单 / 先 design plan 再编码），为**这份文档的主题**现场设计页面——每份文档得到定制的视觉语言，而不是套同一个壳。这也是 `Artifact` 工具的硬性前置（工具说明要求发布前必须加载该 skill）。
 
-## 非本 skill 请求
-
-UI 原型 → pd-vd。写设计文档 → dev-design-refine。
-
 ## Enter Gate
 
-- [ ] dev-design-refine 已完成，设计文档已产出（`.md` 文件）
+- [ ] writing 阶段已完成，设计文档已产出（`.md` 文件）
 
 ## 协议
 
@@ -36,8 +29,8 @@ Task 3: 验证 + 保存
 
 Task 4: 收口 — 交回调用方
   Sub-steps: 向协调器（dev-design）返回 render receipt（Artifact URL + 页面文件路径 + 输入文档未改动），交回主流程；产物关系由协调器记录
-  Gate: 已交回调用方（渲染是终点分支，无下游阶段 skill）
-  metadata: {handoff: true}（供防跳步 Hook B 识别交接 task）
+  Gate: 已交回调用方（渲染是终点分支，无下游阶段）
+  metadata: {handoff: true}
 ```
 
 ### Step 1: 分析文档结构
