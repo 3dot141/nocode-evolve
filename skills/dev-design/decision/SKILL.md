@@ -4,10 +4,11 @@
 
 **Iron Law: 方案未对比的设计是假设不是设计。只提一个方案就让用户确认 = 假共识。**
 
-decision 回答"走哪条路"——**先扩散再收敛**:探索 approach、多方案差异化对比,扩散结果交用户拍方向(Step 4a),再收敛下钻,产出结构化 **决策包 Decision Packet** 交给 writing 阶段写详细设计。本阶段只做决策,不写文档、不评审。
+decision 回答"走哪条路"——**先扩散再收敛**:探索 approach、多方案差异化对比,扩散结果交用户拍方向(Step 4a),再收敛下钻,产出结构化 **决策包 Decision Packet** 交给 writing 阶段写详细设计。本阶段只做决策,不做详细设计、不评审;Packet 落盘为设计文档初稿(见下)。
 
 > Leading word: **approach**。没对比过的 approach 就没有设计,只有假设。
 > **决策包 Decision Packet** = decision 产出、writing 消费的结构化交接契约(带 required 字段 + 版本),schema 见「收尾」节。
+> **落盘载体 = `{dev_design_output}` 设计文档本身**:decision 首条决策落账时创建初稿(Step 5),writing 在**同一路径覆盖扩写**为完整详细设计——不另造 `decision-packet.md` 之类的独立文件。
 
 ## 两种模式
 
@@ -22,7 +23,7 @@ decision 回答"走哪条路"——**先扩散再收敛**:探索 approach、多�
 - **Step 4a 方案确认(每轮)**:每个决策层级(L1/L2/L3)的方案 + 权衡表成型后、选定前,交用户拍方向。L1 是杠杆最大的介入点;L2/L3 同样不静默——用户确认后才落账本。
 - **Step 8a Packet 终审**:完整 Packet 展示给用户逐条审核。审的是领域决策 / TO 这层细节(方向已在 4a 定过)。
 
-**决策账本**(非阻塞可见):Step 5 起每锁定一项决策就增量追加到账本(条目格式见 Step 5);层级边界(L1/L2/L3 锁定、6c 完成)在回合内给 1-2 行状态注记(本轮新锁 N 项 / 待定 M 项),不要求确认、不阻塞。8a 终审因此审的是一份用户看着长出来的账本,不是陌生成品。
+**决策账本**(非阻塞可见,载体 = 设计文档初稿,见 Step 5):Step 5 起每锁定一项决策就增量追加到账本(条目格式见 Step 5);层级边界(L1/L2/L3 锁定、6c 完成)在回合内给 1-2 行状态注记(本轮新锁 N 项 / 待定 M 项),不要求确认、不阻塞。8a 终审因此审的是一份用户看着长出来的账本,不是陌生成品。
 
 **异常停下来问,仅限**:① 打平手(权衡相当,取决于用户主观优先级)② 冲突需拍板(与已有 ADR/wiki 决策冲突)③ 信息缺口(需 agent 拿不到的外部信息)④ 不可逆 + 高影响。
 
@@ -89,7 +90,7 @@ Task 9: 硬交接 — 交付 Decision Packet(方案选择模式→writing;resear
 
   `决策点 | 结论 | 依据/置信度 | 否决备选及原因 | P0 还是延后`
 
-  账本是收敛进度的度量,也是 8a 终审的骨架。层级下钻检查(展开一层列子决策,跟 PRD 功能领域交叉)→ 有子决策回 Step 3,全无进 Step 6。
+  **首条落账时创建设计文档初稿 `{dev_design_output}`**(路径变量解析含项目本地覆盖),账本增量写入该文件——这就是 Packet 的落盘载体,不另造独立文件。账本是收敛进度的度量,也是 8a 终审的骨架。层级下钻检查(展开一层列子决策,跟 PRD 功能领域交叉)→ 有子决策回 Step 3,全无进 Step 6。
 
 ### Step 6: 对齐 + 失败预演 + 领域覆盖检查
 
@@ -125,8 +126,9 @@ DecisionPacket {
   verifyStrategy     // 验证策略
   evalSpec?          // AI 功能类(isAIFeature=true)必填:eval 设计(维度/指标/用例/baseline)
   sources[]          // [Read]/[SOURCE] 来源
+  docPath            // 设计文档路径(= {dev_design_output}):decision 创建初稿,writing 同一路径覆盖扩写
 }
-requiredFields = [version, selectedApproach, alternatives, constraints, domainDecisions, testObjectives, verifyStrategy]
+requiredFields = [version, selectedApproach, alternatives, constraints, domainDecisions, testObjectives, verifyStrategy, docPath]
 ```
 
 **阶段返回 StageResult** = `completed | needs_user_input`(decision 是首阶段,只这两态;`replan_required` 是 writing 的返回态,decision 不产出——下方 replan envelope schema 在此定义,仅供 writing 单源引用)。
@@ -160,7 +162,7 @@ NeedsUserInput {
 
 ### Step 8a: 用户终审 Decision Packet
 
-决策账本已从 Step 5 起增量累积;本步将其补全为完整 Packet 结构,作为**回合末尾文本**展示交用户终审。格式要求：
+决策账本已从 Step 5 起增量累积在设计文档初稿(`docPath`)中;本步将其补全为完整 Packet 结构**覆盖写回初稿**,并作为**回合末尾文本**展示交用户终审(用户的修改同步更新初稿)。格式要求：
 
 - 每个 requiredField 独立章节（selectedApproach / alternatives / constraints / domainDecisions / testObjectives / verifyStrategy）
 - 决策条目沿用账本格式（决策点 / 结论 / 依据置信度 / 否决备选及原因 / P0 还是延后）,标注当前状态（`[已定]` / `[假定]` / `[延后]`）
@@ -177,8 +179,8 @@ NeedsUserInput {
 
 ### Step 9: 硬交接
 
-- **方案选择模式** → 返回 Decision Packet 给协调器(`dev-design`),由其进入 writing 阶段写详细设计
-- **独立预研 research 模式** → **直接交付 research Decision Packet 终止**,向用户报告预研结论 + 建议下一步(进 design / plan / 放弃),不自动进 writing
+- **方案选择模式** → 返回 Decision Packet(含 `docPath`)给协调器(`dev-design`),由其进入 writing 阶段——writing 在 `docPath` 初稿上覆盖扩写详细设计
+- **独立预研 research 模式** → **直接交付 research Decision Packet 终止**:预研结论按 `references/example-research-skeleton.md` 骨架落盘 `docPath`(初稿即最终交付物),向用户报告结论 + 建议下一步(进 design / plan / 放弃),不自动进 writing
 
 ## Exit Gate
 
@@ -187,6 +189,6 @@ NeedsUserInput {
 - [ ] 8 领域逐项 ✅/跳过,可观测基础日志层已决策
 - [ ] TO 覆盖每条路径和约束,5 维自审通过
 - [ ] 账本清点除 ⏸ 延后外全 ✅(延后项已入 openQuestions),功能覆盖全 ✅
-- [ ] Decision Packet 产出,requiredFields 齐
+- [ ] Decision Packet 产出,requiredFields 齐,已落盘为设计文档初稿(`docPath` = `{dev_design_output}`)
 - [ ] Step 8a 用户终审通过（Packet 已展示 → 用户确认/修改 → 变更已应用;方案级变更已回 Step 3 重选）
 - [ ] **硬交接**:方案选择→交 Packet 给协调器进 writing;research→直接交付终止

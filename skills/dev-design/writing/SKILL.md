@@ -29,7 +29,7 @@ decision 阶段选完方案（"走哪条路"，产出 Decision Packet），本�
 
 ## 协议
 
-> **消费 Decision Packet**：writing 是决策包的**消费方**——decision 产出、经协调器传入。schema（含 requiredFields / 条件必填 / replan envelope）单源在 `decision/SKILL.md` 的「收尾」节，本阶段只按它校验、映射、消费，不重复定义。
+> **消费 Decision Packet**：writing 是决策包的**消费方**——decision 产出、经协调器传入。schema（含 requiredFields / 条件必填 / replan envelope）单源在 `decision/SKILL.md` 的「收尾」节，本阶段只按它校验、映射、消费，不重复定义。Packet 已由 decision 落盘为 `docPath`（= `{dev_design_output}`）设计文档初稿——writing 全程在**该文件上覆盖扩写**，不另存新文件。
 
 > **内部 Step 编号统一**：通用流程步 **Step 0-5** 与场景模板 detail 步 **Step 4a/4b/…** 连续编号，不各自从 Step 2 重启——历史上"通用 Step2 章节大纲 vs 场景 Step2 领域划分"曾因各自编号撞车，统一编号后消除。
 
@@ -81,7 +81,7 @@ Task 7: 保存 + 渲染确认 + handoff（步 13-14）
 
 3. **Read `references/writing-principles.md`**（写作准则全文 12 条 + 文件影响硬格式 + 文档生命周期）——Step 2 起所有产出按它写，本文末尾只留索引。
 
-4. **加载输入**：Decision Packet（选定方案 / 备选 / 约束 / 领域决策 / TO / evalSpec / 来源）、UI 设计（`.ix.md` / `.vd.md`，如有）。无 Packet 时从用户描述提取。
+4. **加载输入**：Decision Packet（选定方案 / 备选 / 约束 / 领域决策 / TO / evalSpec / 来源）+ 其 `docPath` 初稿文件（decision 已落盘，后续覆盖扩写的对象）、UI 设计（`.ix.md` / `.vd.md`，如有）。无 Packet 时从用户描述提取，此时初稿不存在，由 writing 按 `{dev_design_output}` 解析路径自建。
 
 **Exit Gate:**
 - [ ] Decision Packet 已校验（version + requiredFields + 条件必填齐；不齐已报缺回协调器）
@@ -213,7 +213,7 @@ Task 7: 保存 + 渲染确认 + handoff（步 13-14）
 ### 保存 + 渲染确认
 
 **Core Actions:**
-1. 保存到 `{dev_design_output}`（文档产出路径变量，项目本地 AGENTS.md / CLAUDE.md 可覆盖）
+1. **覆盖保存**到 Packet `docPath`（即 `{dev_design_output}`，decision 创建的初稿同一路径）——初稿被完整详细设计覆盖，Packet 内容承载于「方案决策」章节不丢失；不另存新文件、不留初稿副本
 2. **AskUserQuestion：是否渲染成 Artifact 页面？**
    - 是 → 进入 render 阶段（Read `render/SKILL.md` 执行），把设计文档渲染成 Artifact 页面（图用 DOM 排版、表格可交互、可分享 URL）
    - 否 → 设计文档（markdown）即最终交付
@@ -272,7 +272,7 @@ Task 7: 保存 + 渲染确认 + handoff（步 13-14）
 
 ## 输出路径
 
-路径由 `{dev_design_output}` 变量定义（项目本地 AGENTS.md / CLAUDE.md 可覆盖）。同 topic 的 plan 等文档落同一目录。
+路径由 `{dev_design_output}` 变量定义（项目本地 AGENTS.md / CLAUDE.md 可覆盖）。同 topic 的 plan 等文档落同一目录。decision 初稿与 writing 终稿是**同一文件**——decision 创建，writing 覆盖扩写。
 
 ## references 索引
 

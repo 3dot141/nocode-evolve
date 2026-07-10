@@ -32,7 +32,7 @@ dev-design 是设计流程的**薄协调器**：持有总流程图 / 阶段状�
 ## 阶段状态机
 
 ```
-decision ──Decision Packet──→ writing ──reviewed doc + verdict──→ (可选) render ──receipt──→ final gate → handoff dev-plan
+decision ──Decision Packet(落盘设计文档初稿)──→ writing(同路径覆盖扩写) ──reviewed doc + verdict──→ (可选) render ──receipt──→ final gate → handoff dev-plan
    ▲                              │
    └────── replan_required ───────┘（writing 遇方案级决策变更，协调器回退到 decision 重选）
 ```
@@ -69,7 +69,7 @@ Task 4: final gate + 硬交接 dev-plan
 ### Step 1: 路由 → decision
 
 Read `decision/SKILL.md`，按协议执行选方案。收回 **Decision Packet**：
-- 校验 `requiredFields` 齐（清单单源在 decision SKILL「收尾」节）；缺 → 补完，不带缺口进 writing。
+- 校验 `requiredFields` 齐（清单单源在 decision SKILL「收尾」节）；缺 → 补完，不带缺口进 writing。含 `docPath`——decision 已在该路径落盘设计文档初稿（`{dev_design_output}`），writing 将同路径覆盖扩写。
 - decision 返回 `needs_user_input`（打平手 / 冲突 / 信息缺口 / 不可逆）→ 走「确认策略」统一弹，用户答复后继续。
 
 ### Step 2: 路由 → writing（传 Decision Packet）
@@ -103,7 +103,7 @@ final gate = 本轮设计流程的**计划内总确认窗口**：向用户报告
 
 writing 在信息补全遇**方案级决策**（改数据流 / 模块边界 / 外部契约 / 关键约束）→ 返回 `replan_required`（envelope 单源见 `decision/SKILL.md`）。协调器：
 1. **覆盖旧 Decision Packet + 递增 revision**（`originalPacketRevision` + 1）。
-2. **保留决策历史**（旧 Packet 不删，留痕供审计——与设计文档 superseded 留痕同理：旧版不删、指向新版）。
+2. **保留决策历史**（留痕供审计）：失效决策条目在设计文档（`docPath`）中标注 `superseded`（指向新决策 + `evidence`），不整体删除——与文档生命周期的推翻式修订同理。
 3. 按 `resumeState` **回退到 decision 对应阶段重选**，带上 `invalidatedDecision` + `evidence`，decision 不从零重来。
 4. 重选产出新 Packet → 回 Step 2 writing。
 
@@ -115,7 +115,7 @@ render 纯输出、不碰输入文档；**产物关系由协调器在 final gate
 
 - [ ] decision 产出合法 Decision Packet（requiredFields 齐），协调器已校验
 - [ ] writing 返回 reviewed 文档 + review verdict（`approved`），协调器只验未重审
-- [ ] replan（如有）已处理：旧 Packet 留痕 + revision 递增 + 回 decision 重选完成
+- [ ] replan（如有）已处理：失效决策已在文档中标 superseded 留痕 + revision 递增 + 回 decision 重选完成
 - [ ] render（如选）receipt 已收，输入文档未被改动，产物关系已在 final gate 报告 `sourceDoc`↔`output` 映射
 - [ ] 全流程确认按「确认策略」清单落实（总窗口 + 列举确认 + 异常统一弹）
 - [ ] **硬交接**：final gate 通过后向用户报告 Design 完成（方案摘要 + 关键决策 + 测试目标 + 文档路径），建议进 Plan（`nocode:dev-plan`），列出 Plan sub-steps。等用户拍板，不自行进入下一阶段
@@ -124,6 +124,7 @@ render 纯输出、不碰输入文档；**产物关系由协调器在 final gate
 
 - 协调器自己选方案 / 自己写文档 / 自己评审——领域工作全在阶段协议，协调器越界就是重构前的病复发
 - 收到 writing 的 verdict 又重新评审一遍——协调器只验 verdict，重审 = "双所有者各审一遍"的历史病灶回潮
-- replan 时直接让 decision 从零重来 / 不保留旧 Packet——丢了 `invalidatedDecision + evidence` 和决策历史
+- replan 时直接让 decision 从零重来 / 删掉失效决策不留痕——丢了 `invalidatedDecision + evidence` 和决策历史
+- 把 Packet 写成独立文件（如 `decision-packet.md`）——Packet 的唯一落盘载体是 `docPath` 设计文档（decision 创建初稿 → writing 同路径覆盖），不存在第二个文件
 - render 改了输入设计文档 / 协调器不记录产物关系——已评审文档不可变，产物映射只在 final gate 报告里给
 - 因"任务简单 / 用户说了'继续'"跳过某阶段路由、不建 Step 0 TaskCreate、或漏掉最后的交接 task
