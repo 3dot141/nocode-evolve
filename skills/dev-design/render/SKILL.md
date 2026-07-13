@@ -6,6 +6,8 @@
 
 **设计能力来自 artifact-design**：渲染前调用 CC 内置的 `Skill(artifact-design)`（原则型设计指导：角色锚定 / token 双主题 / 反模板化负面清单 / 先 design plan 再编码），为**这份文档的主题**现场设计页面——每份文档得到定制的视觉语言，而不是套同一个壳。这也是 `Artifact` 工具的硬性前置（工具说明要求发布前必须加载该 skill）。
 
+artifact-design 按请求分两档（utilitarian / editorial），工程文档会被它默认归入 utilitarian 保守档。它自己定义的优先级是 user's words > project's existing system > its choices——本协议即 project system，在 Step 2 显式钉住 treatment，不允许取保守档。
+
 ## Enter Gate
 
 - [ ] writing 阶段已完成，设计文档已产出（`.md` 文件）
@@ -77,13 +79,14 @@ Task 4: 收口 — 交回调用方
 先调 `Skill(artifact-design)` 加载设计原则，然后：
 
 1. **先写 design plan 再编码**（按 artifact-design 的 Process）：4-6 个命名色值 + 2+ 字体角色 + 一句布局概念——**为这份文档的主题选**（数据产品文档和底层重构文档不该长一样），不落负面清单里的模板化默认。
+   - **treatment 钉住，不取保守档**：polished 是下限不是上限——字号跨度、字重对比、行高节奏、配色都用足，标题与正文的层级差一眼可辨；"实用型 / 避免过度设计"不是"加了配色的 markdown"的许可。CSP 禁网络字体是真实约束，但系统字体栈必须用字级 / 字重 / 间距补偿层级，不能以此为由压平排版。
 2. **写页面文件**，落设计文档同目录 `<topic>-design.html`。同时满足 render 侧的领域硬约束（artifact-design 管"好看"，这些管"是设计文档渲染物"）：
    - **Artifact 页面片段，不是完整 HTML 文档**：发布时会被包进 `<!doctype html>…<head>…</head><body>` 骨架——文件里**不写** DOCTYPE / `<html>` / `<head>` / `<body>`，直接写内容 + 内联 `<style>` / `<script>`，并设置一个简洁稳定的 `<title>`
    - **零外链**：CSS/JS 全内联，无 CDN / 网络字体 / fetch——Artifact 的 CSP 拦截一切外部请求，外链资源直接加载失败
    - **双主题跟随 viewer**：`@media (prefers-color-scheme: dark)` 为默认信号 + `:root[data-theme="dark"]` / `:root[data-theme="light"]` 双向覆盖（viewer 的主题切换 stamp `data-theme`，必须两个方向都压得过 media query）。**不要自己做主题切换按钮**——viewer 自带
    - **可导航**：章节树 → 侧边/顶部导航，锚点唯一；长文档要有当前章节高亮
    - **内容忠实**：正文一字不改；代码块内含 `</script>`、HTML 示例时必须转义，防提前闭合/内容逃逸
-   - **图用 DOM 排版**：架构/流程/时序图优先用 HTML/CSS 布局（flex 行列箱图、CSS counter 步骤流、grid 泳道 + 字符箭头）——盒子自适应文本、自动换行、token 化换肤；**禁止手写 SVG path / 像素坐标**；节点多、连线交错的复杂图退回样式化 ASCII（`<figure><pre>` + 图注），不硬画
+   - **图用 DOM 排版（默认路径，逐张判定）**：架构/流程/状态/模块/ER 图一律先走 HTML/CSS 布局（flex 行列箱图、CSS counter 步骤流、grid 泳道 + 字符箭头）——盒子自适应文本、自动换行、token 化换肤；**禁止手写 SVG path / 像素坐标**。退回样式化 ASCII（`<figure><pre>` + 图注）是**逐张例外**，仅限两类：节点多、连线交错到 DOM 排版会失真的复杂图；等宽本身就是语义的内容（文件树 / 目录树 / 多角色多泳道时序图）。**不得以"风格统一 / 内容忠实"为由整批退回 ASCII**——增强图在 `<details>` 里保留 ASCII 原文即是忠实
    - **宽内容自滚动**：表格/图/代码块套 `overflow-x: auto` 容器，页面 body 不出现横向滚动
    - **表格增强**：可排序/可读的表格处理，数字列 `tabular-nums`
 3. 图清单逐张过：每张图按上面约定选呈现方式；增强图在 `<details>` 里保留 ASCII 原文。
@@ -139,6 +142,7 @@ Task 4: 收口 — 交回调用方
 - 只落本地文件不发 Artifact、或发完不把 URL 写进 receipt——"通过 Artifact 渲染"是本 skill 的交付定义
 - 更新时换 file_path 或不带 `url=`——会另开新 URL，旧链接失效
 - 手写 SVG path / 像素坐标画图——图走 DOM 排版或样式化 ASCII
+- 以"工程文档 = 实用型"取最保守解释（标题正文层级差过小、等宽字符画占页面主体），或以"风格统一"为由整批退 ASCII——treatment 已钉住，DOM 是默认路径，例外逐张给理由
 - 页面里的章节数跟原文档对不上（漏渲染了）
 - 没有设计文档就直接渲染（设计在先，渲染在后）
 - **改了输入设计文档**（追加「## 可视化」等）——输入已评审，render 回写会让评审失效；render 必须纯输出，产物关系交协调器记录
