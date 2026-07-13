@@ -457,6 +457,7 @@ cd ../fx-data-server && docker compose down
 11. 单独重启 sync 容器 (如 `test-sync`) 必须连带重启 `sync-polars-localhost` — socat sidecar 共享 sync 网络栈, 主容器重启后绑定失效, Excel 导入静默写空表 (表还标 valid, 无报错)
 12. server-cli 有副作用: 会 patch server 仓 `build.gradle.kts` (ZGC→G1GC, 幂等) 且不还原, **勿把该改动误提交**; server 日志在 `<FX_SERVER_DIR>/dev-start.log` 不在 launcher stdout
 13. 新建 server worktree 后先跑 `server-cli prepare`, 否则 IDE 对 ANTLR 生成类报红 (dev 启动不受影响, gradle 自愈); prepare 已自动解析 JAVA_HOME (本机默认 JDK 过新会 build 失败)
+14. docker 步骤的 `--scale fx-data-agents=0` 已按 compose 实际 service 列表条件化 (launcher 内置 `docker compose config --services` 探测)——不同分支 compose 模板不一定有该 service (release 分支就没有). up 失败 fail loud 且报错里带恢复命令; 但 down→up 是全量重建, up 失败时中间件已被 down 清空, 按报错提示手动 `IMAGE_PREFIX=<pfx> docker compose up -d` 恢复
 
 ## 不要做
 

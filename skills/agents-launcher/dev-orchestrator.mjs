@@ -134,16 +134,30 @@ async function main() {
   // 不走 dockerstart.sh 的 up（它写死 up 全栈含 fx-data-agents, 且该服务 pull_policy:always 每次重拉）。
   // 这里复用 cp template + 按分支算 IMAGE_PREFIX，跳过 harbor login（依赖已缓存镜像；首次未缓存先手动 ./dockerstart.sh 拉一次）。
   if (args.services.docker) {
-    const scaleArg = args.services.agents ? '--scale fx-data-agents=0' : '';   // 起本地 agents 就不创建 docker 上那个
+    // scale 排除参数按 compose 实际 service 列表条件化——不同分支的 compose 模板不一定有
+    // fx-data-agents service（release 分支就没有），硬编码 --scale 会让 up 报 "no such service"，
+    // 且 down 已先执行，中间件被清空、现场比启动前更糟。
+    const scaleProbe = args.services.agents
+      ? `SCALE=$(docker compose config --services 2>/dev/null | grep -qx 'fx-data-agents' && echo '--scale fx-data-agents=0' || true)`
+      : `SCALE=""`;
+    // set -e 多行脚本而非 && 平铺——平铺时成员内的 `|| true` 因左结合会兜掉整个前缀链，语义漂移
     const up = [
+      `set -e`,
       `cd ${repos.SERVER_DIR}`,
-      `[ -f docker-compose.yml ] && docker compose down || true`,             // 关旧
-      `[ -f docker-compose.yml ] || cp docker-compose.template.yml docker-compose.yml`,
-      `BR=$(git rev-parse --abbrev-ref HEAD 2>/dev/null)`,
+      `[ -f docker-compose.yml ] || cp docker-compose.template.yml docker-compose.yml`,  // 先保证文件在，config/down 都要用
+      scaleProbe,
+      `docker compose down || true`,                                          // 关旧（全量重建，sidecar 一起重建防 socat 失效）
+      `BR=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || true)`,
       `case "$BR" in *release*) PFX=test;; *persist*) PFX=prod;; *) PFX=dev;; esac`,
-      `IMAGE_PREFIX=$PFX docker compose up -d ${scaleArg}`,                    // 起新
-    ].join(' && ');
-    await runToEnd('docker', 'sh', ['-c', up]);
+      `IMAGE_PREFIX=$PFX docker compose up -d $SCALE`,                         // 起新
+    ].join('\n');
+    const code = await runToEnd('docker', 'sh', ['-c', up]);
+    if (code !== 0) {
+      throw new Error(
+        `[docker] compose up 失败（退出码 ${code}）。注意: down 已执行、中间件可能已被清空——`
+        + `请到 ${repos.SERVER_DIR} 检查 docker-compose.yml 后手动 IMAGE_PREFIX=<pfx> docker compose up -d 恢复`
+      );
+    }
     await waitHealthy('docker', async () => (await tcpOpen(5432)) && (await tcpOpen(9000)), { tries: 60, intervalMs: 1000 });
   }
 

@@ -109,7 +109,9 @@ export function alignReset({ webDir, targetSha, exec = execFileSync }) {
 }
 
 export function start({ webDir, spawn = spawnPrefixed } = {}) {
-  return spawn('web', 'pnpm', ['dev'], { cwd: webDir, env: { ...process.env, JSY_DEV_MODE: 'vite' } });
+  // BROWSER=none: vite server.open 遵循该约定跳过自动开浏览器——launcher 是后台编排场景，
+  // 弹浏览器是干扰（web 仓 vite.home.config.ts 配了 open，交互式裸跑 pnpm dev 不受本行影响）
+  return spawn('web', 'pnpm', ['dev'], { cwd: webDir, env: { ...process.env, JSY_DEV_MODE: 'vite', BROWSER: 'none' } });
 }
 
 export async function status({ ports = PORTS, probes = { tcpOpen, pidOnPort } } = {}) {

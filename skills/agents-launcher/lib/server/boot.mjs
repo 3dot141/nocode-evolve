@@ -136,7 +136,9 @@ export async function waitAppHealthy({ appPort = 8081, alive = () => true, fetch
   for (let i = 0; i < maxRetries; i++) {
     if (!alive()) throw new Error('应用启动失败，查看日志: tail -50 dev-start.log');
     try {
-      const r = await fetchFn(`http://localhost:${appPort}/`, { signal: AbortSignal.timeout(1500) });
+      // redirect: 'manual'——release 版 Spring 未登录时 `/` 起 302 循环（login 页互踢），
+      // follow 会追满 20 次上限抛错被吞成"未就绪"；302 本身即"应用已就绪"的证据
+      const r = await fetchFn(`http://localhost:${appPort}/`, { signal: AbortSignal.timeout(1500), redirect: 'manual' });
       if (r.status >= 200 && r.status < 500) { log('[start] 应用启动成功'); return true; }
     } catch { /* 未就绪继续等 */ }
     await sleep(2000);
