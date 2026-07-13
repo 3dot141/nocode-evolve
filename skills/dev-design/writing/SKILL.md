@@ -15,6 +15,7 @@ decision 阶段选完方案（"走哪条路"，产出 Decision Packet），本�
 - **低耦合**：域间通过接口交互，边界显式标出
 - **总分结构**：先总图（全局一屏看完）再分（各域 / 模块展开）。先图后文
 - **接口四层**：对外 API / 类接口 / 事件接口 / 数据契约——按需展开，不只有 HTTP
+- **战术层（条件触发）**：设计涉及 ≥2 个限界上下文（跨仓 / 跨服务）或持久化数据模型时，升级到战术 DDD——限界上下文 / 聚合根 / 实体 / 域服务 / 跨上下文引用只存 ID。术语、建模步骤、检查清单单源在 `references/ddd-modeling.md`（Step 1 条件 Read）；单上下文纯 UI 小改不硬套
 
 ## 确认与回退
 
@@ -79,7 +80,7 @@ Task 7: 保存 + 渲染确认 + handoff（步 13-14）
    - **骨架示例必 Read**——学骨架和颗粒度，不照搬措辞；决策数量按设计复杂度（核心只有 1 个关键决策就写 1 个，不硬凑）；伪代码注释密度按复杂度。
    - 预研 / 技术选型 / 调研（research）→ 不在本阶段，走 decision 的预研模式。writing 只做 feat / bug / refactor 三种详细设计。
 
-3. **Read `references/writing-principles.md`**（写作准则全文 12 条 + 文件影响硬格式 + 文档生命周期）——Step 2 起所有产出按它写，本文末尾只留索引。
+3. **Read `references/writing-principles.md`**（写作准则全文 12 条 + 文件影响硬格式 + 文档生命周期）——Step 2 起所有产出按它写，本文末尾只留索引。**条件 Read `references/ddd-modeling.md`**：设计涉及 ≥2 个限界上下文（跨仓 / 跨服务 / 跨独立部署单元）或持久化数据模型（新表 / 改表 / 跨表关系）时必 Read——聚合根 / 跨上下文引用规则的单源在该文件。
 
 4. **加载输入**：Decision Packet（选定方案 / 备选 / 约束 / 领域决策 / TO / evalSpec / 来源）+ 其 `docPath` 初稿文件（decision 已落盘，后续覆盖扩写的对象）、UI 设计（`.ix.md` / `.vd.md`，如有）。无 Packet 时从用户描述提取，此时初稿不存在，由 writing 按 `{dev_design_output}` 解析路径自建。
 
@@ -121,6 +122,7 @@ Task 7: 保存 + 渲染确认 + handoff（步 13-14）
 
 **Core Actions:**
 - 审 Step 2 结构骨架：**域拆分按实体（名词非动词）** / **模块边界清晰** / **依赖方向单向无环** / **高内聚低耦合**
+- **战术建模触发时**（≥2 限界上下文或有持久化模型）：按 `references/ddd-modeling.md` 检查清单审——每上下文聚合根明确、子实体 FK 锚聚合根、跨上下文引用只存 ID、无跨上下文 join / 共享实体
 - 对照 Decision Packet 的 `selectedApproach` + `domainDecisions`：结构是否忠实落地选定方案，无偏离
 - **场景轻重**：feat / refactor 重点审（域/模块拆分是架构核心）；**bug 局部修复通常无跨模块架构影响 → 快速确认影响范围不跨模块即轻过**
 - 发现架构级问题（域拆错 / 边界错位 / 依赖成环）→ 就地修正结构骨架、回 Step 2 重新确认；若问题触及**方案级决策**（改数据流 / 模块边界 / 外部契约 / 关键约束）→ 按 Step 4 replan 判据返回 `replan_required` 回 decision
@@ -260,6 +262,7 @@ Task 7: 保存 + 渲染确认 + handoff（步 13-14）
 ## 常见反模式
 
 - ❌ **域按动词拆**：把流水线阶段（解析 / 存储 / 同步）当 DDD 域——应按实体（资源 / Agent）拆
+- ❌ **跨上下文共享实体**：引用处冗余存被引用上下文的业务字段 / 直接 join 对方表——跨上下文只存 ID + API 调用（战术规则见 `references/ddd-modeling.md`）
 - ❌ **跳过总图**：直接进细节，读者不知道整体长什么样
 - ❌ **接口只写 HTTP**：类怎么协作、数据怎么存只字未提
 - ❌ **章节空话**：「需要保证安全性、性能」「未来可扩展」——无具体内容的填充
@@ -279,6 +282,7 @@ Task 7: 保存 + 渲染确认 + handoff（步 13-14）
 - `references/template-{feat,bug,refactor}.md` — 三种场景模板（结构骨架产出标准 + Step 4a/4b detail 子步），Step 1 按场景必 Read
 - `references/example-{feat,bug,refactor}-skeleton.md` — 三种场景的骨架示例，随场景模板一起 Read
 - `references/writing-principles.md` — 写作准则 12 条全文 + 文件影响硬格式 + 文档生命周期，Step 1 必 Read
+- `references/ddd-modeling.md` — 战术 DDD 建模（限界上下文 / 聚合根 / 跨上下文引用四规则 + 检查清单），Step 1 条件 Read（≥2 限界上下文或有持久化模型）
 - `references/design-doc-review.md` — 设计文档评审维度（默认自查的维度单源；用户显式要求升审时随声明传入 reviewing 引擎）
 - `references/cards/{quick-view,prerequisites}.md` — 骨架驱动型内容的可选锚点节
 - `render/SKILL.md` — 设计文档 → Artifact 页面（内部协议）
