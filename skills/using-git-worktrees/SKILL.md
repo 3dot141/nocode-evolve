@@ -1,15 +1,15 @@
 ---
 name: using-git-worktrees
-description: Use when starting feature work that needs isolation from current workspace or before executing implementation plans - ensures an isolated workspace exists via native tools or git worktree fallback
+description: Use when starting feature work that needs isolation from current workspace or before executing implementation plans - creates an isolated workspace with git worktree add, then switches the session in via native tools when available
 ---
 
 # Using Git Worktrees
 
 ## Overview
 
-Ensure work happens in an isolated workspace. Prefer your platform's native worktree tools. Fall back to manual git worktrees only when no native tool is available.
+Ensure work happens in an isolated workspace. Create the worktree with `git worktree add` so directory placement stays under your control, then switch the session into it — preferring your platform's native session-switch tool.
 
-**Core principle:** Detect existing isolation first. Then use native tools. Then fall back to git. Never fight the harness.
+**Core principle:** Detect existing isolation first. Create with git (you choose the directory). Enter with the native tool. Never fight the harness.
 
 **Announce at start:** "I'm using the using-git-worktrees skill to set up an isolated workspace."
 
@@ -44,23 +44,13 @@ Has the user already indicated their worktree preference in your instructions? I
 
 Honor any existing declared preference without asking. If the user declines consent, work in place and skip to Step 3.
 
-## Step 1: Create Isolated Workspace
+## Step 1: Create the Worktree
 
-**You have two mechanisms. Try them in this order.**
+**Always create with `git worktree add` — even when a native worktree tool exists.**
 
-### 1a. Native Worktree Tools (preferred)
+Native creation modes (e.g. `EnterWorktree` with `name` or no arguments) place the worktree in a fixed harness-chosen location (such as `.claude/worktrees/`). Creating with git keeps directory selection under your control; Step 2 then hands the session over to the native tool.
 
-The user has asked for an isolated workspace (Step 0 consent). Do you already have a way to create a worktree? It might be a tool with a name like `EnterWorktree`, `WorktreeCreate`, a `/worktree` command, or a `--worktree` flag. If you do, use it and skip to Step 3.
-
-Native tools handle directory placement, branch creation, and cleanup automatically. Using `git worktree add` when you have a native tool creates phantom state your harness can't see or manage.
-
-Only proceed to Step 1b if you have no native worktree tool available.
-
-### 1b. Git Worktree Fallback
-
-**Only use this if Step 1a does not apply** — you have no native worktree tool available. Create a worktree manually using git.
-
-#### Directory Selection
+### Directory Selection
 
 Follow this priority order. Explicit user preference always beats observed filesystem state.
 
@@ -82,7 +72,7 @@ Follow this priority order. Explicit user preference always beats observed files
 
 4. **If there is no other guidance available**, default to `.worktrees/` at the project root.
 
-#### Safety Verification (project-local directories only)
+### Safety Verification (project-local directories only)
 
 **MUST verify directory is ignored before creating worktree:**
 
@@ -96,7 +86,7 @@ git check-ignore -q .worktrees 2>/dev/null || git check-ignore -q worktrees 2>/d
 
 Global directories (`~/.config/superpowers/worktrees/`) need no verification.
 
-#### Create the Worktree
+### Create the Worktree
 
 ```bash
 project=$(basename "$(git rev-parse --show-toplevel)")
@@ -106,10 +96,30 @@ project=$(basename "$(git rev-parse --show-toplevel)")
 # For global: path="~/.config/superpowers/worktrees/$project/$BRANCH_NAME"
 
 git worktree add "$path" -b "$BRANCH_NAME"
-cd "$path"
 ```
 
 **Sandbox fallback:** If `git worktree add` fails with a permission error (sandbox denial), tell the user the sandbox blocked worktree creation and you're working in the current directory instead. Then run setup and baseline tests in place.
+
+## Step 2: Enter the Worktree
+
+`git worktree add` does not change your working directory — persist the switch before doing anything else.
+
+### 2a. Native Session-Switch Tool (preferred)
+
+If you have a tool that can switch the session into an **existing** worktree — e.g. `EnterWorktree` with its `path` parameter — use it now:
+
+```
+EnterWorktree(path="$path")
+```
+
+The session's working directory persists across commands; no repeated `cd` prefixes.
+
+- **Never use the tool's create mode** (`EnterWorktree()` with no arguments, or with `name`) — it creates the worktree itself in a harness-chosen directory, bypassing Step 1's directory selection.
+- Leaving later: `ExitWorktree(action="keep")`. Worktrees entered via `path` are not auto-removed — clean up with `git worktree remove` when the work is done.
+
+### 2b. cd Fallback
+
+No native session-switch tool: `cd "$path"`. If your harness resets cwd between shell commands, re-`cd` at the start of each command.
 
 ## Step 3: Project Setup
 
@@ -157,8 +167,9 @@ Ready to implement <feature-name>
 |-----------|--------|
 | Already in linked worktree | Skip creation (Step 0) |
 | In a submodule | Treat as normal repo (Step 0 guard) |
-| Native worktree tool available | Use it (Step 1a) |
-| No native tool | Git worktree fallback (Step 1b) |
+| Creating the worktree | Always `git worktree add "$path" -b "$BRANCH_NAME"` (Step 1) |
+| Native session-switch tool available | Enter via its path mode, e.g. `EnterWorktree(path=...)` (Step 2a) |
+| No native tool | `cd "$path"` (Step 2b) |
 | `.worktrees/` exists | Use it (verify ignored) |
 | `worktrees/` exists | Use it (verify ignored) |
 | Both exist | Use `.worktrees/` |
@@ -171,10 +182,15 @@ Ready to implement <feature-name>
 
 ## Common Mistakes
 
-### Fighting the harness
+### Creating via the native tool's create mode
 
-- **Problem:** Using `git worktree add` when the platform already provides isolation
-- **Fix:** Step 0 detects existing isolation. Step 1a defers to native tools.
+- **Problem:** `EnterWorktree(name=...)` / no-arg creation drops the worktree in a harness-chosen directory, ignoring Step 1's directory selection
+- **Fix:** Create with `git worktree add`; the native tool only enters via `path` (Step 2a)
+
+### Forgetting to enter after creating
+
+- **Problem:** `git worktree add` doesn't change cwd; commands keep running in the main checkout
+- **Fix:** Step 2 immediately after creation — native path mode, or cd
 
 ### Skipping detection
 
@@ -200,15 +216,16 @@ Ready to implement <feature-name>
 
 **Never:**
 - Create a worktree when Step 0 detects existing isolation
-- Use `git worktree add` when you have a native worktree tool (e.g., `EnterWorktree`). This is the #1 mistake — if you have it, use it.
-- Skip Step 1a by jumping straight to Step 1b's git commands
+- Create via the native tool (`EnterWorktree()` / `EnterWorktree(name=...)`). This is the #1 mistake — create with `git worktree add`, enter with `path` mode.
+- Stay in the main checkout after `git worktree add` (skipping Step 2)
 - Create worktree without verifying it's ignored (project-local)
 - Skip baseline test verification
 - Proceed with failing tests without asking
 
 **Always:**
 - Run Step 0 detection first
-- Prefer native tools over git fallback
+- Create with `git worktree add "$path" -b "$BRANCH_NAME"`
+- Enter via the native session-switch tool (`path` mode) when available; cd otherwise
 - Follow directory priority: existing > global legacy > instruction file > default
 - Verify directory is ignored for project-local
 - Auto-detect and run project setup

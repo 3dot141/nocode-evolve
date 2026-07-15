@@ -20,8 +20,8 @@
       "reason": "已吸收进 dev-land (v4.0.0 拆出, v11.0.0 并回), 不再依赖 vendor sp skill + overlay 模式"
     },
     "using-git-worktrees": {
-      "action": "keep-as-skill",
-      "reason": "rule-git-worktree overlay 叠在上面"
+      "action": "fork",
+      "reason": "本仓改造版：创建走 git worktree add -b、进入走 EnterWorktree(path)，sync 不再从 vendor 覆盖；rule-git-worktree overlay 仍叠在上面；上游更新需人工 diff 合并"
     },
     "systematic-debugging": {
       "action": "keep-as-skill",

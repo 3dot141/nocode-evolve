@@ -43,6 +43,7 @@ vendor/
 |---|---|
 | `keep-as-skill` | 原样 copy 到 `skills/`，随插件发布 |
 | `extract-references` | 提取指定文件到 `references/`，skill 目录不保留 |
+| `fork` | 本仓改造版留在 `skills/`，sync 只校验存在、永不覆盖；上游更新人工 diff 合并 |
 | `skip` | 不同步，已被自有 skill 覆盖或不需要 |
 
 ### commit 前
@@ -57,4 +58,4 @@ node scripts/vendor-sync.mjs --check   # 检查一致性
 
 - **不要手动 cp/rm vendor skill 到 skills/ 或 references/**——走 `vendor-sync.mjs`
 - vendor 目录的文件是上游原版参考，不要直接修改（改了下次 rsync 会被覆盖）
-- 要定制上游 skill 的行为，用 rule overlay 叠加，不改 skill 源文件
+- 要定制上游 skill 的行为，优先用 rule overlay 叠加，不改 skill 源文件；overlay 盖不住（要改 skill 正文流程）时把 action 升级为 `fork` 再改 `skills/` 内容

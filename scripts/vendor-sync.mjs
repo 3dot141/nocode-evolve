@@ -129,6 +129,18 @@ function syncCategory({ entries, vendorSubdir, targetDir, vendorDir, label, file
         break
       }
 
+      case 'fork': {
+        // fork：skills/ 里是本仓改造版，sync 永不从 vendor 覆盖；只校验 target 存在。
+        // 上游更新时人工 diff vendor 源与本地版，按需手动合并。
+        if (!existsSync(targetPath)) {
+          console.log(`  MISSING: ${rel} (fork, should exist)`)
+          if (CHECK) dirty = true
+          break
+        }
+        console.log(`  ✓ ${rel} (fork, local version kept)`)
+        break
+      }
+
       case 'extract-references': {
         for (const { src, dst } of rule.extract || []) {
           const srcPath = join(isDir ? vendorSrc : dirname(vendorSrc), src)

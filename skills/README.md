@@ -66,7 +66,7 @@ skills/
 | `skill-writing` | 创建 / 编辑 / 测试 / 优化 skill 的 TDD 方法论，替代 writing-skills 和 skill-creator |
 | `strategic-compact` | 在逻辑阶段边界建议手动 `/compact`，而非依赖任意时机的自动压缩（vendor: everything-claude-code） |
 | `systematic-debugging` | 提出修复前先系统化定位根因（vendor: superpowers） |
-| `using-git-worktrees` | 建立 / 清理隔离工作区（git worktree 或原生工具兜底）（vendor: superpowers） |
+| `using-git-worktrees` | 建立 / 清理隔离工作区（`git worktree add -b` 创建 + `EnterWorktree(path)` 进入）（vendor: superpowers，fork 改造版） |
 
 ## 与 commands/、agents/ 的关系
 
