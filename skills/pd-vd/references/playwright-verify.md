@@ -51,7 +51,7 @@ IA 全部页面/视图的树状结构。独立页面为节点，嵌入组件为�
 │    独立页面 5/5  嵌入组件 2/2  总计 7/7 = 100%           │
 └─────────────────────────────────────────────────────────┘
 
-Phase 标记：[P1] 截图  [P1b] UI 细节审核  [P2] 交互  [P3] 4 态+边界态+链路
+Phase 标记：[P1] 截图  [P1b] UI 细节审核  [P2] 交互  [P3] 控件四态+边界态+链路
 
 ### 二、导航链路图
 
@@ -112,8 +112,8 @@ Phase 标记：[P1] 截图  [P1b] UI 细节审核  [P2] 交互  [P3] 4 态+边�
 #### Phase 3 — 完整验证（仅完整实现）
 | 维度 | 场景 | 文件 | data-testid | 预期 |
 |---|---|---|---|---|
-| 4 态 | 筛选按钮 hover | library.html | library-filter-btn | 背景色变化 |
-| 4 态 | 筛选按钮 disabled | library.html | library-filter-btn | 灰色 + 不可点 |
+| 控件四态 | 筛选按钮 hover | library.html | library-filter-btn | 背景色变化 |
+| 控件四态 | 筛选按钮 disabled | library.html | library-filter-btn | 灰色 + 不可点 |
 | 边界态 | 列表 empty | library.html | library-state-empty | "暂无数据" + 引导 |
 | 边界态 | 列表 loading | library.html | library-state-loading | 骨架屏 |
 | 边界态 | 列表 error | library.html | library-state-error | 错误提示 + 重试 |
@@ -130,7 +130,7 @@ Phase 标记：[P1] 截图  [P1b] UI 细节审核  [P2] 交互  [P3] 4 态+边�
 |---|---|---|
 | **低保真** | Phase 1 | 每个页面渲染正常（不白屏、不报错）、嵌入组件布局可见 |
 | **高保真** | Phase 1 + Phase 2 | 低保真全部 + 每个交互可操作（点击弹出/滑出/跳转） |
-| **完整实现** | Phase 1 + Phase 2 + Phase 3 | 高保真全部 + 4 态逐控件验证 + 边界态切换 + 跨页导航链路走通 |
+| **完整实现** | Phase 1 + Phase 2 + Phase 3 | 高保真全部 + 控件四态逐控件验证 + 边界态切换 + 跨页导航链路走通 |
 
 ### Phase 1 — 基础截图（所有保真度）
 
@@ -195,11 +195,11 @@ interactions.json 示例（selector 统一用 `data-testid`）：
 
 在 Phase 2 基础上扩展 interactions.json，覆盖三个维度：
 
-**1. 4 态逐控件**：每个可操作控件的 hover / active / focus-visible / disabled
+**1. 控件四态逐控件**：每个可操作控件的 hover / active / focus-visible / disabled
 ```json
 {
   "file": "library.html",
-  "label": "筛选按钮 4 态",
+  "label": "筛选按钮 控件四态",
   "steps": [
     { "action": "hover", "selector": "[data-testid='library-filter-btn']", "screenshot": "filter-btn-hover" },
     { "action": "click", "selector": "[data-testid='library-filter-btn']", "screenshot": "filter-btn-active" },

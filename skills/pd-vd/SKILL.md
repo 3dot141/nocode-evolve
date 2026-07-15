@@ -29,12 +29,14 @@ description: Use when the user wants to design the visual direction and produce 
 
 | pd-vd 做 | 不做（→ 去哪） |
 |---|---|
-| 视觉方向、配色排版 | 信息架构、页面流 → pd-ix |
-| 可交互原型（Claude Design / HTML） | 交互拆解、4 态枚举 → pd-ix |
-| 设计系统决策 | 技术架构、模块划分 → dev-design |
+| 视觉方向、tokens、控件四态样式 | 信息架构、页面流 → pd-ix |
+| 可交互原型（Claude Design / HTML） | 交互拆解、状态覆盖枚举、行为规格 → pd-ix |
+| 设计系统（tokens + components + 样张） | 技术架构、模块划分 → dev-design |
 | Playwright 验证 | 生产级组件代码 → devflow Build |
 
 **非本 skill**：无 `.ix.md` → 先 pd-ix。要技术架构 → dev-design。要生产代码 → devflow Build。
+
+> IX↔VD 分工判据与共享术语（状态覆盖 / 行为规格 / 控件四态、三层命名 tokens/components/patterns）单源在 `{NOCODE_SKILL_REF}/ix-vd-contract.md`——`.ix.md` 定义的行为语义不得改动；原型需要 IX 未定义的行为 → 回流登记，不就地定。
 
 ## Enter Gate
 
@@ -54,12 +56,12 @@ Task 2: 保真度 + 交付方式 + 视觉方向
   Sub-steps: 选保真度(低保真/高保真/完整实现) → 选交付方式 → 定视觉方向
   Gate: 三项已定
 
-Task 3: Design System 决策
-  Sub-steps: 判需求 → 搜已有 → 创建（三步走）
-  Gate: skip/复用/创建完成
+Task 3: 设计系统（tokens + components + 样张，全必做）
+  Sub-steps: 取值来源决策树 → 3a 生成 tokens → 3b 生成 components + patterns 骨架 → 3c 单页样张渲染 + 用户拍板
+  Gate: 样张经拍板，tokens + components 冻结
 
 Task 4: 生成原型
-  Sub-steps: 回查交付方式 → Claude Design 或本地 HTML 出稿 → 产出原型清单
+  Sub-steps: 回查交付方式 → 用冻结组件组装（Claude Design 或本地 HTML）→ 产出原型清单
   Gate: 原型产出 + 原型清单 100% 覆盖 IA 全部页面/视图
 
 Task 5: 验证
@@ -113,16 +115,20 @@ Task 6: 保存 + Handoff
 
 **2a. 保真度**（AskUserQuestion，默认低保真）：
 
-| 档 | 核心能力 | 原型覆盖度 | Playwright 验证 | 适用 | 后续 |
+> **覆盖度三档相同：IA 全部页面/视图 100%，无例外**——递进只在每页深度，不在页面数量。「关键页先出」不是档位，是违规。
+
+| 档 | 核心能力 | 每页深度 | **此档不包含** | Playwright 验证 | 适用 |
 |---|---|---|---|---|---|
-| **低保真** | 看得见 | 每个 IA 页面/视图都有静态渲染 | Phase 1：截图确认渲染正常 | 确认视觉观感 | 走 Step 3-4 |
-| **高保真** | 点得动 | 低保真 + 每个交互点可操作 | Phase 1 + Phase 2：交互场景验证 | 验证交互逻辑 | 走 Step 3-4 |
-| **完整实现** | 跑得通 | 高保真 + 4 态逐控件 + 边界态全覆盖 + 跨页导航链路 | Phase 1 + Phase 2 + Phase 3：完整测试套件 | 演示 / 交付前验收 | 走 Step 3-4 |
+| **低保真** | 看得见 | 每页静态渲染 | 交互不可点、无控件四态、无边界态切换 | Phase 1：截图确认渲染正常 | 确认视觉观感 |
+| **高保真** | 点得动 | 低保真 + 每个交互点可操作 | 无控件四态、无边界态切换 | Phase 1 + Phase 2：交互场景验证 | 验证交互逻辑 |
+| **完整实现** | 跑得通 | 高保真 + 控件四态 + 边界态全覆盖 + 跨页链路 | —（全量） | Phase 1 + 2 + 3：完整测试套件 | 演示 / 交付前验收 |
+
+选档时必须把「此档不包含」列念给用户——用户对「完整」的预期落差要在选档时暴露，不在交付后。选定档位后，档内内容一律做满；砍任何内容必须能引用档位定义，禁止「做不完所以不做」。
 
 **三层递进（few-shot）：**
 - 低保真：一张静态截图——"首页长这样，侧边栏蓝底白字，卡片 12px 圆角"。嵌入组件在宿主页面里展示布局，不需要能点
 - 高保真：能点的——"点侧边栏的'资源库'跳到列表页，点一行展开详情抽屉，空状态显示引导"
-- 完整实现：跑得通——"每个按钮 hover/active/focus-visible/disabled 4 态都有、列表区 empty/loading/error 切换正常、从首页走到详情再回来链路无断点"
+- 完整实现：跑得通——"每个按钮的控件四态（hover/active/focus-visible/disabled）都有、列表区 empty/loading/error 切换正常、从首页走到详情再回来链路无断点"
 
 **2b. 交付方式**（AskUserQuestion）：
 
@@ -135,7 +141,7 @@ Task 6: 保存 + Handoff
 
 | 方式 | 产物在哪 | 独立页面（拆分） | 交互原型（组合） | 选它当 |
 |---|---|---|---|---|
-| **Claude Design** | claude.ai 项目 | 每个独立页面一个文件，嵌入组件写在宿主页面内 | 额外一个组合文件，融合所有页面代码，JS 实现 tab 切换/弹窗/4 态 | 团队 canvas 协作、设计系统复用 |
+| **Claude Design** | claude.ai 项目 | 每个独立页面一个文件，嵌入组件写在宿主页面内 | 额外一个组合文件，融合所有页面代码，JS 实现 tab 切换/弹窗/边界态 | 团队 canvas 协作、设计系统复用 |
 | **本地 HTML** | 落 repo | 每个独立页面一个 `.html`，嵌入组件写在宿主页面内 | 多文件之间用 URL 跳转串联，不需要额外组合文件 | 版本控制、离线、无重复维护 |
 
 **Claude Design 的代价**：组合文件里的内容和独立页面文件是重复的，改了独立页面的设计，组合文件也要同步改。
@@ -155,7 +161,7 @@ Task 6: 保存 + Handoff
 
 **2d. 渐进式升级**（已有前一档产出时）：
 - 已有低保真 → 升级到高保真：**加交互**（导航/嵌入组件能弹出），不重画页面
-- 已有高保真 → 升级到完整实现：**加 4 态 + 边界态 + 跨页链路**，不重做交互逻辑
+- 已有高保真 → 升级到完整实现：**加控件四态 + 边界态 + 跨页链路**，不重做交互逻辑
 - 回查 `.vd.md` 确认升级基线，不推翻
 
 **Exit Gate:**
@@ -165,45 +171,63 @@ Task 6: 保存 + Handoff
 
 ---
 
-## Step 3: Design System 决策
+## Step 3: 设计系统（tokens + components + 样张，全必做）
 
-> 设计系统 = 品牌渲染层（颜色/字体/组件）。它让多个页面看起来像同一个产品，不是各写各的。**不是每个项目都需要**——3 页以下的小项目直接出稿比建设计系统快，brand-neutral 够用。
+> 设计系统三层：**tokens**（原子层：色/字/距/圆角/阴影/控件四态规则）→ **components**（分子层：按钮/卡片/表格…）→ **patterns**（组织层：页面布局 = Step 4 组装）。**tokens 和 components 全必做，无 skip 分支**——组件清单由交互清单 gap analysis 推出，小项目交互少清单自然短，成本随规模自动缩放；跳过的代价是 Step 4 并行 subagent 各自脑补值，页面互相不一致。
 
 **Enter Gate:**
 - [ ] Step 2 完成
 
 **Core Actions:**
 
-**3a. 需不需要？**
-- 小项目（≤3 页）/ 快速验证 / 无品牌要求 → **跳过**，Task 标 skip
-- 有品牌要求 / 多页一致性 / 长期产品 → 进 3b
-
-**3b. 搜已有，能复用就不新建：**
-
-| 来源 | 怎么搜 |
-|---|---|
-| Claude Design | `Skill(nocode:claude-design)` → `claude-design systems` / `claude-design list` |
-| 本地代码库 | 扫已有 design tokens / 组件库 |
-| Figma | `figma-design-read` |
-
-有匹配 → 复用（记录标识）。无匹配 → 进 3c。
-
-**3c. 创建（三步走，自下而上）** — patterns 由 components 组装，components 引用 foundations 的 token。跳层 = 在 pattern 里内联本该复用的组件，改一处要改全部。
+**3a. 生成 tokens** —— 先走取值来源决策树，再按完备 schema 逐项产出：
 
 ```
-foundations  颜色 token、字号、间距    → 串行先做，冻结 token
-    ↓
-components   按钮、卡片、输入框等      → 可并行（一组件一 subagent）
-    ↓
-patterns     页面级布局               → Step 4 组装
+tokens 取值来源
+├─ 1. 项目已有设计系统？（代码库 tokens / Claude Design 项目 / Figma）
+│     有 → 直接沿用，不问；gap analysis 只补缺口
+├─ 2. 没有 → AskUserQuestion（单选）：
+│     · 已有品牌资产（如探测到品牌色板，列为首选项）
+│     · minimalist-ui —— 暖色极简 editorial（宽松/克制/友好）
+│     · high-end-visual-design —— agency 精致感（表现力/圆角/景深）
+│     · industrial-brutalist-ui —— 工业终端风（紧凑/零圆角/专业）
+└─ 3. 用户不选 / 说「你定」→ 按三轴坐标 + 竞品参考集就近选，
+      样张里说明选了什么、为什么（选错在样张翻案，代价一页）
 ```
+
+- **决策框架恒加载**：无论走哪条分支，`frontend-design`（token-plan 取值方法）与 `design-taste-frontend`（AI 套路反模式禁令）都生效
+- **风格预设包一次最多一个**（minimalist / high-end / brutalist 互斥，同载必打架），其死值作 token 初值
+- IA 含图表/dashboard → 加载 `dataviz` 预留分类色/状态色槽位（图表色域独立于整站 accent）
+- 改造已有产品场景 → 加载 `redesign-existing-projects`（审计流程，与风格正交）
+
+**tokens 完备 schema**（逐项产出，缺一不过）：色板（4-6 具名 hex）/ 字体角色（≥2）/ 字号刻度 / 间距基 / 圆角 / 阴影 / 控件四态通用规则 / signature 元素。全部以 CSS 变量落地。
+
+**3b. 生成 components + patterns 骨架**：
+- 组件清单 ← 对照 IA 逐交互 gap analysis（复用去重）
+- 每组件覆盖交互会用到的变体 + 控件四态，**只许引用 token 变量，禁硬编码 hex/px**（收口时机械校验，一处硬编码打回）
+- patterns 骨架 = 页面级布局的灰块示意（真实内容组装留给 Step 4，本步不吞）
+
+**3c. 单页样张渲染 + 用户拍板**：
+
+```
+┌─ Tokens      色板 / 字体样例 / 间距刻度 ────────────┐
+│  Components  全部组件 × 关键变体 × 控件四态          │
+│  Patterns    布局骨架缩略（灰块示意，不填真实内容）    │
+└──────────────────────────────────────────────────┘
+```
+
+- 调性不对 → 改 token 变量，样张自动刷新，原地迭代
+- 组件不对 → 重做该组件，其它不动
+- **拍板后 tokens + components 一起冻结**，成为 Step 4-6 唯一取值来源
+- 样张是持久产物：存 `{pd_vd_output}` 同目录 `styleguide.html`，Step 5 截图作组件基线，devflow Build 作组件参考
 
 **Exit Gate:**
-- [ ] 已判断（skip / 复用 / 创建完成）
-- [ ] 创建时：foundations 冻结 → components 补齐
-- [ ] 设计系统标识已记录（如有）
+- [ ] tokens 按 schema 完备（八项齐）
+- [ ] components 覆盖 gap analysis 全部清单，零硬编码
+- [ ] 样张经用户拍板，tokens + components 已冻结
+- [ ] 复用已有设计系统时：标识已记录，缺口已补齐
 
-> 展开：三步走并行流程、gap analysis、创建方式选型 → `references/design-system-build.md`
+> 展开：gap analysis、并行创建、样张构成、claude-design 操作 → `references/design-system-build.md`
 
 ---
 
@@ -212,7 +236,7 @@ patterns     页面级布局               → Step 4 组装
 > 把交互结构 + 视觉方向 + 设计系统拼成可看可走的原型。**回查 Step 2 交付方式，不凭记忆判断。**
 
 **Enter Gate:**
-- [ ] Step 3 完成（done 或 skip）
+- [ ] Step 3 完成（tokens + components + 样张已冻结）
 - [ ] 回查交付方式：Claude Design / 本地 HTML
 
 **Core Actions:**
@@ -220,11 +244,13 @@ patterns     页面级布局               → Step 4 组装
 | | Claude Design 线 | 本地 HTML 线 |
 |---|---|---|
 | **怎么出** | `Skill(nocode:claude-design)` → `claude-design <brief>` | 本地写多个 `.html` 文件 |
-| **喂什么** | brief = IA + 交互清单 + 视觉方向；挂 template + design system（如有） | IA + 交互清单 + 视觉方向 + token/组件；无设计系统则加载 taste skill |
+| **喂什么** | brief = IA + 交互清单 + 场景脚本 + 视觉方向；挂 template + Step 3 冻结的设计系统 | IA + 交互清单 + 场景脚本 + 视觉方向 + Step 3 冻结的 tokens/components/样张 |
 | **低保真** | 每个独立页面一个文件（含宿主内的嵌入组件），静态 | 每个独立页面一个文件（含宿主内的嵌入组件），静态 |
-| **高保真** | 保留独立页面文件 + 新增一个组合文件（融合全部页面，JS tab 切换/弹窗） | 多文件之间用 URL 跳转，每个文件内做弹窗/4 态 |
-| **完整实现** | 高保真基础上：组合文件内每个控件 4 态 + 边界态切换 + 跨页导航链路 | 高保真基础上：每个控件 4 态 + 边界态切换 + URL 跳转链路全覆盖 |
+| **高保真** | 保留独立页面文件 + 新增一个组合文件（融合全部页面，JS tab 切换/弹窗） | 多文件之间用 URL 跳转，每个文件内做弹窗 |
+| **完整实现** | 高保真基础上：组合文件内控件四态（继承组件级定义）+ 边界态切换 + 跨页导航链路 | 高保真基础上：控件四态（继承组件级定义）+ 边界态切换 + URL 跳转链路全覆盖 |
 | **产物** | claude.ai 项目（记 projectId） | `{pd_vd_output}` 目录 |
+
+行为语义以 `.ix.md` 的行为规格为准（触发/规则/退出/反馈）；原型需要 IX 未定义的行为 → 在 `.ix.md`「下游澄清回流」节登记后再实现，时序参数（如浮层退出缓冲时长）由原型定值并同步登记。
 
 **Claude Design 线并行生成（≥3 个独立页面时推荐）：**
 
@@ -248,13 +274,13 @@ patterns     页面级布局               → Step 4 组装
 
 | | 低保真 | 高保真 | 完整实现 |
 |---|---|---|---|
-| **视觉值** | 具体值（hex / 字号 / 间距 / 圆角） | token 不硬编码（CSS 变量） | 同高保真 |
+| **视觉值** | 引用 Step 3 冻结 tokens（CSS 变量），禁硬编码、禁改名 | 同左 | 同左 |
 | **嵌入组件** | 在宿主页面展示布局（初始隐藏态可见） | 可触发（点击弹出/滑出） | 可触发 + 关闭后状态回归 |
-| **4 态** | 不要求 | 不要求 | 每个可操作控件 hover/active/focus-visible/disabled 逐个实现 |
+| **控件四态** | 不要求 | 不要求 | 组件级样式已在 Step 3 实现，页面继承落地，逐控件验证 |
 | **边界态** | 不要求 | 不要求 | 数据区 empty/loading/error 全覆盖，可切换 |
 | **导航链路** | 不要求 | 页面间可跳转 | 端到端链路可走通（A→B→C→A 无断点） |
 | **test-id** | 所有可操作元素加 `data-testid` | 同低保真 | 同低保真 |
-| **渐进式** | 在 .ix.md ASCII 基线上加视觉 | 在低保真上加交互 | 在高保真上加 4 态 + 边界态 + 链路 |
+| **渐进式** | 在 .ix.md ASCII 基线上加视觉 | 在低保真上加交互 | 在高保真上加控件四态 + 边界态 + 链路 |
 
 **test-id**：每个可操作元素加 `data-testid`，命名 `<页面>-<组件>[-<变体>]` kebab-case。Playwright 用 `[data-testid="xxx"]` 定位。
 
@@ -271,7 +297,7 @@ Step 4 产出后、进 Step 5 前，列一份原型清单：每个 IA 页面/视
 - [ ] 原型清单 100% 覆盖 IA 全部页面/视图
 - [ ] Claude Design 线：projectId 已记录 / HTML 线：文件已保存
 - [ ] 高保真：交互可操作
-- [ ] 完整实现：4 态逐控件 + 边界态全覆盖 + 跨页导航链路无断点
+- [ ] 完整实现：控件四态组件级继承落地 + 边界态全覆盖 + 跨页导航链路无断点
 
 > 展开：brief 完整写法、两条线详细操作 → `references/prototype-gen.md`
 
@@ -304,9 +330,9 @@ PRD 路径覆盖的状态必须由下面两个矩阵聚合得出，不能单独�
 
 测试方案按保真度分四层 Phase：
 - **Phase 1**（所有保真度）：每个页面截图，确认渲染正常
-- **Phase 1b**（所有保真度）：UI 细节审核——遮挡/溢出/截断/层叠/间距一致性
-- **Phase 2**（高保真 + 完整实现）：交互场景——点击弹出/滑出/跳转
-- **Phase 3**（仅完整实现）：4 态逐控件 + 边界态切换 + 跨页导航链路
+- **Phase 1b**（所有保真度）：UI 细节审核——遮挡/溢出/截断/层叠/间距一致性 + 对照样张核组件一致性
+- **Phase 2**（高保真 + 完整实现）：交互场景——按 `.ix.md` 行为规格逐条验证（触发/规则/退出都要试到，浮层的维持与退出是重点）
+- **Phase 3**（仅完整实现）：控件四态逐控件验证 + 边界态切换 + 跨页导航链路
 
 **审批 Gate**：用户确认测试方案后才进 5b。
 
@@ -350,9 +376,9 @@ node scripts/prototype-verify.mjs <prototype-dir> --interactions interactions.js
 ```
 ## 交互覆盖矩阵
 
-| 交互 ID | 交互描述 | 原型中的实现 | 可操作控件 | 4 态 | 边界态 | 截图证据 | 状态 |
+| 交互 ID | 交互描述 | 原型中的实现 | 行为规格验证（触发/规则/退出） | 控件四态 | 边界态 | 截图证据 | 状态 |
 |---|---|---|---|---|---|---|---|
-| 订单.P1.1 | 浏览商品列表 | 资源库 tab | 筛选栏 ✓、排序 ✓ | ✓ | E/L/Err ✓ | library.png | ✅ |
+| 订单.P1.1 | 浏览商品列表 | 资源库 tab | 触发✓ 规则✓ 退出 N/A | ✓ | E/L/Err ✓ | library.png | ✅ |
 ```
 
 **无截图不允许标 ✅。Gate 只认 ✅，不存在中间态通过。**
@@ -387,8 +413,8 @@ findings 套统一契约（C/W/S），**Critical 必须全部修复后重跑 Pla
 |---|---|---|---|
 | Playwright Phase 1（截图） | 必须 | 必须 | 必须 |
 | Phase 1b UI 细节审核 | 必须 | 必须 | 必须 |
-| Playwright Phase 2（交互） | — | 必须 | 必须 |
-| Playwright Phase 3（4 态 + 边界态 + 链路） | — | — | 必须 |
+| Playwright Phase 2（行为规格逐条） | — | 必须 | 必须 |
+| Playwright Phase 3（控件四态 + 边界态 + 链路） | — | — | 必须 |
 | 页面覆盖矩阵 100%（有截图证据） | 必须 | 必须 | 必须 |
 | 交互覆盖矩阵 100%（有截图证据） | — | 必须 | 必须 |
 | PRD 路径走查 | 必须 | 必须 | 必须 |
@@ -401,12 +427,14 @@ verify-report.json errors = 0 才过 Gate。
 ## Step 6: 保存 + Handoff
 
 **Core Actions:**
-1. `.vd.md` → `{pd_vd_output}`
-2. 原型：Claude Design 记 projectId / HTML → `{pd_vd_output}` 同目录下 `{topic}.prototype.html`
-3. 提示："进 devflow 以 PRD + `.ix.md` + `.vd.md` 为输入。"
+1. `.vd.md` → `{pd_vd_output}`（按 `references/vd-doc-template.md`）
+2. 原型：Claude Design 记 projectId / HTML → `{pd_vd_output}` 同目录下 `{topic}.prototype.html`；样张 `styleguide.html` 同目录保存
+3. **回流检查**：原型阶段新产生的设计决策（行为补充、时序参数）已登记——行为类回 `.ix.md`「下游澄清回流」节，视觉类落 `.vd.md`「原型阶段补充决策」节；原型内 token 名与 Step 3 冻结表逐一一致（**禁改名**，下游 devflow 按名继承）
+4. 提示："进 devflow 以 PRD + `.ix.md` + `.vd.md` 为输入。"
 
 **Exit Gate:**
-- [ ] `.vd.md` + 原型已保存
+- [ ] `.vd.md` + 原型 + 样张已保存
+- [ ] 回流检查过（补充决策已登记，token 名零漂移）
 - [ ] 全部 Task 已更新
 
 ---
@@ -414,11 +442,12 @@ verify-report.json errors = 0 才过 Gate。
 ## Exit Gate (Global)
 
 - [ ] 视觉参考集已整理
-- [ ] 保真度 + 交付方式 + 视觉方向已定
-- [ ] Design System 已判断（skip / 复用 / 创建完成）
-- [ ] 原型已产出，覆盖 IA 全部页面/视图
+- [ ] 保真度（含「此档不包含」已告知）+ 交付方式 + 视觉方向已定
+- [ ] 设计系统已冻结（tokens 八项 schema + components + 样张经拍板）
+- [ ] 原型已产出，覆盖 IA 全部页面/视图（100%，三档同）
 - [ ] 验证通过（按保真度 Gate 表全过）
-- [ ] `.vd.md` + 原型已保存到 `{pd_vd_output}`
+- [ ] 回流检查过（补充决策已登记，token 名零漂移）
+- [ ] `.vd.md` + 原型 + 样张已保存到 `{pd_vd_output}`
 
 ## AI 能力边界
 
@@ -434,10 +463,11 @@ verify-report.json errors = 0 才过 Gate。
 | 借口 | 现实 |
 |---|---|
 | "低保真够了，不用想交互态" | empty/loading/error 是一半的真实使用时间，完整实现才覆盖 |
+| "原型不可能全都做" | 对 AI 没有做不完，只有演示方式问题（状态切换按钮）。砍内容必须能引用档位定义，「做不完所以不做」不是理由 |
 | "直接上高保真快" | 没批准低保真就糊高保真 = 在未验证的骨架上贴皮 |
-| "高保真够了，4 态以后开发再说" | 4 态在开发阶段补的成本远高于原型阶段 |
+| "高保真够了，控件四态以后开发再说" | 控件四态是组件属性，Step 3 定一次全站继承——开发阶段逐处补的成本远高于此 |
 | "视觉方向凭感觉定一个" | 2-3 个方向让人选，比赌一个返工率低 |
-| "小项目也要建设计系统" | 小项目 brand-neutral 够用 |
+| "小项目跳过设计系统" | tokens + components 必做——组件清单由交互驱动，小项目清单自然短；跳过的代价是并行生成各页漂移 |
 | "Claude Design 不可用就没法做" | 本地 HTML 是完整备选 |
 | "Modal 太简单不用做原型" | IA 里列了就要实现，在宿主页面里加一个 `<dialog>` 不费事 |
 | "截图看了没问题就行" | Playwright 跑一遍比看一眼靠谱 |
@@ -449,8 +479,14 @@ verify-report.json errors = 0 才过 Gate。
 - 没建 TaskCreate 就开始做
 - 没有 .ix.md 就开始出视觉
 - 跳档（没低保真就出高保真，或没高保真就出完整实现）
+- 低保真只出「关键页」（覆盖度三档恒 100%，砍页面数不是降保真）
+- 选档时没念「此档不包含」
 - 只给一个视觉方向
+- Step 3 没走完就出稿：tokens schema 缺项 / 样张没经拍板 / 组件硬编码 hex/px
+- 同时加载两个风格预设包
 - Step 4 没回查交付方式
+- 原型 token 名与冻结表不一致（禁改名）
+- 原型实现了 `.ix.md` 未定义的行为且未回流登记
 - 覆盖矩阵手填 ✅ 没跑 Playwright 验证
 - 嵌入组件单独建了文件（应在宿主页面内实现）
 - IA 中有页面/视图但原型里没实现
