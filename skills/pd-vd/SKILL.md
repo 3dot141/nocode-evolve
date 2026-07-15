@@ -1,6 +1,6 @@
 ---
 name: pd-vd
-description: Use when the user wants to design the visual direction and produce prototypes after interaction design. Use when the user says "视觉设计/视觉方向/配色/原型/wireframe/线框图/设计稿/长什么样/出个原型", or when pdflow routes to the visual design stage after pd-ix, or when upgrading fidelity of an existing design. Produces .vd.md + optional .prototype.html (requires .ix.md). Not for interaction design (use nocode:pd-ix), technical architecture (use nocode:dev-design), or production component code (use devflow Build).
+description: Use when the user wants to design the visual direction and produce prototypes after interaction design. Use when the user says "视觉设计/视觉方向/配色/原型/wireframe/线框图/设计稿/长什么样/出个原型", or when pdflow routes to the visual design stage after pd-ix, or when upgrading fidelity of an existing design. ALSO use when modifying an existing prototype — "改原型/修原型问题/调交互效果/这个 hover 不对/原型里 X 效果很差" enters iteration mode (lightweight path with regression verify), do NOT hand-edit prototype HTML outside this skill. Produces .vd.md + styleguide.html + optional .prototype.html (requires .ix.md). Not for interaction design (use nocode:pd-ix), technical architecture (use nocode:dev-design), or production component code (use devflow Build).
 ---
 
 # pd-vd — 视觉设计
@@ -42,6 +42,25 @@ description: Use when the user wants to design the visual direction and produce 
 
 - [ ] pd-vd skill 已加载
 - [ ] `.ix.md` 存在（交互阶段已完成）——无 `.ix.md` 时建议先跑 `Skill(nocode:pd-ix)`
+
+## 模式分流：全流程 or 迭代
+
+Enter 时检测——**已有 `.vd.md` + 原型，且本次请求是局部修改**（改交互效果 / 修原型问题 / 调样式 / 换文案）→ 走**迭代模式**，不重走 Step 1-4：
+
+```
+迭代模式（轻路径，带回归网）
+1. TaskCreate 轻量版：Task A「迭代: 定位→修改→重验→登记」+ Task B「Handoff」(metadata: {handoff: true})
+2. 定位改动：哪个页面 / 哪个交互（引用交互 ID）
+3. 修改：视觉值只用冻结 tokens；行为语义查 .ix.md 行为规格——
+   需要 IX 未定义的行为 → 先回流登记再实现，不就地发明
+4. 重验（修改后必重验）：受影响页面 Phase 1 + 该页相关 Phase 2 场景重跑
+   （场景已从行为规格转译，断言判挂）
+5. 收尾：矩阵对应行刷新 + 补充决策登记（.ix.md 回流节 / .vd.md 登记节）
+```
+
+**不算迭代、要回对应阶段的**：改 IA / 页面结构 → pd-ix；换视觉方向 / 改 token 值 → Step 2c/3（样张重拍板）；升保真档 → Step 2d 渐进升级（全流程）。
+
+> 动机：局部改原型是最高频的返场场景，只有「重走全流程」一条路时它必然被绕开——绕开 = 裸奔迭代（v7 式七轮肉眼修 bug）。给合规轻路径，回归网（重验）不丢。
 
 ## Step 0: TaskCreate
 
@@ -352,7 +371,9 @@ node scripts/prototype-verify.mjs <prototype-dir> --interactions interactions.js
 
 产出：`verify-output/screenshots/` + `verify-report.json`。errors > 0 → 修原型后重跑。
 
-> 展开：interactions.json 示例、验证失败处理 → `references/playwright-verify.md`
+**Phase 2 场景从 `.ix.md` 行为规格逐字段机械转译**（触发/规则/退出 100% 场景化，每场景带断言）；**修改后必重验**——原型任何改动（含用户反馈迭代）→ 受影响页面 Phase 1 + 相关 Phase 2 重跑，矩阵刷新。
+
+> 展开：转译规则、action 集合（含 press/assert）、interactions.json 示例、验证失败处理 → `references/playwright-verify.md`
 
 ### 5c. 页面覆盖矩阵（所有保真度必做）
 
@@ -381,7 +402,7 @@ node scripts/prototype-verify.mjs <prototype-dir> --interactions interactions.js
 | 订单.P1.1 | 浏览商品列表 | 资源库 tab | 触发✓ 规则✓ 退出 N/A | ✓ | E/L/Err ✓ | library.png | ✅ |
 ```
 
-**无截图不允许标 ✅。Gate 只认 ✅，不存在中间态通过。**
+**无截图不允许标 ✅。Gate 只认 ✅，不存在中间态通过。**「行为规格验证」列：触发 / 规则 / 退出三字段 **100% 转译成带断言的场景且跑过**才打 ✓（字段为 N/A 的跳过）——转译规则见 `references/playwright-verify.md`。
 
 ### 5e. vis-review 评审（低保真 / 高保真 / 完整实现）
 
@@ -488,6 +509,9 @@ verify-report.json errors = 0 才过 Gate。
 - 原型 token 名与冻结表不一致（禁改名）
 - 原型实现了 `.ix.md` 未定义的行为且未回流登记
 - 覆盖矩阵手填 ✅ 没跑 Playwright 验证
+- Phase 2 场景没从行为规格转译（触发/规则/退出有字段未场景化）、场景无断言
+- 改了原型没重跑受影响场景就请求用户再看（迭代模式第 4 步不可省）
+- 用户要改原型时绕开本 skill 直接改 HTML（应进迭代模式）
 - 嵌入组件单独建了文件（应在宿主页面内实现）
 - IA 中有页面/视图但原型里没实现
 - 升档时推翻前一档（渐进式 = 叠加不是替换）

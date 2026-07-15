@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-Playwright-based prototype verification for pd-ui Step 8.
+Playwright-based prototype verification for pd-vd Step 5.
 
 Phase 1: Screenshot each HTML file (full page).
-Phase 2: Run interaction scenarios (click/hover/focus) and screenshot each step.
+Phase 2: Run interaction scenarios (click/hover/focus/wait/press/assertVisible/assertHidden) and screenshot each step.
 
 Output: screenshots/ dir + verify-report.json + human-readable stdout summary.
 """
@@ -159,6 +159,15 @@ def main():
                                 page.focus(selector)
                             elif action == "wait":
                                 page.wait_for_timeout(step.get("ms", 500))
+                            elif action == "press":
+                                page.keyboard.press(step.get("key", "Escape"))
+                            elif action == "assertVisible":
+                                if not page.locator(selector).first.is_visible():
+                                    raise Exception(f"expected visible but hidden/absent: {selector}")
+                            elif action == "assertHidden":
+                                loc = page.locator(selector).first
+                                if loc.count() > 0 and loc.is_visible():
+                                    raise Exception(f"expected hidden but visible: {selector}")
 
                             if ss_name:
                                 page.wait_for_timeout(300)
