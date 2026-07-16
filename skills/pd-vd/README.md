@@ -2,13 +2,13 @@
 
 视觉设计 skill — 产品流第三阶段（视觉部分）。
 
-以 `.ix.md` 为输入，通过视觉探索 + 方向选定 + 设计系统（tokens + components + 样张拍板，全必做）+ 原型生成 + Playwright 验证，产出 `.vd.md` + 样张 + 可选原型。
+以 `.ix.md` 为输入，通过视觉探索 + 方向选定 + 设计系统（tokens + components + 样张拍板 + 按交付线落点，全必做）+ 原型生成 + Playwright 验证，产出 `.vd.md` + 样张 + 高保真原型。
 
 ## 产出
 
 - `{topic}.vd.md` — 视觉方向、tokens 冻结表、组件清单、原型清单、验证记录（模板：`references/vd-doc-template.md`）
 - `styleguide.html` — 单页样张（tokens + 全部组件 + patterns 骨架，Step 3 拍板产物）
-- `{topic}.prototype.html` — 可选原型（低保真 / 高保真 / 完整实现，覆盖度三档恒 100%）
+- `{topic}.prototype.html` — 高保真可交互原型（唯一档位，覆盖度恒 100%；Claude Design 线为原型项目 + DS 项目）
 
 ## 在产品流中的位置
 

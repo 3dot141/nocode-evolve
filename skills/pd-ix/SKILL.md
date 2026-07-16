@@ -16,7 +16,7 @@ description: Use when the user wants to design the interaction structure of a pr
 ```
 pd-ix → ASCII 线框 + IA + 交互流    → 可交付 ✓
          ↓ 要视觉？
-pd-vd → 低保真 / 高保真 / 完整实现   → 可交付 ✓
+pd-vd → 高保真可交互原型             → 可交付 ✓
 ```
 
 ## 边界

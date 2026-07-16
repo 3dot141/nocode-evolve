@@ -115,20 +115,19 @@ pd-vd 传来的 brief 通常包含:
 1. **设计系统引用** — "用 XX 设计系统"(有 → 绑 design_system_id)
 2. **页面结构(IA)** — 每个页面/视图的区块
 3. **交互清单** — 每个页面用户能做的操作
-4. **视觉方向 + 保真度** — 调性 + 低保真/高保真
+4. **视觉方向** — 调性(pd-vd 线固定高保真: 独立页面 + 组合文件,交互可操作)
 
 没有 brief 时(用户直接说"帮我建个设计项目"),走 `create` 子命令就够了。
 
-### 低保真 vs 高保真
+### pd-vd 线产物结构（拆分 + 组合）
 
-| | 低保真（拆分） | 高保真（拆分 + 组合） |
-|---|---|---|
-| 独立页面 | 每页一个文件，静态 | 同低保真，保留不动 |
-| 组合文件 | 不需要 | 额外一个 `prototype.html`，融合全部页面代码 |
-| 交互 | 不强调 | 组合文件内：tab 导航 + JS 弹窗/抽屉 + hover/active/focus/disabled |
-| 边界态 | 不要求 | empty / loading / error（JS 切换演示） |
-| 限制 | — | 跨文件导航不支持（平台每个文件独立渲染），所以交互只在组合文件内实现 |
-| 代价 | — | 组合文件与独立页面内容重复，改一处要同步改另一处 |
+| 项 | 说明 |
+|---|---|
+| 独立页面 | 每页一个文件，含宿主内嵌入组件，可独立渲染/截图 |
+| 组合文件 | 额外一个 `prototype.html`，融合全部主链路页面代码 |
+| 交互 | 组合文件内：tab 导航 + JS 弹窗/抽屉（行为按 `.ix.md` 行为规格） |
+| 限制 | 跨文件导航不支持（平台每个文件独立渲染），所以交互只在组合文件内实现；页面文件需自包含 token 定义 |
+| 代价 | 组合文件与独立页面内容重复，改一处要同步改另一处 |
 
 ---
 
@@ -196,7 +195,7 @@ DesignSync register_assets(projectId: project_id, planId, assets: [{name, path, 
 
 | 调用方 | 怎么用 claude-design |
 |---|---|
-| **pd-vd Step 3** | `claude-design systems` 搜已有 → `claude-design create` 建设计系统项目 → `claude-design write` 推组件 |
-| **pd-vd Step 4** | `claude-design <brief>` 生成原型 → 记 projectId |
-| **pd-vd Step 6** | 记录 projectId 到 .vd.md |
+| **pd-vd Step 3d** | `claude-design systems` 搜已有 → DesignSync `create_project` 建 DS 类型项目 → `claude-design write` 推组件卡 → 显式 `register_assets` 入索引 → 记 dsProjectId |
+| **pd-vd Step 4** | `claude-design <brief>` 生成原型（create_project 时绑 Step 3d 的 design_system_id）→ 记 projectId |
+| **pd-vd Step 6** | 记录 projectId + dsProjectId 到 .vd.md |
 | **/design-sync** | 外部独立 skill(不在本插件内,当前环境未安装则不可调用),推 React bundle 用 DesignSync 的 localPath;claude-design 不替代它,该 skill 不可用时直接用 DesignSync 工具走上传流程 |

@@ -25,7 +25,7 @@ description: 产品发现工作流领航（Research → PRD · 2 场景路由）
 └─ Light: PRD → 交互设计 → 视觉设计              (思路清晰, 直接 PRD + 设计)
 ```
 
-> 交互设计（pd-ix）产出界面结构 + 交互流，视觉设计（pd-vd）产出视觉方向 + 原型，保真度可选（默认低保真 wireframe）。**纯后端 / 无界面的需求可跳过两者**（见 Step 3）。
+> 交互设计（pd-ix）产出界面结构 + 交互流，视觉设计（pd-vd）产出视觉方向 + 高保真可交互原型（唯一档位）。**纯后端 / 无界面的需求可跳过两者**（见 Step 3）。
 
 **判断信号**：
 
@@ -61,7 +61,7 @@ Task 3: 交互设计 — 界面结构 + 交互流（无界面需求可跳过）
   Gate: .ix.md 产出 + 用户确认 IA
 
 Task 4: 视觉设计 — 视觉方向 + 原型（无界面需求可跳过）
-  Sub-steps: ⓪ Skill(nocode:pd-vd) → 视觉探索 → 保真度+交付+方向 → DS → 原型 → 产出 .vd.md
+  Sub-steps: ⓪ Skill(nocode:pd-vd) → 视觉探索 → 交付线+方向 → DS(含落点) → 原型 → 产出 .vd.md
   Gate: .vd.md 产出 + 用户确认方向
 
 Task 5: Handoff — 衔接开发流
@@ -79,7 +79,7 @@ Task 2: 交互设计 — 界面结构 + 交互流（无界面需求可跳过）
   Gate: .ix.md 产出 + 用户确认 IA
 
 Task 3: 视觉设计 — 视觉方向 + 原型（无界面需求可跳过）
-  Sub-steps: ⓪ Skill(nocode:pd-vd) → 视觉探索 → 保真度+交付+方向 → DS → 原型 → 产出 .vd.md
+  Sub-steps: ⓪ Skill(nocode:pd-vd) → 视觉探索 → 交付线+方向 → DS(含落点) → 原型 → 产出 .vd.md
   Gate: .vd.md 产出 + 用户确认方向
 
 Task 4: Handoff — 衔接开发流
@@ -103,7 +103,7 @@ Task 4: Handoff — 衔接开发流
 > "PRD 已就绪。建议下一步做交互设计，把需求落成界面结构 + 交互流。纯后端 / 无界面需求可跳过，直接 Handoff。"
 
 **交互设计 → 视觉设计 衔接**：pd-ix 完成后，若需求涉及界面，自动建议进 pd-vd：
-> "交互设计已就绪（`.ix.md`）。建议下一步做视觉设计，把交互骨架落成视觉方向 + 原型（默认低保真 wireframe，可升档）。只需交互规范的可跳过，直接 Handoff。"
+> "交互设计已就绪（`.ix.md`）。建议下一步做视觉设计，把交互骨架落成视觉方向 + 高保真可交互原型。只需交互规范的可跳过，直接 Handoff。"
 
 **Research No-Go**：用户在 Research 阶段选了 No-Go → pdflow 结束，不进 PRD：
 > "调研结论是 No-Go。产品流结束。如果要重新评估，可以再次调起 pdflow。"

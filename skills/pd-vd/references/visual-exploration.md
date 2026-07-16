@@ -26,7 +26,7 @@ pd-ix 已经把竞品的功能和交互摸清了。这一步不重新找竞品�
 | **关键组件特写** | 按钮 / 卡片 / 表格 / 表单的局部放大 | 看圆角、阴影、间距、字重这些细节值 |
 | **状态切换** | hover / active / empty / loading 态 | 看交互反馈的视觉表达，这是最容易漏的 |
 
-状态态尽量截——很多产品的空状态、加载态设计得很用心，是低保真容易忽略的部分。
+边界状态尽量截——很多产品的空状态、加载态设计得很用心，是容易被忽略的部分。
 
 ### 每张截图的标注
 
@@ -77,7 +77,7 @@ Claude Design 新建项目时的一个起步入口。选 Template = 拿一个已
 
 - Claude Design 可用 → `Skill(nocode:claude-design)` → `claude-design list` 确认授权，浏览模板库找匹配本产品类型的（dashboard / landing / app / settings 等）
 - 匹配判断：看模板的页面结构跟本次 IA 的关键页是否接近，接近 → 记为起点候选
-- **Claude Design 不可用 / 走本地 HTML 线 → 跳过本节**，无 template 概念，直接走 Step 2c 视觉方向发散
+- **Claude Design 不可用 / 走本地 HTML 线 → 跳过本节**，无 template 概念，直接走 Step 2b 视觉方向发散
 
 ## 4. 视觉参考集产出格式
 
@@ -96,4 +96,4 @@ Claude Design 新建项目时的一个起步入口。选 Template = 拿一个已
 | Dashboard Pro | SaaS Dashboard | 高 | 侧边栏 + 卡片网格，接近本次 IA |
 | Minimal Admin | Admin Panel | 中 | 结构匹配但调性偏冷，需调色 |
 
-> 视觉参考集是 Step 2c 定视觉方向的输入——有了它，定方向是「从这几个里挑/融合」，而不是凭空发散。
+> 视觉参考集是 Step 2b 定视觉方向的输入——有了它，定方向是「从这几个里挑/融合」，而不是凭空发散。

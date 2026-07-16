@@ -13,7 +13,6 @@ Step 5 的 5a（测试方案）和 5b（Playwright 执行）的完整操作指�
 - `library-import-trigger` — 导入对话框触发按钮
 - `library-import-dialog` — 导入对话框本体
 - `library-import-cancel` — 导入对话框取消按钮
-- `library-state-empty` — 切换到 empty 态的控件
 - `nav-home` / `nav-library` / `nav-settings` — 导航项
 
 ---
@@ -59,13 +58,12 @@ Phase 2 场景不是 agent 想到什么测什么——**从 `.ix.md` 每条交�
 
 ## 5a. 测试方案模板
 
-基于原型清单 + 保真度输出，用户审批后才写脚本执行。测试方案必须包含三个部分：**页面层级图**（ASCII 树）、**导航链路图**（ASCII 流程）、**分层验证表**（Phase 1-3 按保真度）。
+基于原型清单输出，用户审批后才写脚本执行。测试方案必须包含三个部分：**页面层级图**（ASCII 树）、**导航链路图**（ASCII 流程）、**分层验证表**（Phase 1 / 1b / 2，全部必做）。
 
 ```
 ## 测试方案
 
-保真度：完整实现
-交付方式：本地 HTML
+交付线：本地 HTML
 
 ### 一、页面层级图
 
@@ -73,12 +71,11 @@ IA 全部页面/视图的树状结构。独立页面为节点，嵌入组件为�
 
 ┌─ 资源管理应用 ─────────────────────────────────────────┐
 │                                                         │
-│  首页 (home.html)                    [P1][P1b][P2][P3] │
+│  首页 (home.html)                    [P1][P1b][P2]      │
 │                                                         │
-│  资源库 (library.html)               [P1][P1b][P2][P3] │
-│    ├── 资源详情 (Drawer, 嵌入)            [P2][P3]      │
-│    ├── 导入对话框 (Dialog, 嵌入)          [P2][P3]      │
-│    └── 数据区 (empty/loading/error)       [P3]          │
+│  资源库 (library.html)               [P1][P1b][P2]      │
+│    ├── 资源详情 (Drawer, 嵌入)            [P2]          │
+│    └── 导入对话框 (Dialog, 嵌入)          [P2]          │
 │                                                         │
 │  设置页 (settings.html)              [P1][P1b][P2]      │
 │                                                         │
@@ -90,7 +87,7 @@ IA 全部页面/视图的树状结构。独立页面为节点，嵌入组件为�
 │    独立页面 5/5  嵌入组件 2/2  总计 7/7 = 100%           │
 └─────────────────────────────────────────────────────────┘
 
-Phase 标记：[P1] 截图  [P1b] UI 细节审核  [P2] 交互  [P3] 控件四态+边界态+链路
+Phase 标记：[P1] 截图  [P1b] UI 细节审核  [P2] 交互
 
 ### 二、导航链路图
 
@@ -122,7 +119,7 @@ Phase 标记：[P1] 截图  [P1b] UI 细节审核  [P2] 交互  [P3] 控件四�
 
 ### 三、分层验证表
 
-#### Phase 1 — 页面截图（所有保真度）
+#### Phase 1 — 页面截图
 | 文件 | 对应 IA 页面 | 类型 | 预期内容 |
 |---|---|---|---|
 | home.html | 首页 | 主链路 | 卡片网格 + 统计面板 + 活动流 |
@@ -131,7 +128,7 @@ Phase 标记：[P1] 截图  [P1b] UI 细节审核  [P2] 交互  [P3] 控件四�
 | 404.html | 404 页面 | 孤立 | 错误提示 + 返回首页链接 |
 | onboarding.html | 引导页 | 孤立 | 欢迎文案 + 引导步骤 |
 
-#### Phase 1b — UI 细节审核（所有保真度）
+#### Phase 1b — UI 细节审核
 | 检查项 | 范围 | 判定 |
 |---|---|---|
 | 遮挡 | 所有页面 | 非浮层元素重叠 > 10% → warning |
@@ -142,7 +139,7 @@ Phase 标记：[P1] 截图  [P1b] UI 细节审核  [P2] 交互  [P3] 控件四�
 | 样张一致性 | 每页主要组件 | 组件渲染与 styleguide.html 明显不一致 → warning |
 | AI 截图走查 | 所有截图 | 布局/颜色/间距 vs 视觉方向偏离 → warning |
 
-#### Phase 2 — 交互场景（高保真+完整实现，从行为规格转译）
+#### Phase 2 — 交互场景（从行为规格转译）
 | 交互 ID | 场景（规格字段） | 文件 | 操作 → 断言 | data-testid |
 |---|---|---|---|---|
 | 资源库.P5.2 | 触发 | library.html | 点击行 → assertVisible Drawer | library-detail-trigger → library-detail-drawer |
@@ -150,38 +147,22 @@ Phase 标记：[P1] 截图  [P1b] UI 细节审核  [P2] 交互  [P3] 控件四�
 | 资源库.P5.3 | 触发 | library.html | 点击"+导入" → assertVisible Dialog | library-import-trigger → library-import-dialog |
 | 资源库.P5.3 | 退出（取消） | library.html | 点击"取消" → assertHidden Dialog | library-import-cancel |
 | 资源库.P5.3 | 退出（Esc） | library.html | press Esc → assertHidden Dialog | library-import-dialog |
-
-#### Phase 3 — 完整验证（仅完整实现）
-| 维度 | 场景 | 文件 | data-testid | 预期 |
-|---|---|---|---|---|
-| 控件四态 | 筛选按钮 hover | library.html | library-filter-btn | 背景色变化 |
-| 控件四态 | 筛选按钮 disabled | library.html | library-filter-btn | 灰色 + 不可点 |
-| 边界态 | 列表 empty | library.html | library-state-empty | "暂无数据" + 引导 |
-| 边界态 | 列表 loading | library.html | library-state-loading | 骨架屏 |
-| 边界态 | 列表 error | library.html | library-state-error | 错误提示 + 重试 |
-| 链路 | 首页→资源库→详情→首页 | home.html | nav-library → library-detail-trigger → nav-home | 无断点 |
 ```
 
 ---
 
 ## 5b. Playwright 执行
 
-### 按保真度分层跑不同 Phase
+三层 Phase 全部必跑：Phase 1（渲染正常）→ Phase 1b（UI 细节）→ Phase 2（每个交互可操作：点击弹出/滑出/跳转）。
 
-| 保真度 | 跑什么 | 验证什么 |
-|---|---|---|
-| **低保真** | Phase 1 | 每个页面渲染正常（不白屏、不报错）、嵌入组件布局可见 |
-| **高保真** | Phase 1 + Phase 2 | 低保真全部 + 每个交互可操作（点击弹出/滑出/跳转） |
-| **完整实现** | Phase 1 + Phase 2 + Phase 3 | 高保真全部 + 控件四态逐控件验证 + 边界态切换 + 跨页导航链路走通 |
-
-### Phase 1 — 基础截图（所有保真度）
+### Phase 1 — 基础截图
 
 ```bash
 node scripts/prototype-verify.mjs <prototype-dir>
 ```
 自动打开每个 HTML 文件、截全页面图、收集页面元数据（链接/按钮/dialog 数量）。
 
-### Phase 1b — UI 细节审核（所有保真度）
+### Phase 1b — UI 细节审核
 
 Phase 1 截图完成后，对每张截图 + 页面 DOM 做 UI 质量检查。不只看"能不能渲染"，还看"渲染出来的效果对不对"。
 
@@ -209,7 +190,7 @@ Phase 1 产出的每张截图，喂给 AI 做视觉审查（Read 截图文件）
 
 产出：`verify-output/ui-audit.json`，每个 warning/error 标文件名 + 元素 + 问题描述。errors > 0 → 修原型后重跑。
 
-### Phase 2 — 交互场景验证（高保真 + 完整实现）
+### Phase 2 — 交互场景验证
 
 场景从行为规格转译（见本文开头的转译规则），写成 `interactions.json`：
 ```bash
@@ -252,49 +233,6 @@ interactions.json 示例（selector 统一用 `data-testid`，每个场景至少
     ]
   }
 ]
-```
-
-### Phase 3 — 完整测试套件（仅完整实现）
-
-在 Phase 2 基础上扩展 interactions.json，覆盖三个维度：
-
-**1. 控件四态逐控件**：每个可操作控件的 hover / active / focus-visible / disabled
-```json
-{
-  "file": "library.html",
-  "label": "筛选按钮 控件四态",
-  "steps": [
-    { "action": "hover", "selector": "[data-testid='library-filter-btn']", "screenshot": "filter-btn-hover" },
-    { "action": "click", "selector": "[data-testid='library-filter-btn']", "screenshot": "filter-btn-active" },
-    { "action": "focus", "selector": "[data-testid='library-filter-btn']", "screenshot": "filter-btn-focus" }
-  ]
-}
-```
-
-**2. 边界态切换**：每个数据区的 empty / loading / error
-```json
-{
-  "file": "library.html",
-  "label": "列表边界态",
-  "steps": [
-    { "action": "click", "selector": "[data-testid='library-state-empty']", "screenshot": "library-empty" },
-    { "action": "click", "selector": "[data-testid='library-state-loading']", "screenshot": "library-loading" },
-    { "action": "click", "selector": "[data-testid='library-state-error']", "screenshot": "library-error" }
-  ]
-}
-```
-
-**3. 跨页导航链路**：从页面 A 到页面 B 再到 C 再回 A，验证链路无断点
-```json
-{
-  "file": "home.html",
-  "label": "首页→资源库→详情→首页 链路",
-  "steps": [
-    { "action": "click", "selector": "[data-testid='nav-library']", "screenshot": "nav-to-library" },
-    { "action": "click", "selector": "[data-testid='library-detail-trigger']", "screenshot": "nav-to-detail" },
-    { "action": "click", "selector": "[data-testid='nav-home']", "screenshot": "nav-back-home" }
-  ]
-}
 ```
 
 ### Claude Design 线

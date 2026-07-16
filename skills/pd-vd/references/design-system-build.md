@@ -1,6 +1,6 @@
 # Step 3 展开：设计系统（tokens + components + 样张）
 
-> pd-vd Step 3 的展开 reference。设计系统 = 品牌渲染层，让多个页面看起来像同一个产品。本文覆盖：三层顺序、tokens 取值方法、gap analysis、并行创建、样张构成、创建方式选型、claude-design 操作参考。
+> pd-vd Step 3 的展开 reference。设计系统 = 品牌渲染层，让多个页面看起来像同一个产品。本文覆盖：三层顺序、tokens 取值方法、gap analysis、并行创建、样张构成、两线落点（3d）、claude-design 操作参考。
 > 三层命名（tokens / components / patterns）单源在 `{NOCODE_SKILL_REF}/ix-vd-contract.md`。
 
 ## 一、三层为什么是这个顺序
@@ -104,7 +104,7 @@ claude-design open <projectId>
 服务的交互点：<从 gap analysis 取>
 必须覆盖的变体/状态：<从交互的行为规格与状态覆盖推，如 default / focused / disabled>
 控件四态：按 tokens 的通用四态规则实现（hover/active/focus-visible/disabled）
-视觉方向（Step 2c 选定）：<一句话描述 + 调性>
+视觉方向（Step 2b 选定）：<一句话描述 + 调性>
 
 可用的 tokens（只能用这些变量，禁止硬编码 hex/px）：
 <冻结的 token 清单>
@@ -125,11 +125,12 @@ claude-design open <projectId>
 2. **变量化校验** — 每个组件引用的 token 都在清单里吗？不在 = 硬编码了，打回重做
 3. **失败降级** — 某组件 subagent 失败 / 校验不过 → 记入失败清单 → 串行重试一次 → 仍失败编排者自己补。一个组件失败不拖垮整批
 
-### 4.4 样张渲染 + 拍板（见第五节）→ 拍板后统一推送
+### 4.4 样张渲染 + 拍板（见第五节）→ 拍板后按交付线落点（3d，见第六节）
 
-1. 一次 `finalize_plan`（writes 列全部组件路径 + tokens + 样张）
-2. 一次 `write_files` 批量推
-3. 本地 HTML 线直接落 `{pd_vd_output}` 目录
+拍板后执行 3d 落点。**这一步不专属并行流程**——串行生产、复用已有设计系统同样要走：
+
+- Claude Design 线：一次 `finalize_plan`（writes 列全部组件路径 + tokens + 样张）→ 一次 `write_files` 批量推 → 组件卡显式入索引
+- 本地 HTML 线：直接落 `{pd_vd_output}` 目录
 
 ## 五、单页样张（styleguide.html）
 
@@ -155,9 +156,19 @@ claude-design open <projectId>
 
 **拍板后**：tokens + components 冻结，成为 Step 4-6 唯一取值来源。样张存 `{pd_vd_output}` 同目录 `styleguide.html`，Step 5 Phase 1b 对照它核组件一致性，devflow Build 拿它当组件参考。
 
-## 六、创建方式选型（三条路，不绑死）
+## 六、两线落点（3d）与创建方式选型
 
-按项目当前状态选，不强制走某一条：
+落点由 Step 2a 交付线决定。**落点绑死，创建路径不绑死**——不论设计系统从哪来、用什么方式创建，冻结结果必须落到交付线对应的位置。
+
+### 本地 HTML 线
+
+冻结结果落 `{pd_vd_output}` 目录：`tokens.css` + components + `styleguide.html`。复用代码库已有 tokens 时，提取对齐后落盘冻结快照（标注上游来源 + 冻结日期）。
+
+### Claude Design 线：DS 项目必落，创建路径三选
+
+**交付线 = Claude Design ⇒ 冻结结果必须成为独立 DS 项目**（与 Step 4 原型项目分离，可被 `design_system_id` 绑定），**设计真源在代码库也不豁免**——推送物是冻结时点快照（标注上游来源 + 冻结日期），单向同步，不构成双主。tokens 内联进原型文件只解决渲染（平台每个文件独立渲染，页面文件本就需要自包含 token 定义）；DS 面板可浏览、跨项目可绑定、协作可见，靠的是 DS 项目——内联不能替代落点。
+
+创建路径按项目当前状态选：
 
 | 方式 | 适用 | 推什么 |
 |---|---|---|
@@ -177,7 +188,7 @@ claude-design open <projectId>
 
 > `/design-sync`（命令）和 `claude-design`（skill）是两回事：前者推真实 React 组件 bundle（走 DesignSync localPath），后者是通用 Claude Design 操作入口（MCP + DesignSync 自动路由）。无代码阶段用 `claude-design write` 推 `.dc.html`，有代码阶段用 `/design-sync` 推 bundle。
 
-**复用已有设计系统 ≠ 跳过 Step 3**：取值来源变为「提取对齐已有 tokens」（3a）、gap analysis 只补缺口（3b）、样张仍然渲染拍板（3c，已有系统 + 新组件同页展示）。
+**复用已有设计系统 ≠ 跳过 Step 3**：取值来源变为「提取对齐已有 tokens」（3a）、gap analysis 只补缺口（3b）、样张仍然渲染拍板（3c，已有系统 + 新组件同页展示）、**落点仍然执行（3d）**——Claude Design 线已有 DS 项目则增量推缺口，没有则新建。
 
 ## 七、claude-design 操作参考
 
@@ -189,6 +200,10 @@ claude-design open <projectId>
 - **大文件**（bundle/字体/图片 > 50KB）→ DesignSync `finalize_plan` → `write_files`（localPath 从磁盘读）
 
 调用方不需要关心路由细节，只需要知道 `claude-design write` 会处理。
+
+### DS 项目与卡片索引（3d 必查）
+
+DS 类型项目的创建、组件卡显式入索引的具体工具路由以 `Skill(nocode:claude-design)` 为准。两处不能赌默认行为：普通项目建了**不能转** DS 型（类型创建时不可变，建错只能重建）；手写推的组件卡**不显式注册不保证入索引**（卡片长时间不出现在 Design System 面板）。
 
 ### 并发限制（重要）
 
@@ -208,6 +223,8 @@ claude-design open <projectId>
 补齐后验证：
 
 - `claude-design open <projectId>` 确认文件已在项目里
+- DS 项目类型 = 设计系统（不是普通项目），`claude-design systems` 可见、可被原型项目绑定
+- 组件卡已入 Design System 面板索引（显式注册过，不是等被动扫描）
 - 新组件引用的 token 在 tokens 里都有定义（零硬编码）
 - 组件变体覆盖了交互的行为规格与状态覆盖会用到的状态
 - 样张已渲染且经用户拍板
