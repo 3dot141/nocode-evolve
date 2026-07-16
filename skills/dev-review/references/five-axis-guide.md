@@ -15,6 +15,7 @@
 - **race condition**：共享状态并发读写？await 之间状态被改？缺锁 / 缺幂等？
 - **错误处理**：异常被吞了？错误路径有没有清理资源？失败是否静默？
 - **spec 匹配**：实现和需求 / 验收标准一致吗？有没有偷偷改了语义？
+- **被删行为**：diff 删掉的分支 / 兜底 / 错误处理 / 字段，有没有 caller 或调用链还依赖？是有意删除（对照需求 / plan）还是重构顺手误删？拿不准先 `git blame` 查来历 + `rg` 查引用
 
 ```python
 # BAD: off-by-one + 未处理空
@@ -87,6 +88,7 @@ function getActiveUserName(record: Record | null): string | null {
 - **循环依赖**：A → B → A？import 成环？
 - **抽象层级**：同一函数里混了高层意图和低层细节（抽象层级跳变）？
 - **pattern 一致性**：本次新增的写法和仓库现有 pattern 一致吗？还是另起炉灶？
+- **契约一致性**：接口两端同步改了吗——producer 改了响应 shape，consumer / mock / fixture / 类型定义跟上没有？序列化边界（API 响应 / view 对象）有没有把内部字段泄露给不该看的消费方？跨模块隐含约定（缓存 key / queryKey 拼法等两处各写一份）有没有单源化？
 
 ```ts
 // BAD: 业务逻辑泄进 React 组件，且直接 fetch（耦合数据层）
