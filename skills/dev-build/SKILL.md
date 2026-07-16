@@ -84,6 +84,7 @@ Task 3: 硬交接 — 调用下一步 skill
 ## 核心规则（when X → do Y）
 
 - **When** bug 不稳定复现 → 目标不是干净 repro，是**更高复现率**。循环 100×、并行、加压、收窄时序。50% flake 可调试，1% 不可调——先拉高再 debug
+- **When** task 涉及 UI 样式且存在设计基线（样张 / 原型截图 / 设计稿）→ 实现循环加入设计值对齐（Read `{NOCODE_SKILL_REF}/frontend-guide.md`「设计基线对齐」节）：实现 → devtools 对比设计值 → 调整 → 复检，作为样式代码的红绿等价物；对齐记录留在 task 产出里供 Verify 抽查。无基线则跳过并标注
 
 ## Common Rationalizations
 

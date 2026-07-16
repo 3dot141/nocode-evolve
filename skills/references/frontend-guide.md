@@ -405,6 +405,39 @@ export function useDebounce<T>(value: T, delay: number): T {
 - 实现：用成熟库（如 `@tanstack/react-virtual`、`react-window`），不要自己手写——边界情况（动态行高、滚动恢复、a11y）很多。
 - 取舍：虚拟化会牺牲浏览器原生的 Ctrl+F 搜索、锚点跳转。列表需要这些能力时要额外处理。
 
+## Design Baseline Alignment（设计基线对齐）
+
+有设计基线的 UI 任务，样式正确性不靠肉眼感觉，靠逐项对齐设计值——这是样式代码的红绿循环等价物：实现 → 对比 → 调整 → 复检。无基线的 UI 任务跳过本节并标注。
+
+### 基线来源（优先级从高到低）
+
+1. **样张** `styleguide.html`（pd-vd 冻结产物）——组件级基线
+2. **原型截图**（pd-vd `screenshots/`）——页面级基线
+3. **用户提供的设计稿**（截图 / 设计工具链接）
+
+### 对比词表（与 pd-vd tokens schema 同词表）
+
+字号 / 颜色 / 间距 / 圆角 / 阴影 / 控件四态（default·hover·active·disabled）。逐项核对，不泛泛看「像不像」。
+
+### 手段
+
+- **设计值核对**：浏览器 devtools 检查元素读 computed style，逐项对照基线设计值
+- **截图走查**：实现截图与基线截图并排目视对比（同一组件的圆角/配色/间距肉眼一致）
+- **禁止逐像素 diff**——跨平台字体渲染/反锯齿差异使像素级一致不可达，误报腐蚀信任（与 pd-vd 原型验证同一哲学）
+
+### 待测产物的打开方式
+
+| 产物形态 | 打开方式 |
+|---|---|
+| 静态 HTML | 直接打开（`file://` 或静态服务） |
+| SPA / 框架项目（React/Vue/…）的页面 | 起 dev server，导航到目标路由 |
+| 未被页面引用的组件（组件库 task） | 有 Storybook → story 隔离渲染；无 → 建 dev-only styleguide 路由（如 `/__styleguide`，生产构建剔除），全组件 × 变体 × 四态渲染一页，作为样张的代码版镜像——后续页面 task 参考、跨页一致性走查、样式回归都复用它 |
+
+### Build / Verify 分层（不重复对齐）
+
+- **Build**（实现循环）：只对当前 task 改动的组件/页面做逐项对齐，对齐记录（核对了哪些项 + 截图）留在 task 产出里
+- **Verify**（验收收口）：信任 Build 的 per-task 对齐记录，不重跑逐组件核对；只做单 task 循环看不到的两件事——抽查 1-2 个页面复核对齐记录、跨页一致性走查（同一组件在不同页面应长一样）
+
 ## Common Rationalizations（常见自我合理化）
 
 | Rationalization | Reality |

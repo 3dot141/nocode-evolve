@@ -108,7 +108,9 @@ Task 10: 硬交接 — 调用下一步 skill
 
 **Slicing 形态**（怎么切）：
 - **Vertical**（默认）：端到端穿透所有层，做完可验证
-- **Contract-First**：前后端并行时先定 API 契约 + mock，各自独立开发
+- **Contract-First**：前后端并行时选用——API 契约 + mock 作为两条子序列的共同依赖排最前，之后前后端各出子序列，**各按自己的自然单元拆**，不共用同一套拆分维度（用后端领域逻辑拆前端任务，计划会被前端执行者抛弃）：
+  - **后端子序列**：跨 task 共享物（领域接口 / DTO / 类型定义）作为底层 task 先行，闭环标准 = 编译通过 + 契约测试绿——**不是把全量测试先写完爆红再补实现**（爆红期 checkpoint 失效、接口在拿到实现反馈前被锁死）；之后按领域/模块拆切片，每个切片自带红绿循环
+  - **前端子序列**：组件层先行——对照 IA 页面清单 + pd-vd 冻结的 components/样张（`styleguide.html`）做组件 gap analysis，gap 清单 = 组件库 task（依赖图底层，排页面 task 前；**gap 为空则此 task 自然不存在**，不设页数阈值）；页面 task 按「一个 IA 页面 ≈ 一个前端 task」（Step 7 同一约定）拆，页面只引用组件、不各自定样式
 
 **排序原则**：**Risk-first**——最不确定的 slice 排最前，可能不可行的路径早点撞墙。
 
@@ -219,6 +221,8 @@ Round 1 的骨架定了"改什么"，Round 2 填"怎么改"——每个 task 补
   Run: <具体命令>
   Expected: PASS
 ```
+
+**UI task 的验证方式**：涉及 UI 样式且存在设计基线（样张 / 原型截图 / 设计稿）的 task，Step 8d 声明的验证方式写「设计值对齐 + 截图对比基线」（方法与词表见 `{NOCODE_SKILL_REF}/frontend-guide.md`「设计基线对齐」节），不硬套测试命令；无基线则标注跳过。
 
 **不按 task 拆 commit**：commit 挪到 Build 阶段任务循环结束后统一处理一次（见 devflow Build sub-flow 5d），dev-plan 的 task 模板不再包含 commit 步骤。
 

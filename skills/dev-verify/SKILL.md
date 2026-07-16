@@ -97,6 +97,7 @@ Task 7: 硬交接 — 调用下一步 skill
 - pd-vd 阶段的 `interactions.json` → E2E 测试骨架，selector（`data-testid`）已定好，直接用 `prototype-verify.mjs` 跑开发产物
 - pd-vd 阶段的 `screenshots/` → 视觉回归基线，开发截图和原型截图做对比
 - **样式完整性核对**：读原型 CSS，列出其定义的组件样式清单（按钮变体/卡片/输入框/导航/空态/loading 等），逐项对比 app 实际 CSS——缺失的组件样式 = ❌ 回 Build 补。只搬了 token 层而漏掉组件样式是已知反模式
+- **设计值对齐分层**（`{NOCODE_SKILL_REF}/frontend-guide.md`「设计基线对齐」节）：Build 已做 per-task 对齐 → 不重跑逐组件核对，只抽查 1-2 个页面复核对齐记录 + 跨页一致性走查（同一组件在不同页面应长一样——单 task 循环看不到的集成属性）；Build 未做对齐（无基线或旧计划）→ 按该节词表在本步补齐
 
 启动 dev server → golden path + 边界 case → 截图/录屏作证据。
 无障碍检查（键盘可达、对比度、ARIA）。详见 `references/e2e-guide.md`。
