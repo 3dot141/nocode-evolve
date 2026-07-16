@@ -172,7 +172,7 @@ Task 4: 保存 + Handoff
 | "交互太简单不用拆" | 简单的交互也有 empty/loading/error 态；行为规格五块必填，不适用的字段填 N/A + 理由 |
 | "hover/disabled 是视觉的事" | 态改变内容或行为就归 IX（判据见 ix-vd-contract）；pd-vd 只管控件四态的样式 |
 | "直接出视觉更快" | 没批准交互就出视觉 = 在未验证的骨架上贴皮 |
-| "这个改动简单，跳过某 Step 或不建 TaskCreate" | 进了 skill 就走完所有 Step。"简单"是你的判断，不是跳 Gate 的授权（详见 agent-catalog-using.md「进了 skill 就走完」） |
+| "这个改动简单，跳过某 Step 或不建 TaskCreate" | 进了 skill 就走完所有 Step。"简单"是你的判断，不是跳 Gate 的授权 |
 
 ## Red Flags
 

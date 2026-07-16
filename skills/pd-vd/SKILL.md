@@ -493,7 +493,7 @@ verify-report.json errors = 0 才过 Gate。
 | "Modal 太简单不用做原型" | IA 里列了就要实现，在宿主页面里加一个 `<dialog>` 不费事 |
 | "截图看了没问题就行" | Playwright 跑一遍比看一眼靠谱 |
 | "没有 .ix.md 但我知道交互是什么" | 凭记忆出视觉 = 在空气上贴皮，先跑 pd-ix |
-| "这个改动简单，跳过某 Step 或不建 TaskCreate" | 进了 skill 就走完所有 Step。"简单"是你的判断，不是跳 Gate 的授权（详见 agent-catalog-using.md「进了 skill 就走完」） |
+| "这个改动简单，跳过某 Step 或不建 TaskCreate" | 进了 skill 就走完所有 Step。"简单"是你的判断，不是跳 Gate 的授权 |
 
 ## Red Flags
 

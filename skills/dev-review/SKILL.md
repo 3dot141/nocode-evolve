@@ -168,7 +168,7 @@ Task 6: 硬交接 — 调用下一步 skill
 | "reviewer 说的肯定对" | external 反馈先验证再实现。错的要 push-back |
 | "简化顺手就删了" | Chesterton's Fence——先 git blame 查来历 |
 | "这次 Critical 特殊" | Critical 不可 override 就是为了挡这句话 |
-| "这个改动简单，跳过某 Step 或不建 TaskCreate" | 进了 skill 就走完所有 Step。"简单"是你的判断，不是跳 Gate 的授权（详见 agent-catalog-using.md「进了 skill 就走完」） |
+| "这个改动简单，跳过某 Step 或不建 TaskCreate" | 进了 skill 就走完所有 Step。"简单"是你的判断，不是跳 Gate 的授权 |
 
 ## Red Flags
 

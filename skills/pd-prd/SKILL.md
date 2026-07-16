@@ -383,7 +383,7 @@ research skill 的 Go/No-Go 建议基于以下判据（PRD 里引用）：
 | "先做着，需求做着做着就清楚了" | 那叫 spike，不叫产品设计。spike 完回来写 PRD |
 | "团队都知道要做什么" | 默契在第三个人加入时失效。写下来成本极低 |
 | "AI 写的 PRD 不靠谱" | AI 写初稿 + 人确认 > 人从零写。不靠谱的部分标 [ASSUMED] |
-| "这个改动简单，跳过某 Step 或不建 TaskCreate" | 进了 skill 就走完所有 Step。"简单"是你的判断，不是跳 Gate 的授权（详见 agent-catalog-using.md「进了 skill 就走完」） |
+| "这个改动简单，跳过某 Step 或不建 TaskCreate" | 进了 skill 就走完所有 Step。"简单"是你的判断，不是跳 Gate 的授权 |
 
 ## Red Flags
 

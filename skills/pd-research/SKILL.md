@@ -225,7 +225,7 @@ research-report 存到 `{pd_research_output}` 变量指定的路径（见 `model
 | "调研浪费时间" | 30 分钟调研省 3 天返工 |
 | "先做着看，遇到问题再调研" | 遇到问题时已经投入了沉没成本 |
 | "竞品跟我们不一样" | 不一样也值得看——知道为什么不一样更有价值 |
-| "这个改动简单，跳过某 Step 或不建 TaskCreate" | 进了 skill 就走完所有 Step。"简单"是你的判断，不是跳 Gate 的授权（详见 agent-catalog-using.md「进了 skill 就走完」） |
+| "这个改动简单，跳过某 Step 或不建 TaskCreate" | 进了 skill 就走完所有 Step。"简单"是你的判断，不是跳 Gate 的授权 |
 
 ## Red Flags
 

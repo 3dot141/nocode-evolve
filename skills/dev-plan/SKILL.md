@@ -1,6 +1,6 @@
 ---
 name: dev-plan
-description: Use when you have defined goals and need to break work into tasks. Use when devflow routes to Plan stage, or when the user says "写计划/拆任务/怎么实现/plan it out". Use when a task feels too large to start or when parallel work is possible. Not for writing code (use dev-build), clarifying unclear requirements (use dev-define), or interaction breakdown/交互拆解 (use pd-ix).
+description: Use when you have defined goals and need to break work into tasks. Use when devflow routes to Plan stage, or when the user says "写计划/拆任务/写实现/plan it out". Use when a task feels too large to start or when parallel work is possible. Not for writing code (use dev-build), clarifying unclear requirements (use dev-define), interaction breakdown/交互拆解 (use pd-ix), or meta-questions about what the agent intends to do ("你准备怎么做/接下来打算做什么/让我确认一下") — answer in plain text and wait for confirmation instead.
 ---
 
 # plan — 把目标拆成任务序列
@@ -16,7 +16,7 @@ description: Use when you have defined goals and need to break work into tasks. 
 
 ## 非本 skill 请求
 
-知识问答 / 目标不明确（缺 restate）→ 回 Define。单步太小不需拆 → 直接给验收标准走 Build，不硬拆。写代码 → 走 Build。
+知识问答 / 目标不明确（缺 restate）→ 回 Define。单步太小不需拆 → 直接给验收标准走 Build，不硬拆。写代码 → 走 Build。用户在问"你准备怎么做 / 让我先确认"（元提问，要的是陈述打算）→ 用回合末尾文本陈述打算并等用户拍板，不进本协议；拍板后确需拆任务再进。
 
 ## Enter Gate
 
@@ -335,7 +335,7 @@ task 间依赖不成环，底层 task 排前面。循环依赖说明切片方式
 | "简单的先做，难的留后面" | risk-first：不确定性留到投入最大时暴露更贵 |
 | "checkpoint 太频繁拖节奏" | 风险驱动 + fallback 3 已经降频了。省掉它出问题只能回退整个计划 |
 | "自查走个形式就行" | 骨架改一行 vs 填充完改十行。前置自查省的是后面的返工——每条要有判断 + 依据，不是打勾 |
-| "这个改动简单，跳过某 Step 或不建 TaskCreate" | 进了 skill 就走完所有 Step。"简单"是你的判断，不是跳 Gate 的授权（详见 agent-catalog-using.md「进了 skill 就走完」） |
+| "这个改动简单，跳过某 Step 或不建 TaskCreate" | 进了 skill 就走完所有 Step。"简单"是你的判断，不是跳 Gate 的授权 |
 
 ## Red Flags
 

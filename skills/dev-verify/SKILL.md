@@ -168,7 +168,7 @@ Core Web Vitals：LCP ≤ 2.5s、INP ≤ 200ms、CLS ≤ 0.1。详见 `reference
 | "上次跑过了，没动那块" | "没动"是假设。重新跑 |
 | "先报完成回头补" | "回头补"永远不来 |
 | "warning 不影响功能" | warning 是未来 error 的预告 |
-| "这个改动简单，跳过某 Step 或不建 TaskCreate" | 进了 skill 就走完所有 Step。"简单"是你的判断，不是跳 Gate 的授权（详见 agent-catalog-using.md「进了 skill 就走完」） |
+| "这个改动简单，跳过某 Step 或不建 TaskCreate" | 进了 skill 就走完所有 Step。"简单"是你的判断，不是跳 Gate 的授权 |
 
 ## Common Failures
 
