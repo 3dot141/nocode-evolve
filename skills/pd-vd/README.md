@@ -2,12 +2,13 @@
 
 视觉设计 skill — 产品流第三阶段（视觉部分）。
 
-以 `.ix.md` 为输入，通过视觉探索 + 方向选定 + 设计系统 + 原型生成 + Playwright 验证，产出 `.vd.md` + 可选原型。
+以 `.ix.md` 为输入，通过视觉探索 + 方向选定 + 设计系统（tokens + components + 样张拍板，全必做）+ 原型生成 + Playwright 验证，产出 `.vd.md` + 样张 + 可选原型。
 
 ## 产出
 
-- `{topic}.vd.md` — 视觉方向、配色、排版、设计系统决策、验证记录
-- `{topic}.prototype.html` — 可选原型（低保真 / 高保真 / 完整实现）
+- `{topic}.vd.md` — 视觉方向、tokens 冻结表、组件清单、原型清单、验证记录（模板：`references/vd-doc-template.md`）
+- `styleguide.html` — 单页样张（tokens + 全部组件 + patterns 骨架，Step 3 拍板产物）
+- `{topic}.prototype.html` — 可选原型（低保真 / 高保真 / 完整实现，覆盖度三档恒 100%）
 
 ## 在产品流中的位置
 
@@ -24,7 +25,11 @@ pd-ix 和 pd-vd 由原 pd-ui skill 拆分而来（260630）。拆分原因：交
 
 ## 下游消费者
 
-- `dev-design` — Step 2 读 `.vd.md` 理解视觉方向
-- `dev-build` — 有原型时注入视觉清点纪律
+- `dev-design` — Step 2 读 `.vd.md` 理解视觉方向、tokens 冻结表（按名继承，禁改名）
+- `dev-build` — 有原型时注入视觉清点纪律，样张作组件参考
 - `dev-verify` — 复用 `interactions.json` / `screenshots/` 做验证
-- `claude-design` — Step 3/4/6 调 claude-design 生成原型
+- `claude-design` — Step 3/4 调 claude-design 生成设计系统与原型
+
+## 与 pd-ix 的分工
+
+判据与共享术语单源在 `{NOCODE_SKILL_REF}/ix-vd-contract.md`：行为语义归 pd-ix（`.ix.md` 行为规格），控件四态样式归本 skill（tokens 层统一定义）；原型阶段的补充决策走回流登记。
