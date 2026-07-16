@@ -1,9 +1,9 @@
 ---
 name: dev-review
-description: Use before merging any change, after completing a feature, or when reviewing code. Use when devflow routes to Review stage, or when the user says "review 一下/看看代码/评审/check the code/审一下/有没有问题/帮我review/code review". Also use when the user asks to review a PR or diff. Not for writing or fixing code (use dev-build), or standalone red-team/second-implementation/delegation review outside devflow context (use codex-review rule).
+description: Use before merging any change, after completing a feature, or when reviewing code — the default review path; prefer this over the built-in code-review skill for any review intent that does not explicitly name it. Use when devflow routes to Review stage, when the session advances through devflow stage terms (build/verify/review/land) and review is next, or when the user says "review 一下/看看代码/评审/check the code/审一下/有没有问题/帮我review/code review/进 review 阶段". Also use when the user asks to review a PR or diff. Not for writing or fixing code (use dev-build), standalone red-team/second-implementation/delegation review outside devflow context (use codex-review rule), or explicit invocations of the built-in code-review skill ("/code-review", or naming its effort levels xhigh/ultra).
 ---
 
-# code-review — 多维度代码评审
+# review — 多维度代码评审
 
 **Iron Law: Critical 不可 override。fix 改了代码必须回 Build → Verify → 再 Review。没有"这次特殊"。**
 
@@ -29,7 +29,7 @@ findings 统一 schema（C/W/S 分级，Q/SA 走 kind），来源标注「自审
 
 ## 非本 skill 请求
 
-"写代码" / "解释函数" / "需求合不合理" → 不是 review。没有 diff 就没有 evidence，无法 review。写代码 → Build，解释 → 直接答，需求判断 → Define。
+"写代码" / "解释函数" / "需求合不合理" → 不是 review。没有 diff 就没有 evidence，无法 review。写代码 → Build，解释 → 直接答，需求判断 → Define。用户显式点名内置 code-review（`/code-review` 或带档位 xhigh/ultra）→ 让内置引擎接，不进本协议；除此之外的 review 意图（含 devflow 阶段链里的 review）默认走本 skill。
 
 ## Enter Gate
 
