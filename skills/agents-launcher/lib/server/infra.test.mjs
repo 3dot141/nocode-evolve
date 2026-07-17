@@ -50,6 +50,32 @@ test('startInfra: 缺容器时调 compose up 起缺的那些', async () => {
   assert.ok(calls.some((c) => c.includes('compose up -d mongodb rabbitmq neo4j minio elasticsearch')));
 });
 
+test('startInfra: serverDir 提供时按 compose services 过滤缺失服务，compose 在 server 仓根执行', async () => {
+  const calls = [];
+  const mockExec = (cmd, args, opts) => {
+    const s = args?.[1] || '';
+    calls.push({ s, cwd: opts?.cwd });
+    if (s.includes('docker ps')) return 'postgres\nredis\nmongodb\nrabbitmq\nminio\n';   // 缺 neo4j + elasticsearch
+    if (s.includes('config --services')) return 'postgresql\nredis\nmongodb\nrabbitmq\nminio\nelasticsearch\n';   // release 分支无 neo4j
+    return '';
+  };
+  const result = await startInfra({ exec: mockExec, fetchFn: async () => ({ json: async () => ({ status: 'green' }) }), sleep: noSleep, log: () => {}, serverDir: '/srv' });
+  assert.deepEqual(result.started, ['elasticsearch']);   // neo4j 不在 compose 里，不再尝试起它
+  const up = calls.find((c) => c.s.includes('compose up'));
+  assert.equal(up.cwd, '/srv');
+});
+
+test('startInfra: compose services 探测失败时 fallback 全量清单（旧行为）', async () => {
+  const mockExec = (cmd, args) => {
+    const s = args?.[1] || '';
+    if (s.includes('docker ps')) return INFRA_SERVICES.map(containerNameOf).join('\n');
+    if (s.includes('config --services')) throw new Error('no configuration file');
+    return '';
+  };
+  const result = await startInfra({ exec: mockExec, fetchFn: async () => ({ json: async () => ({ status: 'green' }) }), sleep: noSleep, log: () => {}, serverDir: '/srv' });
+  assert.deepEqual(result.started, []);   // 全量清单下所有容器都在跑 → 早返回
+});
+
 test('startInfra: PG 未就绪时不跑 ensureRabbitmqQueues/fixDbPermissions（收尾动作跳过）', async () => {
   const calls = [];
   const mockExec = (cmd, args) => {

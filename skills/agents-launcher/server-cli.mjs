@@ -72,7 +72,7 @@ export async function start({ serverDir, ports, killOld = false, log = console.l
   Object.assign(env, localInfraEnv({
     overrides: Object.fromEntries(RESPECT_EXISTING.filter((k) => env[k] !== undefined).map((k) => [k, env[k]])),
   }));   // 原 force_local_infra：本地模式强制基础设施指向 localhost
-  await startInfra({ env, log });
+  await startInfra({ env, log, serverDir });
   const graalvm = detectGraalvm({ serverDir, env });
   return startApp({ serverDir, appPort: ports?.server ?? 8081, graalvm, env, killOld, log });
 }
@@ -106,7 +106,7 @@ async function main() {
       await prepare({ serverDir });
       break;
     case 'infra':
-      await startInfra();
+      await startInfra({ serverDir });
       break;
     case 'start':
       await start({ serverDir, killOld: flags.includes('--kill-old') });

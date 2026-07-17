@@ -57,12 +57,30 @@ function disableEsDiskThreshold({ exec }) {
   } catch { /* 非阻塞：磁盘水位关闭失败不影响启动，只是单节点开发环境可能因磁盘满报警 */ }
 }
 
+// compose 实际 services 探测：不同分支模板服务集不同（release 无 neo4j），照全量清单 up 会
+// "no such service" 中断启动。探测失败返回 null，调用方 fallback 全量清单（保持旧行为）。
+function detectComposeServices({ exec, serverDir, log }) {
+  try {
+    const out = exec('sh', ['-c', 'docker compose config --services'], { encoding: 'utf8', cwd: serverDir });
+    const services = new Set(out.split('\n').map((s) => s.trim()).filter(Boolean));
+    return services.size > 0 ? services : null;
+  } catch {
+    log(`[infra] compose services 探测失败（${serverDir}），按全量清单尝试`);
+    return null;
+  }
+}
+
 // 编排：检查容器 → 起缺的 → 等 PG+ES 就绪 → 队列 + 权限 + ES 配置收尾。
-export async function startInfra({ exec = execFileSync, fetchFn = fetch, env = process.env, sleep = realSleep, log = console.log } = {}) {
+// serverDir 必传才能保证 docker compose 在 server 仓根执行——orchestrator/CLI 的 cwd 不是 server 仓。
+export async function startInfra({ exec = execFileSync, fetchFn = fetch, env = process.env, sleep = realSleep, log = console.log, serverDir } = {}) {
   const running = new Set(
     exec('sh', ['-c', `docker ps --format '{{.Names}}'`], { encoding: 'utf8' }).split('\n').filter(Boolean),
   );
-  const needStart = INFRA_SERVICES.filter((svc) => !running.has(containerNameOf(svc)));
+  const available = serverDir ? detectComposeServices({ exec, serverDir, log }) : null;
+  const targets = available ? INFRA_SERVICES.filter((svc) => available.has(svc)) : INFRA_SERVICES;
+  const skipped = INFRA_SERVICES.filter((svc) => !targets.includes(svc));
+  if (skipped.length > 0) log(`[infra] compose 未定义，跳过: ${skipped.join(' ')}`);
+  const needStart = targets.filter((svc) => !running.has(containerNameOf(svc)));
 
   if (needStart.length === 0) {
     log('[infra] 所有基础设施容器已就绪');
@@ -70,7 +88,7 @@ export async function startInfra({ exec = execFileSync, fetchFn = fetch, env = p
   }
 
   log(`[infra] 启动容器: ${needStart.join(' ')}`);
-  exec('sh', ['-c', `docker compose up -d ${needStart.join(' ')}`]);
+  exec('sh', ['-c', `docker compose up -d ${needStart.join(' ')}`], serverDir ? { cwd: serverDir } : undefined);
 
   let pgReady = false;
   try {
