@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import {
   envLocalPath, buildWebEnv, prepare, pkgmgrCheck, pkgmgrPatch,
-  alignCheck, alignReset, killCommands, viteCacheDir, cleanViteCache,
+  alignCheck, alignReset, killCommands, viteCacheDir, cleanViteCache, start,
 } from './web-cli.mjs';
 // 旧导出将在 T8 删除；动态 import + skip 让回归锚在删除后自动跳过而非 import 失败
 const legacyPorts = await import('./lib/ports.mjs');
@@ -146,6 +146,19 @@ test('cleanViteCache: 缓存不存在 → action=none', () => {
     const r = cleanViteCache({ webDir: dir });
     assert.equal(r.action, 'none');
   } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('start: spawn vite 前先清 Vite 缓存（所有启动路径共享，防 CLI start 绕过 orchestrator 漏清）', () => {
+  const order = [];
+  const fakeChild = {};
+  const r = start({
+    webDir: '/repo',
+    clean: ({ webDir }) => { order.push(`clean:${webDir}`); return { action: 'removed', path: '/repo/packages/jsy-web/node_modules/.vite' }; },
+    spawn: (_label, cmd, args) => { order.push(`spawn:${cmd} ${args.join(' ')}`); return fakeChild; },
+    log: () => {},
+  });
+  assert.deepEqual(order, ['clean:/repo', 'spawn:pnpm dev']);
+  assert.equal(r, fakeChild);
 });
 
 test('killCommands 只清 web 端口，不碰 agents/server', () => {

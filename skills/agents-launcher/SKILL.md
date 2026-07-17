@@ -76,7 +76,7 @@ Workspace 三档按用户表述路由 (**默认 `ui`**, 不擅自升级):
 | CLI | 动词 | 用途 |
 |---|---|---|
 | `server-cli.mjs` | `prepare` / `infra` / `start` / `stop` / `status` | prepare = ANTLR 生成类预热 + GraalVM 检测缓存（新建 server worktree 后必跑一次, 否则 IDE 报红）; start = 原 dev-start.sh app 链的 node 实现 |
-| `web-cli.mjs` | `prepare` / `env` / `pkgmgr` / `align` / `start` / `stop` / `status` | prepare = cp .env.local（`FX_WEB_FROM=<源仓>`）; env = 写 AGENTS_LOCAL_SRC 等四键; pkgmgr = corepack 缓存检查+packageManager patch（`--patch=<version>`）; align = fork 对齐检查（`--reset` 显式才 reset） |
+| `web-cli.mjs` | `prepare` / `env` / `pkgmgr` / `align` / `start` / `stop` / `status` | prepare = cp .env.local（`FX_WEB_FROM=<源仓>`）; env = 写 AGENTS_LOCAL_SRC 等四键; pkgmgr = corepack 缓存检查+packageManager patch（`--patch=<version>`）; align = fork 对齐检查（`--reset` 显式才 reset）; start = 清 Vite 预构建缓存后起 vite dev（orchestrator 与独立 CLI 两条路径共享, 防切 worktree 后缓存路径失效） |
 | `agents-cli.mjs` | `prepare` / `start` / `stop` / `status` | prepare = cp config.yaml（`FX_AGENTS_FROM=<源仓>`） |
 
 调用模板（`${CLAUDE_PLUGIN_ROOT}` 先换插件真实绝对路径; repo 路径用 FX_*_DIR env 传）:

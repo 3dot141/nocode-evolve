@@ -108,7 +108,11 @@ export function alignReset({ webDir, targetSha, exec = execFileSync }) {
   return { reset: true, targetSha };
 }
 
-export function start({ webDir, spawn = spawnPrefixed } = {}) {
+export function start({ webDir, spawn = spawnPrefixed, clean = cleanViteCache, log = console.log } = {}) {
+  // 清缓存放 start() 内而非各调用方——orchestrator 与 CLI start 两条启动路径共享，
+  // 任一条绕过都会复现"切 worktree 后 Vite 预构建缓存路径失效"
+  const vc = clean({ webDir });
+  if (vc.action === 'removed') log(`[web] 已清 Vite 预构建缓存: ${vc.path}`);
   // BROWSER=none: vite server.open 遵循该约定跳过自动开浏览器——launcher 是后台编排场景，
   // 弹浏览器是干扰（web 仓 vite.home.config.ts 配了 open，交互式裸跑 pnpm dev 不受本行影响）
   return spawn('web', 'pnpm', ['dev'], { cwd: webDir, env: { ...process.env, JSY_DEV_MODE: 'vite', BROWSER: 'none' } });
