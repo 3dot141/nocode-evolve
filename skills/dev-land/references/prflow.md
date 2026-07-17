@@ -13,7 +13,7 @@ toolchain 检测（`github.com`→gh / `bitbucket.`→bkt）与 base 解析见 S
 3. **title + body**：契约单源见 `pr-body-contract.md`（标题 + 背景/方案两段），核对 push range 无遗漏实质变更
 4. **Affected**：`git diff --name-status "$(git merge-base HEAD $base_branch)..HEAD" | sort -k2`——按目录聚合成**目录树**展示：目录作节点（同链单子目录合并成 `a/b/c/` 一行），文件作叶用 `├──`/`└──` 连线；状态只标非修改项——新增 `(新)`、删除 `(删)`、改名 `(← 旧路径)`；同目录同类批量文件（如 i18n 语言包）折叠为一行 `<模式> ×N`。禁止扁平路径列表或 ` / ` 单行串接。只进全景计划展示，**不写进 PR body**
 5. **target 解析**：`base_branch` 已由 SKILL.md Step 2e 单源解析；映射 `target_remote` + `target_branch`（fork 场景 `origin/<branch>`→`upstream/<base>`；单仓 `origin/<base>`）。项目本地 override 仅读 `.agents-personal/rules/personal-repo-pr.md`，不存在即无约定
-6. **default reviewer** → 见 `pr-flow-gh`「default reviewer」/ `pr-flow-bkt`「default reviewer」（gh 走 branch protection/CODEOWNERS，bkt 走 default-reviewers API）
+6. **default reviewer** → 见 `pr-flow-gh`「default reviewer」/ `pr-flow-bkt`「default reviewer」（gh 走 branch protection/CODEOWNERS，bkt 走 default-reviewers API）。**名单全量采用（只排除 PR 作者），agent 不得自行精简或挑选**——「挑最相关的人减少打扰」「合并只需一个 approve」都不是精简理由：default 名单是团队配置的应加集合，取舍权在用户；仅当用户在全景回应中显式指定名单/点名增删时才偏离（实测教训：agent 曾自行把 10 人名单精简为 2 人，被用户事后纠正）
 7. **任务号 + 目标状态**：SKILL.md Step 2e 已提取推定（有任务号时已 Read `post-merge.md` 拿映射），直接引用结果
 8. **远程坐标**（合并后清理用，此刻捕获写死进 cron prompt——删 branch 后 `branch.<name>.remote/merge` 配置即消失）：`remote=$(git config branch.<current>.remote)`（空则 origin）+ `remote_branch=$(git config branch.<current>.merge | sed 's|^refs/heads/||')`（空则同名）
 

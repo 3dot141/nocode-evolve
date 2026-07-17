@@ -141,7 +141,8 @@ node "<REF>/pr-check.mjs" --toolchain bkt --pr <pr-id> \
 ```bash
 # version 必须现取——PR 每次变更(加 reviewer/push)都会递增, 旧 version POST 会 409
 version=$(bkt api "/rest/api/1.0/projects/<KEY>/repos/<slug>/pull-requests/<id>" --json --jq '.version')
-bkt api "/rest/api/1.0/projects/<KEY>/repos/<slug>/pull-requests/<id>/merge?version=${version}" --method POST
+# -H "X-Atlassian-Token: no-check" 必带——DC 对 /merge POST 开 XSRF 防护, 不带报 403 XSRF check failed (实测 PR #1522)
+bkt api "/rest/api/1.0/projects/<KEY>/repos/<slug>/pull-requests/<id>/merge?version=${version}" --method POST -H "X-Atlassian-Token: no-check"
 ```
 
 - 合并策略走仓库默认（DC 端配置），不在命令侧选
@@ -164,6 +165,7 @@ bkt api "/rest/api/1.0/projects/<KEY>/repos/<slug>/pull-requests/<id>/merge?vers
 - **`/reviewers` resolved endpoint push 前会 404** — 依赖 source ref 已在 origin；cross-fork push 前无此 ref。预览用 `/conditions`，push 后用 `/reviewers`
 - **不要对 fork PR（Workflow B）用 `bkt pr edit --with-default-reviewers`** — 报 `400 source repository with id '0' does not exist`。B 的 reviewer 必须 `--reviewer` 显式加
 - **不要用 `bkt pr view` 验证跨仓（Workflow B）PR** — author/reviewers 显示 None/空。走 raw GET `bkt api '.../pull-requests/<id>' --json` 看 `reviewers[].user.name`/`.state`
+- **不要裸 POST `/merge`** — DC 的 XSRF 防护会 403 `XSRF check failed`；必须 `-H "X-Atlassian-Token: no-check"`（实测 PR #1522，重试同样 403，不是偶发）
 
 ## 项目本地特异内容不在本文件
 

@@ -6,6 +6,10 @@
 
 ---
 
+## 罗盘（Define Restate）
+
+（已确认 restate / decision 轻量 restate 原样承载：目标 = 修复 OOM + 复现用例通过；Out of Scope = 不重做导入架构。writing 不改写。）
+
 ## 背景
 
 **问题现象**：批量导入超过约 50 条资源时，api-server 进程内存暴涨后崩溃（OOM Killed），导入中断，已写入的资源残留但同步未完成。

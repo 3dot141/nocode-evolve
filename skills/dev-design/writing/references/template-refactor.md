@@ -11,6 +11,9 @@
 ```
 # Refactor: 资源同步从轮询改为事件驱动
 
+## 罗盘（Define Restate）
+  已确认 restate / 轻量 restate 原样承载（Define 落盘或 decision 补），writing 不改写
+
 ## 现状分析
   现状结构图 + DDD 问题诊断
   问题：SyncService 轮询所有 Agent，耦合重、延迟高

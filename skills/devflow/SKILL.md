@@ -132,7 +132,7 @@ Land 有 5 个子步骤（8a Create PR → 8b ... → 8e Cleanup），只说"pus
 
 | Leading Word | 中文 | 所属 skill | 含义 |
 |---|---|---|---|
-| **restate** | 重述 | Define | 把模糊需求收敛为结构化问题定义（目标 + Quality Bar + Out of Scope）——没有 restate 就没有 Define 的产出 |
+| **restate** | 重述 | Define | 把模糊需求收敛为结构化问题定义（目标 + Quality Bar + Out of Scope）——没有 restate 就没有 Define 的产出；Full 场景确认后落盘为设计文档首章「罗盘」，Design 全程在同一文档上迭代 |
 | **approach** | 方案 | Design | 差异化方案对比——没有对比过的 approach 就没有设计 |
 | **tracer bullet** | 穿透切片 | Plan | 穿透所有层的端到端垂直切片——窄但完整的交付单元 |
 | **red-green** | 红绿循环 | Build | 失败测试(red)→最小实现(green)的 TDD 循环 |

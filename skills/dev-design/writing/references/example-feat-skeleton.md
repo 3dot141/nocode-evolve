@@ -4,6 +4,10 @@
 
 ---
 
+## 罗盘（Define Restate）
+
+（Define 落盘的已确认 restate 原样承载：Outcome / User / Why Now / SC / Out of Scope / 路径清单 + SC 绑定 / 探索胶囊附录。writing 不改写，只对照校准——SC 有落点、不越 Out of Scope。）
+
 ## 背景
 
 核心问题：用户迁移一个完整工作环境要手动添加 20+ 个资源，逐个操作。

@@ -2,6 +2,8 @@
 
 Define 阶段的标准化产出格式。用户确认此 restate 后 Define 才过 Gate。
 
+> **落盘约定**：Full 场景确认后写入 `{dev_design_output}` 设计文档**首章「罗盘（Define Restate）」**（设计文档由此创建，Design 各阶段在同一文件上迭代），不产出独立 `-restate.md` 文件；Standard / Fix / Mini 不落盘，对话内交接。
+
 ## 标准 Restate（Standard / Full 场景）
 
 ```markdown

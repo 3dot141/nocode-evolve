@@ -30,7 +30,7 @@ decision 阶段选完方案（"走哪条路"，产出 Decision Packet），本�
 
 ## 协议
 
-> **消费 Decision Packet**：writing 是决策包的**消费方**——decision 产出、经协调器传入。schema（含 requiredFields / 条件必填 / replan envelope）单源在 `decision/SKILL.md` 的「收尾」节，本阶段只按它校验、映射、消费，不重复定义。Packet 已由 decision 落盘为 `docPath`（= `{dev_design_output}`）设计文档初稿——writing 全程在**该文件上覆盖扩写**，不另存新文件。
+> **消费 Decision Packet**：writing 是决策包的**消费方**——decision 产出、经协调器传入。schema（含 requiredFields / 条件必填 / replan envelope）单源在 `decision/SKILL.md` 的「收尾」节，本阶段只按它校验、映射、消费，不重复定义。Packet 已由 decision 落盘为 `docPath`（= `{dev_design_output}`）设计文档初稿——writing 全程在**该文件上覆盖扩写**，不另存新文件。初稿首章是「罗盘」（Define 落盘的 restate，或 decision 补的轻量 restate）——覆盖扩写**保留罗盘不改写**，它是全文档迭代的校准锚点。
 
 > **内部 Step 编号统一**：通用流程步 **Step 0-5** 与场景模板 detail 步 **Step 4a/4b/…** 连续编号，不各自从 Step 2 重启——历史上"通用 Step2 章节大纲 vs 场景 Step2 领域划分"曾因各自编号撞车，统一编号后消除。
 
@@ -99,7 +99,7 @@ Task 7: 保存 + 渲染确认 + handoff（步 13-14）
 
 **Core Actions:**
 
-1. **章节大纲**：基于场景模板的「章节大纲示例」生成本次文档的章节列表，展示给用户。所有场景的大纲均包含「方案决策」章节（承载 decision 产出的 Decision Packet 完整内容，位于概述之后）。
+1. **章节大纲**：基于场景模板的「章节大纲示例」生成本次文档的章节列表，展示给用户。所有场景的大纲均以「罗盘（Define Restate）」为**首章**（承载已确认 restate，writing 不改写；需求变更走 replan / 回 Define 修正罗盘），并包含「方案决策」章节（承载 decision 产出的 Decision Packet 完整内容，位于概述之后）。
 2. **结构骨架**（架构审核的对象，先图后文，产出标准见场景模板「结构骨架」节）：
    - **feat** → 域划分 + 域关系总图
    - **bug** → 现象 + 复现 + 影响范围（问题位置图在 Step 4a 根因分析里补细）
@@ -143,6 +143,7 @@ Task 7: 保存 + 渲染确认 + handoff（步 13-14）
 - 先图后文，每章有图的先画图
 - 图标路径 ID / BF / 约束，文本引用 ID，互相跳转
 - 每个域/场景章节自包含（接口+业务流+文件影响+验证+安全/性能）
+- **每章补全后对照首章罗盘**：SC 有落点、路径有覆盖、不越 Out of Scope——越界内容要么删、要么按 replan 判据回 decision / 回 Define 扩罗盘，不静默扩范围
 
 **每遇新决策 → 套「局部 vs 方案级」判据**（方案级决策的唯一所有者是 decision——writing 在补全中自行改方案级决策，文档会和已确认的 Decision Packet 漂移，评审和实现就会各信一边）：
 - 改动**数据流 / 模块边界 / 外部契约 / 关键约束**任一 → **方案级决策**：停下，返回结构化 `replan_required`（含 `originalPacketRevision / invalidatedDecision / evidence / affectedSections[] / resumeState`，envelope 单源见 `decision/SKILL.md`），由协调器回 decision 重选，不带方案级变更硬写
@@ -215,9 +216,9 @@ Task 7: 保存 + 渲染确认 + handoff（步 13-14）
 ### 保存 + 渲染确认
 
 **Core Actions:**
-1. **覆盖保存**到 Packet `docPath`（即 `{dev_design_output}`，decision 创建的初稿同一路径）——初稿被完整详细设计覆盖，Packet 内容承载于「方案决策」章节不丢失；不另存新文件、不留初稿副本
+1. **覆盖保存**到 Packet `docPath`（即 `{dev_design_output}`，与初稿同一路径）——初稿被完整详细设计覆盖，首章「罗盘」原样保留，Packet 内容承载于「方案决策」章节不丢失；不另存新文件、不留初稿副本
 2. **AskUserQuestion：是否渲染成 Artifact 页面？**
-   - 是 → 进入 render 阶段（Read `render/SKILL.md` 执行），把设计文档渲染成 Artifact 页面（图用 DOM 排版、表格可交互、可分享 URL）
+   - 是 → 进入 render 阶段（Read `{NOCODE_SKILL_REF}/doc-render.md` 执行），把设计文档渲染成 Artifact 页面（图用 DOM 排版、表格可交互、可分享 URL）
    - 否 → 设计文档（markdown）即最终交付
 3. **硬交接**：向协调器报告 writing 阶段完成 + 文档保存路径 + **review verdict**，协调器**只验 verdict 不重审**，继续状态机（→ render / final gate）
 
@@ -285,4 +286,4 @@ Task 7: 保存 + 渲染确认 + handoff（步 13-14）
 - `references/ddd-modeling.md` — 战术 DDD 建模（限界上下文 / 聚合根 / 跨上下文引用四规则 + 检查清单），Step 1 条件 Read（≥2 限界上下文或有持久化模型）
 - `references/design-doc-review.md` — 设计文档评审维度（默认自查的维度单源；用户显式要求升审时随声明传入 reviewing 引擎）
 - `references/cards/{quick-view,prerequisites}.md` — 骨架驱动型内容的可选锚点节
-- `render/SKILL.md` — 设计文档 → Artifact 页面（内部协议）
+- `{NOCODE_SKILL_REF}/doc-render.md` — 已定稿 markdown 文档 → Artifact 页面（共享 reference，260716 从 dev-design 内部抽出）

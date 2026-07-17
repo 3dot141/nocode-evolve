@@ -53,8 +53,8 @@ Task 6: 产出 restate
   Gate: restate 完整产出
 
 Task 7: 用户确认 — 三选 + define-review
-  Sub-steps: define-review（有异议升档交叉，skeleton §1a）→ AskUserQuestion 三选（确认/修改/重来）
-  Gate: 用户显式确认 + 无 Critical findings
+  Sub-steps: define-review（有异议升档交叉，skeleton §1a）→ AskUserQuestion 三选（确认/修改/重来）→（Full）确认后落盘罗盘
+  Gate: 用户显式确认 + 无 Critical findings +（Full）罗盘已落盘
 
 Task 8: 硬交接 — 调用下一步 skill
   Sub-steps: 按 Exit Gate 硬交接报告 Define 完成（场景分类 + restate 摘要）→ 按场景建议下一步：Full/Standard/Fix → Env（调 Skill(nocode:using-git-worktrees)）；Mini → Build-lite → 等用户拍板
@@ -214,6 +214,8 @@ Standard 场景网络探索可简化为 `Agent(fork)` 轻量搜一两个查询�
 - "可以"/"行" → 追问"有没有要修改的？"
 - 沉默后"那开始吧" → 用户放弃了讨论，停下问是否遗漏
 
+**确认后落盘（Full 场景）**：restate 确认即创建设计文档 `{dev_design_output}`，把 restate 全文（含路径清单 + SC 绑定 + 探索胶囊附录）写成文档首章「罗盘（Define Restate）」——设计文档从罗盘起步，Design 的决策账本 / 详细设计 / Review Log 在**同一文件**上迭代长出，不产出独立 `-restate.md` 文件。罗盘的所有者是 Define：Design 各阶段只读它做校准、不改写；需求变更回 Define 修正罗盘再继续。Standard / Fix / Mini 不落盘——restate 对话内交接（Standard 交 Plan）。
+
 ### Step 7a: define-review（默认自查）
 
 用户确认前做 define-review：Read `references/define-review.md`（restate 7 维度）拿维度，**主会话就地逐维自查**——不调 reviewing 引擎、不派 subagent/Codex。发现的问题按 Critical / Warning / Suggestion 粗分，Critical 级必须修复再让用户确认。
@@ -227,7 +229,7 @@ Standard 场景网络探索可简化为 `Agent(fork)` 轻量搜一两个查询�
 - [ ] 场景分类已标注
 - [ ] （Full/Standard）路径清单已校验——有 PRD 则搬入并查完整性，无 PRD 则现场生成
 - [ ] （Full/Standard）每条路径至少绑定一条 SC，无裸路径也无裸 SC
-- [ ] 后续阶段输入齐全：Full → Design 可用 restate + 路径清单 + 探索胶囊（scanBase + findings 带 path:line），Standard → Plan 可用 restate + 路径清单 + 探索胶囊
+- [ ] 后续阶段输入齐全：Full → Design 可用罗盘文档（`{dev_design_output}` 首章 = restate + 路径清单 + 探索胶囊，scanBase + findings 带 path:line），Standard → Plan 可用 restate + 路径清单 + 探索胶囊（对话内交接）
 - [ ] **硬交接**：Exit Gate 全部通过后，向用户报告 Define 完成（含场景分类 + restate 摘要），并按场景建议下一阶段：Full/Standard/Fix → Env（`nocode:using-git-worktrees`），Mini → Build-lite。列出下一阶段的 sub-steps + 关键决策（devflow Step 5 格式）。等用户拍板，不自行进入下一阶段
 
 ## Common Rationalizations
@@ -250,4 +252,5 @@ Standard 场景网络探索可简化为 `Agent(fork)` 轻量搜一两个查询�
 - Full/Standard 场景没做代码探索就出 restate——可能遗漏已有实现
 - Full/Standard 场景 restate 没有路径清单——用户使用场景没建模，下游无完整性骨架
 - 路径清单里有路径没绑任何 SC，或有 SC 不对应任何路径——绑定断裂
+- Full 场景 restate 落成独立 `-restate.md` 文件，或确认后没落盘——罗盘的唯一载体是设计文档首章
 - 因"任务简单 / 还在概览 / 用户说了'继续'"跳过某 Step、不建 Step 0 TaskCreate、或漏掉最后的交接 task

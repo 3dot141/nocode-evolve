@@ -8,7 +8,7 @@ decision 回答"走哪条路"——**先扩散再收敛**:探索 approach、多�
 
 > Leading word: **approach**。没对比过的 approach 就没有设计,只有假设。
 > **决策包 Decision Packet** = decision 产出、writing 消费的结构化交接契约(带 required 字段 + 版本),schema 见「收尾」节。
-> **落盘载体 = `{dev_design_output}` 设计文档本身**:decision 首条决策落账时创建初稿(Step 5),writing 在**同一路径覆盖扩写**为完整详细设计——不另造 `decision-packet.md` 之类的独立文件。
+> **落盘载体 = `{dev_design_output}` 设计文档本身**:Full 场景该文档已由 Define 创建(首章「罗盘」= 已确认 restate),decision 在罗盘后追加账本;文档不存在(宽进无 Define)才由 decision 首条落账时自建(Step 5)。writing 在**同一路径覆盖扩写**为完整详细设计——不另造 `decision-packet.md` / `xxx-restate.md` 之类的独立文件。
 
 ## 两种模式
 
@@ -90,11 +90,11 @@ Task 9: 硬交接 — 交付 Decision Packet(方案选择模式→writing;resear
 
   `决策点 | 结论 | 依据/置信度 | 否决备选及原因 | P0 还是延后`
 
-  **首条落账时创建设计文档初稿 `{dev_design_output}`**(路径变量解析含项目本地覆盖),账本增量写入该文件——这就是 Packet 的落盘载体,不另造独立文件。账本是收敛进度的度量,也是 8a 终审的骨架。层级下钻检查(展开一层列子决策,跟 PRD 功能领域交叉)→ 有子决策回 Step 3,全无进 Step 6。
+  **首条落账时落盘**(路径 `{dev_design_output}`,变量解析含项目本地覆盖):文档已存在(Full 场景 Define 已落首章罗盘)→ 在罗盘章节后追加账本,罗盘不动;文档不存在(宽进无 Define)→ 自建文档,把 Enter Gate 提取的轻量 restate 写成首章「罗盘」再落账本。账本增量写入该文件——这就是 Packet 的落盘载体,不另造独立文件。账本是收敛进度的度量,也是 8a 终审的骨架。层级下钻检查(展开一层列子决策,跟 PRD 功能领域交叉)→ 有子决策回 Step 3,全无进 Step 6。
 
 ### Step 6: 对齐 + 失败预演 + 领域覆盖检查
 
-- **6a 回检 restate**:无冲突继续;有冲突建议回 Define 修正(最多 2 轮)
+- **6a 回检罗盘**(文档首章 restate):无冲突继续;有冲突建议回 Define 修正罗盘(最多 2 轮)——decision 无权自己改罗盘
 - **6b 失败预演(pre-mortem)**:"假设这方案上线 3 个月后彻底失败,top 3 失败原因是什么?" 反向检验,失败原因无应对就补措施或标风险
 - **6c 领域覆盖检查**:8 领域(架构/测试/安全/API/性能/前端/**可观测**/迁移)逐项过,涉及的强制逐项落决策账本(条目格式见 Step 5)。
   - **可观测性分两层**:**基础日志**(关键路径 / 异常分支 / 模块出入口打 log)是**每个功能默认必过项**,不设条件——历史教训是基础日志落在"要不要上监控"门槛之下成三不管地带;**生产监控**(Metrics/告警/Trace)按需触发。基础日志决策落 Decision Packet 的 `domainDecisions.observability.basicLogging`
@@ -126,7 +126,7 @@ DecisionPacket {
   verifyStrategy     // 验证策略
   evalSpec?          // AI 功能类(isAIFeature=true)必填:eval 设计(维度/指标/用例/baseline)
   sources[]          // [Read]/[SOURCE] 来源
-  docPath            // 设计文档路径(= {dev_design_output}):decision 创建初稿,writing 同一路径覆盖扩写
+  docPath            // 设计文档路径(= {dev_design_output}):Define 落罗盘时创建(无则 decision 自建),writing 同一路径覆盖扩写
 }
 requiredFields = [version, selectedApproach, alternatives, constraints, domainDecisions, testObjectives, verifyStrategy, docPath]
 ```
@@ -162,7 +162,7 @@ NeedsUserInput {
 
 ### Step 8a: 用户终审 Decision Packet
 
-决策账本已从 Step 5 起增量累积在设计文档初稿(`docPath`)中;本步将其补全为完整 Packet 结构**覆盖写回初稿**,并作为**回合末尾文本**展示交用户终审(用户的修改同步更新初稿)。格式要求：
+决策账本已从 Step 5 起增量累积在设计文档初稿(`docPath`)中;本步将其补全为完整 Packet 结构**覆盖写回初稿**(首章罗盘保留不动),并作为**回合末尾文本**展示交用户终审(用户的修改同步更新初稿)。格式要求：
 
 - 每个 requiredField 独立章节（selectedApproach / alternatives / constraints / domainDecisions / testObjectives / verifyStrategy）
 - 决策条目沿用账本格式（决策点 / 结论 / 依据置信度 / 否决备选及原因 / P0 还是延后）,标注当前状态（`[已定]` / `[假定]` / `[延后]`）
