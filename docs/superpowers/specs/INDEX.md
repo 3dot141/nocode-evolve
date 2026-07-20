@@ -8,7 +8,7 @@
 
 | 路径 | 主题 | 状态 |
 |---|---|---|
-| `3dot141/260720-claude-codex-dual-runtime-design.md` | Claude Code / Codex 双平台插件架构：通用语义内核 + 平台适配器 + 编译期双产物 | **implemented（客户端安装 smoke manual pending）** |
+| `3dot141/260720-codex-semantic-compatibility-design.md` | 双运行时语义兼容补救：领域优先 capability/provider、统一 Open Design、workflow、session handoff 与全量能力审计 | **approved（等待实施计划与实现）** |
 | `3dot141/260603-strategic-review-v3.4.0.md` | v3.4.0 双路 audit + 红蓝军推演后的战略级架构改进 spec (Batch 1 P0 = v3.5.0 落地依据; Batch 2/3 未实施) | **draft / 落地中** |
 | `3dot141/260602-worktree-setup-script-design.md` | worktree-setup.mjs (新建分支走 worktree, 落 `<project>-<branch_flat>/`, setup verb 补 env/IDE/node_modules + symlink) | **active** (主仓 git-worktree 增强已实施) |
 
@@ -16,6 +16,7 @@
 
 | 路径 | 主题 | 被谁取代 |
 |---|---|---|
+| `3dot141/260720-claude-codex-dual-runtime-design.md` | Claude Code / Codex 双平台插件架构：通用语义内核 + 平台适配器 + 编译期双产物 | 被 `260720-codex-semantic-compatibility-design.md` 取代 — 旧实现只验证生成结构，未覆盖 Claude Design、Artifact、Workflow 等语义依赖与真实客户端验收 |
 | `3dot141/260602-skillify-route-design.md` | v3.0.0 skillify-route 设计 (route skill 按需中转 + manifest 单源) | 被 `260603-pilot-catalog-rearch.md` 取代 — pilot-catalog 重构推翻 route 软触发, 改为 catalog 分片常驻 |
 | `3dot141/260603-pilot-catalog-rearch.md` | v3.3.0 pilot-catalog 重构 (catalog 分片常驻 + pilot 手动入口 + design-doc-rendering 并入) | 被 `260603-strategic-review-v3.4.0.md` 部分修正 — 战略级 review 指出 catalog 常驻 ≠ 必触发 (本质仍是软触发), Batch 1 加 Step 0 扫桶硬指令 + pilot 主动建议改良 |
 
@@ -31,7 +32,7 @@
 
 | 路径 | 配对的 spec | 状态 |
 |---|---|---|
-| `3dot141/260720-claude-codex-dual-runtime.md` | `260720-claude-codex-dual-runtime-design.md` | **implemented（等待 commit 决策）** |
+| `3dot141/260720-claude-codex-dual-runtime.md` | `260720-claude-codex-dual-runtime-design.md` (superseded) | **superseded** — `689cc25` 仅为 draft implementation，等待新设计配套 plan |
 | `3dot141/260602-skillify-route.md` | `260602-skillify-route-design.md` (superseded) | **superseded** — skillify-route v3.0.0 已被 pilot-catalog v3.3.0 取代 |
 
 ## 规则

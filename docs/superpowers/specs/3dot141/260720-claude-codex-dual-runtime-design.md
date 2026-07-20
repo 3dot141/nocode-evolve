@@ -1,6 +1,6 @@
 # nocode Claude / Codex 双运行时架构设计
 
-> 状态：implemented（客户端安装 smoke manual pending）
+> 状态：superseded（被 `260720-codex-semantic-compatibility-design.md` 取代；`689cc25` 仅为 draft implementation）
 >
 > 日期：2026-07-20
 >
