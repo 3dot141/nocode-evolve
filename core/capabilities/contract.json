@@ -1,0 +1,151 @@
+{
+  "schemaVersion": 1,
+  "platforms": {
+    "claude": {
+      "displayName": "Claude Code"
+    },
+    "codex": {
+      "displayName": "Codex"
+    }
+  },
+  "capabilities": [
+    {
+      "name": "skill.invoke",
+      "platforms": {
+        "claude": {
+          "status": "supported",
+          "implementation": "Skill(nocode:<name>)"
+        },
+        "codex": {
+          "status": "supported",
+          "implementation": "Bundled skill invocation via $<name> or implicit matching"
+        }
+      }
+    },
+    {
+      "name": "agent.dispatch",
+      "platforms": {
+        "claude": {
+          "status": "supported",
+          "implementation": "Agent tool with bundled agent profile"
+        },
+        "codex": {
+          "status": "degraded",
+          "implementation": "spawn_agent with a generated private profile",
+          "fallback": "Run the profile in the main session when collaboration is unavailable"
+        }
+      }
+    },
+    {
+      "name": "agent.wait",
+      "platforms": {
+        "claude": {
+          "status": "supported",
+          "implementation": "Agent result or background monitor"
+        },
+        "codex": {
+          "status": "degraded",
+          "implementation": "wait_agent",
+          "fallback": "Dispatch synchronously or complete the job in the main session"
+        }
+      }
+    },
+    {
+      "name": "plan.create",
+      "platforms": {
+        "claude": {
+          "status": "supported",
+          "implementation": "TaskCreate"
+        },
+        "codex": {
+          "status": "degraded",
+          "implementation": "update_plan with new pending items",
+          "fallback": "Maintain a Markdown checklist"
+        }
+      }
+    },
+    {
+      "name": "plan.update",
+      "platforms": {
+        "claude": {
+          "status": "supported",
+          "implementation": "TaskUpdate, TaskList, and TaskGet"
+        },
+        "codex": {
+          "status": "degraded",
+          "implementation": "update_plan",
+          "fallback": "Update a Markdown checklist and report the active item"
+        }
+      }
+    },
+    {
+      "name": "user.ask",
+      "platforms": {
+        "claude": {
+          "status": "supported",
+          "implementation": "AskUserQuestion"
+        },
+        "codex": {
+          "status": "degraded",
+          "implementation": "request_user_input when available",
+          "fallback": "Ask one concise question at the end of the turn"
+        }
+      }
+    },
+    {
+      "name": "workspace.enter",
+      "platforms": {
+        "claude": {
+          "status": "supported",
+          "implementation": "EnterWorktree(path=...)"
+        },
+        "codex": {
+          "status": "degraded",
+          "implementation": "Set workdir or cwd explicitly for each command",
+          "fallback": "Use git -C with an explicit verified worktree path"
+        }
+      }
+    },
+    {
+      "name": "hook.session_context",
+      "platforms": {
+        "claude": {
+          "status": "supported",
+          "implementation": "hookSpecificOutput.additionalContext"
+        },
+        "codex": {
+          "status": "supported",
+          "implementation": "SessionStart systemMessage"
+        }
+      }
+    },
+    {
+      "name": "hook.pretool_decision",
+      "platforms": {
+        "claude": {
+          "status": "supported",
+          "implementation": "PreToolUse permissionDecision or additionalContext"
+        },
+        "codex": {
+          "status": "degraded",
+          "implementation": "PreToolUse systemMessage",
+          "fallback": "Fail open with a visible warning because continue:false is unsupported"
+        }
+      }
+    },
+    {
+      "name": "hook.stop_decision",
+      "platforms": {
+        "claude": {
+          "status": "supported",
+          "implementation": "Replay Task transcript and return a blocking decision"
+        },
+        "codex": {
+          "status": "unsupported",
+          "implementation": "No transcript replay in the first Codex release",
+          "fallback": "Fail open and retain handoff semantics in the plan text"
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,5 @@
+interface:
+  display_name: "continuous-learning-v2"
+  short_description: "Reference doc for the instinct-based continuous learning architecture — PreTool…"
+policy:
+  allow_implicit_invocation: false

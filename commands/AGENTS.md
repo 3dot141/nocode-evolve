@@ -1,6 +1,6 @@
 # commands/ — Agent 工作指南
 
-本目录是 Claude Code 插件 `nocode` 的 slash command 定义目录。每个 `.md` 文件对应一个 `/<文件名>` 命令，frontmatter 里的 `description`（可选 `argument-hint`）决定它是否出现在可用命令列表里、以及怎么展示。子目录 `sow-reference/` 是 `/sow` 专属的 Python 辅助脚本。
+本目录是 `nocode` 的用户入口定义源码。Claude 发布物中每个 `.md` 对应一个 `/<文件名>` 命令；Codex 发布物由 adapter 编译为同名 skill。frontmatter 里的 `description`（可选 `argument-hint`）决定入口如何展示。子目录 `sow-reference/` 是 `sow` 专属的 Python 辅助脚本。
 
 在本目录新增/修改文件前，先读完本文件的边界约束。
 
@@ -32,7 +32,7 @@ command（`.md`，frontmatter 至少含 `description`）是**用户键入的入�
 
 ## 新增/改 command 后升 plugin.json 版本
 
-`commands/` 在 `CLAUDE.md` 规则 2 的范围内——任何命令**功能性内容**的改动都算插件更新，必须在同一个 commit 里升 `.claude-plugin/plugin.json` 的 `version`（新增命令 = minor；文案/bug fix = patch；破坏性改名或语义反转 = major）。
+`commands/` 在 `CLAUDE.md` 规则 2 的范围内——任何命令**功能性内容**的改动都算插件更新，必须在同一个 commit 里升 `plugin/metadata.json` 的 `version` 并重新生成双平台发布物（新增命令 = minor；文案/bug fix = patch；破坏性改名或语义反转 = major）。
 
 **例外**：`commands/AGENTS.md` 和 `commands/README.md` 本身属于纯文档，按 `CLAUDE.md` 末段的豁免条款不需要升版本（但仍要 commit，仍不要自动 push）。
 
@@ -76,6 +76,6 @@ argument-hint: ...   # 多数命令有，纯占位/无参命令可省略或写 "
 - ❌ 在 `*hub` 文件里写整合判断/校验分支等业务逻辑——越界，应转发给对应 Skill
 - ❌ 在 `commands/` 新建 `xxx-flow.md`——`*flow` 只属于 `skills/`
 - ❌ 新命令模仿 `evolve.md`/`instinct-*.md` 直接 shell 脚本、绕开 `Skill()`——那是历史遗留格式，不是推荐模板
-- ❌ 新增/改命令后忘记同步升 `.claude-plugin/plugin.json` 的 version
+- ❌ 新增/改命令后忘记同步升 `plugin/metadata.json` 的 version，或忘记运行 `node scripts/compile.platform.mjs`
 - ❌ 新增命令忘记写 `description` frontmatter——参考 `eval.md` 的下场
 - ❌ 把非 `/sow` 专属的脚本塞进 `sow-reference/`

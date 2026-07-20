@@ -40,13 +40,13 @@
 Agent(subagent_type: "nocode:code-reviewer", description: "评审本次改动", prompt: "...")
 ```
 
-`subagent_type` 前缀 `nocode:` 来自插件名（`.claude-plugin/plugin.json` 的 `name` 字段），
+`subagent_type` 前缀 `nocode:` 来自插件名（`plugin/metadata.json` 的 `name` 字段），
 安装插件后 Claude Code 会自动以 `<plugin>:<agent-name>` 的形式注册每个 `agents/*.md`。
 具体 prompt 该怎么写（要不要带上下文、是否要求独立验证）参考各 agent 文件里的"派发步骤"小节，
 以及仓库根 `README.md` 里关于插件整体架构的说明。
 
 ## 新增/修改前必读
 
-改这个目录下任何文件都要在同一个 commit 里升级 `.claude-plugin/plugin.json` 的 `version`
+改这个目录下任何文件都要在同一个 commit 里升级 `plugin/metadata.json` 的 `version`，并运行 `node scripts/compile.platform.mjs`
 （`CLAUDE.md` 规则 2：`agents/` 属于插件加载的文件范围）。具体版本分类规则、frontmatter 字段写法、
 三种 agent 模式的判断标准、fallback 声明惯例，见同目录 `AGENTS.md`。

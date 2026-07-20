@@ -1,0 +1,38 @@
+[
+  {
+    "rule": "git-worktree",
+    "pattern": "(?:^|[;&|])\\s*git\\s+worktree\\s+add\\b",
+    "decision": "inject",
+    "reason": "建 worktree 前先 Read rule-git-worktree.md: 落 <project>-<branch>/, 建后调 worktree-setup.mjs setup 补齐(cp env/IDE + 从零 install + symlink). 前置 (?:^|[;&|])\\s* 限定命令位置, 不命中 quote/heredoc 内字面文本"
+  },
+  {
+    "rule": "git-worktree",
+    "pattern": "git\\s+(checkout\\s+-[bB]|switch\\s+-[cC]|branch\\s+[^-\\s|]\\S*)",
+    "decision": "inject",
+    "reason": "原则: 每个分支都要 worktree。别在主仓裸开 branch, 先 Read rule-git-worktree.md 走 git worktree add 落 <project>-<branch>/. branch 段 [^-\\s|] 排除 -flag 和 pipe 查询, 只命中新建 git branch <name>"
+  },
+  {
+    "rule": "git-freshness",
+    "pattern": "\\b(grep\\s+(-[a-zA-Z]*r|-[a-zA-Z]*\\s+-r|--recursive)|rg\\s+)\\b",
+    "decision": "inject",
+    "reason": "代码搜索 (grep -r / rg) 前先跑 freshness-check.mjs 确认分支不过时"
+  },
+  {
+    "rule": "git-freshness",
+    "pattern": "\\bfind\\s+.*\\.(tsx?|jsx?|mjs|cjs|py|go|rs|java|rb|vue|svelte)\\b",
+    "decision": "inject",
+    "reason": "find 搜代码文件前先跑 freshness-check.mjs 确认分支不过时"
+  },
+  {
+    "rule": "personal-deletion-guard",
+    "pattern": "\\b(rm|mv)\\s+.*(\\.agents-personal/|\\$USER_VAULT_PATH/|\\$\\{USER_VAULT_PATH\\})",
+    "decision": "inject",
+    "reason": "rm/mv 命中 .agents-personal/ 或 $USER_VAULT_PATH/ 下路径 — 这些是 gitignored 用户沉淀, 不可恢复. 停手, 描述将删什么 + 原因 + 影响, 等用户明确确认 (model/agent-personal.md 删除护栏)"
+  },
+  {
+    "rule": "personal-deletion-guard",
+    "pattern": "find\\s+.*(\\.agents-personal|\\$USER_VAULT_PATH|\\$\\{USER_VAULT_PATH\\}).*-delete\\b",
+    "decision": "inject",
+    "reason": "find -delete 命中 .agents-personal/ 或 $USER_VAULT_PATH/ — 批量删除等同 rm, 停手二次确认 (model/agent-personal.md 删除护栏)"
+  }
+]

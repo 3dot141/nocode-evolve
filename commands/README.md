@@ -1,6 +1,6 @@
 # commands/
 
-Claude Code 插件 `nocode` 的 slash command 定义目录。每个 `.md` 文件对应一个 `/<文件名>` 命令：frontmatter 声明 `description`（多数还带 `argument-hint`），命令体是写给 Claude 的执行指令。全目录共 24 个命令 + 1 个子目录 `sow-reference/`（`/sow` 专属的 Python 辅助脚本）。
+`nocode` 的用户入口定义源码。Claude 发布物把每个 `.md` 暴露为 `/<文件名>` slash command；Codex adapter 则把它编译为同名 skill。frontmatter 声明 `description`（多数还带 `argument-hint`），正文保存共享工作流语义。全目录共 24 个命令 + 1 个子目录 `sow-reference/`（`sow` 专属的 Python 辅助脚本）。
 
 命名遵循三类惯例（`*hub` 聚合入口 / `*flow` 阶段制工作流 / `xx-yy` 子命令），详细的模式边界和写作约束见 `AGENTS.md`；本文件只给概览。
 

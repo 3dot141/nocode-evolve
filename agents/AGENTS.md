@@ -1,7 +1,7 @@
 # agents/
 
-本目录是 Claude Code 插件 `nocode` 的 subagent 定义源——每个 `.md` 文件对应一个可被 `Agent()` 工具以
-`subagent_type: "nocode:<name>"` 派发的子代理（`nocode:` 前缀来自 `.claude-plugin/plugin.json` 的插件名）。
+本目录是 `nocode` 的 agent profile 定义源——Claude 发布物中每个 `.md` 文件对应一个可被 `Agent()` 工具以
+`subagent_type: "nocode:<name>"` 派发的子代理（`nocode:` 前缀来自 `plugin/metadata.json` 的插件名）。Codex 发布物会把这些定义编译为私有 agent-profile references，由 adapter 选择等价调用方式。
 在此目录新增/修改文件时遵守以下约束。
 
 ## Frontmatter 字段约定
@@ -65,7 +65,7 @@
 `agents/` 属于 `CLAUDE.md` 规则 2 里"会被插件加载的文件"范围（`hooks/` / `model/` / `rules/` /
 `skills/` / `agents/` / `commands/` / `.claude-plugin/` / `.mcp.json`）。**任何新增/修改/删除 agent 文件都视为插件更新**：
 
-- 编辑 `.claude-plugin/plugin.json` 的 `version`，按 SemVer 套用到 agent 改动场景：
+- 编辑 `plugin/metadata.json` 的 `version`、运行 `node scripts/compile.platform.mjs`，按 SemVer 套用到 agent 改动场景：
   - 新增一个 agent 文件 → **minor**（新增能力，向后兼容）
   - 改已有 agent 的正文措辞、派发步骤、工具面调整但不改变对外可见的能力边界 → **patch**
   - 改 `name`（等价于改 `subagent_type`，会破坏其他 skill/command 里对旧名字的引用）、
