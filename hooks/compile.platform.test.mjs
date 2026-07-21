@@ -5,6 +5,7 @@ import {
   mkdirSync,
   readFileSync,
   rmSync,
+  statSync,
   writeFileSync,
 } from 'node:fs';
 import os from 'node:os';
@@ -150,6 +151,22 @@ test('writeExpectedTree refuses to clean a path outside repo plugins/<platform>'
     () => writeExpectedTree(expected, path.join(root, 'skills'), root),
     /plugins\/(claude|codex)\/nocode/,
   );
+});
+
+test('writeExpectedTree restores the executable bit for .sh/.py scripts', (t) => {
+  const root = fixtureRepo(t);
+  const outputRoot = path.join(root, 'plugins', 'claude', 'nocode');
+  const expected = new Map([
+    ['hooks/inject-nocode.sh', Buffer.from('#!/bin/sh\n')],
+    ['skills/x/scripts/run.py', Buffer.from('print(1)\n')],
+    ['skills/x/SKILL.md', Buffer.from('doc\n')],
+  ]);
+  writeExpectedTree(expected, outputRoot, root);
+
+  const modeOf = (relative) => statSync(path.join(outputRoot, relative)).mode & 0o777;
+  assert.equal(modeOf('hooks/inject-nocode.sh'), 0o755);
+  assert.equal(modeOf('skills/x/scripts/run.py'), 0o755);
+  assert.equal(modeOf('skills/x/SKILL.md'), 0o644);
 });
 
 test('compile CLI argument parser defaults to both platforms and rejects unknown input', () => {
