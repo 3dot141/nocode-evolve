@@ -1,9 +1,8 @@
 ---
 name: recall
 description: "从 wiki 和 vault 检索已沉淀内容，返回按置信度排序的精简清单"
+argument-hint: <搜索关键词>
 ---
-
-> Codex 入口：原命令参数统一称为“用户本次调用参数”。
 
 # /recall：沉淀内容检索
 

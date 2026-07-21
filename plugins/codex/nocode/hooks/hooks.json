@@ -6,43 +6,87 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${PLUGIN_ROOT}/hooks/inject-nocode.sh model-about"
+            "command": "node \"${PLUGIN_ROOT}/skills/using-nocode/scripts/runtime-entry.mjs\" -- node \"${PLUGIN_ROOT}/skills/using-nocode/scripts/providers/codex-plugin-data/scripts/entry.mjs\" -- node \"${PLUGIN_ROOT}/hooks/session-open.mjs\""
           },
           {
             "type": "command",
-            "command": "${PLUGIN_ROOT}/hooks/inject-nocode.sh model-personal"
+            "command": "node \"${PLUGIN_ROOT}/skills/using-nocode/scripts/runtime-entry.mjs\" -- node \"${PLUGIN_ROOT}/skills/using-nocode/scripts/providers/codex-plugin-data/scripts/entry.mjs\" -- \"${PLUGIN_ROOT}/hooks/inject-nocode.sh\" model-nocode"
           },
           {
             "type": "command",
-            "command": "${PLUGIN_ROOT}/hooks/inject-nocode.sh model-karpathy"
+            "command": "node \"${PLUGIN_ROOT}/skills/using-nocode/scripts/runtime-entry.mjs\" -- node \"${PLUGIN_ROOT}/skills/using-nocode/scripts/providers/codex-plugin-data/scripts/entry.mjs\" -- \"${PLUGIN_ROOT}/hooks/inject-nocode.sh\" model-about 1"
           },
           {
             "type": "command",
-            "command": "${PLUGIN_ROOT}/hooks/inject-nocode.sh model-rule-catalog-1"
+            "command": "node \"${PLUGIN_ROOT}/skills/using-nocode/scripts/runtime-entry.mjs\" -- node \"${PLUGIN_ROOT}/skills/using-nocode/scripts/providers/codex-plugin-data/scripts/entry.mjs\" -- \"${PLUGIN_ROOT}/hooks/inject-nocode.sh\" model-about 2"
           },
           {
             "type": "command",
-            "command": "${PLUGIN_ROOT}/hooks/inject-nocode.sh model-rule-catalog-2"
+            "command": "node \"${PLUGIN_ROOT}/skills/using-nocode/scripts/runtime-entry.mjs\" -- node \"${PLUGIN_ROOT}/skills/using-nocode/scripts/providers/codex-plugin-data/scripts/entry.mjs\" -- \"${PLUGIN_ROOT}/hooks/inject-nocode.sh\" model-about 3"
           },
           {
             "type": "command",
-            "command": "${PLUGIN_ROOT}/hooks/inject-nocode.sh model-rule-catalog-3"
+            "command": "node \"${PLUGIN_ROOT}/skills/using-nocode/scripts/runtime-entry.mjs\" -- node \"${PLUGIN_ROOT}/skills/using-nocode/scripts/providers/codex-plugin-data/scripts/entry.mjs\" -- \"${PLUGIN_ROOT}/hooks/inject-nocode.sh\" model-about 4"
           },
           {
             "type": "command",
-            "command": "${PLUGIN_ROOT}/hooks/inject-nocode.sh model-rule-catalog-4"
+            "command": "node \"${PLUGIN_ROOT}/skills/using-nocode/scripts/runtime-entry.mjs\" -- node \"${PLUGIN_ROOT}/skills/using-nocode/scripts/providers/codex-plugin-data/scripts/entry.mjs\" -- \"${PLUGIN_ROOT}/hooks/inject-nocode.sh\" model-about 5"
           },
           {
             "type": "command",
-            "command": "${PLUGIN_ROOT}/hooks/inject-nocode.sh model-rule-catalog-5"
+            "command": "node \"${PLUGIN_ROOT}/skills/using-nocode/scripts/runtime-entry.mjs\" -- node \"${PLUGIN_ROOT}/skills/using-nocode/scripts/providers/codex-plugin-data/scripts/entry.mjs\" -- \"${PLUGIN_ROOT}/hooks/inject-nocode.sh\" model-about 6"
           },
           {
             "type": "command",
-            "command": "${PLUGIN_ROOT}/hooks/inject-nocode.sh project"
+            "command": "node \"${PLUGIN_ROOT}/skills/using-nocode/scripts/runtime-entry.mjs\" -- node \"${PLUGIN_ROOT}/skills/using-nocode/scripts/providers/codex-plugin-data/scripts/entry.mjs\" -- \"${PLUGIN_ROOT}/hooks/inject-nocode.sh\" model-personal 1"
           },
           {
             "type": "command",
-            "command": "node ${PLUGIN_ROOT}/scripts/personal-snapshot.mjs"
+            "command": "node \"${PLUGIN_ROOT}/skills/using-nocode/scripts/runtime-entry.mjs\" -- node \"${PLUGIN_ROOT}/skills/using-nocode/scripts/providers/codex-plugin-data/scripts/entry.mjs\" -- \"${PLUGIN_ROOT}/hooks/inject-nocode.sh\" model-personal 2"
+          },
+          {
+            "type": "command",
+            "command": "node \"${PLUGIN_ROOT}/skills/using-nocode/scripts/runtime-entry.mjs\" -- node \"${PLUGIN_ROOT}/skills/using-nocode/scripts/providers/codex-plugin-data/scripts/entry.mjs\" -- \"${PLUGIN_ROOT}/hooks/inject-nocode.sh\" model-personal 3"
+          },
+          {
+            "type": "command",
+            "command": "node \"${PLUGIN_ROOT}/skills/using-nocode/scripts/runtime-entry.mjs\" -- node \"${PLUGIN_ROOT}/skills/using-nocode/scripts/providers/codex-plugin-data/scripts/entry.mjs\" -- \"${PLUGIN_ROOT}/hooks/inject-nocode.sh\" model-karpathy 1"
+          },
+          {
+            "type": "command",
+            "command": "node \"${PLUGIN_ROOT}/skills/using-nocode/scripts/runtime-entry.mjs\" -- node \"${PLUGIN_ROOT}/skills/using-nocode/scripts/providers/codex-plugin-data/scripts/entry.mjs\" -- \"${PLUGIN_ROOT}/hooks/inject-nocode.sh\" model-karpathy 2"
+          },
+          {
+            "type": "command",
+            "command": "node \"${PLUGIN_ROOT}/skills/using-nocode/scripts/runtime-entry.mjs\" -- node \"${PLUGIN_ROOT}/skills/using-nocode/scripts/providers/codex-plugin-data/scripts/entry.mjs\" -- \"${PLUGIN_ROOT}/hooks/inject-nocode.sh\" model-rule-catalog-1 1"
+          },
+          {
+            "type": "command",
+            "command": "node \"${PLUGIN_ROOT}/skills/using-nocode/scripts/runtime-entry.mjs\" -- node \"${PLUGIN_ROOT}/skills/using-nocode/scripts/providers/codex-plugin-data/scripts/entry.mjs\" -- \"${PLUGIN_ROOT}/hooks/inject-nocode.sh\" model-rule-catalog-1 2"
+          },
+          {
+            "type": "command",
+            "command": "node \"${PLUGIN_ROOT}/skills/using-nocode/scripts/runtime-entry.mjs\" -- node \"${PLUGIN_ROOT}/skills/using-nocode/scripts/providers/codex-plugin-data/scripts/entry.mjs\" -- \"${PLUGIN_ROOT}/hooks/inject-nocode.sh\" model-rule-catalog-2"
+          },
+          {
+            "type": "command",
+            "command": "node \"${PLUGIN_ROOT}/skills/using-nocode/scripts/runtime-entry.mjs\" -- node \"${PLUGIN_ROOT}/skills/using-nocode/scripts/providers/codex-plugin-data/scripts/entry.mjs\" -- \"${PLUGIN_ROOT}/hooks/inject-nocode.sh\" model-rule-catalog-3"
+          },
+          {
+            "type": "command",
+            "command": "node \"${PLUGIN_ROOT}/skills/using-nocode/scripts/runtime-entry.mjs\" -- node \"${PLUGIN_ROOT}/skills/using-nocode/scripts/providers/codex-plugin-data/scripts/entry.mjs\" -- \"${PLUGIN_ROOT}/hooks/inject-nocode.sh\" model-rule-catalog-4"
+          },
+          {
+            "type": "command",
+            "command": "node \"${PLUGIN_ROOT}/skills/using-nocode/scripts/runtime-entry.mjs\" -- node \"${PLUGIN_ROOT}/skills/using-nocode/scripts/providers/codex-plugin-data/scripts/entry.mjs\" -- \"${PLUGIN_ROOT}/hooks/inject-nocode.sh\" model-rule-catalog-5"
+          },
+          {
+            "type": "command",
+            "command": "node \"${PLUGIN_ROOT}/skills/using-nocode/scripts/runtime-entry.mjs\" -- node \"${PLUGIN_ROOT}/skills/using-nocode/scripts/providers/codex-plugin-data/scripts/entry.mjs\" -- \"${PLUGIN_ROOT}/hooks/inject-nocode.sh\" project"
+          },
+          {
+            "type": "command",
+            "command": "node \"${PLUGIN_ROOT}/skills/using-nocode/scripts/runtime-entry.mjs\" -- node \"${PLUGIN_ROOT}/skills/using-nocode/scripts/providers/codex-plugin-data/scripts/entry.mjs\" -- node \"${PLUGIN_ROOT}/scripts/personal-snapshot.mjs\""
           }
         ]
       }
@@ -53,30 +97,11 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node ${PLUGIN_ROOT}/hooks/pretooluse-guard.mjs"
-          }
-        ]
-      },
-      {
-        "matcher": "*",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "${PLUGIN_ROOT}/skills/continuous-learning-v2/hooks/observe.sh"
+            "command": "node \"${PLUGIN_ROOT}/skills/using-nocode/scripts/runtime-entry.mjs\" -- node \"${PLUGIN_ROOT}/skills/using-nocode/scripts/providers/codex-plugin-data/scripts/entry.mjs\" -- node \"${PLUGIN_ROOT}/hooks/pretooluse-guard.mjs\""
           }
         ]
       }
     ],
-    "PostToolUse": [
-      {
-        "matcher": "*",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "${PLUGIN_ROOT}/skills/continuous-learning-v2/hooks/observe.sh"
-          }
-        ]
-      }
-    ]
+    "PostToolUse": []
   }
 }

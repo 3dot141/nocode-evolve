@@ -34,24 +34,22 @@ NO SKILL WITHOUT A FAILING BASELINE FIRST — ALL SKILL TYPES, NO EXCEPTIONS.
 
 压力场景设计细则见 `../writing-skills/testing-skills-with-subagents.md`。
 
-## Codex 交叉 baseline
+## 交叉模型 baseline
 
-至少 1 个场景同时跑 codex，暴露跨模型差异的失败模式：
+至少 1 个场景通过 workflow review provider 执行，暴露跨模型差异的失败模式：
 
 ```
-codex 可用? (setup --json)
+workflow 返回的 reviewMode
      │
-     ├─ 可用 ──→ 跑 ≥1 场景 → 与 subagent 失败模式对比
+     ├─ cross-model ──→ 跑 ≥1 场景 → 与主模型 baseline 失败模式对比
      │              - 两边都失败 = 高置信失败模式
      │              - 只有一边失败 = 模型特有盲区，仍算有效 baseline 失败
      │
-     └─ 不可用 ──→ 只用 subagent（声明 "codex 不可用，跳过交叉 baseline"）
+     └─ isolated-same-model / inline-self-review
+                    └─ 保留结果但如实声明降级，不声称跨模型已验证
 ```
 
-```bash
-node "${PLUGIN_ROOT}/vendor/codex/scripts/codex-companion.mjs" task \
-  "<场景 prompt，与 subagent 相同，不加载 skill>"
-```
+具体 execute → wait → collect 调度协议由 `skill-writing` 正文拥有；本参考只定义场景与判据。交叉任务必须携带完整场景 prompt、明确“不加载待测 skill”，并要求结构化返回行为记录与失败判据。
 
 ## 通过判据
 

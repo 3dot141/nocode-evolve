@@ -1,3 +1,11 @@
+---
+name: dev-design-decision
+description: Private decision protocol used by dev-design to compare approaches and produce a Decision Packet; never invoke independently.
+disable-model-invocation: true
+---
+
+> 本文写“结构化决策”时，必须把当前步骤的完整问题与 2–3 个互斥选项编译为 `Capability(workflow.decision.request, {"question":"<self-contained current-step question>","options":[{"label":"<option-label>","description":"<impact or tradeoff>"}],"allowFreeform":false})`；示例只展示单项形状，真实调用需带齐本步骤列出的选项，不得回退到平台专属提问工具。
+
 # decision — 选方案 + 预研，产出决策包
 
 > dev-design 内部协议，不独立注册。由 dev-design 协调器在 decision 阶段 Read 并执行。
@@ -41,7 +49,7 @@ decision 回答"走哪条路"——**先扩散再收敛**:探索 approach、多�
 
 ## 协议
 
-### Step 0: TaskCreate
+### Step 0: workflow.plan.create
 
 **进入后第一件事**,创建以下全部 task:
 
@@ -57,6 +65,12 @@ Task 8a: 用户终审 Decision Packet(展示完整 Packet → 用户确认/修�
 Task 9: 硬交接 — 交付 Decision Packet(方案选择模式→writing;research 模式→直接交付终止)
   metadata: {handoff: true}
 ```
+
+调用时把上面**每一条** Task 编译成一个稳定 item：`id` 固定、`subject` 为标题、`description` 完整包含 Sub-steps + Gate、初始 `status=pending`，仅最后一项设置 `handoff`。不得只改名后继续依赖平台 task 工具，也不得传空 items：
+
+`Capability(workflow.plan.create, {"items":[{"id":"<stable-task-id>","subject":"<task-title>","description":"<complete Sub-steps and Gate>","status":"pending","handoff":"<final-item-only; otherwise omit>"}]})`
+
+示例只展示单项形状；真实调用必须包含本段清单的全部 items。保存返回的 `planRef`。每次状态变化都用 `Capability(workflow.plan.update, {"planRef":"<planRef>","items":[{"id":"<same-stable-id>","subject":"<same-title>","description":"<same-complete-description>","status":"<pending|in_progress|completed>","handoff":"<preserve-final-item-handoff; otherwise omit>"}]})` 提交**完整快照**（示例仍只展示单项形状）；每次 update 必须原样保留最终 item 的 `handoff`，其它 item 继续省略该字段，不得发送单项 patch。
 
 每完成一个标 done。
 
@@ -82,9 +96,9 @@ Task 9: 硬交接 — 交付 Decision Packet(方案选择模式→writing;resear
 
 - **Step 3 提 2-3 方案**:首轮核心架构差异化(数据流不同,不是参数变体);后续轮上一轮架构内组件/细节。每个方案:一句话 + 优势 + 代价 + 适用条件 + `[Read]`/`[SOURCE]` 来源。YAGNI + Seam 判据。**逐维度权衡表**(成本/复杂度/可维护/可测/对 restate 约束满足度)。
 - **Step 4 spike 验证(可选)**:不确定能否跑通 → 写最小可运行脚本(logic branch)或 UI 变体(UI branch),throwaway,答案才是产物。方案成熟 skip。
-- **Step 4a 方案确认(每轮,例行)**:当轮方案 + 权衡表(+ spike 结论,如做)成型后、选定前,交用户拍方向。两回合模式,方案对比禁塞 AskUserQuestion:
+- **Step 4a 方案确认(每轮,例行)**:当轮方案 + 权衡表(+ spike 结论,如做)成型后、选定前,交用户拍方向。两回合模式,方案对比禁塞 结构化决策:
   - **展示回合**:方案卡片 + 逐维度权衡表 + agent 推荐及理由作为**回合末尾文本**完整输出;末尾只问**一个最承重的问题**——当轮决策选哪个。结束回合,不接任何工具调用(方案对比塞 `question` 挤成密集段落,塞 `preview` 被终端折叠)。
-  - **确认回合**:用户回应即决策(采纳推荐 / 改选备选 / 注入权重偏好)→ 直接按其执行;要求补方向 → 回 Step 3 补提再走展示回合;回应含糊才 AskUserQuestion 澄清。
+  - **确认回合**:用户回应即决策(采纳推荐 / 改选备选 / 注入权重偏好)→ 直接按其执行;要求补方向 → 回 Step 3 补提再走展示回合;回应含糊才 结构化决策 澄清。
   - research 模式不走 4a(预研直接交付终止,用户在交付后拍板)。
 - **Step 5 方案选定 + 落账 + 层级下钻**:按 4a 用户拍板结果选定(每轮 L1/L2/L3 均需用户确认,不静默)。每项选定即追加**决策账本**,条目格式:
 

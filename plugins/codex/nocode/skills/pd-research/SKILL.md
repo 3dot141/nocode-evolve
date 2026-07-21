@@ -3,6 +3,8 @@ name: pd-research
 description: "Use when the user wants to explore a problem space before committing to a solution."
 ---
 
+> 本文写“结构化决策”时，必须把当前步骤的完整问题与 2–3 个互斥选项编译为 `Capability(workflow.decision.request, {"question":"<self-contained current-step question>","options":[{"label":"<option-label>","description":"<impact or tradeoff>"}],"allowFreeform":false})`；示例只展示单项形状，真实调用需带齐本步骤列出的选项，不得回退到平台专属提问工具。
+
 # research — 发散探索问题空间
 
 **Iron Law: 没看过世界就动手 = 赌。闭门造车的代价是调研的 10 倍。**
@@ -23,13 +25,13 @@ description: "Use when the user wants to explore a problem space before committi
 
 ## 协议
 
-### Step 0: update_plan
+### Step 0: workflow.plan.create
 
 **进入 pd-research 后第一件事**，创建以下全部 task：
 
 ```
 Task 1: 定范围 — 切面 + 深度
-  Sub-steps: request_user_input 勾切面 → 选深度 → 裁剪
+  Sub-steps: 结构化决策 勾切面 → 选深度 → 裁剪
   Gate: 切面 + 深度已确认
 
 Task 2: 并行探索 — 每切面委派 research-workflow
@@ -45,7 +47,7 @@ Task 4: 综合 → research-report.md
   Gate: report 产出，每条带 [SOURCE]
 
 Task 5: Go/No-Go — 用户拍板
-  Sub-steps: 展示建议 → request_user_input 三选
+  Sub-steps: 展示建议 → 结构化决策 三选
   Gate: 用户拍板（Go / No-Go / 需更多调研）
 
 Task 6: 保存
@@ -53,16 +55,22 @@ Task 6: 保存
   Gate: 文件保存 + 提示下一步
 
 Task 7: 硬交接 — 调用下一步 skill
-  Sub-steps: 报告调研完成（Go/No-Go 结论）→ 建议写 PRD → 等用户拍板后调 $pd-prd
+  Sub-steps: 报告调研完成（Go/No-Go 结论）→ 建议写 PRD → 等用户拍板后调 Capability(workflow.skill.invoke, {"skill":"pd-prd","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})
   Gate: 用户拍板进入 PRD（这一步不勾，Research 不算收尾）
   metadata: {handoff: true}（供防跳步 Hook B 识别交接 task）
 ```
+
+调用时把上面**每一条** Task 编译成一个稳定 item：`id` 固定、`subject` 为标题、`description` 完整包含 Sub-steps + Gate、初始 `status=pending`，仅最后一项设置 `handoff`。不得只改名后继续依赖平台 task 工具，也不得传空 items：
+
+`Capability(workflow.plan.create, {"items":[{"id":"<stable-task-id>","subject":"<task-title>","description":"<complete Sub-steps and Gate>","status":"pending","handoff":"<final-item-only; otherwise omit>"}]})`
+
+示例只展示单项形状；真实调用必须包含本段清单的全部 items。保存返回的 `planRef`。每次状态变化都用 `Capability(workflow.plan.update, {"planRef":"<planRef>","items":[{"id":"<same-stable-id>","subject":"<same-title>","description":"<same-complete-description>","status":"<pending|in_progress|completed>","handoff":"<preserve-final-item-handoff; otherwise omit>"}]})` 提交**完整快照**（示例仍只展示单项形状）；每次 update 必须原样保留最终 item 的 `handoff`，其它 item 继续省略该字段，不得发送单项 patch。
 
 每完成一个标 done。
 
 ### Step 1: 定范围
 
-用户给出调研对象（一句话即可）。AI 提议调研切面，用 request_user_input 让用户勾选：
+用户给出调研对象（一句话即可）。AI 提议调研切面，用 结构化决策 让用户勾选：
 
 | 切面 | 做什么 |
 |---|---|
@@ -74,7 +82,7 @@ Task 7: 硬交接 — 调用下一步 skill
 
 默认全选。用户可取消不需要的切面。至少选一个。
 
-**选完切面后，用 request_user_input 让用户选研究深度**：
+**选完切面后，用 结构化决策 让用户选研究深度**：
 
 | 深度 | 行为 | 适用场景 |
 |---|---|---|
@@ -180,7 +188,7 @@ Task 7: 硬交接 — 调用下一步 skill
 
 ### Step 5: Go/No-Go
 
-把 report 的 Go/No-Go 建议展示给用户，用 request_user_input：
+把 report 的 Go/No-Go 建议展示给用户，用 结构化决策：
 
 - **Go** — 继续，建议接 prd skill 写 PRD
 - **No-Go** — 放弃，标注原因
@@ -190,7 +198,7 @@ Task 7: 硬交接 — 调用下一步 skill
 
 ### Step 6: 保存
 
-research-report 存到 `{pd_research_output}` 变量指定的路径（见 `model/agent-about.md`「文档产出路径变量」）。
+research-report 存到 `{pd_research_output}` 变量指定的路径；默认是 `{PD_BASE_DIR}/research-report.md`，项目可通过已注入的同名变量覆盖。
 
 完成后提示用户："调研完成。要继续写 PRD 吗？（调 `nocode:pd-prd`）"
 
@@ -225,7 +233,7 @@ research-report 存到 `{pd_research_output}` 变量指定的路径（见 `model
 | "调研浪费时间" | 30 分钟调研省 3 天返工 |
 | "先做着看，遇到问题再调研" | 遇到问题时已经投入了沉没成本 |
 | "竞品跟我们不一样" | 不一样也值得看——知道为什么不一样更有价值 |
-| "这个改动简单，跳过某 Step 或不建 update_plan" | 进了 skill 就走完所有 Step。"简单"是你的判断，不是跳 Gate 的授权 |
+| "这个改动简单，跳过某 Step 或不建 workflow.plan.create" | 进了 skill 就走完所有 Step。"简单"是你的判断，不是跳 Gate 的授权 |
 
 ## Red Flags
 
@@ -234,4 +242,4 @@ research-report 存到 `{pd_research_output}` 变量指定的路径（见 `model
 - Go/No-Go 建议没有理由（逃避判断）
 - 跳过了代码现状切面就去搜外部方案（可能重复造轮子）
 - 切面校验全跳过（没给用户看就直接综合）
-- 因"任务简单 / 还在概览 / 用户说了'继续'"跳过某 Step、不建 Step 0 update_plan、或漏掉最后的交接 task
+- 因"任务简单 / 还在概览 / 用户说了'继续'"跳过某 Step、不建 Step 0 workflow.plan.create、或漏掉最后的交接 task

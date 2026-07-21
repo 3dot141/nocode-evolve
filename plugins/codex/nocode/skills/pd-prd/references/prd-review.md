@@ -5,7 +5,7 @@
 
 ## 怎么用
 
-pd-prd 的 prd-review step Read 本文拿维度，调 `$reviewing`，声明：对象 = PRD；方法 = checklist；领域维度 = 下面 8 维度。流程 / 选方法 / 异源交叉 / 分级 / 收口全由引擎承载。
+pd-prd 的 prd-review step Read 本文拿维度，调 `[provider-neutral skill boundary]`，声明：对象 = PRD；方法 = checklist；领域维度 = 下面 8 维度。流程 / 选方法 / 异源交叉 / 分级 / 收口全由引擎承载。
 
 **领域档位**（帮引擎判档）：PRD 含架构性产品决策 / 跨多领域路径 / 不可逆承诺（对外接口、计费、数据模型）→ **重档**（8 维度全量过）；小改（增补单条 US / 文案澄清 / 局部路径修订）→ **轻档**。
 

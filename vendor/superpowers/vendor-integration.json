@@ -12,8 +12,8 @@
       "reason": "曾 absorb 进 model/agent-catalog-using.md（Red Flags 表 + 调用纪律 + 指令优先级），该文件已在 260704 model/*.md 内容精简中被删除；absorb 目标不存在，暂不重新吸收，如需恢复触发协议/调用纪律内容需重新评估落点"
     },
     "brainstorming": {
-      "action": "keep-as-skill",
-      "reason": "rule-superpowers-brainstorming overlay 叠在上面"
+      "action": "fork",
+      "reason": "双运行时改造版：workflow handoff 使用领域 capability；上游更新需人工 diff 合并"
     },
     "finishing-a-development-branch": {
       "action": "skip",
@@ -65,8 +65,8 @@
       "reason": "dev-verify 完全覆盖"
     },
     "dispatching-parallel-agents": {
-      "action": "keep-as-skill",
-      "reason": "并行任务编排方法论，与 agents-launcher（项目 agent 启动器）不同"
+      "action": "fork",
+      "reason": "双运行时改造版：并行调度使用 workflow.execute capability；上游更新需人工 diff 合并"
     },
     "executing-plans": {
       "action": "skip",

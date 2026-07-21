@@ -32,7 +32,7 @@
   触发判断，不要在别处（例如某个共享文件）重新定义分组或粗触发摘要。
 - **rule 文件命名**：`rule-<id>.md`，`<id>` 必须与文件自身 frontmatter 的 `name` 字段完全一致
   （如 `name: git-worktree` → `rules/rule-git-worktree.md`）。
-- **不是所有触发规则都要建 `rule-*.md`**：纯 `Skill(nocode:xxx)` 路由的规则，触发条件写进该
+- **不是所有触发规则都要建 `rule-*.md`**：纯 `[provider-neutral skill boundary]` 路由的规则，触发条件写进该
   skill 自己 `SKILL.md` 的 `description` 就够（Claude Code 原生 skill 发现机制已覆盖），不要在
   本目录重复建一份；本来就常驻不需要按需触发的规则（如删除护栏）内容归属对应的常驻 `model/*.md`
   文件，PreToolUse pattern 单独进 `scripts/compile.hooks.js`。

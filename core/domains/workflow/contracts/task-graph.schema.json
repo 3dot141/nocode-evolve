@@ -1,0 +1,11 @@
+{
+  "$id": "workflow.task-graph",
+  "type": "object",
+  "required": ["tasks", "maxParallel", "fallbackPolicy"],
+  "properties": {
+    "tasks": { "type": "array", "items": { "type": "object", "required": ["id", "objective", "profile", "dependsOn", "writeScope"], "properties": { "id": { "type": "string" }, "objective": { "type": "string" }, "profile": { "type": "string" }, "dependsOn": { "type": "array", "items": { "type": "string" } }, "writeScope": { "type": "string" }, "timeoutMs": { "type": "integer" }, "continueOnError": { "type": "boolean" } }, "additionalProperties": false } },
+    "maxParallel": { "type": "integer" },
+    "fallbackPolicy": { "enum": ["inline", "none"] }
+  },
+  "additionalProperties": false
+}

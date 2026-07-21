@@ -1,9 +1,8 @@
 ---
 name: personal-lint
 description: "检查当前项目 .agents-personal/ 的健康状态（wiki 结构 + rules 完整性 + AGENTS.md 变量对齐）"
+argument-hint: [--all]
 ---
-
-> Codex 入口：原命令参数统一称为“用户本次调用参数”。
 
 # /personal-lint：.agents-personal/ 健康检查
 

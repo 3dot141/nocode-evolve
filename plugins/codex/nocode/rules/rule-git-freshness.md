@@ -29,7 +29,7 @@ skip: false
 **触发** (任何一项命中):
 
 - 即将做设计性动作 (写设计文档 / PRD / RFC / ADR / 方案对比 / 技术选型 / 重构方案 / 架构设计)
-- 即将做**代码搜索** (`spawn_agent(subagent_type: "nocode:semble-search")` / Bash `grep -r` / `rg` / `find` 找实现 / `Explore` agent)
+- 即将做**代码搜索**（语义搜索 workflow / 精确文本搜索 / 文件名搜索 / 多文件探索）
 - 即将做**多文件 Read** 分析方案 (≥3 文件 Read 探源)
 
 **不触发** (明确豁免):
@@ -87,4 +87,4 @@ node "${PLUGIN_ROOT}/scripts/freshness-check.mjs" --max-behind=5 --ttl=7200
 
 ## 机制化局限 (诚实标注)
 
-本 rule 是 **behavior 触发** — "即将搜代码 / 设计"不是单条 Bash 命令, **PreToolUse 拦不到** (主搜索通道 `spawn_agent(subagent_type: "nocode:semble-search")` 不经 Bash matcher). 主要靠 catalog Step 0 工序 + agent 自觉跑脚本. cache 机制大幅降低重复 fetch 成本 (2h 内 0 网络开销), 是性能上的兜底, 但不是触发上的硬保证.
+本 rule 是 **behavior 触发** — “即将搜代码 / 设计”不是单条命令，PreToolUse 无法覆盖所有语义搜索入口。主要靠 catalog Step 0 工序 + agent 自觉跑脚本。cache 机制大幅降低重复 fetch 成本（2h 内 0 网络开销），是性能上的兜底，但不是触发上的硬保证。

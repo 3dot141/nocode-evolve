@@ -1,12 +1,11 @@
 {
   "schemaVersion": 1,
   "files": {
-    "skills/devflow/SKILL.md": "5d12299ac4849106a54ddcb456cf15243ab388265c51df0bf26c2bc80f3b2d33",
-    "skills/dev-build/SKILL.md": "c6c413e73ba9800b3aef12edecd9ffe44826caa0653272cf1cab63d6d1d3136b",
-    "skills/dev-review/SKILL.md": "df488aa241537be2c1729ed5720d25a4abe4b9505030270d86af3ce831e0133d",
-    "rules/rule-codex-review.md": "5dedf7eabf2b8a191627c2a382ad1373782c517448adc9917981f6d1e1769136",
-    "hooks/hooks.json": "a5837d5742ee877aae51550393493c55a9b28debf4e659c04299545c9d94c5e5",
-    "hooks/pretooluse-guard.mjs": "1b76e7f532b0d438d891f9db85f204fa99f6983d82e13ce6166d88742248e99b",
-    "hooks/handoff-stop-guard.mjs": "c8e8e61758a99d7e99d573a04730f0ad32ebf6e77876c6a231d35eb63821922e"
+    "skills/devflow/SKILL.md": "2f1407fbf546394fbc1e33e4cb546bbb4fe578c4f166729463822962a6f31641",
+    "skills/dev-build/SKILL.md": "de41fda04354153e46fd86245a50cd14ce8b78fe178a25705c57e665294cc341",
+    "skills/dev-review/SKILL.md": "670899f021f066638cc1b3334ba811520ae699a3972adbe0c2f20b3ac94fc665",
+    "rules/rule-codex-review.md": "24c2ef126058a766ce35a20ae56694c910e080700631278a2014e471680786b7",
+    "hooks/hooks.json": "ae555469a5ee1865b6bea1d1af211e5d5562b681b8c7f65ed00cc5f623aa85ac",
+    "hooks/pretooluse-guard.mjs": "1b76e7f532b0d438d891f9db85f204fa99f6983d82e13ce6166d88742248e99b"
   }
 }

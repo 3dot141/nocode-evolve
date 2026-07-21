@@ -1,18 +1,8 @@
 # 方法卡：database-method（PostgreSQL 数据库专项清单）
 
-> reviewing 框架方法库 · 领域方法 card。**适合**：SQL 查询 / schema 设计 / migration / 索引 / RLS / 连接与并发配置。是 `checklist` 方法在「数据库」对象上的领域维度载体——§4.3 选择表「数据库（SQL/schema/migration）→ checklist(database-method card)」。
->
-> 改造自 `agents/database-reviewer.md`（PostgreSQL 专家，含 Supabase best-practice）。本卡保留完整领域清单，剥掉 agent frontmatter 与冗长写死示例。深度审查时仍可 `@database-reviewer` 薄壳直触本卡。
->
-> **接线确认**：skeleton.md 方法选择表已含「数据库 SQL/migration → database-method」（批0 写入）。审到 SQL/migration（哪怕一行也是**重档**：不可逆 + 数据风险，见 skeleton §1 边界示例）时 selectMethods 据此选本卡，**不经 manifest 路由**。
+适用于 SQL 查询、schema 设计、migration、索引、RLS、连接与并发配置。数据库变更具有不可逆和数据风险，即使 diff 很小也按 `references/skeleton.md` 的重档规则执行。
 
-**用法**：把被评审的 SQL / migration / schema diff 填入 `{DIFF}`，逐项遍历下方维度，每项标 ✅ 通过 / ⚠️ 疑点 / ❌ 问题，落到 `file:line`，按 findings 契约产出。
-
-```
-{DIFF}
-```
-
-先 `Read references/skeleton.md` 套通用流程（分档/独立交叉/分级/收口），`Read references/findings-contract.md` 套 findings 契约。本卡只提供第 3 步的领域维度。
+对当前 SQL、migration 或 schema diff 逐项遍历下方维度，每项标 ✅ 通过 / ⚠️ 疑点 / ❌ 问题，落到 `file:line`，并按 `references/findings-contract.md` 产出 findings。
 
 ---
 
@@ -151,4 +141,4 @@ psql -c "SELECT indexrelname, idx_scan, idx_tup_read FROM pg_stat_user_indexes O
 psql -c "SELECT relname, n_dead_tup, last_vacuum, last_autovacuum FROM pg_stat_user_tables WHERE n_dead_tup > 1000 ORDER BY n_dead_tup DESC;"
 ```
 
-> 维度清单改造自 [Supabase Agent Skills](https://github.com/supabase/agent-skills)（MIT）+ `agents/database-reviewer.md`。
+> PostgreSQL 与 Supabase 专项维度参考 [Supabase Agent Skills](https://github.com/supabase/agent-skills)（MIT）。

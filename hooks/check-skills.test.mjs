@@ -160,7 +160,7 @@ test('metadataBudget counts generated skill names and descriptions', () => {
   assert.ok(budget.total <= 8000, `Codex metadata budget ${budget.total} exceeds 8000`);
 });
 
-test('checkAll validates the generated Codex plugin with zero errors', () => {
+test('checkAll enforces generated Codex syntax by default', () => {
   const codexRoot = path.join(ROOT, 'plugins', 'codex', 'nocode');
   const { errors } = checkAll({ root: codexRoot, platform: 'codex' });
   assert.deepEqual(errors, [], errors.join('\n'));
@@ -172,5 +172,10 @@ test('check-skills CLI parser accepts explicit root/platform', () => {
     platform: 'codex',
   });
   assert.throws(() => parseCheckArgs(['--platform=other']), /platform/);
+  assert.deepEqual(parseCheckArgs(['--platform', 'source']), {
+    root: ROOT,
+    platform: 'source',
+  });
   assert.throws(() => parseCheckArgs(['--unknown']), /unknown argument/);
+  assert.throws(() => parseCheckArgs(['--audit=inventory']), /unknown argument/);
 });

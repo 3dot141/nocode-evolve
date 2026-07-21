@@ -4,12 +4,12 @@ Full templates for workflow skills — referenced from SKILL.md Phase 4. A workf
 
 Workflow skill SKILL.md must include all three elements below.
 
-## 1. Step 0: update_plan
+## 1. Step 0: workflow.plan.create
 
 First thing on entry, create all tasks at once. Each task has Sub-steps + Gate:
 
 ```markdown
-## Step 0: update_plan
+## Step 0: workflow.plan.create
 
 **First thing on entry** — create all tasks at once:
 

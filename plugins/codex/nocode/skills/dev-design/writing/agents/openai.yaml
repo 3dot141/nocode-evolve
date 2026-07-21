@@ -1,0 +1,5 @@
+interface:
+  display_name: "dev-design-writing"
+  short_description: "Private writing protocol used by dev-design to expand an approved Decision Pack…"
+policy:
+  allow_implicit_invocation: false

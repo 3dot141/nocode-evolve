@@ -20,6 +20,8 @@ description: "Use when creating a new skill, shaping a vague skill idea into a c
 
 **Iron Law 是这把尺的实证版**：拿不准答案时不许猜——跑 baseline 去*观察*那个坏行为（`references/baseline.md`）。行为纪律型内容必须实测答尺；轻量事实型内容可以推理答尺。
 
+需要交叉模型 baseline 时，由本 skill 执行 `Capability(workflow.execute, {"tasks":[{"id":"cross-model-baseline","objective":"<完整场景 prompt，与主路相同，不加载待测 skill；包含输入、失败判据和输出格式>","profile":"review.cross-model-preferred","dependsOn":[],"writeScope":"none","timeoutMs":600000,"continueOnError":false}],"maxParallel":1,"fallbackPolicy":"inline"})`。返回 `running` 时用 `Capability(workflow.wait, {"executionId":"<execution-id>","timeoutMs":600000})` 等到终态，再用 `Capability(workflow.collect, {"executionId":"<execution-id>"})` 读取 `tasks[0].result` 和 `reviewMode`。`reviewMode` 不是 `cross-model` 时必须如实标记降级。
+
 ## Entry Routing
 
 | 信号 | 入口 |
@@ -63,6 +65,8 @@ description: "Use when creating a new skill, shaping a vague skill idea into a c
 - **写**：按类型选写法（纪律型反合理化 / 其它讲清 why），见 `references/writing-styles.md`
 - **证必要**：过那把尺；行为纪律型 → baseline 实测（`references/baseline.md`）
 - **验证**：改动大 / 关键 skill → eval 定量（`references/eval.md`）；轻改 → 自审即可（自审清单在 `references/writing-styles.md` 尾部）
+
+需要交叉模型 baseline 时，把 reference 里选定的场景编译为单任务 graph：`Capability(workflow.execute, {"tasks":[{"id":"cross-model-baseline","objective":"Run this complete baseline scenario without loading the skill; return structured observations and failed criteria: <scenario-prompt-input-failure-criteria-output-format>","profile":"review.cross-model-preferred","dependsOn":[],"writeScope":"none","timeoutMs":600000,"continueOnError":false}],"maxParallel":1,"fallbackPolicy":"inline"})`。receipt 若为 `running`，反复调用 `Capability(workflow.wait, {"executionId":"<execution-id>","timeoutMs":600000})` 到终态，再调用 `Capability(workflow.collect, {"executionId":"<execution-id>"})`；只消费 `tasks[0].result`，并如实记录 `reviewMode`。不得直接启动平台 CLI，不得把 opaque `resultRef` 当成结果正文。
 
 写作硬约束（始终生效）：
 

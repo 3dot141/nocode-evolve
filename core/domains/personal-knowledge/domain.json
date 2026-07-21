@@ -1,0 +1,17 @@
+{
+  "id": "personal-knowledge",
+  "capabilities": [
+    "capabilities/page.read.json",
+    "capabilities/usage.record.json",
+    "capabilities/snapshot.json"
+  ],
+  "contracts": [
+    "contracts/page-read-result.schema.json",
+    "contracts/usage-result.schema.json",
+    "contracts/snapshot-result.schema.json",
+    "contracts/domain-error.schema.json"
+  ],
+  "providers": [
+    "providers/project-wiki/provider.json"
+  ]
+}

@@ -1,27 +1,4 @@
-const DESCRIPTION_LIMIT = 96;
-
-export function compactDescription(value, limit = DESCRIPTION_LIMIT) {
-  const normalized = String(value).replace(/\s+/g, ' ').trim();
-  const firstSentence = normalized.split(/(?<=[。！？.!?])\s+/u)[0] || normalized;
-  if (firstSentence.length <= limit) return firstSentence;
-  return `${firstSentence.slice(0, limit - 1).trimEnd()}…`;
-}
-
-export function extractDescription(text) {
-  const frontmatter = /^---\n([\s\S]*?)\n---(?:\n|$)/.exec(String(text));
-  if (!frontmatter) return '';
-  const lines = frontmatter[1].split('\n');
-  const index = lines.findIndex((line) => /^description:/.test(line));
-  if (index < 0) return '';
-  const rawValue = lines[index].replace(/^description:\s*/, '');
-  if (!/^[>|][+-]?$/.test(rawValue)) return rawValue.trim();
-  const parts = [];
-  for (let line = index + 1; line < lines.length; line++) {
-    if (!/^\s+/.test(lines[line]) && lines[line] !== '') break;
-    parts.push(lines[line].trim());
-  }
-  return parts.join(' ').trim();
-}
+import { compactDescription } from '../shared/markdown.mjs';
 
 function compactSkillFrontmatter(text) {
   const match = /^---\n([\s\S]*?)\n---(?:\n|$)/.exec(text);
@@ -52,35 +29,60 @@ export function renderCodexMarkdown(text, { skill = false } = {}) {
   let rendered = String(text)
     .replaceAll('${CLAUDE_PLUGIN_ROOT}', '${PLUGIN_ROOT}')
     .replaceAll('{CLAUDE_PLUGIN_ROOT}', '{PLUGIN_ROOT}')
-    .replaceAll('${CLAUDE_PLUGIN_DATA}', '${PLUGIN_DATA}')
-    .replaceAll('{CLAUDE_PLUGIN_DATA}', '{PLUGIN_DATA}')
-    .replaceAll('${NOCODE_SKILL_REF}', '${PLUGIN_ROOT}/shared/references')
-    .replaceAll('{NOCODE_SKILL_REF}', '${PLUGIN_ROOT}/shared/references')
-    .replaceAll('CLAUDE_PROJECT_DIR', 'cwd')
-    .replaceAll('CLAUDE_ENV_FILE', 'PLUGIN_DATA')
-    .replace(/Skill\(nocode:([^),]+)(?:,[^)]*)?\)/g, (_match, name) => `$${name.trim()}`)
-    .replace(/\/nocode:([a-z0-9-]+)/gi, (_match, name) => `$${name}`)
-    .replace(/\bAskUserQuestion\b/g, 'request_user_input')
-    .replace(/\bTask(?:Create|Update|List|Get)\b/g, 'update_plan')
-    .replace(/\bAgent\(/g, 'spawn_agent(')
-    .replace(/\bEnterWorktree\b/g, 'Codex workdir')
-    .replace(/\bExitWorktree\b/g, 'return to the main workdir');
+    .replaceAll('${NOCODE_SKILL_REF}', '${PLUGIN_ROOT}/skills/references')
+    .replaceAll('{NOCODE_SKILL_REF}', '${PLUGIN_ROOT}/skills/references')
+    .replaceAll('CLAUDE_PROJECT_DIR', 'cwd');
   if (skill) rendered = compactSkillFrontmatter(rendered);
   return rendered;
 }
 
-export function renderCodexContent({ targetPath, content }) {
-  if (targetPath.startsWith('skills/references/')) return null;
-  if (/^commands\/[^/]+\.md$/.test(targetPath)) return null;
+export function renderCodexContent({ targetPath, content, contextPlan = new Map() }) {
+  if (targetPath.startsWith('agents/') || targetPath.startsWith('commands/')) return null;
+  if (targetPath === 'hooks/inject-nocode.sh') {
+    return content.toString('utf8').replaceAll(
+      '__NOCODE_CONTEXT_BUDGET__',
+      '${PLUGIN_ROOT}/skills/using-nocode/scripts/providers/codex-hooks/context-budget.json',
+    );
+  }
   if (targetPath === 'hooks/hooks.json') {
     const config = JSON.parse(content.toString('utf8'));
-    delete config.hooks.Stop;
-    if (Array.isArray(config.hooks.PostToolUse)) {
-      config.hooks.PostToolUse = config.hooks.PostToolUse.filter(
-        (group) => !JSON.stringify(group).includes('usage-tracker.mjs'),
-      );
+    if (Array.isArray(config.hooks.SessionStart)) {
+      for (const group of config.hooks.SessionStart) {
+        group.hooks = (group.hooks || []).flatMap((hook) => {
+          const segment = /inject-nocode\.sh\s+([a-z0-9-]+)/.exec(hook.command)?.[1];
+          const count = contextPlan.get(segment)?.chunks || 1;
+          return Array.from({ length: count }, (_, index) => ({
+            ...hook,
+            command: count > 1 ? `${hook.command} ${index + 1}` : hook.command,
+          }));
+        });
+      }
     }
-    return `${JSON.stringify(config, null, 2).replaceAll('${CLAUDE_PLUGIN_ROOT}', '${PLUGIN_ROOT}')}\n`;
+    if (Array.isArray(config.hooks.PostToolUse)) {
+      for (const group of config.hooks.PostToolUse) {
+        if (group.matcher === 'TaskCreate|TaskUpdate') group.matcher = 'update_plan';
+      }
+    }
+    for (const groups of Object.values(config.hooks || {})) {
+      for (const group of groups || []) {
+        for (const hook of group.hooks || []) {
+          const argv = hook.command
+            .replaceAll('${CLAUDE_PLUGIN_ROOT}', '${PLUGIN_ROOT}')
+            .replaceAll('/providers/claude-hooks/', '/skills/using-nocode/scripts/providers/codex-hooks/')
+            .trim().split(/\s+/);
+          if (argv.some((part) => !/^[A-Za-z0-9_./${}-]+$/.test(part))) {
+            throw new Error(`unsupported hook command token: ${hook.command}`);
+          }
+          hook.command = [
+            'node', '"${PLUGIN_ROOT}/skills/using-nocode/scripts/runtime-entry.mjs"',
+            '--', 'node', '"${PLUGIN_ROOT}/skills/using-nocode/scripts/providers/codex-plugin-data/scripts/entry.mjs"',
+            '--',
+            ...argv.map((part) => part.includes('${PLUGIN_ROOT}') ? `"${part}"` : part),
+          ].join(' ');
+        }
+      }
+    }
+    return `${JSON.stringify(config, null, 2)}\n`;
   }
   if (!targetPath.endsWith('.md')) return content;
   return renderCodexMarkdown(content.toString('utf8'), {

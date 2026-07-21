@@ -13,13 +13,14 @@ import { fileURLToPath } from 'node:url';
 import {
   buildExpectedTree,
   diffTree,
-  validateContract,
+  validateAdapterResolution,
   validateMetadata,
   writeExpectedTree,
 } from '../scripts/lib/platform-compiler.mjs';
 import { parseArgs, run } from '../scripts/compile.platform.mjs';
 import { claudeAdapter } from '../adapters/claude/adapter.mjs';
 import { codexAdapter } from '../adapters/codex/adapter.mjs';
+import { loadDomainRegistry } from '../scripts/lib/domain-registry.mjs';
 
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -41,25 +42,14 @@ function fixtureMetadata() {
   };
 }
 
-function fixtureContract() {
-  return {
-    platforms: { claude: {}, codex: {} },
-    capabilities: [
-      {
-        name: 'skill.invoke',
-        platforms: {
-          claude: { status: 'supported', implementation: 'Skill' },
-          codex: { status: 'degraded', implementation: '$skill', fallback: 'main session' },
-        },
-      },
-    ],
-  };
+function fixtureResolution(platform = 'claude') {
+  return { platform, domains: { workflow: { 'workflow.skill.invoke': { primary: `${platform}-control` } } }, excluded: {} };
 }
 
 function fixtureAdapter(platform = 'claude') {
   return {
     platform,
-    capabilities: ['skill.invoke'],
+    providerSupport: [`${platform}-control`],
     sourceRoots: [{ source: 'skills', target: 'skills' }],
     manifestPath: platform === 'claude'
       ? '.claude-plugin/plugin.json'
@@ -85,29 +75,19 @@ test('validateMetadata accepts strict SemVer and rejects invalid metadata', () =
   );
 });
 
-test('validateContract rejects a missing adapter capability and missing fallback', () => {
-  const contract = fixtureContract();
-  assert.doesNotThrow(() => validateContract(contract, {
-    claude: fixtureAdapter('claude'),
-    codex: fixtureAdapter('codex'),
-  }));
-
+test('adapter validates domain provider support instead of a legacy capability table', () => {
+  assert.doesNotThrow(() => validateAdapterResolution(fixtureAdapter(), fixtureResolution()));
   assert.throws(
-    () => validateContract(contract, {
-      claude: { ...fixtureAdapter('claude'), capabilities: [] },
-      codex: fixtureAdapter('codex'),
-    }),
-    /skill\.invoke.*claude/,
+    () => validateAdapterResolution({ ...fixtureAdapter(), providerSupport: [] }, fixtureResolution()),
+    /missing provider support: claude-control/,
   );
-
-  const withoutFallback = structuredClone(contract);
-  delete withoutFallback.capabilities[0].platforms.codex.fallback;
   assert.throws(
-    () => validateContract(withoutFallback, {
-      claude: fixtureAdapter('claude'),
-      codex: fixtureAdapter('codex'),
-    }),
-    /fallback/,
+    () => validateAdapterResolution(fixtureAdapter(), fixtureResolution('codex')),
+    /platform mismatch/,
+  );
+  assert.throws(
+    () => validateAdapterResolution(fixtureAdapter(), { platform: 'claude', domains: {}, excluded: {} }),
+    /must contain at least one capability/,
   );
 });
 
@@ -116,8 +96,9 @@ test('buildExpectedTree is deterministic and includes the rendered manifest', (t
   const adapter = fixtureAdapter();
   const metadata = fixtureMetadata();
 
-  const first = buildExpectedTree({ root, metadata, adapter });
-  const second = buildExpectedTree({ root, metadata, adapter });
+  const resolution = fixtureResolution();
+  const first = buildExpectedTree({ root, metadata, adapter, resolution });
+  const second = buildExpectedTree({ root, metadata, adapter, resolution });
 
   assert.deepEqual([...first.keys()], [
     '.claude-plugin/plugin.json',
@@ -141,6 +122,7 @@ test('writeExpectedTree cleans stale files and diffTree reports changed/missing/
     root,
     metadata: fixtureMetadata(),
     adapter: fixtureAdapter(),
+    resolution: fixtureResolution(),
   });
   writeExpectedTree(expected, outputRoot, root);
 
@@ -177,6 +159,7 @@ test('compile CLI argument parser defaults to both platforms and rejects unknown
     platforms: ['codex'],
   });
   assert.throws(() => parseArgs(['--platform', 'other']), /unknown platform/);
+  assert.throws(() => parseArgs(['--audit=inventory']), /unknown argument/);
   assert.throws(() => parseArgs(['--wat']), /unknown argument/);
 });
 
@@ -184,17 +167,54 @@ test('compile CLI run writes both manifests and then detects drift', (t) => {
   const root = mkdtempSync(path.join(os.tmpdir(), 'platform-cli-'));
   t.after(() => rmSync(root, { recursive: true, force: true }));
   mkdirSync(path.join(root, 'plugin'), { recursive: true });
-  mkdirSync(path.join(root, 'core', 'capabilities'), { recursive: true });
+  mkdirSync(path.join(root, 'core', 'domains', 'workflow', 'capabilities'), { recursive: true });
+  mkdirSync(path.join(root, 'core', 'domains', 'workflow', 'contracts'), { recursive: true });
+  mkdirSync(path.join(root, 'core', 'domains', 'workflow', 'providers', 'claude-control'), { recursive: true });
+  mkdirSync(path.join(root, 'core', 'domains', 'workflow', 'providers', 'codex-control'), { recursive: true });
+  mkdirSync(path.join(root, 'core', 'contracts'), { recursive: true });
   mkdirSync(path.join(root, 'commands'), { recursive: true });
   mkdirSync(path.join(root, 'agents'), { recursive: true });
   writeFileSync(
     path.join(root, 'plugin', 'metadata.json'),
     JSON.stringify(fixtureMetadata()),
   );
-  writeFileSync(
-    path.join(root, 'core', 'capabilities', 'contract.json'),
-    JSON.stringify(fixtureContract()),
-  );
+  writeFileSync(path.join(root, 'core/contracts/provider-attempt.schema.json'), JSON.stringify({
+    $id: 'nocode.provider-attempt', type: 'object', additionalProperties: true,
+  }));
+  const input = { $id: 'workflow.input', type: 'object' };
+  const output = { $id: 'workflow.output', type: 'object' };
+  writeFileSync(path.join(root, 'core/domains/workflow/contracts/input.schema.json'), JSON.stringify(input));
+  writeFileSync(path.join(root, 'core/domains/workflow/contracts/output.schema.json'), JSON.stringify(output));
+  writeFileSync(path.join(root, 'core/domains/workflow/capabilities/invoke.json'), JSON.stringify({
+    id: 'workflow.skill.invoke', domain: 'workflow', inputSchema: 'contracts/input.schema.json', outputSchema: 'contracts/output.schema.json', fallbackOn: 'never',
+    platforms: { claude: { primary: 'claude-control' }, codex: { primary: 'codex-control' } },
+  }));
+  mkdirSync(path.join(root, 'core/domains/workflow/entrypoints/skill.invoke'), { recursive: true });
+  writeFileSync(path.join(root, 'core/domains/workflow/entrypoints/skill.invoke/SKILL.md'), `---
+name: _nocode-domain-workflow-skill.invoke
+description: Synthetic workflow entry.
+---
+
+### Provider: claude-control
+
+Return a provider-attempt envelope.
+
+### Provider: codex-control
+
+Return a provider-attempt envelope.
+`);
+  writeFileSync(path.join(root, 'core/domains/workflow/entrypoints/skill.invoke/route.mjs'), "export const capability = 'workflow.skill.invoke';\n");
+  for (const [provider, platform] of [['claude-control', 'claude'], ['codex-control', 'codex']]) {
+    writeFileSync(path.join(root, `core/domains/workflow/providers/${provider}/provider.json`), JSON.stringify({
+      id: provider, domain: 'workflow', execution: 'native', pluginData: false,
+      platforms: [platform], dependencies: [],
+      capabilities: { 'workflow.skill.invoke': { inputSchema: 'contracts/input.schema.json', outputSchema: 'contracts/output.schema.json' } },
+    }));
+  }
+  writeFileSync(path.join(root, 'core/domains/workflow/domain.json'), JSON.stringify({
+    id: 'workflow', capabilities: ['capabilities/invoke.json'], contracts: ['contracts/input.schema.json', 'contracts/output.schema.json'],
+    providers: ['providers/claude-control/provider.json', 'providers/codex-control/provider.json'],
+  }));
 
   const generated = run({ check: false, platforms: ['claude', 'codex'] }, root);
   assert.equal(generated.hasDrift, false);
@@ -209,26 +229,44 @@ test('compile CLI run writes both manifests and then detects drift', (t) => {
   const drift = run({ check: true, platforms: ['codex'] }, root);
   assert.equal(drift.hasDrift, true);
   assert.match(drift.messages.join('\n'), /codex: changed: \.codex-plugin\/plugin\.json/);
+
 });
 
-test('Claude adapter builds a behavior-equivalent runtime artifact', () => {
+test('Claude adapter builds shared entry skills and agent references', () => {
   const metadata = JSON.parse(readFileSync(path.join(REPO_ROOT, 'plugin/metadata.json'), 'utf8'));
-  const tree = buildExpectedTree({ root: REPO_ROOT, metadata, adapter: claudeAdapter });
+  const registry = loadDomainRegistry(REPO_ROOT);
+  const resolution = registry.resolvePlatform('claude');
+  const tree = buildExpectedTree({ root: REPO_ROOT, metadata, adapter: claudeAdapter, resolution, registry });
   const required = [
     '.claude-plugin/plugin.json',
-    'agents/code-reviewer.md',
-    'commands/task.md',
+    '.mcp.json',
     'hooks/hooks.json',
+    'model/agent-nocode.md',
     'model/agent-about.md',
     'references/skill-integration-map.md',
     'rules/rule-codex-review.md',
     'scripts/compile.rule.js',
     'skills/devflow/SKILL.md',
-    'vendor/codex/scripts/codex-companion.mjs',
+    'skills/task/SKILL.md',
+    'skills/using-nocode/SKILL.md',
+    'skills/using-nocode/references/agents/planner.md',
+    'skills/using-nocode/references/design.md',
   ];
   for (const relative of required) {
     assert.ok(tree.has(relative), `Claude artifact missing ${relative}`);
   }
+  assert.equal(tree.has('skills/sow/scripts/test_script.py'), false);
+  assert.equal([...tree.keys()].some((relative) => relative.startsWith('vendor/codex/')), false);
+  for (const developmentOnly of [
+    'scripts/check-skills.mjs',
+    'scripts/compile.platform.mjs',
+    'scripts/vendor-sync.mjs',
+    'scripts/lib/domain-registry.mjs',
+  ]) assert.equal(tree.has(developmentOnly), false, `${developmentOnly} must not be published`);
+  const claudeMcp = tree.get('.mcp.json').toString();
+  assert.match(claudeMcp, /providers\/claude-plugin-data\/scripts\/entry\.mjs/);
+  assert.match(claudeMcp, /skills\/using-nocode\/scripts\/providers\/open-design\/scripts\/launch\.mjs/);
+  assert.doesNotMatch(claudeMcp, /\/Users\//);
   for (const nonComponentDoc of [
     'agents/AGENTS.md',
     'agents/README.md',
@@ -237,45 +275,72 @@ test('Claude adapter builds a behavior-equivalent runtime artifact', () => {
   ]) {
     assert.equal(tree.has(nonComponentDoc), false, `${nonComponentDoc} must not be auto-discovered`);
   }
+  assert.equal(
+    [...tree.keys()].some((relative) => relative.startsWith('agents/') || relative.startsWith('commands/')),
+    false,
+    'Claude agents and commands must be compiled into shared skills instead of published natively',
+  );
   assert.equal(tree.has('docs/superpowers/specs/INDEX.md'), false);
   assert.deepEqual(
     JSON.parse(tree.get('.claude-plugin/plugin.json').toString()),
     claudeAdapter.renderManifest(metadata),
   );
-  assert.ok(
-    tree.get('skills/devflow/SKILL.md').equals(
-      readFileSync(path.join(REPO_ROOT, 'skills/devflow/SKILL.md')),
-    ),
-    'Claude renderer must preserve workflow bytes',
+  assert.match(tree.get('skills/devflow/SKILL.md').toString(), /Capability\(workflow\.plan\.create/);
+  const claudeTask = tree.get('skills/task/SKILL.md').toString();
+  assert.match(claudeTask, /^---\nname: task\ndescription:/);
+  assert.doesNotMatch(claudeTask, /x-nocode:/);
+  assert.match(claudeTask, /\$ARGUMENTS/);
+  assert.match(
+    tree.get('skills/using-nocode/references/agents/planner.md').toString(),
+    /planning/i,
   );
+  const claudeHooks = JSON.parse(tree.get('hooks/hooks.json').toString());
+  assert.equal('Stop' in claudeHooks.hooks, false);
+  assert.doesNotMatch(JSON.stringify(claudeHooks), /handoff|plan-change/);
+  assert.match(JSON.stringify(claudeHooks.hooks.SessionStart), /model-nocode/);
+  const claudeInjector = tree.get('hooks/inject-nocode.sh').toString();
+  assert.match(claudeInjector, /skills\/using-nocode\/scripts\/providers\/claude-hooks\/context-budget\.json/);
+  assert.doesNotMatch(claudeInjector, /providers\/codex-hooks\//);
 });
 
-test('Codex adapter builds native skills, command skills, and private agent profiles', () => {
+test('Codex adapter builds shared entry skills and agent references', () => {
   const metadata = JSON.parse(readFileSync(path.join(REPO_ROOT, 'plugin/metadata.json'), 'utf8'));
-  const tree = buildExpectedTree({ root: REPO_ROOT, metadata, adapter: codexAdapter });
+  const registry = loadDomainRegistry(REPO_ROOT);
+  const resolution = registry.resolvePlatform('codex');
+  const tree = buildExpectedTree({ root: REPO_ROOT, metadata, adapter: codexAdapter, resolution, registry });
   const required = [
     '.codex-plugin/plugin.json',
-    'commands/sow-reference/script.py',
+    '.mcp.json',
+    'skills/sow/scripts/script.py',
     'hooks/hooks.json',
+    'model/agent-nocode.md',
     'model/agent-about.md',
     'rules/rule-git-worktree.md',
     'scripts/compile.rule.js',
-    'shared/references/testing-guide.md',
+    'skills/references/testing-guide.md',
     'skills/agents-launcher/agents/openai.yaml',
     'skills/devflow/SKILL.md',
     'skills/task/SKILL.md',
-    'skills/agent-profiles/SKILL.md',
-    'skills/agent-profiles/references/code-reviewer.md',
+    'skills/using-nocode/SKILL.md',
+    'skills/using-nocode/references/agents/planner.md',
+    'skills/using-nocode/references/workflow.md',
   ];
   for (const relative of required) {
     assert.ok(tree.has(relative), `Codex artifact missing ${relative}`);
   }
+  assert.equal(tree.has('skills/sow/scripts/test_script.py'), false);
+  const codexMcp = tree.get('.mcp.json').toString();
+  assert.match(codexMcp, /skills\/using-nocode\/scripts\/runtime-entry\.mjs/);
+  assert.match(codexMcp, /providers\/codex-plugin-data\/scripts\/entry\.mjs/);
+  assert.doesNotMatch(codexMcp, /\/Users\//);
   assert.equal([...tree.keys()].some((relative) => relative.startsWith('vendor/codex/')), false);
-  assert.equal([...tree.keys()].some((relative) => relative.startsWith('skills/references/')), false);
+  assert.equal(tree.has('scripts/compile.platform.mjs'), false);
+  assert.equal(tree.has('scripts/lib/platform-compiler.mjs'), false);
+  assert.equal([...tree.keys()].some((relative) => relative.startsWith('shared/references/')), false);
   assert.equal(
-    [...tree.keys()].some((relative) => /^commands\/[^/]+\.md$/.test(relative)),
+    [...tree.keys()].some((relative) => relative.startsWith('agents/') || relative.startsWith('commands/')),
     false,
-    'Codex command markdown must be compiled to skills instead of copied twice',
+    'Codex agents and commands must be compiled into shared skills instead of copied twice',
   );
 
   const manifest = JSON.parse(tree.get('.codex-plugin/plugin.json').toString());
@@ -287,11 +352,10 @@ test('Codex adapter builds native skills, command skills, and private agent prof
   assert.ok(Array.isArray(manifest.interface.defaultPrompt));
 
   const devflow = tree.get('skills/devflow/SKILL.md').toString();
-  assert.doesNotMatch(devflow, /Skill\(nocode:/);
-  assert.match(devflow, /\$dev-(define|build|plan)/);
+  assert.match(devflow, /Capability\(workflow\.plan\.create/);
   assert.match(
     tree.get('skills/dev-build/SKILL.md').toString(),
-    /\$\{PLUGIN_ROOT\}\/shared\/references/,
+    /\$\{PLUGIN_ROOT\}\/skills\/references/,
   );
   const launcher = tree.get('skills/agents-launcher/SKILL.md').toString();
   assert.doesNotMatch(launcher, /disable-model-invocation/);
@@ -299,16 +363,33 @@ test('Codex adapter builds native skills, command skills, and private agent prof
     tree.get('skills/agents-launcher/agents/openai.yaml').toString(),
     /interface:\n  display_name: "agents-launcher"\n  short_description: "本仓 fx-data-agents.+"\npolicy:\n  allow_implicit_invocation: false/,
   );
+  for (const nested of ['decision', 'writing']) {
+    assert.match(
+      tree.get(`skills/dev-design/${nested}/SKILL.md`).toString(),
+      /^---\nname: dev-design-(?:decision|writing)\ndescription:/,
+    );
+    assert.match(
+      tree.get(`skills/dev-design/${nested}/agents/openai.yaml`).toString(),
+      /allow_implicit_invocation: false/,
+    );
+  }
   const commandTask = tree.get('skills/task/SKILL.md').toString();
   assert.match(commandTask, /^---\nname: task\ndescription:/);
+  assert.doesNotMatch(commandTask, /x-nocode:/);
   assert.doesNotMatch(commandTask, /\$ARGUMENTS/);
   assert.match(commandTask, /用户本次调用参数/);
   assert.match(
-    tree.get('skills/agent-profiles/SKILL.md').toString(),
-    /spawn_agent/,
+    tree.get('skills/using-nocode/references/agents/planner.md').toString(),
+    /planning/i,
   );
+  assert.equal(tree.has('skills/agent-profiles/SKILL.md'), false);
   const codexHooks = JSON.parse(tree.get('hooks/hooks.json').toString());
   assert.equal('Stop' in codexHooks.hooks, false);
+  assert.doesNotMatch(JSON.stringify(codexHooks), /handoff|plan-change/);
+  assert.match(JSON.stringify(codexHooks.hooks.SessionStart), /model-nocode/);
+  const codexInjector = tree.get('hooks/inject-nocode.sh').toString();
+  assert.match(codexInjector, /providers\/codex-hooks\/context-budget\.json/);
+  assert.doesNotMatch(codexInjector, /providers\/claude-hooks\//);
   assert.doesNotMatch(JSON.stringify(codexHooks), /usage-tracker\.mjs/);
   assert.match(JSON.stringify(codexHooks), /\$\{PLUGIN_ROOT\}/);
   assert.doesNotMatch(JSON.stringify(codexHooks), /\$\{CLAUDE_PLUGIN_ROOT\}/);

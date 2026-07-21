@@ -1,0 +1,77 @@
+{
+  "id": "project-wiki",
+  "execution": "cli",
+  "pluginData": false,
+  "wrapper": {
+    "command": "node",
+    "args": ["providers/project-wiki/scripts/wiki-read.mjs"],
+    "safeFailureExitCodes": []
+  },
+  "domain": "personal-knowledge",
+  "platforms": [
+    "claude",
+    "codex"
+  ],
+  "capabilities": {
+    "personal-knowledge.page.read": {
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "sessionId",
+          "path"
+        ],
+        "properties": {
+          "sessionId": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "outputSchema": "contracts/page-read-result.schema.json"
+    },
+    "personal-knowledge.usage.record": {
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "sessionId",
+          "path"
+        ],
+        "properties": {
+          "sessionId": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "outputSchema": "contracts/usage-result.schema.json"
+    },
+    "personal-knowledge.snapshot": {
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "sessionId"
+        ],
+        "properties": {
+          "sessionId": {
+            "type": "string"
+          },
+          "snapshotMessage": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "outputSchema": "contracts/snapshot-result.schema.json"
+    }
+  },
+  "dependencies": [
+    "workspace.read",
+    "workspace.write"
+  ]
+}

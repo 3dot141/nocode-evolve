@@ -1,6 +1,6 @@
 # Step 2 展开：逐交互拆解
 
-> 术语（状态覆盖 / 行为规格 / 控件四态）单源在 `${PLUGIN_ROOT}/shared/references/ix-vd-contract.md`。
+> 术语（状态覆盖 / 行为规格 / 控件四态）单源在 `${PLUGIN_ROOT}/skills/references/ix-vd-contract.md`。
 
 ## 2a. 提取交互清单
 

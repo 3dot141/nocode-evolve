@@ -6,7 +6,7 @@ Harrison 的 Claude Code / Codex 双平台工程工作流插件。仓库只维�
 业务源码（Common Core）
 skills / commands / agents / rules / model / hooks domain logic
                          │
-                capability contract
+                 domain registry
                          │
               ┌──────────┴──────────┐
               │                     │
@@ -18,32 +18,36 @@ plugins/claude/nocode   plugins/codex/nocode
 核心原则：
 
 - `skills/`、`commands/`、`agents/`、`rules/`、`model/` 与平台无关的 hook 判断是业务单源。
-- `core/capabilities/contract.json` 明确两个平台每项能力的 `supported`、`degraded` 或 `unsupported` 状态及 fallback。
+- `core/domains/` 是领域单源：每个领域拥有 capabilities、contracts 与 providers；compiler 据此生成 `using-nocode` 的平台 references。
+- 业务 Skill 在正文保留 `Capability(domain.action, input)` 语义标记；领域 registry 维护 capability、contract 与 provider，compiler 生成当前平台的读取指引。
 - `adapters/claude/`、`adapters/codex/` 是平台协议单源，负责 manifest、内容语法、组件映射与 Hook codec。
 - `plugins/claude/nocode/`、`plugins/codex/nocode/` 是只读生成物，禁止手改。
 - `plugin/metadata.json` 是 name/version/author/license 单源。
 
 ## 平台行为
 
-Claude 发布物保留现有 commands、agents、skills 与完整 Hook 行为。Codex 发布物按平台能力做静态转换：
+Claude/Codex 发布物共享 Skills 与 agent references 布局，只在 provider、Hook codec 和平台变量上做静态差异化：
 
-- Claude slash commands 编译为 Codex 同名 skills，例如 `/task` 对应 `task` skill。
-- Claude agent 定义编译为 `agent-profiles` skill 的私有 references，不依赖用户全局 agent 配置。
+- `commands/*.md` 作为共享入口源码，同时编译为 Claude/Codex 同名 skills，例如 `task`。
+- `agents/*.md` 作为共享 profile 源码，同时编译到 `using-nocode/references/agents/`；两端由各自 workflow provider 执行，不依赖用户全局 agent 配置。
 - `disable-model-invocation: true` 编译为相应 skill 的 `agents/openai.yaml`，设置 `policy.allow_implicit_invocation: false`。
 - SessionStart 上下文在 Claude 输出 `additionalContext`，在 Codex 输出 `systemMessage`。
 - PreToolUse 的领域判断共用；Claude 可硬 `deny`，Codex 当前 codec 以醒目的 `systemMessage` fail-open 提醒，不伪装成已拦截。
-- Claude Stop handoff guard 在 Codex 没有同构生命周期能力，因此 Codex 发布物不注册该 Hook，并按 capability contract 降级。
-- `vendor/codex/` 是 Claude 调用异源 reviewer 的实现，不会进入 Codex 发布物，避免自递归。
+- Claude 与 Codex 都在 SessionStart 初始化 session 隔离的 runtime-state；没有 Stop handoff guard。
+- Wiki 引用计数只由显式 `wiki-read` 入口更新；两个平台都不再通过通用 Read Hook 猜测页面读取。
+- Continuous Learning 源码保留但默认排除，不进入两套发布物，也不注册 observation Hook。
+- 旧 `vendor/codex/` companion 已被 workflow review provider 取代，默认不进入 Claude 或 Codex 发布物。
 
 ## 目录结构
 
 ```text
 nocode-evolve/
 ├── plugin/metadata.json                 # 插件元数据与版本单源
-├── core/capabilities/                   # 平台能力契约
+├── core/domains/                        # 六领域 capability/provider/contract 单源
 ├── adapters/
 │   ├── claude/                          # Claude manifest/content renderer
-│   └── codex/                           # Codex manifest/component/hook renderer
+│   ├── codex/                           # Codex manifest/component/hook renderer
+│   └── shared/                          # 双平台入口 Skill 与 agent reference renderer
 ├── skills/ commands/ agents/            # workflow、入口与 agent profile 业务源码
 ├── rules/ model/ references/            # 规则、会话上下文与参考材料源码
 ├── hooks/                               # hook 注册源、领域判断、平台 codec、测试
@@ -95,7 +99,13 @@ codex plugin marketplace add 3dot141/nocode-evolve
 codex plugin add nocode@nocode-market
 ```
 
-Codex 只会加载 `plugins/codex/nocode/`，不会读取 Claude 发布物中的 commands、agents 或 Claude-only Hook 协议。
+Codex 只会加载 `plugins/codex/nocode/`，不会读取 Claude 发布物或 Claude-only Hook 协议。
+
+### Open Design
+
+Claude 与 Codex 统一使用 Open Design 作为 Design domain 的主 provider。安装 nocode 时，发布物内置的 `.mcp.json` 会通过本平台 runtime entry 启动 Open Design adapter；配置不写用户名绝对路径，也不会把 Claude/Codex 的插件数据目录混用。
+
+Open Design App 需要单独安装并启动。Nocode 不自动安装 App、不修改 App 数据，也不猜测未声明的本地服务地址或私有目录。App、授权、IPC 或布局不可用时，agent 按 Design reference 说明问题，并在用户同意后改用 local HTML；插件不会自动重试或跨 provider 降级。业务 Skill 只声明和使用 `design.*` capability，不直接依赖 MCP 工具名。
 
 ## 开发与校验
 
@@ -114,9 +124,10 @@ node scripts/compile.rule.js --check
 node scripts/compile.hooks.js --check
 node scripts/vendor-sync.mjs --check
 node scripts/compile.platform.mjs --check
+node scripts/check-skills.mjs --root . --platform source
 node scripts/check-skills.mjs --root plugins/claude/nocode --platform claude
 node scripts/check-skills.mjs --root plugins/codex/nocode --platform codex
-node --test 'hooks/*.test.mjs'
+node --test hooks/*.test.mjs scripts/*.test.mjs
 ```
 
 只检查或生成单个平台时可传 `--platform claude` 或 `--platform codex`。未知参数返回 exit 2；`--check` 发现 missing/changed/extra 文件返回 exit 1。
@@ -134,11 +145,12 @@ node --test 'hooks/*.test.mjs'
 
 静态校验通过后，发布前还应在目标客户端各做一次人工 smoke：
 
-- Claude：从 `.claude-plugin/marketplace.json` 安装，确认 slash command / skill / agent 可发现，SessionStart 有规则上下文，危险 Bash 命中时被硬拦截。
-- Codex：从 `.agents/plugins/marketplace.json` 安装，确认同名 command skills 与 `agent-profiles` 可发现，SessionStart 有规则上下文，危险 Bash 命中时出现明确的 fail-open 警告。
-- 两端分别确认运行时只加载本平台发布物，不暴露另一平台组件目录。
+- Claude：从 `.claude-plugin/marketplace.json` 隔离安装，确认入口 skills、`using-nocode` agent references、SessionStart 与 Open Design MCP。
+- Codex：从 `.agents/plugins/marketplace.json` 隔离安装，确认入口 skills、`using-nocode` agent references、SessionStart 与 Open Design MCP。
+- 两端验证 Open Design primary、local HTML 人工降级、workflow、handoff-state、Wiki usage、session/data isolation 与 Continuous Learning 缺席。
+- 两端分别确认 runtime 原生数据根映射到 `NOCODE_PLUGIN_DATA`：Claude 从 `CLAUDE_PLUGIN_DATA` 映射；Codex 只在 adapter 边界把原生 `PLUGIN_DATA` 映射为 `CODEX_PLUGIN_DATA`，再由 provider 映射。任何一层缺失都失败，不做兼容回退。
 
-本次双运行时架构迁移已覆盖生成、静态检查与官方 manifest validator；实际客户端安装 smoke 标记为 **manual pending**，不要用 validator 结果冒充真实 UI/会话验证。
+真实客户端结果记录在 `docs/superpowers/smoke/`；静态测试或 manifest validator 不能替代安装与会话 smoke。
 
 ## License
 

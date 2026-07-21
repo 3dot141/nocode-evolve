@@ -20,7 +20,7 @@
 ## 一、执行结构（三个位置固定）
 
 1. **主路 = 隔离执行**（执行者 / 派发 / 降级见 skeleton §4.0）：按打包任务里各场景的领域维度表，逐场景 checklist 遍历产 findings。会话内已确立的事实（拍板 / 约束 / 历史）打包成 Context Capsule（§4.1）补给主路，不靠「留在主会话」换上下文。
-2. **独立路 = 隔离上下文执行**：默认单路 Codex（经 `rule-codex-review` 单一通道，`spawn_agent()` 包 Bash 执行）；调用报错才 fallback 改派 general-purpose subagent 单跑（标「同模型（降级）」），非并行双跑。传给独立路的内容 = 打包任务原文（评审对象 + 全部场景清单）+ **Context Capsule**（skeleton §4.1：剥结论、留事实）——不传主路 findings / 倾向。
+2. **独立路 = 隔离上下文执行**：默认单路 Codex（经 `rule-codex-review` 单一通道，`[provider-neutral workflow boundary]` 包 Bash 执行）；调用报错才 fallback 改派 general-purpose subagent 单跑（标「同模型（降级）」），非并行双跑。传给独立路的内容 = 打包任务原文（评审对象 + 全部场景清单）+ **Context Capsule**（skeleton §4.1：剥结论、留事实）——不传主路 findings / 倾向。
 3. **场景内归一 + Verify**：按场景分组，场景内按 `[location, axis]` 去重——交集 = 高置信，直接进 findings；对称差（仅单路命中）→ **不由主会话自己拍板**，走 skeleton §4.7 Verify（confirmed/plausible/refuted 三态判定及其到 severity/kind 的完整映射规则见该节，本卡不复述）。**注意不对称性**：Verify 只能滤掉独立路的误报，补不回它因缺上下文漏掉的发现——所以 Capsule 打包尽量全，胜过事后 Verify。
 
 ## 二、输出契约

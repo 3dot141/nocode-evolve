@@ -24,10 +24,10 @@ argument-hint: <sub-action> [args]
 
 | 子动作 | 做什么 | 转发到 | 独立命令 |
 |---|---|---|---|
-| `write` | 为指定目录写入/更新 AGENTS.md + README.md | `Skill(nocode:project-distill)` | `/project-distill` |
-| `dream` | 递归：选定目录，逐层扫子目录，批量生成 | `Skill(nocode:project-dream)` | `/project-dream` |
-| `search` | 搜索项目内所有子目录 AGENTS.md / README.md | `Skill(nocode:project-recall)` | `/project-recall` |
-| `check` | 健康检查（stale 引用 / 覆盖缺口） | `Skill(nocode:project-lint)` | `/project-lint` |
+| `write` | 为指定目录写入/更新 AGENTS.md + README.md | `Capability(workflow.skill.invoke, {"skill":"project-distill","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})` | `/project-distill` |
+| `dream` | 递归：选定目录，逐层扫子目录，批量生成 | `Capability(workflow.skill.invoke, {"skill":"project-dream","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})` | `/project-dream` |
+| `search` | 搜索项目内所有子目录 AGENTS.md / README.md | `Capability(workflow.skill.invoke, {"skill":"project-recall","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})` | `/project-recall` |
+| `check` | 健康检查（stale 引用 / 覆盖缺口） | `Capability(workflow.skill.invoke, {"skill":"project-lint","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})` | `/project-lint` |
 | `init` | TBD | — | `/project-init` |
 | `status` | 覆盖率概览 | 内联执行（见下方） | — |
 

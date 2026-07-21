@@ -38,4 +38,4 @@
 
 ## 使用方式
 
-选定后 `Skill()` 加载：决策框架给取值方法与禁令，风格包给具体值（作初值，与 brief 冲突时 brief 赢）。把消化后的值写进设计文档 / `.vd.md`，taste model 的任务就完成了。
+选定后 `[provider-neutral skill boundary]` 加载：决策框架给取值方法与禁令，风格包给具体值（作初值，与 brief 冲突时 brief 赢）。把消化后的值写进设计文档 / `.vd.md`，taste model 的任务就完成了。

@@ -1,6 +1,6 @@
 # dev-build-subagent — 顺序派发独立 subagent，分档审查
 
-对应 plan `Execution` 字段值 `subagent-lite` / `subagent-full`（旧计划的 `subagent` 按 `subagent-full` 处理）。dev-build 编排者用 `Agent()` 逐个 task **顺序**派发独立 subagent 执行；两档共用同一条实现链，差别只在**审查派发密度**。实现链改编自上游 superpowers `subagent-driven-development`；审查分档是本仓库为墙钟成本加的本地扩展（per-task 双 review 随 task 数线性增长，是全链路重触点墙钟的最大来源）。
+对应 plan `Execution` 字段值 `subagent-lite` / `subagent-full`（旧计划的 `subagent` 按 `subagent-full` 处理）。dev-build 编排者用 `[provider-neutral workflow boundary]` 逐个 task **顺序**派发独立 subagent 执行；两档共用同一条实现链，差别只在**审查派发密度**。实现链改编自上游 superpowers `subagent-driven-development`；审查分档是本仓库为墙钟成本加的本地扩展（per-task 双 review 随 task 数线性增长，是全链路重触点墙钟的最大来源）。
 
 ## 为什么顺序，不并行
 
@@ -30,7 +30,7 @@
 
 **每个 task 的阶段：**
 
-1. **Implement** — 派 implementer subagent（`Agent(subagent_type: "general-purpose")`，prompt 见 `implementer-prompt.md`）。要求它按下面格式结构化报告：
+1. **Implement** — 派 implementer subagent（`[provider-neutral workflow boundary]`，prompt 见 `implementer-prompt.md`）。要求它按下面格式结构化报告：
    - `status`：`DONE` / `DONE_WITH_CONCERNS` / `BLOCKED` / `NEEDS_CONTEXT`
    - `summary` / `filesChanged` / `concerns` / `testResults`
 2. **Spec Review** — 仅当 `status ∈ {DONE, DONE_WITH_CONCERNS}` 且按上表应派时派发（prompt 见 `spec-reviewer-prompt.md`）。reviewer 报 `{approved, issues[]}`。lite 档非风险 task 跳过本阶段，记「lite 跳过」。

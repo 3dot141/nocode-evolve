@@ -9,8 +9,8 @@ Step 6 产出 `.vd.md` 时使用此模板。本文档只承载视觉设计——
 > 日期: {yymmdd}
 > IX: {.ix.md 路径}
 > 产出标准: 高保真可交互原型（「不包含」清单已告知）
-> 交付线: Claude Design（原型 <projectId> + DS <dsProjectId>）/ 本地 HTML
-> 设计源: [design-source: claude-design <projectId>] / [design-source: prototype <路径>]
+> 交付线: Open Design / 本地 HTML
+> 设计回执: [design-receipt: <receipt.json 路径>] / [design-local: <prototype 路径>]
 > 样张: styleguide.html 路径
 
 ## 视觉参考集

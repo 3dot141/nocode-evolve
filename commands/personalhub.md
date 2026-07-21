@@ -15,11 +15,11 @@ argument-hint: <sub-action> [args]
 
 | 子动作 | 做什么 | 转发到 | 独立命令 |
 |---|---|---|---|
-| `init` | 初始化 .agents-personal/ 结构 | `Skill(nocode:personal-init)` | `/personal-init` |
-| `write` | 写入 wiki / rules / AGENTS.md（变量·语气·命名·约定） | `Skill(nocode:personal-distill)` | `/personal-distill` |
-| `search` | 检索 .agents-personal/ 内容（wiki + rules + AGENTS.md 各分节） | `Skill(nocode:personal-recall)` | `/personal-recall` |
-| `check` | 健康检查 | `Skill(nocode:personal-lint)` | `/personal-lint` |
-| `tidy` | 自主维护（stale/prune/merge/promote） | `Skill(nocode:personal-dream)` | `/personal-dream` |
+| `init` | 初始化 .agents-personal/ 结构 | `Capability(workflow.skill.invoke, {"skill":"personal-init","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})` | `/personal-init` |
+| `write` | 写入 wiki / rules / AGENTS.md（变量·语气·命名·约定） | `Capability(workflow.skill.invoke, {"skill":"personal-distill","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})` | `/personal-distill` |
+| `search` | 检索 .agents-personal/ 内容（wiki + rules + AGENTS.md 各分节） | `Capability(workflow.skill.invoke, {"skill":"personal-recall","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})` | `/personal-recall` |
+| `check` | 健康检查 | `Capability(workflow.skill.invoke, {"skill":"personal-lint","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})` | `/personal-lint` |
+| `tidy` | 自主维护（stale/prune/merge/promote） | `Capability(workflow.skill.invoke, {"skill":"personal-dream","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})` | `/personal-dream` |
 | `snap` | 手动触发备份快照 | `node "${CLAUDE_PLUGIN_ROOT}/scripts/personal-snapshot.mjs" --json` | — |
 | `status` | 概览当前状态 | 内联执行（见下方） | — |
 

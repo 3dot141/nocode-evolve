@@ -1,0 +1,57 @@
+{
+  "id": "design.artifact.generate",
+  "domain": "design",
+  "inputSchema": {
+    "type": "object",
+    "required": [
+      "workspaceRef",
+      "kind",
+      "brief",
+      "outputDir"
+    ],
+    "properties": {
+      "workspaceRef": {
+        "type": "object",
+        "required": [
+          "type",
+          "ref"
+        ],
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "ref": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "kind": {
+        "enum": [
+          "design-system",
+          "prototype",
+          "document"
+        ]
+      },
+      "brief": {
+        "type": "string"
+      },
+      "outputDir": {
+        "type": "string"
+      }
+    },
+    "additionalProperties": false
+  },
+  "outputSchema": "contracts/design-result.schema.json",
+  "fallbackOn": "manual",
+  "platforms": {
+    "claude": {
+      "primary": "open-design",
+      "fallback": "local-html"
+    },
+    "codex": {
+      "primary": "open-design",
+      "fallback": "local-html"
+    }
+  }
+}

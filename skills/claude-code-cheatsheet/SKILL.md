@@ -102,7 +102,7 @@ Claude Code 内置的"功能型"工具，按用途分组。基础文件工具（
 
 | 工具 | 干嘛 | 关键点 |
 |---|---|---|
-| `TaskCreate` / `TaskGet` / `TaskList` / `TaskUpdate` | 会话内结构化任务清单，跟踪多步进度 | v2.1.142 起取代 `TodoWrite`；进 workflow skill 要求 Step 0 先把全部 task 建出来 |
+| `workflow.plan.create` / `workflow plan item` / `workflow plan snapshot` / `workflow.plan.update` | 会话内结构化任务清单，跟踪多步进度 | v2.1.142 起取代 `TodoWrite`；进 workflow skill 要求 Step 0 先把全部 task 建出来 |
 | `TaskStop` / `TaskOutput` | 停 / 读后台 agent 的产出 | 管后台 `Agent`/`Monitor`/`Workflow` 的生命周期 |
 
 **E. 通信与通知**
@@ -116,7 +116,7 @@ Claude Code 内置的"功能型"工具，按用途分组。基础文件工具（
 
 | 工具 | 干嘛 | 关键点 |
 |---|---|---|
-| `EnterWorktree` / `ExitWorktree` | 建隔离 git worktree 并把会话切进去 | **只在用户或 CLAUDE.md 明确要 worktree 时才用**；`path` 进已存在的 worktree、`name` 建新的 |
+| `workspace.worktree.enter` / `ExitWorktree` | 建隔离 git worktree 并把会话切进去 | **只在用户或 CLAUDE.md 明确要 worktree 时才用**；`path` 进已存在的 worktree、`name` 建新的 |
 | `EnterPlanMode` / `ExitPlanMode` | 进/出计划模式（只读探索 → 拿批准再执行） | `ExitPlanMode` 把计划提交给用户批 |
 
 **G. 工具加载与产出**
@@ -126,7 +126,7 @@ Claude Code 内置的"功能型"工具，按用途分组。基础文件工具（
 | `ToolSearch` | 按需加载 deferred 工具的完整 schema（否则只有名字，不能调） | 批量用 keyword 一次拉一组（如 `"computer-use"`），别一个个 `select:` 往返 |
 | `Artifact` | 把 HTML/MD 渲染成 claude.ai 托管网页 | 严格 CSP：所有 CSS/JS/图片必须内联；同 `file_path` 重发覆盖同一 URL |
 | `Skill` | 加载并执行一个 skill | 进了刚性 skill 要走完每个 Step |
-| `AskUserQuestion` | 结构化选项问用户 | 待确认内容要写进 payload 自足，别指代前文 |
+| `workflow.decision.request` | 结构化选项问用户 | 待确认内容要写进 payload 自足，别指代前文 |
 
 ### 2.3 引擎机制（不是你调的，是它自动发生的）
 

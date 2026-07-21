@@ -31,14 +31,14 @@ pd-vd → 高保真可交互原型             → 可交付 ✓
 
 **非本 skill**：无 PRD → 先 pd-prd。要视觉设计 → pd-vd。要技术架构 → dev-design。
 
-> IX↔VD 分工判据与共享术语（状态覆盖 / 行为规格 / 控件四态）单源在 `${PLUGIN_ROOT}/shared/references/ix-vd-contract.md`——该态改变内容或行为归本 skill，纯样式反馈归 pd-vd。
+> IX↔VD 分工判据与共享术语（状态覆盖 / 行为规格 / 控件四态）单源在 `${PLUGIN_ROOT}/skills/references/ix-vd-contract.md`——该态改变内容或行为归本 skill，纯样式反馈归 pd-vd。
 
 ## Enter Gate
 
 - [ ] pd-ix skill 已加载
 - [ ] 有 `.prd.md` 或明确的产品上下文（无 → 建议先 pd-prd）
 
-## Step 0: update_plan
+## Step 0: workflow.plan.create
 
 **进入 pd-ix 后第一件事**，创建以下全部 task：
 
@@ -56,10 +56,16 @@ Task 3: IA 汇总 + 完整性四查 + 用户批准
   Gate: 四查全过，IA 经批准，.ix.md 已写入
 
 Task 4: 保存 + Handoff
-  Sub-steps: 保存 .ix.md → 提示下一步：有界面 → 调 $pd-vd；否则进 devflow
+  Sub-steps: 保存 .ix.md → 提示下一步：有界面 → 调 Capability(workflow.skill.invoke, {"skill":"pd-vd","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})；否则进 devflow
   Gate: 文件保存，全部 Task 更新
   metadata: {handoff: true}（供防跳步 Hook B 识别交接 task）
 ```
+
+调用时把上面**每一条** Task 编译成一个稳定 item：`id` 固定、`subject` 为标题、`description` 完整包含 Sub-steps + Gate、初始 `status=pending`，仅最后一项设置 `handoff`。不得只改名后继续依赖平台 task 工具，也不得传空 items：
+
+`Capability(workflow.plan.create, {"items":[{"id":"<stable-task-id>","subject":"<task-title>","description":"<complete Sub-steps and Gate>","status":"pending","handoff":"<final-item-only; otherwise omit>"}]})`
+
+示例只展示单项形状；真实调用必须包含本段清单的全部 items。保存返回的 `planRef`。每次状态变化都用 `Capability(workflow.plan.update, {"planRef":"<planRef>","items":[{"id":"<same-stable-id>","subject":"<same-title>","description":"<same-complete-description>","status":"<pending|in_progress|completed>","handoff":"<preserve-final-item-handoff; otherwise omit>"}]})` 提交**完整快照**（示例仍只展示单项形状）；每次 update 必须原样保留最终 item 的 `handoff`，其它 item 继续省略该字段，不得发送单项 patch。
 
 每完成一个标 done。
 
@@ -138,7 +144,7 @@ Task 4: 保存 + Handoff
 **Core Actions:**
 1. `.ix.md` → `{pd_ix_output}`
 2. 提示下一步选择：
-   - **进 pd-vd**（推荐，有界面需求时）→ 调 `$pd-vd` 做视觉设计
+   - **进 pd-vd**（推荐，有界面需求时）→ 调 `Capability(workflow.skill.invoke, {"skill":"pd-vd","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})` 做视觉设计
    - **直接进 devflow** → 以 PRD + `.ix.md` 为输入
 
 **Exit Gate:**
@@ -172,11 +178,11 @@ Task 4: 保存 + Handoff
 | "交互太简单不用拆" | 简单的交互也有 empty/loading/error 态；行为规格五块必填，不适用的字段填 N/A + 理由 |
 | "hover/disabled 是视觉的事" | 态改变内容或行为就归 IX（判据见 ix-vd-contract）；pd-vd 只管控件四态的样式 |
 | "直接出视觉更快" | 没批准交互就出视觉 = 在未验证的骨架上贴皮 |
-| "这个改动简单，跳过某 Step 或不建 update_plan" | 进了 skill 就走完所有 Step。"简单"是你的判断，不是跳 Gate 的授权 |
+| "这个改动简单，跳过某 Step 或不建 workflow.plan.create" | 进了 skill 就走完所有 Step。"简单"是你的判断，不是跳 Gate 的授权 |
 
 ## Red Flags
 
-- 没建 update_plan 就开始做
+- 没建 workflow.plan.create 就开始做
 - 跳 Step 2 直接出 IA
 - IA 先于交互拆解产出
 - wireframe 缺 empty/loading/error
@@ -184,4 +190,4 @@ Task 4: 保存 + Handoff
 - 交互流没标路径 ID
 - 没对照 PRD 逐条核路径；完整性四查没跑就请求批准 IA
 - `.ix.md` 里出现 hex / px / 动画时长等样式值（违反 ix-vd-contract 禁令）
-- 因"任务简单 / 还在概览 / 用户说了'继续'"跳过某 Step、不建 Step 0 update_plan、或漏掉最后的交接 task
+- 因"任务简单 / 还在概览 / 用户说了'继续'"跳过某 Step、不建 Step 0 workflow.plan.create、或漏掉最后的交接 task

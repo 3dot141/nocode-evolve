@@ -5,7 +5,7 @@
 
 ## 怎么用
 
-dev-define 的 define-review step Read 本文拿维度，**默认主会话就地逐维自查**（不调 reviewing 引擎、不派 subagent/Codex），Critical 级问题修复后再交用户确认。用户显式要求升审时才调 `$reviewing`，声明：对象 = restate；方法 = checklist；领域维度 = 下面 7 维度。
+dev-define 的 define-review step Read 本文拿维度，**默认主会话就地逐维自查**（不调 reviewing 引擎、不派 subagent/Codex），Critical 级问题修复后再交用户确认。用户显式要求升审时才调 `[provider-neutral skill boundary]`，声明：对象 = restate；方法 = checklist；领域维度 = 下面 7 维度。
 
 **敏感面提醒**：需求含多角色 / 权限 / 计费 / 数据迁移等不可逆面 → 向用户一句话建议升审（7 维度独立全量过），用户点头才调，不自动派发。
 

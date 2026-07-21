@@ -34,7 +34,7 @@ Define 阶段的标准化产出格式。用户确认此 restate 后 Define 才�
 约束:
 - 约束.{N}: ...
 
-（路径格式详见 `${PLUGIN_ROOT}/shared/references/path-conventions.md`）
+（路径格式详见 `${PLUGIN_ROOT}/skills/references/path-conventions.md`）
 
 **路径 ↔ SC 绑定**:
 | 路径 | 绑定 SC |

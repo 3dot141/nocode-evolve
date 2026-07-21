@@ -1,9 +1,8 @@
 ---
 name: task
 description: "任务管理子系统单一入口, AI 解析意图分发到 8 个 sub-action (add / update / done / cancel / wrap-day / carry-over /…"
+argument-hint: <自然语言意图>
 ---
-
-> Codex 入口：原命令参数统一称为“用户本次调用参数”。
 
 # /task: MyJarvis 任务管理子系统单一入口
 

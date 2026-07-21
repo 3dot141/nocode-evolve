@@ -23,7 +23,7 @@ threat-modeling 不逐行扫代码，而是**先画信任边界，再沿边界�
 
 **Step C — OWASP 兜底**：STRIDE 出的威胁，对照 `references/methods/security-method.md` 的 **OWASP Top10 清单**逐项核查（注入 / 失效认证 / 敏感数据暴露 / 访问控制失效 / SSRF……），保证不漏高发类。
 
-> security-method 卡由批4 从 `agents/security-reviewer.md` 转出，保留完整 OWASP Top10 + 漏洞模式。本卡负责「按边界系统性发现威胁」，security-method 负责「按 OWASP 逐项核查」，两者互补。
+`threat-modeling` 负责按边界系统性发现威胁；`security-method` 负责按 OWASP 与高发漏洞模式逐项兜底，两者互补。
 
 **纪律**：① 威胁落到具体入口 `file:line` + **攻击向量**（怎么打——构造什么输入/请求）；② 每条威胁给缓解（Structural Remedy 优先：参数化查询消除整类注入，而非转义单点）；③ 无外部面的边界显式跳过，不为凑 STRIDE 编威胁（Doubt Theater）。
 

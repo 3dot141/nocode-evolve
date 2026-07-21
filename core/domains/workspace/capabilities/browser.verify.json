@@ -1,0 +1,26 @@
+{
+  "id": "workspace.browser.verify",
+  "domain": "workspace",
+  "inputSchema": {
+    "type": "object",
+    "required": [
+      "url"
+    ],
+    "properties": {
+      "url": {
+        "type": "string"
+      }
+    },
+    "additionalProperties": false
+  },
+  "outputSchema": "contracts/workspace-result.schema.json",
+  "fallbackOn": "never",
+  "platforms": {
+    "claude": {
+      "primary": "claude-workspace"
+    },
+    "codex": {
+      "primary": "codex-workspace"
+    }
+  }
+}

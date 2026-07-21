@@ -3,6 +3,8 @@ name: pdflow
 description: "产品发现工作流领航（Research → PRD · 2 场景路由）。可被 devflow 主动建议，也可用户 /调 进入。给\"当前阶段判断 + 下一步建议\"，用户拍板，不替执行。用于产品调…"
 ---
 
+> 本文写“结构化决策”时，必须把当前步骤的完整问题与 2–3 个互斥选项编译为 `Capability(workflow.decision.request, {"question":"<self-contained current-step question>","options":[{"label":"<option-label>","description":"<impact or tradeoff>"}],"allowFreeform":false})`；示例只展示单项形状，真实调用需带齐本步骤列出的选项，不得回退到平台专属提问工具。
+
 # nocode:pdflow — 产品阶段工作流领航
 
 > 产品流驾驶舱。独立于 devflow，专管"开发前"的产品调研和需求定义。
@@ -37,31 +39,31 @@ description: "产品发现工作流领航（Research → PRD · 2 场景路由�
 | devflow 建议走产品流 | **Full** — 默认完整 |
 | 用户给了一句话模糊想法 | **Full** — 需要发散探索 |
 
-用 request_user_input 确认场景：
+用 `Capability(workflow.decision.request, {"question":"本次产品发现采用哪条路径？","options":[{"label":"Full（推荐）","description":"先 Research，再 PRD、交互与视觉设计"},{"label":"Light","description":"已有充分输入，直接 PRD、交互与视觉设计"}],"allowFreeform":false})` 确认场景：
 
 - "你想完整调研再写 PRD（推荐），还是直接写 PRD？"
 - 推荐放 Full，除非用户明确有充分信息
 
-### Step 2: update_plan
+### Step 2: workflow.plan.create
 
-为当前场景的阶段建 task。每个有对应 skill 的阶段（Research / PRD / 交互设计 / 视觉设计），**task description 的 sub-steps 链首固定写 `⓪ Skill(...)`**——把"加载该阶段 skill"钉成进入阶段的第一个动作。Handoff 是衔接动作，无 skill，不加 ⓪。最后一个阶段 task（Handoff）建 update_plan 时带 `metadata: {handoff: true}`——供防跳步 Hook B 识别交接 task。
+为当前场景的阶段建 task。每个有对应 skill 的阶段（Research / PRD / 交互设计 / 视觉设计），**task description 的 sub-steps 链首固定写 `⓪ Skill(...)`**——把"加载该阶段 skill"钉成进入阶段的第一个动作。Handoff 是衔接动作，无 skill，不加 ⓪。最后一个阶段 task（Handoff）建 workflow.plan.create 时带 `metadata: {handoff: true}`——供防跳步 Hook B 识别交接 task。
 
 **Full 场景**：
 ```
 Task 1: Research — 发散探索（竞品/代码/市场/已有方案）
-  Sub-steps: ⓪ $pd-research → 发散探索 → 产出 research-report
+  Sub-steps: ⓪ Capability(workflow.skill.invoke, {"skill":"pd-research","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}}) → 发散探索 → 产出 research-report
   Gate: research-report 产出 + Go/No-Go 用户拍板
 
 Task 2: PRD — 收敛成文档
-  Sub-steps: ⓪ $pd-prd → 读 memo + clarify → 写 .prd.md
+  Sub-steps: ⓪ Capability(workflow.skill.invoke, {"skill":"pd-prd","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}}) → 读 memo + clarify → 写 .prd.md
   Gate: .prd.md 产出 + 用户确认
 
 Task 3: 交互设计 — 界面结构 + 交互流（无界面需求可跳过）
-  Sub-steps: ⓪ $pd-ix → 起点 → 竞品+交互拆解 → IA批准 → 产出 .ix.md
+  Sub-steps: ⓪ Capability(workflow.skill.invoke, {"skill":"pd-ix","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}}) → 起点 → 竞品+交互拆解 → IA批准 → 产出 .ix.md
   Gate: .ix.md 产出 + 用户确认 IA
 
 Task 4: 视觉设计 — 视觉方向 + 原型（无界面需求可跳过）
-  Sub-steps: ⓪ $pd-vd → 视觉探索 → 交付线+方向 → DS(含落点) → 原型 → 产出 .vd.md
+  Sub-steps: ⓪ Capability(workflow.skill.invoke, {"skill":"pd-vd","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}}) → 视觉探索 → 交付线+方向 → DS(含落点) → 原型 → 产出 .vd.md
   Gate: .vd.md 产出 + 用户确认方向
 
 Task 5: Handoff — 衔接开发流
@@ -71,26 +73,32 @@ Task 5: Handoff — 衔接开发流
 **Light 场景**：
 ```
 Task 1: PRD — 收敛成文档
-  Sub-steps: ⓪ $pd-prd → 读 memo + clarify → 写 .prd.md
+  Sub-steps: ⓪ Capability(workflow.skill.invoke, {"skill":"pd-prd","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}}) → 读 memo + clarify → 写 .prd.md
   Gate: .prd.md 产出 + 用户确认
 
 Task 2: 交互设计 — 界面结构 + 交互流（无界面需求可跳过）
-  Sub-steps: ⓪ $pd-ix → 起点 → 竞品+交互拆解 → IA批准 → 产出 .ix.md
+  Sub-steps: ⓪ Capability(workflow.skill.invoke, {"skill":"pd-ix","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}}) → 起点 → 竞品+交互拆解 → IA批准 → 产出 .ix.md
   Gate: .ix.md 产出 + 用户确认 IA
 
 Task 3: 视觉设计 — 视觉方向 + 原型（无界面需求可跳过）
-  Sub-steps: ⓪ $pd-vd → 视觉探索 → 交付线+方向 → DS(含落点) → 原型 → 产出 .vd.md
+  Sub-steps: ⓪ Capability(workflow.skill.invoke, {"skill":"pd-vd","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}}) → 视觉探索 → 交付线+方向 → DS(含落点) → 原型 → 产出 .vd.md
   Gate: .vd.md 产出 + 用户确认方向
 
 Task 4: Handoff — 衔接开发流
   Gate: 用户决定是否进 devflow
 ```
 
+调用时把所选场景的**每一条** Task 编译成稳定 item：`id` 固定、`subject` 为标题、`description` 完整包含 Sub-steps + Gate、初始 `status=pending`，仅 Handoff 设置 `handoff`。不得传空 items：
+
+`Capability(workflow.plan.create, {"items":[{"id":"<stable-task-id>","subject":"<task-title>","description":"<complete Sub-steps and Gate>","status":"pending","handoff":"<handoff-item-only; otherwise omit>"}]})`
+
+示例只展示单项形状；真实调用必须包含所选场景全部 items。保存返回的 `planRef`；每次进入或完成阶段都通过 `Capability(workflow.plan.update, {"planRef":"<planRef>","items":[{"id":"<same-stable-id>","subject":"<same-title>","description":"<same-complete-description>","status":"<pending|in_progress|completed>","handoff":"<preserve-final-item-handoff; otherwise omit>"}]})` 提交**完整快照**（示例仍只展示单项形状）；每次 update 必须原样保留最终 item 的 `handoff`，其它 item 继续省略该字段，不得发送单项 patch。
+
 ### Step 3: 推进阶段
 
 每个阶段严格按以下 5 步执行，不跳不并行，缺任一步 = 跳步 bug：
 
-1. **加载 skill（硬 Gate）**：标 in_progress 后的第一个动作必须是 `$pd-research` / `$pd-prd` / `$pd-ix` / `$pd-vd`。没看到 Skill 调用回执，不许执行任何 sub-step——task description 里的 sub-steps 是地图，skill 内才有 clarify gate / 文档结构 / 标注约定这些详图。
+1. **加载 skill（硬 Gate）**：标 in_progress 后的第一个动作必须是 `Capability(workflow.skill.invoke, {"skill":"pd-research","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})` / `Capability(workflow.skill.invoke, {"skill":"pd-prd","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})` / `Capability(workflow.skill.invoke, {"skill":"pd-ix","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})` / `Capability(workflow.skill.invoke, {"skill":"pd-vd","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})`。没看到 Skill 调用回执，不许执行任何 sub-step——task description 里的 sub-steps 是地图，skill 内才有 clarify gate / 文档结构 / 标注约定这些详图。
 2. **顺序执行 sub-steps**：按 task description 中的子步骤链逐个执行，每个子步骤完成后确认其条件满足再进下一个。
 3. **Gate 证据点名**：所有子步骤完成后，逐条核对 Gate 条件 + 具体证据。任一条不满足 = 不标 completed。
 4. **标 completed + 停下报告**：向用户报告本阶段完成情况 + 建议下一步。**不自动进入下一阶段。**
@@ -112,7 +120,7 @@ Task 4: Handoff — 衔接开发流
 
 视觉设计完成后（或无界面需求跳过 pd-ix/pd-vd 后），提示用户下一步选择：
 
-用 request_user_input 三选：
+用 结构化决策 三选：
 
 1. **进 devflow** — "PRD + 设计已就绪，进入开发流。devflow 的 Define/Design 会以 PRD（做什么）+ design（长什么样）为输入。"
 2. **先沉淀** — "PRD 先放着，不急开发。可以用 `/distill` 沉淀这次讨论。"

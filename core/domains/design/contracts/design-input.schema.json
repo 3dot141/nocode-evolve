@@ -1,0 +1,24 @@
+{
+  "$id": "design.design-input",
+  "type": "object",
+  "properties": {
+    "operation": { "enum": ["workspace.create", "artifact.generate", "artifact.read", "artifact.write", "preview.open"] },
+    "projectRoot": { "type": "string" },
+    "kind": { "enum": ["design-system", "prototype", "document"] },
+    "name": { "type": "string" },
+    "workspaceRef": { "type": "object", "required": ["type", "ref"], "properties": { "type": { "type": "string" }, "ref": { "type": "string" } }, "additionalProperties": false },
+    "brief": { "type": "string" },
+    "workspacePath": { "type": "string" },
+    "outputDir": { "type": "string" },
+    "artifactRef": { "$ref": "design.design-result" },
+    "content": { "type": "string" },
+    "patch": { "type": "object", "additionalProperties": true }
+  },
+  "oneOf": [
+    { "type": "object", "required": ["operation", "projectRoot", "kind", "name"], "properties": { "operation": { "const": "workspace.create" } } },
+    { "type": "object", "required": ["operation", "workspaceRef", "kind", "brief", "outputDir"], "properties": { "operation": { "const": "artifact.generate" } } },
+    { "type": "object", "required": ["operation", "artifactRef"], "properties": { "operation": { "enum": ["artifact.read", "preview.open"] } } },
+    { "type": "object", "required": ["operation", "artifactRef"], "properties": { "operation": { "const": "artifact.write" } }, "oneOf": [{ "required": ["content"] }, { "required": ["patch"] }] }
+  ],
+  "additionalProperties": false
+}

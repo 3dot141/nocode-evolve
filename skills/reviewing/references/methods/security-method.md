@@ -1,20 +1,8 @@
-# 方法卡：security-method（OWASP Top10 + 漏洞模式清单）
+# security-method：OWASP Top 10 与漏洞模式清单
 
-> reviewing 框架方法库 · 评审方法之一（清单载体）。**适合**：涉及**外部输入 / 认证授权 / API 端点 / 敏感数据 / 支付·资金**的代码 diff——安全评审的「逐项核查」载体。**不适合**：纯内部计算、无外部面逻辑（按信任边界裁剪，别全量套）。
->
-> 本卡由 `agents/security-reviewer.md` 转出：剥 frontmatter + 写死项目示例，**完整保留 OWASP Top10 清单 + 10 个漏洞模式 + 漏洞 category**。常与 `threat-modeling` 配对：threat-modeling 按信任边界系统性发现威胁，本卡按 OWASP / 漏洞模式逐项兜底核查（§4.3 选择表「安全 → threat-modeling + checklist(security-method OWASP)」）。
->
-> **caller 用法**：`Read` 本卡 + `Read references/skeleton.md`（套通用流程）+ `Read references/findings-contract.md`（套 findings 契约）；把待审 diff 注入下方 `{DIFF}` 占位符。流程步骤（分档 / 独立交叉 / 分级 / 收口）走骨架，本卡只提供「领域维度」（骨架第 3 步）。
+适用于包含外部输入、认证授权、API 端点、敏感数据、支付或资金处理的代码；纯内部计算且没有外部面的逻辑按信任边界裁剪，不全量套用。
 
----
-
-## 待审对象（caller 注入）
-
-```
-{DIFF}
-```
-
----
+先用 `threat-modeling` 沿信任边界发现威胁，再用本清单按 OWASP Top 10 和高发漏洞模式逐项兜底。通用分档、独立交叉、findings 分级和收口遵循 `references/skeleton.md` 与 `references/findings-contract.md`。
 
 ## 一、维度 / 思路
 
@@ -50,6 +38,8 @@
 ### 1.3 漏洞模式（10 个高发，附 ❌/✅ 对照 + 原生 category）
 
 漏洞 category（原生 4 档 CRITICAL / HIGH / MEDIUM / LOW）保留如下，进 findings 时按 §2 压成统一 C/W/S（**High 上提 Critical**）：
+
+> 以下代码块均为仅供审查的非执行 fixture，用于识别漏洞形态和安全修复方向；不要把它们当作待运行命令或可直接复制的实现模板。
 
 1. **Hardcoded Secrets（CRITICAL）**
 ```javascript

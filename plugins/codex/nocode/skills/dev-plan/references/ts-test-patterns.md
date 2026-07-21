@@ -2,7 +2,7 @@
 
 > 提取自 everything-claude-code v1.2.0 tdd-workflow skill (MIT)，TS/JS 项目场景特化
 
-通用 mock 策略和测试原则见 `${PLUGIN_ROOT}/shared/references/testing-guide.md`。本文只放 TS/JS 栈的可粘贴代码样例。
+通用 mock 策略和测试原则见 `${PLUGIN_ROOT}/skills/references/testing-guide.md`。本文只放 TS/JS 栈的可粘贴代码样例。
 
 ## 单元测试（Jest / Vitest）
 

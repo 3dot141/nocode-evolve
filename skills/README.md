@@ -44,7 +44,7 @@ skills/
 |---|---|
 | `agents-launcher` | 本仓 fx-data-agents 三服务（web/agents/server）本地 dev 启停编排 |
 | `bkt` | Bitbucket CLI（仓库 / PR / 分支 / issue / webhook / pipeline） |
-| `claude-design` | Claude Design 项目的终端操作（建项目 / 读写文件 / 预览 / 设计系统 / 分享） |
+| `open-design` | provider-neutral Design 操作入口（Open Design 主路，本地 HTML 显式降级） |
 | `lark-project` | 飞书项目管理（工作项读取含附件 / 状态流转 / 搜索 / 创建更新） |
 | `lark-read` | 完整读取飞书文档（文字 + 嵌入图片） |
 | `signoz-cli` | 查询 SigNoz 的 trace / log / metric，跑 PromQL/ClickHouse SQL |
@@ -55,7 +55,7 @@ skills/
 |---|---|
 | `brainstorming` | 创意工作前的意图 / 需求 / 设计探索对话（vendor: superpowers） |
 | `caveman` | 精简回复模式，省 token，"正常模式" 前持续生效 |
-| `continuous-learning-v2` | 基于 instinct 的会话观察学习系统，置信度评分并演化为 skill/command/agent（vendor: everything-claude-code） |
+| `continuous-learning-v2` | 源码保留但已停用：不发布到 Claude/Codex 生成产物，也不注册 observer Hook |
 | `dispatching-parallel-agents` | 2+ 独立任务的并行 subagent 派发方法论（vendor: superpowers） |
 | `eval-harness` | EDD（eval 驱动开发）正式评估框架（vendor: everything-claude-code） |
 | `receiving-code-review` | 接收 review 反馈时先验证再实现，不盲从（vendor: superpowers） |
@@ -66,11 +66,11 @@ skills/
 | `skill-writing` | 创建 / 编辑 / 测试 / 优化 skill 的 TDD 方法论，替代 writing-skills 和 skill-creator |
 | `strategic-compact` | 在逻辑阶段边界建议手动 `/compact`，而非依赖任意时机的自动压缩（vendor: everything-claude-code） |
 | `systematic-debugging` | 提出修复前先系统化定位根因（vendor: superpowers） |
-| `using-git-worktrees` | 建立 / 清理隔离工作区（`git worktree add -b` 创建 + `EnterWorktree(path)` 进入）（vendor: superpowers，fork 改造版） |
+| `using-git-worktrees` | 建立 / 清理隔离工作区（`git worktree add -b` 创建 + `[provider-neutral workflow boundary]` 进入）（vendor: superpowers，fork 改造版） |
 
 ## 与 commands/、agents/ 的关系
 
-- **commands/**：用户 `/slash` 命令入口。是 skill 的可选显式触发面，多对多——一个命令可能路由到一个或多个 skill（如 `/nocodehub` 聚合入口），一个 skill 也可能没有对应命令、只靠触发词自动调起。
-- **agents/**：subagent 定义（`architect` / `code-reviewer` / `database-reviewer` / `security-reviewer` / `planner` / `tdd-guide` 等），是 `dev-review`、`dev-design`、`dev-plan`、`dev-build` 等 skill 在执行过程中派发的独立评审/规划 subagent，属于 skill 的执行资源。
+- **commands/**：入口 Skill 的作者态单源，由两个 adapter 统一生成到 `skills/<name>/SKILL.md`，不再发布原生 `commands/`。
+- **agents/**：agent profile 的作者态单源，由两个 adapter 统一生成到 `using-nocode/references/agents/`，再由 workflow provider 执行。
 
 新增 skill、修改 SKILL.md、workflow 类登记流程等细节见本目录 `AGENTS.md`。

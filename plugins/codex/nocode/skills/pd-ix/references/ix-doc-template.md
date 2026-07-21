@@ -1,6 +1,6 @@
 # .ix.md 模板
 
-Step 3 产出 `.ix.md` 时使用此模板。本文档只承载交互设计——视觉方向 / 设计系统 / 原型属于 `.vd.md`（pd-vd 产出），不在此出现（分工契约见 `${PLUGIN_ROOT}/shared/references/ix-vd-contract.md`）。
+Step 3 产出 `.ix.md` 时使用此模板。本文档只承载交互设计——视觉方向 / 设计系统 / 原型属于 `.vd.md`（pd-vd 产出），不在此出现（分工契约见 `${PLUGIN_ROOT}/skills/references/ix-vd-contract.md`）。
 
 ```markdown
 # 交互设计: {title}

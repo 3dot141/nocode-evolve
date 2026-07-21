@@ -14,7 +14,7 @@
 
 **审查/质量**：`/code-review`、`/simplify`（v2.1.154+ 从 `/code-review` 拆分独立，专注清理不找 bug）、`/security-review`、`/diff`、`/ultrareview`（现推荐用 `/code-review ultra`）、`/ultraplan`
 
-**Skills 型内置命令**（本质是 bundled skill，会自动触发也可手动调）：`/batch`、`/claude-api`、`/code-review`、`/debug`、`/design-sync`、`/fewer-permission-prompts`、`/loop`、`/run`、`/run-skill-generator`、`/simplify`、`/verify`
+**Skills 型内置命令**（本质是 bundled skill，会自动触发也可手动调）：`/batch`、`/claude-api`、`/code-review`、`/debug`、`Open Design provider`、`/fewer-permission-prompts`、`/loop`、`/run`、`/run-skill-generator`、`/simplify`、`/verify`
 
 **跨端/协作**：`/desktop`（别名 `/app`）、`/teleport`（别名 `/tp`）、`/remote-control`（别名 `/rc`）、`/cd`（v2.1.169+）、`/add-dir`、`/ide`
 
@@ -41,7 +41,7 @@ MCP 服务器可暴露 prompt 作为命令，格式 `/mcp__<server>__<prompt>`�
 | v2.1.91 / v2.1.92 | `/pr-comments`、`/vim` 分别被移除 |
 | v2.1.98 | `/advisor` 命令 + `Monitor` 工具引入 |
 | v2.1.117 | fork subagent 能力引入（当时需设 `CLAUDE_CODE_FORK_SUBAGENT=1`） |
-| v2.1.142 | `TodoWrite` 默认禁用改用 `TaskCreate/TaskGet/TaskList/TaskUpdate`；`permissions.defaultMode: "auto"` 写在项目/本地 settings 会被忽略，必须写用户级 |
+| v2.1.142 | `TodoWrite` 默认禁用改用 `workflow.plan.create/workflow plan item/workflow plan snapshot/workflow.plan.update`；`permissions.defaultMode: "auto"` 写在项目/本地 settings 会被忽略，必须写用户级 |
 | v2.1.145 | `/run`、`/run-skill-generator`、`/verify` 引入 |
 | v2.1.152 | `/reload-skills` 引入 |
 | v2.1.154 | `/code-review` 与 `/simplify` 拆分 |

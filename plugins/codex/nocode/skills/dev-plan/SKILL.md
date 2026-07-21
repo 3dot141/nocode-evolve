@@ -3,6 +3,8 @@ name: dev-plan
 description: "Use when you have defined goals and need to break work into tasks."
 ---
 
+> 本文写“结构化决策”时，必须把当前步骤的完整问题与 2–3 个互斥选项编译为 `Capability(workflow.decision.request, {"question":"<self-contained current-step question>","options":[{"label":"<option-label>","description":"<impact or tradeoff>"}],"allowFreeform":false})`；示例只展示单项形状，真实调用需带齐本步骤列出的选项，不得回退到平台专属提问工具。
+
 # plan — 把目标拆成任务序列
 
 **Iron Law: 计划里贴的是真实代码和命令，不是占位符。写不出真实代码 = 还没想清楚。**
@@ -32,7 +34,7 @@ description: "Use when you have defined goals and need to break work into tasks.
 
 ## 协议
 
-### Step 0: update_plan
+### Step 0: workflow.plan.create
 
 **进入后第一件事**，创建以下全部 task：
 
@@ -77,14 +79,20 @@ Task 8: Round 2 Checklist 核查 + 跨 task 一致性自查 + Plan Validation
   Gate: checklist + 一致性自查完成 + 修正完成 + 四项自检全过（任一不过回 Task 7 补）
 
 Task 9: 用户确认计划
-  Sub-steps: 完整呈现计划 → request_user_input 确认
+  Sub-steps: 完整呈现计划 → 结构化决策 确认
   Gate: 用户确认计划
 
 Task 10: 硬交接 — 调用下一步 skill
-  Sub-steps: 按 Exit Gate 硬交接报告 Plan 完成（task 数 + 首个 slice）→ 建议进 Build → 等用户拍板后调 $dev-build
+  Sub-steps: 按 Exit Gate 硬交接报告 Plan 完成（task 数 + 首个 slice）→ 建议进 Build → 等用户拍板后调 Capability(workflow.skill.invoke, {"skill":"dev-build","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})
   Gate: 用户拍板进入 Build（这一步不勾，Plan 不算收尾）
   metadata: {handoff: true}（供防跳步 Hook B 识别交接 task）
 ```
+
+调用时把上面**每一条** Task 编译成一个稳定 item：`id` 固定、`subject` 为标题、`description` 完整包含 Sub-steps + Gate、初始 `status=pending`，仅最后一项设置 `handoff`。不得只改名后继续依赖平台 task 工具，也不得传空 items：
+
+`Capability(workflow.plan.create, {"items":[{"id":"<stable-task-id>","subject":"<task-title>","description":"<complete Sub-steps and Gate>","status":"pending","handoff":"<final-item-only; otherwise omit>"}]})`
+
+示例只展示单项形状；真实调用必须包含本段清单的全部 items。保存返回的 `planRef`。每次状态变化都用 `Capability(workflow.plan.update, {"planRef":"<planRef>","items":[{"id":"<same-stable-id>","subject":"<same-title>","description":"<same-complete-description>","status":"<pending|in_progress|completed>","handoff":"<preserve-final-item-handoff; otherwise omit>"}]})` 提交**完整快照**（示例仍只展示单项形状）；每次 update 必须原样保留最终 item 的 `handoff`，其它 item 继续省略该字段，不得发送单项 patch。
 
 每完成一个标 done。
 
@@ -94,7 +102,8 @@ Task 10: 硬交接 — 调用下一步 skill
 1. restate（成果物/验收标准/约束/Out of Scope）
 2. dev-design 产出的设计文档（含领域划分、模块设计、接口、业务流、测试目标）
 3. **定向加载**：设计文档「前置调研」章节的 `path:line` 引用就是加载清单——要改的文件、关键 caller、pattern 参照、类型/接口定义大多已被 Design 探索过并引用，逐条定向 Read（含对应测试文件），不重新自由探索。Standard 场景（无设计文档）用 restate 附录探索胶囊的 findings sources 作加载清单，同样定向 Read
-4. 清单没覆盖、本次拆解又需要的文件，再补搜（精确匹配走 rg，语义找走 `spawn_agent(nocode:semble-search)`）——补缺，不是重扫
+4. 清单没覆盖、本次拆解又需要的文件，再补搜（精确匹配走 rg；语义查找走 `Capability(workflow.execute, {"tasks":[{"id":"plan-gap-search","objective":"只补齐当前计划缺失的实现位置；返回路径、符号、证据和它对应的计划缺口；不得重扫已覆盖范围，不修改工作树","profile":"search.semantic","dependsOn":[],"writeScope":"none","timeoutMs":120000,"continueOnError":false}],"maxParallel":1,"fallbackPolicy":"inline"})`）——补缺，不是重扫
+   - 保存 `executionId`；若 `status=running`，反复执行 `Capability(workflow.wait, {"executionId":"<execution-id>","timeoutMs":120000})` 直到终态，再执行 `Capability(workflow.collect, {"executionId":"<execution-id>"})` 从 `tasks[0].result` 读取补搜结果
 
 发现自己开始改文件 → 停——你在跳过 Plan 直接 Build。
 
@@ -118,7 +127,7 @@ Task 10: 硬交接 — 调用下一步 skill
 
 ### Step 4: 写 task 骨架（Round 1）
 
-每个 task 用 `references/task-template.md` 格式。路径/约束 ID 约定见 `${PLUGIN_ROOT}/shared/references/path-conventions.md`。
+每个 task 用 `references/task-template.md` 格式。路径/约束 ID 约定见 `${PLUGIN_ROOT}/skills/references/path-conventions.md`。
 
 Round 1 写骨架——定清楚**改什么、覆盖什么、谁做**，代码留空给 Round 2 填：
 
@@ -163,7 +172,7 @@ Round 1 骨架完成，在填充代码前对计划骨架做一遍自查。骨架
 
 > 「这份计划的骨架合理吗？切片策略（垂直还是横切？每片独立可验证吗？）、依赖图（有没有隐式耦合遗漏？）、risk-first 排序（最不确定的真的排前面了吗？）、task 粒度（sizing 准吗？有 and 该拆的吗？）、restate 覆盖（有遗漏路径吗？）」
 
-自查纪律：放下"当时为什么这么排"的推理，只看骨架本身现在站不站得住；每条给一句判断 + 依据，不是走过场打勾。用户显式要求对抗审视（「红蓝军 / 深审」）才调 `$red-blue-deep`。
+自查纪律：放下"当时为什么这么排"的推理，只看骨架本身现在站不站得住；每条给一句判断 + 依据，不是走过场打勾。用户显式要求对抗审视（「红蓝军 / 深审」）才调 `Capability(workflow.skill.invoke, {"skill":"red-blue-deep","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})`。
 
 **结论落地**：自查中成立的质疑修正到骨架中（回 Step 3/4/5 对应调整）。
 
@@ -191,11 +200,11 @@ Round 1 的骨架定了"改什么"，Round 2 填"怎么改"——每个 task 补
 
 | 场景 | Read | 用来做什么 |
 |---|---|---|
-| 涉及文件结构/模块边界 | `${PLUGIN_ROOT}/shared/references/architecture-principles.md` | Deep Module / 依赖分类 / seam 纪律，指导怎么拆文件、定接口 |
-| 碰用户输入/认证/数据 | `${PLUGIN_ROOT}/shared/references/security-guide.md` | 威胁模型 / OWASP 防护模式，决定这段代码该用什么防注入写法 |
-| 碰数据库查询/前端渲染 | `${PLUGIN_ROOT}/shared/references/performance-guide.md` | N+1 / 缓存 / 懒加载模式选型 |
-| 碰 UI 组件 | `${PLUGIN_ROOT}/shared/references/frontend-guide.md` | 组件模式 / 设计系统遵循 |
-| 写测试代码前 | `${PLUGIN_ROOT}/shared/references/testing-guide.md` | 测试替身怎么选 / 测试金字塔怎么分层 / DAMP 原则 |
+| 涉及文件结构/模块边界 | `${PLUGIN_ROOT}/skills/references/architecture-principles.md` | Deep Module / 依赖分类 / seam 纪律，指导怎么拆文件、定接口 |
+| 碰用户输入/认证/数据 | `${PLUGIN_ROOT}/skills/references/security-guide.md` | 威胁模型 / OWASP 防护模式，决定这段代码该用什么防注入写法 |
+| 碰数据库查询/前端渲染 | `${PLUGIN_ROOT}/skills/references/performance-guide.md` | N+1 / 缓存 / 懒加载模式选型 |
+| 碰 UI 组件 | `${PLUGIN_ROOT}/skills/references/frontend-guide.md` | 组件模式 / 设计系统遵循 |
+| 写测试代码前 | `${PLUGIN_ROOT}/skills/references/testing-guide.md` | 测试替身怎么选 / 测试金字塔怎么分层 / DAMP 原则 |
 
 **技术栈配方（落地可粘贴代码要用）**：
 
@@ -222,7 +231,7 @@ Round 1 的骨架定了"改什么"，Round 2 填"怎么改"——每个 task 补
   Expected: PASS
 ```
 
-**UI task 的验证方式**：涉及 UI 样式且存在设计基线（样张 / 原型截图 / 设计稿）的 task，Step 8d 声明的验证方式写「设计值对齐 + 截图对比基线」（方法与词表见 `${PLUGIN_ROOT}/shared/references/frontend-guide.md`「设计基线对齐」节），不硬套测试命令；无基线则标注跳过。
+**UI task 的验证方式**：涉及 UI 样式且存在设计基线（样张 / 原型截图 / 设计稿）的 task，Step 8d 声明的验证方式写「设计值对齐 + 截图对比基线」（方法与词表见 `${PLUGIN_ROOT}/skills/references/frontend-guide.md`「设计基线对齐」节），不硬套测试命令；无基线则标注跳过。
 
 **不按 task 拆 commit**：commit 挪到 Build 阶段任务循环结束后统一处理一次（见 devflow Build sub-flow 5d），dev-plan 的 task 模板不再包含 commit 步骤。
 
@@ -246,7 +255,7 @@ Round 1 的骨架定了"改什么"，Round 2 填"怎么改"——每个 task 补
 
 > 「前置 task 的产出（接口/数据结构/约定）够后续 task 用吗？多个 task 之间有没有隐含冲突的假设？执行顺序对吗？」
 
-对着依赖图 + 接口约定 + 假设清单逐条核，每条给判断 + 依据。**升审只在两种情况**：① 用户显式要求（「红蓝军 / 深审 / 找 codex」）→ 调 `$red-blue-deep` 重档，喂依赖图 + 接口约定 + 假设清单（不喂完整实现代码）；② 计划命中敏感面（认证 / 敏感数据 / schema·migration / 资金 / 跨模块接口 / 不可逆动作）→ 向用户**一句话建议**升审，用户点头才调，不自动派发。
+对着依赖图 + 接口约定 + 假设清单逐条核，每条给判断 + 依据。**升审只在两种情况**：① 用户显式要求（「红蓝军 / 深审 / 找 codex」）→ 调 `Capability(workflow.skill.invoke, {"skill":"red-blue-deep","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})` 重档，喂依赖图 + 接口约定 + 假设清单（不喂完整实现代码）；② 计划命中敏感面（认证 / 敏感数据 / schema·migration / 资金 / 跨模块接口 / 不可逆动作）→ 向用户**一句话建议**升审，用户点头才调，不自动派发。
 
 **结论落地**：checklist 发现的问题 + 自查中成立的质疑，都修正到计划中（回 Step 7 修正对应 task）。
 
@@ -278,10 +287,10 @@ task 间依赖不成环，底层 task 排前面。循环依赖说明切片方式
 
 ### Step 9: 用户确认计划 + 选执行方式
 
-拆两回合，**计划内容禁塞 request_user_input**（塞 `question` 挤成密集段落、塞 `preview` 被终端折叠 `N lines hidden`，用户什么都没看清就被要求确认）：
+拆两回合，**计划内容禁塞 结构化决策**（塞 `question` 挤成密集段落、塞 `preview` 被终端折叠 `N lines hidden`，用户什么都没看清就被要求确认）：
 
 - **展示回合**：计划全景作为**回合末尾文本**完整输出——plan 文件路径 + per-task 清单（有序列表，一行一个：编号 / 标题 / 一句验证方式）+ 对抗审视结论一行；末尾问两件事：「计划确认吗？Build 执行方式选哪种？」并给出两种方式一行说明。**结束回合，不接任何工具调用**。
-- **确认回合**：用户回应通常已是决策（确认 + 执行方式 / 具体修改意见）→ 直接采纳；要改 → 改后重走展示回合；回应只确认了计划没选执行方式 → request_user_input 只补问执行方式（question 写 plan 路径 + task 数一行摘要，不复述计划）。
+- **确认回合**：用户回应通常已是决策（确认 + 执行方式 / 具体修改意见）→ 直接采纳；要改 → 改后重走展示回合；回应只确认了计划没选执行方式 → 结构化决策 只补问执行方式（question 写 plan 路径 + task 数一行摘要，不复述计划）。
 
 执行方式三选一：
 
@@ -335,7 +344,7 @@ task 间依赖不成环，底层 task 排前面。循环依赖说明切片方式
 | "简单的先做，难的留后面" | risk-first：不确定性留到投入最大时暴露更贵 |
 | "checkpoint 太频繁拖节奏" | 风险驱动 + fallback 3 已经降频了。省掉它出问题只能回退整个计划 |
 | "自查走个形式就行" | 骨架改一行 vs 填充完改十行。前置自查省的是后面的返工——每条要有判断 + 依据，不是打勾 |
-| "这个改动简单，跳过某 Step 或不建 update_plan" | 进了 skill 就走完所有 Step。"简单"是你的判断，不是跳 Gate 的授权 |
+| "这个改动简单，跳过某 Step 或不建 workflow.plan.create" | 进了 skill 就走完所有 Step。"简单"是你的判断，不是跳 Gate 的授权 |
 
 ## Red Flags
 
@@ -348,5 +357,5 @@ task 间依赖不成环，底层 task 排前面。循环依赖说明切片方式
 - task 缺 `covers` 字段，或汇总后有路径没被任何 task 覆盖（漏实现的早期信号）
 - Round 2 的 checklist 核查 / 跨 task 一致性自查被跳过（这是 plan → build 前最后一道审视；自查是默认档不可省，升审派独立路仅用户显式要求）
 - 自查（或升审）结论中成立的质疑没有落实到骨架/代码修正
-- 因"任务简单 / 还在概览 / 用户说了'继续'"跳过某 Step、不建 Step 0 update_plan、或漏掉最后的交接 task
+- 因"任务简单 / 还在概览 / 用户说了'继续'"跳过某 Step、不建 Step 0 workflow.plan.create、或漏掉最后的交接 task
 - 计划里出现"E2E 全链路验证""既有功能回归"这类整体确认性 task —— 不是 tracer bullet，违反 task 定义。应删除该 task，改为核对设计文档「汇总」节的验证策略总表是否已覆盖，交给 dev-verify 执行

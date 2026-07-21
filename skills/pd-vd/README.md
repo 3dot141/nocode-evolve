@@ -8,7 +8,7 @@
 
 - `{topic}.vd.md` — 视觉方向、tokens 冻结表、组件清单、原型清单、验证记录（模板：`references/vd-doc-template.md`）
 - `styleguide.html` — 单页样张（tokens + 全部组件 + patterns 骨架，Step 3 拍板产物）
-- `{topic}.prototype.html` — 高保真可交互原型（唯一档位，覆盖度恒 100%；Claude Design 线为原型项目 + DS 项目）
+- `{topic}.prototype.html` — 高保真可交互原型（唯一档位，覆盖度恒 100%；Open Design 线为原型项目 + DS 项目）
 
 ## 在产品流中的位置
 
@@ -28,7 +28,7 @@ pd-ix 和 pd-vd 由原 pd-ui skill 拆分而来（260630）。拆分原因：交
 - `dev-design` — Step 2 读 `.vd.md` 理解视觉方向、tokens 冻结表（按名继承，禁改名）
 - `dev-build` — 有原型时注入视觉清点纪律，样张作组件参考
 - `dev-verify` — 复用 `interactions.json` / `screenshots/` 做验证
-- `claude-design` — Step 3/4 调 claude-design 生成设计系统与原型
+- Design domain — Step 3/4 通过 Open Design 主 provider 生成设计系统与原型，并保存完整 receipt；不可用时显式降级为本地 HTML
 
 ## 与 pd-ix 的分工
 

@@ -52,7 +52,7 @@ function buildQuery(filter: Filter, opts?: { unbounded?: boolean }) {
 
 ### T3 — export 端点 [HITL, 权限确认] [M, 2 文件]
 
-**领域指南消费**：碰权限校验 → 读 `${PLUGIN_ROOT}/shared/references/security-guide.md` 的 Broken Access Control 段，确认中间件复用而非重开一套校验逻辑
+**领域指南消费**：碰权限校验 → 读 `${PLUGIN_ROOT}/skills/references/security-guide.md` 的 Broken Access Control 段，确认中间件复用而非重开一套校验逻辑
 
 ```ts
 // api/orders/export.ts
@@ -98,7 +98,7 @@ T1+T2 完成后插 checkpoint：两个工具单测通过 + build 通过 → 再�
 
 #### 8a. Checklist 核查 + 跨 task 一致性自查
 
-主会话就地核查完整计划（用户显式要求「红蓝军 / 深审」时才调 `$red-blue-deep`）。
+主会话就地核查完整计划（用户显式要求「红蓝军 / 深审」时才调 `[provider-neutral skill boundary]`）。
 
 **自查问题**：「这份填充了真实代码的计划拿去执行可行吗？代码/测试/设计一致性/执行顺序？」
 

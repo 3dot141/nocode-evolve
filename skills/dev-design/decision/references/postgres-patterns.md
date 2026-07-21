@@ -2,7 +2,7 @@
 
 # PostgreSQL 设计速查
 
-设计涉及 PostgreSQL 的 schema、索引、查询、RLS 时的速查参考。深度审查交给 `database-reviewer` agent。
+设计涉及 PostgreSQL 的 schema、索引、查询、RLS 时的速查参考。需要深度审查时，由调用方交接到 `reviewing` Skill 并声明数据库专项。
 
 ## 索引速查
 

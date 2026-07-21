@@ -16,8 +16,8 @@
       "reason": "自动沉淀 instinct，单独评估接线"
     },
     "strategic-compact": {
-      "action": "keep-as-skill",
-      "reason": "逻辑边界建议 /compact，独立行为"
+      "action": "fork",
+      "reason": "双运行时改造版：保留可选手动 compact 指引，但不跨层指路插件 Hook 实现；上游更新需人工 diff 合并"
     },
     "iterative-retrieval": {
       "action": "absorb",
@@ -98,24 +98,24 @@
   },
   "agents": {
     "architect": {
-      "action": "keep-as-agent",
-      "reason": "通用架构设计 subagent，dev-design 调用"
+      "action": "skip",
+      "reason": "架构评审已由 reviewing 的 architecture-method 单源覆盖，不保留转发薄壳"
     },
     "planner": {
       "action": "keep-as-agent",
       "reason": "通用任务规划 subagent，dev-plan 调用"
     },
     "code-reviewer": {
-      "action": "keep-as-agent",
-      "reason": "通用代码审查 subagent，dev-review 调用"
+      "action": "skip",
+      "reason": "代码质量评审已由 reviewing 的 code-quality-method 单源覆盖，不保留转发薄壳"
     },
     "security-reviewer": {
-      "action": "keep-as-agent",
-      "reason": "OWASP 安全审查 subagent，dev-review 调用"
+      "action": "skip",
+      "reason": "安全评审已由 reviewing 的 security-method 与 threat-modeling 单源覆盖，不保留转发薄壳"
     },
     "database-reviewer": {
-      "action": "keep-as-agent",
-      "reason": "PG 数据库审查 subagent，dev-review 调用"
+      "action": "skip",
+      "reason": "数据库评审已由 reviewing 的 database-method 单源覆盖，不保留转发薄壳"
     },
     "tdd-guide": {
       "action": "keep-as-agent",

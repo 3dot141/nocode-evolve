@@ -1,3 +1,5 @@
+> 本文写“结构化决策”时，必须把当前步骤的完整问题与 2–3 个互斥选项编译为 `Capability(workflow.decision.request, {"question":"<self-contained current-step question>","options":[{"label":"<option-label>","description":"<impact or tradeoff>"}],"allowFreeform":false})`；示例只展示单项形状，真实调用需带齐本步骤列出的选项，不得回退到平台专属提问工具。
+
 # 行为准则
 
 ## 输出语言
@@ -38,9 +40,10 @@
 - 中：每个决策点对照真实代码，引用给 `path:line`。
 - 后：逐项回扫，确认方案里每个文件 / 函数 / 配置仍成立。
 
-**评估类提问调红蓝军**：用户问「怎么样 / 行不行 / 合适吗 / 值得吗 / 选 A 还是 B / 哪个更好」或显式说「红蓝军 / 第一性原理」→ 调 `$red-blue-deep`（skill 内判档位）。调用前不要自己先给结论。纯事实 / 执行 / 检索不触发。
+**评估类提问调红蓝军**：用户问「怎么样 / 行不行 / 合适吗 / 值得吗 / 选 A 还是 B / 哪个更好」或显式说「红蓝军 / 第一性原理」→ 调 `Capability(workflow.skill.invoke, {"skill":"red-blue-deep","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})`（skill 内判档位）。调用前不要自己先给结论。纯事实 / 执行 / 检索不触发。
 
-**代码搜索走 semble-search**：按语义 / 符号 / 意图找实现或相关代码 → `spawn_agent(nocode:semble-search)`，不盲扫。fallback 链见 `agents/semble-search.md`，全不可用退 Bash rg / Explore 并报告。
+**代码搜索走 semble-search**：按语义 / 符号 / 意图找实现或相关代码 → `Capability(workflow.execute, {"tasks":[{"id":"semantic-code-search","objective":"按当前问题的语义、符号与意图定位相关实现；返回路径、位置、匹配依据和候选优先级；只读，不修改工作树","profile":"search.semantic","dependsOn":[],"writeScope":"none","timeoutMs":120000,"continueOnError":false}],"maxParallel":1,"fallbackPolicy":"inline"})`，不盲扫。fallback 由 Workflow provider 处理；降级时如实报告。
+- 保存 `executionId`；当 `status=running` 时反复执行 `Capability(workflow.wait, {"executionId":"<execution-id>","timeoutMs":120000})` 直到终态，再执行 `Capability(workflow.collect, {"executionId":"<execution-id>"})` 从 `tasks[].result` 读取搜索结果。初始 execute 回执不是搜索结果。
 - 不触发（用原生工具）：已知路径 → Read；单行 literal → rg；文件名 pattern → find / Glob。
 - grep→rg：任何需要 grep 处一律换 rg，仅 rg 不可用才退回 grep 并说明。
 
@@ -55,13 +58,13 @@
 
 「先跳过这个」是跳过某步非离开，不触发。
 
-**request_user_input 确认必须 payload 自足**（常驻）：harness 只保证渲染回合末尾文本，工具调用间自由文本常被吞。凡「展示内容 → 让用户确认」：
+**结构化决策 确认必须 payload 自足**（常驻）：harness 只保证渲染回合末尾文本，工具调用间自由文本常被吞。凡「展示内容 → 让用户确认」：
 - payload 自足：短字段（target / 路径 / 一行值）把实际值写进 `question`；短小长内容（计划 / 清单 / 树 / body，≤10 行）放 `options[].preview`；多选每个 option 自带「编号 + 摘要 + 处置」。
 - 禁止前文指代：question 不写「以上 / 上述…确认?」。
 - 超长内容降级：**preview 内容超 ~10 行即降级**（终端 preview 十几行就折叠成 `N lines hidden`，用户看不到就被要求确认；question 塞长段落同样挤成不可读）→ 拆两步——展示步把内容作为回合末尾文本输出后结束回合（不再接工具调用），确认步在用户回应后的下一回合发起（用户回应已是决策则省掉 ask）。绝不「文本展示 + 同回合 ask」。
 - 已落盘文件：给路径 + 关键结论摘要即可。
 
-触发：所有用 request_user_input 确认「刚生成内容」的场景（Gate / 计划 / restate / 候选勾选 / findings / Go-No-Go）。纯选择题（模式切换 / 场景分类 / 深度选择）不触发。
+触发：所有用 结构化决策 确认「刚生成内容」的场景（Gate / 计划 / restate / 候选勾选 / findings / Go-No-Go）。纯选择题（模式切换 / 场景分类 / 深度选择）不触发。
 
 # SKILL & RULE -> EXPERIENCE
 
@@ -106,7 +109,7 @@
 | 占位符 | 默认值 | 说明 |
 |---|---|---|
 | `{username}` | `3dot141` | GitHub username，路径分目录 / 归属标记 |
-| `${PLUGIN_ROOT}/shared/references` | `${PLUGIN_ROOT}/shared/references` | 共享领域指南绝对路径（env，SessionStart 写入）|
+| `${PLUGIN_ROOT}/skills/references` | `${PLUGIN_ROOT}/skills/references` | 共享领域指南绝对路径（env，SessionStart 写入）|
 
 ## 文档产出路径变量
 
@@ -118,7 +121,7 @@
 
 | 变量 | 默认值 | skill |
 |---|---|---|
-| `{pd_research_output}` | `{PD_BASE_DIR}/esearch-report.md` | pd-research |
+| `{pd_research_output}` | `{PD_BASE_DIR}/research-report.md` | pd-research |
 | `{pd_prd_output}` | `{PD_BASE_DIR}/{topic}.prd.md` | pd-prd |
 | `{pd_ix_output}` | `{PD_BASE_DIR}/{topic}.ix.md` | pd-ix |
 | `{pd_vd_output}` | `{PD_BASE_DIR}/{topic}.vd.md` | pd-vd |
@@ -140,4 +143,3 @@
 - 时间格式 `yymmdd`（例 `260511`）
 
 新增全局约定 / 占位符追加本文件，避免散落各 rule。
-

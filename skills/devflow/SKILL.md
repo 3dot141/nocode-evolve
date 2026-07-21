@@ -28,7 +28,7 @@ Define 返回后，拿到确认的 restate + 场景分类，进 Step 2。
 
 **Full 场景产品流前置检查**（Define 返回 Full 场景后、进入 Step 2 前执行）：检查 `{pd_prd_output}` 所在目录下有没有已有 `.prd.md`：
 - 有 → Define 读它作为输入，正常进 Step 2
-- 没有 → 建议用户先走产品流（`nocode:pdflow`），用 AskUserQuestion 三选：
+- 没有 → 建议用户先走产品流（`nocode:pdflow`），调用 `Capability(workflow.decision.request, {"question":"当前 Full 场景没有 PRD，下一步如何推进？","options":[{"label":"走产品流","description":"调用 pdflow 完成 Research → PRD 后返回 devflow"},{"label":"只做 research","description":"调用 pd-research 产出调研输入后返回"},{"label":"跳过产品调研","description":"按当前用户描述直接进入工程流"}],"allowFreeform":false})`：
   1. "走产品流 (pdflow)" — 调起产品流驾驶舱（Research → PRD），完成后回 devflow
   2. "只做 research" — 调起 `nocode:pd-research` 单独调研
   3. "跳过，直接继续" — 不做产品调研，按用户描述继续
@@ -46,45 +46,45 @@ Define 返回后，拿到确认的 restate + 场景分类，进 Step 2。
 
 > Design 产出架构后，如果模块多/复杂度高需要拆分子任务，由 Design 内部的 Decompose 子步骤处理（见 Design sub-flow 3e）。devflow 不做独立的规模评估——以完整需求为准，不考虑人天/人力。
 
-### Step 3: TaskCreate
+### Step 3: 创建阶段计划
 
 为当前场景的阶段各建一条 task。每条 task 的 description 含：
 
 1. **三要素**：`调用` / `进入前 Read` / `Gate`（从「8 阶段总览」表抄）
-2. **Sub-steps 序列**：从下方「Phase sub-flows」抄该阶段的子步骤编号链，**链首固定是 `⓪ Skill(...)`**——把"加载该阶段 skill"写成显式第 0 步，进入阶段第一眼就看到
-3. **末阶段 handoff 标记**：最后一个阶段 task（交接/收口阶段，如 Land）建 TaskCreate 时带 `metadata: {handoff: true}`——供防跳步 Hook B 识别交接 task
+2. **Sub-steps 序列**：从下方「Phase sub-flows」抄该阶段的子步骤编号链，**链首固定是 `⓪ workflow.skill.invoke(<stage-skill>)`**——把“加载该阶段 skill”写成显式第 0 步，进入阶段第一眼就看到
+3. **完成条件**：最后一个阶段 item 也只记录其完整 Sub-steps 与 Gate；没有额外的 handoff 状态。
 
 示例：
-```
-TaskCreate(subject: "阶段 8: Land",
-           description: "调用: nocode:dev-land / Gate: PR merged + 任务流转 + worktree 清理
-Sub-steps: ⓪ Skill(nocode:dev-land) → 1.意图推定 → 2.全景计划 → 3.全自动执行(含 post-merge)")
+```text
+Capability(workflow.plan.create, {"items":[{"id":"env","subject":"Env","description":"⓪ using-git-worktrees → 2a 检测隔离 → 2b Gate Base → 2c 创建 → 2d 进入 → 2e setup → 2f baseline；Gate: worktree 已建并进入","status":"pending"},{"id":"plan","subject":"Plan","description":"⓪ dev-plan → 4a 读设计 → 4b 代码勘察 → 4c tracer bullets → 4d 写计划 → 4e review → 4f 补漏 → 4g 确认；Gate: 计划确认","status":"pending"},{"id":"build","subject":"Build","description":"⓪ dev-build → Scope Lock → Test First → Implement → Verify；Gate: 测试和 build 通过","status":"pending"},{"id":"verify","subject":"Verify","description":"⓪ dev-verify → 逐条验收并收集证据；Gate: 验收标准全部通过","status":"pending"},{"id":"review","subject":"Review","description":"⓪ dev-review → 五轴检查 → findings 处置；Gate: Critical 全部修复且用户确认","status":"pending"},{"id":"land","subject":"Land","description":"⓪ dev-land → 意图推定 → 全景计划 → 执行处置与 post-merge；Gate: 选定路径全部完成","status":"pending"}]})
 ```
 
-Sub-steps 写进 description 是为了**进入阶段时一眼看到完整步骤序列**——防止跳步遗漏。链首的 `⓪ Skill(...)` 是为了把"加载 skill"钉成每个阶段的第一个动作——**sub-steps 是地图，skill 才是详图**，照地图裸跑会丢掉 skill 内的模板 / Iron Law / 格式约束。
+保存返回的 `planRef`。后续每次状态变化都调用 `workflow.plan.update`，携带这个 `planRef` 和**完整 items 快照**；不得只发单项 patch，也不得用另一个会话中的 planRef。
+
+Sub-steps 写进 description 是为了**进入阶段时一眼看到完整步骤序列**——防止跳步遗漏。链首的 `⓪ workflow.skill.invoke(...)` 是为了把“加载 skill”钉成每个阶段的第一个动作——**sub-steps 是地图，skill 才是详图**，照地图裸跑会丢掉 skill 内的模板 / Iron Law / 格式约束。
 
 ### Step 4: 推进阶段
 
 每个阶段严格按以下 6 步执行，不跳不并行，缺任一步 = 跳步 bug：
 
 1. **进入前** Read 该阶段的 rule（如有）
-2. **加载 skill（硬 Gate）**：TaskUpdate 标 in_progress 后的**第一个动作**必须是 `Skill(nocode:<阶段 skill>)`。没看到 Skill 调用回执，不许执行任何 sub-step。
+2. **加载 skill（硬 Gate）**：先用 `Capability(workflow.plan.update, {"planRef":"<planRef>","items":[{"id":"<current-id>","subject":"<current-stage>","description":"<complete sub-steps and Gate>","status":"in_progress"},{"id":"<next-id>","subject":"<next-stage>","description":"<complete sub-steps and Gate>","status":"pending"},{"id":"<final-id>","subject":"<final-stage>","description":"<complete sub-steps and Gate>","status":"pending"}]})` 更新**全部阶段的完整快照**（示例只展示当前、下一和最终项，实际不能省略中间项）；成功后的第一个动作必须是 `Capability(workflow.skill.invoke, {"skill":"<current-stage-skill>","arguments":{"restate":"<confirmed restate>","stage":"<stage>","planRef":"<planRef>"}})`。没看到 Skill 调用回执，不许执行任何 sub-step。
 3. **顺序执行 sub-steps**：按 task description 中的子步骤链**逐个**执行，每个子步骤完成后确认其产出/条件满足，再进下一个子步骤。不跳步、不合并、不并行。
 4. **Gate 证据点名**：所有子步骤完成后，逐条核对 Gate 条件 + 满足它的具体证据。任一条不满足 = 不标 completed。
-5. **TaskUpdate completed + 停下报告**：标 completed 后**停下**，向用户报告本阶段完成情况 + 下一步建议（格式见 Step 5）。**不自动进入下一阶段。**
+5. **更新计划为 completed + 停下报告**：通过 `workflow.plan.update` 提交完整 items 快照后停下，向用户报告本阶段完成情况 + 下一步建议（格式见 Step 5）。**不自动进入下一阶段。**
 6. **等用户拍板**：用户明确说 OK / 继续 / 下一步，才标下一阶段 in_progress 并进入。
 
 **两条强制工序**：
 
-- **加载 skill 是硬 Gate**——task description 抄了 sub-steps，不等于可以照着裸跑。sub-steps 只列"做什么"，skill 内才有"怎么做"（模板 / Iron Law / 格式约束 / Gate 细节）。跳过 `Skill()` = 丢掉一半指令，这正是本 todo 流程要防的 bug。
+- **加载 skill 是硬 Gate**——plan item description 抄了 sub-steps，不等于可以照着裸跑。sub-steps 只列“做什么”，skill 内才有“怎么做”（模板 / Iron Law / 格式约束 / Gate 细节）。跳过 `workflow.skill.invoke` = 丢掉一半指令，这正是本流程要防的 bug。
 - **Gate 证据是强制工序**——"大概过了 / 应该没问题"不算证据。拿不出证据 = 不标 completed = 不进下一阶段。
 
 **反例**（触发本次强化的 bug）：
 ```
 ❌ 进入 Build 阶段，看到 task description 里已有 "5a.Scope Lock → 5b.Test First → ..."，
-   直接照着写代码——没调 Skill(nocode:dev-build)，丢了 TDD Iron Law 和 slice 循环约束。
+   直接照着写代码——没调 Capability(workflow.skill.invoke, {"skill":"dev-build","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})，丢了 TDD Iron Law 和 slice 循环约束。
 ```
-正确做法：标 in_progress → 先 `Skill(nocode:dev-build)` 拿到完整指令 → 再按 sub-steps 推进。
+正确做法：用完整快照标 in_progress → `Capability(workflow.skill.invoke, {"skill":"dev-build","arguments":{"restate":"<confirmed restate>","planRef":"<planRef>"}})` 拿到完整指令 → 再按 sub-steps 推进。
 
 ### Step 5: 输出建议 + 等用户拍板
 
@@ -120,7 +120,7 @@ Land 有 5 个子步骤（8a Create PR → 8b ... → 8e Cleanup），只说"pus
 | # | 阶段 | 调用 | 进入前 Read | Gate |
 |---|---|---|---|---|
 | 1 | **Define** | `nocode:dev-define` | — | 问题边界收敛 + 场景分类 + 用户确认 |
-| 2 | **Env** | Gate Base → `nocode:using-git-worktrees` → EnterWorktree | `rule-git-worktree` | worktree 已建并进入（注：Env 不需要独立 nocode skill，逻辑完全由 superpowers skill + rule-git-worktree 覆盖） |
+| 2 | **Env** | Gate Base → `nocode:using-git-worktrees` → `workspace.worktree.enter` | `rule-git-worktree` | worktree 已建并进入（注：Env 不需要独立 nocode skill，逻辑完全由 superpowers skill + rule-git-worktree 覆盖） |
 | 3 | **Design** | `nocode:dev-design` | — | 方案确认 + 测试目标 + 设计文档评审通过 + 用户 approve |
 | 4 | **Plan** | `nocode:dev-plan` | — | 计划已产出 + 所有 task ≤ M + 用户确认 |
 | 5 | **Build** | `nocode:dev-build` | — | 所有 task 完成 + 测试通过 + build 通过 |
@@ -186,20 +186,20 @@ Fix 类任务的 Review 通过后，问一句：**"什么能预防这个 bug？"
 
 ### Phase sub-flows（全阶段子步骤 + 决策点）
 
-每个阶段的子步骤序列。Step 3 TaskCreate 时抄编号链，Step 5 进入时展开决策点。
+每个阶段的子步骤序列。Step 3 创建 plan snapshot 时抄编号链，Step 5 进入时展开决策点。
 
-> 下表只列阶段内子步骤。**每条链实际都隐含一个 `⓪ Skill(<阶段 skill>)` 前置步**（见 Step 3 / Step 4）——进入阶段先加载 skill，再走表里的子步骤，表略去 ⓪ 不重复。
+> 下表只列阶段内子步骤。**每条链实际都隐含一个 `⓪ workflow.skill.invoke(<阶段 skill>)` 前置步**（见 Step 3 / Step 4）——进入阶段先加载 skill，再走表里的子步骤，表略去 ⓪ 不重复。
 
 #### Define sub-flow
 
 | Sub-step | 做什么 | 决策 |
 |---|---|---|
-| 1a. 场景分类 | AskUserQuestion 四选 | Full/Standard/Fix/Mini（拿不准偏 Full） |
+| 1a. 场景分类 | `workflow.decision.request` 四选 | Full/Standard/Fix/Mini（拿不准偏 Full） |
 | 1b. 实现范围确认 | PRD 有多 Phase/模块时，明确问用户"这次做哪些" | 不问 = 默认全部；禁止自行假设只做部分 |
 | 1c. 假设先行 | hypothesis + confidence | ≥95% 跳 1d 走快速路径 |
 | 1d. 澄清循环 | 一次一问（代码能答的不问用户） | 95% 停止测试退出循环 |
 | 1e. 产出 restate | 结构化输出（含实现范围） | Quality Bar + Out of Scope + 实现范围 不可省 |
-| 1f. 用户确认 | AskUserQuestion 三选 | 确认/修改/重来（"随你"不算确认） |
+| 1f. 用户确认 | `workflow.decision.request` 三选 | 确认/修改/重来（“随你”不算确认） |
 
 #### Env sub-flow
 
@@ -208,7 +208,7 @@ Fix 类任务的 Review 通过后，问一句：**"什么能预防这个 bug？"
 | 2a. Base 推断 | 按优先级推断 base ref | upstream→@{u}→origin/HEAD→origin/main |
 | 2b. Gate Base | 展示 base + behind/ahead 状态 | ahead>0 弹问三选；流程内必须用户确认 |
 | 2c. worktree add | `git worktree add -b` + 写 nocode-base config | 分支名 / 路径自动推导 |
-| 2d. EnterWorktree | 切 cwd 到 worktree | — |
+| 2d. `workspace.worktree.enter` | 进入已创建 worktree | — |
 | 2e. Setup | worktree-setup.mjs 补齐 env/config | envCandidates 哪些 cp（拿不准优先 cp） |
 | 2f. Verify Baseline | 跑测试确认起点干净 | 失败则报告 + 请示 |
 
@@ -311,7 +311,7 @@ PDCA 循环：
 | 4d. 写 task | 贴真实代码零占位符 | ≤M（≤5 文件），标 HITL/AFK |
 | 4e. 插 checkpoint | 每 2-3 task 一个 | rollback 边界 |
 | 4f. Plan Validation | 需求覆盖+任务可验证+依赖无环 | 不过回 4d 补 |
-| 4g. 用户确认 | AskUserQuestion | 确认计划 |
+| 4g. 用户确认 | `workflow.decision.request` | 确认计划 |
 
 #### Build sub-flow
 
@@ -387,6 +387,6 @@ PDCA 循环：
 - **不自行跳过阶段** — 跳过需用户显式授权
 - **不自动进入下一阶段** — 标 completed 后停下报告，等用户说"继续"才进下一阶段。"已经做完了直接走下一步" = 自动跳步
 - **用户授权自主推进（"我会离开 / 执行到 land / 全部跑完"）≠ 跳步许可** — 授权免除的是"等用户拍板"的等待，不是阶段本身。每个阶段的 sub-steps、Gate 检查、skill 加载一个不少，只是不停下来问用户"继续吗"。快速推进 = 每步简洁但完整执行；跳步 = 省掉步骤。前者合法，后者违规
-- **不跳过 TaskCreate** — 进入 devflow 必须建 todo
+- **不跳过 plan.create** — 进入 devflow 必须创建完整阶段计划并保存 `planRef`
 - **不无证据标 completed** — Gate 证据点名是前置工序
 - **不把 skill 实现细节抄进 devflow** — devflow 列子步骤序列和决策点（防跳步），不抄 skill 内部的具体做法/模板/格式要求（那些进入 skill 后自然加载）

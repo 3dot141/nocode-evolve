@@ -70,13 +70,14 @@ if [ -n "$base_ref" ]; then
     # ahead>0（本地有独有 commit）→ start_point 留空, 走「何时弹问 base」, 不要在此静默基于远程
 fi
 
-git worktree add "$worktree_path" -b "$BRANCH_NAME" $start_point   # start_point 空则基于当前 HEAD
+# 将已确认的 branch / absolute path / start-point 交给创建 capability。
+Capability(workspace.worktree.create, {"branch":"<BRANCH_NAME>","path":"<absolute-worktree-path>","startPoint":"<optional-base-ref>"})
 
 # 记录 freshness base (freshness-check.mjs 最高优先级读此 config, 不随 push -u 漂移)
 [ -n "$base_ref" ] && git -C "$worktree_path" config branch."$BRANCH_NAME".nocode-base "$base_ref"
 
 # 切 cwd 不在此处用 cd——见下文「Worktree 创建后: 切到 worktree 工作目录」:
-# harness 有 Codex workdir 必用 Codex workdir(path=) 持久化; 仅 harness 无此工具时才退每次 cd
+# 创建成功后调用 workspace.worktree.enter 进入同一个绝对路径；provider 负责平台差异。
 ```
 
 > 注意：`-b` 后传的仍是**原始** `BRANCH_NAME`（含 `/`），git 分支名本身不变；只有**目录名**做扁平化。
@@ -205,18 +206,18 @@ skill `SKILL.md` 中下列默认行为**全部失效**，按本文执行：
 
 后续所有动作 (cp env / link personal / run setup / verify baseline / git 操作) 都该在 worktree **内**执行, 必须把 cwd 切过去**并让切换持久化**.
 
-### 标准 (harness 有 Codex workdir 即强制): `git worktree add` + `Codex workdir(path=)` 两步组合
+### 标准：`workspace.worktree.create` + `workspace.worktree.enter` 两步组合
 
 ```
-1. git worktree add "$worktree_path" -b "$BRANCH_NAME"     # 拿规则要的平级路径
-2. Codex workdir(path="$worktree_path")                    # session cwd 持久化, 后续 Bash 不用再 cd
+1. Capability(workspace.worktree.create, {"branch":"<BRANCH_NAME>","path":"<absolute-worktree-path>","startPoint":"<optional-base-ref>"})
+2. Capability(workspace.worktree.enter, {"path":"<absolute-worktree-path>"})
 ```
 
-为什么必须两步, 不能 `Codex workdir` 一把梭:
+为什么必须两步：
 
-- `Codex workdir()` 无参 / `Codex workdir(name=...)` 会**自动创建** worktree 到项目内 `.claude/worktrees/<name>/`——直接违反本 rule「平级 + 扁平命名」核心原则
-- `Codex workdir(path=<existing>)` 模式只**进入**已存在的 worktree (要求 `path` 在 `git worktree list` 里), 不创建——这才跟规则共存
-- 退出: `return to the main workdir(action="keep")`. `path=` 模式进入的 worktree 不会被 remove, 安全
+- `workspace.worktree.create` 只按业务层给出的绝对路径创建，不隐式切换 session。
+- `workspace.worktree.enter` 只进入已存在的 worktree，不创建、不删除。
+- 退出时传主 worktree 的绝对路径；不能用 `.`，否则当前 workspace 身份不明确。
 
 ### 触发
 
@@ -226,31 +227,21 @@ skill `SKILL.md` 中下列默认行为**全部失效**，按本文执行：
 
 变量沿用「路径推导」段的 `worktree_path`.
 
-**强制 (harness 有 Codex workdir 工具时——Claude Code 默认就有)**:
+**强制动作**：
 
 ```
-Codex workdir(path="$worktree_path")
+Capability(workspace.worktree.enter, {"path":"<absolute-worktree-path>"})
 ```
 
-之后 Bash call 起点直接是 worktree, 无须 cd 前缀. **harness 有此工具就必须用它**, 不许退到每次 cd——重复 cd 前缀只是 fallback, 不是「有成本但可接受的等价选项」; 能 Codex workdir 而选了 cd 即为违反本 rule.
-
-**fallback (仅限 harness 无 Codex workdir 时, 如纯 shell 脚本 / 别的 agent harness)**: 每次 Bash 显式 cd. 这是退路不是偏好——它存在只为没有 Codex workdir 的 harness 兜底。
-
-```bash
-cd "$worktree_path"
-pwd                                   # 确认切过去了
-git rev-parse --show-toplevel         # 应输出 $worktree_path, 不是 $project_root
-```
-
-cd / Codex workdir 是后续 cp env / link personal / setup / baseline 链的前置——它们都默认在当前 cwd 跑.
+Claude provider 可持久化 session cwd；Codex provider 将后续 Workspace 操作绑定到显式 workdir。业务规则只读取统一回执，不自行选择 `cd` 或原生工具。
 
 ### 不要
 
-- 不要用 `Codex workdir()` (无参) 或 `Codex workdir(name=...)` **自动创建** worktree——会落项目内 `.claude/worktrees/`, 违反平级规则; 创建走 `git worktree add`, Codex workdir 只负责 `path=` 模式进入
+- 不要省略路径、传 `.`，或把 enter 当 create；创建和进入是两个独立 capability
 - 不要把 `git -C "$worktree_path" <cmd>` 当常规用法——偶发 OK, 常态化 cwd 跟参数路径分裂, 容易把主仓 working tree 改坏
-- 不要假设 agent 会自动切——`git worktree add` 是 git 命令, 不改 shell 状态, 必须显式 Codex workdir(path=) 或 cd 才生效
+- 不要假设创建会自动切换；创建成功后必须显式进入相同绝对路径
 - 不要切过去后又 cd 回主仓做事——后续动作链 (cp env / link personal / setup / baseline) 应一气在 worktree 内做完
-- 不要在 harness 有 Codex workdir 时还每条 Bash 都 `cd <worktree> && export … && <cmd>` 前缀——典型反例: worktree 早建好、后续几十轮命令每次重新 cd + 重新 export env, 这是漏用 Codex workdir 持久化造成的反复摩擦; 第一条 worktree 内命令前 `Codex workdir(path=)` 一次到位, 之后 Bash 起点即 worktree
+- 不要在业务层拼平台相关 cwd 前缀；后续调用继续走 Workspace provider 的 active workdir
 
 ## Worktree 创建后：调 worktree-setup.mjs 补齐 gitignored 运行物
 
@@ -262,7 +253,7 @@ cd / Codex workdir 是后续 cp env / link personal / setup / baseline 链的前
 
 > **不再从主仓 cp `node_modules`**。跨分支时主仓 node_modules 版本与 worktree 分支的 lock 文件不匹配，且 build tool 预构建缓存（`.vite/deps` 等）不会被 install 刷新，导致难排查的运行时错误。pnpm/yarn 有全局 store，从零 install 主要是建硬链接，速度可接受。
 
-Codex workdir 之后调一次脚本即可 (变量沿用本文「路径推导」段，支持 `--key=value` 或 `--key value`)：
+进入 worktree 的 capability 返回成功回执后调一次脚本即可（变量沿用本文「路径推导」段，支持 `--key=value` 或 `--key value`）：
 
 ```bash
 node "${PLUGIN_ROOT}/scripts/worktree-setup.mjs" setup \
@@ -348,10 +339,10 @@ IDE 的 run/debug 配置目录（VS Code 的 `.vscode/`、JetBrains 的 `.idea/`
 
 `git worktree remove` 默认会因 `.agents-personal/` symlink 是 untracked 而**拒绝执行**, 提示 "contains modified or untracked files, use --force". 即便加 `--force`, POSIX rm 对 dir symlink 只删 symlink 自身**不**递归 target——实测 macOS BSD rm + git worktree --force 不会误删主仓 `.agents-personal/`. 双重安全.
 
-但为了**显式控制 + 跨平台稳健**, 用 teardown verb——它封装"先拆 `.agents-personal` symlink（只删 symlink 自身、target 不动）→ `git worktree remove`"的固定顺序（顺序反了 remove 会因 untracked symlink 拒绝）。销毁前先 `return to the main workdir(action="keep")` 退出 worktree（否则 cwd 卡在被删目录里）:
+但为了**显式控制 + 跨平台稳健**, 用 teardown verb——它封装"先拆 `.agents-personal` symlink（只删 symlink 自身、target 不动）→ `git worktree remove`"的固定顺序（顺序反了 remove 会因 untracked symlink 拒绝）。销毁前先进入主 worktree 的绝对路径（否则 cwd 卡在被删目录里）：
 
 ```bash
-# 先 return to the main workdir(action="keep") 退出 worktree, 再:
+# 先 Capability(workspace.worktree.enter, {"path":"<absolute-main-worktree-path>"})，再：
 node "${PLUGIN_ROOT}/scripts/worktree-setup.mjs" teardown \
     --worktree-path "$worktree_path"
 # remove 被拒绝(有其他 untracked)→ 进 needsAttention, 不自动 --force; 人工判后再处理

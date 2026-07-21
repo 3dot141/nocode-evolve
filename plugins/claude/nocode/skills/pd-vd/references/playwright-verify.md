@@ -235,9 +235,9 @@ interactions.json 示例（selector 统一用 `data-testid`，每个场景至少
 ]
 ```
 
-### Claude Design 线
+### Open Design 线
 
-先用 `claude-design read <projectId> <path>` 把产物拉到本地临时目录，然后在拉下来的文件上跑 `prototype-verify.mjs`，流程与本地 HTML 线一致。拉取失败时降级为 `claude-design render` 预览 + 截图。
+由 pd-vd 使用完整 artifact receipt 执行 `design.artifact.read`，再对返回的 `artifact.localPath` 运行 `prototype-verify.mjs`，流程与本地 HTML 线一致。无法物化但存在 preview URL 时，执行 `design.preview.open` 做人工预览并记录自动验证缺口；不得把预览截图冒充 Playwright 全量证据。
 
 ### 产出
 

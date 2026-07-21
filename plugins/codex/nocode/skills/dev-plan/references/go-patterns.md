@@ -2,7 +2,7 @@
 
 > 提取自 everything-claude-code v1.2.0 golang-patterns/golang-testing/go-reviewer/go-build-resolver (MIT)，Go 项目场景特化
 
-通用 TDD / 测试原则见 `${PLUGIN_ROOT}/shared/references/testing-guide.md`。本文是 Go 栈专用配方：惯用法 → 测试 → 审查要点 → 构建排错。
+通用 TDD / 测试原则见 `${PLUGIN_ROOT}/skills/references/testing-guide.md`。本文是 Go 栈专用配方：惯用法 → 测试 → 审查要点 → 构建排错。
 
 ---
 

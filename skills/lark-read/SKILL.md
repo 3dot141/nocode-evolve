@@ -14,7 +14,7 @@ metadata:
 
 ## 前置
 
-**CRITICAL — 开始前 MUST 先调 `Skill(lark-shared)` 确认认证就绪。**（lark-shared 是外部 skill，随 lark-cli 技能包安装，不在本插件内；不可用时跳过此步，认证报错时再提示用户安装 lark-cli 技能包。）
+**CRITICAL — 开始前 MUST 先调 `Capability(workflow.skill.invoke, {"skill":"lark-shared","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})` 确认认证就绪。**（lark-shared 是外部 skill，随 lark-cli 技能包安装，不在本插件内；不可用时跳过此步，认证报错时再提示用户安装 lark-cli 技能包。）
 
 ## 流程
 

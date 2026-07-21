@@ -3,6 +3,8 @@ name: dev-define
 description: "Use when starting any non-trivial task, when requirements are unclear (\"build me X\" without \"fo…"
 ---
 
+> 本文写“结构化决策”时，必须把当前步骤的完整问题与 2–3 个互斥选项编译为 `Capability(workflow.decision.request, {"question":"<self-contained current-step question>","options":[{"label":"<option-label>","description":"<impact or tradeoff>"}],"allowFreeform":false})`；示例只展示单项形状，真实调用需带齐本步骤列出的选项，不得回退到平台专属提问工具。
+
 # define — 从模糊到明确
 
 **Iron Law: 问题没定义清就动手 = 赌。建错东西的代价是澄清的 10 倍，而且由用户承担。**
@@ -23,13 +25,13 @@ description: "Use when starting any non-trivial task, when requirements are uncl
 
 ## 协议
 
-### Step 0: update_plan
+### Step 0: workflow.plan.create
 
 **进入后第一件事**，创建以下全部 task：
 
 ```
 Task 1: 场景分类 — Mini/Fix/Standard/Full
-  Sub-steps: request_user_input 判场景 → Scope check（太大先拆）
+  Sub-steps: 结构化决策 判场景 → Scope check（太大先拆）
   Gate: 场景已确认（Mini 出 mini-goal 退出 / Fix 出复现定义 / Standard·Full 进 Task 2）
 
 Task 2: 探索现状 — 代码 + 网络并行
@@ -44,7 +46,7 @@ Task 4: 假设先行 — 判断 + CONFIDENCE
   Sub-steps: 基于探索写判断 → 摊开隐含假设
   Gate: 假设已摊给用户（≥95% 可跳 Task 5）
 
-Task 5: 澄清循环 — request_user_input 给选项
+Task 5: 澄清循环 — 结构化决策 给选项
   Sub-steps: 代码能自答的不问 → 一次问一个 → 收敛到 95%
   Gate: 置信度 ≥95%（过 95% 停止测试）
 
@@ -53,20 +55,26 @@ Task 6: 产出 restate
   Gate: restate 完整产出
 
 Task 7: 用户确认 — 三选 + define-review
-  Sub-steps: define-review（有异议升档交叉，skeleton §1a）→ request_user_input 三选（确认/修改/重来）→（Full）确认后落盘罗盘
+  Sub-steps: define-review（有异议升档交叉，skeleton §1a）→ 结构化决策 三选（确认/修改/重来）→（Full）确认后落盘罗盘
   Gate: 用户显式确认 + 无 Critical findings +（Full）罗盘已落盘
 
 Task 8: 硬交接 — 调用下一步 skill
-  Sub-steps: 按 Exit Gate 硬交接报告 Define 完成（场景分类 + restate 摘要）→ 按场景建议下一步：Full/Standard/Fix → Env（调 $using-git-worktrees）；Mini → Build-lite → 等用户拍板
+  Sub-steps: 按 Exit Gate 硬交接报告 Define 完成（场景分类 + restate 摘要）→ 按场景建议下一步：Full/Standard/Fix → Env（调 Capability(workflow.skill.invoke, {"skill":"using-git-worktrees","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})）；Mini → Build-lite → 等用户拍板
   Gate: 用户拍板进入下一阶段（这一步不勾，Define 不算收尾）
   metadata: {handoff: true}（供防跳步 Hook B 识别交接 task）
 ```
+
+调用时把上面**每一条** Task 编译成一个稳定 item：`id` 固定、`subject` 为标题、`description` 完整包含 Sub-steps + Gate、初始 `status=pending`，仅最后一项设置 `handoff`。不得只改名后继续依赖平台 task 工具，也不得传空 items：
+
+`Capability(workflow.plan.create, {"items":[{"id":"<stable-task-id>","subject":"<task-title>","description":"<complete Sub-steps and Gate>","status":"pending","handoff":"<final-item-only; otherwise omit>"}]})`
+
+示例只展示单项形状；真实调用必须包含本段清单的全部 items。保存返回的 `planRef`。每次状态变化都用 `Capability(workflow.plan.update, {"planRef":"<planRef>","items":[{"id":"<same-stable-id>","subject":"<same-title>","description":"<same-complete-description>","status":"<pending|in_progress|completed>","handoff":"<preserve-final-item-handoff; otherwise omit>"}]})` 提交**完整快照**（示例仍只展示单项形状）；每次 update 必须原样保留最终 item 的 `handoff`，其它 item 继续省略该字段，不得发送单项 patch。
 
 每完成一个标 done。
 
 ### Step 1: 场景分类
 
-判断**问题性质**（不是解法），用 request_user_input 确认：
+判断**问题性质**（不是解法），用 结构化决策 确认：
 
 | 信号 | 场景 | 后续路径 |
 |---|---|---|
@@ -75,7 +83,7 @@ Task 8: 硬交接 — 调用下一步 skill
 | 跨文件 + 实现路径明确 | **Standard** | Define → Env → Plan → Build → Verify → Review → Land |
 | 跨文件 + 需要架构/选型/设计 | **Full** | Define → Env → Design → Plan → Build → Verify → Review → Land |
 
-request_user_input 把你的判断 + 理由放推荐选项，其余场景放备选。拿不准偏向 Full。
+结构化决策 把你的判断 + 理由放推荐选项，其余场景放备选。拿不准偏向 Full。
 
 Mini → 输出 3 行 mini-goal（做什么 + 验收标准 + 不做什么），用户确认后退出。
 Fix → 侧重复现：重现步骤 + 预期 vs 实际 + 影响范围。模糊诉求（"让它更快"/"修好这个"）→ reframe 成可测标准（"LCP < 2.5s" / "500 错误率 < 0.1%"），问用户确认。
@@ -104,7 +112,7 @@ Standard/Full → 进 Step 2。
 - `depth`: `targeted`（默认——Define 只需要"有没有、在哪里"来定假设的置信度，深挖影响面是 Design Step 1a 的事，别在这里铺重档）
 - `angles`: 从任务描述提炼 2~3 个搜索点（`[{label, query}]`，如 已有同类实现 / 相关模块与调用链 / 可复用 pattern）
 
-**升档有疑点先问用户**：angles 提炼不出（任务太模糊 / 陌生子系统、术语和预期对不上）→ request_user_input 让用户在 `targeted` / `shallow`（迭代逼近，agent 数翻倍以上）之间拍板，不自作主张往重档跑。
+**升档有疑点先问用户**：angles 提炼不出（任务太模糊 / 陌生子系统、术语和预期对不上）→ 结构化决策 让用户在 `targeted` / `shallow`（迭代逼近，agent 数翻倍以上）之间拍板，不自作主张往重档跑。
 
 **网络探索**（Full / Standard）：
 - `question`: `<任务描述> 在业界怎么定义、有没有行业标准/规范`
@@ -112,7 +120,9 @@ Standard/Full → 进 Step 2。
 - `depth`: `shallow`
 - `systemPrompt`（追加）: `只搜问题定义层面的参考（行业标准/规范/问题框架），不搜解法——解法是 Design 的事。`
 
-Standard 场景网络探索可简化为 `spawn_agent(fork)` 轻量搜一两个查询，不走 research-workflow。
+Standard 场景网络探索可简化为 `Capability(workflow.execute, {"tasks":[{"id":"standard-research","objective":"围绕已确认问题做 1–2 个定向查询；返回来源、关键事实、不确定项及其与当前需求的关系；只读","profile":"research.shallow","dependsOn":[],"writeScope":"none","timeoutMs":120000,"continueOnError":false}],"maxParallel":1,"fallbackPolicy":"inline"})`，不走完整 research-workflow。
+
+保存返回的 `executionId`；若 `status=running`，反复执行 `Capability(workflow.wait, {"executionId":"<execution-id>","timeoutMs":120000})` 到终态，再执行 `Capability(workflow.collect, {"executionId":"<execution-id>"})` 从 `tasks[0].result` 读取来源与事实。不得把 execute 的调度回执当研究结论。
 
 **综合 → 探索胶囊**：两路结果回来后，产出「探索胶囊」——不把 findings 压缩成一段散文总结，下游要按证据复用它（Full 场景给 Design Step 1a，Standard 场景给 Plan Step 1）：
 
@@ -124,7 +134,7 @@ Standard 场景网络探索可简化为 `spawn_agent(fork)` 轻量搜一两个�
 
 ### Step 3: 路径校验
 
-把用户使用场景显式建模成路径清单，作为 restate 的完整性骨架。路径格式、ID 体系、状态标注见 `${PLUGIN_ROOT}/shared/references/path-conventions.md`。
+把用户使用场景显式建模成路径清单，作为 restate 的完整性骨架。路径格式、ID 体系、状态标注见 `${PLUGIN_ROOT}/skills/references/path-conventions.md`。
 
 **Mini/Fix 跳过本步**——Mini 走 mini-goal，Fix 走复现定义，都不需要路径建模。Standard/Full 必做。
 
@@ -162,7 +172,7 @@ Standard 场景网络探索可简化为 `spawn_agent(fork)` 轻量搜一两个�
 
 **提问前自查：这个问题的答案在代码里或 Step 2 的探索结论里吗？**
 - 已在探索中确认的事实 → 直接引用，不问用户
-- 只有用户才能回答的问题（意图、优先级、约束、business context）→ 用 request_user_input
+- 只有用户才能回答的问题（意图、优先级、约束、business context）→ 用 结构化决策
 
 **能给选项就给选项**。用户点选比手打快，也更不容易礼貌性同意。开放式问题仍可纯文字，但附猜测——用户纠正错误猜测比从零生成答案快。偶尔故意往你预期会被反驳的方向猜——防止用户礼貌性附和。
 
@@ -207,7 +217,7 @@ Standard 场景网络探索可简化为 `spawn_agent(fork)` 轻量搜一两个�
 
 ### Step 7: 用户确认
 
-用 request_user_input 三选：确认 / 要修改 / 重新来。**路径清单 + SC 绑定和 restate 主体一起确认，不分开问**（合批降低确认疲劳）。
+用 结构化决策 三选：确认 / 要修改 / 重新来。**路径清单 + SC 绑定和 restate 主体一起确认，不分开问**（合批降低确认疲劳）。
 
 以下不算确认：
 - "随你"/"都行" → 用户在委托，重新提具体选项
@@ -220,11 +230,11 @@ Standard 场景网络探索可简化为 `spawn_agent(fork)` 轻量搜一两个�
 
 用户确认前做 define-review：Read `references/define-review.md`（restate 7 维度）拿维度，**主会话就地逐维自查**——不调 reviewing 引擎、不派 subagent/Codex。发现的问题按 Critical / Warning / Suggestion 粗分，Critical 级必须修复再让用户确认。
 
-**升审只在两种情况**：① 用户显式要求（「审一下 / 深审 / 独立审」）→ 调 `$reviewing` 传 7 维度；② restate 命中敏感面（权限 / 计费 / 数据迁移 / 对外接口 / 不可逆）→ 向用户**一句话建议**升审，用户点头才调，不自动派发。
+**升审只在两种情况**：① 用户显式要求（「审一下 / 深审 / 独立审」）→ 调 `Capability(workflow.skill.invoke, {"skill":"reviewing","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"dev-define","restate":"<complete-confirmed-restate>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<user-approved-independent-review>"},"payload":{"object":{"type":"restate","ref":"<complete-confirmed-restate>"},"dimensions":["<all-7-define-review-axes>"],"method":"checklist","contextCapsule":{"facts":["<verified-fact>"],"decisions":["<confirmed-decision>"],"rejectedAlternatives":["<alternative-and-reason>"],"constraints":["<constraint>"],"nonGoals":["<non-goal>"]},"depth":"independent"}}})` 传 7 维度；② restate 命中敏感面（权限 / 计费 / 数据迁移 / 对外接口 / 不可逆）→ 向用户**一句话建议**升审，用户点头才调，不自动派发。
 
 ## Exit Gate
 
-- [ ] restate 已产出，用户显式确认（request_user_input 选了"确认"）
+- [ ] restate 已产出，用户显式确认（结构化决策 选了"确认"）
 - [ ] define-review 自查通过（无未修复的 Critical 级问题）
 - [ ] 场景分类已标注
 - [ ] （Full/Standard）路径清单已校验——有 PRD 则搬入并查完整性，无 PRD 则现场生成
@@ -241,7 +251,7 @@ Standard 场景网络探索可简化为 `spawn_agent(fork)` 轻量搜一两个�
 | "做着做着就明白了" | 实现中的发现是返工，不是发现 |
 | "先给几个选项让用户挑" | 用户还不知道自己要什么，提问缩小空间比列选项扩大空间有效 |
 | "不用探索，我知道代码里有什么" | 你上次看可能是 N 轮工具调用之前，隔了就重新过一遍 |
-| "这个改动简单，跳过某 Step 或不建 update_plan" | 进了 skill 就走完所有 Step。"简单"是你的判断，不是跳 Gate 的授权 |
+| "这个改动简单，跳过某 Step 或不建 workflow.plan.create" | 进了 skill 就走完所有 Step。"简单"是你的判断，不是跳 Gate 的授权 |
 
 ## Red Flags
 
@@ -253,4 +263,4 @@ Standard 场景网络探索可简化为 `spawn_agent(fork)` 轻量搜一两个�
 - Full/Standard 场景 restate 没有路径清单——用户使用场景没建模，下游无完整性骨架
 - 路径清单里有路径没绑任何 SC，或有 SC 不对应任何路径——绑定断裂
 - Full 场景 restate 落成独立 `-restate.md` 文件，或确认后没落盘——罗盘的唯一载体是设计文档首章
-- 因"任务简单 / 还在概览 / 用户说了'继续'"跳过某 Step、不建 Step 0 update_plan、或漏掉最后的交接 task
+- 因"任务简单 / 还在概览 / 用户说了'继续'"跳过某 Step、不建 Step 0 workflow.plan.create、或漏掉最后的交接 task

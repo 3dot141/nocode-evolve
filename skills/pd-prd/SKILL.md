@@ -3,6 +3,8 @@ name: pd-prd
 description: Use when the user wants to write a product requirements document. Use when the user says "写 PRD/产品需求/产品设计/产品 brief/写需求文档", or after research skill completes and the user wants to synthesize findings into a document. Also use when devflow Full-scene suggests running the product flow. Not for technical design docs (use nocode:dev-design) or code comments/README.
 ---
 
+> 本文写“结构化决策”时，必须把当前步骤的完整问题与 2–3 个互斥选项编译为 `Capability(workflow.decision.request, {"question":"<self-contained current-step question>","options":[{"label":"<option-label>","description":"<impact or tradeoff>"}],"allowFreeform":false})`；示例只展示单项形状，真实调用需带齐本步骤列出的选项，不得回退到平台专属提问工具。
+
 # prd — 收敛成产品需求文档
 
 **Iron Law: 没有写下来的需求就不存在。口头共识在第三个人加入时蒸发。**
@@ -24,7 +26,7 @@ description: Use when the user wants to write a product requirements document. U
 
 ## 协议
 
-### Step 0: TaskCreate
+### Step 0: workflow.plan.create
 
 **进入 pd-prd 后第一件事**，创建以下全部 task：
 
@@ -58,7 +60,7 @@ Task 7: 自审 + prd-review
   Gate: 自审 + prd-review 通过，无 Critical findings
 
 Task 8: 用户最终确认
-  Sub-steps: AskUserQuestion 三选
+  Sub-steps: 结构化决策 三选
   Gate: 用户显式确认
 
 Task 9: 保存
@@ -66,10 +68,16 @@ Task 9: 保存
   Gate: 文件保存 + 提示下一步
 
 Task 10: 硬交接 — 调用下一步 skill
-  Sub-steps: 报告 PRD 完成 → 按需求形态建议：涉及界面 → 调 Skill(nocode:pd-ix)（之后可续 pd-vd）；纯后端 / 无界面 → 进 devflow 开发流 → 等用户拍板
+  Sub-steps: 报告 PRD 完成 → 按需求形态建议：涉及界面 → 调 Capability(workflow.skill.invoke, {"skill":"pd-ix","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})（之后可续 pd-vd）；纯后端 / 无界面 → 进 devflow 开发流 → 等用户拍板
   Gate: 用户拍板进入下一阶段（这一步不勾，PRD 不算收尾）
   metadata: {handoff: true}（供防跳步 Hook B 识别交接 task）
 ```
+
+调用时把上面**每一条** Task 编译成一个稳定 item：`id` 固定、`subject` 为标题、`description` 完整包含 Sub-steps + Gate、初始 `status=pending`，仅最后一项设置 `handoff`。不得只改名后继续依赖平台 task 工具，也不得传空 items：
+
+`Capability(workflow.plan.create, {"items":[{"id":"<stable-task-id>","subject":"<task-title>","description":"<complete Sub-steps and Gate>","status":"pending","handoff":"<final-item-only; otherwise omit>"}]})`
+
+示例只展示单项形状；真实调用必须包含本段清单的全部 items。保存返回的 `planRef`。每次状态变化都用 `Capability(workflow.plan.update, {"planRef":"<planRef>","items":[{"id":"<same-stable-id>","subject":"<same-title>","description":"<same-complete-description>","status":"<pending|in_progress|completed>","handoff":"<preserve-final-item-handoff; otherwise omit>"}]})` 提交**完整快照**（示例仍只展示单项形状）；每次 update 必须原样保留最终 item 的 `handoff`，其它 item 继续省略该字段，不得发送单项 patch。
 
 每完成一个标 done。
 
@@ -85,7 +93,7 @@ Task 10: 硬交接 — 调用下一步 skill
 
 在写任何内容之前，暴露歧义。**对每个核心字段，先给带理由的默认值让用户改**（"提议默认值"模式——改比答空白快）。
 
-用 AskUserQuestion 逐字段确认（不一次问完，一次一个）：
+用 结构化决策 逐字段确认（不一次问完，一次一个）：
 
 1. **Problem** — "基于调研，核心问题是 X，因为 Y。对吗？"
 2. **Target User** — "目标用户是 X。对吗？"
@@ -325,11 +333,11 @@ DDD 域划分的正式规格，被 §4 的流程图引用。每个域围绕一�
 
 ### Step 7a: prd-review（有异议升档）
 
-用户确认前做 PRD 评审：Read `references/prd-review.md`（PRD 8 维度）拿维度，然后 `Skill(nocode:reviewing)`，声明：**对象** = PRD；**领域维度** = PRD 8 维度；**方法** = checklist（或让引擎按对象自选）。引擎产 findings + verdict——流程 / 执行者 / 档位 / 升档 / 降级 / 分级全由引擎承载，本节不复述。Critical 必须修复再让用户确认。
+用户确认前做 PRD 评审：Read `references/prd-review.md`（PRD 8 维度）拿维度，然后 `Capability(workflow.skill.invoke, {"skill":"reviewing","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"pd-prd","restate":"<confirmed-restate-or-omit>","artifacts":["<absolute-prd-path>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"},"payload":{"object":{"type":"prd","ref":"<absolute-prd-path>"},"dimensions":["<all-8-prd-review-axes>"],"method":"checklist","contextCapsule":{"facts":["<verified-fact>"],"decisions":["<confirmed-decision>"],"rejectedAlternatives":["<alternative-and-reason>"],"constraints":["<constraint>"],"nonGoals":["<non-goal>"]},"depth":"auto"}}})`，声明：**对象** = PRD；**领域维度** = PRD 8 维度；**方法** = checklist（或让引擎按对象自选）。引擎产 findings + verdict——流程 / 执行者 / 档位 / 升档 / 降级 / 分级全由引擎承载，本节不复述。Critical 必须修复再让用户确认。
 
 ### Step 8: 用户最终确认
 
-用 AskUserQuestion 三选：
+用 结构化决策 三选：
 
 - **确认** → 保存文档
 - **要修改** → 用户指出修改点，改完再确认
@@ -341,7 +349,7 @@ DDD 域划分的正式规格，被 §4 的流程图引用。每个域围绕一�
 
 ### Step 9: 保存
 
-文档存到 `{pd_prd_output}` 变量指定的路径（见 `model/agent-about.md`「文档产出路径变量」）。和同 topic 的 research-report 落同一目录。
+文档存到 `{pd_prd_output}` 变量指定的路径；默认是 `{PD_BASE_DIR}/{topic}.prd.md`，项目可通过已注入的同名变量覆盖。和同 topic 的 research-report 落同一目录。
 
 完成后提示："PRD 写完了。若需求涉及界面，建议下一步做交互设计（调 `nocode:pd-ix`），把需求落成界面结构 + 交互流（之后可再做视觉设计 `nocode:pd-vd`）；纯后端 / 无界面需求可直接进 devflow 开发流。"
 
@@ -372,7 +380,7 @@ research skill 的 Go/No-Go 建议基于以下判据（PRD 里引用）：
 - [ ] 跨域路径 + 系统路径 + 约束已建模（含 ID + 状态 + US 来源）
 - [ ] 用户故事 + 路径 + 流程图已合批确认
 - [ ] prd-review 通过（无 Critical findings）
-- [ ] 用户显式确认（AskUserQuestion 选了"确认"）
+- [ ] 用户显式确认（结构化决策 选了"确认"）
 - [ ] 文件已保存到正确路径
 
 ## Common Rationalizations
@@ -383,7 +391,7 @@ research skill 的 Go/No-Go 建议基于以下判据（PRD 里引用）：
 | "先做着，需求做着做着就清楚了" | 那叫 spike，不叫产品设计。spike 完回来写 PRD |
 | "团队都知道要做什么" | 默契在第三个人加入时失效。写下来成本极低 |
 | "AI 写的 PRD 不靠谱" | AI 写初稿 + 人确认 > 人从零写。不靠谱的部分标 [ASSUMED] |
-| "这个改动简单，跳过某 Step 或不建 TaskCreate" | 进了 skill 就走完所有 Step。"简单"是你的判断，不是跳 Gate 的授权 |
+| "这个改动简单，跳过某 Step 或不建 workflow.plan.create" | 进了 skill 就走完所有 Step。"简单"是你的判断，不是跳 Gate 的授权 |
 
 ## Red Flags
 
@@ -401,4 +409,4 @@ research skill 的 Go/No-Go 建议基于以下判据（PRD 里引用）：
 - §4 流程图和 §5 领域能力图高度重复——§4 讲场景故事，§5 讲域内结构，不该画同一张图
 - 图中节点没标路径 ID（图和详述断连，读者无法跳转）
 - §1 没有核心设计决定速查表，或速查表内容和正文不一致
-- 因"任务简单 / 还在概览 / 用户说了'继续'"跳过某 Step、不建 Step 0 TaskCreate、或漏掉最后的交接 task
+- 因"任务简单 / 还在概览 / 用户说了'继续'"跳过某 Step、不建 Step 0 workflow.plan.create、或漏掉最后的交接 task

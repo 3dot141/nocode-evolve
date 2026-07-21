@@ -60,7 +60,7 @@
 |---|---|---|
 | `interview-me` | agent-skills | **核心吸收**: 一次一问+猜测+置信度+95%停止条件+"want vs should want" |
 | `spec-driven-development` | agent-skills | **模式吸收**: 可量化成功标准+假设列出+Boundaries(Always/Ask/Never) |
-| `brainstorming` | superpowers | **子调用复用**: `$brainstorming`，方案探索时调用 |
+| `brainstorming` | superpowers | **子调用复用**: `[provider-neutral skill boundary]`，方案探索时调用 |
 
 ### 2. Env
 

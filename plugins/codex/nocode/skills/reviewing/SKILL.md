@@ -1,17 +1,21 @@
 ---
 name: reviewing
-description: "通用 review 引擎，被其它 skill 以 `$reviewing` 调用。审代码 diff / 方案 / 设计文档 / 安全 / 数据库 / 架构 / 需求都走它。不是用户直触入口—…"
+description: "通用 review 引擎，供其它 skill 传入明确对象、维度、方法与 Context Capsule；审代码 diff、方案、设计文档、安全、数据库、架构和需求。不是用户直触入口，用户…"
 ---
 
 # Reviewing — 通用 review 引擎
 
-review 这件事在仓库里被重造了十几遍：每个 review 都重新发明一遍「维度清单 → 主路审 → 异源交叉 → findings → 分级 → 收口」。本引擎把那个反复出现的范式做成**一个自包含、可调用的 skill**——各专项 review 直接 `$reviewing` 调它、只描述自己的领域维度，不再各抄一份流程。
+review 这件事在仓库里被重造了十几遍：每个 review 都重新发明一遍「维度清单 → 主路审 → 异源交叉 → findings → 分级 → 收口」。本引擎把那个反复出现的范式做成**一个自包含、可调用的 skill**；各专项 review 按下方调用契约传入自己的领域数据，不再各抄一份流程。
 
 > 边界：`reviewing` 是**被调用的 review 引擎**，与 `dev-review`（开发流里的 review 阶段，调本引擎）、`red-blue-deep`（用户直触的对抗评估入口，也调本引擎）区分。引擎自包含——所有实现件在 `references/` 下：场景/视角/方法三层、执行者 / 档位 / 升档 / 降级 / Verify 单源在 `skeleton.md`；reviewer 纪律 / Evidence Gate / Q-SA 判据单源在 `reviewer-discipline.md`；分级单源在 `findings-contract.md`。调用方不 Read 这些内部文件，只调本 skill。
 
 ## 调用契约（怎么用本引擎）
 
-调用方在自己的 review step 里 `$reviewing`，并声明以下几项（随调用一起给引擎）：
+调用方在自己的 review step 里执行：
+
+`Capability(workflow.skill.invoke, {"skill":"reviewing","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"},"payload":{"object":{"type":"<review-object-type>","ref":"<stable-path-diff-range-or-receipt>"},"dimensions":["<complete-caller-owned-axis>"],"method":"<method-or-auto>","contextCapsule":{"facts":["<fact>"],"decisions":["<confirmed-decision>"],"rejectedAlternatives":["<alternative-and-reason>"],"constraints":["<constraint>"],"nonGoals":["<non-goal>"]},"depth":"<self|independent|auto>"}}})`
+
+`payload` 不是旁边 prose 的提示，而是实际传给引擎的数据；以下各项必须在 JSON 中物化：
 
 | 传入 | 必填 | 说明 |
 |---|---|---|

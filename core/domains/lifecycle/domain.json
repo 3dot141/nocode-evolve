@@ -1,0 +1,18 @@
+{
+  "id": "lifecycle",
+  "capabilities": [
+    "capabilities/session-start.json",
+    "capabilities/pre-tool.json",
+    "capabilities/post-tool.json"
+  ],
+  "contracts": [
+    "contracts/hook-event.schema.json",
+    "contracts/hook-decision.schema.json",
+    "contracts/session-context.schema.json",
+    "contracts/domain-error.schema.json"
+  ],
+  "providers": [
+    "providers/claude-hooks/provider.json",
+    "providers/codex-hooks/provider.json"
+  ]
+}

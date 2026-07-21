@@ -38,7 +38,7 @@ description: Use when [具体触发条件] — 不概括工作流
 
 **判据**：多步顺序执行 + 顺序敏感或有副作用的操作 → workflow skill，与四类型正交（顺序风险和知识类型是两码事）。例：带阶段合规检查的纪律型、事务性 API 的参考型（finalize_plan → write_files）、有破坏性准备步骤的技巧型。
 
-Workflow skill 的 SKILL.md 必须包含：**Step 0 update_plan**（所有任务开局建齐，各带 Sub-steps + Gate）、**每步 Enter/Exit Gate**、**Global Exit Gate**。Gate 必须客观可验（yes/no、pass/fail、阈值）——不用主观词。
+Workflow skill 的 SKILL.md 必须包含：**Step 0 workflow.plan.create**（所有任务开局建齐，各带 Sub-steps + Gate）、**每步 Enter/Exit Gate**、**Global Exit Gate**。Gate 必须客观可验（yes/no、pass/fail、阈值）——不用主观词。
 
 完整模板与 gate 写法原则见 `../writing-skills/workflow-skill-template.md`。
 
@@ -60,8 +60,8 @@ Workflow skill 的 SKILL.md 必须包含：**Step 0 update_plan**（所有任务
 ```
 
 - **不做弱交叉引用**。只在硬执行依赖时点名其它 skill/command（handoff、必需框架、"Not for X — use Y" 路由）；永不引用其它 skill 的内部结构（Step N、小节标题）当"参考模式"。
-- **自闭环边界**：SKILL.md 正文与私有 references/ 只能指向两类东西——其它 Skill（点名 handoff 或 `Skill()` 调用）和参考材料（自己的 `references/` 或共享 `skills/references/`）。不得直指 `rules/rule-*.md`、`model/agent-*.md`、`hooks/`、他 skill 的非 reference `scripts/`——那是 SessionStart/PreToolUse 自动注入的路由护栏层，skill 运行时没有理由点名。确有依赖 → 把内容摘进自己的 references/，或改成 handoff。
-- **引用路径**：自己的 references/ 用相对路径（`references/xxx.md`），不写 `{PLUGIN_ROOT}/skills/<skill-name>/references/xxx.md`——相对路径在 skill 目录搬家时零改动。归属他 skill 领域的材料（如 `reviewing`）→ `$<name>` 调用，即使知道确切路径也不直指。无单一归属的材料才放共享 `skills/references/`，用 `${PLUGIN_ROOT}/shared/references/xxx.md` 直引。
+- **自闭环边界**：SKILL.md 正文与私有 references/ 只能指向两类东西——其它 Skill（点名 handoff 或 `[provider-neutral skill boundary]` 调用）和参考材料（自己的 `references/` 或共享 `skills/references/`）。不得直指 `rules/rule-*.md`、`model/agent-*.md`、`hooks/`、他 skill 的非 reference `scripts/`——那是 SessionStart/PreToolUse 自动注入的路由护栏层，skill 运行时没有理由点名。确有依赖 → 把内容摘进自己的 references/，或改成 handoff。
+- **引用路径**：自己的 references/ 用相对路径（`references/xxx.md`），不写 `{PLUGIN_ROOT}/skills/<skill-name>/references/xxx.md`——相对路径在 skill 目录搬家时零改动。归属他 skill 领域的材料（如 `reviewing`）→ `[provider-neutral skill boundary]` 调用，即使知道确切路径也不直指。无单一归属的材料才放共享 `skills/references/`，用 `${PLUGIN_ROOT}/skills/references/xxx.md` 直引。
 - Anthropic 官方最佳实践见 `../writing-skills/anthropic-best-practices.md`
 
 ## 自验证步骤的独立评审指引
@@ -70,11 +70,11 @@ Workflow skill 的 SKILL.md 必须包含：**Step 0 update_plan**（所有任务
 
 判定：agent 检查自己刚产出的东西（代码/设计/计划/文档/配置）→ 给该步骤加指引。两层：
 
-**Layer 1 · 结构化评审走 reviewing 引擎**：若是多维评审（多评审维度 + 分档 + findings 分级 + 收尾），引导它调 `$reviewing` 而不是在新 skill 里重造评审流程——该步骤写成：调引擎，传评审对象 + 本 skill 自己的领域评审维度（inline 或指向新 skill 自己的 `references/xxx-review.md`）+ 可选方法。引擎自闭环处理分档、方法选择、升档、findings/verdict 格式——新 skill 永不直读 reviewing 的内部文件、永不硬编码指向它的路径。
+**Layer 1 · 结构化评审走 reviewing 引擎**：若是多维评审（多评审维度 + 分档 + findings 分级 + 收尾），引导它调 `[provider-neutral skill boundary]` 而不是在新 skill 里重造评审流程——该步骤写成：调引擎，传评审对象 + 本 skill 自己的领域评审维度（inline 或指向新 skill 自己的 `references/xxx-review.md`）+ 可选方法。引擎自闭环处理分档、方法选择、升档、findings/verdict 格式——新 skill 永不直读 reviewing 的内部文件、永不硬编码指向它的路径。
 
 **Layer 2 · 谁跑独立交叉**（轻量单点自查跳过 Layer 1 直接选）：
-- **评估/决策**（"这方案靠谱吗？"）→ 指向 `$red-blue-deep`
-- **产出评审**（"这代码/文档有没有问题？"）→ 先自审，分歧时升级单次 codex 独立评审（经 `$reviewing` 达成）
+- **评估/决策**（"这方案靠谱吗？"）→ 指向 `[provider-neutral skill boundary]`
+- **产出评审**（"这代码/文档有没有问题？"）→ 先自审，分歧时升级单次 codex 独立评审（经 `[provider-neutral skill boundary]` 达成）
 - **合规检查**（"规矩守没守？"）→ 先自查，拿不准派独立 subagent（无需跨模型）
 
 不需要指引的步骤：纯机械验证（测试/lint/类型检查）、对客观判据的模式匹配。
@@ -88,4 +88,4 @@ Workflow skill 的 SKILL.md 必须包含：**Step 0 update_plan**（所有任务
 - 残留占位符/TODO、内部矛盾、语义含糊、范围漂移、许诺没兑现、完整性
 - 自闭环边界：有没有直指 `rules/*.md`、`model/agent-*.md`、`hooks/`、他 skill 非 reference 文件？自己的 references/ 是不是相对路径？
 
-问题当场修；修不了的显式记录。自审是底线不是天花板——发现真正的关键缺陷、或对象明显高风险时，升级 `$red-blue-deep` 独立评审。
+问题当场修；修不了的显式记录。自审是底线不是天花板——发现真正的关键缺陷、或对象明显高风险时，升级 `[provider-neutral skill boundary]` 独立评审。

@@ -1,9 +1,8 @@
 ---
 name: personal-recall
 description: "从 .agents-personal/ 检索已沉淀内容（wiki + rules + AGENTS.md），返回按置信度排序的清单"
+argument-hint: <搜索关键词>
 ---
-
-> Codex 入口：原命令参数统一称为“用户本次调用参数”。
 
 # /personal-recall：.agents-personal/ 内容检索
 
@@ -41,7 +40,7 @@ rg -il --glob '*.md' '<variant>' .agents-personal/
 
 ### 3. 元数据提取
 
-对每个候选 `Read(file, limit=40)` 提取：
+对每个候选提取元数据。`wiki/pages/` 与 `wiki/draft/` 候选用 `Capability(personal-knowledge.page.read, {"sessionId":"<current-session-id>","path":"<wiki-page-path>"})` 读取并计数；rules/ 和 AGENTS.md 继续普通 Read：
 - **wiki 页**：title（frontmatter title → slug → 文件名）、summary（description → TLDR）、tags、maturity
 - **rules 文件**：title（H1）、summary（第一段）
 - **AGENTS.md**：按分节结构化提取——命中的分节标题 + 分节类型（变量覆盖 / 命名惯例 / 语气风格 / 协作约定 / Rules 触发条目）+ 上下文行。变量命中时展示 `{name} = value` 全行
@@ -66,4 +65,4 @@ AGENTS.md 命中时，路径列显示 `AGENTS.md ## <分节名>` 方便定位。
 
 0 结果时："未找到与 '<keyword>' 相关的内容。"
 
-用户可以说"打开第 N 个"，主 agent Read 对应文件。
+用户可以说"打开第 N 个"。若结果是 wiki page，主 agent 必须再次通过 `personal-knowledge.page.read` 的 receipt 内容打开；rules/ 或 AGENTS.md 才直接 Read。

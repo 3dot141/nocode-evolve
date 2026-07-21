@@ -17,7 +17,7 @@ wiki 是事实记录，rules 是工作指令——不把 wiki 当指令执行，
 - **即将排查 / 调试 / 联调任何环境或功能问题**（功能看不见 / 灰度 / 白名单 / 权限 / 环境差异 / 接口不返预期）→ 默认先查，不等识别为"项目特有知识"（漏查代价 >> 先查成本）；
 - **工作中需项目特有知识**（子系统机制 / 配置约定 / 联调踩坑 / 架构背景）→ 先查 index.md 再走代码探索；探索产出可复用项目知识时回写 `wiki/draft/` 作 stub + 追加 `log.md`（query-write）；
 
-index.md 同会话只 Read 一次，读了必引用。`pages/` `draft/` 按需再 Read。
+index.md 同会话只 Read 一次，读了必引用。`pages/` / `draft/` 按需读取时统一调用 `Capability(personal-knowledge.page.read, {"sessionId":"<current-session-id>","path":"<wiki-page-path>"})`；只有该显式路径会增加 usage，禁止用普通 Read/cat 绕过计数。
 
 **maturity 感知**（读 wiki 页按成熟度分级信任）：
 - `active` / `draft`(pages/) → 直接引用
@@ -42,4 +42,3 @@ index.md 同会话只 Read 一次，读了必引用。`pages/` `draft/` 按需�
 - distill / sow "顺手"清理旧 wiki / rule（除非命令定义了清理且用户已勾选）
 - 为"重新组织"批量 mv / rm（结构改 = 删除等价物；gitignored 下 git mv 也算 delete + create）
 - 因"过时 / 矛盾"自己拍板删（superseded 仍有参考价值，由用户判断删还是标 `superseded by ...`）
-

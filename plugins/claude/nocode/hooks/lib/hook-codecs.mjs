@@ -41,6 +41,9 @@ export function encodeSessionContext(content, platform) {
 }
 
 export function encodeStopDecision(decision, platform) {
-  if (!decision || platform === 'codex') return null;
-  return decision;
+  if (!decision) return null;
+  if (platform === 'codex') {
+    return { continue: false, stopReason: decision.reason };
+  }
+  return { decision: 'block', reason: decision.reason };
 }

@@ -1,0 +1,599 @@
+{
+  "id": "codex-plugin-data",
+  "execution": "cli",
+  "pluginData": true,
+  "wrapper": {
+    "command": "node",
+    "args": [
+      "providers/codex-plugin-data/scripts/state.mjs"
+    ],
+    "safeFailureExitCodes": []
+  },
+  "domain": "runtime-state",
+  "platforms": [
+    "codex"
+  ],
+  "capabilities": {
+    "state.cleanup": {
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "sessionId"
+        ],
+        "properties": {
+          "sessionId": {
+            "type": "string"
+          },
+          "retentionMs": {
+            "type": "integer"
+          }
+        },
+        "additionalProperties": false
+      },
+      "outputSchema": "contracts/session-state.schema.json"
+    },
+    "state.execution.cleanup": {
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "sessionId"
+        ],
+        "properties": {
+          "sessionId": {
+            "type": "string"
+          },
+          "retentionMs": {
+            "type": "integer"
+          }
+        },
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "required": [
+          "removed",
+          "retained"
+        ],
+        "properties": {
+          "removed": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "retained": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "state.execution.create": {
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "sessionId",
+          "execution"
+        ],
+        "properties": {
+          "sessionId": {
+            "type": "string"
+          },
+          "execution": {
+            "type": "object",
+            "required": [
+              "provider",
+              "graph",
+              "tasks"
+            ],
+            "properties": {
+              "executionId": {
+                "type": "string"
+              },
+              "provider": {
+                "type": "string"
+              },
+              "status": {
+                "enum": [
+                  "pending",
+                  "running",
+                  "completed",
+                  "partial",
+                  "failed",
+                  "cancelled"
+                ]
+              },
+              "cancelReason": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "providerHandle": {
+                "type": "object",
+                "additionalProperties": true
+              },
+              "graph": {
+                "$ref": "workflow.task-graph"
+              },
+              "tasks": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "id"
+                  ],
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "enum": [
+                        "pending",
+                        "running",
+                        "completed",
+                        "failed",
+                        "skipped",
+                        "cancelled"
+                      ]
+                    },
+                    "resultRef": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "result": {},
+                    "error": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "additionalProperties": true
+                    },
+                    "reviewMode": {
+                      "enum": [
+                        "cross-model",
+                        "isolated-same-model",
+                        "inline-self-review",
+                        null
+                      ]
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "outputSchema": "contracts/execution-state.schema.json"
+    },
+    "state.execution.read": {
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "sessionId",
+          "executionId"
+        ],
+        "properties": {
+          "sessionId": {
+            "type": "string"
+          },
+          "executionId": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "outputSchema": "contracts/execution-state.schema.json"
+    },
+    "state.execution.recover": {
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "sessionId",
+          "executionId",
+          "provider"
+        ],
+        "properties": {
+          "sessionId": {
+            "type": "string"
+          },
+          "executionId": {
+            "type": "string"
+          },
+          "provider": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "outputSchema": "contracts/execution-private.schema.json"
+    },
+    "state.execution.update": {
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "sessionId",
+          "executionId",
+          "provider",
+          "patch"
+        ],
+        "properties": {
+          "sessionId": {
+            "type": "string"
+          },
+          "executionId": {
+            "type": "string"
+          },
+          "provider": {
+            "type": "string"
+          },
+          "patch": {
+            "type": "object",
+            "properties": {
+              "status": {
+                "enum": [
+                  "pending",
+                  "running",
+                  "completed",
+                  "partial",
+                  "failed",
+                  "cancelled"
+                ]
+              },
+              "cancelReason": {
+                "type": "string"
+              },
+              "providerHandle": {
+                "type": "object",
+                "additionalProperties": true
+              },
+              "tasks": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "id",
+                    "status",
+                    "resultRef",
+                    "result",
+                    "error"
+                  ],
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "enum": [
+                        "pending",
+                        "running",
+                        "completed",
+                        "failed",
+                        "skipped",
+                        "cancelled"
+                      ]
+                    },
+                    "resultRef": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "result": {},
+                    "error": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "additionalProperties": true
+                    },
+                    "reviewMode": {
+                      "enum": [
+                        "cross-model",
+                        "isolated-same-model",
+                        "inline-self-review",
+                        null
+                      ]
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "outputSchema": "contracts/execution-state.schema.json"
+    },
+    "state.handoff.abandon": {
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "sessionId",
+          "handoffId",
+          "generation",
+          "reason"
+        ],
+        "properties": {
+          "sessionId": {
+            "type": "string"
+          },
+          "handoffId": {
+            "type": "string"
+          },
+          "generation": {
+            "type": "integer"
+          },
+          "reason": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "outputSchema": "contracts/handoff.schema.json"
+    },
+    "state.handoff.complete": {
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "sessionId",
+          "handoffId",
+          "generation"
+        ],
+        "properties": {
+          "sessionId": {
+            "type": "string"
+          },
+          "handoffId": {
+            "type": "string"
+          },
+          "generation": {
+            "type": "integer"
+          }
+        },
+        "additionalProperties": false
+      },
+      "outputSchema": "contracts/handoff.schema.json"
+    },
+    "state.handoff.open": {
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "sessionId",
+          "handoffId"
+        ],
+        "properties": {
+          "sessionId": {
+            "type": "string"
+          },
+          "handoffId": {
+            "type": "string"
+          },
+          "from": {
+            "type": "string"
+          },
+          "to": {
+            "type": "string"
+          },
+          "summary": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "outputSchema": "contracts/handoff.schema.json"
+    },
+    "state.handoff.status": {
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "sessionId"
+        ],
+        "properties": {
+          "sessionId": {
+            "type": "string"
+          },
+          "handoffId": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "outputSchema": "contracts/handoff-state.schema.json"
+    },
+    "state.plan.create": {
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "sessionId",
+          "plan"
+        ],
+        "properties": {
+          "sessionId": {
+            "type": "string"
+          },
+          "plan": {
+            "type": "object",
+            "required": [
+              "provider",
+              "items"
+            ],
+            "properties": {
+              "planRef": {
+                "type": "string"
+              },
+              "provider": {
+                "type": "string"
+              },
+              "providerHandle": {
+                "type": "object",
+                "additionalProperties": true
+              },
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "id",
+                    "subject",
+                    "status"
+                  ],
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "subject": {
+                      "type": "string"
+                    },
+                    "description": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "enum": [
+                        "pending",
+                        "in_progress",
+                        "completed"
+                      ]
+                    },
+                    "handoff": {
+                      "type": "string"
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "outputSchema": "contracts/plan-state.schema.json"
+    },
+    "state.plan.read": {
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "sessionId",
+          "planRef"
+        ],
+        "properties": {
+          "sessionId": {
+            "type": "string"
+          },
+          "planRef": {
+            "type": "string"
+          },
+          "provider": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "outputSchema": "contracts/plan-state.schema.json"
+    },
+    "state.plan.update": {
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "sessionId",
+          "planRef",
+          "items"
+        ],
+        "properties": {
+          "sessionId": {
+            "type": "string"
+          },
+          "planRef": {
+            "type": "string"
+          },
+          "provider": {
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "id",
+                "subject",
+                "status"
+              ],
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "subject": {
+                  "type": "string"
+                },
+                "description": {
+                  "type": "string"
+                },
+                "status": {
+                  "enum": [
+                    "pending",
+                    "in_progress",
+                    "completed"
+                  ]
+                },
+                "handoff": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "outputSchema": "contracts/plan-state.schema.json"
+    },
+    "state.session.close": {
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "sessionId"
+        ],
+        "properties": {
+          "sessionId": {
+            "type": "string"
+          },
+          "retentionMs": {
+            "type": "integer"
+          }
+        },
+        "additionalProperties": false
+      },
+      "outputSchema": "contracts/session-state.schema.json"
+    },
+    "state.session.open": {
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "sessionId",
+          "workspace"
+        ],
+        "properties": {
+          "sessionId": {
+            "type": "string"
+          },
+          "workspace": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "outputSchema": "contracts/session-state.schema.json"
+    }
+  },
+  "dependencies": []
+}

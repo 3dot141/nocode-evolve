@@ -1,0 +1,22 @@
+{
+  "id": "state.handoff.complete",
+  "domain": "runtime-state",
+  "internal": true,
+  "contextBindings": { "sessionId": "sessionId" },
+  "inputSchema": {
+    "type": "object",
+    "required": ["sessionId", "handoffId", "generation"],
+    "properties": {
+      "sessionId": { "type": "string" },
+      "handoffId": { "type": "string" },
+      "generation": { "type": "integer" }
+    },
+    "additionalProperties": false
+  },
+  "outputSchema": "contracts/handoff.schema.json",
+  "fallbackOn": "never",
+  "platforms": {
+    "claude": { "primary": "claude-plugin-data" },
+    "codex": { "primary": "codex-plugin-data" }
+  }
+}

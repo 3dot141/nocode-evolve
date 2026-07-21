@@ -27,8 +27,7 @@ test('Claude generated hooks retain all lifecycle boundaries', () => {
     'SessionStart',
     'PreToolUse',
     'PostToolUse',
-    'Stop',
   ]);
   assert.match(JSON.stringify(hooks.hooks.PreToolUse), /pretooluse-guard\.mjs/);
-  assert.match(JSON.stringify(hooks.hooks.Stop), /handoff-stop-guard\.mjs/);
+  assert.equal('Stop' in hooks.hooks, false);
 });

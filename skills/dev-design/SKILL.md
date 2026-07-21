@@ -52,7 +52,7 @@ decision ──Decision Packet(落盘设计文档初稿)──→ writing(同路
 
 ## 协议
 
-### Step 0: TaskCreate（协调里程碑，不镜像阶段内部步骤）
+### Step 0: workflow.plan.create（协调里程碑，不镜像阶段内部步骤）
 
 **进入后第一件事**，建 4 个协调里程碑（**不镜像 decision/writing 的内部 Step**——那些由各阶段协议内部循环处理，镜像出来会打架、谎报进度）：
 
@@ -63,6 +63,12 @@ Task 3:（可选）路由 render — 收 render receipt，记录产物关系
 Task 4: final gate + 硬交接 dev-plan
   metadata: {handoff: true}
 ```
+
+调用时把上面**每一条** Task 编译成一个稳定 item：`id` 固定、`subject` 为标题、`description` 完整包含 Sub-steps + Gate、初始 `status=pending`，仅最后一项设置 `handoff`。不得只改名后继续依赖平台 task 工具，也不得传空 items：
+
+`Capability(workflow.plan.create, {"items":[{"id":"<stable-task-id>","subject":"<task-title>","description":"<complete Sub-steps and Gate>","status":"pending","handoff":"<final-item-only; otherwise omit>"}]})`
+
+示例只展示单项形状；真实调用必须包含本段清单的全部 items。保存返回的 `planRef`。每次状态变化都用 `Capability(workflow.plan.update, {"planRef":"<planRef>","items":[{"id":"<same-stable-id>","subject":"<same-title>","description":"<same-complete-description>","status":"<pending|in_progress|completed>","handoff":"<preserve-final-item-handoff; otherwise omit>"}]})` 提交**完整快照**（示例仍只展示单项形状）；每次 update 必须原样保留最终 item 的 `handoff`，其它 item 继续省略该字段，不得发送单项 patch。
 
 每完成一个标 done。
 
@@ -82,12 +88,14 @@ Read `writing/SKILL.md`，按协议执行，传入 Decision Packet。收回 **re
 ### Step 3:（可选）路由 → render
 
 用户在 writing 收尾选了渲染 → Read `{NOCODE_SKILL_REF}/doc-render.md`，按协议执行。收回 **render receipt**：
+- 用 `Capability(design.workspace.create, {"projectRoot":"<absolute-project-root>","kind":"document","name":"<document-name>"})` 创建文档 workspace，再用 `Capability(design.artifact.generate, {"workspaceRef":{"type":"project","ref":"<workspace-ref>"},"kind":"document","brief":"<render-the-reviewed-document-faithfully>","outputDir":"<absolute-document-output-dir>"})` 发布。
+- 更新时执行 `Capability(design.artifact.write, {"artifactRef":{"provider":"open-design","workspace":{"type":"project","ref":"<workspace-ref>"},"artifact":{"kind":"document","localPath":"<local-path>","previewUrl":null},"degraded":false,"degradedFrom":null,"warnings":[]},"patch":{"brief":"<approved-render-change>"}})`；回读执行 `Capability(design.artifact.read, {"artifactRef":{"provider":"open-design","workspace":{"type":"project","ref":"<workspace-ref>"},"artifact":{"kind":"document","localPath":"<local-path>","previewUrl":null},"degraded":false,"degradedFrom":null,"warnings":[]}})`；预览执行 `Capability(design.preview.open, {"artifactRef":{"provider":"open-design","workspace":{"type":"project","ref":"<workspace-ref>"},"artifact":{"kind":"document","localPath":"<local-path>","previewUrl":null},"degraded":false,"degradedFrom":null,"warnings":[]}})`。三者都必须使用真实完整 receipt，不重建字段。
 - render **不改输入文档**（已评审文档不可变——render 回写会让评审结论不再覆盖当前内容）；协调器**记录产物关系**（见「产物记录」）。
 - 用户不渲染 → 跳过，markdown 即最终交付。
 
 ### Step 4: final gate + 硬交接
 
-final gate = 本轮设计流程的**计划内总确认窗口**：向用户报告方案摘要（← Packet `selectedApproach`）+ 关键决策（← `alternatives` 反方 + `[已确认]/[假定]`）+ 测试目标（← `testObjectives`）+ 文档路径 + 渲染产物（如有）。用户可对任意决策提异议要求回退。通过后建议进 Plan，等用户拍板调 `Skill(nocode:dev-plan)`。
+final gate = 本轮设计流程的**计划内总确认窗口**：向用户报告方案摘要（← Packet `selectedApproach`）+ 关键决策（← `alternatives` 反方 + `[已确认]/[假定]`）+ 测试目标（← `testObjectives`）+ 文档路径 + 渲染产物（如有）。用户可对任意决策提异议要求回退。通过后建议进 Plan，等用户拍板调 `Capability(workflow.skill.invoke, {"skill":"dev-plan","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})`。
 
 ## 确认策略（单一所有者：协调器）
 
@@ -127,4 +135,4 @@ render 纯输出、不碰输入文档；**产物关系由协调器在 final gate
 - replan 时直接让 decision 从零重来 / 删掉失效决策不留痕——丢了 `invalidatedDecision + evidence` 和决策历史
 - 把 Packet 或 restate 写成独立文件（如 `decision-packet.md` / `xxx-restate.md`）——唯一落盘载体是 `docPath` 设计文档：罗盘（restate）→ 决策账本 → 详细设计 → Review Log 全在同一文件上迭代长出，不存在第二个文件
 - render 改了输入设计文档 / 协调器不记录产物关系——已评审文档不可变，产物映射只在 final gate 报告里给
-- 因"任务简单 / 用户说了'继续'"跳过某阶段路由、不建 Step 0 TaskCreate、或漏掉最后的交接 task
+- 因"任务简单 / 用户说了'继续'"跳过某阶段路由、不建 Step 0 workflow.plan.create、或漏掉最后的交接 task

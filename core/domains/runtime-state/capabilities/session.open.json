@@ -1,0 +1,30 @@
+{
+  "id": "state.session.open",
+  "domain": "runtime-state",
+  "inputSchema": {
+    "type": "object",
+    "required": [
+      "sessionId",
+      "workspace"
+    ],
+    "properties": {
+      "sessionId": {
+        "type": "string"
+      },
+      "workspace": {
+        "type": "string"
+      }
+    },
+    "additionalProperties": false
+  },
+  "outputSchema": "contracts/session-state.schema.json",
+  "fallbackOn": "never",
+  "platforms": {
+    "claude": {
+      "primary": "claude-plugin-data"
+    },
+    "codex": {
+      "primary": "codex-plugin-data"
+    }
+  }
+}

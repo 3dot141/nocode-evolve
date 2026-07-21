@@ -3,12 +3,12 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { claudeAdapter } from '../adapters/claude/adapter.mjs';
 import { codexAdapter } from '../adapters/codex/adapter.mjs';
+import { loadDomainRegistry } from './lib/domain-registry.mjs';
 import {
   buildExpectedTree,
   diffTree,
   formatDiff,
   loadJson,
-  validateContract,
   validateMetadata,
   writeExpectedTree,
 } from './lib/platform-compiler.mjs';
@@ -40,15 +40,26 @@ export function parseArgs(args) {
 
 export function run(options, root = ROOT) {
   const metadata = validateMetadata(loadJson(path.join(root, 'plugin/metadata.json')));
-  const contract = loadJson(path.join(root, 'core/capabilities/contract.json'));
   const adapters = { claude: claudeAdapter, codex: codexAdapter };
-  validateContract(contract, adapters);
+  const registry = loadDomainRegistry(root);
 
   const messages = [];
   let hasDrift = false;
+  const builds = [];
   for (const platform of options.platforms) {
-    const expected = buildExpectedTree({ root, metadata, adapter: adapters[platform] });
+    const resolution = registry.resolvePlatform(platform);
+    const expected = buildExpectedTree({
+      root,
+      metadata,
+      adapter: adapters[platform],
+      resolution,
+      registry,
+    });
     const outputRoot = path.join(root, 'plugins', platform, metadata.name);
+    builds.push({ platform, expected, outputRoot });
+  }
+
+  for (const { platform, expected, outputRoot } of builds) {
     if (options.check) {
       const lines = formatDiff(platform, diffTree(expected, outputRoot));
       messages.push(...lines);

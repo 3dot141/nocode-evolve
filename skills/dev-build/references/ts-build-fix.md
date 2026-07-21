@@ -61,7 +61,7 @@ function processData(data: any[]) {   // 只改这一行
 
 ## 停止条件
 
-需要重构（交给 refactor）/ 需要架构改动（交给 architect）/ 需要新功能（交给 planner）/ 测试失败（交给测试流程）→ 超出本配方范围，停手报告。
+需要重构（交给 refactor）/ 需要架构改动（交接到 `reviewing` Skill 的架构专项）/ 需要新功能（交给 planner）/ 测试失败（交给测试流程）→ 超出本配方范围，停手报告。
 
 ## 成功标准
 

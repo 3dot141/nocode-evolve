@@ -1,9 +1,8 @@
 ---
 name: personalhub
 description: ".agents-personal/ 聚合入口（hub），分发到 7 个子动作（init/write/search/check/tidy/snap/status）"
+argument-hint: <sub-action> [args]
 ---
-
-> Codex 入口：原命令参数统一称为“用户本次调用参数”。
 
 # /personalhub：.agents-personal/ 管理入口
 
@@ -17,11 +16,11 @@ description: ".agents-personal/ 聚合入口（hub），分发到 7 个子动作
 
 | 子动作 | 做什么 | 转发到 | 独立命令 |
 |---|---|---|---|
-| `init` | 初始化 .agents-personal/ 结构 | `$personal-init` | `/personal-init` |
-| `write` | 写入 wiki / rules / AGENTS.md（变量·语气·命名·约定） | `$personal-distill` | `/personal-distill` |
-| `search` | 检索 .agents-personal/ 内容（wiki + rules + AGENTS.md 各分节） | `$personal-recall` | `/personal-recall` |
-| `check` | 健康检查 | `$personal-lint` | `/personal-lint` |
-| `tidy` | 自主维护（stale/prune/merge/promote） | `$personal-dream` | `/personal-dream` |
+| `init` | 初始化 .agents-personal/ 结构 | `Capability(workflow.skill.invoke, {"skill":"personal-init","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})` | `/personal-init` |
+| `write` | 写入 wiki / rules / AGENTS.md（变量·语气·命名·约定） | `Capability(workflow.skill.invoke, {"skill":"personal-distill","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})` | `/personal-distill` |
+| `search` | 检索 .agents-personal/ 内容（wiki + rules + AGENTS.md 各分节） | `Capability(workflow.skill.invoke, {"skill":"personal-recall","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})` | `/personal-recall` |
+| `check` | 健康检查 | `Capability(workflow.skill.invoke, {"skill":"personal-lint","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})` | `/personal-lint` |
+| `tidy` | 自主维护（stale/prune/merge/promote） | `Capability(workflow.skill.invoke, {"skill":"personal-dream","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})` | `/personal-dream` |
 | `snap` | 手动触发备份快照 | `node "${PLUGIN_ROOT}/scripts/personal-snapshot.mjs" --json` | — |
 | `status` | 概览当前状态 | 内联执行（见下方） | — |
 

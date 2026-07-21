@@ -66,12 +66,11 @@ Each agent gets:
 ### 3. Dispatch in Parallel
 
 ```typescript
-// In Claude Code / AI environment
-Task("Fix agent-tool-abort.test.ts failures")
-Task("Fix batch-completion-behavior.test.ts failures")
-Task("Fix tool-approval-race-conditions.test.ts failures")
-// All three run concurrently
+Capability(workflow.execute, {"tasks":[{"id":"abort-tests","objective":"Fix agent-tool-abort.test.ts failures: partial output capture expects 'interrupted at'; mixed completed/aborted tools aborts the fast tool; pendingToolCount expects 3 results but gets 0. Find the race root cause, modify only src/agent-tool-abort, run this test file, and return root cause/files/tests/concerns.","profile":"implementation.general","dependsOn":[],"writeScope":"src/agent-tool-abort"},{"id":"batch-tests","objective":"Fix batch-completion-behavior.test.ts failures where the fast tool aborted instead of completed. Read the failing assertions and production path, modify only src/batch-completion, run this test file, and return root cause/files/tests/concerns.","profile":"implementation.general","dependsOn":[],"writeScope":"src/batch-completion"},{"id":"approval-tests","objective":"Fix tool-approval-race-conditions.test.ts failures where pendingToolCount expects 3 results but gets 0. Read the failing assertions and production path, modify only src/tool-approval, run this test file, and return root cause/files/tests/concerns.","profile":"implementation.general","dependsOn":[],"writeScope":"src/tool-approval"}],"maxParallel":3,"fallbackPolicy":"inline"})
+// The provider dispatches the independent, non-overlapping tasks concurrently.
 ```
+
+Save the returned `executionId`. While `status=running`, repeatedly call `Capability(workflow.wait, {"executionId":"<execution-id>","timeoutMs":600000})` until a terminal status, then call `Capability(workflow.collect, {"executionId":"<execution-id>"})` and read every `tasks[].result` or failure. The initial execute receipt is not a completion result.
 
 ### 4. Review and Integrate
 

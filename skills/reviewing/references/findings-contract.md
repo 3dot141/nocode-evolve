@@ -86,7 +86,7 @@ verdict {
 
 security 原生 4 档（Critical/High/Medium/Low）压成 3 档时，`High` 上提到统一 `Critical`，**不下沉到 Warning**。
 
-依据：`agents/security-reviewer.md` 里 `High` 的语义是 "Fix Before Production"——近似阻塞。4→3 压缩若把 High 下沉成 Warning，会让"上线前必修的安全问题"被当成"可选修"，是安全语义损失。故 `Critical + High → Critical`。
+依据：`security-method` 将 High 定义为上线前必须修复，语义近似阻塞。4→3 压缩若把 High 下沉成 Warning，会把必修安全问题误作可选项，故 `Critical + High → Critical`。
 
 ### ② Q/SA 是 kind 不是 severity
 

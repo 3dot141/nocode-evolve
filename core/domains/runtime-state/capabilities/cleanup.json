@@ -1,0 +1,29 @@
+{
+  "id": "state.cleanup",
+  "domain": "runtime-state",
+  "inputSchema": {
+    "type": "object",
+    "required": [
+      "sessionId"
+    ],
+    "properties": {
+      "sessionId": {
+        "type": "string"
+      },
+      "retentionMs": {
+        "type": "integer"
+      }
+    },
+    "additionalProperties": false
+  },
+  "outputSchema": "contracts/session-state.schema.json",
+  "fallbackOn": "never",
+  "platforms": {
+    "claude": {
+      "primary": "claude-plugin-data"
+    },
+    "codex": {
+      "primary": "codex-plugin-data"
+    }
+  }
+}

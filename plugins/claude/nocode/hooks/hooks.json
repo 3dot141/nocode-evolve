@@ -6,43 +6,55 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/inject-nocode.sh model-about"
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/skills/using-nocode/scripts/providers/claude-plugin-data/scripts/entry.mjs\" -- node \"${CLAUDE_PLUGIN_ROOT}/hooks/session-open.mjs\""
           },
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/inject-nocode.sh model-personal"
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/skills/using-nocode/scripts/providers/claude-plugin-data/scripts/entry.mjs\" -- \"${CLAUDE_PLUGIN_ROOT}/hooks/inject-nocode.sh\" model-nocode"
           },
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/inject-nocode.sh model-karpathy"
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/skills/using-nocode/scripts/providers/claude-plugin-data/scripts/entry.mjs\" -- \"${CLAUDE_PLUGIN_ROOT}/hooks/inject-nocode.sh\" model-about 1"
           },
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/inject-nocode.sh model-rule-catalog-1"
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/skills/using-nocode/scripts/providers/claude-plugin-data/scripts/entry.mjs\" -- \"${CLAUDE_PLUGIN_ROOT}/hooks/inject-nocode.sh\" model-about 2"
           },
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/inject-nocode.sh model-rule-catalog-2"
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/skills/using-nocode/scripts/providers/claude-plugin-data/scripts/entry.mjs\" -- \"${CLAUDE_PLUGIN_ROOT}/hooks/inject-nocode.sh\" model-personal"
           },
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/inject-nocode.sh model-rule-catalog-3"
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/skills/using-nocode/scripts/providers/claude-plugin-data/scripts/entry.mjs\" -- \"${CLAUDE_PLUGIN_ROOT}/hooks/inject-nocode.sh\" model-karpathy"
           },
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/inject-nocode.sh model-rule-catalog-4"
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/skills/using-nocode/scripts/providers/claude-plugin-data/scripts/entry.mjs\" -- \"${CLAUDE_PLUGIN_ROOT}/hooks/inject-nocode.sh\" model-rule-catalog-1"
           },
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/inject-nocode.sh model-rule-catalog-5"
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/skills/using-nocode/scripts/providers/claude-plugin-data/scripts/entry.mjs\" -- \"${CLAUDE_PLUGIN_ROOT}/hooks/inject-nocode.sh\" model-rule-catalog-2"
           },
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/inject-nocode.sh project"
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/skills/using-nocode/scripts/providers/claude-plugin-data/scripts/entry.mjs\" -- \"${CLAUDE_PLUGIN_ROOT}/hooks/inject-nocode.sh\" model-rule-catalog-3"
           },
           {
             "type": "command",
-            "command": "node ${CLAUDE_PLUGIN_ROOT}/scripts/personal-snapshot.mjs"
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/skills/using-nocode/scripts/providers/claude-plugin-data/scripts/entry.mjs\" -- \"${CLAUDE_PLUGIN_ROOT}/hooks/inject-nocode.sh\" model-rule-catalog-4"
+          },
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/skills/using-nocode/scripts/providers/claude-plugin-data/scripts/entry.mjs\" -- \"${CLAUDE_PLUGIN_ROOT}/hooks/inject-nocode.sh\" model-rule-catalog-5"
+          },
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/skills/using-nocode/scripts/providers/claude-plugin-data/scripts/entry.mjs\" -- \"${CLAUDE_PLUGIN_ROOT}/hooks/inject-nocode.sh\" project"
+          },
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/skills/using-nocode/scripts/providers/claude-plugin-data/scripts/entry.mjs\" -- node \"${CLAUDE_PLUGIN_ROOT}/scripts/personal-snapshot.mjs\""
           }
         ]
       }
@@ -53,50 +65,11 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node ${CLAUDE_PLUGIN_ROOT}/hooks/pretooluse-guard.mjs"
-          }
-        ]
-      },
-      {
-        "matcher": "*",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/skills/continuous-learning-v2/hooks/observe.sh"
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/skills/using-nocode/scripts/providers/claude-plugin-data/scripts/entry.mjs\" -- node \"${CLAUDE_PLUGIN_ROOT}/hooks/pretooluse-guard.mjs\""
           }
         ]
       }
     ],
-    "PostToolUse": [
-      {
-        "matcher": "*",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/skills/continuous-learning-v2/hooks/observe.sh"
-          }
-        ]
-      },
-      {
-        "matcher": "Read",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node ${CLAUDE_PLUGIN_ROOT}/hooks/usage-tracker.mjs"
-          }
-        ]
-      }
-    ],
-    "Stop": [
-      {
-        "matcher": "*",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node ${CLAUDE_PLUGIN_ROOT}/hooks/handoff-stop-guard.mjs"
-          }
-        ]
-      }
-    ]
+    "PostToolUse": []
   }
 }

@@ -1,13 +1,12 @@
 ---
 name: eval
 description: "eval-driven development 工作流管理（定义/检查/生成报告/列出 eval）"
+argument-hint: "[define|check|report|list|clean] [feature-name]"
 ---
-
-> Codex 入口：原命令参数统一称为“用户本次调用参数”。
 
 # /eval：eval-driven development 工作流
 
-统一入口，转发到 `$eval-harness` 执行 EDD（eval-driven development）方法论——定义能力/回归 eval、跑 eval、生成报告、列出所有 eval 定义。
+统一入口，转发到 `Capability(workflow.skill.invoke, {"skill":"eval-harness","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})` 执行 EDD（eval-driven development）方法论——定义能力/回归 eval、跑 eval、生成报告、列出所有 eval 定义。
 
 ## 用法
 
@@ -15,7 +14,7 @@ description: "eval-driven development 工作流管理（定义/检查/生成报�
 
 ## 执行
 
-调 `$eval-harness`，把 `用户本次调用参数` 原样传入：
+调 `Capability(workflow.skill.invoke, {"skill":"eval-harness","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})`，把 `用户本次调用参数` 原样传入：
 
 - `define <name>` — 创建新的 eval 定义
 - `check <name>` — 跑并检查 eval

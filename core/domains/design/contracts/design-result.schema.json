@@ -1,0 +1,19 @@
+{
+  "$id": "design.design-result",
+  "type": "object",
+  "required": ["provider", "workspace", "artifact", "degraded", "degradedFrom", "warnings"],
+  "properties": {
+    "provider": { "type": "string" },
+    "workspace": { "type": "object", "required": ["type", "ref"], "properties": { "type": { "enum": ["project", "directory"] }, "ref": { "type": "string" } }, "additionalProperties": false },
+    "artifact": { "oneOf": [{ "type": "null" }, { "type": "object", "required": ["kind", "localPath", "previewUrl"], "properties": { "kind": { "enum": ["design-system", "prototype", "document"] }, "localPath": { "type": "string" }, "previewUrl": { "type": ["string", "null"] } }, "additionalProperties": false }] },
+    "degraded": { "type": "boolean" },
+    "degradedFrom": { "type": ["string", "null"] },
+    "reason": { "type": "string" },
+    "warnings": { "type": "array", "items": { "type": "string" } }
+  },
+  "oneOf": [
+    { "type": "object", "required": ["degraded"], "properties": { "degraded": { "const": false } } },
+    { "type": "object", "required": ["degraded", "reason"], "properties": { "degraded": { "const": true } } }
+  ],
+  "additionalProperties": false
+}

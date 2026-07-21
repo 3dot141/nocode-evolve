@@ -12,10 +12,10 @@
 
 ```
 src/components/
-  TaskList/
-    TaskList.tsx          # Component implementation
-    TaskList.test.tsx     # Tests
-    TaskList.stories.tsx  # Storybook stories (if using)
+  workflow plan snapshot/
+    workflow plan snapshot.tsx          # Component implementation
+    workflow plan snapshot.test.tsx     # Tests
+    workflow plan snapshot.stories.tsx  # Storybook stories (if using)
     use-task-list.ts      # Custom hook (if complex state)
     types.ts              # Component-specific types (if needed)
 ```
@@ -31,7 +31,7 @@ src/components/
     <CardTitle>Tasks</CardTitle>
   </CardHeader>
   <CardBody>
-    <TaskList tasks={tasks} />
+    <workflow plan snapshot tasks={tasks} />
   </CardBody>
 </Card>
 
@@ -40,7 +40,7 @@ src/components/
   title="Tasks"
   headerVariant="large"
   bodyPadding="md"
-  content={<TaskList tasks={tasks} />}
+  content={<workflow plan snapshot tasks={tasks} />}
 />
 ```
 
@@ -72,11 +72,11 @@ export function TaskListContainer() {
   if (error) return <ErrorState message="Failed to load tasks" retry={refetch} />;
   if (tasks.length === 0) return <EmptyState message="No tasks yet" />;
 
-  return <TaskList tasks={tasks} />;
+  return <workflow plan snapshot tasks={tasks} />;
 }
 
 // Presentation: handles rendering
-export function TaskList({ tasks }: { tasks: Task[] }) {
+export function workflow plan snapshot({ tasks }: { tasks: Task[] }) {
   return (
     <ul role="list" className="divide-y">
       {tasks.map(task => <TaskItem key={task.id} task={task} />)}
@@ -210,7 +210,7 @@ function Dialog({ isOpen, onClose }: DialogProps) {
 
 ```tsx
 // Don't show blank screens
-function TaskList({ tasks }: { tasks: Task[] }) {
+function workflow plan snapshot({ tasks }: { tasks: Task[] }) {
   if (tasks.length === 0) {
     return (
       <div role="status" className="text-center py-12">

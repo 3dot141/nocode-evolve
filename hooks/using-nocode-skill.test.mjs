@@ -1,0 +1,29 @@
+import assert from 'node:assert/strict';
+import { existsSync, readFileSync } from 'node:fs';
+import path from 'node:path';
+import { test } from 'node:test';
+import { fileURLToPath } from 'node:url';
+
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+
+test('default bootstrap and using-nocode route all six domains without a gateway runtime', () => {
+  const bootstrapPath = path.join(ROOT, 'model/agent-nocode.md');
+  const skillPath = path.join(ROOT, 'skills/using-nocode/SKILL.md');
+  assert.equal(existsSync(bootstrapPath), true, 'agent-nocode bootstrap is required');
+  assert.equal(existsSync(skillPath), true, 'using-nocode Skill is required');
+
+  const bootstrap = readFileSync(bootstrapPath, 'utf8');
+  assert.match(bootstrap, /using-nocode/);
+  assert.match(bootstrap, /外部.*数据|网页.*数据|工具输出.*数据/s);
+  assert.match(bootstrap, /approval|确认|权限/i);
+
+  const skill = readFileSync(skillPath, 'utf8');
+  assert.match(skill, /^---\nname: using-nocode\n/m);
+  assert.match(skill, /Domain Routing/);
+  for (const domain of [
+    'workflow', 'workspace', 'design', 'runtime-state', 'personal-knowledge', 'lifecycle',
+  ]) {
+    assert.match(skill, new RegExp(`references/${domain}\\.md`));
+  }
+  assert.doesNotMatch(skill, /nocode-domains\.md|gateway\.mjs|attemptToken/);
+});

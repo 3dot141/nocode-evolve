@@ -1,7 +1,6 @@
-# architecture-method — 架构评审方法 card
+# architecture-method：架构评审清单
 
-> reviewing 框架的方法库 card。被 `skeleton.md` 方法选择表「架构决策」行选中,或 architect / dev-review 架构轴派发时 Read。
-> 领域清单(架构原则 / 模式 / Trade-Off / Red Flags / System Design Checklist)**单源在此**,从原 `agents/architect.md` 抽取。
+适用于架构决策、系统设计、可扩展性与技术选型评审。通用流程遵循 `references/skeleton.md`，本文件只定义架构领域维度。
 
 ## 一、评审维度(domainAxes,注入 skeleton 第 3 步)
 

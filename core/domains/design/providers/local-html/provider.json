@@ -1,0 +1,178 @@
+{
+  "id": "local-html",
+  "execution": "cli",
+  "pluginData": false,
+  "wrapper": {
+    "command": "node",
+    "args": ["providers/local-html/scripts/render.mjs"],
+    "safeFailureExitCodes": []
+  },
+  "domain": "design",
+  "platforms": [
+    "claude",
+    "codex"
+  ],
+  "capabilities": {
+    "design.workspace.create": {
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "projectRoot",
+          "kind",
+          "name"
+        ],
+        "properties": {
+          "projectRoot": {
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "design-system",
+              "prototype",
+              "document"
+            ]
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "outputSchema": "contracts/design-result.schema.json"
+    },
+    "design.artifact.generate": {
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "workspaceRef",
+          "kind",
+          "brief",
+          "outputDir"
+        ],
+        "properties": {
+          "workspaceRef": {
+            "type": "object",
+            "required": [
+              "type",
+              "ref"
+            ],
+            "properties": {
+              "type": {
+                "type": "string"
+              },
+              "ref": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          },
+          "kind": {
+            "enum": [
+              "design-system",
+              "prototype",
+              "document"
+            ]
+          },
+          "brief": {
+            "type": "string"
+          },
+          "outputDir": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "outputSchema": "contracts/design-result.schema.json"
+    },
+    "design.artifact.read": {
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "artifactRef"
+        ],
+        "properties": {
+          "artifactRef": {
+            "allOf": [
+              { "$ref": "design.design-result" },
+              {
+                "type": "object",
+                "required": ["artifact"],
+                "properties": { "artifact": { "type": "object" } }
+              }
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "outputSchema": "contracts/design-result.schema.json"
+    },
+    "design.artifact.write": {
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "artifactRef"
+        ],
+        "properties": {
+          "artifactRef": {
+            "allOf": [
+              { "$ref": "design.design-result" },
+              {
+                "type": "object",
+                "required": ["artifact"],
+                "properties": { "artifact": { "type": "object" } }
+              }
+            ]
+          },
+          "content": {
+            "type": "string"
+          },
+          "patch": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "oneOf": [
+          {
+            "required": [
+              "content"
+            ]
+          },
+          {
+            "required": [
+              "patch"
+            ]
+          }
+        ],
+        "additionalProperties": false
+      },
+      "outputSchema": "contracts/design-result.schema.json"
+    },
+    "design.preview.open": {
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "artifactRef"
+        ],
+        "properties": {
+          "artifactRef": {
+            "allOf": [
+              { "$ref": "design.design-result" },
+              {
+                "type": "object",
+                "required": ["artifact"],
+                "properties": { "artifact": { "type": "object" } }
+              }
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "outputSchema": "contracts/design-result.schema.json"
+    }
+  },
+  "dependencies": [
+    "workspace.read",
+    "workspace.write",
+    "workspace.browser.verify"
+  ]
+}

@@ -1,3 +1,11 @@
+---
+name: dev-design-writing
+description: Private writing protocol used by dev-design to expand an approved Decision Packet into the final design document; never invoke independently.
+disable-model-invocation: true
+---
+
+> 本文写“结构化决策”时，必须把当前步骤的完整问题与 2–3 个互斥选项编译为 `Capability(workflow.decision.request, {"question":"<self-contained current-step question>","options":[{"label":"<option-label>","description":"<impact or tradeoff>"}],"allowFreeform":false})`；示例只展示单项形状，真实调用需带齐本步骤列出的选项，不得回退到平台专属提问工具。
+
 # writing — 设计完善
 
 > dev-design 内部协议，不独立注册。由 dev-design 协调器在 writing 阶段 Read 并执行。
@@ -34,7 +42,7 @@ decision 阶段选完方案（"走哪条路"，产出 Decision Packet），本�
 
 > **内部 Step 编号统一**：通用流程步 **Step 0-5** 与场景模板 detail 步 **Step 4a/4b/…** 连续编号，不各自从 Step 2 重启——历史上"通用 Step2 章节大纲 vs 场景 Step2 领域划分"曾因各自编号撞车，统一编号后消除。
 
-### Step 0: TaskCreate
+### Step 0: workflow.plan.create
 
 **进入后第一件事**，创建以下 task（Step 4 内部 detail 子步因场景而异，见场景模板）：
 
@@ -48,6 +56,12 @@ Task 6: Review（唯一评审：默认主会话 8 维自查，用户显式要求
 Task 7: 保存 + 渲染确认 + handoff（步 13-14）
   metadata: {handoff: true}
 ```
+
+调用时把上面**每一条** Task 编译成一个稳定 item：`id` 固定、`subject` 为标题、`description` 完整包含 Sub-steps + Gate、初始 `status=pending`，仅最后一项设置 `handoff`。不得只改名后继续依赖平台 task 工具，也不得传空 items：
+
+`Capability(workflow.plan.create, {"items":[{"id":"<stable-task-id>","subject":"<task-title>","description":"<complete Sub-steps and Gate>","status":"pending","handoff":"<final-item-only; otherwise omit>"}]})`
+
+示例只展示单项形状；真实调用必须包含本段清单的全部 items。保存返回的 `planRef`。每次状态变化都用 `Capability(workflow.plan.update, {"planRef":"<planRef>","items":[{"id":"<same-stable-id>","subject":"<same-title>","description":"<same-complete-description>","status":"<pending|in_progress|completed>","handoff":"<preserve-final-item-handoff; otherwise omit>"}]})` 提交**完整快照**（示例仍只展示单项形状）；每次 update 必须原样保留最终 item 的 `handoff`，其它 item 继续省略该字段，不得发送单项 patch。
 
 每完成一个标 done。
 
@@ -104,9 +118,9 @@ Task 7: 保存 + 渲染确认 + handoff（步 13-14）
    - **feat** → 域划分 + 域关系总图
    - **bug** → 现象 + 复现 + 影响范围（问题位置图在 Step 4a 根因分析里补细）
    - **refactor** → 现状结构图 + 目标结构图（before/after）
-3. **展示 + 确认（拆两回合，大纲/骨架禁塞 AskUserQuestion）**：
+3. **展示 + 确认（拆两回合，大纲/骨架禁塞 结构化决策）**：
    - **展示回合**：章节大纲（有序列表，一行一章）+ 结构骨架（代码块）作为**回合末尾文本**完整输出，末尾问「这个结构可以吗，还是要调整？」，**结束回合，不接任何工具调用**。大纲塞 `question` 会挤成密集段落，骨架塞 `preview` 会被终端折叠（`N lines hidden`）——用户什么都没看清就被要求确认。
-   - **确认回合**：用户回应通常已是决策（确认 / 具体调整意见）→ 直接采纳，不再补 ask；回应含糊才 AskUserQuestion 澄清。要调整 → 改后重走展示回合；章节太多 → 去掉不需要的（小改动不需监控/eval 章）。
+   - **确认回合**：用户回应通常已是决策（确认 / 具体调整意见）→ 直接采纳，不再补 ask；回应含糊才 结构化决策 澄清。要调整 → 改后重走展示回合；章节太多 → 去掉不需要的（小改动不需监控/eval 章）。
 
 **Exit Gate:**
 - [ ] 章节大纲 + 结构骨架经用户确认
@@ -147,7 +161,7 @@ Task 7: 保存 + 渲染确认 + handoff（步 13-14）
 
 **每遇新决策 → 套「局部 vs 方案级」判据**（方案级决策的唯一所有者是 decision——writing 在补全中自行改方案级决策，文档会和已确认的 Decision Packet 漂移，评审和实现就会各信一边）：
 - 改动**数据流 / 模块边界 / 外部契约 / 关键约束**任一 → **方案级决策**：停下，返回结构化 `replan_required`（含 `originalPacketRevision / invalidatedDecision / evidence / affectedSections[] / resumeState`，envelope 单源见 `decision/SKILL.md`），由协调器回 decision 重选，不带方案级变更硬写
-- 都没改（接口参数 / 命名 / 模块内部实现）→ **局部决策**：writing 自己定，小问题 AskUserQuestion 当场确认，不中断
+- 都没改（接口参数 / 命名 / 模块内部实现）→ **局部决策**：writing 自己定，小问题 结构化决策 当场确认，不中断
 
 **Exit Gate:**
 - [ ] 场景模板各 detail 子步（4a/4b/…）完成
@@ -186,7 +200,7 @@ Task 7: 保存 + 渲染确认 + handoff（步 13-14）
 **默认自查（主路）**：Read `references/design-doc-review.md` 拿设计文档评审维度，**主会话就地逐维过全文**——不调 reviewing 引擎、不派 subagent/Codex。自查纪律：放下写作过程中的推理，只看文档本身现在站不站得住；发现的问题产出 findings（五档 C/W/S/Q/SA，短编号 `C1/W1/S1/Q1/SA1`），代码/事实类 finding 要带章节锚点 + 原文摘录，缺锚点的降 Q 档不硬上 Critical/Warning。
 
 **升审只在两种情况**：
-- **用户显式要求**（「审一下 / 深审 / 独立审 / 找 codex」）→ 调 `Skill(nocode:reviewing)`，声明：对象 = 设计文档；领域维度 = design-doc-review 8 维；Context Capsule = 已拍板决策 / 被否决方案及原因 / 非目标 / 预算（不带作者预期结论）——派发 / CLAIM 剥离 / 降级由引擎承载
+- **用户显式要求**（「审一下 / 深审 / 独立审 / 找 codex」）→ 调 `Capability(workflow.skill.invoke, {"skill":"reviewing","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"dev-design-writing","restate":"<confirmed-restate-or-omit>","artifacts":["<absolute-design-document-path>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"},"payload":{"object":{"type":"design-document","ref":"<absolute-design-document-path>"},"dimensions":["<all-8-design-doc-review-axes>"],"method":"checklist","contextCapsule":{"facts":["<verified-fact>"],"decisions":["<confirmed-decision>"],"rejectedAlternatives":["<alternative-and-reason>"],"constraints":["<constraint>"],"nonGoals":["<non-goal>"]},"depth":"independent"}}})`，声明：对象 = 设计文档；领域维度 = design-doc-review 8 维；Context Capsule = 已拍板决策 / 被否决方案及原因 / 非目标 / 预算（不带作者预期结论）——派发 / CLAIM 剥离 / 降级由引擎承载
 - **文档命中敏感面**（认证 / 敏感数据 / schema·migration / 资金 / 对外接口 / 不可逆决策）→ 向用户**一句话建议**升审，用户点头才调，不自动派发
 
 自查（或升审后引擎返回）的 findings 进下面的收口确认。
@@ -217,7 +231,7 @@ Task 7: 保存 + 渲染确认 + handoff（步 13-14）
 
 **Core Actions:**
 1. **覆盖保存**到 Packet `docPath`（即 `{dev_design_output}`，与初稿同一路径）——初稿被完整详细设计覆盖，首章「罗盘」原样保留，Packet 内容承载于「方案决策」章节不丢失；不另存新文件、不留初稿副本
-2. **AskUserQuestion：是否渲染成 Artifact 页面？**
+2. **结构化决策：是否渲染成 Artifact 页面？**
    - 是 → 进入 render 阶段（Read `{NOCODE_SKILL_REF}/doc-render.md` 执行），把设计文档渲染成 Artifact 页面（图用 DOM 排版、表格可交互、可分享 URL）
    - 否 → 设计文档（markdown）即最终交付
 3. **硬交接**：向协调器报告 writing 阶段完成 + 文档保存路径 + **review verdict**，协调器**只验 verdict 不重审**，继续状态机（→ render / final gate）
@@ -272,7 +286,7 @@ Task 7: 保存 + 渲染确认 + handoff（步 13-14）
 - ❌ **代用户拍板**：拿到 findings 自己挑修哪些——用户确认是 hard gate
 - ❌ **吞 Review Log**：只改主体不 append Review Log——审计轨迹断
 - ❌ **把 plan 内容塞进来**：class 内部 / TDD 步骤 / 具体 catch 块写法
-- ❌ 因"任务简单 / 还在概览 / 用户说了'继续'"跳过某 Step、不建 Step 0 TaskCreate、或漏掉收尾交接——进了流程就走完所有 Step
+- ❌ 因"任务简单 / 还在概览 / 用户说了'继续'"跳过某 Step、不建 Step 0 workflow.plan.create、或漏掉收尾交接——进了流程就走完所有 Step
 
 ## 输出路径
 

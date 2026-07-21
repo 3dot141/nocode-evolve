@@ -61,7 +61,9 @@ test('session and stop codecs expose the platform lifecycle difference', () => {
   assert.deepEqual(encodeSessionContext('context', 'codex'), { systemMessage: 'context' });
   const decision = { decision: 'block', reason: 'handoff pending' };
   assert.deepEqual(encodeStopDecision(decision, 'claude'), decision);
-  assert.equal(encodeStopDecision(decision, 'codex'), null);
+  assert.deepEqual(encodeStopDecision(decision, 'codex'), {
+    continue: false, stopReason: 'handoff pending',
+  });
 });
 
 test('session-context CLI encodes stdin using the selected platform', () => {

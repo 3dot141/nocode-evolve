@@ -14,7 +14,7 @@ description: "Use before merging any change, after completing a feature, or when
 **默认（主路）**：主会话就地按五轴 checklist 逐轴过 diff——不调 reviewing 引擎、不派 subagent/Codex。维度 = 五轴（正确性 / 可读性 / 架构 / 安全 / 性能），是后续 finding 的 `axis`；五轴详细检查点见 `references/five-axis-guide.md`。Spec 轴（需求对齐）不在 dev-review 查，前移到 Design/Plan/Build（见"Review 的检查范围是 Standards 轴"）。自查纪律：放下写代码时的推理，只看 diff 本身站不站得住；代码事实类 finding 必须带 file:line + 摘录，缺 location 不上 Critical/Warning（降 open-question）。
 
 **升审只在两种情况**：
-- **用户显式要求**（「深审 / 独立审 / 找 codex / 红蓝军」）→ 调 `$reviewing`，声明：对象 = 代码 diff；领域维度 = 五轴；Context Capsule = 已拍板决策 / 非目标 / 约束（不带主会话对改动的预期结论）——派发 / CLAIM 剥离 / 降级由引擎承载
+- **用户显式要求**（「深审 / 独立审 / 找 codex / 红蓝军」）→ 调 `Capability(workflow.skill.invoke, {"skill":"reviewing","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"dev-review","restate":"<confirmed-restate>","artifacts":["<absolute-diff-range-or-patch-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef>","decision":"<user-approved-independent-review>"},"payload":{"object":{"type":"code-diff","ref":"<absolute-diff-range-or-patch-receipt>"},"dimensions":["correctness","readability","architecture","security","performance"],"method":"checklist","contextCapsule":{"facts":["<verified-build-and-test-fact>"],"decisions":["<confirmed-decision>"],"rejectedAlternatives":["<alternative-and-reason>"],"constraints":["<constraint>"],"nonGoals":["<non-goal>"]},"depth":"independent"}}})`，声明：对象 = 代码 diff；领域维度 = 五轴；Context Capsule = 已拍板决策 / 非目标 / 约束（不带主会话对改动的预期结论）——派发 / CLAIM 剥离 / 降级由引擎承载
 - **diff 命中敏感面**（外部输入 / 认证 / 敏感数据 / SQL·schema·migration / 并发 / 资金 / 不可逆）→ 向用户**一句话建议**升审，用户点头才调，不自动派发
 
 findings 统一 schema（C/W/S 分级，Q/SA 走 kind），来源标注「自审」或独立路。
@@ -43,16 +43,16 @@ findings 统一 schema（C/W/S 分级，Q/SA 走 kind），来源标注「自审
 
 | 轴 / 检查 | 取什么 | 用来做什么 |
 |---|---|---|
-| 安全轴 | Read `${PLUGIN_ROOT}/shared/references/security-guide.md` | OWASP / 注入 / 信任边界 |
-| 架构轴 | Read `${PLUGIN_ROOT}/shared/references/architecture-principles.md` | Deep-Shallow / 依赖方向 / seam |
+| 安全轴 | Read `${PLUGIN_ROOT}/skills/references/security-guide.md` | OWASP / 注入 / 信任边界 |
+| 架构轴 | Read `${PLUGIN_ROOT}/skills/references/architecture-principles.md` | Deep-Shallow / 依赖方向 / seam |
 | 数据库（SQL/schema/migration） | 敏感面——自查基础反模式 + 一句话建议升审 | migration 本身命中敏感面提醒 |
-| 性能轴 | Read `${PLUGIN_ROOT}/shared/references/performance-guide.md` | N+1 / 重渲染 / bundle 反模式 |
-| 测试质量 | Read `${PLUGIN_ROOT}/shared/references/testing-guide.md` | DAMP / 替身偏好序 / 金字塔 |
-| UI 代码 | Read `${PLUGIN_ROOT}/shared/references/frontend-guide.md` | 组件模式 / Avoid AI Aesthetic / WCAG |
+| 性能轴 | Read `${PLUGIN_ROOT}/skills/references/performance-guide.md` | N+1 / 重渲染 / bundle 反模式 |
+| 测试质量 | Read `${PLUGIN_ROOT}/skills/references/testing-guide.md` | DAMP / 替身偏好序 / 金字塔 |
+| UI 代码 | Read `${PLUGIN_ROOT}/skills/references/frontend-guide.md` | 组件模式 / Avoid AI Aesthetic / WCAG |
 
 ## 协议
 
-### Step 0: update_plan
+### Step 0: workflow.plan.create
 
 **进入后第一件事**，创建以下全部 task：
 
@@ -70,7 +70,7 @@ Task 2: Simplification Pass
   Gate: 简化项已识别
 
 Task 3: 独立交叉（仅用户显式要求）
-  Sub-steps: 默认跳过并记录「未派独立交叉（默认自审）」；用户显式要求 → $reviewing 派独立路
+  Sub-steps: 默认跳过并记录「未派独立交叉（默认自审）」；用户显式要求 → Capability(workflow.skill.invoke, {"skill":"reviewing","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"dev-review","restate":"<confirmed-restate>","artifacts":["<absolute-diff-range-or-patch-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef>","decision":"<user-approved-independent-review>"},"payload":{"object":{"type":"code-diff","ref":"<absolute-diff-range-or-patch-receipt>"},"dimensions":["correctness","readability","architecture","security","performance"],"method":"checklist","contextCapsule":{"facts":["<verified-build-and-test-fact>"],"decisions":["<confirmed-decision>"],"rejectedAlternatives":["<alternative-and-reason>"],"constraints":["<constraint>"],"nonGoals":["<non-goal>"]},"depth":"independent"}}}) 派独立路
   Gate: 已记录跳过，或独立路 findings 已合并 + 独立性声明
 
 Task 4: Findings Triage（对应 Step 4）
@@ -82,16 +82,22 @@ Task 5: 用户 approve
   Gate: Critical 清零 + 用户拍板
 
 Task 6: 硬交接 — 调用下一步 skill
-  Sub-steps: 按 Exit Gate 硬交接报告 Review 完成（findings 统计 + Critical/Warning 处置）→ 建议进 Land → 等用户拍板后调 $dev-land
+  Sub-steps: 按 Exit Gate 硬交接报告 Review 完成（findings 统计 + Critical/Warning 处置）→ 建议进 Land → 等用户拍板后调 Capability(workflow.skill.invoke, {"skill":"dev-land","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})
   Gate: 用户拍板进入 Land（这一步不勾，Review 不算收尾）
   metadata: {handoff: true}（供防跳步 Hook B 识别交接 task）
 ```
+
+调用时把上面**每一条** Task 编译成一个稳定 item：`id` 固定、`subject` 为标题、`description` 完整包含 Sub-steps + Gate、初始 `status=pending`，仅最后一项设置 `handoff`。不得只改名后继续依赖平台 task 工具，也不得传空 items：
+
+`Capability(workflow.plan.create, {"items":[{"id":"<stable-task-id>","subject":"<task-title>","description":"<complete Sub-steps and Gate>","status":"pending","handoff":"<final-item-only; otherwise omit>"}]})`
+
+示例只展示单项形状；真实调用必须包含本段清单的全部 items。保存返回的 `planRef`。每次状态变化都用 `Capability(workflow.plan.update, {"planRef":"<planRef>","items":[{"id":"<same-stable-id>","subject":"<same-title>","description":"<same-complete-description>","status":"<pending|in_progress|completed>","handoff":"<preserve-final-item-handoff; otherwise omit>"}]})` 提交**完整快照**（示例仍只展示单项形状）；每次 update 必须原样保留最终 item 的 `handoff`，其它 item 继续省略该字段，不得发送单项 patch。
 
 每完成一个标 done。
 
 ### Step 1: Five-Axis Review（checklist 方法 · 主路）
 
-主会话按 checklist 逐轴过 diff、每轴显式标 ✅/⚠️/❌（五轴详细检查点见 `references/five-axis-guide.md`；用户显式要求升审时改调 `$reviewing` 传 diff 范围 + 五轴维度 + Context Capsule）：
+主会话按 checklist 逐轴过 diff、每轴显式标 ✅/⚠️/❌（五轴详细检查点见 `references/five-axis-guide.md`；用户显式要求升审时改调 `Capability(workflow.skill.invoke, {"skill":"reviewing","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"dev-review","restate":"<confirmed-restate>","artifacts":["<absolute-diff-range-or-patch-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef>","decision":"<user-approved-independent-review>"},"payload":{"object":{"type":"code-diff","ref":"<absolute-diff-range-or-patch-receipt>"},"dimensions":["correctness","readability","architecture","security","performance"],"method":"checklist","contextCapsule":{"facts":["<verified-build-and-test-fact>"],"decisions":["<confirmed-decision>"],"rejectedAlternatives":["<alternative-and-reason>"],"constraints":["<constraint>"],"nonGoals":["<non-goal>"]},"depth":"independent"}}})` 传 diff 范围 + 五轴维度 + Context Capsule）：
 
 **打包前先读 Build 的 Quality Review verdict（per-task 或 checkpoint 批量，有则读，增量提示写进 prompt）**：可读性/架构/正确性（对应 Build Quality Review 的 Conventions/Structure/Quality）这三轴，对**已有 Quality Review 覆盖的 task** 不再从零通读——只找"合并后才出现"的增量问题（多个 task 各自看都合规、合起来才暴露的循环依赖/重复抽象/职责重叠），已经被挑过的同类问题不重复记 finding；**无 Quality Review 覆盖的 task**（`subagent-lite` 跳过审查的非风险 task / `executing` 模式全部 task）这三轴保持全量检查，不按增量处理——覆盖情况以 Build 收尾报告的审查覆盖清单为准。**安全轴 / 性能轴对所有 task 仍是全量强制检查**——Build 的 Quality Review 没有这两个维度，这里是它们第一次、也是唯一一次被系统性检查。
 
@@ -103,7 +109,7 @@ Task 6: 硬交接 — 调用下一步 skill
 | 安全 | 信任边界守住了吗？ | OWASP Top 10 / 注入 / 密钥硬编码 |
 | 性能 | 不必要的开销？ | N+1 / unbounded fetch / 缺分页 |
 
-安全 / 架构轴自查时 Read 上表对应 guide。性能详见 `${PLUGIN_ROOT}/shared/references/performance-guide.md`。
+安全 / 架构轴自查时 Read 上表对应 guide。性能详见 `${PLUGIN_ROOT}/skills/references/performance-guide.md`。
 
 **Review 中测试评估**：测试是否会在重构中存活？重命名内部函数测试就挂 = 测的是实现不是行为。
 
@@ -121,7 +127,7 @@ Task 6: 硬交接 — 调用下一步 skill
 
 ### Step 3: 独立交叉（仅用户显式要求）
 
-**默认跳过本步**，记录一行「未派独立交叉（默认自审）」。仅当用户显式要求（「深审 / 独立审 / 找 codex / 红蓝军」）才调 `$reviewing` 派独立路——派发 / CLAIM 剥离 / codex 降级由引擎承载，调用时把五轴维度 + Context Capsule 传全（Capsule 尽量全——triage 能滤独立路误报，补不回漏报）。diff 命中敏感面时在 Step 1 已向用户建议过升审，用户点头即视为显式要求。
+**默认跳过本步**，记录一行「未派独立交叉（默认自审）」。仅当用户显式要求（「深审 / 独立审 / 找 codex / 红蓝军」）才调 `Capability(workflow.skill.invoke, {"skill":"reviewing","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"dev-review","restate":"<confirmed-restate>","artifacts":["<absolute-diff-range-or-patch-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef>","decision":"<user-approved-independent-review>"},"payload":{"object":{"type":"code-diff","ref":"<absolute-diff-range-or-patch-receipt>"},"dimensions":["correctness","readability","architecture","security","performance"],"method":"checklist","contextCapsule":{"facts":["<verified-build-and-test-fact>"],"decisions":["<confirmed-decision>"],"rejectedAlternatives":["<alternative-and-reason>"],"constraints":["<constraint>"],"nonGoals":["<non-goal>"]},"depth":"independent"}}})` 派独立路——派发 / CLAIM 剥离 / codex 降级由引擎承载，调用时把五轴维度 + Context Capsule 传全（Capsule 尽量全——triage 能滤独立路误报，补不回漏报）。diff 命中敏感面时在 Step 1 已向用户建议过升审，用户点头即视为显式要求。
 
 ### Step 4: Findings Triage
 
@@ -168,7 +174,7 @@ Task 6: 硬交接 — 调用下一步 skill
 | "reviewer 说的肯定对" | external 反馈先验证再实现。错的要 push-back |
 | "简化顺手就删了" | Chesterton's Fence——先 git blame 查来历 |
 | "这次 Critical 特殊" | Critical 不可 override 就是为了挡这句话 |
-| "这个改动简单，跳过某 Step 或不建 update_plan" | 进了 skill 就走完所有 Step。"简单"是你的判断，不是跳 Gate 的授权 |
+| "这个改动简单，跳过某 Step 或不建 workflow.plan.create" | 进了 skill 就走完所有 Step。"简单"是你的判断，不是跳 Gate 的授权 |
 
 ## Red Flags
 
@@ -176,4 +182,4 @@ Task 6: 硬交接 — 调用下一步 skill
 - finding 写成"感觉怪"——没有 file:line + evidence
 - 1000 行 diff 直接开评，没先建议 split
 - 对外部 reviewer 每条都"good point"全盘照改
-- 因"任务简单 / 还在概览 / 用户说了'继续'"跳过某 Step、不建 Step 0 update_plan、或漏掉最后的交接 task
+- 因"任务简单 / 还在概览 / 用户说了'继续'"跳过某 Step、不建 Step 0 workflow.plan.create、或漏掉最后的交接 task

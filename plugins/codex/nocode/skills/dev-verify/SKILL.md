@@ -26,15 +26,15 @@ Build 完成后的 **evidence** 门。"看起来对"不是证据，跑一下才�
 
 | 领域 | 何时 Read | 用来做什么 |
 |---|---|---|
-| `${PLUGIN_ROOT}/shared/references/testing-guide.md` | 决定该验什么时 | 测试金字塔 / Prove-It / 浏览器安全边界 |
-| `${PLUGIN_ROOT}/shared/references/performance-guide.md` | 有性能需求时 | 度量方法 / Core Web Vitals / 基线对比 |
-| `${PLUGIN_ROOT}/shared/references/security-guide.md` | 涉及安全功能时 | 安全检查清单 / 渗透验证 |
-| `${PLUGIN_ROOT}/shared/references/observability-guide.md` | 验证生产可观测时 | 埋点是否到位 / 告警是否 actionable |
-| `${PLUGIN_ROOT}/shared/references/frontend-guide.md` | 有 UI 变更时 | 无障碍检查 / 响应式验证 |
+| `${PLUGIN_ROOT}/skills/references/testing-guide.md` | 决定该验什么时 | 测试金字塔 / Prove-It / 浏览器安全边界 |
+| `${PLUGIN_ROOT}/skills/references/performance-guide.md` | 有性能需求时 | 度量方法 / Core Web Vitals / 基线对比 |
+| `${PLUGIN_ROOT}/skills/references/security-guide.md` | 涉及安全功能时 | 安全检查清单 / 渗透验证 |
+| `${PLUGIN_ROOT}/skills/references/observability-guide.md` | 验证生产可观测时 | 埋点是否到位 / 告警是否 actionable |
+| `${PLUGIN_ROOT}/skills/references/frontend-guide.md` | 有 UI 变更时 | 无障碍检查 / 响应式验证 |
 
 ## 协议
 
-### Step 0: update_plan
+### Step 0: workflow.plan.create
 
 **进入后第一件事**，创建以下全部 task：
 
@@ -64,10 +64,16 @@ Task 6: 验收逐条核对（Step 6）
   Gate: 逐条通过，任一 ❌ 回 Build
 
 Task 7: 硬交接 — 调用下一步 skill
-  Sub-steps: 按 Exit Gate 硬交接报告 Verify 完成（验收通过率 + 证据）→ 建议进 Review → 等用户拍板后调 $dev-review
+  Sub-steps: 按 Exit Gate 硬交接报告 Verify 完成（验收通过率 + 证据）→ 建议进 Review → 等用户拍板后调 Capability(workflow.skill.invoke, {"skill":"dev-review","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})
   Gate: 用户拍板进入 Review（这一步不勾，Verify 不算收尾）
   metadata: {handoff: true}（供防跳步 Hook B 识别交接 task）
 ```
+
+调用时把上面**每一条** Task 编译成一个稳定 item：`id` 固定、`subject` 为标题、`description` 完整包含 Sub-steps + Gate、初始 `status=pending`，仅最后一项设置 `handoff`。不得只改名后继续依赖平台 task 工具，也不得传空 items：
+
+`Capability(workflow.plan.create, {"items":[{"id":"<stable-task-id>","subject":"<task-title>","description":"<complete Sub-steps and Gate>","status":"pending","handoff":"<final-item-only; otherwise omit>"}]})`
+
+示例只展示单项形状；真实调用必须包含本段清单的全部 items。保存返回的 `planRef`。每次状态变化都用 `Capability(workflow.plan.update, {"planRef":"<planRef>","items":[{"id":"<same-stable-id>","subject":"<same-title>","description":"<same-complete-description>","status":"<pending|in_progress|completed>","handoff":"<preserve-final-item-handoff; otherwise omit>"}]})` 提交**完整快照**（示例仍只展示单项形状）；每次 update 必须原样保留最终 item 的 `handoff`，其它 item 继续省略该字段，不得发送单项 patch。
 
 每完成一个标 done。
 
@@ -90,14 +96,14 @@ Task 7: 硬交接 — 调用下一步 skill
 
 ### Step 3: E2E / Browser（有 UI 变更时）
 
-**先读 UI 设计**：Read `.ix.md`（交互流 + IA）+ `.vd.md`（视觉方向 + 覆盖矩阵 + testid 命名）+ prototype（有 `[design-source: claude-design]` 时 `/design import` 拉回，有 `[design-source: prototype]` 时读本地 HTML）。E2E 验证的基准是 UI 设计，不是"看起来能用"。
+**先读 UI 设计**：Read `.ix.md`（交互流 + IA）+ `.vd.md`（视觉方向 + 覆盖矩阵 + testid 命名）+ prototype。`[design-receipt: <path>]` 指向完整 receipt 时，用 `Capability(design.artifact.read, {"artifactRef":{"provider":"open-design","workspace":{"type":"project","ref":"<workspace-ref>"},"artifact":{"kind":"prototype","localPath":"<local-path>","previewUrl":null},"degraded":false,"degradedFrom":null,"warnings":[]}})` 物化；需要人工核验时用 `Capability(design.preview.open, {"artifactRef":{"provider":"open-design","workspace":{"type":"project","ref":"<workspace-ref>"},"artifact":{"kind":"prototype","localPath":"<local-path>","previewUrl":null},"degraded":false,"degradedFrom":null,"warnings":[]}})`。本地 prototype 则直接读 HTML。E2E 验证的基准是 UI 设计，不是"看起来能用"。
 
 **有 pd-vd 产出时直接复用**：
 - `.vd.md` 的覆盖矩阵（页面 + 交互）→ E2E 验收清单，逐条核对实现是否和设计一致
 - pd-vd 阶段的 `interactions.json` → E2E 测试骨架，selector（`data-testid`）已定好，直接用 `prototype-verify.mjs` 跑开发产物
 - pd-vd 阶段的 `screenshots/` → 视觉回归基线，开发截图和原型截图做对比
 - **样式完整性核对**：读原型 CSS，列出其定义的组件样式清单（按钮变体/卡片/输入框/导航/空态/loading 等），逐项对比 app 实际 CSS——缺失的组件样式 = ❌ 回 Build 补。只搬了 token 层而漏掉组件样式是已知反模式
-- **设计值对齐分层**（`${PLUGIN_ROOT}/shared/references/frontend-guide.md`「设计基线对齐」节）：Build 已做 per-task 对齐 → 不重跑逐组件核对，只抽查 1-2 个页面复核对齐记录 + 跨页一致性走查（同一组件在不同页面应长一样——单 task 循环看不到的集成属性）；Build 未做对齐（无基线或旧计划）→ 按该节词表在本步补齐
+- **设计值对齐分层**（`${PLUGIN_ROOT}/skills/references/frontend-guide.md`「设计基线对齐」节）：Build 已做 per-task 对齐 → 不重跑逐组件核对，只抽查 1-2 个页面复核对齐记录 + 跨页一致性走查（同一组件在不同页面应长一样——单 task 循环看不到的集成属性）；Build 未做对齐（无基线或旧计划）→ 按该节词表在本步补齐
 
 启动 dev server → golden path + 边界 case → 截图/录屏作证据。
 无障碍检查（键盘可达、对比度、ARIA）。详见 `references/e2e-guide.md`。
@@ -168,7 +174,7 @@ Core Web Vitals：LCP ≤ 2.5s、INP ≤ 200ms、CLS ≤ 0.1。详见 `reference
 | "上次跑过了，没动那块" | "没动"是假设。重新跑 |
 | "先报完成回头补" | "回头补"永远不来 |
 | "warning 不影响功能" | warning 是未来 error 的预告 |
-| "这个改动简单，跳过某 Step 或不建 update_plan" | 进了 skill 就走完所有 Step。"简单"是你的判断，不是跳 Gate 的授权 |
+| "这个改动简单，跳过某 Step 或不建 workflow.plan.create" | 进了 skill 就走完所有 Step。"简单"是你的判断，不是跳 Gate 的授权 |
 
 ## Common Failures
 
@@ -187,4 +193,4 @@ Core Web Vitals：LCP ≤ 2.5s、INP ≤ 200ms、CLS ≤ 0.1。详见 `reference
 - 有 UI 变更但没截图
 - 验收核对出现"大概通过/应该没问题"
 - 只核对了 SC，没核对路径和约束（Step 6 漏了一半）
-- 因"任务简单 / 还在概览 / 用户说了'继续'"跳过某 Step、不建 Step 0 update_plan、或漏掉最后的交接 task
+- 因"任务简单 / 还在概览 / 用户说了'继续'"跳过某 Step、不建 Step 0 workflow.plan.create、或漏掉最后的交接 task

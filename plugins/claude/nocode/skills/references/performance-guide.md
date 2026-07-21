@@ -207,13 +207,13 @@ const tasks = await db.tasks.findMany({
 
 ```tsx
 // BAD: Creates new object on every render, causing children to re-render
-function TaskList() {
+function workflow plan snapshot() {
   return <TaskFilters options={{ sortBy: 'date', order: 'desc' }} />;
 }
 
 // GOOD: Stable reference
 const DEFAULT_OPTIONS = { sortBy: 'date', order: 'desc' } as const;
-function TaskList() {
+function workflow plan snapshot() {
   return <TaskFilters options={DEFAULT_OPTIONS} />;
 }
 
@@ -242,7 +242,7 @@ const ChartLibrary = lazy(() => import('./ChartLibrary'));
 // GOOD: Route-level code splitting wrapped in Suspense
 const SettingsPage = lazy(() => import('./pages/Settings'));
 
-function App() {
+function Application() {
   return (
     <Suspense fallback={<Spinner />}>
       <SettingsPage />

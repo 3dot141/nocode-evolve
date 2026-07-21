@@ -7,9 +7,9 @@ description: "Use when starting feature work that needs isolation from current w
 
 ## Overview
 
-Ensure work happens in an isolated workspace. Create the worktree with `git worktree add` so directory placement stays under your control, then switch the session into it — preferring your platform's native session-switch tool.
+Ensure work happens in an isolated workspace. Resolve the branch and absolute target directory in the business flow, then let the selected Workspace provider create and enter it.
 
-**Core principle:** Detect existing isolation first. Create with git (you choose the directory). Enter with the native tool. Never fight the harness.
+**Core principle:** Detect existing isolation first. The caller chooses the directory; Workspace capabilities own platform-specific Git and session behavior.
 
 **Announce at start:** "I'm using the using-git-worktrees skill to set up an isolated workspace."
 
@@ -17,18 +17,11 @@ Ensure work happens in an isolated workspace. Create the worktree with `git work
 
 **Before creating anything, check if you are already in an isolated workspace.**
 
-```bash
-GIT_DIR=$(cd "$(git rev-parse --git-dir)" 2>/dev/null && pwd -P)
-GIT_COMMON=$(cd "$(git rev-parse --git-common-dir)" 2>/dev/null && pwd -P)
-BRANCH=$(git branch --show-current)
-```
+Call `Capability(workspace.worktree.current, {})` and inspect its receipt for the current root, branch and linked-worktree status.
 
 **Submodule guard:** `GIT_DIR != GIT_COMMON` is also true inside git submodules. Before concluding "already in a worktree," verify you are not in a submodule:
 
-```bash
-# If this returns a path, you're in a submodule, not a worktree — treat as normal repo
-git rev-parse --show-superproject-working-tree 2>/dev/null
-```
+The provider must distinguish a linked worktree from a submodule before returning `linked=true`; a submodule is treated as a normal checkout.
 
 **If `GIT_DIR != GIT_COMMON` (and not a submodule):** You are already in a linked worktree. Skip to Step 3 (Project Setup). Do NOT create another worktree.
 
@@ -46,9 +39,7 @@ Honor any existing declared preference without asking. If the user declines cons
 
 ## Step 1: Create the Worktree
 
-**Always create with `git worktree add` — even when a native worktree tool exists.**
-
-Native creation modes (e.g. `Codex workdir` with `name` or no arguments) place the worktree in a fixed harness-chosen location (such as `.claude/worktrees/`). Creating with git keeps directory selection under your control; Step 2 then hands the session over to the native tool.
+**Always create through `workspace.worktree.create` with an explicit branch and absolute path.** The provider may use Git internally, but it cannot choose a different directory or silently enter creation mode.
 
 ### Directory Selection
 
@@ -88,38 +79,30 @@ Global directories (`~/.config/superpowers/worktrees/`) need no verification.
 
 ### Create the Worktree
 
-```bash
-project=$(basename "$(git rev-parse --show-toplevel)")
-
-# Determine path based on chosen location
-# For project-local: path="$LOCATION/$BRANCH_NAME"
-# For global: path="~/.config/superpowers/worktrees/$project/$BRANCH_NAME"
-
-git worktree add "$path" -b "$BRANCH_NAME"
+```text
+Capability(workspace.worktree.create, {"branch":"<BRANCH_NAME>","path":"<absolute-worktree-path>"})
 ```
 
 **Sandbox fallback:** If `git worktree add` fails with a permission error (sandbox denial), tell the user the sandbox blocked worktree creation and you're working in the current directory instead. Then run setup and baseline tests in place.
 
 ## Step 2: Enter the Worktree
 
-`git worktree add` does not change your working directory — persist the switch before doing anything else.
+Creation does not implicitly change the active workspace. Enter it before doing anything else.
 
-### 2a. Native Session-Switch Tool (preferred)
-
-If you have a tool that can switch the session into an **existing** worktree — e.g. `Codex workdir` with its `path` parameter — use it now:
+### 2a. Enter through the Workspace provider
 
 ```
-Codex workdir(path="$path")
+Capability(workspace.worktree.enter, {"path":"<absolute-worktree-path>"})
 ```
 
-The session's working directory persists across commands; no repeated `cd` prefixes.
+The provider either persists the session workspace or binds subsequent workspace operations to that explicit workdir. Enter never creates or removes a worktree.
 
-- **Never use the tool's create mode** (`Codex workdir()` with no arguments, or with `name`) — it creates the worktree itself in a harness-chosen directory, bypassing Step 1's directory selection.
-- Leaving later: `return to the main workdir(action="keep")`. Worktrees entered via `path` are not auto-removed — clean up with `git worktree remove` when the work is done.
+- Never omit `path` or pass `.`; the contract requires the absolute existing worktree path.
+- To leave later, enter the absolute main-worktree path. Entering does not remove the feature worktree.
 
-### 2b. cd Fallback
+### 2b. Provider fallback
 
-No native session-switch tool: `cd "$path"`. If your harness resets cwd between shell commands, re-`cd` at the start of each command.
+There is no business-layer `cd` fallback. The Codex provider uses explicit workdir execution and the Claude provider may use its native session switch; both expose the same receipt.
 
 ## Step 3: Project Setup
 
@@ -167,9 +150,8 @@ Ready to implement <feature-name>
 |-----------|--------|
 | Already in linked worktree | Skip creation (Step 0) |
 | In a submodule | Treat as normal repo (Step 0 guard) |
-| Creating the worktree | Always `git worktree add "$path" -b "$BRANCH_NAME"` (Step 1) |
-| Native session-switch tool available | Enter via its path mode, e.g. `Codex workdir(path=...)` (Step 2a) |
-| No native tool | `cd "$path"` (Step 2b) |
+| Creating the worktree | `Capability(workspace.worktree.create, {"branch":"<branch>","path":"<absolute-path>"})` |
+| Entering the worktree | `Capability(workspace.worktree.enter, {"path":"<absolute-path>"})` |
 | `.worktrees/` exists | Use it (verify ignored) |
 | `worktrees/` exists | Use it (verify ignored) |
 | Both exist | Use `.worktrees/` |
@@ -182,10 +164,10 @@ Ready to implement <feature-name>
 
 ## Common Mistakes
 
-### Creating via the native tool's create mode
+### Letting the provider choose a path
 
-- **Problem:** `Codex workdir(name=...)` / no-arg creation drops the worktree in a harness-chosen directory, ignoring Step 1's directory selection
-- **Fix:** Create with `git worktree add`; the native tool only enters via `path` (Step 2a)
+- **Problem:** a missing or relative path makes workspace identity ambiguous
+- **Fix:** calculate the destination first, create with explicit branch + absolute path, then enter that exact path
 
 ### Forgetting to enter after creating
 
@@ -216,7 +198,7 @@ Ready to implement <feature-name>
 
 **Never:**
 - Create a worktree when Step 0 detects existing isolation
-- Create via the native tool (`Codex workdir()` / `Codex workdir(name=...)`). This is the #1 mistake — create with `git worktree add`, enter with `path` mode.
+- Call enter as if it could create a worktree. Creation and entry are separate capabilities.
 - Stay in the main checkout after `git worktree add` (skipping Step 2)
 - Create worktree without verifying it's ignored (project-local)
 - Skip baseline test verification
@@ -224,8 +206,8 @@ Ready to implement <feature-name>
 
 **Always:**
 - Run Step 0 detection first
-- Create with `git worktree add "$path" -b "$BRANCH_NAME"`
-- Enter via the native session-switch tool (`path` mode) when available; cd otherwise
+- Create with `workspace.worktree.create` using the chosen absolute path
+- Enter with `workspace.worktree.enter`; let the provider implement platform-specific workdir behavior
 - Follow directory priority: existing > global legacy > instruction file > default
 - Verify directory is ignored for project-local
 - Auto-detect and run project setup

@@ -1,0 +1,27 @@
+{
+  "id": "claude-hooks",
+  "execution": "native",
+  "pluginData": false,
+  "domain": "lifecycle",
+  "platforms": [
+    "claude"
+  ],
+  "capabilities": {
+    "lifecycle.session-start": {
+      "inputSchema": "contracts/hook-event.schema.json",
+      "outputSchema": "contracts/session-context.schema.json"
+    },
+    "lifecycle.pre-tool": {
+      "inputSchema": "contracts/hook-event.schema.json",
+      "outputSchema": "contracts/hook-decision.schema.json"
+    },
+    "lifecycle.post-tool": {
+      "inputSchema": "contracts/hook-event.schema.json",
+      "outputSchema": "contracts/hook-decision.schema.json"
+    }
+  },
+  "dependencies": [
+    "state.session.open",
+    "state.cleanup"
+  ]
+}

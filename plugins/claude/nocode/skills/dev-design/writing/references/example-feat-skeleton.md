@@ -194,7 +194,7 @@ Agent APIs → SSE 推送进度
 
 ## 表现层设计（交互场景 / 边）
 
-> 设计源：[design-source: claude-design c9346159]
+> 设计回执：[design-receipt: docs/design/example.receipt.json]
 
 ### 端到端业务流总图
 

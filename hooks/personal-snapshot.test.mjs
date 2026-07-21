@@ -169,7 +169,7 @@ test('case 2.2 — 幂等: .git 已存在时 ensureNestedRepo 跳过, 不重新 
   }
 });
 
-test('case 2.3 — .git 不存在 + 检测到旧 bare repo → 触发迁移, 嵌套仓库导入旧历史', () => {
+test('case 2.3 — .git 不存在 + 旧 bare repo 存在 → 忽略旧历史并初始化独立嵌套仓库', () => {
   const tmp = makeTmpDir();
   const personal = join(tmp, '.agents-personal');
   const history = join(tmp, 'history');
@@ -183,21 +183,19 @@ test('case 2.3 — .git 不存在 + 检测到旧 bare repo → 触发迁移, 嵌
   try {
     const out = runScript({ CLAUDE_PROJECT_DIR: tmp, NOCODE_HISTORY_ROOT: history });
     const result = JSON.parse(out);
-    // ensureNestedRepo 内部的迁移已经吸收了当前磁盘漂移并 commit 过一次,
-    // main() 紧接着再跑的 snapshot() 已无新变化可提交.
-    assert.equal(result.status, 'no_changes');
+    assert.equal(result.status, 'committed');
     assert.ok(existsSync(join(personal, '.git')), '嵌套仓库应已建立');
 
     const log = nestedGitLog(personal);
     const commits = log.split('\n').filter(Boolean);
-    assert.equal(commits.length, 2, '应有旧历史 1 commit + 迁移吸收漂移 1 commit');
-    assert.ok(log.includes('legacy commit'), '应导入旧仓库历史');
+    assert.equal(commits.length, 1, '只应提交当前目录状态');
+    assert.ok(!log.includes('legacy commit'), 'SessionStart 不得导入旧仓库历史');
 
     const files = nestedGit(personal, 'ls-tree -r --name-only HEAD');
     assert.ok(files.includes('current.md'), '迁移后应吸收当前磁盘状态');
 
-    assert.ok(existsSync(`${oldBareDir}.migrated`), '旧 bare repo 应被改名为 .migrated');
-    assert.ok(!existsSync(oldBareDir), '旧路径不应再存在');
+    assert.ok(!existsSync(`${oldBareDir}.migrated`), 'SessionStart 不得改名旧 bare repo');
+    assert.ok(existsSync(oldBareDir), '旧仓库必须原样保留，迁移只能手动执行');
   } finally {
     rmSync(tmp, { recursive: true, force: true });
   }
@@ -370,9 +368,9 @@ test('case 4.3 — ensureNestedRepo 释放锁后, 双重检查发现 .git 已被
   }
 });
 
-// ── BF5: 老架构迁移入口 gate（Review 复审 W5）──
+// ── BF5: 老架构不自动迁移 ──
 
-test('case 5.1 — .agents-personal/ 不存在但老 bare repo 存在 → 仍触发迁移, 不再永远 skip', () => {
+test('case 5.1 — .agents-personal/ 不存在但老 bare repo 存在 → skip 且不读取或迁移旧历史', () => {
   const tmp = makeTmpDir();
   const history = join(tmp, 'history');
   // 故意不创建 .agents-personal/ 目录 —— 模拟"曾经用过老架构, 但本机这个目录不存在
@@ -386,12 +384,12 @@ test('case 5.1 — .agents-personal/ 不存在但老 bare repo 存在 → 仍触
   try {
     const out = runScript({ CLAUDE_PROJECT_DIR: tmp, NOCODE_HISTORY_ROOT: history });
     const result = JSON.parse(out);
-    assert.notEqual(result.status, 'skipped', '老 bare repo 存在时不应因 .agents-personal/ 不存在就直接 skip');
+    assert.equal(result.status, 'skipped');
 
     const personal = join(tmp, '.agents-personal');
-    assert.ok(existsSync(join(personal, '.git')), '应自动建出 .agents-personal/ 并完成迁移');
-    const log = nestedGitLog(personal);
-    assert.ok(log.includes('legacy commit'), '应导入旧仓库历史, 不是孤儿化');
+    assert.ok(!existsSync(personal), 'SessionStart 不得创建目录来触发旧数据迁移');
+    assert.ok(existsSync(oldBareDir), '旧仓库应原样保留');
+    assert.ok(!existsSync(`${oldBareDir}.migrated`), '旧仓库不得被自动改名');
   } finally {
     rmSync(tmp, { recursive: true, force: true });
   }

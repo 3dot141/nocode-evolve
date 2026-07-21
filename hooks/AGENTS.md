@@ -45,7 +45,7 @@
 
 ## 写新 hook 时的安全姿态约定
 
-- 运行时失败一律偏向"放行"（fail-open）——参见 `handoff-stop-guard.mjs` 顶部注释：最坏退化为"hook 不存在"，不卡死 session。
+- Stop 不使用运行时 guard；SessionStart 失败会明确返回初始化错误。
 - fork/subagent（payload 里 `agent_id` 非空）默认不拦截，除非明确要子 agent 也生效。
-- 涉及落盘/写文件的 hook（如 `usage-tracker.mjs`）要用短超时的 `RepoLock`，拿不到锁就跳过，不能拖慢用户的正常操作。
+- 涉及落盘/写文件的 hook 要用短超时的锁，拿不到锁就跳过，不能拖慢用户的正常操作。Wiki usage 已由 `personal-knowledge.page.read` 显式路径维护，不属于 Hook。
 - `pretooluse-guard.mjs` 的 bypass 观测日志（`.bypass-observations.jsonl`）默认关闭，只在设置 `NOCODE_EVOLVE_OBSERVE=1` 时落盘——避免命令片段（可能含 token/URL）被隐式持久化，新 hook 若要落盘同类敏感数据也应默认关闭、opt-in 开启。

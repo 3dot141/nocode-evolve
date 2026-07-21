@@ -6,7 +6,7 @@
 
 ## 怎么用
 
-pd-vd 的 vis-review step Read 本文拿维度，调 `Skill(nocode:reviewing)`，声明：对象 = 设计文档（`.ix.md` / `.vd.md`）；方法 = checklist；领域维度 = 下面视觉 9 维度。流程 / 选方法 / 异源交叉 / 分级 / 收口全由引擎承载。
+pd-vd 的 vis-review step Read 本文拿维度，调 `[provider-neutral skill boundary]`，声明：对象 = 设计文档（`.ix.md` / `.vd.md`）；方法 = checklist；领域维度 = 下面视觉 9 维度。流程 / 选方法 / 异源交叉 / 分级 / 收口全由引擎承载。
 
 **领域档位**（帮引擎判档）：全流程产出（高保真原型）、跨页设计系统、涉及支付·权限·关键业务路径 → **重档**（9 维度全量过）；迭代模式单页局部调整 → **轻档**。
 

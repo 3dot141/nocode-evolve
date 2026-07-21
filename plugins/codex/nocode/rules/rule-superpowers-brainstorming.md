@@ -37,13 +37,13 @@ skip: false
    - 输出路径按 `{dev_design_output}` 变量（落在 step 1 创建的 worktree 内）
 
 3. **评审**（dev-design writing 阶段的 Review 环节，维度用 `references/design-doc-review.md`）
-   - 评审：**默认主会话逐维自查**（design-doc-review 维度核心审查 + AI patterns 附带检查 + Self-Audit），不调 reviewing 引擎、不派 subagent/Codex；用户显式要求（「审一下 / 深审 / 独立审」）才调 `$reviewing`；文档命中敏感面（认证 / 数据迁移 / 资金 / 对外接口 / 不可逆决策）→ 一句话建议升审，用户点头才派
+   - 评审：**默认主会话逐维自查**（design-doc-review 维度核心审查 + AI patterns 附带检查 + Self-Audit），不调 reviewing 引擎、不派 subagent/Codex；用户显式要求（「审一下 / 深审 / 独立审」）才调 `Capability(workflow.skill.invoke, {"skill":"reviewing","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"brainstorming-rule","restate":"<confirmed-restate-or-omit>","artifacts":["<absolute-design-document-path>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"},"payload":{"object":{"type":"design-document","ref":"<absolute-design-document-path>"},"dimensions":["<design-doc-review-axes>","ai-patterns","self-audit"],"method":"checklist","contextCapsule":{"facts":["<verified-fact>"],"decisions":["<confirmed-decision>"],"rejectedAlternatives":["<alternative-and-reason>"],"constraints":["<constraint>"],"nonGoals":["<non-goal>"]},"depth":"independent"}}})`；文档命中敏感面（认证 / 数据迁移 / 资金 / 对外接口 / 不可逆决策）→ 一句话建议升审，用户点头才派
    - 输出分级 Review Report（Critical / Warning / Suggestion），每条带短编号（C1/W1/S1...）
    - **不自动循环修订**：Report 原样呈现给用户，逐条勾选 fix / skip（也可一键全修/全跳过/自由指示）
    - 据用户决定修订主体后，**本轮 Report 全文 + 用户决定 + 修订摘要 append 到文档末尾 `## Review Log`**
    - 是否再来一轮 review 由用户决定，不再有"最多 3 轮"硬限制
 
-4. **render 阶段** —— 渲染前 Read 共享 reference `${PLUGIN_ROOT}/shared/references/doc-render.md`，照其四步（结构分析 → design plan → 渲染发布 → 验证 receipt）执行
+4. **render 阶段** —— 渲染前 Read 共享 reference `${PLUGIN_ROOT}/skills/references/doc-render.md`，照其四步（结构分析 → design plan → 渲染发布 → 验证 receipt）执行
    - PRD / RFC / ADR 与技术设计文档**同一协议**——不因产物类型或入口不同另起渲染方式
    - 细节（图 DOM 化 / 不取保守档 / 内容忠实 ≠ 呈现镜像 / favicon / receipt）全在 doc-render 协议内，本 rule 不复制、以其为准
 

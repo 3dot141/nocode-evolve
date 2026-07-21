@@ -1,22 +1,13 @@
 import { renderClaudeContent } from './content.mjs';
 import { renderClaudeManifest } from './manifest.mjs';
-
-const capabilities = [
-  'skill.invoke',
-  'agent.dispatch',
-  'agent.wait',
-  'plan.create',
-  'plan.update',
-  'user.ask',
-  'workspace.enter',
-  'hook.session_context',
-  'hook.pretool_decision',
-  'hook.stop_decision',
-];
+import { generateAgentReferences, generateCommandSkills } from '../shared/skill-renderers.mjs';
 
 export const claudeAdapter = {
   platform: 'claude',
-  capabilities,
+  providerSupport: [
+    'claude-control', 'claude-hooks', 'claude-native', 'claude-plugin-data',
+    'claude-workspace', 'inline', 'local-html', 'open-design', 'project-wiki',
+  ],
   sourceRoots: [
     { source: 'agents', target: 'agents' },
     { source: 'commands', target: 'commands' },
@@ -26,9 +17,17 @@ export const claudeAdapter = {
     { source: 'rules', target: 'rules' },
     { source: 'scripts', target: 'scripts' },
     { source: 'skills', target: 'skills' },
-    { source: 'vendor/codex', target: 'vendor/codex' },
   ],
   manifestPath: '.claude-plugin/plugin.json',
   renderManifest: renderClaudeManifest,
   transformFile: renderClaudeContent,
+  generateFiles({ root, isExcluded = () => false }) {
+    return new Map([
+      ...generateCommandSkills(root, {
+        isExcluded,
+        argumentLabel: '$ARGUMENTS',
+      }),
+      ...generateAgentReferences(root, { isExcluded }),
+    ]);
+  },
 };

@@ -3,6 +3,8 @@ name: dev-land
 description: "Use when implementation is complete and you need to land the work — merge locally, create a PR, keep, or discard. Use when devflow routes to Land stage, or when user says \"land/着陆/提PR/收尾/合并/创建PR/完成worktree/discard worktree/PR合了/流转任务\". Not for: PR review (dev-review), work-in-progress pushes, or git queries."
 ---
 
+> 本文写“结构化决策”时，必须把当前步骤的完整问题与 2–3 个互斥选项编译为 `Capability(workflow.decision.request, {"question":"<self-contained current-step question>","options":[{"label":"<option-label>","description":"<impact or tradeoff>"}],"allowFreeform":false})`；示例只展示单项形状，真实调用需带齐本步骤列出的选项，不得回退到平台专属提问工具。
+
 # land — 3 步着陆，干净收场
 
 **Iron Law: 意图 → 全景 → 全自动。用户只在全景确认介入一次。**
@@ -31,9 +33,9 @@ disposition 直接从入口语读，读得出就**不出菜单**：
 | 合并 / merge 到 main/release | **Merge** |
 | discard / 丢弃 / 不要了 | **Discard** |
 | keep / 先放着 / 留着分支 | **Keep** |
-| 收尾 / 完成 worktree / land / devflow 路由未带意图 | 推不定 → AskUserQuestion 四选一菜单 |
+| 收尾 / 完成 worktree / land / devflow 路由未带意图 | 推不定 → 结构化决策 四选一菜单 |
 
-- 菜单是全景确认之外**唯一**使用 AskUserQuestion 的点（纯单选，选项 label 写实际分支名与 base）
+- 菜单是全景确认之外**唯一**使用 结构化决策 的点（纯单选，选项 label 写实际分支名与 base）
 - detached HEAD → 菜单去掉 Merge
 
 ---
@@ -98,7 +100,7 @@ remote_url=$(git -C "$MAIN_ROOT" remote get-url origin)
 
 ### 展示：全景一屏
 
-把整条线一屏展给用户，**回合末尾文本展示**，等用户自由回应。不用 AskUserQuestion。红线：**禁止「工具调用间文本展示 + 同回合 ask」**。
+把整条线一屏展给用户，**回合末尾文本展示**，等用户自由回应。不用 结构化决策。红线：**禁止「工具调用间文本展示 + 同回合 ask」**。
 
 **PR 版模板**（详见 `references/prflow.md`）：
 
@@ -195,7 +197,7 @@ PR body 回链：Requirements Addressed（引用 Define 的 restate）+ Verifica
 
 ### 合并后流转
 
-合并后调 `Skill(nocode:lark-project)` 把任务流转到全景计划定好的目标状态。详见 `references/post-merge.md`。
+合并后调 `Capability(workflow.skill.invoke, {"skill":"lark-project","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})` 把任务流转到全景计划定好的目标状态。详见 `references/post-merge.md`。
 
 - 前置：有任务号 + FeishuProjectMcp 可用。不满足 → 跳过，报告原因
 - 典型映射：缺陷/任务类 `组员开发 → 研发已改待BUILD`

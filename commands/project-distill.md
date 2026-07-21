@@ -13,7 +13,7 @@ argument-hint: <dir-path> [agents|readme|both]
 
 ### 被 distill 调用时
 
-distill 传入结构化候选：
+distill 传入 `arguments.payload.candidates[]` 结构化候选；不得读取扁平顶层字段：
 ```
 { summary, target_dir, target_file, body }
   target_dir   目标子目录路径 (相对项目根)
@@ -119,8 +119,8 @@ distill 传入结构化候选：
 
 ```
 project-distill 完成：
-  + hooks/AGENTS.md (新建, 28 行)
-  + hooks/README.md (更新, +12 行)
+  + module-a/AGENTS.md (新建, 28 行)
+  + module-a/README.md (更新, +12 行)
 ```
 
 ## 反模式

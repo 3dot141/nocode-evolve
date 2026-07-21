@@ -12,7 +12,7 @@
 
 ## 优先级阶梯
 
-1. **agent-browser**（首选）：`Skill(agent-browser)` 驱动真实浏览器，自动导航 + 截图 + 断言
+1. **agent-browser**（首选）：`[provider-neutral skill boundary]` 驱动真实浏览器，自动导航 + 截图 + 断言
 2. **DevTools 手动检查**：agent-browser 不可用时降级
 3. **纯手动**：连 DevTools 都不可用时，手动操作 + 逐步骤记录
 

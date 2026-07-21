@@ -8,7 +8,7 @@
 
 ## Step 1: 场景分类
 
-跨文件 + 实现路径不明（导出什么、什么格式、谁用都没说）→ AskUserQuestion 确认为 **Standard**（暂无明显架构/选型决策；若后续发现需异步导出架构再升 Full）。
+跨文件 + 实现路径不明（导出什么、什么格式、谁用都没说）→ workflow.decision.request 确认为 **Standard**（暂无明显架构/选型决策；若后续发现需异步导出架构再升 Full）。
 
 ## Step 2: 探索现状（代码）
 
@@ -23,7 +23,7 @@
 
 ## Step 4: 澄清循环（代码不能自答的才问）
 
-1. **导出哪些数据？** → AskUserQuestion：[当前筛选结果 / 全表 / 选中行] → 用户选"当前筛选结果"
+1. **导出哪些数据？** → workflow.decision.request：[当前筛选结果 / 全表 / 选中行] → 用户选"当前筛选结果"
 2. **什么格式？** → [CSV / Excel / both] → 用户选 CSV
 3. **数据量级？**（影响同步还是异步）→ 用户："单次最多几千行" → 同步即可，不需异步架构 → 确认 Standard
 
@@ -46,7 +46,7 @@
 
 ## Step 6: 用户确认
 
-AskUserQuestion 三选 → 用户选"确认"。Define 完成，进 Plan。
+workflow.decision.request 三选 → 用户选"确认"。Define 完成，进 Plan。
 
 ---
 

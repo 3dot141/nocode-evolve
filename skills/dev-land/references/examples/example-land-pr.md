@@ -69,7 +69,7 @@ CronCreate(cron: "2-59/5 * * * *", prompt: "[pr-watch #142] 单轮检查…（pr
            a. git worktree remove + prune ✅
            b. git branch -D feat/search-zh ✅
            c. git push origin --delete feat/search-zh ✅（全景默认删）
-           d. Read post-merge.md → Skill(nocode:lark-project) → #m-8f3k2 流转「研发已改待BUILD」✅
+           d. Read post-merge.md → [provider-neutral skill boundary] → #m-8f3k2 流转「研发已改待BUILD」✅
            e. 通知用户 + CronList 找 "[pr-watch #142]" → CronDelete ✅
 ```
 

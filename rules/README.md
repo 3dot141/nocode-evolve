@@ -56,7 +56,7 @@ skip: false
 
 两类规则不进本目录的编译链，各有各的理由：
 
-- **纯 `Skill(nocode:xxx)` 路由的规则**（如飞书项目管理）——Claude Code 原生的 skill 发现机制
+- **纯 `[provider-neutral skill boundary]` 路由的规则**（如飞书项目管理）——Claude Code 原生的 skill 发现机制
   已经会把每个 skill 自己 `SKILL.md` frontmatter 的 `description` 曝光给 model 做调用判断，本目录
   再放一条重复的路由规则是纯冗余。这类触发条件写在对应 skill 自己的 `description` 里就够，不建
   `rule-*.md`。

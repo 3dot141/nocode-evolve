@@ -29,7 +29,7 @@ You MUST create a task for each of these items and complete them in order:
 6. **Write design doc** — save to `docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md` and commit
 7. **Spec self-review** — quick inline check for placeholders, contradictions, ambiguity, scope (see below)
 8. **User reviews written spec** — ask user to review the spec file before proceeding
-9. **Transition to implementation** — hand off to the downstream planning skill (this repo does not ship `writing-plans`; see routing note after the diagram below) to create an implementation plan
+9. **Transition to implementation** — after approval, invoke `using-git-worktrees`, then `dev-design`, through `Capability(workflow.skill.invoke, {"skill":"using-git-worktrees","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})` and its following handoff; do not jump directly to implementation
 
 ## Process Flow
 
@@ -63,7 +63,7 @@ digraph brainstorming {
 }
 ```
 
-**The terminal state is handing off to the downstream planning skill.** Do NOT invoke frontend-design, mcp-builder, or any other implementation skill directly. This repo does not ship the upstream `writing-plans` skill as-is — the actual next-skill routing is defined in `rules/rule-superpowers-brainstorming.md` (as of this writing: `nocode:using-git-worktrees` → `nocode:dev-design`). Follow that rule rather than hardcoding a skill name here.
+**The terminal state is a workflow handoff.** Do NOT invoke frontend-design, mcp-builder, or any other implementation skill directly. After the user approves the written spec, invoke `Capability(workflow.skill.invoke, {"skill":"using-git-worktrees","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})`, then hand the resulting workspace and spec to `Capability(workflow.skill.invoke, {"skill":"dev-design","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})`.
 
 ## The Process
 
@@ -114,7 +114,7 @@ digraph brainstorming {
 - Commit the design document to git
 
 **Spec Self-Review:**
-After writing the spec document, run a **light-depth self-review** over it。调 `Skill(nocode:reviewing)`，声明：**对象** = 刚写的 spec；**方法** = self-review（轻档就地，不派 subagent / codex）；**领域维度** = 下面 4 项 spec 自查维度；**档位** = 轻档。引擎按 self-review 形态就地过维度、就地修复，跳过独立交叉；仅"记录但本轮不修"的遗留才落 findings（`kind = self-audit`）。分级 / schema / 纪律全由引擎承载，本 skill 不复述。
+After writing the spec document, run a **light-depth self-review** over it。调 `Capability(workflow.skill.invoke, {"skill":"reviewing","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"brainstorming","restate":"<confirmed-restate-or-omit>","artifacts":["<absolute-written-spec-path>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"},"payload":{"object":{"type":"specification","ref":"<absolute-written-spec-path>"},"dimensions":["placeholder-scan","internal-consistency","scope","ambiguity"],"method":"self-review","contextCapsule":{"facts":["<verified-fact>"],"decisions":["<confirmed-decision>"],"rejectedAlternatives":["<alternative-and-reason>"],"constraints":["<constraint>"],"nonGoals":["<non-goal>"]},"depth":"self"}}})`，声明：**对象** = 刚写的 spec；**方法** = self-review（轻档就地，不派 subagent / codex）；**领域维度** = 下面 4 项 spec 自查维度；**档位** = 轻档。引擎按 self-review 形态就地过维度、就地修复，跳过独立交叉；仅"记录但本轮不修"的遗留才落 findings（`kind = self-audit`）。分级 / schema / 纪律全由引擎承载，本 skill 不复述。
 
 **领域维度（框架第 3 步注入点）** —— 对着 spec 过这 4 项（= self-review card 维度表按 spec 类型裁剪）：
 
@@ -134,8 +134,8 @@ Wait for the user's response. If they request changes, make them and re-run the 
 
 **Implementation:**
 
-- This repo does not ship a `writing-plans` skill (that's the upstream superpowers skill name; this repo's downstream routing differs). Hand off per the routing defined in `rules/rule-superpowers-brainstorming.md` — as of this writing: `nocode:using-git-worktrees` → `nocode:dev-design`.
-- Do NOT invoke any other implementation skill directly (e.g. frontend-design, mcp-builder). Follow the rule's routing instead of a hardcoded skill name.
+- This repo does not ship a `writing-plans` skill. The downstream sequence is `Capability(workflow.skill.invoke, {"skill":"using-git-worktrees","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})` → `Capability(workflow.skill.invoke, {"skill":"dev-design","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})`.
+- Do NOT invoke any other implementation skill directly (e.g. frontend-design, mcp-builder).
 
 ## Key Principles
 

@@ -1,0 +1,19 @@
+{
+  "id": "design",
+  "capabilities": [
+    "capabilities/workspace.create.json",
+    "capabilities/artifact.generate.json",
+    "capabilities/artifact.read.json",
+    "capabilities/artifact.write.json",
+    "capabilities/preview.open.json"
+  ],
+  "contracts": [
+    "contracts/design-input.schema.json",
+    "contracts/design-result.schema.json",
+    "contracts/domain-error.schema.json"
+  ],
+  "providers": [
+    "providers/open-design/provider.json",
+    "providers/local-html/provider.json"
+  ]
+}

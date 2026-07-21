@@ -1,6 +1,6 @@
 # Step 4 展开：生成原型
 
-把交互结构 + 视觉方向 + 冻结的设计系统（tokens + components，Step 3 样张已拍板、3d 已落点）拼成可看可走的高保真原型。两条交付线（Claude Design / 本地 HTML）步骤相同、实现不同。**先回查 Step 2a 选定的交付线，别凭记忆判断走哪条线。**
+把交互结构 + 视觉方向 + 冻结的设计系统（tokens + components，Step 3 样张已拍板、3d 已落点）拼成可看可走的高保真原型。两条交付线（Open Design / 本地 HTML）步骤相同、实现不同。**先回查 Step 2a 选定的交付线，别凭记忆判断走哪条线。**
 
 ---
 
@@ -15,25 +15,25 @@
 
 **100% 覆盖**：IA 中的每个页面/视图都必须在原型中实现——独立页面有自己的文件，嵌入组件在宿主页面内实现。不存在"设计覆盖但原型未实现"的中间态，**也不存在"先出关键页"**——覆盖度不打折。
 
-| | Claude Design 线 | 本地 HTML 线 |
+| | Open Design 线 | 本地 HTML 线 |
 |---|---|---|
-| 怎么出 | `$claude-design` → `claude-design <brief>` | 本地写多个 `.html` 文件 |
+| 怎么出 | pd-vd 以 workspace receipt 调用 `design.artifact.generate` | 本地写多个 `.html` 文件 |
 | 喂什么 | brief = IA + 交互清单 + 场景脚本 + 视觉方向；绑 Step 3d 的 DS 项目（design_system_id）+ 挂 template | IA + 交互清单 + 场景脚本 + 视觉方向 + 冻结 tokens/components/样张 |
 | 拆分 | 每个独立页面一个文件（含宿主内嵌入组件） | 每个独立页面一个文件（含宿主内嵌入组件） |
 | 组合 | 额外一个组合文件（融合全部主链路页面代码，JS tab 切换/弹窗） | 多文件之间用 URL 跳转，每个文件内做弹窗 |
 | 组合的代价 | 内容在独立页面和组合文件中重复，改一处要同步改另一处 | 无重复，每个文件只存在一份 |
-| 产物在哪 | claude.ai 原型项目（记 projectId，与 DS 项目分离） | `{pd_vd_output}` 目录落本地 repo |
+| 产物在哪 | receipt 指向的 Open Design workspace（与 DS workspace 分离） | `{pd_vd_output}` 目录落本地 repo |
 | 适合 | 团队 canvas 协作、复用组织设计系统 | 版本控制、离线、无重复维护 |
 
 **行为语义单源在 `.ix.md`**：交互怎么触发、维持、退出，按行为规格实现，不就地发明；需要 IX 未定义的行为 → 先在 `.ix.md`「下游澄清回流」节登记；时序参数（浮层退出缓冲时长等）原型定值后同步登记。
 
 ---
 
-## Claude Design 线
+## Open Design 线
 
-### `claude-design <brief>` 写法
+### 生成 brief 写法
 
-先调 `$claude-design` 加载 claude-design skill，然后传 brief。Claude Design 基于已同步的设计系统生成多屏设计/原型。brief 写得越结构化，产出越贴合。
+pd-vd 创建 prototype workspace 后，把结构化 brief 交给 `design.artifact.generate`。Open Design 基于已冻结的设计系统生成多屏设计/原型；provider 细节不进入 brief。
 
 **brief 必含五块：**
 
@@ -48,9 +48,9 @@
 - **绑 design system**：创建原型项目时绑 Step 3d 的 DS 项目（`design_system_id`），brief 里写"用 \<名\> 设计系统"。注意：平台每个文件独立渲染，页面文件仍需自包含 token 定义——值从冻结表复制、名零漂移，这解决渲染；浏览/绑定/复用由 DS 项目承载，两者不互相替代
 - **挂 template**：Step 1 搜到的 template 候选 → brief 里写"以 \<template 名\> 为起点结构"，省去从空白生成
 
-### Claude Design 交互能力边界
+### Open Design 交互能力边界
 
-Claude Design 的每个文件独立渲染，**跨文件导航不支持**——写了 5 个文件就是 5 个独立页面，互相点不过去。
+Open Design 的每个文件独立渲染，**跨文件导航不支持**——写了 5 个文件就是 5 个独立页面，互相点不过去。
 
 解法：独立页面文件保留不动（每个文件内已含该页的嵌入组件），**额外创建一个组合文件**（`prototype.html`），把所有页面的代码融合进来，用 tab/section 切换模拟导航。单文件内 JS 正常执行，弹窗、抽屉、状态切换都能做。
 
@@ -70,7 +70,7 @@ Claude Design 的每个文件独立渲染，**跨文件导航不支持**——�
 ### brief 示例
 
 ```
-claude-design 用 Nocode Manager 设计系统，生成资源管理应用的高保真可交互原型。
+使用 Nocode Manager 设计系统，生成资源管理应用的高保真可交互原型。
 
 第一步：独立页面文件（每个独立页面一个，嵌入组件在宿主页面内实现，覆盖 IA 全部页面）
 - home.html — 首页：预设卡片网格 + 统计面板 + 最近活动流
@@ -79,7 +79,7 @@ claude-design 用 Nocode Manager 设计系统，生成资源管理应用的高�
 
 第二步：组合文件 prototype.html
 把所有页面的代码融合到一个文件里，用顶部 tab 切换页面。
-Claude Design 不支持跨文件导航，所以交互统一在这个组合文件实现。
+Open Design 不支持跨文件导航，所以交互统一在这个组合文件实现。
 
 组合文件内交互（必须能点，行为按 .ix.md 行为规格）：
 - 顶部 tab 切换：首页 ↔ 资源库 ↔ 设置
@@ -116,7 +116,7 @@ page-brief（每页独有）：
 
 #### 2. 并行生成
 
-每页一个 subagent，产出 `.html` 文件到本地（纯本地写文件，不调 Claude Design API）：
+每页一个 subagent，产出 `.html` 文件到本地（纯本地写文件，不调 Open Design API）：
 
 ```
 parallel(pages.map(page => () =>
@@ -145,14 +145,12 @@ subagent 只产本地文件、只引用冻结 tokens 变量（禁硬编码）。
 | **孤立页面** | 无法通过前端导航到达，只在特定条件触发 | 404 页面、onboarding 引导、邮件验证页 | 保留为独立文件，不进组合文件 |
 | **条件分支** | 连通但触发条件特殊（如登录后跳转、权限不同展示不同页面） | 登录页 → 首页（登录后）| 视链路完整性：能串起来就融合，串不起来就独立 |
 
-**推送流程：**
+**提交流程：**
 ```
-1. 选/建目标 project
-2. 写入前版本检查（已有 project 时 list_files → read_file 拿 etag）
-3. 所有文件（主链路 + 孤立）推到同一 project
-   finalize_plan(project_id, writes: [所有页面文件名])
-   write_files(project_id, plan_token, files: [所有页面，已存在的带 if_match])
-4. 追加 prototype.html（只融合主链路页面）→ 再一次 finalize_plan → write_files
+1. 创建或读取目标 workspace receipt
+2. 已有 artifact 时先按完整 receipt 回读版本
+3. 所有文件（主链路 + 孤立）作为一次 artifact 变更提交到同一 workspace
+4. prototype.html 与独立页面一起提交；更新时沿用返回的新 receipt
 ```
 
 **最终产物结构：**
@@ -171,22 +169,16 @@ project/
 
 组合文件只融合**主链路页面**（导航图连通子图内的页面），不强行塞入孤立页面：
 
-- 读取主链路页面文件（`read_file` 每个页面）
+- 读取本地生成的主链路页面文件
 - 融合代码到 `prototype.html`：顶部 tab 切换 + JS 弹窗/抽屉
 - 孤立页面保持独立文件，各自可渲染、可截图，但不参与组合文件的导航链路
-- 再一次 `finalize_plan` → `write_files` 推送组合文件
+- 由编排者将组合文件包含在同一批 artifact 提交中
 
 组合文件内容与独立页面重复——改了独立页面，组合文件要同步改。
 
 ### 拉回本地（Step 5 验证必做）
 
-Step 5 Playwright 验证需要本地文件，Claude Design 线必须先拉回：
-
-```
-claude-design read <projectId> <path>
-```
-
-把指定项目的文件拉进工作目录，然后在拉下来的文件上跑 `prototype-verify.mjs`，流程与本地 HTML 线一致。拉取失败时降级为 `claude-design render` 预览 + 截图。
+Step 5 Playwright 验证需要本地文件。pd-vd 用完整 artifact receipt 执行 `design.artifact.read`，在 receipt 的 `artifact.localPath` 上跑 `prototype-verify.mjs`，流程与本地 HTML 线一致。若无法物化但 receipt 提供 preview URL，则用 `design.preview.open` 做人工预览并把自动验证缺口显式记入报告；不得跨 provider 重建 receipt。
 
 ---
 
@@ -232,7 +224,7 @@ claude-design read <projectId> <path>
 
 ## 两条线共同要求
 
-- **test-id** — 每个可操作元素（按钮、链接、输入框、导航项、状态切换控件、弹窗触发器）加 `data-testid` 属性。Playwright selector 用 `[data-testid="xxx"]` 定位，不依赖脆弱的 CSS class 或文本内容。命名规则：`<页面>-<组件>[-<变体>]`，kebab-case。两条线（本地 HTML + Claude Design）都加
+- **test-id** — 每个可操作元素（按钮、链接、输入框、导航项、状态切换控件、弹窗触发器）加 `data-testid` 属性。Playwright selector 用 `[data-testid="xxx"]` 定位，不依赖脆弱的 CSS class 或文本内容。命名规则：`<页面>-<组件>[-<变体>]`，kebab-case。两条线（本地 HTML + Open Design）都加
 - **基线不推翻** — 在 `.ix.md` ASCII 骨架上落视觉 + 交互，不改 IA / 页面结构；视觉不对回 Step 3 改 token / 组件重拍板，不在页面里就地改值
 - **截图走查** — Step 5 用 Playwright 自动截图 + 交互验证，不手动看
 - **对照 IA 核覆盖** — 原型产出后回扫 `.ix.md` 的 IA：每个页面/视图都有对应屏吗？每条交互流走得通吗？缺的补，多的删
@@ -259,4 +251,4 @@ Step 4 产出后、进 Step 5 前，列一份原型清单：每个 IA 页面/视
 - token 零硬编码、零改名（与 Step 3 冻结表逐一比对）
 - 行为语义与 `.ix.md` 行为规格一致；新增行为已回流登记
 - 所有可操作元素有 `data-testid`（Step 5 Playwright 验证依赖）
-- Claude Design 线：原型项目已绑 Step 3d 的 DS 项目 + projectId 已记录 + `claude-design read` 可拉回本地 / HTML 线：文件已保存到 `{pd_vd_output}`
+- Open Design 线：prototype receipt 已引用 Step 3d 的 DS workspace + 完整 receipt 已保存 + artifact 可物化到本地 / HTML 线：文件已保存到 `{pd_vd_output}`

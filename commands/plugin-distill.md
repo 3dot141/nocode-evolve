@@ -3,6 +3,8 @@ description: rule / skill 双轨写入——新增/优化 plugin rule（三步�
 argument-hint: <描述> | (被 /distill 传结构化候选)
 ---
 
+> 本文写“结构化决策”时，必须把当前步骤的完整问题与 2–3 个互斥选项编译为 `Capability(workflow.decision.request, {"question":"<self-contained current-step question>","options":[{"label":"<option-label>","description":"<impact or tradeoff>"}],"allowFreeform":false})`；示例只展示单项形状，真实调用需带齐本步骤列出的选项，不得回退到平台专属提问工具。
+
 # /plugin-distill：plugin rule / skill 写入
 
 统一入口，处理两类插件自维护写入：新增/融合一条 `rules/rule-<slug>.md`（frontmatter 自带触发定义）登记的 plugin rule，或委托优化一个 `skills/` 下的 skill。被 `/distill` 的 `rules:plugin` 出口调用（传结构化候选），也可独立调用（传 NL 描述）。
@@ -10,7 +12,7 @@ argument-hint: <描述> | (被 /distill 传结构化候选)
 ## 用法
 
 `/plugin-distill <描述>` — 独立调用，NL 描述你要新增/优化的 rule 或 skill
-被 `/distill` 调用时接收结构化候选 `{summary, disposition, target?, body, description?, ...}`
+被 `/distill` 调用时严格从 `arguments.payload.candidates[]` 接收结构化候选 `{id, disposition, target?, body, description?, ...}`；`disposition ∈ {create, merge, skip}`。
 
 ## 权威依据
 
@@ -20,12 +22,14 @@ argument-hint: <描述> | (被 /distill 传结构化候选)
 
 ### Step 1: 判类型
 
-- 被 `/distill` 调用（输入带 `disposition` 字段）：
-  - `disposition` 以"融合"开头（格式 `融合→<现有文件路径>`）→ 解析 `→` 后的路径为 fuseTarget，走「融合路径」（不能只做精确相等判断，会丢 target）
-  - 否则（"新建"）→ 走「三步联动」
+- 被 `/distill` 调用（逐个读取 `arguments.payload.candidates[]`）：
+  - `disposition=merge` → 从同一 candidate 的 `target` 读取 fuseTarget，走「融合路径」
+  - `disposition=create` → 走「三步联动」
+  - `disposition=skip` → 不写入并报告跳过
+  - 缺字段或其它枚举 → 报协议错误停止，不从展示文案猜值
 - 独立调用（NL 描述）：
   - 判断描述内容是 rule 类（触发条件/工作流指令）还是 skill 类（创建/优化一个 skill 的能力）
-  - 拿不准 → `AskUserQuestion`：`rule` / `skill` / `两者都涉及`，不猜测
+  - 拿不准 → `结构化决策`：`rule` / `skill` / `两者都涉及`，不猜测
   - rule → 判 slug 是否已存在（走「融合路径」或「三步联动」），skill → 走「skill 委托」
 
 ### 融合路径（disposition=融合，或独立调用判定为融合现有 rule）
@@ -42,7 +46,7 @@ argument-hint: <描述> | (被 /distill 传结构化候选)
 
 ### 三步联动（disposition=新建，或独立调用判定为新建 rule）
 
-1. **写 rule 文件（含 frontmatter）**：`slug` 从描述/候选提取；`filePath = ${NOCODE_EVOLVE_REPO}/rules/rule-<slug>.md`。冲突检查：文件系统里已存在 `rule-<slug>.md` → 不 abort、不静默覆盖，`AskUserQuestion`：融进已有文件 / 改名新建。未命中才 `Write`，内容顶部带 frontmatter：
+1. **写 rule 文件（含 frontmatter）**：`slug` 从描述/候选提取；`filePath = ${NOCODE_EVOLVE_REPO}/rules/rule-<slug>.md`。冲突检查：文件系统里已存在 `rule-<slug>.md` → 不 abort、不静默覆盖，`结构化决策`：融进已有文件 / 改名新建。未命中才 `Write`，内容顶部带 frontmatter：
    ```yaml
    ---
    name: <slug>
@@ -69,7 +73,7 @@ compile: node scripts/compile.rule.js 重新生成 catalog
 ### skill 委托
 
 1. 从描述推导信号词（`create a skill` / `improve this skill` / `fix trigger accuracy`），让 `skill-writing` 的 Entry Routing 自判 Create/Edit/Description-only，不替它选模式
-2. `Skill(nocode:skill-writing, <intent> + <signalWord>)`。skill-writing 走到 Phase 7（描述优化）收敛即可，Phase 8 Package（打包 `.skill` 分发）对本仓无意义（marketplace 直接读 git），明确不需要
+2. `Capability(workflow.skill.invoke, {"skill":"skill-writing","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})`。skill-writing 走到 Phase 7（描述优化）收敛即可，Phase 8 Package（打包 `.skill` 分发）对本仓无意义（marketplace 直接读 git），明确不需要
 3. **Gate**：只有 skill 文件确有改动（对比委托前后的 `git status`/`git diff` 有实际变更）才继续；委托中止 / 用户放弃 / 无改动 → 报告"skill 未改动"，**不升版本**
 4. 有改动 → 升 `plugin.json` 版本（`minor`，判据同上现读 CLAUDE.md）——**skill-writing 本身不碰 plugin.json，这一步必须自己补**
 5. 报告：`skill 已更新: <skillPath>，版本: <old> → <new> (minor)，请 review + commit，push 需询问`

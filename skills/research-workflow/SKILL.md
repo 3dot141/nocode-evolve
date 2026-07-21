@@ -20,22 +20,31 @@ description: Generic research engine (structured search + verification) for othe
 
 ## 调用方式
 
-调用方通过 Workflow 工具委派，脚本路径在本 skill 目录下：
+调用方把问题参数传给本 skill；本 skill 将每个研究阶段动态编译为 Workflow task graph，不依赖本地固定编排脚本。**一次 execution 只完成当前轮次**：
 
 ```js
-Workflow({
-  scriptPath: '$CLAUDE_PLUGIN_ROOT/skills/research-workflow/workflow.js',
-  args: {
-    question: '要研究的问题',
-    type: 'web',          // web | code | mixed | custom
-    depth: 'shallow',     // targeted | shallow（默认）| deep；inline = 不发本 workflow（见「四档深度」）
-  }
-})
+Capability(workflow.execute, {"tasks":[{"id":"search-angle-1-round-1","objective":"围绕 <question> 的 <angle-1> 执行第 1 轮检索；按 <type> 工具链返回 SearchResult JSON：angle/query/sources[{ref,title,excerpt,quality}]/summary/learnedTerms/gaps","profile":"research.<type>","dependsOn":[],"writeScope":"none","timeoutMs":300000,"continueOnError":false},{"id":"search-angle-2-round-1","objective":"围绕 <question> 的 <angle-2> 执行第 1 轮检索；返回同一 SearchResult JSON；只读","profile":"research.<type>","dependsOn":[],"writeScope":"none","timeoutMs":300000,"continueOnError":false}],"maxParallel":2,"fallbackPolicy":"inline"})
 ```
 
-大多数情况只需要 `question` + `type` + `depth`。`type` 决定了用什么工具、怎么降级、迭代几轮——这些都不用调用方操心。
+保存 `executionId`。当 `status=running` 时反复执行 `Capability(workflow.wait, {"executionId":"<execution-id>","timeoutMs":300000})` 直到终态；再执行 `Capability(workflow.collect, {"executionId":"<execution-id>"})`，由主会话直接读取并验证 `tasks[].result` 为本轮约定 JSON（`resultRef` 只作追踪元数据）。不得让同一 graph 的下游 task 猜测前序 resultRef：scheduler 只保证依赖顺序，不把前序结果内容注入后续 objective。
 
-**约束：仅主 agent 可委派。** `Workflow` 是主 agent 的工具，subagent / fork 内没有它。调用方 skill 若正在 subagent 或 fork 里执行，委派本 workflow 会失败——需要 research 能力时，由主 agent 来委派。
+### 可执行编译协议
+
+固定数据流为 **Scope → Search → Evaluate → Refine → Extract → Verify → Synthesize**，每个箭头都是“上一轮终态后 collect，主会话读取并把必要内容显式嵌入下一轮 objective”，不是 graph 内隐式传值：
+
+1. **Scope**：未传 `angles` 时单独 execute 一个 `research.scope` task，collect 后校验得到 2–3 个 `{label,query,rationale}`；传了 angles 时直接校验调用方输入。空 angles 立即返回结构化空结果，不创建空 graph。
+2. **Search**：按 angle 并行 execute，objective 必须含完整 `question/type/angle/query/systemPrompt`，返回上例 `SearchResult`；wait 到终态并 collect。
+3. **Evaluate**：`targeted` 或 `iterate=1` 跳过；否则为每个 angle 创建独立只读 evaluator task，objective 显式嵌入该 angle 的 `<collected-search-results>`，返回 `{score,coverage,gaps,nextQuery,stop}`。不得让搜索 task 自评。
+4. **Refine**：若 evaluator 的 `stop=false` 且未达 iterate 上限，用 `nextQuery + learnedTerms + gaps` 创建下一轮 Search；然后重新 Evaluate。每轮都使用新的 executionId，最多运行 `iterate` 轮。
+5. **Extract**：仅 deep。按来源创建 extract task；objective 显式嵌入去重后的来源条目与 question，输出可证伪 claims `{claim,evidence,source}`。主会话按规范化 `claim+source` 去重，并执行来源/claim budget，超限项按 quality、相关度排序截断且记录 stats。
+6. **Verify**：仅 deep。每条 claim 创建 3 个彼此无依赖的 skeptic task；每个 objective 都显式带 claim、evidence、source，默认 `refuted=true`，输出 `{refuted,reason,evidence}`。三票中至少 2 票 refute 就进入 `refuted`，否则保留并记录票型。
+7. **Synthesize**：最后单独 execute 一个 task，objective 显式嵌入 `<collected-search-results>`；deep 还要嵌入保留 claims、三票结果与 refuted 清单。要求严格返回「返回值」schema 的 JSON。wait/collect 后由主会话校验字段并补齐 stats；没有可用来源时返回 `findings=[]`、具体 `caveats` 与 `openQuestions`，不得编造结论。
+
+各档的确定性裁剪：`targeted = [可选 Scope] → Search → Synthesize`；`shallow = Scope → Search ⇄ Evaluate/Refine → Synthesize`；`deep = shallow → Extract → Verify(3 票) → Synthesize`。实际 task 数按角度、轮次与 claim 数动态生成，但任何一次 execute 都不能传空 `tasks`。
+
+大多数情况只需要 `question` + `type` + `depth`。`type` 决定工具链、降级链和迭代轮数；调用方不需要知道平台 provider。
+
+**约束：session owner 负责推进 graph。** 子任务只处理自己的 objective，不递归创建同一研究 workflow；动态的下一轮查询和 deep 验证 graph 由本 skill 所在主会话根据上一轮 result refs 创建。
 
 ## 参数
 
@@ -87,11 +96,11 @@ Workflow({
 | `shallow` | Scope → Search（每角度按 iterate 轮收敛）→ Synthesize | 8~17 | 不知道搜什么，要迭代逼近术语 |
 | `deep` | shallow + Extract → Verify（3 票对抗） | 20+ | 结论要经得住反驳、进正式报告 |
 
-**升降档有疑点不自作主张**：调用方拿不准该用哪档（要不要从 targeted 升 shallow / deep）时，AskUserQuestion 让用户拍板，不默认往重档跑。
+**升降档有疑点不自作主张**：调用方拿不准该用哪档（要不要从 targeted 升 shallow / deep）时，调 `Capability(workflow.decision.request, {"question":"这次调研需要哪种深度？","options":[{"label":"targeted","description":"已知方向，单轮并行覆盖"},{"label":"shallow","description":"多角度迭代搜索，不做对抗验证"},{"label":"deep","description":"提取声明并做独立反证验证"}],"allowFreeform":false})` 让用户拍板，不默认往重档跑。
 
 ### inline —— 不调本 workflow（0~1 个 agent）
 
-这一档是给调用方的判断标准，不是 workflow 参数：主 agent 已经知道要看哪（讨论里定过方向、有明确路径或术语），一次 `Agent(nocode:semble-search)` 或一次 WebSearch 就能答——**别发 Workflow**，省掉 scope / synthesize 的固定开销。误传 `depth: 'inline'` 会直接报错提醒。
+这一档是给调用方的判断标准，不是 workflow 参数：主会话已经知道要看哪（讨论里定过方向、有明确路径或术语），直接做一次精确代码搜索或一次网络搜索即可——**别创建 Workflow execution**，省掉 scope / synthesize 的固定开销。误传 `depth: 'inline'` 会直接报错提醒。
 
 ### targeted —— 定向覆盖（最轻 workflow 档）
 
@@ -154,7 +163,7 @@ Scope → Search+Extract（pipeline，无 barrier）→ Verify（3 票对抗）�
 
 ## 迭代检索原理
 
-> 思路源自 everything-claude-code v1.2.0 iterative-retrieval skill (MIT)，在本 workflow 里落成代码层的循环（不再靠 prompt 自觉）。
+> 思路源自 everything-claude-code v1.2.0 iterative-retrieval skill (MIT)，在本 workflow 里落成显式的多轮 execution/collect 协议（不靠 prompt 猜测前序结果）。
 
 每个搜索角度走一个最多 `iterate` 轮的循环：
 

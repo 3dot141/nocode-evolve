@@ -20,7 +20,7 @@
 
 ## Step 2: Lark 任务流转
 
-调 `Skill(nocode:lark-project)` 把任务流转到**全景计划定死的目标状态**。
+调 `[provider-neutral skill boundary]` 把任务流转到**全景计划定死的目标状态**。
 
 - 典型流转映射（材料收集阶段推定用）：缺陷/任务类 `组员开发 → 研发已改待BUILD`
 - **前置条件**：有任务号 + FeishuProjectMcp 可用。不满足 → 跳过，报告原因，不报错

@@ -24,6 +24,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { parseFrontmatter, ROOT } from './compile.rule.js';
+import { loadPluginExclusions } from './lib/platform-compiler.mjs';
 
 // Skill(nocode:X) 里 X 是文档示例而非真实路由目标, 跳过存在性检查
 const PLACEHOLDER_TARGETS = new Set(['xxx', 'name', 'x', 'y', 'foo', 'bar']);
@@ -216,14 +217,32 @@ export function metadataBudget(root) {
   return { total: entries.reduce((sum, entry) => sum + entry.chars, 0), entries };
 }
 
-export function checkAll({ root = ROOT, platform = 'claude', metadataLimit = 8000 } = {}) {
+export function checkAll({
+  root = ROOT, platform = 'claude', metadataLimit = 8000,
+} = {}) {
   const errors = [];
   const warnings = [];
   const targets = routeTargetSet(root);
+  const explicitExclusions = fs.existsSync(path.join(root, 'plugin', 'exclusions.json'))
+    ? loadPluginExclusions(root).sources.map((entry) => entry.path)
+    : [];
+  const excludedSkills = new Set(explicitExclusions
+    .filter((entry) => /^skills\/[^/]+$/.test(entry))
+    .map((entry) => entry.slice('skills/'.length)));
   for (const name of listSkills(root)) {
+    if (excludedSkills.has(name)) continue;
     const r = checkOneSkill(name, { root, targets });
     errors.push(...r.errors);
     warnings.push(...r.warnings);
+  }
+  for (const file of listMarkdown(root)) {
+    const rel = path.relative(root, file).replaceAll('\\', '/');
+    if (!/^skills\/.+\/.+\/SKILL\.md$/.test(rel)) continue;
+    const frontmatter = parseFrontmatter(fs.readFileSync(file, 'utf8'));
+    if (!frontmatter?.name || !SKILL_NAME.test(frontmatter.name)) {
+      errors.push(`${rel}: nested Skill 缺合法 name`);
+    }
+    if (!frontmatter?.description) errors.push(`${rel}: nested Skill 缺 description`);
   }
   errors.push(...checkCommands(root, targets));
   if (platform === 'codex') {
@@ -261,7 +280,7 @@ export function parseCheckArgs(args) {
       throw new Error(`unknown argument: ${arg}`);
     }
   }
-  if (!['claude', 'codex'].includes(options.platform)) throw new Error(`unknown platform: ${options.platform}`);
+  if (!['source', 'claude', 'codex'].includes(options.platform)) throw new Error(`unknown platform: ${options.platform}`);
   return options;
 }
 

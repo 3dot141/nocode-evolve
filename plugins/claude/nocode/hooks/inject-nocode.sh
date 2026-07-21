@@ -24,6 +24,7 @@ set -euo pipefail
 PLUGIN_ROOT="${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}}"
 PROJECT_DIR="${CLAUDE_PROJECT_DIR:-$PWD}"
 SEG="${1:-}"
+CHUNK="${2:-1}"
 
 # segment → 文件 映射 (单一来源)
 seg_file() {
@@ -127,4 +128,15 @@ fi
 _REF="${NOCODE_SKILL_REF:-${PLUGIN_ROOT}/skills/references}"
 content="${header}"$'\n'"$(sed "s|\${CLAUDE_PLUGIN_ROOT}|${PLUGIN_ROOT}|g; s|\${NOCODE_SKILL_REF}|${_REF}|g" "$file")"
 
-printf '%s' "$content" | node "${PLUGIN_ROOT}/hooks/session-context.mjs"
+budget="${NOCODE_CONTEXT_BUDGET_FILE:-${PLUGIN_ROOT}/skills/using-nocode/scripts/providers/claude-hooks/context-budget.json}"
+if [ "$SEG" = "project" ]; then
+  mode="dynamic"
+  source_name="${file}"
+else
+  mode="static"
+  source_name="nocode/${rel}"
+fi
+
+printf '%s' "$content" \
+  | node "${PLUGIN_ROOT}/scripts/lib/context-budget.mjs" "$mode" "$budget" "$source_name" "$CHUNK" \
+  | node "${PLUGIN_ROOT}/hooks/session-context.mjs"

@@ -3,6 +3,8 @@ description: 把当前会话围绕给定意图浓缩并归档到用户 vault, AI
 argument-hint: <一句话意图：想抽取什么内容>
 ---
 
+> 本文写“结构化决策”时，必须把当前步骤的完整问题与 2–3 个互斥选项编译为 `Capability(workflow.decision.request, {"question":"<self-contained current-step question>","options":[{"label":"<option-label>","description":"<impact or tradeoff>"}],"allowFreeform":false})`；示例只展示单项形状，真实调用需带齐本步骤列出的选项，不得回退到平台专属提问工具。
+
 # /sow v2：会话沉淀到用户 vault, 支持三层
 
 把当前会话围绕用户指定的意图沉淀为一条文档, AI 判 layer (`Inbox` / `Inputs` / `Outputs`) + 用户 NL 单候选确认 loop, 归档到 `$USER_VAULT_PATH/Memory/<layer-dir>/<yymm>/<yymmdd>-<title>.md`.
@@ -69,7 +71,7 @@ AI 按 intent + 会话浓度判 layer ──三档启发式 (见下方判层 exa
 
 ### 3. 单候选 + 编号确认
 
-把 candidate propose 给用户，用 `AskUserQuestion` 单选组件（下方 propose 块整体放进 question 文本或各选项 preview，不作为工具调用前的自由文本——那段文本可能被吞）：
+把 candidate propose 给用户，用 `结构化决策` 单选组件（下方 propose 块整体放进 question 文本或各选项 preview，不作为工具调用前的自由文本——那段文本可能被吞）：
 
 ```
 沉淀到: Memory/<layer-dir>/<yymm>/<yymmdd>-<title>.md

@@ -8,7 +8,7 @@
 
 | 路径 | 主题 | 状态 |
 |---|---|---|
-| `3dot141/260720-codex-semantic-compatibility-design.md` | 双运行时语义兼容补救：领域优先 capability/provider、统一 Open Design、workflow、session handoff 与全量能力审计 | **approved（等待实施计划与实现）** |
+| `3dot141/260720-codex-semantic-compatibility-design.md` | 双运行时语义兼容：using-nocode 领域 references、统一 Open Design、workflow 与 session 隔离 | **implemented / automated verification complete / client smoke pending** |
 | `3dot141/260603-strategic-review-v3.4.0.md` | v3.4.0 双路 audit + 红蓝军推演后的战略级架构改进 spec (Batch 1 P0 = v3.5.0 落地依据; Batch 2/3 未实施) | **draft / 落地中** |
 | `3dot141/260602-worktree-setup-script-design.md` | worktree-setup.mjs (新建分支走 worktree, 落 `<project>-<branch_flat>/`, setup verb 补 env/IDE/node_modules + symlink) | **active** (主仓 git-worktree 增强已实施) |
 
@@ -32,6 +32,7 @@
 
 | 路径 | 配对的 spec | 状态 |
 |---|---|---|
+| `3dot141/260720-codex-semantic-compatibility.md` | `260720-codex-semantic-compatibility-design.md` | **superseded** — 私有 entrypoint/provider-attempt 方案被轻量 using-nocode 设计取代，最终实现未按该 plan 执行 |
 | `3dot141/260720-claude-codex-dual-runtime.md` | `260720-claude-codex-dual-runtime-design.md` (superseded) | **superseded** — `689cc25` 仅为 draft implementation，等待新设计配套 plan |
 | `3dot141/260602-skillify-route.md` | `260602-skillify-route-design.md` (superseded) | **superseded** — skillify-route v3.0.0 已被 pilot-catalog v3.3.0 取代 |
 

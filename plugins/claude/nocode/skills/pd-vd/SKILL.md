@@ -4,6 +4,8 @@ description: >-
   Use when the user wants to design the visual direction and produce prototypes after interaction design. Use when the user says "视觉设计/视觉方向/配色/原型/wireframe/线框图/设计稿/长什么样/出个原型", or when pdflow routes to the visual design stage after pd-ix. ALSO use when modifying an existing prototype — "改原型/修原型问题/调交互效果/这个 hover 不对/原型里 X 效果很差" enters iteration mode (lightweight path with regression verify), do NOT hand-edit prototype HTML outside this skill. Always produces high-fidelity interactive prototypes (no fidelity tiers): .vd.md + styleguide.html + prototype (requires .ix.md). Not for interaction design (use nocode:pd-ix), technical architecture (use nocode:dev-design), or production component code (use devflow Build).
 ---
 
+> 本文写“结构化决策”时，必须把当前步骤的完整问题与 2–3 个互斥选项编译为 `Capability(workflow.decision.request, {"question":"<self-contained current-step question>","options":[{"label":"<option-label>","description":"<impact or tradeoff>"}],"allowFreeform":false})`；示例只展示单项形状，真实调用需带齐本步骤列出的选项，不得回退到平台专属提问工具。
+
 # pd-vd — 视觉设计
 
 **Iron Law: 交互骨架定了才上视觉。没有 `.ix.md` 就出原型 = 在空气上贴皮。**
@@ -28,7 +30,7 @@ description: >-
 | pd-vd 做 | 不做（→ 去哪） |
 |---|---|
 | 视觉方向、tokens、控件四态样式 | 信息架构、页面流 → pd-ix |
-| 可交互原型（Claude Design / HTML） | 交互拆解、状态覆盖枚举、行为规格 → pd-ix |
+| 可交互原型（Open Design / HTML） | 交互拆解、状态覆盖枚举、行为规格 → pd-ix |
 | 设计系统（tokens + components + 样张，按交付线落点） | 技术架构、模块划分 → dev-design |
 | Playwright 验证 | 生产级组件代码 → devflow Build |
 
@@ -39,7 +41,7 @@ description: >-
 ## Enter Gate
 
 - [ ] pd-vd skill 已加载
-- [ ] `.ix.md` 存在（交互阶段已完成）——无 `.ix.md` 时建议先跑 `Skill(nocode:pd-ix)`
+- [ ] `.ix.md` 存在（交互阶段已完成）——无 `.ix.md` 时建议先跑 `Capability(workflow.skill.invoke, {"skill":"pd-ix","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})`
 
 ## 模式分流：全流程 or 迭代
 
@@ -47,9 +49,9 @@ Enter 时检测——**已有 `.vd.md` + 原型，且本次请求是局部修改
 
 ```
 迭代模式（轻路径，带回归网）
-1. TaskCreate 轻量版：Task A「迭代: 定位→修改→重验→登记」+ Task B「Handoff」(metadata: {handoff: true})
+1. workflow.plan.create 轻量版：Task A「迭代: 定位→修改→重验→登记」+ Task B「Handoff」(metadata: {handoff: true})
 2. 定位改动：哪个页面 / 哪个交互（引用交互 ID）
-3. 修改：视觉值只用冻结 tokens；行为语义查 .ix.md 行为规格——
+3. 修改：视觉值只用冻结 tokens；Open Design artifact 用 `Capability(design.artifact.write, {"artifactRef":{"provider":"open-design","workspace":{"type":"project","ref":"<workspace-ref>"},"artifact":{"kind":"prototype","localPath":"<local-path>","previewUrl":null},"degraded":false,"degradedFrom":null,"warnings":[]},"patch":{"brief":"<approved-local-change>"}})` 沿用完整 receipt；行为语义查 .ix.md 行为规格——
    需要 IX 未定义的行为 → 先回流登记再实现，不就地发明
 4. 重验（修改后必重验）：受影响页面 Phase 1 + 该页相关 Phase 2 场景重跑
    （场景已从行为规格转译，断言判挂）
@@ -60,7 +62,7 @@ Enter 时检测——**已有 `.vd.md` + 原型，且本次请求是局部修改
 
 > 动机：局部改原型是最高频的返场场景，只有「重走全流程」一条路时它必然被绕开——绕开 = 裸奔迭代（v7 式七轮肉眼修 bug）。给合规轻路径，回归网（重验）不丢。
 
-## Step 0: TaskCreate
+## Step 0: workflow.plan.create
 
 **进入 pd-vd 后第一件事**，创建以下全部 task：
 
@@ -70,7 +72,7 @@ Task 1: 视觉探索
   Gate: 视觉参考集整理
 
 Task 2: 交付线 + 视觉方向
-  Sub-steps: 选交付线(Claude Design / 本地 HTML，设计系统与原型同线) → 告知产出标准(含「不包含」) → 定视觉方向
+  Sub-steps: 选交付线(Open Design / 本地 HTML，设计系统与原型同线) → 告知产出标准(含「不包含」) → 定视觉方向
   Gate: 交付线 + 视觉方向已定，产出标准已告知
 
 Task 3: 设计系统（tokens + components + 样张 + 落点，全必做）
@@ -91,6 +93,12 @@ Task 6: 保存 + Handoff
   metadata: {handoff: true}（供防跳步 Hook B 识别交接 task）
 ```
 
+调用时把上面**每一条** Task 编译成一个稳定 item：`id` 固定、`subject` 为标题、`description` 完整包含 Sub-steps + Gate、初始 `status=pending`，仅最后一项设置 `handoff`。不得只改名后继续依赖平台 task 工具，也不得传空 items：
+
+`Capability(workflow.plan.create, {"items":[{"id":"<stable-task-id>","subject":"<task-title>","description":"<complete Sub-steps and Gate>","status":"pending","handoff":"<final-item-only; otherwise omit>"}]})`
+
+示例只展示单项形状；真实调用必须包含本段清单的全部 items。保存返回的 `planRef`。每次状态变化都用 `Capability(workflow.plan.update, {"planRef":"<planRef>","items":[{"id":"<same-stable-id>","subject":"<same-title>","description":"<same-complete-description>","status":"<pending|in_progress|completed>","handoff":"<preserve-final-item-handoff; otherwise omit>"}]})` 提交**完整快照**（示例仍只展示单项形状）；每次 update 必须原样保留最终 item 的 `handoff`，其它 item 继续省略该字段，不得发送单项 patch。
+
 每完成一个标 done。
 
 ---
@@ -109,7 +117,7 @@ Task 6: 保存 + Handoff
    - 有 → 定位到对应 IA 关键页的视觉页面，请用户截图整理
    - 没有 → 按产品类型搜同类视觉参考
 
-2. **搜 Template** — Claude Design 可用时查模板库，匹配产品类型（dashboard / landing / app 等）
+2. **搜 Template** — Open Design 可用时查模板库，匹配产品类型（dashboard / landing / app 等）
    - 有匹配 → 记为起点候选，Step 2 视觉方向可直接用它定调
    - 没匹配 / 不可用 → 跳过
 
@@ -130,7 +138,7 @@ Task 6: 保存 + Handoff
 
 **Core Actions:**
 
-**2a. 交付线**（AskUserQuestion）——一条线管两个落点：Step 3 设计系统和 Step 4 原型同线交付，不混线：
+**2a. 交付线**（结构化决策）——一条线管两个落点：Step 3 设计系统和 Step 4 原型同线交付，不混线：
 
 **什么算独立页面文件，什么不算：**
 - **独立页面** = 不同路径分支的落地页（首页、列表页、详情页、设置页）→ 各一个文件
@@ -139,10 +147,10 @@ Task 6: 保存 + Handoff
 
 | 线 | 设计系统落点 | 原型落点 | 交互原型（组合） | 选它当 |
 |---|---|---|---|---|
-| **Claude Design** | 独立 DS 项目（组件卡入 Design System 面板，供绑定/复用） | 原型项目（与 DS 项目分离），每个独立页面一个文件 | 额外一个组合文件，融合所有页面代码，JS 实现 tab 切换/弹窗 | 团队 canvas 协作、设计系统跨项目复用 |
+| **Open Design** | 独立 DS 项目（组件卡入 Design System 面板，供绑定/复用） | 原型项目（与 DS 项目分离），每个独立页面一个文件 | 额外一个组合文件，融合所有页面代码，JS 实现 tab 切换/弹窗 | 团队 canvas 协作、设计系统跨项目复用 |
 | **本地 HTML** | `tokens.css` + `styleguide.html` 落 `{pd_vd_output}` 目录 | 每个独立页面一个 `.html` 落同目录 | 多文件之间用 URL 跳转串联，不需要额外组合文件 | 版本控制、离线、无重复维护 |
 
-**Claude Design 的代价**：组合文件里的内容和独立页面文件是重复的，改了独立页面的设计，组合文件也要同步改。
+**Open Design 的代价**：组合文件里的内容和独立页面文件是重复的，改了独立页面的设计，组合文件也要同步改。
 
 **覆盖要求**：IA 中的每个页面/视图都必须在原型中实现——独立页面有自己的文件，嵌入组件在宿主页面内实现。不存在"设计覆盖但原型未实现"的中间态。
 
@@ -176,9 +184,9 @@ Task 6: 保存 + Handoff
 
 ```
 tokens 取值来源
-├─ 1. 项目已有设计系统？（代码库 tokens / Claude Design 项目 / Figma）
+├─ 1. 项目已有设计系统？（代码库 tokens / Open Design 项目 / Figma）
 │     有 → 直接沿用，不问；gap analysis 只补缺口
-├─ 2. 没有 → AskUserQuestion（单选）：
+├─ 2. 没有 → 结构化决策（单选）：
 │     · 已有品牌资产（如探测到品牌色板，列为首选项）
 │     · minimalist-ui —— 暖色极简 editorial（宽松/克制/友好）
 │     · high-end-visual-design —— agency 精致感（表现力/圆角/景深）
@@ -215,22 +223,22 @@ tokens 取值来源
 
 **3d. 按交付线落点**（回查 2a，冻结后执行）：
 
-| | Claude Design 线 | 本地 HTML 线 |
+| | Open Design 线 | 本地 HTML 线 |
 |---|---|---|
 | **落点** | **独立 DS 项目**（与 Step 4 原型项目分离） | `{pd_vd_output}` 目录 |
-| **动作** | `Skill(nocode:claude-design)` 建 DS 类型项目 → 推 tokens + 组件卡（`.dc.html`）+ 样张 → 组件卡显式入索引 → 记 dsProjectId | `tokens.css` + components + `styleguide.html` 落盘 |
+| **动作** | `Capability(design.workspace.create, {"projectRoot":"<absolute-project-root>","kind":"design-system","name":"<topic>-design-system"})` 建 DS workspace → `Capability(design.artifact.generate, {"workspaceRef":{"type":"project","ref":"<workspace-ref>"},"kind":"design-system","brief":"<frozen-tokens-components-and-styleguide>","outputDir":"<absolute-pd-vd-output>"})` → 保存完整 receipt | `tokens.css` + components + `styleguide.html` 落盘 |
 | **复用已有** | 已有 DS 项目 → gap analysis 增量推缺口 | 已有代码库 tokens → 提取对齐后落盘冻结快照 |
 
-**交付线 = Claude Design ⇒ 设计系统必须落成 DS 项目，设计真源在代码库也不豁免**——推送物是冻结时点快照（标注上游来源 + 冻结日期，单向同步，不构成双主）。tokens 内联进原型文件只解决渲染；DS 面板可浏览、跨项目可绑定、协作可见，靠的是 DS 项目——内联不能替代落点。
+**交付线 = Open Design ⇒ 设计系统必须落成 DS 项目，设计真源在代码库也不豁免**——推送物是冻结时点快照（标注上游来源 + 冻结日期，单向同步，不构成双主）。tokens 内联进原型文件只解决渲染；DS 面板可浏览、跨项目可绑定、协作可见，靠的是 DS 项目——内联不能替代落点。
 
 **Exit Gate:**
 - [ ] tokens 按 schema 完备（八项齐）
 - [ ] components 覆盖 gap analysis 全部清单，零硬编码
 - [ ] 样张经用户拍板，tokens + components 已冻结
 - [ ] 复用已有设计系统时：标识已记录，缺口已补齐
-- [ ] 落点完成——Claude Design 线：DS 项目已建（DS 类型）+ 组件卡已入索引 + dsProjectId 已记录 / 本地 HTML 线：tokens + 样张已落 `{pd_vd_output}`
+- [ ] 落点完成——Open Design 线：DS 项目已建（DS 类型）+ 组件卡已入索引 + dsProjectId 已记录 / 本地 HTML 线：tokens + 样张已落 `{pd_vd_output}`
 
-> 展开：gap analysis、并行创建、样张构成、两线落点、claude-design 操作 → `references/design-system-build.md`
+> 展开：gap analysis、并行创建、样张构成、两线落点、open-design 操作 → `references/design-system-build.md`
 
 ---
 
@@ -240,21 +248,21 @@ tokens 取值来源
 
 **Enter Gate:**
 - [ ] Step 3 完成（tokens + components + 样张已冻结，3d 落点完成）
-- [ ] 回查交付线：Claude Design / 本地 HTML
-- [ ] Claude Design 线：Step 3d 的 DS 项目可绑（`claude-design systems` 能找到）
+- [ ] 回查交付线：Open Design / 本地 HTML
+- [ ] Open Design 线：Step 3d 的 DS workspace receipt 完整且可复用
 
 **Core Actions:**
 
-| | Claude Design 线 | 本地 HTML 线 |
+| | Open Design 线 | 本地 HTML 线 |
 |---|---|---|
-| **怎么出** | `Skill(nocode:claude-design)` → `claude-design <brief>` | 本地写多个 `.html` 文件 |
+| **怎么出** | `Capability(design.workspace.create, {"projectRoot":"<absolute-project-root>","kind":"prototype","name":"<topic>-prototype"})` → `Capability(design.artifact.generate, {"workspaceRef":{"type":"project","ref":"<workspace-ref>"},"kind":"prototype","brief":"<approved-brief-with-design-system-receipt>","outputDir":"<absolute-pd-vd-output>"})` | 本地写多个 `.html` 文件 |
 | **喂什么** | brief = IA + 交互清单 + 场景脚本 + 视觉方向；绑 Step 3d 的 DS 项目（design_system_id）+ 挂 template | IA + 交互清单 + 场景脚本 + 视觉方向 + Step 3 冻结的 tokens/components/样张 |
 | **结构** | 每个独立页面一个文件（含宿主内的嵌入组件）+ 一个组合文件（融合全部主链路页面，JS tab 切换/弹窗） | 每个独立页面一个 `.html`（含宿主内的嵌入组件），多文件之间用 URL 跳转，每个文件内做弹窗 |
 | **产物** | claude.ai 原型项目（记 projectId，与 DS 项目分离） | `{pd_vd_output}` 目录 |
 
 行为语义以 `.ix.md` 的行为规格为准（触发/规则/退出/反馈）；原型需要 IX 未定义的行为 → 在 `.ix.md`「下游澄清回流」节登记后再实现，时序参数（如浮层退出缓冲时长）由原型定值并同步登记。
 
-**Claude Design 线并行生成（≥3 个独立页面时推荐）：**
+**Open Design 线并行生成（≥3 个独立页面时推荐）：**
 
 页面数少（≤2）时一个 brief 一次出完；≥3 时拆分并行：
 
@@ -268,7 +276,7 @@ tokens 取值来源
    - 分析 IA 导航图，找出**连通子图**
    - **连通的页面** → 融合到同一 prototype
    - **孤立页面** → 保留为独立文件
-4. **推送**：所有文件推到同一 project，走一次 `finalize_plan` → `write_files`
+4. **提交**：所有文件作为一次 `design.artifact.generate`/`design.artifact.write` 操作提交到同一 workspace；只保存领域 receipt，不在业务流程中调用 provider-native 工具
 
 > 展开：并行流程、page-brief 模板、合流策略 → `references/prototype-gen.md`
 
@@ -295,7 +303,7 @@ Step 4 产出后、进 Step 5 前，列一份原型清单：每个 IA 页面/视
 **Exit Gate:**
 - [ ] 原型已产出，交互可操作（嵌入组件可弹出/滑出，页面间可跳转）
 - [ ] 原型清单 100% 覆盖 IA 全部页面/视图
-- [ ] Claude Design 线：原型项目已绑 DS 项目 + projectId 已记录 / HTML 线：文件已保存
+- [ ] Open Design 线：原型项目已绑 DS 项目 + projectId 已记录 / HTML 线：文件已保存
 
 > 展开：brief 完整写法、两条线详细操作 → `references/prototype-gen.md`
 
@@ -337,7 +345,7 @@ PRD 路径覆盖的状态必须由下面两个矩阵聚合得出，不能单独�
 
 ### 5b. Playwright 渲染验证（两条线都做）
 
-基于审批通过的测试方案，写 `interactions.json` 并用 `prototype-verify.mjs` 执行。Claude Design 线先 `claude-design read` 拉到本地再跑。
+基于审批通过的测试方案，写 `interactions.json` 并用 `prototype-verify.mjs` 执行。Open Design 线先用 `Capability(design.artifact.read, {"artifactRef":{"provider":"open-design","workspace":{"type":"project","ref":"<workspace-ref>"},"artifact":{"kind":"prototype","localPath":"<local-path>","previewUrl":null},"degraded":false,"degradedFrom":null,"warnings":[]}})` 按完整 receipt 物化本地文件；需要人工预览时用 `Capability(design.preview.open, {"artifactRef":{"provider":"open-design","workspace":{"type":"project","ref":"<workspace-ref>"},"artifact":{"kind":"prototype","localPath":"<local-path>","previewUrl":null},"degraded":false,"degradedFrom":null,"warnings":[]}})`。
 
 ```bash
 # Phase 1：基础截图
@@ -384,7 +392,7 @@ node scripts/prototype-verify.mjs <prototype-dir> --interactions interactions.js
 
 ### 5e. vis-review 评审
 
-按 `references/vis-review.md`（视觉 9 维度 + 档位判据）做视觉评审——Read 它拿维度，然后 `Skill(nocode:reviewing)`，声明：**对象** = 设计文档（`.ix.md` + `.vd.md`）；**领域维度** = vis-review 视觉 9 维度；**方法** = checklist（或让引擎按对象自选）；**档位** = 全流程默认重档（9 维度全量），迭代模式单页局部修改 → 轻档。引擎按 reviewing 流程产 findings + verdict——流程 / 执行者 / 升档 / 降级 / 分级全由引擎承载，本节不复述。
+按 `references/vis-review.md`（视觉 9 维度 + 档位判据）做视觉评审——Read 它拿维度，然后 `Capability(workflow.skill.invoke, {"skill":"reviewing","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"pd-vd","restate":"<confirmed-restate-or-omit>","artifacts":["<absolute-ix-path> + <absolute-vd-path>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"},"payload":{"object":{"type":"visual-design","ref":"<absolute-ix-path> + <absolute-vd-path>"},"dimensions":["<all-9-vis-review-axes>"],"method":"checklist","contextCapsule":{"facts":["<verified-fact>"],"decisions":["<confirmed-decision>"],"rejectedAlternatives":["<alternative-and-reason>"],"constraints":["<constraint>"],"nonGoals":["<non-goal>"]},"depth":"<full-heavy|iteration-light>"}}})`，声明：**对象** = 设计文档（`.ix.md` + `.vd.md`）；**领域维度** = vis-review 视觉 9 维度；**方法** = checklist（或让引擎按对象自选）；**档位** = 全流程默认重档（9 维度全量），迭代模式单页局部修改 → 轻档。引擎按 reviewing 流程产 findings + verdict——流程 / 执行者 / 升档 / 降级 / 分级全由引擎承载，本节不复述。
 
 本步把以下材料连同 `.ix.md` / `.vd.md` 一起喂给 vis-review 评审：
 - 5c/5d 矩阵完整性
@@ -422,7 +430,7 @@ verify-report.json errors = 0 才过 Gate。
 
 **Core Actions:**
 1. `.vd.md` → `{pd_vd_output}`（按 `references/vd-doc-template.md`）
-2. 原型：Claude Design 线记 projectId（原型项目）+ dsProjectId（DS 项目）/ HTML → `{pd_vd_output}` 同目录下 `{topic}.prototype.html`；样张 `styleguide.html` 同目录保存
+2. 原型：Open Design 线记 projectId（原型项目）+ dsProjectId（DS 项目）/ HTML → `{pd_vd_output}` 同目录下 `{topic}.prototype.html`；样张 `styleguide.html` 同目录保存
 3. **回流检查**：原型阶段新产生的设计决策（行为补充、时序参数）已登记——行为类回 `.ix.md`「下游澄清回流」节，视觉类落 `.vd.md`「原型阶段补充决策」节；原型内 token 名与 Step 3 冻结表逐一一致（**禁改名**，下游 devflow 按名继承）
 4. 提示："进 devflow 以 PRD + `.ix.md` + `.vd.md` 为输入。"
 
@@ -459,24 +467,24 @@ verify-report.json errors = 0 才过 Gate。
 | "先出静态稿给用户看一眼再说" | 本 skill 无静态档——Phase 1 截图同样确认视觉观感，交互一次做到位比补两轮快 |
 | "原型不可能全都做" | 对 AI 没有做不完，只有演示方式问题（状态切换按钮）。砍内容必须能引用产出标准，「做不完所以不做」不是理由 |
 | "控件四态是开发的事，设计系统不用定" | 控件四态是组件属性，Step 3 定一次全站继承——开发阶段逐处补的成本远高于此 |
-| "真源在代码库，Claude Design 的 DS 项目只是二次镜像，不用推" | 镜像正是要推的东西——冻结快照落 DS 项目才有面板可浏览、跨项目可绑定、协作可见；tokens 内联进原型只解决渲染，替代不了落点 |
+| "真源在代码库，Open Design 的 DS 项目只是二次镜像，不用推" | 镜像正是要推的东西——冻结快照落 DS 项目才有面板可浏览、跨项目可绑定、协作可见；tokens 内联进原型只解决渲染，替代不了落点 |
 | "视觉方向凭感觉定一个" | 2-3 个方向让人选，比赌一个返工率低 |
 | "小项目跳过设计系统" | tokens + components 必做——组件清单由交互驱动，小项目清单自然短；跳过的代价是并行生成各页漂移 |
-| "Claude Design 不可用就没法做" | 本地 HTML 是完整备选 |
+| "Open Design 不可用就没法做" | 本地 HTML 是完整备选 |
 | "Modal 太简单不用做原型" | IA 里列了就要实现，在宿主页面里加一个 `<dialog>` 不费事 |
 | "截图看了没问题就行" | Playwright 跑一遍比看一眼靠谱 |
 | "没有 .ix.md 但我知道交互是什么" | 凭记忆出视觉 = 在空气上贴皮，先跑 pd-ix |
-| "这个改动简单，跳过某 Step 或不建 TaskCreate" | 进了 skill 就走完所有 Step。"简单"是你的判断，不是跳 Gate 的授权 |
+| "这个改动简单，跳过某 Step 或不建 workflow.plan.create" | 进了 skill 就走完所有 Step。"简单"是你的判断，不是跳 Gate 的授权 |
 
 ## Red Flags
 
-- 没建 TaskCreate 就开始做
+- 没建 workflow.plan.create 就开始做
 - 没有 .ix.md 就开始出视觉
 - 只出「关键页」（覆盖度恒 100%，砍页面数不是选项）
 - 开工前没告知产出标准的「不包含」清单
 - 只给一个视觉方向
 - Step 3 没走完就出稿：tokens schema 缺项 / 样张没经拍板 / 组件硬编码 hex/px / 3d 落点没完成
-- Claude Design 线设计系统没落 DS 项目（tokens 只内联进原型项目——「真源在代码库」不是豁免）
+- Open Design 线设计系统没落 DS 项目（tokens 只内联进原型项目——「真源在代码库」不是豁免）
 - 同时加载两个风格预设包
 - Step 4 没回查交付线
 - 原型 token 名与冻结表不一致（禁改名）
@@ -487,4 +495,4 @@ verify-report.json errors = 0 才过 Gate。
 - 用户要改原型时绕开本 skill 直接改 HTML（应进迭代模式）
 - 嵌入组件单独建了文件（应在宿主页面内实现）
 - IA 中有页面/视图但原型里没实现
-- 因"任务简单 / 还在概览 / 用户说了'继续'"跳过某 Step、不建 Step 0 TaskCreate、或漏掉最后的交接 task
+- 因"任务简单 / 还在概览 / 用户说了'继续'"跳过某 Step、不建 Step 0 workflow.plan.create、或漏掉最后的交接 task

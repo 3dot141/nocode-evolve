@@ -14,11 +14,11 @@ function readJson(relativePath) {
   }
 }
 
-test('platform metadata is the 14.0.0 version source', () => {
+test('platform metadata is the 14.2.0 version source', () => {
   const metadata = readJson('plugin/metadata.json');
   assert.ok(metadata, 'plugin/metadata.json must exist');
   assert.equal(metadata.name, 'nocode');
-  assert.equal(metadata.version, '14.0.0');
+  assert.equal(metadata.version, '14.2.0');
   assert.match(metadata.version, /^\d+\.\d+\.\d+$/);
   assert.equal(metadata.author?.name, 'Harrison');
   assert.equal(metadata.license, 'MIT');
@@ -69,35 +69,9 @@ test('Claude-discovered frontmatter quotes values that contain YAML syntax', () 
   }
 });
 
-test('capability contract covers both platform adapters', () => {
-  const contract = readJson('core/capabilities/contract.json');
-  assert.ok(contract, 'core/capabilities/contract.json must exist');
-  assert.equal(contract.schemaVersion, 1);
-  assert.deepEqual(Object.keys(contract.platforms).sort(), ['claude', 'codex']);
-
-  const expected = [
-    'agent.dispatch',
-    'agent.wait',
-    'hook.pretool_decision',
-    'hook.session_context',
-    'hook.stop_decision',
-    'plan.create',
-    'plan.update',
-    'skill.invoke',
-    'user.ask',
-    'workspace.enter',
-  ];
-  assert.deepEqual(contract.capabilities.map((item) => item.name).sort(), expected);
-
-  for (const capability of contract.capabilities) {
-    for (const platform of ['claude', 'codex']) {
-      const mapping = capability.platforms?.[platform];
-      assert.ok(mapping, `${capability.name} must define ${platform}`);
-      assert.match(mapping.status, /^(supported|degraded|unsupported)$/);
-      assert.ok(mapping.implementation, `${capability.name}.${platform} needs implementation`);
-      if (mapping.status !== 'supported') {
-        assert.ok(mapping.fallback, `${capability.name}.${platform} needs fallback`);
-      }
-    }
-  }
+test('domain registry replaces the legacy global capability contract', () => {
+  assert.equal(existsSync(path.join(ROOT, 'core/capabilities/contract.json')), false);
+  const domains = ['design', 'lifecycle', 'personal-knowledge', 'runtime-state', 'workflow', 'workspace'];
+  for (const domain of domains) assert.ok(readJson(`core/domains/${domain}/domain.json`), domain);
+  assert.equal(existsSync(path.join(ROOT, 'core/contracts/provider-attempt.schema.json')), false);
 });

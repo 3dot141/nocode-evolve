@@ -56,11 +56,11 @@ pd-ix 已经把竞品的功能和交互摸清了。这一步不重新找竞品�
 
 > 状态态（hover/active）自动截图很难触发，通常要么 computer-use 手动操作，要么请用户提供。
 
-## 3. Template 搜索（Claude Design 可用时）
+## 3. Template 搜索（Open Design 可用时）
 
 ### Template 是什么
 
-Claude Design 新建项目时的一个起步入口。选 Template = 拿一个已经做好的成品当起点，在它基础上改，而不是对着空白 prompt 从零描述。一个匹配的 template 等于 80% 的页面骨架已经搭好。
+Open Design 新建项目时的一个起步入口。选 Template = 拿一个已经做好的成品当起点，在它基础上改，而不是对着空白 prompt 从零描述。一个匹配的 template 等于 80% 的页面骨架已经搭好。
 
 ### Template vs Design System（别混）
 
@@ -75,9 +75,9 @@ Claude Design 新建项目时的一个起步入口。选 Template = 拿一个已
 
 ### 怎么搜
 
-- Claude Design 可用 → `Skill(nocode:claude-design)` → `claude-design list` 确认授权，浏览模板库找匹配本产品类型的（dashboard / landing / app / settings 等）
+- Open Design 可用 → 在 workspace preflight 成功后浏览 App 可见的模板候选，匹配本产品类型（dashboard / landing / app / settings 等）；模板选择写进 brief，不在 reference 中调用 provider 工具
 - 匹配判断：看模板的页面结构跟本次 IA 的关键页是否接近，接近 → 记为起点候选
-- **Claude Design 不可用 / 走本地 HTML 线 → 跳过本节**，无 template 概念，直接走 Step 2b 视觉方向发散
+- **Open Design 不可用 / 走本地 HTML 线 → 跳过本节**，无 template 概念，直接走 Step 2b 视觉方向发散
 
 ## 4. 视觉参考集产出格式
 

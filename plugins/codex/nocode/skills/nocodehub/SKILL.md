@@ -1,9 +1,8 @@
 ---
 name: nocodehub
 description: "nocode 插件自维护聚合入口（hub），分发到 3 个子动作（write/dream/status）"
+argument-hint: <sub-action> [args]
 ---
-
-> Codex 入口：原命令参数统一称为“用户本次调用参数”。
 
 # /nocodehub：插件自维护聚合入口
 
@@ -26,8 +25,8 @@ description: "nocode 插件自维护聚合入口（hub），分发到 3 个子�
 
 | 子动作 | 做什么 | 转发到 | 独立命令 |
 |---|---|---|---|
-| `write` | 新增/优化 plugin rule 或 skill | `$plugin-distill` | `/plugin-distill` |
-| `dream` | 插件仓库自维护巡检（客观漂移+边界符合性） | `$plugin-dream` | `/plugin-dream` |
+| `write` | 新增/优化 plugin rule 或 skill | `Capability(workflow.skill.invoke, {"skill":"plugin-distill","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})` | `/plugin-distill` |
+| `dream` | 插件仓库自维护巡检（客观漂移+边界符合性） | `Capability(workflow.skill.invoke, {"skill":"plugin-dream","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})` | `/plugin-dream` |
 | `status` | 概览当前插件健康状态 | 内联执行（见下方） | — |
 
 ## 执行

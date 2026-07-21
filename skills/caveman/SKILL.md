@@ -31,7 +31,7 @@ description: Use when the user says "caveman / 简洁模式 / 省 token / 精简
 - 代码块内容
 - commit message / PR title
 - 配置文件 / 结构化数据输出
-- AskUserQuestion 的 label 和 description
+- workflow.decision.request 的 label 和 description
 - 错误诊断 / 根因分析输出——debug 推理链、假设排序、证据链需要完整表达，精简会丢可追溯性
 - restate / 设计文档 / 方案对比——这些是给人审核的，不能压缩
 
