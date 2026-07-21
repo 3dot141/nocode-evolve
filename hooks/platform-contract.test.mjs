@@ -14,11 +14,11 @@ function readJson(relativePath) {
   }
 }
 
-test('platform metadata is the 14.2.0 version source', () => {
+test('platform metadata is the 14.2.1 version source', () => {
   const metadata = readJson('plugin/metadata.json');
   assert.ok(metadata, 'plugin/metadata.json must exist');
   assert.equal(metadata.name, 'nocode');
-  assert.equal(metadata.version, '14.2.0');
+  assert.equal(metadata.version, '14.2.1');
   assert.match(metadata.version, /^\d+\.\d+\.\d+$/);
   assert.equal(metadata.author?.name, 'Harrison');
   assert.equal(metadata.license, 'MIT');

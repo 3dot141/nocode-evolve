@@ -3,9 +3,6 @@
     "open-design": {
       "command": "node",
       "args": [
-        "${CLAUDE_PLUGIN_ROOT}/skills/using-nocode/scripts/providers/claude-plugin-data/scripts/entry.mjs",
-        "--",
-        "node",
         "${CLAUDE_PLUGIN_ROOT}/skills/using-nocode/scripts/providers/open-design/scripts/launch.mjs"
       ]
     }

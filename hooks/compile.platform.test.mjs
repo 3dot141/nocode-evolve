@@ -264,8 +264,8 @@ test('Claude adapter builds shared entry skills and agent references', () => {
     'scripts/lib/domain-registry.mjs',
   ]) assert.equal(tree.has(developmentOnly), false, `${developmentOnly} must not be published`);
   const claudeMcp = tree.get('.mcp.json').toString();
-  assert.match(claudeMcp, /providers\/claude-plugin-data\/scripts\/entry\.mjs/);
   assert.match(claudeMcp, /skills\/using-nocode\/scripts\/providers\/open-design\/scripts\/launch\.mjs/);
+  assert.doesNotMatch(claudeMcp, /providers\/claude-plugin-data\/scripts\/entry\.mjs/);
   assert.doesNotMatch(claudeMcp, /\/Users\//);
   for (const nonComponentDoc of [
     'agents/AGENTS.md',
@@ -330,8 +330,9 @@ test('Codex adapter builds shared entry skills and agent references', () => {
   }
   assert.equal(tree.has('skills/sow/scripts/test_script.py'), false);
   const codexMcp = tree.get('.mcp.json').toString();
-  assert.match(codexMcp, /skills\/using-nocode\/scripts\/runtime-entry\.mjs/);
-  assert.match(codexMcp, /providers\/codex-plugin-data\/scripts\/entry\.mjs/);
+  assert.match(codexMcp, /skills\/using-nocode\/scripts\/providers\/open-design\/scripts\/launch\.mjs/);
+  assert.doesNotMatch(codexMcp, /skills\/using-nocode\/scripts\/runtime-entry\.mjs/);
+  assert.doesNotMatch(codexMcp, /providers\/codex-plugin-data\/scripts\/entry\.mjs/);
   assert.doesNotMatch(codexMcp, /\/Users\//);
   assert.equal([...tree.keys()].some((relative) => relative.startsWith('vendor/codex/')), false);
   assert.equal(tree.has('scripts/compile.platform.mjs'), false);

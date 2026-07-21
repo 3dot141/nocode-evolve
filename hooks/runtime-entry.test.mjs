@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {
-  existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync,
+  existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync,
 } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -60,8 +60,19 @@ test('shared runtime mapper accepts extracted values, strips native names and ne
   errorCode(() => createRuntimeEnv({
     value: undefined, sourceName: 'CLAUDE_PLUGIN_DATA', targetName: 'NOCODE_PLUGIN_DATA', baseEnv: {},
   }), 'RUNTIME_DATA_MISSING');
+  const missing = path.join(dir, 'missing');
+  assert.deepEqual(createRuntimeEnv({
+    value: missing, sourceName: 'CLAUDE_PLUGIN_DATA',
+    targetName: 'NOCODE_PLUGIN_DATA', baseEnv: {},
+  }), { NOCODE_PLUGIN_DATA: missing });
   errorCode(() => createRuntimeEnv({
-    value: path.join(dir, 'missing'), sourceName: 'CLAUDE_PLUGIN_DATA',
+    value: 'relative/plugin-data', sourceName: 'CLAUDE_PLUGIN_DATA',
+    targetName: 'NOCODE_PLUGIN_DATA', baseEnv: {},
+  }), 'RUNTIME_DATA_INVALID');
+  const file = path.join(dir, 'not-a-directory');
+  writeFileSync(file, 'fixture');
+  errorCode(() => createRuntimeEnv({
+    value: file, sourceName: 'CLAUDE_PLUGIN_DATA',
     targetName: 'NOCODE_PLUGIN_DATA', baseEnv: {},
   }), 'RUNTIME_DATA_INVALID');
 });
@@ -146,7 +157,7 @@ test('provider manifests explicitly restrict plugin data to runtime-state provid
   assert.deepEqual(owners.sort(), ['claude-plugin-data', 'codex-plugin-data']);
 });
 
-test('generated Hooks and domain commands are composed through runtime entries', () => {
+test('only runtime-state hooks receive plugin data and Open Design starts directly', () => {
   const registry = loadDomainRegistry(ROOT);
   const claudeTree = buildExpectedTree({
     root: ROOT, metadata: METADATA, adapter: claudeAdapter,
@@ -156,16 +167,32 @@ test('generated Hooks and domain commands are composed through runtime entries',
     root: ROOT, metadata: METADATA, adapter: codexAdapter,
     resolution: registry.resolvePlatform('codex'), registry,
   });
-  const claudeHooks = claudeTree.get('hooks/hooks.json').toString();
-  assert.match(claudeHooks, /providers\/claude-plugin-data\/scripts\/entry\.mjs/);
-  assert.match(claudeHooks, /entry\.mjs\\" --/);
-  assert.doesNotMatch(claudeHooks, /CODEX_PLUGIN_DATA/);
-  const codexHooks = codexTree.get('hooks/hooks.json').toString();
-  assert.match(codexHooks, /skills\/using-nocode\/scripts\/runtime-entry\.mjs/);
-  assert.match(codexHooks, /providers\/codex-plugin-data\/scripts\/entry\.mjs/);
-  assert.match(codexHooks, /runtime-entry\.mjs\\" -- node/);
-  assert.match(codexHooks, /codex-plugin-data\/scripts\/entry\.mjs\\" --/);
-  assert.doesNotMatch(codexHooks, /CLAUDE_PLUGIN_DATA/);
+  const claudeHooks = JSON.parse(claudeTree.get('hooks/hooks.json').toString());
+  const claudeSessionHooks = claudeHooks.hooks.SessionStart[0].hooks;
+  const claudeStateHook = claudeSessionHooks.find((hook) => hook.command.includes('session-open.mjs'));
+  assert.ok(claudeStateHook, 'Claude SessionStart must open runtime state');
+  assert.match(claudeStateHook.command, /providers\/claude-plugin-data\/scripts\/entry\.mjs/);
+  for (const hook of [...claudeSessionHooks, ...claudeHooks.hooks.PreToolUse.flatMap((group) => group.hooks)]) {
+    if (hook === claudeStateHook) continue;
+    assert.doesNotMatch(hook.command, /providers\/claude-plugin-data\/scripts\/entry\.mjs/);
+  }
+
+  const codexHooks = JSON.parse(codexTree.get('hooks/hooks.json').toString());
+  const codexSessionHooks = codexHooks.hooks.SessionStart[0].hooks;
+  const codexStateHook = codexSessionHooks.find((hook) => hook.command.includes('session-open.mjs'));
+  assert.ok(codexStateHook, 'Codex SessionStart must open runtime state');
+  assert.match(codexStateHook.command, /skills\/using-nocode\/scripts\/runtime-entry\.mjs/);
+  assert.match(codexStateHook.command, /providers\/codex-plugin-data\/scripts\/entry\.mjs/);
+  for (const hook of [...codexSessionHooks, ...codexHooks.hooks.PreToolUse.flatMap((group) => group.hooks)]) {
+    if (hook === codexStateHook) continue;
+    assert.doesNotMatch(hook.command, /skills\/using-nocode\/scripts\/runtime-entry\.mjs/);
+    assert.doesNotMatch(hook.command, /providers\/codex-plugin-data\/scripts\/entry\.mjs/);
+  }
+
+  const claudeMcp = JSON.stringify(JSON.parse(claudeTree.get('.mcp.json').toString()));
+  const codexMcp = JSON.stringify(JSON.parse(codexTree.get('.mcp.json').toString()));
+  assert.doesNotMatch(claudeMcp, /claude-plugin-data/);
+  assert.doesNotMatch(codexMcp, /runtime-entry|codex-plugin-data/);
   assert.ok(codexTree.has('skills/using-nocode/scripts/runtime-entry.mjs'));
   assert.ok(claudeTree.has('skills/using-nocode/scripts/providers/claude-plugin-data/scripts/entry.mjs'));
   assert.ok(codexTree.has('skills/using-nocode/scripts/providers/codex-plugin-data/scripts/entry.mjs'));

@@ -261,16 +261,9 @@ export function buildExpectedTree({ root, metadata, adapter, resolution, registr
     }
     if (providerIds.has('open-design')) {
       const rootVariable = adapter.platform === 'claude' ? '${CLAUDE_PLUGIN_ROOT}' : '${PLUGIN_ROOT}';
-      const args = adapter.platform === 'claude'
-        ? [
-          `${rootVariable}/skills/using-nocode/scripts/providers/claude-plugin-data/scripts/entry.mjs`, '--',
-          'node', `${rootVariable}/skills/using-nocode/scripts/providers/open-design/scripts/launch.mjs`,
-        ]
-        : [
-          `${rootVariable}/skills/using-nocode/scripts/runtime-entry.mjs`, '--',
-          'node', `${rootVariable}/skills/using-nocode/scripts/providers/codex-plugin-data/scripts/entry.mjs`, '--',
-          'node', `${rootVariable}/skills/using-nocode/scripts/providers/open-design/scripts/launch.mjs`,
-        ];
+      const args = [
+        `${rootVariable}/skills/using-nocode/scripts/providers/open-design/scripts/launch.mjs`,
+      ];
       entries.push(['.mcp.json', Buffer.from(`${JSON.stringify({
         mcpServers: { 'open-design': { command: 'node', args } },
       }, null, 2)}\n`)]);

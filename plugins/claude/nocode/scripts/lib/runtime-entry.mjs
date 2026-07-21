@@ -22,10 +22,14 @@ function validateRuntimeData(value, sourceName) {
   if (typeof value !== 'string' || !value.trim()) {
     throw new RuntimeEntryError('RUNTIME_DATA_MISSING', `${sourceName} is required`);
   }
-  if (!path.isAbsolute(value) || !existsSync(value) || !statSync(value).isDirectory()) {
-    throw new RuntimeEntryError('RUNTIME_DATA_INVALID', `${sourceName} must name an existing absolute directory`);
+  if (!path.isAbsolute(value)) {
+    throw new RuntimeEntryError('RUNTIME_DATA_INVALID', `${sourceName} must name an absolute directory path`);
   }
-  return path.resolve(value);
+  const runtimeData = path.resolve(value);
+  if (existsSync(runtimeData) && !statSync(runtimeData).isDirectory()) {
+    throw new RuntimeEntryError('RUNTIME_DATA_INVALID', `${sourceName} must name a directory path`);
+  }
+  return runtimeData;
 }
 
 export function createRuntimeEnv({ value, sourceName, targetName, baseEnv = {} }) {

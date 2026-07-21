@@ -37,8 +37,9 @@ test('SessionStart accepts Codex-style aliases and rejects incomplete identity',
 test('generated Claude and Codex hook chains open fresh state without a Stop guard', (t) => {
   for (const platform of ['claude', 'codex']) {
     const pluginRoot = join(REPO_ROOT, 'plugins', platform, 'nocode');
-    const dataRoot = mkdtempSync(join(tmpdir(), `nocode-${platform}-lifecycle-`));
-    t.after(() => rmSync(dataRoot, { recursive: true, force: true }));
+    const dataParent = mkdtempSync(join(tmpdir(), `nocode-${platform}-lifecycle-`));
+    const dataRoot = join(dataParent, 'plugin-data');
+    t.after(() => rmSync(dataParent, { recursive: true, force: true }));
     const env = {
       ...process.env,
       NOCODE_PLATFORM: platform,
