@@ -10,43 +10,43 @@
           },
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/inject-nocode.sh model-nocode"
+            "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/inject-nocode.sh model-nocode"
           },
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/inject-nocode.sh model-about"
+            "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/inject-nocode.sh model-about"
           },
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/inject-nocode.sh model-personal"
+            "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/inject-nocode.sh model-personal"
           },
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/inject-nocode.sh model-karpathy"
+            "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/inject-nocode.sh model-karpathy"
           },
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/inject-nocode.sh model-rule-catalog-1"
+            "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/inject-nocode.sh model-rule-catalog-1"
           },
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/inject-nocode.sh model-rule-catalog-2"
+            "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/inject-nocode.sh model-rule-catalog-2"
           },
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/inject-nocode.sh model-rule-catalog-3"
+            "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/inject-nocode.sh model-rule-catalog-3"
           },
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/inject-nocode.sh model-rule-catalog-4"
+            "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/inject-nocode.sh model-rule-catalog-4"
           },
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/inject-nocode.sh model-rule-catalog-5"
+            "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/inject-nocode.sh model-rule-catalog-5"
           },
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/inject-nocode.sh project"
+            "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/inject-nocode.sh project"
           },
           {
             "type": "command",

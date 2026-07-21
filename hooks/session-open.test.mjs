@@ -64,6 +64,14 @@ test('generated Claude and Codex hook chains open fresh state without a Stop gua
     assert.equal(existsSync(sessionFile), true);
     assert.equal(JSON.parse(readFileSync(sessionFile, 'utf8')).status, 'open');
 
-    assert.equal(JSON.parse(readFileSync(sessionFile, 'utf8')).status, 'open');
+    const bootstrap = spawnSync('bash', [join(pluginRoot, 'hooks/inject-nocode.sh'), 'model-nocode'], {
+      env, input: JSON.stringify({ session_id: sessionId, cwd: REPO_ROOT }), encoding: 'utf8',
+    });
+    assert.equal(bootstrap.status, 0, bootstrap.stderr);
+    const bootstrapOutput = JSON.parse(bootstrap.stdout);
+    assert.match(
+      bootstrapOutput.hookSpecificOutput?.additionalContext || bootstrapOutput.systemMessage,
+      /nocode Capability Bootstrap/,
+    );
   }
 });

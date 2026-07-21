@@ -176,6 +176,11 @@ test('only runtime-state hooks receive plugin data and Open Design starts direct
     if (hook === claudeStateHook) continue;
     assert.doesNotMatch(hook.command, /providers\/claude-plugin-data\/scripts\/entry\.mjs/);
   }
+  const claudeInjectors = claudeSessionHooks.filter((hook) => hook.command.includes('inject-nocode.sh'));
+  assert.ok(claudeInjectors.length > 0, 'Claude must retain model injection hooks');
+  for (const hook of claudeInjectors) {
+    assert.match(hook.command, /^bash "\$\{CLAUDE_PLUGIN_ROOT\}\/hooks\/inject-nocode\.sh"/);
+  }
 
   const codexHooks = JSON.parse(codexTree.get('hooks/hooks.json').toString());
   const codexSessionHooks = codexHooks.hooks.SessionStart[0].hooks;
@@ -187,6 +192,11 @@ test('only runtime-state hooks receive plugin data and Open Design starts direct
     if (hook === codexStateHook) continue;
     assert.doesNotMatch(hook.command, /skills\/using-nocode\/scripts\/runtime-entry\.mjs/);
     assert.doesNotMatch(hook.command, /providers\/codex-plugin-data\/scripts\/entry\.mjs/);
+  }
+  const codexInjectors = codexSessionHooks.filter((hook) => hook.command.includes('inject-nocode.sh'));
+  assert.ok(codexInjectors.length > 0, 'Codex must retain model injection hooks');
+  for (const hook of codexInjectors) {
+    assert.match(hook.command, /^bash "\$\{PLUGIN_ROOT\}\/hooks\/inject-nocode\.sh"/);
   }
 
   const claudeMcp = JSON.stringify(JSON.parse(claudeTree.get('.mcp.json').toString()));

@@ -324,8 +324,9 @@ export function writeExpectedTree(expected, outputRoot, repoRoot) {
     const target = path.join(safeRoot, safeRelative(relative, 'generated path'));
     mkdirSync(path.dirname(target), { recursive: true });
     writeFileSync(target, content);
-    // writeFileSync 生成物默认 644，会丢失 shell 辅助脚本的执行位。
-    if (/\.sh$/.test(relative)) chmodSync(target, 0o755);
+    // writeFileSync 生成物默认 644，会丢失源码里 .sh/.py 脚本的执行位。
+    // （SessionStart hook inject-nocode.sh 曾因此 Permission denied），这里补上。
+    if (/\.(sh|py)$/.test(relative)) chmodSync(target, 0o755);
   }
 }
 
