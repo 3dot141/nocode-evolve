@@ -17,7 +17,7 @@
      不读本目录任何文件。
 3. **测试**：`node --test 'hooks/*.test.mjs'`。
 4. **升版本**：`rules/` 属于插件加载路径，改动后必须按 CLAUDE.md「修改插件后，升级版本号」升级
-   `.claude-plugin/plugin.json` 的 `version`（新增 rule → minor；措辞/触发词微调 → patch；
+   `plugin/metadata.json` 的 `version`，并运行 `node scripts/compile.platform.mjs`（新增 rule → minor；措辞/触发词微调 → patch；
    frontmatter schema/路径改名等破坏性变更 → major），并把版本变更放进同一个 commit。
 5. **commit 前一致性兜底**：不放心的话手动跑一次 `node scripts/compile.rule.js --check` +
    `node scripts/compile.hooks.js --check`——SessionStart 也会跑这两步，drift 只 warn 不阻断
@@ -32,7 +32,7 @@
   触发判断，不要在别处（例如某个共享文件）重新定义分组或粗触发摘要。
 - **rule 文件命名**：`rule-<id>.md`，`<id>` 必须与文件自身 frontmatter 的 `name` 字段完全一致
   （如 `name: git-worktree` → `rules/rule-git-worktree.md`）。
-- **不是所有触发规则都要建 `rule-*.md`**：纯 `Skill(nocode:xxx)` 路由的规则，触发条件写进该
+- **不是所有触发规则都要建 `rule-*.md`**：纯 `[provider-neutral skill boundary]` 路由的规则，触发条件写进该
   skill 自己 `SKILL.md` 的 `description` 就够（Claude Code 原生 skill 发现机制已覆盖），不要在
   本目录重复建一份；本来就常驻不需要按需触发的规则（如删除护栏）内容归属对应的常驻 `model/*.md`
   文件，PreToolUse pattern 单独进 `scripts/compile.hooks.js`。
@@ -77,5 +77,5 @@ rule-*.md 正文内部格式。但保持结构一致有助于新规则被快速�
 - [ ] `node scripts/compile.rule.js --check` exit 0（生成物与源一致）
 - [ ] 若碰了 PreToolUse pattern：`node scripts/compile.hooks.js` 跑过 + `--check` exit 0
 - [ ] `node --test 'hooks/*.test.mjs'` 通过
-- [ ] `.claude-plugin/plugin.json` 的 `version` 已按 SemVer 升级，且和本次改动在同一个 commit
+- [ ] `plugin/metadata.json` 的 `version` 已按 SemVer 升级，双平台发布物已重新生成，且和本次改动在同一个 commit
 - [ ] 没有手改 `model/agent-rule-catalog-*.md` / `hooks/pretooluse-rules.json`

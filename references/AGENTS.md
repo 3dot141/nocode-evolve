@@ -29,7 +29,7 @@ rg -l "<不带扩展名的文件名>" --glob '!references/*' -g '!.git' -g '!ven
 | `debug-protocol.md` | `skills/devflow/SKILL.md`（Debug 阶段路由表） | 活跃 |
 | `skill-integration-map.md` | `skills/devflow/SKILL.md`（skill 集成映射脚注）+ `hooks/inject-nocode.sh`（SessionStart 只读 `last_verified` frontmatter 做过期 warn） | 活跃；改动时注意维护/更新文件头的 `last_verified: <yymmdd>` 字段 |
 | `testing-anti-patterns.md` | `skills/systematic-debugging/SKILL.md` | 活跃；同时是 vendor 同步管理（来自 superpowers `test-driven-development`） |
-| `code-reviewer-prompt.md` | 无活跃引用方 | vendor 同步管理（来自 superpowers `requesting-code-review`），仅供参考，dev-review 现走的是 ECC `agents/code-reviewer.md` |
+| `code-reviewer-prompt.md` | 无活跃引用方 | vendor 同步管理（来自 superpowers `requesting-code-review`），仅供参考；实际评审统一走 `reviewing` Skill |
 | `plan-document-reviewer-prompt.md` | 无活跃引用方 | vendor 同步管理（来自 superpowers `writing-plans`），dev-plan 未引用 |
 | `findings-schema.md` | 无活跃引用方 | 已被 `skills/references/reviewing/findings-contract.md` 取代为 findings 分级的当前单源（后者明确说明是为统一"历史上长出的 5 种分级体系"而生） |
 | `implementer-prompt.md` | 无活跃引用方 | 已被 `skills/dev-build/references/implementer-prompt.md`（内容已分叉演化）取代 |

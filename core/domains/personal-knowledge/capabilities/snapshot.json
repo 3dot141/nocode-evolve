@@ -1,0 +1,29 @@
+{
+  "id": "personal-knowledge.snapshot",
+  "domain": "personal-knowledge",
+  "inputSchema": {
+    "type": "object",
+    "required": [
+      "sessionId"
+    ],
+    "properties": {
+      "sessionId": {
+        "type": "string"
+      },
+      "snapshotMessage": {
+        "type": "string"
+      }
+    },
+    "additionalProperties": false
+  },
+  "outputSchema": "contracts/snapshot-result.schema.json",
+  "fallbackOn": "never",
+  "platforms": {
+    "claude": {
+      "primary": "project-wiki"
+    },
+    "codex": {
+      "primary": "project-wiki"
+    }
+  }
+}

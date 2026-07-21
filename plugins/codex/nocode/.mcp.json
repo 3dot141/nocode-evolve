@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "open-design": {
+      "command": "node",
+      "args": [
+        "${PLUGIN_ROOT}/skills/using-nocode/scripts/runtime-entry.mjs",
+        "--",
+        "node",
+        "${PLUGIN_ROOT}/skills/using-nocode/scripts/providers/codex-plugin-data/scripts/entry.mjs",
+        "--",
+        "node",
+        "${PLUGIN_ROOT}/skills/using-nocode/scripts/providers/open-design/scripts/launch.mjs"
+      ]
+    }
+  }
+}

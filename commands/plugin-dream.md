@@ -3,6 +3,8 @@ description: 插件仓库自维护巡检——客观漂移(4项) + 边界符合�
 argument-hint: (无参数)
 ---
 
+> 本文写“结构化决策”时，必须把当前步骤的完整问题与 2–3 个互斥选项编译为 `Capability(workflow.decision.request, {"question":"<self-contained current-step question>","options":[{"label":"<option-label>","description":"<impact or tradeoff>"}],"allowFreeform":false})`；示例只展示单项形状，真实调用需带齐本步骤列出的选项，不得回退到平台专属提问工具。
+
 # /plugin-dream：插件仓库自维护巡检
 
 检查 nocode 插件仓库自身（rules/skills/commands）与预期状态的偏差，提议修复动作，用户确认后执行。独立于 `/plugin-distill`——distill 管写入，dream 管巡检维护。
@@ -22,7 +24,7 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/plugin-dream-baseline.mjs" "${CLAUDE_PLUGIN_
 | `diff` | `changed` | 处理 |
 |---|---|---|
 | `null`（首次运行，或 baseline 指向的 commit 因 rebase 等原因不可达） | `true` | 走全量：Phase 1 Layer1 + Layer2 都对全部对象跑；本轮 Phase 3 执行完毕后进入 **Phase 4**，调用 `setBaseline` 记录本次 HEAD 为新 baseline |
-| 非 `null` 且 `commitDiff`/`dirtyFiles` 均为空 | `false` | **秒回**，不进入 Phase 1，直接输出：`✓ plugin-dream：自上次检查以来 rules/skills/commands/hooks/scripts/.claude-plugin/plugin.json 无变化，无需维护`，命令结束 |
+| 非 `null` 且 `commitDiff`/`dirtyFiles` 均为空 | `false` | **秒回**，不进入 Phase 1，直接输出：`✓ plugin-dream：自上次检查以来业务源码、adapter、compiler、plugin/metadata.json 与 marketplace 无变化，无需维护`，命令结束 |
 | 非 `null` 且 `commitDiff`/`dirtyFiles` 至少一个非空 | `true` | 合并 `commitDiff ∪ dirtyFiles` 得到"变更文件集合"，继续 Phase 1；Layer2 只对该集合覆盖到的 rule/skill/command 对象跑检测；本轮 Phase 3 执行完毕后**同样进入 Phase 4**，调用 `setBaseline` 把 baseline 推进到本次 HEAD（处理过一轮变化后必须前移，不止首次运行才前移，否则 diff 范围只会越滚越大，秒回永久失效）|
 
 > 这一步不可跳过——即使用户在参数里指定了范围（如"只查 rule"），也先跑本判断决定 Layer2 的候选文件集合是"全部 rule"还是"变更文件集合 ∩ rule"。
@@ -46,7 +48,7 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/plugin-dream-baseline.mjs" "${CLAUDE_PLUGIN_
 
 > **扫描范围**：若 Phase 0 判定为"首次运行/降级"，以下每类对象全量扫描；若判定为"有变化"，每类对象只扫描 Phase 0 产出的"变更文件集合"里出现的那些 `rules/*.md` / `skills/*/SKILL.md` / `commands/*.md`，其余对象本轮跳过。
 
-**rule 对象**（逐个 `rules/rule-*.md`，frontmatter 自带触发定义）：
+**rule 对象**（逐个插件 rule source，frontmatter 自带触发定义）：
 
 | 检测 | 判什么 |
 |---|---|
@@ -67,7 +69,7 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/plugin-dream-baseline.mjs" "${CLAUDE_PLUGIN_
 | Step 编号规范 | 整数或字母后缀，禁分数编号（CLAUDE.md 规则5） |
 | 引用路径有效 | `{NOCODE_SKILL_REF}`/references/rule 文件引用不悬空 |
 | 硬交接完整 | workflow skill 末步有 handoff 调下一阶段 |
-| 自闭环边界 | SKILL.md 正文/私有 `references/` 是否直接指路 `rules/rule-*.md`、`model/agent-*.md`、`hooks/`、非自身 `scripts/` 等插件内部实现文件（自身/共享 `references/` 除外，`CLAUDE.md` 规则6） |
+| 自闭环边界 | SKILL.md 正文/私有 `references/` 是否越过 Skill/Reference 边界直接指路插件内部实现（自身/共享 `references/` 除外，遵守仓库规则6） |
 
 **command 对象**（逐个 `commands/*.md`）：命名惯例（`*hub`/`*flow`/`xx-yy`）/ 模式边界（如 `*flow` 只属 skills 层）。hub 的「只转发」约束不在这里判——见下方「通用」节，它按 `*hub` 命名跨 command/skill 统一施加。
 
@@ -82,16 +84,16 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/plugin-dream-baseline.mjs" "${CLAUDE_PLUGIN_
 ```
 | # | 对象 | 检测 | 动作 | 理由 |
 |---|---|---|---|---|
-| 1 | rules/rule-foo.md | R2 触发质量 | 建议优化(委托plugin-distill) | description 只写"需要时读"，无法自判命中 |
+| 1 | plugin rule `foo` | R2 触发质量 | 建议优化(委托plugin-distill) | description 只写"需要时读"，无法自判命中 |
 | 2 | skills/bar/SKILL.md | S4 description触发不准 | 建议优化(委托skill-writing) | description 缺 Use when |
 ```
 
-`AskUserQuestion` 多选让用户勾选要执行的编号（每个 option 自带「编号 + 检测项 + 建议动作」，不依赖上方表格渲染——工具调用间文本可能被吞）。0 候选 → 报"状态良好"。
+`结构化决策` 多选让用户勾选要执行的编号（每个 option 自带「编号 + 检测项 + 建议动作」，不依赖上方表格渲染——工具调用间文本可能被吞）。0 候选 → 报"状态良好"。
 
 ### Phase 3: Execute（按类型分派）
 
 - **自动类**（Layer1 全部）：直接重跑对应命令
-- **建议式**（Layer2 全部）：不自动改——rule 类委托 `Skill(nocode:plugin-distill)`，skill 类委托 `Skill(nocode:skill-writing)`，由用户在委托流程里最终拍板
+- **建议式**（Layer2 全部）：不自动改——rule 类委托 `Capability(workflow.skill.invoke, {"skill":"plugin-distill","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})`，skill 类委托 `Capability(workflow.skill.invoke, {"skill":"skill-writing","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})`，由用户在委托流程里最终拍板
 
 > Layer1 当前均为自动可修复类型，不涉及删除；若未来新增会造成数据丢失的检测（如涉及删文件/删条目），走护栏原则：回显路径 + 原因 + 影响，二次确认后执行——不要因为当前没有这类项就跳过这条原则。
 
@@ -110,8 +112,8 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/plugin-dream-baseline.mjs" --set "${CLAUDE_P
 ```
 plugin-dream 完成：
   ✓ compile.rule.js 重新生成 catalog（漂移已修复）
-  → 委托: rules/rule-foo.md description 优化，转 Skill(plugin-distill)
-  → 委托: skills/bar/SKILL.md description 优化，转 Skill(skill-writing)
+  → 委托: plugin rule `foo` description 优化，转 Capability(workflow.skill.invoke, {"skill":"plugin-distill","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})
+  → 委托: skills/bar/SKILL.md description 优化，转 Capability(workflow.skill.invoke, {"skill":"skill-writing","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})
   ✗ 跳过: #4（用户未勾选）
 
 ℹ 状态：0 error / 1 warn（含未处理的 Layer2 建议）
@@ -119,7 +121,7 @@ plugin-dream 完成：
 
 ## 和 SessionStart 自动 sanity check 的关系
 
-`hooks/inject-nocode.sh` 已在 SessionStart 跑 `compile.rule.js --check` + `compile.hooks.js --check`，但只 warn 不阻断、不修复。`/plugin-dream` 是开发者主动触发的交互式扫描 + 提议修复 + 可执行，两者互补不重复。
+SessionStart 已自动跑 rule 与 Hook generator 的一致性检查，但只 warn 不阻断、不修复。`/plugin-dream` 是开发者主动触发的交互式扫描 + 提议修复 + 可执行，两者互补不重复。
 
 ## 不要
 

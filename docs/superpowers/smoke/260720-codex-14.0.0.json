@@ -1,0 +1,77 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-07-21T02:27:53+08:00",
+  "client": {
+    "name": "Codex CLI",
+    "version": "0.144.6"
+  },
+  "plugin": {
+    "name": "nocode",
+    "version": "14.0.0",
+    "marketplace": "nocode-market"
+  },
+  "isolation": {
+    "mode": "temporary CODEX_HOME",
+    "normalUserConfigurationTouched": false
+  },
+  "cliProbe": {
+    "versionCommand": "codex --version",
+    "version": "codex-cli 0.144.6",
+    "pluginCommands": ["plugin marketplace add --json", "plugin add --json", "plugin list --json"],
+    "contractSource": "installed CLI help"
+  },
+  "installedArtifactStatus": "partial",
+  "overallStatus": "blocked",
+  "checks": {
+    "marketplaceRegistration": {
+      "status": "passed",
+      "evidence": "Codex accepted the isolated marketplace and listed nocode@nocode-market as installed and enabled at 14.0.0."
+    },
+    "pluginInstall": {
+      "status": "partial",
+      "evidence": "Fresh isolated install completed for the pre-final-review artifact. The post-review wiring changes require a new authenticated end-to-end receipt before release."
+    },
+    "openDesignPrimary": {
+      "status": "blocked",
+      "evidence": "The installed artifact resolved Open Design Helper and completed JSON-RPC initialize/tools-list, proving transport only. A model-driven Capability(design.*) invocation through the generated private skill was not run in the unauthenticated client."
+    },
+    "openDesignFallback": {
+      "status": "blocked",
+      "evidence": "Route and packaged local-html bridge harnesses passed, including normalized provider-attempt output. The full model-driven Capability fallback path was not run in the unauthenticated client."
+    },
+    "artifactReceiptIntegrity": {
+      "status": "passed",
+      "evidence": "The installed route signed the local-html result, accepted the unchanged receipt, and rejected a changed artifact path with ARTIFACT_RECEIPT_INVALID."
+    },
+    "workflowContractHarness": {
+      "status": "passed",
+      "evidence": "The installed provider-neutral DAG harness completed a three-task graph in dependency order."
+    },
+    "workflowPrimary": {
+      "status": "blocked",
+      "provider": "codex-agents",
+      "blocker": "The clean isolated CODEX_HOME has no credentials, so a real model-backed agents workflow was not run."
+    },
+    "workflowInlineFallback": {
+      "status": "blocked",
+      "evidence": "The provider-neutral inline harness passed, but the generated private workflow skill was not executed by an authenticated Codex model session."
+    },
+    "sessionAndHandoff": {
+      "status": "passed",
+      "evidence": "Generated SessionStart/Stop hook integration tests open isolated state before handoff checks; the strict PLUGIN_DATA → CODEX_PLUGIN_DATA → NOCODE_PLUGIN_DATA chain and state isolation tests pass without a model invocation."
+    },
+    "wikiUsage": {
+      "status": "blocked",
+      "evidence": "The packaged project-wiki bridge and usage/snapshot harnesses passed. A model-driven Capability(personal-knowledge.*) call through the generated private skill was not run in the unauthenticated client."
+    },
+    "continuousLearningExclusion": {
+      "status": "passed",
+      "evidence": "No continuous-learning-v2, evolve, instinct command/skill, or usage-tracker runtime artifact was present in the installed tree."
+    },
+    "modelSession": {
+      "status": "blocked",
+      "blocker": "The clean isolated CODEX_HOME has no credentials; codex exec reached the Responses API and received HTTP 401 Unauthorized."
+    }
+  },
+  "secretsRecorded": false
+}

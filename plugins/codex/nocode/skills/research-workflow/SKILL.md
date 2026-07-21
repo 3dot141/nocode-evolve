@@ -1,0 +1,240 @@
+---
+name: research-workflow
+description: "Generic research engine (structured search + verification) for other skills that need research…"
+---
+
+# research-workflow — 通用研究工作流
+
+供其他 skill 委派的研究基础设施。选类型（`web` / `code` / `mixed`）就行——工具链、降级链、迭代策略都预制好了，调用方不用关心内部怎么搜。
+
+## 为什么不让每个 skill 自己搜
+
+两个原因：
+
+1. **"搜完就信"是最常见的研究错误。** shallow 模式至少保证多角度覆盖（不只搜一个方向）；deep 模式加对抗验证（搜到的东西经得住反驳吗？），把博客 / 营销 / 过时信息杀掉，只留站得住的声明。
+2. **工具链和降级逻辑不该在每个调用方重复。** 抓网页 WebFetch 失败要降级 ScraplingServer、代码搜 semble-search 失败要降级 grep——这些写一次，按 `type` 复用，调用方不用每次都抄一遍。
+
+## 非本 skill 请求
+
+不直接面向用户。用户说"调研 / research" → 走 pd-research。用户说"技术选型" → 走 dev-design。它们内部按需委派到这里。
+
+## 调用方式
+
+调用方把问题参数传给本 skill；本 skill 将每个研究阶段动态编译为 Workflow task graph，不依赖本地固定编排脚本。**一次 execution 只完成当前轮次**：
+
+```js
+Capability(workflow.execute, {"tasks":[{"id":"search-angle-1-round-1","objective":"围绕 <question> 的 <angle-1> 执行第 1 轮检索；按 <type> 工具链返回 SearchResult JSON：angle/query/sources[{ref,title,excerpt,quality}]/summary/learnedTerms/gaps","profile":"research.<type>","dependsOn":[],"writeScope":"none","timeoutMs":300000,"continueOnError":false},{"id":"search-angle-2-round-1","objective":"围绕 <question> 的 <angle-2> 执行第 1 轮检索；返回同一 SearchResult JSON；只读","profile":"research.<type>","dependsOn":[],"writeScope":"none","timeoutMs":300000,"continueOnError":false}],"maxParallel":2,"fallbackPolicy":"inline"})
+```
+
+保存 `executionId`。当 `status=running` 时反复执行 `Capability(workflow.wait, {"executionId":"<execution-id>","timeoutMs":300000})` 直到终态；再执行 `Capability(workflow.collect, {"executionId":"<execution-id>"})`，由主会话直接读取并验证 `tasks[].result` 为本轮约定 JSON（`resultRef` 只作追踪元数据）。不得让同一 graph 的下游 task 猜测前序 resultRef：scheduler 只保证依赖顺序，不把前序结果内容注入后续 objective。
+
+### 可执行编译协议
+
+固定数据流为 **Scope → Search → Evaluate → Refine → Extract → Verify → Synthesize**，每个箭头都是“上一轮终态后 collect，主会话读取并把必要内容显式嵌入下一轮 objective”，不是 graph 内隐式传值：
+
+1. **Scope**：未传 `angles` 时单独 execute 一个 `research.scope` task，collect 后校验得到 2–3 个 `{label,query,rationale}`；传了 angles 时直接校验调用方输入。空 angles 立即返回结构化空结果，不创建空 graph。
+2. **Search**：按 angle 并行 execute，objective 必须含完整 `question/type/angle/query/systemPrompt`，返回上例 `SearchResult`；wait 到终态并 collect。
+3. **Evaluate**：`targeted` 或 `iterate=1` 跳过；否则为每个 angle 创建独立只读 evaluator task，objective 显式嵌入该 angle 的 `<collected-search-results>`，返回 `{score,coverage,gaps,nextQuery,stop}`。不得让搜索 task 自评。
+4. **Refine**：若 evaluator 的 `stop=false` 且未达 iterate 上限，用 `nextQuery + learnedTerms + gaps` 创建下一轮 Search；然后重新 Evaluate。每轮都使用新的 executionId，最多运行 `iterate` 轮。
+5. **Extract**：仅 deep。按来源创建 extract task；objective 显式嵌入去重后的来源条目与 question，输出可证伪 claims `{claim,evidence,source}`。主会话按规范化 `claim+source` 去重，并执行来源/claim budget，超限项按 quality、相关度排序截断且记录 stats。
+6. **Verify**：仅 deep。每条 claim 创建 3 个彼此无依赖的 skeptic task；每个 objective 都显式带 claim、evidence、source，默认 `refuted=true`，输出 `{refuted,reason,evidence}`。三票中至少 2 票 refute 就进入 `refuted`，否则保留并记录票型。
+7. **Synthesize**：最后单独 execute 一个 task，objective 显式嵌入 `<collected-search-results>`；deep 还要嵌入保留 claims、三票结果与 refuted 清单。要求严格返回「返回值」schema 的 JSON。wait/collect 后由主会话校验字段并补齐 stats；没有可用来源时返回 `findings=[]`、具体 `caveats` 与 `openQuestions`，不得编造结论。
+
+各档的确定性裁剪：`targeted = [可选 Scope] → Search → Synthesize`；`shallow = Scope → Search ⇄ Evaluate/Refine → Synthesize`；`deep = shallow → Extract → Verify(3 票) → Synthesize`。实际 task 数按角度、轮次与 claim 数动态生成，但任何一次 execute 都不能传空 `tasks`。
+
+大多数情况只需要 `question` + `type` + `depth`。`type` 决定工具链、降级链和迭代轮数；调用方不需要知道平台 provider。
+
+**约束：session owner 负责推进 graph。** 子任务只处理自己的 objective，不递归创建同一研究 workflow；动态的下一轮查询和 deep 验证 graph 由本 skill 所在主会话根据上一轮 result refs 创建。
+
+## 参数
+
+| 参数 | 必填 | 说明 |
+|---|---|---|
+| `question` | 是 | 具体问题。"React 状态管理方案对比"比"前端怎么做"好 |
+| `type` | 是 | `web` / `code` / `mixed` / `custom`，决定工具链 + 默认迭代轮数 |
+| `depth` | 否 | `targeted` / `shallow`（默认）/ `deep`，见「四档深度」。传 `inline` 会直接报错——那档意味着不该发本 workflow |
+| `iterate` | 否 | 最大迭代轮数，不传则跟 `type` 默认值走（web=1 / code=3 / mixed=2）。`targeted` 强制 1，传了也忽略 |
+| `systemPrompt` | 否 | 追加到类型预制 prompt 后面，补充关注维度。`custom` 类型必填 |
+| `angles` | 否 | 预设搜索角度 `[{label, query, rationale}]`，跳过自动分解 |
+
+### iterate 参数
+
+`iterate` 控制每个搜索角度最多搜几轮。每轮搜完后，一个**独立的评估 agent** 判断结果够不够好，不够就换关键词再搜。
+
+| `iterate` | 行为 |
+|---|---|
+| `1` | 搜一次就停（不迭代） |
+| `2` | 最多 2 轮，第一轮不够好再搜一次 |
+| `3` | 最多 3 轮收敛 |
+
+不传时跟 `type` 默认值走（见下表）。提前收敛（够好了）就不会跑满。
+
+## 预制类型
+
+每个 `type` 绑定一套工具链 + 降级链 + 默认迭代轮数：
+
+| type | 搜索工具 | 抓取 / 降级 | 默认 iterate | 适用 |
+|---|---|---|---|---|
+| `web` | WebSearch / Exa | WebFetch → ScraplingServer（反爬严的站用 stealthy_fetch）；开源库用 deepwiki | 1 | 网络调研、竞品、用户信号、市场 |
+| `code` | semble-search → grep → Explore | Read | 3 | 代码库现状、已有实现、可复用 pattern |
+| `mixed` | semble-search + WebSearch / Exa | WebFetch → ScraplingServer；deepwiki | 2 | 技术选型（既看代码又看外部方案） |
+| `custom` | 调用方在 systemPrompt 里自定义 | 调用方定义 | 1 | 不属于上述任何一类的特殊场景 |
+
+**为什么 code 默认 iterate=3，web 默认 1：**
+
+- **code=3**：代码库有自己的命名习惯。你预期的术语（"auth"）和代码里实际用的（"credential" / "session" / "principal"）常常对不上，第一轮搜不到点子上是常态。迭代让搜索 agent 从第一轮的结果里学到项目的真实命名，第二、三轮换词再搜。
+- **web=1**：网络搜索的关键词通常够用——搜"React Server Components 对比"基本一轮就能命中相关文章。多搜几轮收益低，不值得多花 agent。
+
+## 四档深度
+
+从轻到重四档。原则：**能用轻档就用轻档**——每往上一档都是拿等待时间换覆盖度 / 可信度。agent 数按 3 个角度估算，每个 agent 都是冷启动 subagent（没有主对话上下文）。
+
+| 档位 | 管线 | agent 数 | 适用 |
+|---|---|---|---|
+| `inline` | 不走 workflow，主 agent 直接搜 | 0~1 | 已知看哪，一两个查询能答 |
+| `targeted` | Scope（预设 angles 则跳过）→ Search（每角度 1 轮）→ Synthesize | 3~5 | 知道搜什么，只要并行铺开覆盖 |
+| `shallow` | Scope → Search（每角度按 iterate 轮收敛）→ Synthesize | 8~17 | 不知道搜什么，要迭代逼近术语 |
+| `deep` | shallow + Extract → Verify（3 票对抗） | 20+ | 结论要经得住反驳、进正式报告 |
+
+**升降档有疑点不自作主张**：调用方拿不准该用哪档（要不要从 targeted 升 shallow / deep）时，调 `Capability(workflow.decision.request, {"question":"这次调研需要哪种深度？","options":[{"label":"targeted","description":"已知方向，单轮并行覆盖"},{"label":"shallow","description":"多角度迭代搜索，不做对抗验证"},{"label":"deep","description":"提取声明并做独立反证验证"}],"allowFreeform":false})` 让用户拍板，不默认往重档跑。
+
+### inline —— 不调本 workflow（0~1 个 agent）
+
+这一档是给调用方的判断标准，不是 workflow 参数：主会话已经知道要看哪（讨论里定过方向、有明确路径或术语），直接做一次精确代码搜索或一次网络搜索即可——**别创建 Workflow execution**，省掉 scope / synthesize 的固定开销。误传 `depth: 'inline'` 会直接报错提醒。
+
+### targeted —— 定向覆盖（最轻 workflow 档）
+
+每角度强制只搜 1 轮（`iterate` 传了也忽略）。推荐配合预设 `angles`（跳过 scope agent）；不预设时 scope 只分解出 2 个角度。
+
+**用于**：调用方明确知道搜什么，只是想并行铺开几个点（如 dev-design 探索——restate 已确认，搜索点直接从讨论里提炼）。
+
+**风险**：不迭代——第一轮关键词不对就搜不到。代码库术语和预期可能对不上时（陌生子系统），那是 shallow 的场景。
+
+### shallow（默认，分钟级）
+
+```
+Scope → Search（并行，每角度按 iterate 轮收敛）→ Synthesize
+```
+
+多角度搜索，不提取声明，不验证。拿到什么综合什么。
+
+**用于**：快速了解、发散阶段、辅助判断。"先大概看看"的场景。
+
+**风险**：搜到的东西可能过时、有偏差、来自低质量源——shallow 不会告诉你这些。
+
+### deep（分钟级到更久）
+
+```
+Scope → Search+Extract（pipeline，无 barrier）→ Verify（3 票对抗）→ Synthesize
+```
+
+多角度搜索，从源文档提取可证伪声明，每条声明 3 个独立 skeptic agent 投票。默认立场 refuted=true——有疑问就杀。≥2 票 refute 则该声明不进最终报告。
+
+**为什么默认 refuted=true？** 因为研究的目标是找到"站得住的结论"，不是"搜到的东西越多越好"。一条经不住反驳的声明，进了报告比不进更危险——它给人虚假的信心。
+
+**用于**：正式调研、设计决策依据、需要引用的报告。
+
+## 返回值
+
+```js
+{
+  question: string,
+  depth: 'shallow' | 'deep',
+  summary: string,             // 回答研究问题的摘要
+  findings: [{                 // 综合后的发现
+    claim: string,             // 一条结论
+    confidence: 'high' | 'medium' | 'low',
+    sources: string[],         // 支撑来源
+    evidence: string,          // 关键证据
+    vote?: string,             // deep: "2-1" = 2 票支持 1 票反对
+  }],
+  caveats: string,             // 局限性
+  openQuestions: string[],     // 未解问题
+  refuted?: [{claim, vote, source}],  // deep: 被杀掉的声明（透明性）
+  sources: [{ref, quality}],   // 所有检索到的源
+  stats: { angles, sourcesFetched, claimsExtracted, confirmed, killed, ... },
+}
+```
+
+**调用方怎么用返回值**：
+- `findings` 是主要产出，每条带置信度和来源
+- `refuted` 是透明性——告诉用户"这些声明搜到了但被杀了"
+- `openQuestions` 提示还有什么没搞清楚
+
+## 迭代检索原理
+
+> 思路源自 everything-claude-code v1.2.0 iterative-retrieval skill (MIT)，在本 workflow 里落成显式的多轮 execution/collect 协议（不靠 prompt 猜测前序结果）。
+
+每个搜索角度走一个最多 `iterate` 轮的循环：
+
+```
+搜一轮 → 独立评估 agent 打相关度分 → 够好？
+                                    ├─ 是 → 停（提前收敛）
+                                    └─ 否 → 从结果学新术语 → 换词再搜
+```
+
+**为什么搜索和评估分给两个 agent：** 搜索 agent 会倾向于觉得自己搜到的东西不错（self-serving bias）——让它自己判断"够不够"，它几乎总会说"够了"。独立的评估 agent 没有这个偏见，它只看结果质量，该说不够就说不够。这是迭代真正起作用的关键，不是多跑几轮就行。
+
+**为什么 code 默认 3 轮、web 默认 1 轮：** 见上文「预制类型」——代码库术语不可预期需要多轮逼近，网络关键词通常一轮够用。
+
+**何时关掉迭代（iterate=1）：** `angles` 已预设（调用方明确知道搜什么）——这正是 `targeted` 档的预制组合，直接用 `depth: 'targeted'` 不用手动传 iterate；或纯发散的 shallow 快速场景。
+
+## 示例
+
+**竞品调研**（pd-research 竞品切面）：
+```js
+{
+  question: '<产品> 的竞品在功能、定价、定位上的差异',
+  type: 'web',
+  depth: 'shallow' | 'deep',  // 跟随 pd-research Step1 用户选择的调研档位，默认 shallow
+  systemPrompt: '关注功能差异、用户痛点、定价策略、市场定位。产出应包含 Feature Matrix 和 Positioning Map 素材。',
+}
+```
+
+**代码探索**（dev-design 代码现状——搜索点已从讨论提炼，走 targeted）：
+```js
+{
+  question: '<任务关键词> 在当前代码库的已有实现和可复用 pattern',
+  type: 'code',
+  depth: 'targeted',
+  angles: [
+    { label: '已有同类实现', query: '<从 restate 提炼的具体查询>' },
+    { label: '受影响调用链', query: '<关键 caller / contract 查询>' },
+  ],
+  // 每角度 1 轮，跳过 scope，工具链自动绑 semble-search → grep → Explore
+}
+```
+
+**代码探索**（dev-define 早期理解——不知道代码里叫什么，走 shallow 迭代逼近）：
+```js
+{
+  question: '<任务关键词> 在当前代码库的已有实现和可复用 pattern',
+  type: 'code',
+  depth: 'shallow',
+  // iterate 自动 = 3，从第一轮结果学项目真实命名后换词再搜
+}
+```
+
+**技术选型**（dev-design 外部方案）：
+```js
+{
+  question: '<要解决的技术问题> 有哪些成熟方案',
+  type: 'mixed',
+  depth: 'targeted',
+  angles: [
+    { label: '成熟开源方案', query: '<技术问题> library framework' },
+    { label: '业界模式与坑', query: '<技术问题> best practice pitfalls' },
+  ],
+  systemPrompt: '关注开源库的成熟度、维护状态、与现有架构的兼容性。不把搜索结果当事实——需对照本项目实际情况评估适用性。',
+}
+```
+
+**用户信号**（pd-research 用户信号切面）：
+```js
+{
+  question: '<产品领域> 用户的真实痛点和需求信号',
+  type: 'web',
+  depth: 'shallow',
+  systemPrompt: '重点搜 Reddit、HN、知乎、GitHub Issues、论坛、G2 / ProductHunt / App Store 评价。提取痛点、需求信号、用户原话。',
+}
+```

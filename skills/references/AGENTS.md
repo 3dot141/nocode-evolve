@@ -15,9 +15,9 @@
 rg -l "NOCODE_SKILL_REF.*<文件名或子路径>" skills/ agents/ commands/ model/
 ```
 
-已知会读本目录的至少有：`dev-define`、`dev-design`、`dev-plan`、`dev-review`、`dev-verify`、`pd-prd`、`pd-vd`、`brainstorming`、`red-blue-deep`、`skill-writing` 等 skill，以及 `agents/architect.md`、`agents/code-reviewer.md`、`agents/database-reviewer.md`、`agents/security-reviewer.md`、`commands/plugin-dream.md`、`model/agent-about.md`。
+已知会读本目录的至少有：`dev-define`、`dev-design`、`dev-plan`、`dev-review`、`dev-verify`、`pd-prd`、`pd-vd`、`brainstorming`、`red-blue-deep`、`skill-writing` 等 skill，以及 `commands/plugin-dream.md`、`model/agent-about.md`。
 
-**`reviewing` 和"四件套"不再是本目录的一部分，改动它们不要来这里找**：`reviewing` 已迁成 `skills/reviewing/` 下的自包含 review 引擎（`skeleton.md` / `findings-contract.md` / `methods/*.md` 都在它自己的 `skills/reviewing/references/`），调用方一律 `Skill(nocode:reviewing)` 调用，不再 `Read` 它的内部文件，也就不再共享本目录。"四件套"（`define-review.md` / `design-review.md` / `prd-review.md` / `vis-review.md`）已分别下沉到各自消费方 skill 的私有 `references/`（`dev-define` / `dev-design` / `pd-prd` / `pd-vd`），本目录不再托管它们。
+**`reviewing` 和"四件套"不再是本目录的一部分，改动它们不要来这里找**：`reviewing` 已迁成 `skills/reviewing/` 下的自包含 review 引擎（`skeleton.md` / `findings-contract.md` / `methods/*.md` 都在它自己的 `skills/reviewing/references/`），调用方一律 `[provider-neutral skill boundary]` 调用，不再 `Read` 它的内部文件，也就不再共享本目录。"四件套"（`define-review.md` / `design-review.md` / `prd-review.md` / `vis-review.md`）已分别下沉到各自消费方 skill 的私有 `references/`（`dev-define` / `dev-design` / `pd-prd` / `pd-vd`），本目录不再托管它们。
 
 ## 是否 vendor 管理
 
@@ -30,4 +30,4 @@ rg -l "NOCODE_SKILL_REF.*<文件名或子路径>" skills/ agents/ commands/ mode
 - 只有被 **≥2 个 skill** 共用的领域知识才放这里；单个 skill 专属的细节放该 skill 自己的 `<skill>/references/`（skill 私有目录，与本目录同名但是两回事）。
 - 新文件遵循已有开头惯例：`# 标题` + 一行「共享 reference，多 skill 按需 Read。」定位说明，再进入正文。
 - 写完后必须去消费方 skill 的 SKILL.md 里加 `Read {NOCODE_SKILL_REF}/<new-file>.md` 引用点——本目录文件不会被自动发现，没有引用点等于文件不存在。
-- 改动本目录文件属于"改动被插件加载的文件"，按仓库 `CLAUDE.md` 规则 2 需要同步升级 `.claude-plugin/plugin.json` 的 version。
+- 改动本目录文件属于"改动被插件加载的文件"，按仓库 `CLAUDE.md` 规则 2 需要同步升级 `plugin/metadata.json` 的 version，并运行 `node scripts/compile.platform.mjs`。

@@ -114,6 +114,20 @@ test('监控范围常量含 hooks/ 与 scripts/ 整个目录（不只是 generat
   );
 });
 
+test('双平台架构监控 source/adapter/metadata/marketplace，不把生成物当源', () => {
+  for (const expected of [
+    'core/',
+    'adapters/',
+    'plugin/metadata.json',
+    '.claude-plugin/marketplace.json',
+    '.agents/plugins/marketplace.json',
+  ]) {
+    assert.ok(MONITORED_PATHS.includes(expected), `应监控 ${expected}`);
+  }
+  assert.equal(MONITORED_PATHS.some((item) => item.startsWith('plugins/')), false);
+  assert.equal(MONITORED_PATHS.includes('.claude-plugin/plugin.json'), false);
+});
+
 test('监控范围含 hooks/ scripts/ 整目录 → 该目录下新文件（非 generate.mjs/vendor-sync.mjs）也能被增量检测捕获', () => {
   const repo = makeRepo();
   try {

@@ -1,0 +1,30 @@
+{
+  "id": "personal-knowledge.usage.record",
+  "domain": "personal-knowledge",
+  "inputSchema": {
+    "type": "object",
+    "required": [
+      "sessionId",
+      "path"
+    ],
+    "properties": {
+      "sessionId": {
+        "type": "string"
+      },
+      "path": {
+        "type": "string"
+      }
+    },
+    "additionalProperties": false
+  },
+  "outputSchema": "contracts/usage-result.schema.json",
+  "fallbackOn": "never",
+  "platforms": {
+    "claude": {
+      "primary": "project-wiki"
+    },
+    "codex": {
+      "primary": "project-wiki"
+    }
+  }
+}

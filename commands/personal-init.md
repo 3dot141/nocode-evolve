@@ -3,6 +3,8 @@ description: 在当前项目初始化 .agents-personal/ 结构（变量覆盖 + 
 argument-hint: (无参数)
 ---
 
+> 本文写“结构化决策”时，必须把当前步骤的完整问题与 2–3 个互斥选项编译为 `Capability(workflow.decision.request, {"question":"<self-contained current-step question>","options":[{"label":"<option-label>","description":"<impact or tradeoff>"}],"allowFreeform":false})`；示例只展示单项形状，真实调用需带齐本步骤列出的选项，不得回退到平台专属提问工具。
+
 # /personal-init: 初始化项目本地 agent 资源
 
 在当前项目根目录创建 `.agents-personal/` 完整结构，让 agent 能在该项目里使用 wiki 记忆、rule 指令、变量覆盖。
@@ -37,7 +39,7 @@ argument-hint: (无参数)
 # Project Agent Config
 
 > 本文件是 agent 在本项目的路由表 + 变量覆盖。优先级高于插件默认值。
-> 参考: model/agent-about.md「全局占位符」+「文档产出路径变量」
+> 可覆盖 SessionStart 已注入的全局占位符与文档产出路径变量。
 
 ## 变量覆盖
 
@@ -129,7 +131,7 @@ Phase 2 完成后直接进入扫描。扫描只读不写，结果呈现给用户
 确认写入 AGENTS.md？可逐条修改。
 ```
 
-用 AskUserQuestion 确认：
+用 结构化决策 确认：
 1. **确认写入** — 按上述覆盖值写入 AGENTS.md
 2. **修改后写入** — 用户给出修改意见，调整后再写入
 3. **跳过** — 保持 AGENTS.md 为注释模板，不覆盖
@@ -212,7 +214,7 @@ subagent 全部完成后，主 agent 读每个临时文件的前几行（TL;DR�
 
 冲突提示：如果 `wiki/draft/` 或 `wiki/pages/` 已有同名文件，在清单中标注 `⚠ 已存在`，用户可选覆盖 / 跳过 / 合并。
 
-用 AskUserQuestion 多选让用户勾选要生成的编号（默认全选；每个 option 自带「编号 + 文件名 + 一句话内容」，不依赖上方清单渲染——工具调用间文本可能被吞）。
+用 结构化决策 多选让用户勾选要生成的编号（默认全选；每个 option 自带「编号 + 文件名 + 一句话内容」，不依赖上方清单渲染——工具调用间文本可能被吞）。
 
 ### Step 4c: 写入
 

@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "files": {
+    "skills/devflow/SKILL.md": "2f1407fbf546394fbc1e33e4cb546bbb4fe578c4f166729463822962a6f31641",
+    "skills/dev-build/SKILL.md": "de41fda04354153e46fd86245a50cd14ce8b78fe178a25705c57e665294cc341",
+    "skills/dev-review/SKILL.md": "670899f021f066638cc1b3334ba811520ae699a3972adbe0c2f20b3ac94fc665",
+    "rules/rule-codex-review.md": "24c2ef126058a766ce35a20ae56694c910e080700631278a2014e471680786b7",
+    "hooks/hooks.json": "ae555469a5ee1865b6bea1d1af211e5d5562b681b8c7f65ed00cc5f623aa85ac",
+    "hooks/pretooluse-guard.mjs": "1b76e7f532b0d438d891f9db85f204fa99f6983d82e13ce6166d88742248e99b"
+  }
+}

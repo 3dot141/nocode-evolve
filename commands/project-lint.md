@@ -50,12 +50,12 @@ AGENTS.md 或 README.md 少于 5 行（可能是占位未填充）。
 ```
 项目子目录文档健康检查：
 
-  E [E1] hooks/AGENTS.md:8 — 引用 generate-catalog.mjs 不存在（已改名 generate.mjs）
+  E [E1] module-a/AGENTS.md:8 — 引用 generate-catalog.mjs 不存在（已改名 generate.mjs）
   E [E2] scripts/AGENTS.md — 提到 deploy.sh 但目录下无此文件
   W [W1] commands/ — 无 AGENTS.md 也无 README.md
   W [W2] model/ — 有 AGENTS.md 无 README.md
   W [W3] scripts/README.md — 仅 3 行，可能未完成
-  I [I1] hooks/ — 新增 pretooluse-inject.mjs，文档未提及
+  I [I1] module-a/ — 新增 worker.mjs，文档未提及
 
   结论: 2 error / 3 warn / 1 info
 ```
@@ -67,8 +67,8 @@ AGENTS.md 或 README.md 少于 5 行（可能是占位未填充）。
 每个 Error 和 Warn 附带修复建议：
 
 ```
-  E [E1] hooks/AGENTS.md:8 — 引用 generate-catalog.mjs 不存在
-    → 建议: /project-distill hooks/ 更新文档
+  E [E1] module-a/AGENTS.md:8 — 引用 generate-catalog.mjs 不存在
+    → 建议: /project-distill module-a/ 更新文档
 
   W [W1] commands/ — 无文档
     → 建议: /project-distill commands/

@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "sources": [
+    {
+      "path": "skills/continuous-learning-v2",
+      "reason": "disabled: Continuous Learning is not part of the Claude/Codex 14.1.0 runtime"
+    },
+    {
+      "path": "commands/evolve.md",
+      "reason": "disabled: Continuous Learning command"
+    },
+    {
+      "path": "commands/instinct-status.md",
+      "reason": "disabled: Continuous Learning command"
+    },
+    {
+      "path": "commands/instinct-import.md",
+      "reason": "disabled: Continuous Learning command"
+    },
+    {
+      "path": "commands/instinct-export.md",
+      "reason": "disabled: Continuous Learning command"
+    },
+    {
+      "path": "vendor/codex",
+      "reason": "disabled: legacy Claude-only Codex companion is replaced by the workflow review provider"
+    }
+  ],
+  "hookCommands": [
+    {
+      "contains": "skills/continuous-learning-v2/hooks/observe.sh",
+      "reason": "disabled: Continuous Learning observer hook"
+    }
+  ]
+}

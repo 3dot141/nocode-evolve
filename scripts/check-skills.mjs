@@ -24,9 +24,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { parseFrontmatter, ROOT } from './compile.rule.js';
-
-const SKILLS_DIR = path.join(ROOT, 'skills');
-const COMMANDS_DIR = path.join(ROOT, 'commands');
+import { loadPluginExclusions } from './lib/platform-compiler.mjs';
 
 // Skill(nocode:X) 里 X 是文档示例而非真实路由目标, 跳过存在性检查
 const PLACEHOLDER_TARGETS = new Set(['xxx', 'name', 'x', 'y', 'foo', 'bar']);
@@ -41,28 +39,30 @@ const SKILL_NAME = /^[a-z][a-z0-9-]+$/;
 const CROSS_LAYER = /(?:rules\/rule-[\w-]+\.md|model\/agent-[\w-]+\.md|hooks\/[\w.-]+)/;
 
 /** skills/ 下所有含 SKILL.md 的目录名 */
-export function listSkills() {
-  if (!fs.existsSync(SKILLS_DIR)) return [];
+export function listSkills(root = ROOT) {
+  const skillsDir = path.join(root, 'skills');
+  if (!fs.existsSync(skillsDir)) return [];
   return fs
-    .readdirSync(SKILLS_DIR, { withFileTypes: true })
-    .filter((d) => d.isDirectory() && fs.existsSync(path.join(SKILLS_DIR, d.name, 'SKILL.md')))
+    .readdirSync(skillsDir, { withFileTypes: true })
+    .filter((d) => d.isDirectory() && fs.existsSync(path.join(skillsDir, d.name, 'SKILL.md')))
     .map((d) => d.name)
     .sort();
 }
 
 /** commands/ 下所有 command 名 (去 .md, 排除 README/AGENTS 文档) */
-export function listCommandTargets() {
-  if (!fs.existsSync(COMMANDS_DIR)) return [];
+export function listCommandTargets(root = ROOT) {
+  const commandsDir = path.join(root, 'commands');
+  if (!fs.existsSync(commandsDir)) return [];
   return fs
-    .readdirSync(COMMANDS_DIR)
+    .readdirSync(commandsDir)
     .filter((f) => f.endsWith('.md') && f !== 'README.md' && f !== 'AGENTS.md')
     .map((f) => f.slice(0, -3))
     .sort();
 }
 
 /** Skill(nocode:X) 的合法目标集: skill 与 command 共享 nocode: 命名空间 */
-export function routeTargetSet() {
-  return new Set([...listSkills(), ...listCommandTargets()]);
+export function routeTargetSet(root = ROOT) {
+  return new Set([...listSkills(root), ...listCommandTargets(root)]);
 }
 
 /** 提取正文里的 Skill(nocode:X) 真实路由目标 (剔除占位符 / 外部 skill) */
@@ -140,25 +140,25 @@ export function checkSkillText(name, raw, { targets, hasRefDir, refExists }) {
 }
 
 /** IO 包装: 读盘 + 组装 ctx, 委托 checkSkillText */
-function checkOneSkill(name) {
-  const dir = path.join(SKILLS_DIR, name);
+function checkOneSkill(name, { root, targets }) {
+  const dir = path.join(root, 'skills', name);
   const raw = fs.readFileSync(path.join(dir, 'SKILL.md'), 'utf8');
   const refDir = path.join(dir, 'references');
   return checkSkillText(name, raw, {
-    targets: routeTargetSet(),
+    targets,
     hasRefDir: fs.existsSync(refDir),
     refExists: (ref) => fs.existsSync(path.join(refDir, ref)),
   });
 }
 
 /** 检查 commands/*.md 的 description 污染 + 路由断链 (command 也路由到 skill) */
-function checkCommands() {
+function checkCommands(root, targets) {
   const errors = [];
-  if (!fs.existsSync(COMMANDS_DIR)) return errors;
-  const targets = routeTargetSet();
-  for (const f of fs.readdirSync(COMMANDS_DIR)) {
+  const commandsDir = path.join(root, 'commands');
+  if (!fs.existsSync(commandsDir)) return errors;
+  for (const f of fs.readdirSync(commandsDir)) {
     if (!f.endsWith('.md') || f === 'README.md' || f === 'AGENTS.md') continue;
-    const raw = fs.readFileSync(path.join(COMMANDS_DIR, f), 'utf8');
+    const raw = fs.readFileSync(path.join(commandsDir, f), 'utf8');
     const rel = `commands/${f}`;
     const fm = parseFrontmatter(raw);
     if (fm?.description && CONTAMINATION.test(fm.description))
@@ -173,27 +173,133 @@ function checkCommands() {
 }
 
 /** 全量检查, 返回 {errors, warnings} */
-export function checkAll() {
+const CODEX_FORBIDDEN = [
+  ['Skill(nocode:', /Skill\(nocode:/g],
+  ['AskUserQuestion', /\bAskUserQuestion\b/g],
+  ['TaskCreate', /\bTaskCreate\b/g],
+  ['EnterWorktree', /\bEnterWorktree\b/g],
+  ['plugins/claude', /plugins\/claude/g],
+];
+
+export function checkPlatformSyntax(raw, rel, platform) {
+  if (platform !== 'codex') return [];
+  const errors = [];
+  for (const [label, pattern] of CODEX_FORBIDDEN) {
+    if (pattern.test(raw)) errors.push(`${rel}: Codex 生成物残留 Claude 语法 ${label}`);
+    pattern.lastIndex = 0;
+  }
+  return errors;
+}
+
+function listMarkdown(root) {
+  const output = [];
+  function visit(dir) {
+    if (!fs.existsSync(dir)) return;
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) visit(full);
+      else if (entry.isFile() && entry.name.endsWith('.md')) output.push(full);
+    }
+  }
+  visit(path.join(root, 'skills'));
+  return output.sort();
+}
+
+export function metadataBudget(root) {
+  const entries = [];
+  for (const name of listSkills(root)) {
+    const file = path.join(root, 'skills', name, 'SKILL.md');
+    const frontmatter = parseFrontmatter(fs.readFileSync(file, 'utf8'));
+    const description = frontmatter?.description || '';
+    entries.push({ name, description, chars: name.length + description.length });
+  }
+  entries.sort((left, right) => right.chars - left.chars || left.name.localeCompare(right.name));
+  return { total: entries.reduce((sum, entry) => sum + entry.chars, 0), entries };
+}
+
+export function checkAll({
+  root = ROOT, platform = 'claude', metadataLimit = 8000,
+} = {}) {
   const errors = [];
   const warnings = [];
-  for (const name of listSkills()) {
-    const r = checkOneSkill(name);
+  const targets = routeTargetSet(root);
+  const explicitExclusions = fs.existsSync(path.join(root, 'plugin', 'exclusions.json'))
+    ? loadPluginExclusions(root).sources.map((entry) => entry.path)
+    : [];
+  const excludedSkills = new Set(explicitExclusions
+    .filter((entry) => /^skills\/[^/]+$/.test(entry))
+    .map((entry) => entry.slice('skills/'.length)));
+  for (const name of listSkills(root)) {
+    if (excludedSkills.has(name)) continue;
+    const r = checkOneSkill(name, { root, targets });
     errors.push(...r.errors);
     warnings.push(...r.warnings);
   }
-  errors.push(...checkCommands());
+  for (const file of listMarkdown(root)) {
+    const rel = path.relative(root, file).replaceAll('\\', '/');
+    if (!/^skills\/.+\/.+\/SKILL\.md$/.test(rel)) continue;
+    const frontmatter = parseFrontmatter(fs.readFileSync(file, 'utf8'));
+    if (!frontmatter?.name || !SKILL_NAME.test(frontmatter.name)) {
+      errors.push(`${rel}: nested Skill 缺合法 name`);
+    }
+    if (!frontmatter?.description) errors.push(`${rel}: nested Skill 缺 description`);
+  }
+  errors.push(...checkCommands(root, targets));
+  if (platform === 'codex') {
+    for (const file of listMarkdown(root)) {
+      const rel = path.relative(root, file).replaceAll('\\', '/');
+      errors.push(...checkPlatformSyntax(fs.readFileSync(file, 'utf8'), rel, platform));
+    }
+    const budget = metadataBudget(root);
+    if (budget.total > metadataLimit) {
+      const largest = budget.entries.slice(0, 5).map((entry) => `${entry.name}:${entry.chars}`).join(', ');
+      errors.push(`Codex skill metadata budget ${budget.total} > ${metadataLimit}; largest: ${largest}`);
+    }
+  }
   return { errors, warnings };
+}
+
+export function parseCheckArgs(args) {
+  const options = { root: ROOT, platform: 'claude' };
+  for (let index = 0; index < args.length; index++) {
+    const arg = args[index];
+    if (arg === '--check') continue;
+    if (arg === '--root') {
+      const root = args[++index];
+      if (!root) throw new Error('--root requires a path');
+      options.root = root;
+    } else if (arg.startsWith('--root=')) {
+      options.root = arg.slice('--root='.length);
+    } else if (arg === '--platform') {
+      const platform = args[++index];
+      if (!platform) throw new Error('--platform requires claude or codex');
+      options.platform = platform;
+    } else if (arg.startsWith('--platform=')) {
+      options.platform = arg.slice('--platform='.length);
+    } else {
+      throw new Error(`unknown argument: ${arg}`);
+    }
+  }
+  if (!['source', 'claude', 'codex'].includes(options.platform)) throw new Error(`unknown platform: ${options.platform}`);
+  return options;
 }
 
 // CLI
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const { errors, warnings } = checkAll();
-  for (const w of warnings) console.warn('  WARN  ' + w);
-  for (const e of errors) console.error('  ERROR ' + e);
-  const nSkills = listSkills().length;
-  if (errors.length) {
-    console.error(`\ncheck-skills: ${nSkills} skills, ${errors.length} error, ${warnings.length} warn — 有断链/污染, 修复后重跑`);
-    process.exit(1);
+  try {
+    const options = parseCheckArgs(process.argv.slice(2));
+    const { errors, warnings } = checkAll(options);
+    for (const w of warnings) console.warn('  WARN  ' + w);
+    for (const e of errors) console.error('  ERROR ' + e);
+    const nSkills = listSkills(options.root).length;
+    if (errors.length) {
+      console.error(`\ncheck-skills: ${nSkills} skills, ${errors.length} error, ${warnings.length} warn — 有断链/污染, 修复后重跑`);
+      process.exit(1);
+    }
+    const budget = options.platform === 'codex' ? `, metadata=${metadataBudget(options.root).total}/8000` : '';
+    console.log(`check-skills: ${nSkills} skills 全部通过 (${warnings.length} warn${budget})`);
+  } catch (error) {
+    console.error(`check-skills: ${error.message}`);
+    process.exit(2);
   }
-  console.log(`check-skills: ${nSkills} skills 全部通过 (${warnings.length} warn)`);
 }

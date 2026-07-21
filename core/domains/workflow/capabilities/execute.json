@@ -1,0 +1,19 @@
+{
+  "id": "workflow.execute",
+  "domain": "workflow",
+  "inputSchema": "contracts/task-graph.schema.json",
+  "outputSchema": "contracts/execution-receipt.schema.json",
+  "fallbackOn": "manual",
+  "platforms": {
+    "claude": {
+      "primary": "claude-native",
+      "fallback": "inline",
+      "fallbackCondition": "fallbackPolicy=inline"
+    },
+    "codex": {
+      "primary": "codex-agents",
+      "fallback": "inline",
+      "fallbackCondition": "fallbackPolicy=inline"
+    }
+  }
+}

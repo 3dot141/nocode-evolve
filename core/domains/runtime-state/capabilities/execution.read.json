@@ -1,0 +1,30 @@
+{
+  "id": "state.execution.read",
+  "domain": "runtime-state",
+  "inputSchema": {
+    "type": "object",
+    "required": [
+      "sessionId",
+      "executionId"
+    ],
+    "properties": {
+      "sessionId": {
+        "type": "string"
+      },
+      "executionId": {
+        "type": "string"
+      }
+    },
+    "additionalProperties": false
+  },
+  "outputSchema": "contracts/execution-state.schema.json",
+  "fallbackOn": "never",
+  "platforms": {
+    "claude": {
+      "primary": "claude-plugin-data"
+    },
+    "codex": {
+      "primary": "codex-plugin-data"
+    }
+  }
+}

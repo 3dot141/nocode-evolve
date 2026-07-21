@@ -1,0 +1,29 @@
+{
+  "id": "workflow.wait",
+  "domain": "workflow",
+  "inputSchema": {
+    "type": "object",
+    "required": [
+      "executionId"
+    ],
+    "properties": {
+      "executionId": {
+        "type": "string"
+      },
+      "timeoutMs": {
+        "type": "integer"
+      }
+    },
+    "additionalProperties": false
+  },
+  "outputSchema": "contracts/execution-receipt.schema.json",
+  "fallbackOn": "never",
+  "platforms": {
+    "claude": {
+      "primary": "claude-native"
+    },
+    "codex": {
+      "primary": "codex-agents"
+    }
+  }
+}

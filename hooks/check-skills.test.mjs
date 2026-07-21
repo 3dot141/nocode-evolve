@@ -8,7 +8,14 @@ import {
   routeTargetSet,
   listSkills,
   listCommandTargets,
+  metadataBudget,
+  checkPlatformSyntax,
+  parseCheckArgs,
 } from '../scripts/check-skills.mjs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 // 构造 ctx / skill 文本的辅助 (纯函数测试, 不碰文件系统)
 const ctx = (over = {}) => ({
@@ -132,4 +139,43 @@ test('routeTargetSet: 同时含 skill 与 command 两类目标', () => {
 test('listSkills / listCommandTargets: 均非空', () => {
   assert.ok(listSkills().length >= 20, 'skill 数应 ≥20');
   assert.ok(listCommandTargets().length >= 5, 'command 数应 ≥5');
+});
+
+test('Codex syntax checker rejects unresolved Claude tool vocabulary', () => {
+  const errors = checkPlatformSyntax(
+    'Skill(nocode:dev-build) AskUserQuestion TaskCreate EnterWorktree plugins/claude/nocode',
+    'skills/foo/SKILL.md',
+    'codex',
+  );
+  assert.equal(errors.length, 5);
+  assert.deepEqual(checkPlatformSyntax('$dev-build update_plan', 'skills/foo/SKILL.md', 'codex'), []);
+  assert.deepEqual(checkPlatformSyntax('Skill(nocode:dev-build)', 'skills/foo/SKILL.md', 'claude'), []);
+});
+
+test('metadataBudget counts generated skill names and descriptions', () => {
+  const codexRoot = path.join(ROOT, 'plugins', 'codex', 'nocode');
+  const budget = metadataBudget(codexRoot);
+  assert.ok(budget.entries.length >= 50, `expected generated skills, got ${budget.entries.length}`);
+  assert.ok(budget.total > 0);
+  assert.ok(budget.total <= 8000, `Codex metadata budget ${budget.total} exceeds 8000`);
+});
+
+test('checkAll enforces generated Codex syntax by default', () => {
+  const codexRoot = path.join(ROOT, 'plugins', 'codex', 'nocode');
+  const { errors } = checkAll({ root: codexRoot, platform: 'codex' });
+  assert.deepEqual(errors, [], errors.join('\n'));
+});
+
+test('check-skills CLI parser accepts explicit root/platform', () => {
+  assert.deepEqual(parseCheckArgs(['--check', '--root', '/tmp/plugin', '--platform=codex']), {
+    root: '/tmp/plugin',
+    platform: 'codex',
+  });
+  assert.throws(() => parseCheckArgs(['--platform=other']), /platform/);
+  assert.deepEqual(parseCheckArgs(['--platform', 'source']), {
+    root: ROOT,
+    platform: 'source',
+  });
+  assert.throws(() => parseCheckArgs(['--unknown']), /unknown argument/);
+  assert.throws(() => parseCheckArgs(['--audit=inventory']), /unknown argument/);
 });

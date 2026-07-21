@@ -40,7 +40,7 @@ find . -name 'AGENTS.md' -o -name 'README.md' | grep -v node_modules | grep -v '
 ```
 搜索 "<query>" 在子目录文档中的结果：
 
-1. hooks/AGENTS.md:5
+1. module-a/AGENTS.md:5
    "本目录下的文件是生成物，禁手改"
    上下文: generate.mjs 从 manifest.json 生成 catalog 分片...
 

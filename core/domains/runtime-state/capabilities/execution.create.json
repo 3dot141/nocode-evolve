@@ -1,0 +1,49 @@
+{
+  "id": "state.execution.create",
+  "domain": "runtime-state",
+  "internal": true,
+  "contextBindings": { "sessionId": "sessionId" },
+  "inputSchema": {
+    "type": "object",
+    "required": ["sessionId", "execution"],
+    "properties": {
+      "sessionId": { "type": "string" },
+      "execution": {
+        "type": "object",
+        "required": ["provider", "graph", "tasks"],
+        "properties": {
+          "executionId": { "type": "string" },
+          "provider": { "type": "string" },
+          "status": { "enum": ["pending", "running", "completed", "partial", "failed", "cancelled"] },
+          "cancelReason": { "type": ["string", "null"] },
+          "providerHandle": { "type": "object", "additionalProperties": true },
+          "graph": { "$ref": "workflow.task-graph" },
+          "tasks": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["id"],
+              "properties": {
+                "id": { "type": "string" },
+                "status": { "enum": ["pending", "running", "completed", "failed", "skipped", "cancelled"] },
+                "resultRef": { "type": ["string", "null"] },
+                "result": {},
+                "error": { "type": ["object", "null"], "additionalProperties": true },
+                "reviewMode": { "enum": ["cross-model", "isolated-same-model", "inline-self-review", null] }
+              },
+              "additionalProperties": false
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "additionalProperties": false
+  },
+  "outputSchema": "contracts/execution-state.schema.json",
+  "fallbackOn": "never",
+  "platforms": {
+    "claude": { "primary": "claude-plugin-data" },
+    "codex": { "primary": "codex-plugin-data" }
+  }
+}

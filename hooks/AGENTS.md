@@ -1,6 +1,6 @@
 # hooks/
 
-本目录是插件的 hook 层：Claude Code 生命周期事件（SessionStart / PreToolUse / PostToolUse / Stop）的注册与实现。Claude Code 按约定自动读取 `hooks/hooks.json`（`.claude-plugin/plugin.json` 无需显式声明 hooks 路径）。
+本目录是插件的 hook 层：领域判断与平台 codec 共用，Claude Code / Codex adapter 分别生成各自支持的生命周期事件。两端都按约定自动读取生成发布物中的 `hooks/hooks.json`，无需在 manifest 显式声明路径。
 
 ## 动手前必须知道
 
@@ -27,7 +27,7 @@
    node --test 'hooks/*.test.mjs'        # 全量单测应全绿
    ```
 
-5. **本目录文件全部被插件加载 → 任何改动都算插件更新**：编辑 `.claude-plugin/plugin.json` 的 `version` 按 SemVer 升级并入同一个 commit（新增 hook/skill 名单项 = minor；bug fix/文案 = patch；路径改名/行为语义反转 = major）。
+5. **本目录文件全部参与插件运行或生成 → 任何改动都算插件更新**：编辑 `plugin/metadata.json` 的 `version`，运行 `node scripts/compile.platform.mjs`，按 SemVer 升级并入同一个 commit（新增 hook/skill 名单项 = minor；bug fix/文案 = patch；路径改名/行为语义反转 = major）。
 
 6. **测试文件位置与被测模块可能不在同一目录**：`hooks/` 下多个 `*.test.mjs`（`dream-baseline` / `plugin-dream-baseline` / `personal-migrate` / `personal-snapshot` / `project-tree-detect` / `repo-lock` / `git-exec`）测试的其实是 `../scripts/` 里的同名模块——这是为了让 `node --test 'hooks/*.test.mjs'` 一条命令覆盖 hook 链间接依赖的全部底层模块。新增同类测试时遵循同一约定：测试文件放 `hooks/`，`import` 从 `../scripts/` 引入源模块。
 
@@ -45,7 +45,7 @@
 
 ## 写新 hook 时的安全姿态约定
 
-- 运行时失败一律偏向"放行"（fail-open）——参见 `handoff-stop-guard.mjs` 顶部注释：最坏退化为"hook 不存在"，不卡死 session。
+- Stop 不使用运行时 guard；SessionStart 失败会明确返回初始化错误。
 - fork/subagent（payload 里 `agent_id` 非空）默认不拦截，除非明确要子 agent 也生效。
-- 涉及落盘/写文件的 hook（如 `usage-tracker.mjs`）要用短超时的 `RepoLock`，拿不到锁就跳过，不能拖慢用户的正常操作。
+- 涉及落盘/写文件的 hook 要用短超时的锁，拿不到锁就跳过，不能拖慢用户的正常操作。Wiki usage 已由 `personal-knowledge.page.read` 显式路径维护，不属于 Hook。
 - `pretooluse-guard.mjs` 的 bypass 观测日志（`.bypass-observations.jsonl`）默认关闭，只在设置 `NOCODE_EVOLVE_OBSERVE=1` 时落盘——避免命令片段（可能含 token/URL）被隐式持久化，新 hook 若要落盘同类敏感数据也应默认关闭、opt-in 开启。

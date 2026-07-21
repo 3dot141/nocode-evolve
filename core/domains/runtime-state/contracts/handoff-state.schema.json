@@ -1,0 +1,13 @@
+{
+  "$id": "runtime-state.handoff-state",
+  "type": "object",
+  "required": ["sessionId", "handoffs"],
+  "properties": {
+    "sessionId": { "type": "string" },
+    "handoffs": {
+      "type": "array",
+      "items": { "$ref": "runtime-state.handoff" }
+    }
+  },
+  "additionalProperties": false
+}

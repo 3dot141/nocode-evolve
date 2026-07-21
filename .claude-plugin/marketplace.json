@@ -1,12 +1,13 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
   "name": "nocode-market",
+  "description": "nocode 的 Claude Code / Codex 双平台插件市场",
   "owner": { "name": "Harrison", "url": "https://github.com/3dot141" },
   "plugins": [
     {
       "name": "nocode",
       "description": "Harrison 的个人工具箱：全局规则注入 + skills 扩展位",
-      "source": "./."
+      "source": "./plugins/claude/nocode"
     }
   ]
 }

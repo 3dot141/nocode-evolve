@@ -1,25 +1,27 @@
 ---
 description: .agents-personal/ 的统一写入层（wiki + rules + AGENTS.md），被 /distill 调用，也可独立使用
-argument-hint: [wiki|rules|agents] [optional-content-description]
+argument-hint: "[wiki|rules|agents] [optional-content-description]"
 ---
 
 # /personal-distill：.agents-personal/ 写入
 
 统一管理 `.agents-personal/` 的所有写入操作——wiki 知识沉淀、rules 指令写入、AGENTS.md 变量/分节更新。
 
-**被 `/distill` 调用**（distill 路由 wiki:project / rules:project / agents:project 时 `Skill(nocode:personal-distill)` 传入候选）。也可用户直接 `/personal-distill` 独立写入。
+**被 `/distill` 调用**时，严格从 `arguments.payload.candidates[]` 读取候选；不得回退读取顶层 `arguments.disposition` 或从 ambient context 猜候选。也可用户直接 `/personal-distill` 独立写入。
 
 ## 入参
 
 ### 被 distill 调用时
 
-distill 传入结构化候选列表，每个候选含：
+distill 传入 `arguments.payload.candidates` 结构化候选列表，每个候选含：
 ```
-{ summary, disposition, target_layer, path, body, target, section_type }
+{ id, disposition, target_layer, path, body, target, section_type, slug }
   target ∈ {wiki, rules, agents}
-  disposition ∈ {新建, 融合→<路径>, supersede→<路径>, promote→<路径>}
+  disposition ∈ {create, merge, supersede, promote, skip}
   section_type ∈ {var, style, naming, convention, rules-trigger}  # 仅 target=agents
 ```
+
+`merge` / `supersede` / `promote` 的目标路径只从 `path` 读取；`skip` 不写入。不得把展示层的中文“新建/融合→…”当作机器枚举。
 
 ### 独立调用时
 
@@ -33,7 +35,7 @@ distill 传入结构化候选列表，每个候选含：
 
 ### Step 0: 写入前检查
 
-调 `Skill(nocode:personal-lint)` 做健康检查。结果附在最终报告底部。error 不阻断写入（用户可选先修复或继续），但结论必须明确指出。
+调 `Capability(workflow.skill.invoke, {"skill":"personal-lint","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})` 做健康检查。结果附在最终报告底部。error 不阻断写入（用户可选先修复或继续），但结论必须明确指出。
 
 `.agents-personal/` 不存在 → 报 "未初始化" + 建议 `/personal-init`，停。
 
@@ -139,7 +141,7 @@ tags: []
 
 #### 整合判断决策树
 
-对每个 wiki 候选，先 Read `wiki/index.md`，判与已有页关系：
+对每个 wiki 候选，先普通 Read 控制文件 `wiki/index.md`；需要核对已有 `pages/`/`draft/` 正文时用 `Capability(personal-knowledge.page.read, {"sessionId":"<current-session-id>","path":"<wiki-page-path>"})`，再判与已有页关系：
 
 ```
 ┌─ 强相关 + 补充（不推翻原有决策）       → 融合进该页

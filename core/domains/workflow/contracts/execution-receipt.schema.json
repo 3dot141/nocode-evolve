@@ -1,0 +1,14 @@
+{
+  "$id": "workflow.execution-receipt",
+  "type": "object",
+  "required": ["provider", "executionId", "status", "tasks", "degraded", "degradedFrom"],
+  "properties": {
+    "executionId": { "type": "string" },
+    "status": { "enum": ["pending", "running", "completed", "partial", "failed", "cancelled"] },
+    "provider": { "type": "string" },
+    "tasks": { "type": "array", "items": { "type": "object", "required": ["id", "status", "resultRef", "result", "error", "reviewMode"], "properties": { "id": { "type": "string" }, "status": { "enum": ["pending", "running", "completed", "failed", "skipped", "cancelled"] }, "resultRef": { "type": ["string", "null"] }, "result": {}, "error": { "oneOf": [{ "type": "null" }, { "type": "object", "required": ["code"], "properties": { "code": { "type": "string" } }, "additionalProperties": false }] }, "reviewMode": { "enum": ["cross-model", "isolated-same-model", "inline-self-review", null] } }, "additionalProperties": false } },
+    "degraded": { "type": "boolean" },
+    "degradedFrom": { "type": ["string", "null"] }
+  },
+  "additionalProperties": false
+}

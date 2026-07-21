@@ -3,6 +3,8 @@ description: 递归扫描选定目录树，为每个有意义的子目录批量�
 argument-hint: [dir-path]
 ---
 
+> 本文写“结构化决策”时，必须把当前步骤的完整问题与 2–3 个互斥选项编译为 `Capability(workflow.decision.request, {"question":"<self-contained current-step question>","options":[{"label":"<option-label>","description":"<impact or tradeoff>"}],"allowFreeform":false})`；示例只展示单项形状，真实调用需带齐本步骤列出的选项，不得回退到平台专属提问工具。
+
 # /project-dream：递归批量生成子目录文档
 
 选定一个目录，递归扫描它和所有子目录，为每个有意义的子目录生成/更新 AGENTS.md + README.md。
@@ -33,7 +35,7 @@ DREAM_EOF
 
 **分支 A：`isGitRepo` 为 `false`（非 git 目录）**
 
-用 `AskUserQuestion` 询问：
+用 `结构化决策` 询问：
 
 > 这个目录不是 git 仓库，要不要初始化一个来支持后续增量扫描？
 
@@ -52,7 +54,7 @@ DREAM_EOF
   输出 `{ "dirPath": "...", "upperRoot": "...", "sameAsDirPath": true|false }`。
 
   - 若 `sameAsDirPath` 为 `true`（两个候选退化为同一个）→ 不再追问第二个选项，直接确认在 `<dir-path>` 初始化，`gitRoot = <dir-path>`。
-  - 若 `sameAsDirPath` 为 `false` → 用 `AskUserQuestion` 二选一：
+  - 若 `sameAsDirPath` 为 `false` → 用 `结构化决策` 二选一：
 
     | 选项 | 说明 |
     |---|---|
@@ -181,7 +183,7 @@ DREAM_EOF
 勾选要处理的编号（默认全选）:
 ```
 
-用 AskUserQuestion 多选让用户勾选要处理的目录（每个 option 自带「目录路径 + 拟做动作」，不依赖上方清单渲染——工具调用间文本可能被吞）。
+用 结构化决策 多选让用户勾选要处理的目录（每个 option 自带「目录路径 + 拟做动作」，不依赖上方清单渲染——工具调用间文本可能被吞）。
 
 ### Step 3: 批量执行
 

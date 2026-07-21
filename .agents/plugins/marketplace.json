@@ -1,0 +1,20 @@
+{
+  "name": "nocode-market",
+  "interface": {
+    "displayName": "nocode"
+  },
+  "plugins": [
+    {
+      "name": "nocode",
+      "source": {
+        "source": "local",
+        "path": "./plugins/codex/nocode"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

@@ -4,7 +4,7 @@
 
 ## 这个目录解决什么问题
 
-Claude Code 插件的 `CLAUDE.md`（挂在插件根目录下）不会被自动加载——这是官方限制，插件不像项目那样能靠根 `CLAUDE.md` 自动生效。SessionStart hook 是官方推荐的等效替代方案：把角色设定、行为基线、完整规则路由拆成若干 `.md` 文件放进 `model/`，hook 在会话开局把每个文件内容读出来，当作 `additionalContext` 注入。
+插件根说明文件不会自动成为运行时上下文，因此本目录保存角色设定、行为基线与完整规则路由，SessionStart hook 在会话开局分段注入。Claude codec 使用 `additionalContext`，Codex codec 使用 `systemMessage`；业务内容仍只维护这一份源码。
 
 为什么要拆成多个文件而不是拼一个大文件：hook 的 `additionalContext` 按**单个 command 的字符数**截断，阈值 10000（Claude Code 官方文档定值，硬编码不可配）。早期版本把多个 model 文件合并成一条 command 输出，一旦超阈值就被整坨截断存盘，注入内容悄悄丢失还不报错。现在拆成"每个文件一条 command"后，各段独立判阈值，只要单文件不超 10000 字符就安全注入。
 
@@ -12,7 +12,7 @@ Claude Code 插件的 `CLAUDE.md`（挂在插件根目录下）不会被自动�
 
 | 文件 | 角色 | 维护方式 |
 |---|---|---|
-| `agent-about.md` | 角色设定 + 本插件工作模型总览 + 输出语言（全程中文，含思考）+ 行为基线（陌生代码先 zoom-out / 推理外化 rubber-duck / 语气规范 / 方案类工作核对真实代码 / 评估类提问调红蓝军 / 代码搜索走 semble-search / 常驻 git 习惯 / 偏离 rule 需显式授权 / 用户离场信号 / AskUserQuestion payload 自足）+ 全局占位符（`{username}` 等）+ 文档产出路径变量 + 变量解析优先级 | 手工维护 |
+| `agent-about.md` | 角色设定 + 本插件工作模型总览 + 输出语言（全程中文，含思考）+ 行为基线（陌生代码先 zoom-out / 推理外化 rubber-duck / 语气规范 / 方案类工作核对真实代码 / 评估类提问调红蓝军 / 代码搜索走 semble-search / 常驻 git 习惯 / 偏离 rule 需显式授权 / 用户离场信号 / workflow.decision.request payload 自足）+ 全局占位符（`{username}` 等）+ 文档产出路径变量 + 变量解析优先级 | 手工维护 |
 | `agent-personal.md` | 项目本地 `.agents-personal/` 的检索约定（wiki 何时查、AGENTS.md+rules 何时查）+ 删除护栏（`.agents-personal/` 和 `$USER_VAULT_PATH` 下 rm/mv/覆盖前必须二次确认，不可恢复） | 手工维护 |
 | `agent-karpathy.md` | 12 条工程准则模板（Think Before Coding / Simplicity First / Surgical Changes / Goal-Driven Execution / Fail Loud 等），`agent-about.md` 声明"行为基线遵循本文件" | 手工维护 |
 | `agent-rule-catalog-1.md` | catalog 唯一分片（体量小，当前不需要续片）：扁平表格，每行一条规则（文件相对地址 + description），不再分桶 | **生成物**，源 = 各 `rules/rule-*.md` 顶部 frontmatter |
@@ -74,4 +74,4 @@ scripts/compile.hooks.js 内硬编码的规则数组 (独立链，不读 rules/ 
 
 ## 改动须知
 
-改本目录任何文件都算插件更新，按仓库根 `CLAUDE.md` 规则升级 `.claude-plugin/plugin.json` 的 `version`。手工文件（`agent-about.md` / `agent-personal.md` / `agent-karpathy.md`）直接 Edit；`agent-rule-catalog-N.md` 数字分片改对应 `rules/rule-*.md` 的 frontmatter 后跑 `node scripts/compile.rule.js` 重新生成，不手改。详细操作步骤（含红线清单）见同目录 `AGENTS.md`。
+改本目录任何文件都算插件更新，按仓库根 `CLAUDE.md` 规则升级 `plugin/metadata.json` 的 `version`，并运行 `node scripts/compile.platform.mjs`。手工文件（`agent-about.md` / `agent-personal.md` / `agent-karpathy.md`）直接 Edit；`agent-rule-catalog-N.md` 数字分片改对应 `rules/rule-*.md` 的 frontmatter 后跑 `node scripts/compile.rule.js` 重新生成，不手改。详细操作步骤（含红线清单）见同目录 `AGENTS.md`。

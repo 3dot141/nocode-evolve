@@ -3,6 +3,8 @@ description: .agents-personal/ 的自主维护（stale 检测 / prune / merge / 
 argument-hint: (无参数)
 ---
 
+> 本文写“结构化决策”时，必须把当前步骤的完整问题与 2–3 个互斥选项编译为 `Capability(workflow.decision.request, {"question":"<self-contained current-step question>","options":[{"label":"<option-label>","description":"<impact or tradeoff>"}],"allowFreeform":false})`；示例只展示单项形状，真实调用需带齐本步骤列出的选项，不得回退到平台专属提问工具。
+
 # /personal-dream：.agents-personal/ 自主维护
 
 检查 `.agents-personal/` 与代码实际状态的偏差，提议清理动作。用户确认后执行。
@@ -47,10 +49,10 @@ import('${CLAUDE_PLUGIN_ROOT}/scripts/personal-snapshot.mjs').then(async ({ reso
 | `[]`（有 baseline，diff 为空） | **秒回**：直接输出 `wiki 状态良好，无需维护动作。`，命令结束，不进入 Phase 2/3，也不调 `personal-lint` |
 | 非空数组 | 只对 `changedFiles` 里列出的 wiki 页做深度检查；额外执行下方**跨域.3 — related 路径变化检测**；结果与 `changedFiles` 覆盖的页面合并成本轮候选范围 |
 
-`changedFiles` 非 `null` 时才继续调 `Skill(nocode:personal-lint)` 获取健康状态，然后对**候选范围**（而不是 `wiki/draft/` + `wiki/pages/` 全部）做深度检查：
+`changedFiles` 非 `null` 时才继续调 `Capability(workflow.skill.invoke, {"skill":"personal-lint","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})` 获取健康状态，然后对**候选范围**（而不是 `wiki/draft/` + `wiki/pages/` 全部）做深度检查：
 
 对候选范围每页：
-1. 读 frontmatter（created、last_updated、maturity、related、sources）
+1. 用 `Capability(personal-knowledge.page.read, {"sessionId":"<current-session-id>","path":"<wiki-page-path>"})` 读页面及 frontmatter（created、last_updated、maturity、related、sources）
 2. 检查 `related` 里的代码路径 → 该路径是否仍存在（`test -e <path>`）
 3. 抽样 Read 关键 related 文件，比对页面描述 vs 代码现状（是否已大幅变化）
 4. 检查与其他页面的主题重叠度（title + tags + description 相似性）
@@ -74,7 +76,7 @@ import('${CLAUDE_PLUGIN_ROOT}/scripts/personal-snapshot.mjs').then(async ({ reso
 
 ### Phase 2: Propose（呈现 + 用户确认）
 
-输出动作表格，用 AskUserQuestion 多选让用户勾选（每个 option 自带「编号 + 动作 + 对象」，不依赖上方表格渲染——工具调用间文本可能被吞）：
+输出动作表格，用 结构化决策 多选让用户勾选（每个 option 自带「编号 + 动作 + 对象」，不依赖上方表格渲染——工具调用间文本可能被吞）：
 
 ```
 personal-dream 维护建议：
@@ -97,9 +99,9 @@ personal-dream 维护建议：
 
 - **prune**：删除 draft 文件。`.agents-personal/` 删除护栏生效——需二次确认（回显路径 + 原因 + 影响）
 - **stale**：在页面 body 顶部（title 下方）加 `> ⚠ stale: related 路径 X, Y 已不存在（dream 260626 标注）`。maturity 不改
-- **merge**：Read 两页 → 融合内容到保留页 → 删除被合并页（走删除护栏） → 更新引用
+- **merge**：通过 `personal-knowledge.page.read` 读取两页 → 融合内容到保留页 → 删除被合并页（走删除护栏） → 更新引用
 - **promote**：调 personal-distill 的 promote 流程（draft → pages，删除 draft 原文件）
-- **archive**：AskUserQuestion 二选——标 superseded 保留 / 删除。标 superseded 不走删除护栏，删除走
+- **archive**：结构化决策 二选——标 superseded 保留 / 删除。标 superseded 不走删除护栏，删除走
 
 **Baseline 前移**（只要执行到了这一步——即 Phase 1 判定为"首次运行"或"有变化"，不是"秒回"提前退出——处理完就前移，不区分是首次全量还是增量有变化）：
 

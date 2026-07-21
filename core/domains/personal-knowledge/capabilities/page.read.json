@@ -1,0 +1,30 @@
+{
+  "id": "personal-knowledge.page.read",
+  "domain": "personal-knowledge",
+  "inputSchema": {
+    "type": "object",
+    "required": [
+      "sessionId",
+      "path"
+    ],
+    "properties": {
+      "sessionId": {
+        "type": "string"
+      },
+      "path": {
+        "type": "string"
+      }
+    },
+    "additionalProperties": false
+  },
+  "outputSchema": "contracts/page-read-result.schema.json",
+  "fallbackOn": "never",
+  "platforms": {
+    "claude": {
+      "primary": "project-wiki"
+    },
+    "codex": {
+      "primary": "project-wiki"
+    }
+  }
+}

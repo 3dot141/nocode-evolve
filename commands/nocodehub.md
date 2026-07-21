@@ -24,8 +24,8 @@ argument-hint: <sub-action> [args]
 
 | 子动作 | 做什么 | 转发到 | 独立命令 |
 |---|---|---|---|
-| `write` | 新增/优化 plugin rule 或 skill | `Skill(nocode:plugin-distill)` | `/plugin-distill` |
-| `dream` | 插件仓库自维护巡检（客观漂移+边界符合性） | `Skill(nocode:plugin-dream)` | `/plugin-dream` |
+| `write` | 新增/优化 plugin rule 或 skill | `Capability(workflow.skill.invoke, {"skill":"plugin-distill","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})` | `/plugin-distill` |
+| `dream` | 插件仓库自维护巡检（客观漂移+边界符合性） | `Capability(workflow.skill.invoke, {"skill":"plugin-dream","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})` | `/plugin-dream` |
 | `status` | 概览当前插件健康状态 | 内联执行（见下方） | — |
 
 ## 执行
@@ -52,12 +52,12 @@ argument-hint: <sub-action> [args]
 
 内联执行，输出插件当前状态概览：
 
-1. 读 `.claude-plugin/plugin.json` 的 `version`（精确）
+1. 读 `plugin/metadata.json` 的 `version`（精确）
 2. 统计 `rules/rule-*.md` 文件数（精确，rule 数）
 3. 统计 `skills/*/SKILL.md` 数量（精确，skill 数）
 4. 跑 `node scripts/vendor-sync.mjs --check`（展示级，人工核验）
 5. 跑 `node --test 'hooks/*.test.mjs'`（展示级，测试通过/失败数）
-6. 跑 `node scripts/compile.rule.js --check` + `node scripts/compile.hooks.js --check`（展示级，漂移状态）
+6. 跑 `node scripts/compile.rule.js --check` + `node scripts/compile.hooks.js --check` + `node scripts/compile.platform.mjs --check`（展示级，漂移状态）
 
 输出格式：
 

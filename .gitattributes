@@ -1,0 +1,2 @@
+# Generated platform artifacts preserve source bytes; lint whitespace at source.
+plugins/** -whitespace

@@ -1,0 +1,7 @@
+{
+  "$id": "personal-knowledge.snapshot-result",
+  "type": "object",
+  "required": ["created", "commit"],
+  "properties": { "created": { "type": "boolean" }, "commit": { "type": ["string", "null"] } },
+  "additionalProperties": false
+}

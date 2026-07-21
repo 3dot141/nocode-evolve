@@ -18,7 +18,7 @@
 ## 改手工文件（about / personal / karpathy）
 
 1. 直接 Edit 目标文件。
-2. 改完必须升级 `.claude-plugin/plugin.json` 的 `version`——`model/` 整个目录都在插件 SessionStart 加载范围内，任何改动都算插件更新（仓库根 `CLAUDE.md` 规则 2，按 SemVer：patch=文案修订，minor=新增行为条款，major=语义反转）。纯文档/元数据修订除外。
+2. 改完必须升级 `plugin/metadata.json` 的 `version` 并运行 `node scripts/compile.platform.mjs`——`model/` 整个目录都在平台发布物的 SessionStart 加载范围内，任何改动都算插件更新（仓库根 `CLAUDE.md` 规则 2，按 SemVer：patch=文案修订，minor=新增行为条款，major=语义反转）。纯文档修订除外。
 3. 完成后 `git status` / `git diff` 复核，创建 commit（不要自动 push，commit 后问用户是否需要 push）。
 
 ## 改路由规则（agent-rule-catalog-N.md 数字分片）

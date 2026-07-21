@@ -1,0 +1,36 @@
+{
+  "$id": "workspace.domain-error",
+  "type": "object",
+  "required": [
+    "code",
+    "capability",
+    "provider",
+    "retryable",
+    "message",
+    "detailsRef"
+  ],
+  "properties": {
+    "code": {
+      "type": "string"
+    },
+    "message": {
+      "type": "string"
+    },
+    "capability": {
+      "type": "string"
+    },
+    "provider": {
+      "type": "string"
+    },
+    "retryable": {
+      "type": "boolean"
+    },
+    "detailsRef": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  },
+  "additionalProperties": false
+}

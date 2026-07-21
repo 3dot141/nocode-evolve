@@ -21,9 +21,10 @@
 # scripts/compile.hooks.js, 与本链无关.
 set -euo pipefail
 
-PLUGIN_ROOT="${CLAUDE_PLUGIN_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}"
+PLUGIN_ROOT="${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}}"
 PROJECT_DIR="${CLAUDE_PROJECT_DIR:-$PWD}"
 SEG="${1:-}"
+CHUNK="${2:-1}"
 
 # segment → 文件 映射 (单一来源)
 seg_file() {
@@ -127,17 +128,15 @@ fi
 _REF="${NOCODE_SKILL_REF:-${PLUGIN_ROOT}/skills/references}"
 content="${header}"$'\n'"$(sed "s|\${CLAUDE_PLUGIN_ROOT}|${PLUGIN_ROOT}|g; s|\${NOCODE_SKILL_REF}|${_REF}|g" "$file")"
 
-if command -v jq >/dev/null 2>&1; then
-  printf '%s' "$content" \
-    | jq -Rs '{hookSpecificOutput:{hookEventName:"SessionStart",additionalContext:.}}'
+budget="${NOCODE_CONTEXT_BUDGET_FILE:-__NOCODE_CONTEXT_BUDGET__}"
+if [ "$SEG" = "project" ]; then
+  mode="dynamic"
+  source_name="${file}"
 else
-  CONTENT="$content" python3 - <<'PY'
-import json, os
-print(json.dumps({
-    "hookSpecificOutput": {
-        "hookEventName": "SessionStart",
-        "additionalContext": os.environ["CONTENT"],
-    }
-}, ensure_ascii=False))
-PY
+  mode="static"
+  source_name="nocode/${rel}"
 fi
+
+printf '%s' "$content" \
+  | node "${PLUGIN_ROOT}/scripts/lib/context-budget.mjs" "$mode" "$budget" "$source_name" "$CHUNK" \
+  | node "${PLUGIN_ROOT}/hooks/session-context.mjs"

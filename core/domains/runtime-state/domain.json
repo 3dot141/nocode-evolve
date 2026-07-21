@@ -1,0 +1,33 @@
+{
+  "id": "runtime-state",
+  "capabilities": [
+    "capabilities/session.open.json",
+    "capabilities/session.close.json",
+    "capabilities/execution.create.json",
+    "capabilities/execution.read.json",
+    "capabilities/execution.recover.json",
+    "capabilities/execution.update.json",
+    "capabilities/execution.cleanup.json",
+    "capabilities/handoff.open.json",
+    "capabilities/handoff.complete.json",
+    "capabilities/handoff.abandon.json",
+    "capabilities/handoff.status.json",
+    "capabilities/plan.create.json",
+    "capabilities/plan.read.json",
+    "capabilities/plan.update.json",
+    "capabilities/cleanup.json"
+  ],
+  "contracts": [
+    "contracts/session-state.schema.json",
+    "contracts/execution-state.schema.json",
+    "contracts/execution-private.schema.json",
+    "contracts/handoff.schema.json",
+    "contracts/handoff-state.schema.json",
+    "contracts/plan-state.schema.json",
+    "contracts/domain-error.schema.json"
+  ],
+  "providers": [
+    "providers/claude-plugin-data/provider.json",
+    "providers/codex-plugin-data/provider.json"
+  ]
+}

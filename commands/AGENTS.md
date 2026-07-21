@@ -1,6 +1,6 @@
 # commands/ — Agent 工作指南
 
-本目录是 Claude Code 插件 `nocode` 的 slash command 定义目录。每个 `.md` 文件对应一个 `/<文件名>` 命令，frontmatter 里的 `description`（可选 `argument-hint`）决定它是否出现在可用命令列表里、以及怎么展示。子目录 `sow-reference/` 是 `/sow` 专属的 Python 辅助脚本。
+本目录是 `nocode` 的入口 Skill 定义单源。Claude/Codex 发布物都由 adapter 把每个未排除的入口 `.md` 编译成同名 `skills/<name>/SKILL.md`；源码不再直接发布为原生 `commands/`。frontmatter 里的 `description` 和可选 `argument-hint` 会进入生成的 Skill。子目录 `sow-reference/` 的运行文件会生成到 `skills/sow/scripts/`，测试不发布。
 
 在本目录新增/修改文件前，先读完本文件的边界约束。
 
@@ -10,37 +10,37 @@
 
 | 模式 | 命名 | 含义 | 本目录现存 | 模式边界（硬约束） |
 |---|---|---|---|---|
-| `*hub` | 领域名 + hub（无连字符） | 聚合入口：flat 意图分发（**角色**，可由 command 或 skill 承载） | command 形态：`nocodehub` / `personalhub` / `projecthub`；skill 形态：`skills/larkhub/`（见下） | **只转发，不写业务逻辑**：文件内容只能是「解析子动作 → 路由表 → 转发 `Skill()`」，或对纯只读统计（如 `status` 子动作）内联执行几行查询/展示代码。任何整合判断、校验分支、写入协议都必须留在被转发的 Skill/命令里，不要往 hub 文件里塞。`plugin-dream.md` 已把 hub「只转发」检测提为跨 command/skill 的通用项（按 `*hub` 命名识别），两种载体的越界都会被巡检出来。 |
-| `*flow` | 领域名 + flow（无连字符） | 工作流：阶段制 sequential | **本目录目前没有任何 `*flow` 命令文件** | `devflow` / `pdflow` 只存在于 `skills/`，不要因为看到这两个名字就在 `commands/` 下新建 `devflow.md` / `pdflow.md`。如果确实需要给某个 flow 加一个用户可直接键入的入口，先确认是不是真的该独立成 command，还是复用 `Skill()` 引用即可。 |
+| `*hub` | 领域名 + hub（无连字符） | 聚合入口：flat 意图分发 | 作者态入口：`nocodehub` / `personalhub` / `projecthub`；源码 Skill：`skills/larkhub/` | **只转发，不写业务逻辑**：文件内容只能是「解析子动作 → 路由表 → 转发 `[provider-neutral skill boundary]`」，或对纯只读统计内联执行几行查询/展示代码。任何整合判断、校验分支、写入协议都必须留在被转发的 Skill 里。 |
+| `*flow` | 领域名 + flow（无连字符） | 工作流：阶段制 sequential | **本目录目前没有任何 `*flow` 命令文件** | `devflow` / `pdflow` 只存在于 `skills/`，不要因为看到这两个名字就在 `commands/` 下新建 `devflow.md` / `pdflow.md`。如果确实需要给某个 flow 加一个用户可直接键入的入口，先确认是不是真的该独立成 command，还是复用 `[provider-neutral skill boundary]` 引用即可。 |
 | `xx-yy` | 连字符 | 子 skill / 子命令，domain-action 结构 | 数量最多：`personal-distill` / `personal-dream` / `personal-init` / `personal-lint` / `personal-recall`、`project-distill` / `project-dream` / `project-init` / `project-lint` / `project-recall`、`plugin-distill` / `plugin-dream`、`instinct-export` / `instinct-import` / `instinct-status` | domain 前缀要和它所属的 hub 对应（`personal-*` ↔ `personalhub`，`project-*` ↔ `projecthub`，`plugin-*` ↔ `nocodehub`）。新增某个 domain 下的子命令时，记得同步在对应 hub 的路由表里加一行。 |
 
 **例外——无连字符的顶层通用命令**：`distill` / `sow` / `task` / `recall` / `eval` / `evolve` 六个不挂靠任何 domain 前缀。这是刻意的：它们是用户最高频直接键入的入口（`/distill`、`/sow` 等），不算三类命名惯例的违例。新增顶层命令前先确认它是否真的该独立于所有 domain，而不是该塞进某个 `xx-yy` 或已有 `*hub` 的子动作。
 
 **`*hub` 是载体无关的角色（command 或 skill 均可承载）**：hub 的本质是「聚合入口 + flat 意图分发 + 只转发不写业务逻辑」——这是**角色**约束，与它是 command 还是 skill 无关。Claude Code 已把 command 与 skill 合并为同一套调用机制（二者触发能力、常驻 token 开销等价），「hub 必须是 command」不再是有技术依据的约束。当前 `nocodehub` / `personalhub` / `projecthub` 是 command 形态，`larkhub`（`skills/larkhub/SKILL.md`，260705 从 command 迁入）是 skill 形态——两者都是合法的 hub、都受同一套「只转发」约束。选载体的判据：需要挂 `references/` 等目录特性 → skill 形态，否则 command 单文件更轻。`/plugin-dream` 的 hub「只转发」检测按 `*hub` 命名跨 command/skill 统一覆盖，不因载体不同而漏检。
 
-## command 与 skill 的分工
+## 入口 Skill 与业务 Skill 的分工
 
-command（`.md`，frontmatter 至少含 `description`）是**用户键入的入口**。body 该做的事只有三种：
+本目录的 `.md` 是**入口 Skill 的生成源**，frontmatter 至少含 `description`。body 该做的事只有三种：
 
-1. **转发到 `Skill(nocode:xxx)`**——绝大多数 hub / 操作型 / 巡检型命令走这条（`distill.md`/`personalhub.md`/`projecthub.md`/`nocodehub.md`/`plugin-dream.md`/`plugin-distill.md`/`personal-dream.md`/`personal-distill.md` 等文件里都能看到 `Skill(...)` 调用）。
+1. **转发到 `[provider-neutral skill boundary]`**——绝大多数 hub / 操作型 / 巡检型命令走这条（`distill.md`/`personalhub.md`/`projecthub.md`/`nocodehub.md`/`plugin-dream.md`/`plugin-distill.md`/`personal-dream.md`/`personal-distill.md` 等文件里都能看到 `[provider-neutral skill boundary]` 调用）。
 2. **内联执行简单只读逻辑**——如各 hub 的 `status` 子动作（读文件统计、跑只读检查命令）、`personalhub` 的 `snap` 直接跑 `scripts/personal-snapshot.mjs`。
-3. **遗留例外**：`evolve.md` / `instinct-export.md` / `instinct-import.md` / `instinct-status.md` 直接 shell 出 `skills/continuous-learning-v2/scripts/instinct-cli.py`，不经过 `Skill()`。这是 `continuous-learning-v2` vendor 集成留下的历史写法，**新命令不要模仿**，新增分发一律走 `Skill()`。
+3. **遗留例外**：`evolve.md` / `instinct-export.md` / `instinct-import.md` / `instinct-status.md` 直接 shell 出 `skills/continuous-learning-v2/scripts/instinct-cli.py`，不经过 `[provider-neutral skill boundary]`。这是 `continuous-learning-v2` vendor 集成留下的历史写法，**新命令不要模仿**，新增分发一律走 `[provider-neutral skill boundary]`。
 
-**不要在 command 文件里塞多步业务判断**（整合判断 / 融合规则 / 复杂校验分支等）——那些属于 Skill 内部实现，command 只负责参数解析 + 路由。
+**不要在薄入口里塞多步业务判断**（整合判断 / 融合规则 / 复杂校验分支等）——那些属于业务 Skill，薄入口只负责参数解析 + 路由。
 
-**但要注意一个反直觉的事实**：`distill.md`、`sow.md`、`plugin-dream.md`、`project-dream.md`、`plugin-distill.md`、`personal-dream.md` 等几个文件体量很大、内含完整执行流程——它们既是命令入口，**也直接就是**对应 Skill 的权威实现（仓库里没有为它们建独立的 `skills/<name>/SKILL.md`）。判断方法：如果某个命令在别的 hub 路由表里被写成「转发到 `Skill(nocode:xxx)`」，而 `skills/` 下又找不到同名目录，不代表引用悬空——说明 `xxx` 对应的实现就是这份 `commands/xxx.md` 自己。改动这类文件时，要同时把它当"命令"和"实现"两个身份一起考虑，不要以为只是薄壳转发。
+`distill.md`、`sow.md`、`plugin-dream.md`、`project-dream.md`、`plugin-distill.md`、`personal-dream.md` 等文件体量较大、内含完整执行流程；它们本身就是对应生成 Skill 的权威实现。源码 `skills/` 下找不到同名目录是正常的，adapter 会在两个发布物中生成。
 
 ## 新增/改 command 后升 plugin.json 版本
 
-`commands/` 在 `CLAUDE.md` 规则 2 的范围内——任何命令**功能性内容**的改动都算插件更新，必须在同一个 commit 里升 `.claude-plugin/plugin.json` 的 `version`（新增命令 = minor；文案/bug fix = patch；破坏性改名或语义反转 = major）。
+`commands/` 在 `CLAUDE.md` 规则 2 的范围内——任何命令**功能性内容**的改动都算插件更新，必须在同一个 commit 里升 `plugin/metadata.json` 的 `version` 并重新生成双平台发布物（新增命令 = minor；文案/bug fix = patch；破坏性改名或语义反转 = major）。
 
 **例外**：`commands/AGENTS.md` 和 `commands/README.md` 本身属于纯文档，按 `CLAUDE.md` 末段的豁免条款不需要升版本（但仍要 commit，仍不要自动 push）。
 
 判定关键是"改的是不是会被 Claude Code 当插件命令加载的文件"：
 
-- `commands/*.md`（真正的命令定义）→ 算，需要升版本。
+- `commands/*.md`（入口 Skill 定义源）→ 算，需要升版本。
 - `commands/AGENTS.md`、`commands/README.md` → 不算，纯文档豁免。
-- `commands/sow-reference/*.py` → 是 `sow.md` 通过 `Bash` 调用的辅助脚本，不是 Claude Code 直接加载的命令文件本身；如果改动只是脚本内部实现细节、不改变 `/sow` 的对外行为，可论证为 patch 甚至不升；如果改了行为（新增参数、改了 exit code 语义等），要按影响到命令产出从紧走升版本。判不准时倾向升版本。
+- `commands/sow-reference/*.py` → 编译到两端 `skills/sow/scripts/`；如果改动影响入口行为，按影响升级版本。
 
 ## frontmatter 必须有 description
 
@@ -69,13 +69,13 @@ argument-hint: ...   # 多数命令有，纯占位/无参命令可省略或写 "
 
 - `project-init.md` 是显式 TBD 占位（`description` 里写明"待设计"），当前输出指向 `project-dream` / `project-distill` 作为替代方案；`projecthub.md` 的 `init` 子动作路由同步指向这个占位输出。改 `projecthub.md` 或补齐 `project-init` 设计时，两处要一起改，避免其中一处漂移。
 
-> `eval.md` 曾经是缺 frontmatter 的 vendor 孤儿文件（无法出现在命令列表里），2026-07-03 的 `/plugin-dream` 巡检修复：补齐 frontmatter 并改造为转发 `Skill(nocode:eval-harness)`，不再重复内联 `.claude/evals/` 那套遗留机制。
+> `eval.md` 曾经是缺 frontmatter 的 vendor 孤儿文件（无法出现在命令列表里），2026-07-03 的 `/plugin-dream` 巡检修复：补齐 frontmatter 并改造为转发 `[provider-neutral skill boundary]`，不再重复内联 `.claude/evals/` 那套遗留机制。
 
 ## 反模式
 
 - ❌ 在 `*hub` 文件里写整合判断/校验分支等业务逻辑——越界，应转发给对应 Skill
 - ❌ 在 `commands/` 新建 `xxx-flow.md`——`*flow` 只属于 `skills/`
-- ❌ 新命令模仿 `evolve.md`/`instinct-*.md` 直接 shell 脚本、绕开 `Skill()`——那是历史遗留格式，不是推荐模板
-- ❌ 新增/改命令后忘记同步升 `.claude-plugin/plugin.json` 的 version
+- ❌ 新命令模仿 `evolve.md`/`instinct-*.md` 直接 shell 脚本、绕开 `[provider-neutral skill boundary]`——那是历史遗留格式，不是推荐模板
+- ❌ 新增/改命令后忘记同步升 `plugin/metadata.json` 的 version，或忘记运行 `node scripts/compile.platform.mjs`
 - ❌ 新增命令忘记写 `description` frontmatter——参考 `eval.md` 的下场
 - ❌ 把非 `/sow` 专属的脚本塞进 `sow-reference/`

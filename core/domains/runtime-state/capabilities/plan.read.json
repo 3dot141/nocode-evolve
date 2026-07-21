@@ -1,0 +1,17 @@
+{
+  "id": "state.plan.read",
+  "domain": "runtime-state",
+  "inputSchema": {
+    "type": "object",
+    "required": ["sessionId", "planRef"],
+    "properties": {
+      "sessionId": { "type": "string" },
+      "planRef": { "type": "string" },
+      "provider": { "type": "string" }
+    },
+    "additionalProperties": false
+  },
+  "outputSchema": "contracts/plan-state.schema.json",
+  "fallbackOn": "never",
+  "platforms": { "claude": { "primary": "claude-plugin-data" }, "codex": { "primary": "codex-plugin-data" } }
+}

@@ -1,0 +1,40 @@
+{
+  "id": "design.workspace.create",
+  "domain": "design",
+  "inputSchema": {
+    "type": "object",
+    "required": [
+      "projectRoot",
+      "kind",
+      "name"
+    ],
+    "properties": {
+      "projectRoot": {
+        "type": "string"
+      },
+      "kind": {
+        "enum": [
+          "design-system",
+          "prototype",
+          "document"
+        ]
+      },
+      "name": {
+        "type": "string"
+      }
+    },
+    "additionalProperties": false
+  },
+  "outputSchema": "contracts/design-result.schema.json",
+  "fallbackOn": "manual",
+  "platforms": {
+    "claude": {
+      "primary": "open-design",
+      "fallback": "local-html"
+    },
+    "codex": {
+      "primary": "open-design",
+      "fallback": "local-html"
+    }
+  }
+}

@@ -1,0 +1,74 @@
+{
+  "id": "workflow.decision.request",
+  "domain": "workflow",
+  "inputSchema": {
+    "type": "object",
+    "required": [
+      "question",
+      "options"
+    ],
+    "properties": {
+      "question": {
+        "type": "string"
+      },
+      "options": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "label",
+            "description"
+          ],
+          "properties": {
+            "label": {
+              "type": "string"
+            },
+            "description": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "allowFreeform": {
+        "type": "boolean"
+      }
+    },
+    "additionalProperties": false
+  },
+  "outputSchema": {
+    "type": "object",
+    "properties": {
+      "selectedOption": {
+        "type": "string"
+      },
+      "freeform": {
+        "type": "string"
+      }
+    },
+    "oneOf": [
+      {
+        "required": [
+          "selectedOption"
+        ]
+      },
+      {
+        "required": [
+          "freeform"
+        ]
+      }
+    ],
+    "additionalProperties": false
+  },
+  "fallbackOn": "manual",
+  "platforms": {
+    "claude": {
+      "primary": "claude-control",
+      "fallback": "inline"
+    },
+    "codex": {
+      "primary": "codex-control",
+      "fallback": "inline"
+    }
+  }
+}
