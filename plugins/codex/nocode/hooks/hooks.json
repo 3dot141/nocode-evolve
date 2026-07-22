@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash ./hooks/inject-nocode.sh model-nocode"
+            "command": "bash \"${PLUGIN_ROOT}/hooks/inject-nocode.sh\" model-nocode"
           }
         ]
       }

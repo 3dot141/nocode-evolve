@@ -172,8 +172,9 @@ test('generated hooks retain only model injection and Open Design starts directl
   const codexHooks = JSON.parse(codexTree.get('hooks/hooks.json').toString());
   const codexSessionHooks = codexHooks.hooks.SessionStart[0].hooks;
   assert.equal(codexSessionHooks.length, 1);
-  assert.equal(codexSessionHooks[0].command, 'bash ./hooks/inject-nocode.sh model-nocode');
-  assert.doesNotMatch(codexSessionHooks[0].command, /runtime-entry|codex-plugin-data|session-open|PLUGIN_ROOT/);
+  assert.equal(codexSessionHooks[0].command,
+    'bash "${PLUGIN_ROOT}/hooks/inject-nocode.sh" model-nocode');
+  assert.doesNotMatch(codexSessionHooks[0].command, /runtime-entry|codex-plugin-data|session-open/);
 
   const claudeMcp = JSON.stringify(JSON.parse(claudeTree.get('.mcp.json').toString()));
   const codexMcp = JSON.stringify(JSON.parse(codexTree.get('.mcp.json').toString()));

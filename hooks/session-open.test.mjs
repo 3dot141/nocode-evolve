@@ -119,3 +119,21 @@ test('an unwritable diagnostics path does not turn a successful SessionStart int
   assert.match(JSON.parse(result.stdout).systemMessage, /nocode Capability Bootstrap/);
   assert.equal(readFileSync(join(workspace, '.nocode'), 'utf8'), 'blocks directory creation');
 });
+
+test('generated Codex hook resolves the injector from PLUGIN_ROOT when cwd is the workspace', () => {
+  const pluginRoot = join(REPO_ROOT, 'plugins', 'codex', 'nocode');
+  const hooks = JSON.parse(readFileSync(join(pluginRoot, 'hooks', 'hooks.json'), 'utf8'));
+  const command = hooks.hooks.SessionStart[0].hooks[0].command;
+  assert.equal(command, 'bash "${PLUGIN_ROOT}/hooks/inject-nocode.sh" model-nocode');
+
+  const result = spawnSync(command, {
+    cwd: REPO_ROOT,
+    env: { ...process.env, NOCODE_PLATFORM: 'codex', PLUGIN_ROOT: pluginRoot },
+    input: JSON.stringify({ cwd: REPO_ROOT }),
+    encoding: 'utf8',
+    shell: true,
+  });
+
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(JSON.parse(result.stdout).systemMessage, /nocode Capability Bootstrap/);
+});
