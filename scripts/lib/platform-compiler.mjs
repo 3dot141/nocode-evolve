@@ -264,8 +264,10 @@ export function buildExpectedTree({ root, metadata, adapter, resolution, registr
       const args = [
         `${rootVariable}/skills/using-nocode/scripts/providers/open-design/scripts/launch.mjs`,
       ];
+      const server = { command: 'node', args };
+      if (adapter.platform === 'codex') server.startup_timeout_sec = 60;
       entries.push(['.mcp.json', Buffer.from(`${JSON.stringify({
-        mcpServers: { 'open-design': { command: 'node', args } },
+        mcpServers: { 'open-design': server },
       }, null, 2)}\n`)]);
     }
     for (const [relative, content] of renderDomainReferences({

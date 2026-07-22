@@ -101,6 +101,10 @@ codex plugin add nocode@nocode-market
 
 Codex 只会加载 `plugins/codex/nocode/`，不会读取 Claude 发布物或 Claude-only Hook 协议。
 
+安装或升级后需要整体重启 Codex App；如果通过 remote-control 使用 Codex，则重启对应 daemon / app-server，然后再新建 Session。已运行的进程可能继续持有旧版插件注册表、Skill 根目录和 Hook 配置，仅新建对话或 Session 不保证重新加载成功。
+
+重启前先保存当前工作，因为连接会中断。重启后应确认 SessionStart、Skills 和 Hook 均来自新版本；如果日志或报错仍引用 `~/.codex/plugins/cache/.../nocode/<旧版本>/`，说明旧进程尚未完成重载。
+
 ### Open Design
 
 Claude 与 Codex 统一使用 Open Design 作为 Design domain 的主 provider。安装 nocode 时，发布物内置的 `.mcp.json` 会通过本平台 runtime entry 启动 Open Design adapter；配置不写用户名绝对路径，也不会把 Claude/Codex 的插件数据目录混用。

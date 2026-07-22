@@ -352,6 +352,7 @@ test('Codex adapter builds shared entry skills and agent references', () => {
   assert.equal(tree.has('skills/sow/scripts/test_script.py'), false);
   const codexMcp = tree.get('.mcp.json').toString();
   assert.match(codexMcp, /skills\/using-nocode\/scripts\/providers\/open-design\/scripts\/launch\.mjs/);
+  assert.equal(JSON.parse(codexMcp).mcpServers['open-design'].startup_timeout_sec, 60);
   assert.doesNotMatch(codexMcp, /skills\/using-nocode\/scripts\/runtime-entry\.mjs/);
   assert.doesNotMatch(codexMcp, /providers\/codex-plugin-data\/scripts\/entry\.mjs/);
   assert.doesNotMatch(codexMcp, /\/Users\//);

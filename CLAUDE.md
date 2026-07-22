@@ -66,3 +66,12 @@ SKILL.md 正文与私有 `references/` 只允许引用两类东西：**其它 Sk
 引用自己 `references/` 里的文件一律用**相对路径**（`references/xxx.md`），不要写成 `{CLAUDE_PLUGIN_ROOT}/skills/<skill-name>/references/xxx.md` 这类绝对路径——相对路径不写死这个 skill 在插件里的位置，skill 目录整体搬家时内部引用一个字都不用改。
 
 一份参考材料该放共享 `skills/references/` 还是某个 skill 自己的 `references/`，看**内容是否已归属某个具体 skill 的领域**（存在一个 skill 本身就是它的方法论/流程底座，例如 `reviewing`）：归属某个 skill → 放该 skill 自己的 `references/`，其它 skill 要用只能点名 `Skill(nocode:<name>)` 调用，不直接指路它的 `references/`（哪怕知道确切路径也不行）；真正跨领域、没有单一归属 skill 的材料才留在共享 `skills/references/`，用 `{NOCODE_SKILL_REF}/xxx.md` 直接引用。
+
+### 7. Codex 插件升级后必须整体重启
+
+执行 `codex plugin add nocode@nocode-market` 安装或升级插件后，正在运行的 Codex App / remote-control daemon 可能仍持有旧版插件注册表、Skill 根目录和 Hook 配置。仅新建对话或 Session 不保证完成重新加载。
+
+- 先保存并结束当前工作，再整体重启 Codex App；使用 remote-control 时重启对应 daemon / app-server。
+- 重启完成后新建 Session，确认 SessionStart、Skills 和 Hook 均来自新版本。
+- 如果日志或错误仍引用 `~/.codex/plugins/cache/.../nocode/<旧版本>/`，说明运行进程尚未完成重载。
+- 整体重启会断开当前连接，不要在尚有未保存工作时执行。
