@@ -1,6 +1,6 @@
 ---
 name: strategic-compact
-description: Reference/setup guide for the optional suggest-compact.sh PreToolUse hook, which suggests manual /compact at logical task boundaries instead of relying on arbitrary auto-compaction. Passive, hook-driven mechanism — not something the model performs by loading this skill in conversation, and not registered by default (opt-in, requires manual setup). Use when the user asks how strategic/manual compaction works, wants to enable or configure the suggest-compact.sh hook, or asks why auto-compaction loses context mid-task.
+description: Use when explaining or configuring the optional manual-compaction suggestion hook or diagnosing auto-compaction context loss. Not for performing compaction or claiming the unregistered hook is active.
 disable-model-invocation: true
 ---
 

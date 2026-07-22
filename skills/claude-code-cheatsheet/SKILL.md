@@ -1,6 +1,6 @@
 ---
 name: claude-code-cheatsheet
-description: Use when you need to know what Claude Code itself provides and how it behaves — its config (CLI flags, settings.json, env vars), built-in slash commands, built-in tools/functions (CronCreate, Workflow, Monitor, Agent/fork, Task family, etc.), and runtime mechanics (parallel vs serial tool calls, permission classifier, context compaction, prompt cache). Also use when unsure whether something is config or a runtime capability, which built-in tool fits a job, or before declaring a background task/subagent done. Not for this plugin's own rules or general coding unrelated to the harness.
+description: Use for Claude Code configuration, CLI flags, built-in commands/tools, agent/task behavior, permissions, compaction, or prompt-cache mechanics. Not for nocode plugin rules or general coding.
 ---
 
 # Claude Code Cheatsheet — 默认能力速查表

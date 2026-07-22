@@ -1,6 +1,6 @@
 ---
 name: dev-plan
-description: Use when you have defined goals and need to break work into tasks. Use when devflow routes to Plan stage, or when the user says "写计划/拆任务/写实现/plan it out". Use when a task feels too large to start or when parallel work is possible. Not for writing code (use dev-build), clarifying unclear requirements (use dev-define), interaction breakdown/交互拆解 (use pd-ix), or meta-questions about what the agent intends to do ("你准备怎么做/接下来打算做什么/让我确认一下") — answer in plain text and wait for confirmation instead.
+description: Use to turn a confirmed goal into implementation tasks or when devflow enters Plan. Not for coding, unclear requirements, product interaction design, or simple questions about intended next steps.
 ---
 
 > 本文写“结构化决策”时，必须把当前步骤的完整问题与 2–3 个互斥选项编译为 `Capability(workflow.decision.request, {"question":"<self-contained current-step question>","options":[{"label":"<option-label>","description":"<impact or tradeoff>"}],"allowFreeform":false})`；示例只展示单项形状，真实调用需带齐本步骤列出的选项，不得回退到平台专属提问工具。

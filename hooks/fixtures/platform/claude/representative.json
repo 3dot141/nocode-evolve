@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
   "files": {
-    "skills/devflow/SKILL.md": "2f1407fbf546394fbc1e33e4cb546bbb4fe578c4f166729463822962a6f31641",
-    "skills/dev-build/SKILL.md": "de41fda04354153e46fd86245a50cd14ce8b78fe178a25705c57e665294cc341",
-    "skills/dev-review/SKILL.md": "670899f021f066638cc1b3334ba811520ae699a3972adbe0c2f20b3ac94fc665",
+    "skills/devflow/SKILL.md": "3cbfce01fa31b7b3feda53e5b1512c80b869a2f26362816701ddd8c1968c5016",
+    "skills/dev-build/SKILL.md": "8466048a4b6866201a86485b2bbea21332c79796ac937a86d09ad3a8186c5280",
+    "skills/dev-review/SKILL.md": "560a4d87d9ffd9b8c56da3dd82bb7b9936ec825d1e487edf4fae7b7ed2e86c31",
     "rules/rule-codex-review.md": "24c2ef126058a766ce35a20ae56694c910e080700631278a2014e471680786b7",
     "hooks/hooks.json": "fcdabbf8802b9367e867957cd4ed862139e85d2c9e6c79dbd65836ec9e33617e",
     "hooks/pretooluse-guard.mjs": "1b76e7f532b0d438d891f9db85f204fa99f6983d82e13ce6166d88742248e99b"

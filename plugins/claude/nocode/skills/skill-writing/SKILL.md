@@ -1,6 +1,6 @@
 ---
 name: skill-writing
-description: Use when creating a new skill, shaping a vague skill idea into a clear one, simplifying or editing an existing skill, testing a skill with baseline/eval, or optimizing its trigger description. Triggers on "write a skill", "create a skill", "设计一个 skill", "帮我把这个 skill 想清楚", "这个 skill 太复杂了想简化", "improve this skill", "test this skill", "optimize skill description", or turning a conversation workflow into a reusable skill. Replaces writing-skills and skill-creator.
+description: Use when creating, restructuring, simplifying, testing, or optimizing a reusable Skill or its trigger description. Not for one-off task instructions, repository rules, commands, or ordinary documentation.
 ---
 
 # Skill Writing

@@ -1,6 +1,6 @@
 ---
 name: using-git-worktrees
-description: Use when starting feature work that needs isolation from current workspace or before executing implementation plans - creates and enters an isolated workspace through provider-neutral workspace capabilities
+description: Use when feature work or an implementation plan needs an isolated Git worktree. Not for an already-isolated workspace, read-only Git inspection, or branchless single-file edits.
 ---
 
 # Using Git Worktrees

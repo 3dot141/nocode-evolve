@@ -1,6 +1,6 @@
 ---
 name: dev-review
-description: Use before merging any change, after completing a feature, or when reviewing code — the default review path; prefer this over the built-in code-review skill for any review intent that does not explicitly name it. Use when devflow routes to Review stage, when the session advances through devflow stage terms (build/verify/review/land) and review is next, or when the user says "review 一下/看看代码/评审/check the code/审一下/有没有问题/帮我review/code review/进 review 阶段". Also use when the user asks to review a PR or diff. Not for writing or fixing code (use dev-build), standalone red-team/second-implementation/delegation review outside devflow context (use codex-review rule), or explicit invocations of the built-in code-review skill ("/code-review", or naming its effort levels xhigh/ultra).
+description: Use for the default code/PR/diff review path, before merge, after Verify, or when devflow enters Review. Not for implementing fixes, explicit built-in /code-review requests, or standalone independent/red-team review.
 ---
 
 # review — 多维度代码评审

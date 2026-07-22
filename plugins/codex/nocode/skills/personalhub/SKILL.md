@@ -21,7 +21,7 @@ argument-hint: <sub-action> [args]
 | `search` | 检索 .agents-personal/ 内容（wiki + rules + AGENTS.md 各分节） | `Capability(workflow.skill.invoke, {"skill":"personal-recall","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})` | `/personal-recall` |
 | `check` | 健康检查 | `Capability(workflow.skill.invoke, {"skill":"personal-lint","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})` | `/personal-lint` |
 | `tidy` | 自主维护（stale/prune/merge/promote） | `Capability(workflow.skill.invoke, {"skill":"personal-dream","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})` | `/personal-dream` |
-| `snap` | 手动触发备份快照 | `node "${PLUGIN_ROOT}/scripts/personal-snapshot.mjs" --json` | — |
+| `snap` | 手动触发备份快照 | `Capability(workflow.skill.invoke, {"skill":"personal-snapshot","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})` | `/personal-snapshot` |
 | `status` | 概览当前状态 | 内联执行（见下方） | — |
 
 ## 执行
@@ -44,19 +44,9 @@ argument-hint: <sub-action> [args]
   status   概览当前状态
 ```
 
-### init / write / search / check / tidy
+### init / write / search / check / tidy / snap
 
 调对应的 `Skill()`，把剩余参数传进去。
-
-### snap
-
-直接跑脚本：
-
-```bash
-node "${PLUGIN_ROOT}/scripts/personal-snapshot.mjs" --json
-```
-
-输出快照结果（committed / no_changes / error）。
 
 ### status
 

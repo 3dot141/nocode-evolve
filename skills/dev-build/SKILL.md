@@ -1,6 +1,6 @@
 ---
 name: dev-build
-description: Use when executing implementation tasks from a plan, writing new code, or implementing features. Use when devflow routes to Build stage, or when the user says "开始实现/写代码/执行计划/build it/动手/实现这个功能/把X加上/继续写/implement". Also use when resuming implementation work after a break or switching back from debugging. Not for explaining code or answering questions directly, tasks with no plan or goal (use dev-define), or scope too large like whole-project refactors (use dev-plan to break down).
+description: Use to implement confirmed tasks, resume coding, or enter devflow Build. Not for explanation-only requests, work without a defined goal, or scopes that still need decomposition.
 ---
 
 # build — 读 plan 执行方式，走对应协议

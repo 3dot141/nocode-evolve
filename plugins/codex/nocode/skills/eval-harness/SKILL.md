@@ -1,6 +1,6 @@
 ---
 name: eval-harness
-description: "Formal evaluation framework for Claude Code sessions implementing eval-driven development (EDD)…"
+description: "Use to define, run, check, or report capability/regression evals, graders, EDD, or pass@k."
 tools: Read, Write, Edit, Bash, Grep, Glob
 ---
 

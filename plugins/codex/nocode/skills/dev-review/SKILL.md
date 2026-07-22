@@ -1,6 +1,6 @@
 ---
 name: dev-review
-description: "Use before merging any change, after completing a feature, or when reviewing code — the default…"
+description: "Use for the default code/PR/diff review path, before merge, after Verify, or when devflow enter…"
 ---
 
 # review — 多维度代码评审

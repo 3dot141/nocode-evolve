@@ -1,6 +1,6 @@
 ---
 name: agents-launcher
-description: "本仓 fx-data-agents 三服务 (web :10001 / agents Hono :8070 / server Spring :8081) 的本地 dev 启停编排."
+description: "Use when starting, stopping, restarting, or checking the local fx-data-agents web/agents/server…"
 ---
 
 # agents-launcher — 本地 dev 服务启停

@@ -1,6 +1,6 @@
 ---
 name: dev-verify
-description: "Use when Build is complete and you need to verify the implementation works end-to-end."
+description: "Use after Build, before completion claims, or in devflow Verify to collect fresh end-to-end evi…"
 ---
 
 # verify — 证明它真的能用

@@ -1,6 +1,6 @@
 ---
 name: skill-writing
-description: "Use when creating a new skill, shaping a vague skill idea into a clear one, simplifying or edit…"
+description: "Use when creating, restructuring, simplifying, testing, or optimizing a reusable Skill or its t…"
 ---
 
 # Skill Writing

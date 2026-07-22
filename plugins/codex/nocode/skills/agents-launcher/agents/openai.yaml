@@ -1,5 +1,5 @@
 interface:
   display_name: "agents-launcher"
-  short_description: "本仓 fx-data-agents 三服务 (web :10001 / agents Hono :8070 / server Spring :8081) 的本…"
+  short_description: "Use when starting, stopping, restarting, or checking the local fx-data-agents w…"
 policy:
   allow_implicit_invocation: false

@@ -1,6 +1,6 @@
 ---
 name: dev-verify
-description: Use when Build is complete and you need to verify the implementation works end-to-end. Use when devflow routes to Verify stage, or when the user says "验证一下/跑一下看看/确认能用/verify/测一下/能跑吗/是不是好了/验收/check it works". Also use before claiming any work is done — evidence before assertions. Not for inferring correctness by reading code (run it and collect evidence instead), or writing tests during implementation (use dev-build).
+description: Use after Build, before completion claims, or in devflow Verify to collect fresh end-to-end evidence. Not for code-reading inference or writing implementation tests.
 ---
 
 # verify — 证明它真的能用

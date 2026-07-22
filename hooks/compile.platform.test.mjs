@@ -385,7 +385,7 @@ test('Codex adapter builds shared entry skills and agent references', () => {
   assert.doesNotMatch(launcher, /disable-model-invocation/);
   assert.match(
     tree.get('skills/agents-launcher/agents/openai.yaml').toString(),
-    /interface:\n  display_name: "agents-launcher"\n  short_description: "本仓 fx-data-agents.+"\npolicy:\n  allow_implicit_invocation: false/,
+    /interface:\n  display_name: "agents-launcher"\n  short_description: "Use when starting, stopping, restarting, or checking the local fx-data-agents.+"\npolicy:\n  allow_implicit_invocation: false/,
   );
   for (const nested of ['decision', 'writing']) {
     assert.match(

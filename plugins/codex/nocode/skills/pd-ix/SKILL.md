@@ -1,6 +1,6 @@
 ---
 name: pd-ix
-description: "Use when the user wants to design the interaction structure of a product after the PRD is defin…"
+description: "Use after PRD for interaction design, information architecture, page flows, or an .ix.md specif…"
 ---
 
 # pd-ix — 交互设计

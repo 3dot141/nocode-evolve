@@ -1,6 +1,6 @@
 ---
 name: dev-build
-description: "Use when executing implementation tasks from a plan, writing new code, or implementing features."
+description: "Use to implement confirmed tasks, resume coding, or enter devflow Build."
 ---
 
 # build — 读 plan 执行方式，走对应协议

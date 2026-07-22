@@ -1,6 +1,6 @@
 ---
 name: pd-research
-description: "Use when the user wants to explore a problem space before committing to a solution."
+description: "Use for product discovery, market/competitor research, or exploring a vague problem before scop…"
 ---
 
 > 本文写“结构化决策”时，必须把当前步骤的完整问题与 2–3 个互斥选项编译为 `Capability(workflow.decision.request, {"question":"<self-contained current-step question>","options":[{"label":"<option-label>","description":"<impact or tradeoff>"}],"allowFreeform":false})`；示例只展示单项形状，真实调用需带齐本步骤列出的选项，不得回退到平台专属提问工具。

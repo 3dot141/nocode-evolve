@@ -1,6 +1,6 @@
 ---
 name: pd-vd
-description: "Use when the user wants to design the visual direction and produce prototypes after interaction…"
+description: "Use after pd-ix for visual direction, design systems, high-fidelity prototypes, or prototype it…"
 ---
 
 > 本文写“结构化决策”时，必须把当前步骤的完整问题与 2–3 个互斥选项编译为 `Capability(workflow.decision.request, {"question":"<self-contained current-step question>","options":[{"label":"<option-label>","description":"<impact or tradeoff>"}],"allowFreeform":false})`；示例只展示单项形状，真实调用需带齐本步骤列出的选项，不得回退到平台专属提问工具。
@@ -344,15 +344,7 @@ PRD 路径覆盖的状态必须由下面两个矩阵聚合得出，不能单独�
 
 ### 5b. Playwright 渲染验证（两条线都做）
 
-基于审批通过的测试方案，写 `interactions.json` 并用 `prototype-verify.mjs` 执行。Open Design 线先用 `Capability(design.artifact.read, {"artifactRef":{"provider":"open-design","workspace":{"type":"project","ref":"<workspace-ref>"},"artifact":{"kind":"prototype","localPath":"<local-path>","previewUrl":null},"degraded":false,"degradedFrom":null,"warnings":[]}})` 按完整 receipt 物化本地文件；需要人工预览时用 `Capability(design.preview.open, {"artifactRef":{"provider":"open-design","workspace":{"type":"project","ref":"<workspace-ref>"},"artifact":{"kind":"prototype","localPath":"<local-path>","previewUrl":null},"degraded":false,"degradedFrom":null,"warnings":[]}})`。
-
-```bash
-# Phase 1：基础截图
-node scripts/prototype-verify.mjs <prototype-dir>
-
-# Phase 2：交互验证（selector 统一用 data-testid）
-node scripts/prototype-verify.mjs <prototype-dir> --interactions interactions.json
-```
+基于审批通过的测试方案写 `interactions.json`，再调用 `Capability(workflow.skill.invoke, {"skill":"prototype-verify","arguments":{"request":"<prototype-dir> [--interactions interactions.json]","context":{"stage":"pd-vd/Step 5b","restate":"<approved-test-plan>","artifacts":["<materialized-prototype-dir>","<interactions-json-if-present>"],"constraints":["selectors use data-testid"],"planRef":"<current-planRef-or-omit>","decision":"test plan approved"}}})`。Open Design 线先用 `Capability(design.artifact.read, {"artifactRef":{"provider":"open-design","workspace":{"type":"project","ref":"<workspace-ref>"},"artifact":{"kind":"prototype","localPath":"<local-path>","previewUrl":null},"degraded":false,"degradedFrom":null,"warnings":[]}})` 按完整 receipt 物化本地文件；需要人工预览时用 `Capability(design.preview.open, {"artifactRef":{"provider":"open-design","workspace":{"type":"project","ref":"<workspace-ref>"},"artifact":{"kind":"prototype","localPath":"<local-path>","previewUrl":null},"degraded":false,"degradedFrom":null,"warnings":[]}})`。
 
 产出：`verify-output/screenshots/` + `verify-report.json`。errors > 0 → 修原型后重跑。
 
@@ -431,7 +423,7 @@ verify-report.json errors = 0 才过 Gate。
 1. `.vd.md` → `{pd_vd_output}`（按 `references/vd-doc-template.md`）
 2. 原型：Open Design 线记 projectId（原型项目）+ dsProjectId（DS 项目）/ HTML → `{pd_vd_output}` 同目录下 `{topic}.prototype.html`；样张 `styleguide.html` 同目录保存
 3. **回流检查**：原型阶段新产生的设计决策（行为补充、时序参数）已登记——行为类回 `.ix.md`「下游澄清回流」节，视觉类落 `.vd.md`「原型阶段补充决策」节；原型内 token 名与 Step 3 冻结表逐一一致（**禁改名**，下游 devflow 按名继承）
-4. 提示："进 devflow 以 PRD + `.ix.md` + `.vd.md` 为输入。"
+4. 提示用户进入 devflow；用户确认后调用 `Capability(workflow.skill.invoke, {"skill":"devflow","arguments":{"request":"以 PRD + .ix.md + .vd.md 进入开发流","context":{"stage":"pd-vd/Step 6 handoff","restate":"<confirmed-product-and-design-scope>","artifacts":["<absolute-prd-path>","<absolute-ix-path>","<absolute-vd-path>","<prototype-artifact>"],"constraints":["preserve frozen token names"],"planRef":"<current-planRef-or-omit>","decision":"user approved devflow handoff"}}})`。
 
 **Exit Gate:**
 - [ ] `.vd.md` + 原型 + 样张已保存

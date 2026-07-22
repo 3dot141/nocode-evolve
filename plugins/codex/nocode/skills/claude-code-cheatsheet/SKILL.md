@@ -1,6 +1,6 @@
 ---
 name: claude-code-cheatsheet
-description: "Use when you need to know what Claude Code itself provides and how it behaves — its config (CLI…"
+description: "Use for Claude Code configuration, CLI flags, built-in commands/tools, agent/task behavior, per…"
 ---
 
 # Claude Code Cheatsheet — 默认能力速查表

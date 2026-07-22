@@ -1,5 +1,5 @@
 interface:
   display_name: "strategic-compact"
-  short_description: "Reference/setup guide for the optional suggest-compact.sh PreToolUse hook, whic…"
+  short_description: "Use when explaining or configuring the optional manual-compaction suggestion ho…"
 policy:
   allow_implicit_invocation: false

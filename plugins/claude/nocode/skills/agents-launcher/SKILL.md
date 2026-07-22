@@ -2,7 +2,7 @@
 name: agents-launcher
 disable-model-invocation: true
 description: >-
-  本仓 fx-data-agents 三服务 (web :10001 / agents Hono :8070 / server Spring :8081) 的本地 dev 启停编排. 逻辑全在脚本 (dev-orchestrator.mjs 编排 + server-cli/web-cli/agents-cli 三个 per-service CLI), skill 只做路由与决策分级. 主仓启动直接执行 orchestrator; worktree 启动按 仓况盘点 → per-service prepare → 联调对齐 → 执行 orchestrator 四步走. server 由 server-cli 承载 (ANTLR 预热/GraalVM 检测/ZGC patch/代理清除/基础设施容器/bootRun). 查状态 --status, 停服 --stop. 决策按可逆性分级: 无损动作 (复用已有同名/base worktree / prepare cp / 改 worktree 内 .env.local / pkgmgr patch) 自动做并入完成汇报; 不可逆或碰共享状态的动作 (reset / 改主仓文件 / 重启已在跑的服务 / 升档全栈 / 替换主仓 agents / 同名和 base worktree 全无时的建/混搭/跳过) 才 askUser gate.
+  Use when starting, stopping, restarting, or checking the local fx-data-agents web/agents/server development stack from a main checkout or worktree. Not for production deployment, unrelated repositories, or changing service business code.
 ---
 
 # agents-launcher — 本地 dev 服务启停

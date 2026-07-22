@@ -4,7 +4,8 @@ description: >-
   即将执行 nocode:brainstorming skill, 或用户直接要求写 PRD/RFC/设计
   文档/ADR (绕过 brainstorming) 时触发——两条入口都走同一条 worktree →
   write → review → render 四步链, 本文件覆盖 skill 内默认值 (冲突以本
-  文件为准)。
+  文件为准)。不触发: 纯实现、已有设计文档的执行、README/注释/提交说明等
+  非设计文档写作。
 skip: false
 ---
 

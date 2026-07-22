@@ -1,6 +1,6 @@
 ---
 name: dev-design
-description: "Use when the user wants to design how to build something — 设计/怎么设计/技术设计/详细设计/写设计文档/出方案再写设计/设计一下/先设计/要不要先设计/需要设计吗/走设计流程/design it/how should we build this/let's design this. Also triggers when devflow routes to Design stage, when the task is non-trivial and no design exists yet, or when the user asks 怎么做/怎么实现 for a multi-module change. Does NOT require Define to be complete — handles missing context internally. Coordinates three internal phases: decision (选方案) → writing (详细设计+评审) → render (可选渲染). Not for code comments, README, commit messages."
+description: "Use for technical design, solution selection, design documents, or devflow’s Design stage for non-trivial multi-module work. Not for README, comments, commit messages, or implementation."
 ---
 
 # dev-design — 设计流程协调器

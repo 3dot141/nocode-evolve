@@ -1,6 +1,6 @@
 ---
 name: using-nocode
-description: "Use when a nocode business Skill contains a semantic Capability call or needs a Claude/Codex do…"
+description: "Use when a loaded nocode Skill contains a trusted semantic Capability needing Claude/Codex prov…"
 ---
 
 # Using nocode

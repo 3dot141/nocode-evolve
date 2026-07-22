@@ -1,6 +1,6 @@
 ---
 name: pd-ix
-description: Use when the user wants to design the interaction structure of a product after the PRD is defined. Use when the user says "交互设计/信息架构/页面流/交互拆解/IA/用户流程", or when pdflow routes to the interaction design stage after PRD. Produces a .ix.md (interaction spec with IA, page flow, and interaction breakdown). Not for visual design (use nocode:pd-vd), technical architecture (use nocode:dev-design), or production component code (use devflow Build).
+description: Use after PRD for interaction design, information architecture, page flows, or an .ix.md specification. Not for visual design, technical architecture, or production code.
 ---
 
 # pd-ix — 交互设计

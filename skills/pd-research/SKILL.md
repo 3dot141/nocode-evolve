@@ -1,6 +1,6 @@
 ---
 name: pd-research
-description: Use when the user wants to explore a problem space before committing to a solution. Use when the user says "调研/research/竞品分析/市场调研/看看已有方案/看看别人怎么做", or when devflow suggests running the product flow first for a Full-scene task. Also use when the user gives a vague product idea and needs to understand the landscape before defining scope. Not for pure technical solution comparison (use dev-design), or when a PRD already exists and scope is defined (go to pd-ix or devflow).
+description: Use for product discovery, market/competitor research, or exploring a vague problem before scope is fixed. Not for technical solution comparison or work with an already-defined PRD.
 ---
 
 > 本文写“结构化决策”时，必须把当前步骤的完整问题与 2–3 个互斥选项编译为 `Capability(workflow.decision.request, {"question":"<self-contained current-step question>","options":[{"label":"<option-label>","description":"<impact or tradeoff>"}],"allowFreeform":false})`；示例只展示单项形状，真实调用需带齐本步骤列出的选项，不得回退到平台专属提问工具。

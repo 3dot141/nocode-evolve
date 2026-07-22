@@ -1,6 +1,6 @@
 ---
 name: caveman
-description: "Use when the user says \"caveman / 简洁模式 / 省 token / 精简回复\" or when token budget is tight."
+description: "Use when the user requests caveman/简洁/省-token mode or context is critically tight; persists unt…"
 ---
 
 # caveman — 精简模式

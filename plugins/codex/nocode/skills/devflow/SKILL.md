@@ -7,9 +7,7 @@ description: "工程任务流程领航（8 阶段 · 4 场景路由）。可被 
 
 > 驾驶舱。**model 命中复杂多步任务时主动调起**，用户也可 `/调` 进入。给建议不替执行。
 >
-> 依赖：SessionStart 已注入 `model/agent-catalog-*.md` 完整路由。每阶段 rule 已常驻，需要完整指令时按需 Read。
->
-> 各阶段集成了哪些 agent-skills / superpowers skill 的完整映射见 `../../references/skill-integration-map.md`。
+> 各阶段只通过下文列出的 `Capability(workflow.skill.invoke, ...)` 进入对应 Skill；不读取路由层或其它插件内部实现。
 
 ## 协议
 

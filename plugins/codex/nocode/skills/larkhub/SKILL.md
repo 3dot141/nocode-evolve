@@ -1,6 +1,6 @@
 ---
 name: larkhub
-description: "\"Lark/飞书工具集聚合入口，按 URL 或意图分发到子 skill（read/project/doc/wiki/task/auth）\""
+description: "\"当用户提供飞书/Lark/豆包文档或飞书项目 URL，或请求文档、知识库、项目与认证能力分流时使用。不是具体业务实现；非飞书内容不触发。\""
 ---
 
 # larkhub：飞书工具集聚合入口
@@ -28,7 +28,7 @@ description: "\"Lark/飞书工具集聚合入口，按 URL 或意图分发到子
 | `project` | 飞书项目管理（MCP） | `Capability(workflow.skill.invoke, {"skill":"lark-project","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})` |
 | `doc` | 文档读写 API | `Capability(workflow.skill.invoke, {"skill":"lark-doc","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})` |
 | `wiki` | 知识空间管理 | `Capability(workflow.skill.invoke, {"skill":"lark-wiki","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})` |
-| `task` | 飞书任务管理 | **待接入/暂不可用**——`Capability(workflow.skill.invoke, {"skill":"lark-task","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})` 当前未安装（外部 lark 系插件只提供 `lark-doc`/`lark-wiki`/`lark-shared`），命中时如实告知用户该能力暂缺，不要假装调用 |
+| `task` | 飞书任务管理 | **待接入/暂不可用**——当前没有可转发目标；命中时如实告知用户该能力暂缺 |
 | `auth` | 认证/scope 配置 | `Capability(workflow.skill.invoke, {"skill":"lark-shared","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})` |
 
 ## 执行

@@ -1,6 +1,6 @@
 ---
 name: dev-design
-description: "\"Use when the user wants to design how to build something — 设计/怎么设计/技术设计/详细设计/写设计文档/出方案再写设计/设计一…"
+description: "\"Use for technical design, solution selection, design documents, or devflow’s Design stage for…"
 ---
 
 # dev-design — 设计流程协调器

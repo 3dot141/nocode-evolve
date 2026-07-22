@@ -1,6 +1,6 @@
 ---
 name: strategic-compact
-description: "Reference/setup guide for the optional suggest-compact.sh PreToolUse hook, which suggests manua…"
+description: "Use when explaining or configuring the optional manual-compaction suggestion hook or diagnosing…"
 ---
 
 # Strategic Compact Skill

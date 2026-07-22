@@ -1,6 +1,6 @@
 ---
 name: caveman
-description: Use when the user says "caveman / 简洁模式 / 省 token / 精简回复" or when token budget is tight. Persists until "正常模式 / normal mode".
+description: Use when the user requests caveman/简洁/省-token mode or context is critically tight; persists until normal mode. Not for removing required evidence, code, or safety details.
 ---
 
 # caveman — 精简模式

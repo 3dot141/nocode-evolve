@@ -1,7 +1,7 @@
 ---
 name: continuous-learning-v2
 disable-model-invocation: true
-description: Reference doc for the instinct-based continuous learning architecture — PreToolUse/PostToolUse hooks are auto-registered by the plugin and passively observe every tool call in the background; there is no conversational trigger to enable it. Use when the user asks how this observation/instinct system works, wants to inspect or tune its config.json, or wants architecture context before running /instinct-status, /evolve, /instinct-export, or /instinct-import. Not for day-to-day instinct operations (listing, clustering, export, import) — use those dedicated commands directly instead of this doc.
+description: Use when explaining or configuring the optional instinct-based continuous-learning architecture. Not for day-to-day instinct listing, clustering, import/export, or enabling excluded runtime components.
 version: 2.0.0
 ---
 
