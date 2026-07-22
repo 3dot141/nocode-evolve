@@ -370,6 +370,7 @@ test('Codex adapter builds shared entry skills and agent references', () => {
   assert.equal(manifest.name, path.basename(path.join(REPO_ROOT, 'plugins/codex/nocode')));
   assert.equal(manifest.version, metadata.version);
   assert.equal(manifest.skills, './skills/');
+  assert.equal(manifest.interface.displayName, 'NoCode');
   assert.equal('hooks' in manifest, false, 'default hooks/hooks.json discovery is sufficient');
   assert.ok(Array.isArray(manifest.interface.capabilities));
   assert.ok(Array.isArray(manifest.interface.defaultPrompt));
@@ -428,7 +429,7 @@ test('repo Codex marketplace points at the name-matched generated plugin root', 
     readFileSync(path.join(REPO_ROOT, '.agents/plugins/marketplace.json'), 'utf8'),
   );
   assert.equal(marketplace.name, 'nocode-market');
-  assert.equal(marketplace.interface.displayName, 'nocode');
+  assert.equal(marketplace.interface.displayName, 'NoCode');
   assert.equal(marketplace.plugins.length, 1);
   assert.deepEqual(marketplace.plugins[0], {
     name: 'nocode',

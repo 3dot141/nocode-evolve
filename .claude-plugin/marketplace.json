@@ -1,7 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
   "name": "nocode-market",
-  "description": "nocode 的 Claude Code / Codex 双平台插件市场",
+  "description": "NoCode 的 Claude Code / Codex 双平台插件市场",
   "owner": { "name": "Harrison", "url": "https://github.com/3dot141" },
   "plugins": [
     {

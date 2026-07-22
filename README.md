@@ -1,4 +1,4 @@
-# nocode
+# NoCode
 
 Harrison 的 Claude Code / Codex 双平台工程工作流插件。仓库只维护一份业务语义，通过平台 adapter 确定性生成两个可独立安装的插件。
 

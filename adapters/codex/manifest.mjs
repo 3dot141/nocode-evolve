@@ -10,16 +10,16 @@ export function renderCodexManifest(metadata) {
     keywords: metadata.keywords,
     skills: './skills/',
     interface: {
-      displayName: 'nocode',
+      displayName: 'NoCode',
       shortDescription: 'Personal engineering workflows and rules',
       longDescription: metadata.description,
       developerName: metadata.author.name,
       category: metadata.category,
       capabilities: ['Read', 'Write', 'Shell'],
       defaultPrompt: [
-        'Use nocode to plan and execute this engineering task.',
-        'Use nocode to review these changes.',
-        'Use nocode to capture or recall project knowledge.',
+        'Use NoCode to plan and execute this engineering task.',
+        'Use NoCode to review these changes.',
+        'Use NoCode to capture or recall project knowledge.',
       ],
     },
   };

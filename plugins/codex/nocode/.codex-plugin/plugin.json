@@ -1,6 +1,6 @@
 {
   "name": "nocode",
-  "version": "16.0.2",
+  "version": "16.0.3",
   "description": "Harrison 的个人工程工作流与规则工具箱，支持 Claude Code 和 Codex",
   "author": {
     "name": "Harrison",
@@ -17,7 +17,7 @@
   ],
   "skills": "./skills/",
   "interface": {
-    "displayName": "nocode",
+    "displayName": "NoCode",
     "shortDescription": "Personal engineering workflows and rules",
     "longDescription": "Harrison 的个人工程工作流与规则工具箱，支持 Claude Code 和 Codex",
     "developerName": "Harrison",
@@ -28,9 +28,9 @@
       "Shell"
     ],
     "defaultPrompt": [
-      "Use nocode to plan and execute this engineering task.",
-      "Use nocode to review these changes.",
-      "Use nocode to capture or recall project knowledge."
+      "Use NoCode to plan and execute this engineering task.",
+      "Use NoCode to review these changes.",
+      "Use NoCode to capture or recall project knowledge."
     ]
   }
 }
