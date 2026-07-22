@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 import { spawnSync } from 'node:child_process';
 import {
-  reportRuntimeEntryError, runRuntimeEntry, targetArgv,
+  platformDataRoot, reportRuntimeEntryError, runRuntimeEntry, targetArgv,
 } from '../../../../../../scripts/lib/runtime-entry.mjs';
 
 export function main(args = process.argv.slice(2), env = process.env, io = process, spawn = spawnSync) {
   return runRuntimeEntry({
-    value: env.CODEX_PLUGIN_DATA,
-    sourceName: 'CODEX_PLUGIN_DATA',
+    value: platformDataRoot('codex', env),
+    sourceName: 'codex data directory',
     targetName: 'NOCODE_PLUGIN_DATA',
     argv: targetArgv(args),
     baseEnv: env,

@@ -39,10 +39,12 @@ export function renderCodexMarkdown(text, { skill = false } = {}) {
 export function renderCodexContent({ targetPath, content, contextPlan = new Map() }) {
   if (targetPath.startsWith('agents/') || targetPath.startsWith('commands/')) return null;
   if (targetPath === 'hooks/inject-nocode.sh') {
-    return content.toString('utf8').replaceAll(
-      '__NOCODE_CONTEXT_BUDGET__',
-      '${PLUGIN_ROOT}/skills/using-nocode/scripts/providers/codex-hooks/context-budget.json',
-    );
+    return content.toString('utf8')
+      .replaceAll('__NOCODE_PLATFORM__', 'codex')
+      .replaceAll(
+        '__NOCODE_CONTEXT_BUDGET__',
+        '${PLUGIN_ROOT}/skills/using-nocode/scripts/providers/codex-hooks/context-budget.json',
+      );
   }
   if (targetPath === 'hooks/hooks.json') {
     const config = JSON.parse(content.toString('utf8'));
@@ -67,21 +69,20 @@ export function renderCodexContent({ targetPath, content, contextPlan = new Map(
       for (const group of groups || []) {
         for (const hook of group.hooks || []) {
           const argv = hook.command
-            .replaceAll('${CLAUDE_PLUGIN_ROOT}', '${PLUGIN_ROOT}')
+            .replaceAll('${CLAUDE_PLUGIN_ROOT}', '.')
             .replaceAll('/providers/claude-hooks/', '/skills/using-nocode/scripts/providers/codex-hooks/')
             .trim().split(/\s+/);
           if (argv.some((part) => !/^[A-Za-z0-9_./${}-]+$/.test(part))) {
             throw new Error(`unsupported hook command token: ${hook.command}`);
           }
-          const command = argv.map((part) => part.includes('${PLUGIN_ROOT}') ? `"${part}"` : part);
-          hook.command = argv.at(-1) === '${PLUGIN_ROOT}/hooks/session-open.mjs'
+          hook.command = argv.at(-1) === './hooks/session-open.mjs'
             ? [
-              'node', '"${PLUGIN_ROOT}/skills/using-nocode/scripts/runtime-entry.mjs"',
-              '--', 'node', '"${PLUGIN_ROOT}/skills/using-nocode/scripts/providers/codex-plugin-data/scripts/entry.mjs"',
+              'node', './skills/using-nocode/scripts/runtime-entry.mjs',
+              '--', 'node', './skills/using-nocode/scripts/providers/codex-plugin-data/scripts/entry.mjs',
               '--',
-              ...command,
+              ...argv,
             ].join(' ')
-            : command.join(' ');
+            : argv.join(' ');
         }
       }
     }

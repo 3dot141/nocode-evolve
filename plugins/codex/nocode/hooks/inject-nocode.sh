@@ -22,6 +22,9 @@
 set -euo pipefail
 
 PLUGIN_ROOT="${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}}"
+export PLUGIN_ROOT
+NOCODE_PLATFORM="${NOCODE_PLATFORM:-codex}"
+export NOCODE_PLATFORM
 PROJECT_DIR="${CLAUDE_PROJECT_DIR:-$PWD}"
 SEG="${1:-}"
 CHUNK="${2:-1}"

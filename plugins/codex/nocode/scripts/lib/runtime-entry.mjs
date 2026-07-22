@@ -1,4 +1,5 @@
 import { existsSync, statSync } from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 
@@ -30,6 +31,14 @@ function validateRuntimeData(value, sourceName) {
     throw new RuntimeEntryError('RUNTIME_DATA_INVALID', `${sourceName} must name a directory path`);
   }
   return runtimeData;
+}
+
+export function platformDataRoot(platform, env = process.env) {
+  if (platform !== 'claude' && platform !== 'codex') {
+    throw new RuntimeEntryError('RUNTIME_PLATFORM_INVALID', `unsupported platform: ${platform}`);
+  }
+  const userHome = env.HOME || env.USERPROFILE || os.homedir();
+  return validateRuntimeData(path.join(userHome, '.nocode', platform, 'data'), `${platform} data directory`);
 }
 
 export function createRuntimeEnv({ value, sourceName, targetName, baseEnv = {} }) {

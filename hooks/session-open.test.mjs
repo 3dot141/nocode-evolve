@@ -38,10 +38,11 @@ test('generated Claude and Codex hook chains open fresh state without a Stop gua
   for (const platform of ['claude', 'codex']) {
     const pluginRoot = join(REPO_ROOT, 'plugins', platform, 'nocode');
     const dataParent = mkdtempSync(join(tmpdir(), `nocode-${platform}-lifecycle-`));
-    const dataRoot = join(dataParent, 'plugin-data');
+    const dataRoot = join(dataParent, '.nocode', platform, 'data');
     t.after(() => rmSync(dataParent, { recursive: true, force: true }));
     const env = {
       ...process.env,
+      HOME: dataParent,
       NOCODE_PLATFORM: platform,
       ...(platform === 'claude'
         ? { CLAUDE_PLUGIN_ROOT: pluginRoot, CLAUDE_PLUGIN_DATA: dataRoot }

@@ -107,38 +107,33 @@ test('runtime launcher uses argv without a shell and redacts native values from 
 
 test('Claude and Codex entry chains perform only their exact mappings', (t) => {
   const dir = dataDir(t);
+  const home = path.join(dir, 'home');
   const claude = captureSpawn();
   assert.equal(runClaudeProviderEntry(['--', 'node', 'hook.mjs'], {
-    CLAUDE_PLUGIN_DATA: dir, PLUGIN_DATA: '/must-not-fallback', KEEP: 'yes',
+    HOME: home, CLAUDE_PLUGIN_DATA: dir, PLUGIN_DATA: '/must-not-fallback', KEEP: 'yes',
   }, undefined, claude.spawn), 0);
-  assert.equal(claude.calls[0].options.env.NOCODE_PLUGIN_DATA, dir);
+  assert.equal(claude.calls[0].options.env.NOCODE_PLUGIN_DATA,
+    path.join(home, '.nocode', 'claude', 'data'));
   assert.equal('NOCODE_ROUTE_KEY' in claude.calls[0].options.env, false);
   assert.equal('CLAUDE_PLUGIN_DATA' in claude.calls[0].options.env, false);
 
   const adapter = captureSpawn();
   assert.equal(runCodexAdapterEntry(['--', 'node', 'provider.mjs', '--', 'node', 'hook.mjs'], {
-    PLUGIN_DATA: dir, CLAUDE_PLUGIN_DATA: '/must-not-fallback', KEEP: 'yes',
+    HOME: home, PLUGIN_DATA: dir, CLAUDE_PLUGIN_DATA: '/must-not-fallback', KEEP: 'yes',
   }, undefined, adapter.spawn), 0);
-  assert.equal(adapter.calls[0].options.env.CODEX_PLUGIN_DATA, dir);
+  assert.equal(adapter.calls[0].options.env.CODEX_PLUGIN_DATA,
+    path.join(home, '.nocode', 'codex', 'data'));
   assert.equal('PLUGIN_DATA' in adapter.calls[0].options.env, false);
 
   const provider = captureSpawn();
   assert.equal(runCodexProviderEntry(['--', 'node', 'hook.mjs'], {
-    CODEX_PLUGIN_DATA: dir, PLUGIN_DATA: '/must-not-fallback', KEEP: 'yes',
+    HOME: home, CODEX_PLUGIN_DATA: dir, PLUGIN_DATA: '/must-not-fallback', KEEP: 'yes',
   }, undefined, provider.spawn), 0);
-  assert.equal(provider.calls[0].options.env.NOCODE_PLUGIN_DATA, dir);
+  assert.equal(provider.calls[0].options.env.NOCODE_PLUGIN_DATA,
+    path.join(home, '.nocode', 'codex', 'data'));
   assert.equal('NOCODE_ROUTE_KEY' in provider.calls[0].options.env, false);
   assert.equal('CODEX_PLUGIN_DATA' in provider.calls[0].options.env, false);
 
-  errorCode(() => runClaudeProviderEntry(['--', 'node', 'hook.mjs'], {
-    PLUGIN_DATA: dir,
-  }, undefined, claude.spawn), 'RUNTIME_DATA_MISSING');
-  errorCode(() => runCodexAdapterEntry(['--', 'node', 'provider.mjs'], {
-    CODEX_PLUGIN_DATA: dir,
-  }, undefined, adapter.spawn), 'RUNTIME_DATA_MISSING');
-  errorCode(() => runCodexProviderEntry(['--', 'node', 'hook.mjs'], {
-    PLUGIN_DATA: dir,
-  }, undefined, provider.spawn), 'RUNTIME_DATA_MISSING');
 });
 
 test('legacy private domain route launcher is removed', () => {
@@ -196,7 +191,8 @@ test('only runtime-state hooks receive plugin data and Open Design starts direct
   const codexInjectors = codexSessionHooks.filter((hook) => hook.command.includes('inject-nocode.sh'));
   assert.ok(codexInjectors.length > 0, 'Codex must retain model injection hooks');
   for (const hook of codexInjectors) {
-    assert.match(hook.command, /^bash "\$\{PLUGIN_ROOT\}\/hooks\/inject-nocode\.sh"/);
+    assert.match(hook.command, /^bash \.\/hooks\/inject-nocode\.sh/);
+    assert.doesNotMatch(hook.command, /PLUGIN_ROOT/);
   }
 
   const claudeMcp = JSON.stringify(JSON.parse(claudeTree.get('.mcp.json').toString()));

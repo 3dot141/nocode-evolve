@@ -1,10 +1,12 @@
 export function renderClaudeContent({ targetPath, content, contextPlan = new Map() }) {
   if (targetPath.startsWith('agents/') || targetPath.startsWith('commands/')) return null;
   if (targetPath === 'hooks/inject-nocode.sh') {
-    return content.toString('utf8').replaceAll(
-      '__NOCODE_CONTEXT_BUDGET__',
-      '${PLUGIN_ROOT}/skills/using-nocode/scripts/providers/claude-hooks/context-budget.json',
-    );
+    return content.toString('utf8')
+      .replaceAll('__NOCODE_PLATFORM__', 'claude')
+      .replaceAll(
+        '__NOCODE_CONTEXT_BUDGET__',
+        '${PLUGIN_ROOT}/skills/using-nocode/scripts/providers/claude-hooks/context-budget.json',
+      );
   }
   if (targetPath === 'hooks/hooks.json') {
     const config = JSON.parse(content.toString('utf8'));

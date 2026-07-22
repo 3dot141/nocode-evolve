@@ -57,6 +57,13 @@ test('genCatalogSharded: 当前规则集在阈值内, 文件名按序号, 表格
   });
 });
 
+test('genCatalogSharded: Codex 发布物使用 PLUGIN_ROOT 占位符', () => {
+  const rules = [{ id: 'foo', description: '触发条件 X。', skip: false, relPath: 'rules/rule-foo.md' }];
+  const text = genCatalogSharded(rules, 'codex')[0].text;
+  assert.match(text, /相对于 \{PLUGIN_ROOT\}/);
+  assert.doesNotMatch(text, /\{CLAUDE_PLUGIN_ROOT\}/);
+});
+
 test('genCatalogSharded: skip:true 的规则不渲染进任何分片', () => {
   const rules = [
     { id: 'a', description: 'DESC_A', skip: false, relPath: 'rules/rule-a.md' },

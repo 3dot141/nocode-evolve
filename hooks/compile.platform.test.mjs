@@ -407,9 +407,10 @@ test('Codex adapter builds shared entry skills and agent references', () => {
   assert.match(JSON.stringify(codexHooks.hooks.SessionStart), /model-nocode/);
   const codexInjector = tree.get('hooks/inject-nocode.sh').toString();
   assert.match(codexInjector, /providers\/codex-hooks\/context-budget\.json/);
+  assert.match(codexInjector, /NOCODE_PLATFORM="\$\{NOCODE_PLATFORM:-codex\}"/);
   assert.doesNotMatch(codexInjector, /providers\/claude-hooks\//);
   assert.doesNotMatch(JSON.stringify(codexHooks), /usage-tracker\.mjs/);
-  assert.match(JSON.stringify(codexHooks), /\$\{PLUGIN_ROOT\}/);
+  assert.doesNotMatch(JSON.stringify(codexHooks), /PLUGIN_ROOT/);
   assert.doesNotMatch(JSON.stringify(codexHooks), /\$\{CLAUDE_PLUGIN_ROOT\}/);
 });
 

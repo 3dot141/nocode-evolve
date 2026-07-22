@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 import { spawnSync } from 'node:child_process';
 import {
-  reportRuntimeEntryError, runRuntimeEntry, targetArgv,
+  platformDataRoot, reportRuntimeEntryError, runRuntimeEntry, targetArgv,
 } from '../../../../../../scripts/lib/runtime-entry.mjs';
 
 export function main(args = process.argv.slice(2), env = process.env, io = process, spawn = spawnSync) {
   return runRuntimeEntry({
-    value: env.CLAUDE_PLUGIN_DATA,
-    sourceName: 'CLAUDE_PLUGIN_DATA',
+    value: platformDataRoot('claude', env),
+    sourceName: 'claude data directory',
     targetName: 'NOCODE_PLUGIN_DATA',
     argv: targetArgv(args),
     baseEnv: env,

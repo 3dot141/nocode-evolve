@@ -69,13 +69,14 @@ export function loadRules() {
   });
 }
 
-function header(n) {
+function header(n, platform) {
+  const pluginRoot = platform === 'codex' ? '{PLUGIN_ROOT}' : '{CLAUDE_PLUGIN_ROOT}';
   return `# agent-rule-catalog-${n}
 
 > 当前章节为 规则目录
 > 当前是第 ${n} 页
 
-> 下面的文件是相对目录，相对于 {CLAUDE_PLUGIN_ROOT}
+> 下面的文件是相对目录，相对于 ${pluginRoot}
 
 `;
 }
@@ -88,13 +89,13 @@ function renderRow(r) {
 }
 
 // 按行切分成分片. 一行(一条 rule)为最小切分粒度, 不切断单行.
-export function genCatalogSharded(rules) {
+export function genCatalogSharded(rules, platform = process.env.NOCODE_PLATFORM || 'claude') {
   const rows = rules.filter((r) => !r.skip).map(renderRow);
   const groups = [[]];
   for (const row of rows) {
     const gi = groups.length - 1;
     const n = gi + 1;
-    const prospective = header(n) + TABLE_HEAD + [...groups[gi], row].join('\n') + '\n';
+    const prospective = header(n, platform) + TABLE_HEAD + [...groups[gi], row].join('\n') + '\n';
     if (groups[gi].length && prospective.length > SHARD_LIMIT) {
       groups.push([row]);
     } else {
@@ -112,7 +113,7 @@ export function genCatalogSharded(rules) {
     const n = i + 1;
     return {
       file: path.join(MODEL_DIR, `agent-rule-catalog-${n}.md`),
-      text: header(n) + TABLE_HEAD + rowsInShard.join('\n') + '\n',
+      text: header(n, platform) + TABLE_HEAD + rowsInShard.join('\n') + '\n',
     };
   });
 }
