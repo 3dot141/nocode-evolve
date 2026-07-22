@@ -152,7 +152,7 @@ test('provider manifests explicitly restrict plugin data to runtime-state provid
   assert.deepEqual(owners.sort(), ['claude-plugin-data', 'codex-plugin-data']);
 });
 
-test('generated hooks retain only model injection and Open Design starts directly', () => {
+test('generated hooks retain the active lifecycle chain and Open Design starts directly', () => {
   const registry = loadDomainRegistry(ROOT);
   const claudeTree = buildExpectedTree({
     root: ROOT, metadata: METADATA, adapter: claudeAdapter,
@@ -164,17 +164,19 @@ test('generated hooks retain only model injection and Open Design starts directl
   });
   const claudeHooks = JSON.parse(claudeTree.get('hooks/hooks.json').toString());
   const claudeSessionHooks = claudeHooks.hooks.SessionStart[0].hooks;
-  assert.equal(claudeSessionHooks.length, 1);
-  assert.equal(claudeSessionHooks[0].command,
-    'bash "${CLAUDE_PLUGIN_ROOT}/hooks/inject-nocode.sh" model-nocode');
-  assert.doesNotMatch(claudeSessionHooks[0].command, /claude-plugin-data|session-open/);
+  assert.ok(claudeSessionHooks.some((hook) => /claude-plugin-data/.test(hook.command)
+    && /session-open/.test(hook.command)));
+  assert.ok(claudeSessionHooks.some((hook) => /inject-nocode\.sh" model-about(?: \d+)?$/.test(hook.command)));
+  assert.ok(claudeSessionHooks.some((hook) => /personal-snapshot\.mjs/.test(hook.command)));
+  assert.doesNotMatch(JSON.stringify(claudeHooks), /model-nocode/);
 
   const codexHooks = JSON.parse(codexTree.get('hooks/hooks.json').toString());
   const codexSessionHooks = codexHooks.hooks.SessionStart[0].hooks;
-  assert.equal(codexSessionHooks.length, 1);
-  assert.equal(codexSessionHooks[0].command,
-    'bash "${PLUGIN_ROOT}/hooks/inject-nocode.sh" model-nocode');
-  assert.doesNotMatch(codexSessionHooks[0].command, /runtime-entry|codex-plugin-data|session-open/);
+  assert.ok(codexSessionHooks.some((hook) => /runtime-entry\.mjs/.test(hook.command)
+    && /codex-plugin-data/.test(hook.command) && /session-open/.test(hook.command)));
+  assert.ok(codexSessionHooks.some((hook) => /inject-nocode\.sh" model-about(?: \d+)?$/.test(hook.command)));
+  assert.ok(codexSessionHooks.some((hook) => /personal-snapshot\.mjs/.test(hook.command)));
+  assert.doesNotMatch(JSON.stringify(codexHooks), /model-nocode/);
 
   const claudeMcp = JSON.stringify(JSON.parse(claudeTree.get('.mcp.json').toString()));
   const codexMcp = JSON.stringify(JSON.parse(codexTree.get('.mcp.json').toString()));

@@ -76,12 +76,12 @@ export function renderCodexContent({ targetPath, content, contextPlan = new Map(
             throw new Error(`unsupported hook command token: ${hook.command}`);
           }
           const command = argv.map((part) => part.includes('${PLUGIN_ROOT}') ? `"${part}"` : part);
-          hook.command = argv.at(-1) === './hooks/session-open.mjs'
+          hook.command = argv.at(-1) === '${PLUGIN_ROOT}/hooks/session-open.mjs'
             ? [
-              'node', './skills/using-nocode/scripts/runtime-entry.mjs',
-              '--', 'node', './skills/using-nocode/scripts/providers/codex-plugin-data/scripts/entry.mjs',
+              'node', '"${PLUGIN_ROOT}/skills/using-nocode/scripts/runtime-entry.mjs"',
+              '--', 'node', '"${PLUGIN_ROOT}/skills/using-nocode/scripts/providers/codex-plugin-data/scripts/entry.mjs"',
               '--',
-              ...argv,
+              ...command,
             ].join(' ')
             : command.join(' ');
         }

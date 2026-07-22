@@ -6,10 +6,102 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"${PLUGIN_ROOT}/hooks/inject-nocode.sh\" model-nocode"
+            "command": "node \"${PLUGIN_ROOT}/skills/using-nocode/scripts/runtime-entry.mjs\" -- node \"${PLUGIN_ROOT}/skills/using-nocode/scripts/providers/codex-plugin-data/scripts/entry.mjs\" -- node \"${PLUGIN_ROOT}/hooks/session-open.mjs\""
+          },
+          {
+            "type": "command",
+            "command": "bash \"${PLUGIN_ROOT}/hooks/inject-nocode.sh\" model-about 1"
+          },
+          {
+            "type": "command",
+            "command": "bash \"${PLUGIN_ROOT}/hooks/inject-nocode.sh\" model-about 2"
+          },
+          {
+            "type": "command",
+            "command": "bash \"${PLUGIN_ROOT}/hooks/inject-nocode.sh\" model-about 3"
+          },
+          {
+            "type": "command",
+            "command": "bash \"${PLUGIN_ROOT}/hooks/inject-nocode.sh\" model-about 4"
+          },
+          {
+            "type": "command",
+            "command": "bash \"${PLUGIN_ROOT}/hooks/inject-nocode.sh\" model-about 5"
+          },
+          {
+            "type": "command",
+            "command": "bash \"${PLUGIN_ROOT}/hooks/inject-nocode.sh\" model-about 6"
+          },
+          {
+            "type": "command",
+            "command": "bash \"${PLUGIN_ROOT}/hooks/inject-nocode.sh\" model-about 7"
+          },
+          {
+            "type": "command",
+            "command": "bash \"${PLUGIN_ROOT}/hooks/inject-nocode.sh\" model-personal 1"
+          },
+          {
+            "type": "command",
+            "command": "bash \"${PLUGIN_ROOT}/hooks/inject-nocode.sh\" model-personal 2"
+          },
+          {
+            "type": "command",
+            "command": "bash \"${PLUGIN_ROOT}/hooks/inject-nocode.sh\" model-personal 3"
+          },
+          {
+            "type": "command",
+            "command": "bash \"${PLUGIN_ROOT}/hooks/inject-nocode.sh\" model-karpathy 1"
+          },
+          {
+            "type": "command",
+            "command": "bash \"${PLUGIN_ROOT}/hooks/inject-nocode.sh\" model-karpathy 2"
+          },
+          {
+            "type": "command",
+            "command": "bash \"${PLUGIN_ROOT}/hooks/inject-nocode.sh\" model-rule-catalog-1 1"
+          },
+          {
+            "type": "command",
+            "command": "bash \"${PLUGIN_ROOT}/hooks/inject-nocode.sh\" model-rule-catalog-1 2"
+          },
+          {
+            "type": "command",
+            "command": "bash \"${PLUGIN_ROOT}/hooks/inject-nocode.sh\" model-rule-catalog-2"
+          },
+          {
+            "type": "command",
+            "command": "bash \"${PLUGIN_ROOT}/hooks/inject-nocode.sh\" model-rule-catalog-3"
+          },
+          {
+            "type": "command",
+            "command": "bash \"${PLUGIN_ROOT}/hooks/inject-nocode.sh\" model-rule-catalog-4"
+          },
+          {
+            "type": "command",
+            "command": "bash \"${PLUGIN_ROOT}/hooks/inject-nocode.sh\" model-rule-catalog-5"
+          },
+          {
+            "type": "command",
+            "command": "bash \"${PLUGIN_ROOT}/hooks/inject-nocode.sh\" project"
+          },
+          {
+            "type": "command",
+            "command": "node \"${PLUGIN_ROOT}/scripts/personal-snapshot.mjs\""
           }
         ]
       }
-    ]
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${PLUGIN_ROOT}/hooks/pretooluse-guard.mjs\""
+          }
+        ]
+      }
+    ],
+    "PostToolUse": []
   }
 }

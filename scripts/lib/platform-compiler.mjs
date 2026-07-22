@@ -151,7 +151,6 @@ function sortedMap(entries) {
 }
 
 const STATIC_CONTEXT_SEGMENTS = {
-  'model-nocode': 'model/agent-nocode.md',
   'model-about': 'model/agent-about.md',
   'model-personal': 'model/agent-personal.md',
   'model-karpathy': 'model/agent-karpathy.md',

@@ -21,14 +21,24 @@ test('Claude representative runtime files match the approved snapshot', () => {
   }
 });
 
-test('Claude generated hooks retain only the model-nocode SessionStart hook', () => {
+test('source hooks restore every prior lifecycle registration', () => {
+  const hooks = JSON.parse(readFileSync(path.join(ROOT, 'hooks/hooks.json'), 'utf8'));
+  assert.deepEqual(Object.keys(hooks.hooks), ['SessionStart', 'PreToolUse', 'PostToolUse']);
+  assert.equal(hooks.hooks.SessionStart[0].hooks.length, 11);
+  assert.equal(hooks.hooks.PreToolUse.length, 2);
+  assert.equal(hooks.hooks.PostToolUse.length, 1);
+  assert.match(JSON.stringify(hooks), /continuous-learning-v2\/hooks\/observe\.sh/);
+  assert.doesNotMatch(JSON.stringify(hooks), /model-nocode/);
+});
+
+test('Claude generated hooks retain the active lifecycle registrations', () => {
   const hooks = JSON.parse(readFileSync(path.join(CLAUDE_ROOT, 'hooks/hooks.json'), 'utf8'));
-  assert.deepEqual(Object.keys(hooks.hooks), ['SessionStart']);
-  assert.deepEqual(hooks.hooks.SessionStart, [{
-    matcher: '*',
-    hooks: [{
-      type: 'command',
-      command: 'bash "${CLAUDE_PLUGIN_ROOT}/hooks/inject-nocode.sh" model-nocode',
-    }],
-  }]);
+  assert.deepEqual(Object.keys(hooks.hooks), ['SessionStart', 'PreToolUse', 'PostToolUse']);
+  const commands = hooks.hooks.SessionStart[0].hooks.map((hook) => hook.command);
+  assert.ok(commands.some((command) => /session-open\.mjs/.test(command)));
+  assert.ok(commands.some((command) => /inject-nocode\.sh" model-about(?: \d+)?$/.test(command)));
+  assert.ok(commands.some((command) => /inject-nocode\.sh" model-rule-catalog-5(?: \d+)?$/.test(command)));
+  assert.ok(commands.some((command) => /inject-nocode\.sh" project$/.test(command)));
+  assert.ok(commands.some((command) => /personal-snapshot\.mjs/.test(command)));
+  assert.doesNotMatch(JSON.stringify(hooks), /model-nocode/);
 });

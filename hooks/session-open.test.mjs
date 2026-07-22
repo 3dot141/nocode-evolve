@@ -65,15 +65,12 @@ test('generated Claude and Codex hook chains open fresh state without a Stop gua
     assert.equal(existsSync(sessionFile), true);
     assert.equal(JSON.parse(readFileSync(sessionFile, 'utf8')).status, 'open');
 
-    const bootstrap = spawnSync('bash', [join(pluginRoot, 'hooks/inject-nocode.sh'), 'model-nocode'], {
+    const bootstrap = spawnSync('bash', [join(pluginRoot, 'hooks/inject-nocode.sh'), 'model-about'], {
       env, input: JSON.stringify({ session_id: sessionId, cwd: REPO_ROOT }), encoding: 'utf8',
     });
     assert.equal(bootstrap.status, 0, bootstrap.stderr);
-    const bootstrapOutput = JSON.parse(bootstrap.stdout);
-    assert.match(
-      bootstrapOutput.hookSpecificOutput?.additionalContext || bootstrapOutput.systemMessage,
-      /nocode Capability Bootstrap/,
-    );
+    assert.ok(JSON.parse(bootstrap.stdout).hookSpecificOutput?.additionalContext
+      || JSON.parse(bootstrap.stdout).systemMessage);
   }
 });
 
@@ -81,7 +78,7 @@ test('generated SessionStart failures are recorded in the project .nocode/logs d
   const workspace = mkdtempSync(join(tmpdir(), 'nocode-hook-log-'));
   t.after(() => rmSync(workspace, { recursive: true, force: true }));
   const pluginRoot = join(REPO_ROOT, 'plugins', 'codex', 'nocode');
-  const result = spawnSync('bash', [join(pluginRoot, 'hooks/inject-nocode.sh'), 'model-nocode'], {
+  const result = spawnSync('bash', [join(pluginRoot, 'hooks/inject-nocode.sh'), 'model-about'], {
     cwd: pluginRoot,
     env: {
       ...process.env,
@@ -97,7 +94,7 @@ test('generated SessionStart failures are recorded in the project .nocode/logs d
   const logFile = join(workspace, '.nocode', 'logs', 'session-start.log');
   assert.equal(existsSync(logFile), true);
   const log = readFileSync(logFile, 'utf8');
-  assert.match(log, /event=start .*segment=model-nocode/);
+  assert.match(log, /event=start .*segment=model-about/);
   assert.match(log, /ENOENT: .*missing-context-budget\.json/);
   assert.match(log, /event=failure .*exit_code=[1-9]\d*/);
   assert.doesNotMatch(log, /must-not-be-logged/);
@@ -108,7 +105,7 @@ test('an unwritable diagnostics path does not turn a successful SessionStart int
   t.after(() => rmSync(workspace, { recursive: true, force: true }));
   writeFileSync(join(workspace, '.nocode'), 'blocks directory creation');
   const pluginRoot = join(REPO_ROOT, 'plugins', 'codex', 'nocode');
-  const result = spawnSync('bash', [join(pluginRoot, 'hooks/inject-nocode.sh'), 'model-nocode'], {
+  const result = spawnSync('bash', [join(pluginRoot, 'hooks/inject-nocode.sh'), 'model-about'], {
     cwd: pluginRoot,
     env: { ...process.env, NOCODE_PLATFORM: 'codex', PLUGIN_ROOT: pluginRoot },
     input: JSON.stringify({ cwd: workspace }),
@@ -116,24 +113,28 @@ test('an unwritable diagnostics path does not turn a successful SessionStart int
   });
 
   assert.equal(result.status, 0, result.stderr);
-  assert.match(JSON.parse(result.stdout).systemMessage, /nocode Capability Bootstrap/);
+  assert.ok(JSON.parse(result.stdout).systemMessage);
   assert.equal(readFileSync(join(workspace, '.nocode'), 'utf8'), 'blocks directory creation');
 });
 
 test('generated Codex hook resolves the injector from PLUGIN_ROOT when cwd is the workspace', () => {
   const pluginRoot = join(REPO_ROOT, 'plugins', 'codex', 'nocode');
   const hooks = JSON.parse(readFileSync(join(pluginRoot, 'hooks', 'hooks.json'), 'utf8'));
-  const command = hooks.hooks.SessionStart[0].hooks[0].command;
-  assert.equal(command, 'bash "${PLUGIN_ROOT}/hooks/inject-nocode.sh" model-nocode');
-
-  const result = spawnSync(command, {
-    cwd: REPO_ROOT,
-    env: { ...process.env, NOCODE_PLATFORM: 'codex', PLUGIN_ROOT: pluginRoot },
-    input: JSON.stringify({ cwd: REPO_ROOT }),
-    encoding: 'utf8',
-    shell: true,
-  });
-
-  assert.equal(result.status, 0, result.stderr);
-  assert.match(JSON.parse(result.stdout).systemMessage, /nocode Capability Bootstrap/);
+  const commands = hooks.hooks.SessionStart[0].hooks
+    .map((hook) => hook.command)
+    .filter((command) => /inject-nocode\.sh" model-about(?: \d+)?$/.test(command));
+  assert.ok(commands.length >= 1);
+  const context = commands.map((command) => {
+    assert.match(command, /^bash "\$\{PLUGIN_ROOT\}\/hooks\/inject-nocode\.sh" model-about(?: \d+)?$/);
+    const result = spawnSync(command, {
+      cwd: REPO_ROOT,
+      env: { ...process.env, NOCODE_PLATFORM: 'codex', PLUGIN_ROOT: pluginRoot },
+      input: JSON.stringify({ cwd: REPO_ROOT }),
+      encoding: 'utf8',
+      shell: true,
+    });
+    assert.equal(result.status, 0, result.stderr);
+    return JSON.parse(result.stdout).systemMessage;
+  }).join('\n');
+  assert.match(context, /nocode Capability Bootstrap/);
 });

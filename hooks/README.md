@@ -20,7 +20,7 @@
 
 | 文件 | 作用 |
 |---|---|
-| `hooks.json` | Hook 注册源：仅保留一个 SessionStart `model-nocode` 注入；compiler 按平台改写命令路径。其它 hook 实现保留为未注册模块，供测试或后续显式恢复。 |
+| `hooks.json` | Hook 注册源：恢复 SessionStart 完整上下文链与状态初始化、PreToolUse 守卫/观察、PostToolUse 观察；compiler 按平台改写命令路径并切分超预算的静态上下文。Continuous Learning observer 仍由 `plugin/exclusions.json` 在发布时过滤。 |
 | `lib/pretool-decision.mjs` | 平台无关的命令规范化、规则匹配与 `deny`/`inject` 领域决策。 |
 | `lib/hook-codecs.mjs` | `detectPlatform` 及 SessionStart、PreToolUse、Stop 的平台输出 codec。 |
 | `pretooluse-guard.mjs` | 读取输入、调用领域判断，再通过当前平台 codec 输出。 |
@@ -34,14 +34,14 @@
 Claude：
 
 - SessionStart 返回 `hookSpecificOutput.additionalContext`。
-- 未注册的 PreToolUse 实现中，block 规则返回 `permissionDecision: deny`，inject 规则返回 `additionalContext`。
-- 仅注册 SessionStart `model-nocode` 注入；不自动初始化 runtime state，也不注册 PreToolUse、PostToolUse 或 Stop。
+- PreToolUse block 规则返回 `permissionDecision: deny`，inject 规则返回 `additionalContext`。
+- SessionStart 会初始化 runtime state，依次注入全部 model/project segment 并执行 personal snapshot；发布物启用 PreToolUse 守卫。源码中的 Continuous Learning PreToolUse/PostToolUse observer 保留注册，但因该模块已停用，会在发布时过滤；Stop 暂未注册。
 
 Codex：
 
 - SessionStart 返回 `systemMessage`。
-- 未注册的 PreToolUse 实现使用完全相同的领域判断，但当前 Hook 输出能力不能表达 Claude 的硬 `deny`。block 命中时输出带“当前 Codex Hook 无法硬阻断，请不要执行”的 `systemMessage`，明确 fail-open，不伪造拦截成功。
-- 仅注册 SessionStart `model-nocode` 注入；不自动初始化 runtime state，也不注册 PreToolUse、PostToolUse 或 Stop。
+- PreToolUse 使用完全相同的领域判断，但当前 Hook 输出能力不能表达 Claude 的硬 `deny`。block 命中时输出带“当前 Codex Hook 无法硬阻断，请不要执行”的 `systemMessage`，明确 fail-open，不伪造拦截成功。
+- 与 Claude 使用相同的有效 hook 链和发布过滤；adapter 把所有插件内命令改写为带引号的 `${PLUGIN_ROOT}` 绝对路径。
 
 平台默认由运行时环境识别：`NOCODE_PLATFORM` 可显式指定；否则存在 `PLUGIN_ROOT` 时视为 Codex，回退为 Claude。生成的 Codex Hook 命令使用 `${PLUGIN_ROOT}`，Claude 使用 `${CLAUDE_PLUGIN_ROOT}`。业务状态脚本只读取 `NOCODE_PLUGIN_DATA`；平台变量的映射只发生在 provider/adapter 边界。
 
@@ -80,4 +80,4 @@ node scripts/check-skills.mjs --root . --platform source
 node --test hooks/*.test.mjs scripts/*.test.mjs
 ```
 
-测试覆盖领域判断、两个 codec、domain registry/contract、session/handoff/plan state、显式 Wiki usage、Open Design fallback、Continuous Learning exclusion、确定性编译与单一 SessionStart 注册约束。
+测试覆盖领域判断、两个 codec、domain registry/contract、session/handoff/plan state、显式 Wiki usage、Open Design fallback、Continuous Learning exclusion、确定性编译、源码完整注册与发布物有效 hook 链。

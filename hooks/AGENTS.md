@@ -1,6 +1,6 @@
 # hooks/
 
-本目录是插件的 hook 层：领域判断与平台 codec 共用，Claude Code / Codex adapter 分别生成平台命令。目前两端只注册 SessionStart `model-nocode`，并按约定自动读取生成发布物中的 `hooks/hooks.json`，无需在 manifest 显式声明路径。
+本目录是插件的 hook 层：领域判断与平台 codec 共用，Claude Code / Codex adapter 分别生成平台命令。源码保留完整的 SessionStart、PreToolUse 与 PostToolUse 注册；发布时 `plugin/exclusions.json` 会过滤已停用的 Continuous Learning observer。两端按约定自动读取生成发布物中的 `hooks/hooks.json`，无需在 manifest 显式声明路径。
 
 ## 动手前必须知道
 
@@ -45,7 +45,7 @@
 
 ## 写新 hook 时的安全姿态约定
 
-- Stop 与 runtime-state SessionStart 实现目前均未注册；已注册的 `model-nocode` 注入失败会明确返回错误。
+- Stop 目前未注册；runtime-state SessionStart 与全部上下文 segment 已注册，任何注入失败都会明确返回错误并写入项目诊断日志。
 - fork/subagent（payload 里 `agent_id` 非空）默认不拦截，除非明确要子 agent 也生效。
 - 涉及落盘/写文件的 hook 要用短超时的锁，拿不到锁就跳过，不能拖慢用户的正常操作。Wiki usage 已由 `personal-knowledge.page.read` 显式路径维护，不属于 Hook。
 - `pretooluse-guard.mjs` 的 bypass 观测日志（`.bypass-observations.jsonl`）默认关闭，只在设置 `NOCODE_EVOLVE_OBSERVE=1` 时落盘——避免命令片段（可能含 token/URL）被隐式持久化，新 hook 若要落盘同类敏感数据也应默认关闭、opt-in 开启。
