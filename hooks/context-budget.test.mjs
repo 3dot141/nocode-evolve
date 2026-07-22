@@ -29,6 +29,14 @@ test('oversize dynamic context is omitted with an explicit source error', () => 
     'CONTEXT_SEGMENT_TOO_LARGE: omitted project/AGENTS.md; 9 bytes exceeds 8');
 });
 
+test('Codex delegates oversized dynamic context to its native spill mechanism', () => {
+  const content = 'x'.repeat(2654);
+  assert.equal(renderDynamicContext(content, {
+    safeBytes: 2000,
+    dynamicOverflow: 'passthrough',
+  }, 'project/AGENTS.md'), content);
+});
+
 test('provider budgets record the Claude release policy and Codex documented limit', () => {
   const claude = loadContextBudget('core/domains/lifecycle/providers/claude-hooks/context-budget.json');
   const codex = loadContextBudget('core/domains/lifecycle/providers/codex-hooks/context-budget.json');
@@ -36,6 +44,7 @@ test('provider budgets record the Claude release policy and Codex documented lim
   assert.equal(claude.policy, 'nocode release injection budget');
   assert.equal(codex.safeBytes, 2000);
   assert.equal(codex.documentedApproximateTokenLimit, 2500);
+  assert.equal(codex.dynamicOverflow, 'passthrough');
 });
 
 test('generated SessionStart hooks load their colocated provider budget', () => {
@@ -48,6 +57,29 @@ test('generated SessionStart hooks load their colocated provider budget', () => 
     assert.equal(result.status, 0, `${platform}: ${result.stderr}`);
     assert.match(result.stdout, /generated context/);
   }
+});
+
+test('generated Codex project injection preserves a 2654-byte AGENTS file', (t) => {
+  const workspace = mkdtempSync(path.join(os.tmpdir(), 'nocode-project-context-'));
+  t.after(() => rmSync(workspace, { recursive: true, force: true }));
+  const personal = path.join(workspace, '.agents-personal');
+  mkdirSync(personal, { recursive: true });
+  const content = `PROJECT_CONTEXT_START\n${'x'.repeat(2600)}\nPROJECT_CONTEXT_END`;
+  writeFileSync(path.join(personal, 'AGENTS.md'), content);
+
+  const pluginRoot = path.resolve('plugins/codex/nocode');
+  const result = spawnSync('bash', [path.join(pluginRoot, 'hooks/inject-nocode.sh'), 'project'], {
+    cwd: workspace,
+    input: JSON.stringify({ cwd: workspace }),
+    encoding: 'utf8',
+    env: { ...process.env, NOCODE_PLATFORM: 'codex', PLUGIN_ROOT: pluginRoot },
+  });
+
+  assert.equal(result.status, 0, result.stderr);
+  const output = JSON.parse(result.stdout).systemMessage;
+  assert.match(output, /PROJECT_CONTEXT_START/);
+  assert.match(output, /PROJECT_CONTEXT_END/);
+  assert.doesNotMatch(output, /CONTEXT_SEGMENT_TOO_LARGE|omitted/);
 });
 
 test('compiler attributes an unsplittable static segment by segment and source path', (t) => {

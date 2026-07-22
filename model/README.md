@@ -57,6 +57,8 @@ scripts/compile.hooks.js 内硬编码的规则数组 (独立链，不读 rules/ 
 
 > `nocode Capability Bootstrap` 已合并到 `agent-about.md` 底部，不再存在独立的 `agent-nocode.md` / `model-nocode` segment。当前是 9 次 `inject-nocode.sh` 调用（8 个 `model-*` segment + 1 个 `project` segment）；平台 compiler 会按各平台 context budget 把过长的静态 segment 展开成多个带 chunk 编号的物理 command。
 
+动态 `project` segment 的溢出策略按平台区分：Claude 超过其发布预算时仍显式省略；Codex 不再按 2000-byte 静态预算提前省略，而是把全文交给 Codex 原生约 2500-token hook spill 机制处理。
+
 `inject-nocode.sh` 在第一个 segment（`model-about`）里顺带做三件事，只执行一次、不在后续 segment 重复：
 
 1. **导出环境变量**：把 `CLAUDE_PLUGIN_ROOT` / `NOCODE_SKILL_REF` 写入 `CLAUDE_ENV_FILE`，供后续 Bash tool 调用使用（hook 进程内能拿到 `CLAUDE_PLUGIN_ROOT`，但 Bash tool 默认拿不到，得靠这一步搭桥）。

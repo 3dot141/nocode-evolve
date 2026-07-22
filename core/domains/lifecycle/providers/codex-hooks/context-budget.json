@@ -1,4 +1,5 @@
 {
   "documentedApproximateTokenLimit": 2500,
-  "safeBytes": 2000
+  "safeBytes": 2000,
+  "dynamicOverflow": "passthrough"
 }

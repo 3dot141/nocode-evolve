@@ -33,8 +33,9 @@ export function splitStaticContext(content, { safeBytes }, source = '<context>')
   return chunks;
 }
 
-export function renderDynamicContext(content, { safeBytes }, source) {
+export function renderDynamicContext(content, { safeBytes, dynamicOverflow = 'omit' }, source) {
   if (utf8Bytes(content) <= safeBytes) return String(content);
+  if (dynamicOverflow === 'passthrough') return String(content);
   return `CONTEXT_SEGMENT_TOO_LARGE: omitted ${source}; ${utf8Bytes(content)} bytes exceeds ${safeBytes}`;
 }
 
@@ -42,6 +43,11 @@ export function loadContextBudget(file) {
   const value = JSON.parse(readFileSync(file, 'utf8'));
   if (!Number.isInteger(value.safeBytes) || value.safeBytes < 1) {
     throw new ContextBudgetError('CONTEXT_BUDGET_INVALID', 'safeBytes must be positive', file);
+  }
+  if (value.dynamicOverflow != null && !['omit', 'passthrough'].includes(value.dynamicOverflow)) {
+    throw new ContextBudgetError(
+      'CONTEXT_BUDGET_INVALID', 'dynamicOverflow must be omit or passthrough', file,
+    );
   }
   return value;
 }
