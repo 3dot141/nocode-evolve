@@ -45,6 +45,8 @@ Codex：
 
 平台默认由运行时环境识别：`NOCODE_PLATFORM` 可显式指定；否则存在 `PLUGIN_ROOT` 时视为 Codex，回退为 Claude。生成的 Codex Hook 命令使用 `${PLUGIN_ROOT}`，Claude 使用 `${CLAUDE_PLUGIN_ROOT}`。业务状态脚本只读取 `NOCODE_PLUGIN_DATA`；平台变量的映射只发生在 provider/adapter 边界。
 
+SessionStart 会从 hook 输入的 `cwd` / `workspace` 定位当前项目，并把开始、成功/失败、退出码及 stderr 追加到 `.nocode/logs/session-start.log`。日志初始化是 best-effort，不会因为目录不可写而制造新的 hook 错误；完整 hook payload 不会落盘。
+
 ## 生成链
 
 规则路由与 Bash 硬拦截仍是两条独立单源：

@@ -1,6 +1,6 @@
 {
   "name": "nocode",
-  "version": "15.0.0",
+  "version": "15.1.0",
   "description": "Harrison 的个人工程工作流与规则工具箱，支持 Claude Code 和 Codex",
   "author": {
     "name": "Harrison",

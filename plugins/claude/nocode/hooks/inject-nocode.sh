@@ -29,6 +29,54 @@ PROJECT_DIR="${CLAUDE_PROJECT_DIR:-$PWD}"
 SEG="${1:-}"
 CHUNK="${2:-1}"
 
+# SessionStart stdin carries the real workspace on both platforms. Codex does not
+# expose CLAUDE_PROJECT_DIR, so prefer the payload cwd/workspace before falling
+# back to the process cwd (which may be the generated plugin directory).
+HOOK_INPUT="$(cat 2>/dev/null || true)"
+INPUT_PROJECT_DIR="$({ printf '%s' "$HOOK_INPUT" | node -e '
+  const fs = require("node:fs");
+  const path = require("node:path");
+  try {
+    const raw = fs.readFileSync(0, "utf8");
+    const payload = raw ? JSON.parse(raw) : {};
+    const value = payload.cwd || payload.workspace;
+    if (typeof value === "string" && path.isAbsolute(value)) process.stdout.write(path.normalize(value));
+  } catch {}
+'; } 2>/dev/null)" || INPUT_PROJECT_DIR=""
+if [ -z "${CLAUDE_PROJECT_DIR:-}" ] && [ -n "$INPUT_PROJECT_DIR" ]; then
+  PROJECT_DIR="$INPUT_PROJECT_DIR"
+fi
+
+# Diagnostics are best-effort: inability to create or append the log must never
+# become a new hook failure. Do not persist the hook payload because it can carry
+# session identifiers or future sensitive fields.
+LOG_FILE=""
+LOG_DIR="${PROJECT_DIR}/.nocode/logs"
+if mkdir -p "$LOG_DIR" 2>/dev/null && : >> "${LOG_DIR}/session-start.log" 2>/dev/null; then
+  LOG_FILE="${LOG_DIR}/session-start.log"
+  exec 3>&2
+  exec 2> >(tee -a "$LOG_FILE" >&3)
+fi
+
+log_event() {
+  [ -n "$LOG_FILE" ] || return 0
+  timestamp="$(date -u '+%Y-%m-%dT%H:%M:%SZ' 2>/dev/null || printf 'unknown')"
+  printf '%s event=%s platform=%s segment=%s project=%s%s\n' \
+    "$timestamp" "$1" "$NOCODE_PLATFORM" "${SEG:-unknown}" "$PROJECT_DIR" "${2:-}" \
+    >> "$LOG_FILE" 2>/dev/null || true
+}
+
+on_exit() {
+  exit_code=$?
+  if [ "$exit_code" -eq 0 ]; then
+    log_event success
+  else
+    log_event failure " exit_code=${exit_code}"
+  fi
+}
+trap on_exit EXIT
+log_event start
+
 # segment → 文件 映射 (单一来源)
 seg_file() {
   case "$1" in

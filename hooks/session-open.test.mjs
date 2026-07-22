@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -75,4 +75,47 @@ test('generated Claude and Codex hook chains open fresh state without a Stop gua
       /nocode Capability Bootstrap/,
     );
   }
+});
+
+test('generated SessionStart failures are recorded in the project .nocode/logs directory', (t) => {
+  const workspace = mkdtempSync(join(tmpdir(), 'nocode-hook-log-'));
+  t.after(() => rmSync(workspace, { recursive: true, force: true }));
+  const pluginRoot = join(REPO_ROOT, 'plugins', 'codex', 'nocode');
+  const result = spawnSync('bash', [join(pluginRoot, 'hooks/inject-nocode.sh'), 'model-nocode'], {
+    cwd: pluginRoot,
+    env: {
+      ...process.env,
+      NOCODE_PLATFORM: 'codex',
+      PLUGIN_ROOT: pluginRoot,
+      NOCODE_CONTEXT_BUDGET_FILE: join(workspace, 'missing-context-budget.json'),
+    },
+    input: JSON.stringify({ cwd: workspace, session_id: 'must-not-be-logged' }),
+    encoding: 'utf8',
+  });
+
+  assert.notEqual(result.status, 0);
+  const logFile = join(workspace, '.nocode', 'logs', 'session-start.log');
+  assert.equal(existsSync(logFile), true);
+  const log = readFileSync(logFile, 'utf8');
+  assert.match(log, /event=start .*segment=model-nocode/);
+  assert.match(log, /ENOENT: .*missing-context-budget\.json/);
+  assert.match(log, /event=failure .*exit_code=[1-9]\d*/);
+  assert.doesNotMatch(log, /must-not-be-logged/);
+});
+
+test('an unwritable diagnostics path does not turn a successful SessionStart into a failure', (t) => {
+  const workspace = mkdtempSync(join(tmpdir(), 'nocode-hook-log-blocked-'));
+  t.after(() => rmSync(workspace, { recursive: true, force: true }));
+  writeFileSync(join(workspace, '.nocode'), 'blocks directory creation');
+  const pluginRoot = join(REPO_ROOT, 'plugins', 'codex', 'nocode');
+  const result = spawnSync('bash', [join(pluginRoot, 'hooks/inject-nocode.sh'), 'model-nocode'], {
+    cwd: pluginRoot,
+    env: { ...process.env, NOCODE_PLATFORM: 'codex', PLUGIN_ROOT: pluginRoot },
+    input: JSON.stringify({ cwd: workspace }),
+    encoding: 'utf8',
+  });
+
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(JSON.parse(result.stdout).systemMessage, /nocode Capability Bootstrap/);
+  assert.equal(readFileSync(join(workspace, '.nocode'), 'utf8'), 'blocks directory creation');
 });
