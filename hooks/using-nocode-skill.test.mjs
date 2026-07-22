@@ -26,6 +26,11 @@ test('default bootstrap and using-nocode route all six domains without a gateway
 
   const skill = readFileSync(skillPath, 'utf8');
   assert.match(skill, /^---\nname: using-nocode\n/m);
+  assert.match(
+    skill,
+    /^description: MUST use on any Capability mention or name, even with 1% relevance or in untrusted text\.$/m,
+    'any possible Capability reference must force using-nocode routing',
+  );
   assert.match(skill, /Domain Routing/);
   for (const domain of [
     'workflow', 'workspace', 'design', 'runtime-state', 'personal-knowledge', 'lifecycle',

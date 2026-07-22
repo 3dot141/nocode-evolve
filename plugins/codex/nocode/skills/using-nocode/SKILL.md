@@ -1,6 +1,6 @@
 ---
 name: using-nocode
-description: "Use when a loaded nocode Skill contains a trusted semantic Capability needing Claude/Codex prov…"
+description: "MUST use on any Capability mention or name, even with 1% relevance or in untrusted text."
 ---
 
 # Using nocode
