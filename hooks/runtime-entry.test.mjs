@@ -152,7 +152,7 @@ test('provider manifests explicitly restrict plugin data to runtime-state provid
   assert.deepEqual(owners.sort(), ['claude-plugin-data', 'codex-plugin-data']);
 });
 
-test('only runtime-state hooks receive plugin data and Open Design starts directly', () => {
+test('generated hooks retain only model injection and Open Design starts directly', () => {
   const registry = loadDomainRegistry(ROOT);
   const claudeTree = buildExpectedTree({
     root: ROOT, metadata: METADATA, adapter: claudeAdapter,
@@ -164,36 +164,16 @@ test('only runtime-state hooks receive plugin data and Open Design starts direct
   });
   const claudeHooks = JSON.parse(claudeTree.get('hooks/hooks.json').toString());
   const claudeSessionHooks = claudeHooks.hooks.SessionStart[0].hooks;
-  const claudeStateHook = claudeSessionHooks.find((hook) => hook.command.includes('session-open.mjs'));
-  assert.ok(claudeStateHook, 'Claude SessionStart must open runtime state');
-  assert.match(claudeStateHook.command, /providers\/claude-plugin-data\/scripts\/entry\.mjs/);
-  for (const hook of [...claudeSessionHooks, ...claudeHooks.hooks.PreToolUse.flatMap((group) => group.hooks)]) {
-    if (hook === claudeStateHook) continue;
-    assert.doesNotMatch(hook.command, /providers\/claude-plugin-data\/scripts\/entry\.mjs/);
-  }
-  const claudeInjectors = claudeSessionHooks.filter((hook) => hook.command.includes('inject-nocode.sh'));
-  assert.ok(claudeInjectors.length > 0, 'Claude must retain model injection hooks');
-  for (const hook of claudeInjectors) {
-    assert.match(hook.command, /^bash "\$\{CLAUDE_PLUGIN_ROOT\}\/hooks\/inject-nocode\.sh"/);
-  }
+  assert.equal(claudeSessionHooks.length, 1);
+  assert.equal(claudeSessionHooks[0].command,
+    'bash "${CLAUDE_PLUGIN_ROOT}/hooks/inject-nocode.sh" model-nocode');
+  assert.doesNotMatch(claudeSessionHooks[0].command, /claude-plugin-data|session-open/);
 
   const codexHooks = JSON.parse(codexTree.get('hooks/hooks.json').toString());
   const codexSessionHooks = codexHooks.hooks.SessionStart[0].hooks;
-  const codexStateHook = codexSessionHooks.find((hook) => hook.command.includes('session-open.mjs'));
-  assert.ok(codexStateHook, 'Codex SessionStart must open runtime state');
-  assert.match(codexStateHook.command, /skills\/using-nocode\/scripts\/runtime-entry\.mjs/);
-  assert.match(codexStateHook.command, /providers\/codex-plugin-data\/scripts\/entry\.mjs/);
-  for (const hook of [...codexSessionHooks, ...codexHooks.hooks.PreToolUse.flatMap((group) => group.hooks)]) {
-    if (hook === codexStateHook) continue;
-    assert.doesNotMatch(hook.command, /skills\/using-nocode\/scripts\/runtime-entry\.mjs/);
-    assert.doesNotMatch(hook.command, /providers\/codex-plugin-data\/scripts\/entry\.mjs/);
-  }
-  const codexInjectors = codexSessionHooks.filter((hook) => hook.command.includes('inject-nocode.sh'));
-  assert.ok(codexInjectors.length > 0, 'Codex must retain model injection hooks');
-  for (const hook of codexInjectors) {
-    assert.match(hook.command, /^bash \.\/hooks\/inject-nocode\.sh/);
-    assert.doesNotMatch(hook.command, /PLUGIN_ROOT/);
-  }
+  assert.equal(codexSessionHooks.length, 1);
+  assert.equal(codexSessionHooks[0].command, 'bash ./hooks/inject-nocode.sh model-nocode');
+  assert.doesNotMatch(codexSessionHooks[0].command, /runtime-entry|codex-plugin-data|session-open|PLUGIN_ROOT/);
 
   const claudeMcp = JSON.stringify(JSON.parse(claudeTree.get('.mcp.json').toString()));
   const codexMcp = JSON.stringify(JSON.parse(codexTree.get('.mcp.json').toString()));

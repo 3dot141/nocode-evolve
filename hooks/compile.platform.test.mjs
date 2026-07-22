@@ -312,9 +312,9 @@ test('Claude adapter builds shared entry skills and agent references', () => {
     /planning/i,
   );
   const claudeHooks = JSON.parse(tree.get('hooks/hooks.json').toString());
-  assert.equal('Stop' in claudeHooks.hooks, false);
-  assert.doesNotMatch(JSON.stringify(claudeHooks), /handoff|plan-change/);
-  assert.match(JSON.stringify(claudeHooks.hooks.SessionStart), /model-nocode/);
+  assert.deepEqual(Object.keys(claudeHooks.hooks), ['SessionStart']);
+  assert.equal(claudeHooks.hooks.SessionStart[0].hooks.length, 1);
+  assert.match(claudeHooks.hooks.SessionStart[0].hooks[0].command, /inject-nocode\.sh" model-nocode$/);
   const claudeInjector = tree.get('hooks/inject-nocode.sh').toString();
   assert.match(claudeInjector, /skills\/using-nocode\/scripts\/providers\/claude-hooks\/context-budget\.json/);
   assert.doesNotMatch(claudeInjector, /providers\/codex-hooks\//);
@@ -402,9 +402,10 @@ test('Codex adapter builds shared entry skills and agent references', () => {
   );
   assert.equal(tree.has('skills/agent-profiles/SKILL.md'), false);
   const codexHooks = JSON.parse(tree.get('hooks/hooks.json').toString());
-  assert.equal('Stop' in codexHooks.hooks, false);
-  assert.doesNotMatch(JSON.stringify(codexHooks), /handoff|plan-change/);
-  assert.match(JSON.stringify(codexHooks.hooks.SessionStart), /model-nocode/);
+  assert.deepEqual(Object.keys(codexHooks.hooks), ['SessionStart']);
+  assert.equal(codexHooks.hooks.SessionStart[0].hooks.length, 1);
+  assert.equal(codexHooks.hooks.SessionStart[0].hooks[0].command,
+    'bash ./hooks/inject-nocode.sh model-nocode');
   const codexInjector = tree.get('hooks/inject-nocode.sh').toString();
   assert.match(codexInjector, /providers\/codex-hooks\/context-budget\.json/);
   assert.match(codexInjector, /NOCODE_PLATFORM="\$\{NOCODE_PLATFORM:-codex\}"/);

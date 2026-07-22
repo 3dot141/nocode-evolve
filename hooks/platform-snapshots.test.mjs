@@ -21,13 +21,14 @@ test('Claude representative runtime files match the approved snapshot', () => {
   }
 });
 
-test('Claude generated hooks retain all lifecycle boundaries', () => {
+test('Claude generated hooks retain only the model-nocode SessionStart hook', () => {
   const hooks = JSON.parse(readFileSync(path.join(CLAUDE_ROOT, 'hooks/hooks.json'), 'utf8'));
-  assert.deepEqual(Object.keys(hooks.hooks), [
-    'SessionStart',
-    'PreToolUse',
-    'PostToolUse',
-  ]);
-  assert.match(JSON.stringify(hooks.hooks.PreToolUse), /pretooluse-guard\.mjs/);
-  assert.equal('Stop' in hooks.hooks, false);
+  assert.deepEqual(Object.keys(hooks.hooks), ['SessionStart']);
+  assert.deepEqual(hooks.hooks.SessionStart, [{
+    matcher: '*',
+    hooks: [{
+      type: 'command',
+      command: 'bash "${CLAUDE_PLUGIN_ROOT}/hooks/inject-nocode.sh" model-nocode',
+    }],
+  }]);
 });
