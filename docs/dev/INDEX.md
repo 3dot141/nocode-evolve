@@ -7,7 +7,6 @@
 
 | 路径 | 主题 | 状态 |
 |---|---|---|
-| `3dot141/260723-01-codex-restart-script/codex-restart-script-design.md` | codex-restart 状态检查、proxy 告警与 daemon-only fire-and-forget 重启脚本 | **implemented** |
 | `3dot141/260723-03-native-platform-block-packaging/native-platform-block-packaging-design.md` | 原生平台块 + 静态打包 | **approved / implementation pending** |
 | `3dot141/260603-02-strategic-review-v3.4.0/strategic-review-v3.4.0.md` | v3.4.0 战略级架构改进 | **draft / 落地中** |
 | `3dot141/260602-02-worktree-setup-script/worktree-setup-script-design.md` | worktree-setup 与同级扁平 worktree | **active** |
@@ -26,6 +25,7 @@
 | 路径 | 主题 | 备注 |
 |---|---|---|
 | `3dot141/260526-02-rule-trigger-eval/rule-trigger-eval-design.md` | rule-eval 框架 | 已实施的历史背景 |
+| `3dot141/260723-01-codex-restart-script/codex-restart-script-design.md` | 17.2 codex-restart helper | 0.9 已由 `codex-nocode-reload` 的 remove → add → restart 流程取代 |
 
 ## 配套计划
 

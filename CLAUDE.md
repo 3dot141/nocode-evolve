@@ -18,10 +18,11 @@
 只要改动了插件业务源码、平台适配器或运行时文件，就视为插件更新，必须更新版本：
 
 - 范围：`hooks/`、`model/`、`rules/`、`skills/`、`agents/`、`commands/`、`core/`、`adapters/`、`scripts/` 中参与插件运行或生成的文件，以及 `.mcp.json` 等平台运行时配置。
-- 操作：编辑版本单源 `plugin/metadata.json` 的 `version`，按 SemVer 升级，再运行 `node scripts/package.platform.mjs` 生成两个平台发布物，并把源码、版本与生成物包含在同一个 commit 里：
+- 操作：编辑版本单源 `plugin/metadata.json` 的 `version`，按 SemVer 升级，再运行 `node scripts/package.platform.mjs` 生成两个平台发布物，并把源码、版本与生成物包含在同一个 commit 里。当前处于 `0.x` 阶段，在用户明确决定发布稳定版 `1.0.0` 前，major 固定为 `0`；非破坏性更新不得自动升级 major：
   - **patch**：bug fix / 文案修订
   - **minor**：新增 hook / skill / 兼容性增强
-  - **major**：破坏性变更（路径改名、规则语义反转等）
+  - **0.x breaking change**：路径改名、规则语义反转等破坏性变更升级 minor，不自动进入 `1.0.0`
+  - **major**：仅在用户明确决定进入新的稳定主版本时升级
 - `plugins/claude/nocode/` 与 `plugins/codex/nocode/` 是生成物，**禁止手改**；marketplace 直接从 git 读取它们，不需要 tarball/npm 打包。
 
 纯文档/元数据修订（README、本文件、AGENTS.md 等）不需要升版本，但仍遵守规则 1。

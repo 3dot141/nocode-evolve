@@ -26,11 +26,11 @@
       "reason": "disabled: legacy Claude-only Codex companion is replaced by the workflow review provider"
     },
     {
-      "path": "skills/codex-restart",
+      "path": "skills/codex-nocode-reload",
       "platforms": [
         "claude"
       ],
-      "reason": "Codex-only: manages the Codex app-server daemon, Remote Control, and Codex App restart"
+      "reason": "Codex-only: reinstalls nocode and restarts the managed Codex daemon"
     }
   ],
   "hookCommands": [

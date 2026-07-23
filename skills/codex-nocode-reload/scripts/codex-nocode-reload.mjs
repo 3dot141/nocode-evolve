@@ -233,28 +233,67 @@ async function defaultProcessList() {
   return result.exitCode === 0 ? result.stdout : null;
 }
 
-export async function scheduleRestart({
+export async function reloadNocode({
   confirmed,
   codexPath = process.env.CODEX_CLI_PATH || 'codex',
+  runCommand: runner = runCommand,
   listProcesses = defaultProcessList,
   spawnCommand = spawn,
 } = {}) {
   if (!confirmed) {
-    throw new Error('restart requires --confirmed after immediate user confirmation');
+    throw new Error('reload requires --confirmed after immediate user confirmation');
   }
 
   const proxyCount = countProxyProcesses(await listProcesses());
-  const child = spawnCommand(codexPath, ['app-server', 'daemon', 'restart'], {
-    detached: true,
-    stdio: 'ignore',
-  });
+  let removeResult;
+  try {
+    removeResult = await runner([
+      codexPath,
+      'plugin',
+      'remove',
+      '--json',
+      PLUGIN_NAME,
+    ]);
+  } catch {
+    throw new Error('nocode plugin removal failed');
+  }
+  if (removeResult.exitCode !== 0) {
+    throw new Error(`nocode plugin removal failed with code ${removeResult.exitCode ?? 'unknown'}`);
+  }
+
+  let addResult;
+  try {
+    addResult = await runner([
+      codexPath,
+      'plugin',
+      'add',
+      '--json',
+      PLUGIN_NAME,
+    ]);
+  } catch {
+    throw new Error('nocode plugin installation failed; plugin remains uninstalled');
+  }
+  if (addResult.exitCode !== 0) {
+    throw new Error(`nocode plugin installation failed with code ${addResult.exitCode ?? 'unknown'}; plugin remains uninstalled`);
+  }
+
+  let child;
+  try {
+    child = spawnCommand(codexPath, ['app-server', 'daemon', 'restart'], {
+      detached: true,
+      stdio: 'ignore',
+    });
+  } catch {
+    throw new Error('failed to submit restart command');
+  }
   await waitForSpawn(child);
   child.unref();
 
   return {
     schemaVersion: 1,
-    action: 'restart',
+    action: 'reload',
     status: 'scheduled',
+    plugin: PLUGIN_NAME,
     proxyCount,
   };
 }
@@ -265,22 +304,22 @@ export async function runCli(argv = process.argv.slice(2)) {
     process.stdout.write(`${JSON.stringify(await inspectCodex(), null, 2)}\n`);
     return 0;
   }
-  if (command === 'restart') {
+  if (command === 'reload') {
     try {
-      const receipt = await scheduleRestart({ confirmed: options.includes('--confirmed') });
+      const receipt = await reloadNocode({ confirmed: options.includes('--confirmed') });
       process.stdout.write(`${JSON.stringify(receipt)}\n`);
       return 0;
     } catch (error) {
       process.stderr.write(`${JSON.stringify({
         schemaVersion: 1,
-        action: 'restart',
+        action: 'reload',
         status: 'error',
         message: error.message,
       })}\n`);
       return options.includes('--confirmed') ? 1 : 2;
     }
   }
-  process.stderr.write('Usage: codex-restart.mjs inspect | restart --confirmed\n');
+  process.stderr.write('Usage: codex-nocode-reload.mjs inspect | reload --confirmed\n');
   return 2;
 }
 

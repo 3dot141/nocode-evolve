@@ -32,7 +32,7 @@ Claude Code 自动发现本目录下每个含 `SKILL.md` 的子目录，**新增
 当前 `fork` 的 vendor 来源 skill（本仓改造版，直接改 `skills/` 内容）：
 - superpowers：`using-git-worktrees`（创建改走 `git worktree add -b`，进入走 `平台原生 agent/plan/decision 工具`）
 
-`keep-as-skill` 的目录**不要手动改内容再指望保留**——上游更新后跑 `node scripts/vendor-sync.mjs` 会按规则重新分发/覆盖，手改内容会被覆盖丢失。要定制这些 skill 的行为，走 rule overlay 叠加在上面（例：`brainstorming` 有 `rule-superpowers-brainstorming` overlay），不改 skill 源文件本身；定制大到 overlay 盖不住（要改 skill 正文流程）时，把该 skill 的 action 升级为 `fork` 再改（例：`using-git-worktrees`，其 `rule-git-worktree` overlay 仍叠在上面）。
+`keep-as-skill` 的目录**不要手动改内容再指望保留**——上游更新后跑 `node scripts/vendor-sync.mjs` 会按规则重新分发/覆盖，手改内容会被覆盖丢失。小范围行为定制可以走 rule overlay；定制大到需要改 Skill 正文流程时，把该 Skill 的 action 升级为 `fork` 再改。`brainstorming` 与 `using-git-worktrees` 都是本地 fork，行为直接由各自 SKILL.md 定义。
 
 commit 前跑 `node scripts/vendor-sync.mjs --check` 确认一致（不一致 exit 1），必要时跑不带 `--check` 的版本执行同步。规则详见仓库 `CLAUDE.md` 规则 4 和 `vendor/AGENTS.md`。
 

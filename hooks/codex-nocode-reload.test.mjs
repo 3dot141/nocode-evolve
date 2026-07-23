@@ -7,8 +7,8 @@ import {
   countProxyProcesses,
   inspectCodex,
   parsePluginList,
-  scheduleRestart,
-} from '../skills/codex-restart/scripts/codex-restart.mjs';
+  reloadNocode,
+} from '../skills/codex-nocode-reload/scripts/codex-nocode-reload.mjs';
 
 function commandFixture(overrides = {}) {
   const outputs = new Map([
@@ -150,11 +150,15 @@ test('parsePluginList returns not-found without guessing fields', () => {
   });
 });
 
-test('restart refuses to spawn without immediate confirmation', async () => {
+test('reload refuses all mutations without immediate confirmation', async () => {
+  let commandRan = false;
   let spawned = false;
   await assert.rejects(
-    scheduleRestart({
+    reloadNocode({
       confirmed: false,
+      runCommand: async () => {
+        commandRan = true;
+      },
       listProcesses: async () => '',
       spawnCommand: () => {
         spawned = true;
@@ -162,19 +166,24 @@ test('restart refuses to spawn without immediate confirmation', async () => {
     }),
     /--confirmed/,
   );
+  assert.equal(commandRan, false);
   assert.equal(spawned, false);
 });
 
-test('confirmed restart submits only the official detached command and returns a receipt', async () => {
+test('confirmed reload removes, installs, then submits the detached daemon restart', async () => {
   const calls = [];
   const child = new EventEmitter();
   child.unref = () => {
     calls.push(['unref']);
   };
 
-  const receiptPromise = scheduleRestart({
+  const receiptPromise = reloadNocode({
     confirmed: true,
     codexPath: '/opt/codex',
+    runCommand: async (argv) => {
+      calls.push(argv);
+      return { exitCode: 0, stdout: '{}', stderr: '' };
+    },
     listProcesses: async () => [
       '1 2 /opt/codex app-server proxy',
       '3 4 /opt/codex app-server proxy',
@@ -188,11 +197,14 @@ test('confirmed restart submits only the official detached command and returns a
 
   assert.deepEqual(await receiptPromise, {
     schemaVersion: 1,
-    action: 'restart',
+    action: 'reload',
     status: 'scheduled',
+    plugin: 'nocode@nocode-market',
     proxyCount: 2,
   });
   assert.deepEqual(calls, [
+    ['/opt/codex', 'plugin', 'remove', '--json', 'nocode@nocode-market'],
+    ['/opt/codex', 'plugin', 'add', '--json', 'nocode@nocode-market'],
     ['/opt/codex', ['app-server', 'daemon', 'restart'], {
       detached: true,
       stdio: 'ignore',
@@ -201,12 +213,71 @@ test('confirmed restart submits only the official detached command and returns a
   ]);
 });
 
-test('restart reports a pre-spawn error and never returns scheduled', async () => {
+test('remove failure stops before install and restart', async () => {
+  const calls = [];
+
+  await assert.rejects(
+    reloadNocode({
+      confirmed: true,
+      runCommand: async (argv) => {
+        calls.push(argv);
+        return { exitCode: 1, stdout: '', stderr: 'private details' };
+      },
+      listProcesses: async () => '',
+      spawnCommand: () => assert.fail('restart must not run'),
+    }),
+    /removal failed with code 1/,
+  );
+  assert.equal(calls.length, 1);
+});
+
+test('install failure leaves nocode uninstalled and stops before restart', async () => {
+  const calls = [];
+
+  await assert.rejects(
+    reloadNocode({
+      confirmed: true,
+      runCommand: async (argv) => {
+        calls.push(argv);
+        return {
+          exitCode: calls.length === 1 ? 0 : 7,
+          stdout: '',
+          stderr: 'private details',
+        };
+      },
+      listProcesses: async () => '',
+      spawnCommand: () => assert.fail('restart must not run'),
+    }),
+    /installation failed with code 7; plugin remains uninstalled/,
+  );
+  assert.deepEqual(calls.map((argv) => argv[2]), ['remove', 'add']);
+});
+
+test('reload redacts thrown command details and reports only the failed phase', async () => {
+  await assert.rejects(
+    reloadNocode({
+      confirmed: true,
+      runCommand: async () => {
+        throw new Error('secret-token');
+      },
+      listProcesses: async () => '',
+      spawnCommand: () => assert.fail('restart must not run'),
+    }),
+    (error) => {
+      assert.match(error.message, /plugin removal failed/);
+      assert.doesNotMatch(error.message, /secret-token/);
+      return true;
+    },
+  );
+});
+
+test('reload reports a pre-spawn error after successful reinstall', async () => {
   const child = new EventEmitter();
   child.unref = () => assert.fail('unref must not run after spawn failure');
 
-  const receiptPromise = scheduleRestart({
+  const receiptPromise = reloadNocode({
     confirmed: true,
+    runCommand: async () => ({ exitCode: 0, stdout: '{}', stderr: '' }),
     listProcesses: async () => '',
     spawnCommand: () => {
       queueMicrotask(() => child.emit('error', new Error('ENOENT')));
@@ -217,18 +288,19 @@ test('restart reports a pre-spawn error and never returns scheduled', async () =
   await assert.rejects(receiptPromise, /failed to submit restart command/);
 });
 
-test('skill keeps daemon-only submission separate from full App reload', () => {
+test('skill has one confirmed remove-add-restart sequence and no post actions', () => {
   const skill = readFileSync(
-    new URL('../skills/codex-restart/SKILL.md', import.meta.url),
+    new URL('../skills/codex-nocode-reload/SKILL.md', import.meta.url),
     'utf8',
   );
 
-  assert.match(skill, /scripts\/codex-restart\.mjs/);
-  assert.match(skill, /RESTART_HELPER" inspect/);
-  assert.match(skill, /RESTART_HELPER" restart --confirmed/);
-  assert.match(skill, /> Restart command submitted\./);
+  assert.match(skill, /^name: codex-nocode-reload$/m);
+  assert.match(skill, /scripts\/codex-nocode-reload\.mjs/);
+  assert.match(skill, /RELOAD_HELPER" inspect/);
+  assert.match(skill, /RELOAD_HELPER" reload --confirmed/);
+  assert.match(skill, /plugin remove --json nocode@nocode-market[\s\S]*plugin add --json nocode@nocode-market[\s\S]*app-server daemon restart/);
+  assert.match(skill, /> Reload command submitted\./);
   assert.match(skill, /Do not wait, poll, reconnect, verify, inspect again/);
-  assert.match(skill, /Full App reload instructions/);
   assert.doesNotMatch(skill, /Verify after reconnection/);
-  assert.doesNotMatch(skill, /managed app-server daemon and fully restart Codex App now/);
+  assert.doesNotMatch(skill, /Full App reload/);
 });

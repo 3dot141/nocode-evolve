@@ -336,9 +336,9 @@ test('Claude adapter builds native skills and direct runtime overlays', () => {
   for (const relative of required) {
     assert.ok(tree.has(relative), `Claude artifact missing ${relative}`);
   }
-  assert.equal(tree.has('skills/codex-restart/scripts/codex-restart.mjs'), false);
+  assert.equal(tree.has('skills/codex-nocode-reload/scripts/codex-nocode-reload.mjs'), false);
   assert.equal(tree.has('model/agent-nocode.md'), false);
-  assert.equal(tree.has('skills/codex-restart/SKILL.md'), false);
+  assert.equal(tree.has('skills/codex-nocode-reload/SKILL.md'), false);
   assert.equal(tree.has('skills/sow/scripts/test_script.py'), false);
   assert.equal([...tree.keys()].some((relative) => relative.startsWith('vendor/codex/')), false);
   for (const developmentOnly of [
@@ -401,8 +401,8 @@ test('Codex adapter builds native skills and direct runtime overlays', () => {
     'scripts/compile.rule.js',
     'skills/references/testing-guide.md',
     'skills/agents-launcher/agents/openai.yaml',
-    'skills/codex-restart/SKILL.md',
-    'skills/codex-restart/scripts/codex-restart.mjs',
+    'skills/codex-nocode-reload/SKILL.md',
+    'skills/codex-nocode-reload/scripts/codex-nocode-reload.mjs',
     'skills/devflow/SKILL.md',
     'skills/task/SKILL.md',
     'runtime/context-budget.json',

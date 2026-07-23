@@ -84,20 +84,17 @@ test('using-git-worktrees uses the flat sibling path and rejects legacy containe
 });
 
 test('development documents use topic directories under docs/dev', () => {
-  const brainstorming = read('skills/brainstorming/SKILL.md');
   const about = read('model/agent-about.md');
 
-  assert.match(brainstorming, /\{dev_design_output\}/);
-  assert.doesNotMatch(brainstorming, /docs\/superpowers\/(?:specs|plans)/);
   assert.match(about, /docs\/dev\/\{username\}\/\{yymmdd\}-\{serial\}-\{topic\}/);
   assert.equal(existsSync(new URL('../docs/dev/INDEX.md', import.meta.url)), true);
   assert.equal(existsSync(new URL('../docs/plans', import.meta.url)), false);
   assert.equal(existsSync(new URL('../docs/superpowers', import.meta.url)), false);
 });
 
-test('global model and brainstorming rule avoid forced semantic-search agents', () => {
+test('global model avoids forced semantic-search agents', () => {
   for (const file of [
-    'model/agent-about.md', 'model/agent-personal.md', 'rules/rule-superpowers-brainstorming.md',
+    'model/agent-about.md', 'model/agent-personal.md',
   ]) {
     const source = read(file);
     assert.doesNotMatch(source, /Capability\(|"profile"\s*:|fallbackPolicy/, file);
@@ -144,15 +141,26 @@ test('design and review subflows use native plans and direct Skill calls', () =>
     assert.match(source, /TaskUpdate/);
     assert.match(source, /update_plan/);
   }
-  const brainstorming = read('skills/brainstorming/SKILL.md');
-  for (const skill of ['using-git-worktrees', 'dev-design', 'reviewing']) {
-    assert.match(brainstorming, new RegExp(`Skill\\(nocode:${skill}\\)`));
-  }
   assert.match(read('skills/dev-design/writing/SKILL.md'), /Skill\(nocode:reviewing\)/);
   assert.match(read('skills/red-blue-deep/SKILL.md'), /Skill\(nocode:reviewing\)/);
   const reviewing = read('skills/reviewing/SKILL.md');
   for (const field of ['request:', 'context:', 'object:', 'dimensions:', 'method:', 'contextCapsule:', 'depth:']) {
     assert.match(reviewing, new RegExp(field));
+  }
+});
+
+test('brainstorming broadens options without forcing delivery artifacts', () => {
+  const brainstorming = read('skills/brainstorming/SKILL.md');
+  assert.match(brainstorming, /multiple materially different plausible directions/);
+  assert.match(brainstorming, /Generate 3-5 genuinely different directions/);
+  assert.match(brainstorming, /Do not force a spec, design document, commit, worktree, implementation plan, or workflow handoff/);
+  assert.doesNotMatch(brainstorming, /HARD-GATE|dev_design_output|Skill\(nocode:|TaskCreate|update_plan/);
+  for (const removed of [
+    'skills/brainstorming/visual-companion.md',
+    'skills/brainstorming/spec-document-reviewer-prompt.md',
+    'skills/brainstorming/scripts/server.cjs',
+  ]) {
+    assert.equal(existsSync(new URL(`../${removed}`, import.meta.url)), false, removed);
   }
 });
 
@@ -240,7 +248,7 @@ test('dev-land has one panorama gate and never adds a runtime confirmation', () 
 
 test('skill handoffs use a self-contained context envelope instead of an ambient-context placeholder', () => {
   for (const file of [
-    'model/agent-about.md', 'rules/rule-superpowers-brainstorming.md',
+    'model/agent-about.md',
     'skills/dev-build/SKILL.md', 'skills/dev-review/SKILL.md', 'skills/reviewing/SKILL.md',
     'skills/pdflow/SKILL.md', 'commands/distill.md', 'commands/nocodehub.md',
   ]) {
@@ -263,8 +271,6 @@ test('skill invocation payloads carry the business fields claimed by their calle
     '"target":"<rule-or-skill-path>"', '"description":"<routing-description>"',
   ]) assert.match(distill, new RegExp(field.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
 
-  const brainstormingRule = read('rules/rule-superpowers-brainstorming.md');
-  assert.match(brainstormingRule, /设计文档绝对路径.*全部设计审查维度.*AI patterns.*self-audit.*checklist.*Context Capsule.*independent/s);
   const prd = read('skills/pd-prd/SKILL.md');
   assert.match(prd, /对象 = PRD.*全部 8 维.*checklist.*Context Capsule.*深度 = auto/s);
   const vd = read('skills/pd-vd/SKILL.md');
