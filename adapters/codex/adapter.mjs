@@ -27,15 +27,6 @@ export const codexAdapter = {
         }),
       }),
       ...generateSkillPolicies(root, { isExcluded }),
-      ['.mcp.json', `${JSON.stringify({
-        mcpServers: {
-          'open-design': {
-            command: 'node',
-            args: ['${PLUGIN_ROOT}/scripts/open-design-launch.mjs'],
-            startup_timeout_sec: 60,
-          },
-        },
-      }, null, 2)}\n`],
     ]);
   },
 };

@@ -103,15 +103,15 @@ test('generated platform entrypoints map directly to isolated data roots', async
   }
 });
 
-test('generated hooks and MCP use only direct runtime paths', () => {
+test('generated hooks use direct runtime paths without global MCP registration', () => {
   for (const [platform, adapter] of Object.entries({ claude: claudeAdapter, codex: codexAdapter })) {
     const tree = buildExpectedTree({ root: ROOT, metadata: METADATA, adapter });
     const hooks = tree.get('hooks/hooks.json').toString();
     assert.match(hooks, /runtime\/plugin-data-entry\.mjs/);
     assert.match(hooks, /hooks\/session-open\.mjs/);
     assert.doesNotMatch(hooks, /using-nocode|provider/);
-    const mcp = tree.get('.mcp.json').toString();
-    assert.match(mcp, /scripts\/open-design-launch\.mjs/);
-    assert.doesNotMatch(mcp, /using-nocode|provider|runtime-entry/);
+    assert.equal(tree.has('.mcp.json'), false, `${platform} must not register a global MCP server`);
+    assert.equal(tree.has('scripts/open-design-launch.mjs'), false,
+      `${platform} must not publish the legacy Open Design MCP launcher`);
   }
 });

@@ -107,9 +107,9 @@ Codex 只会加载 `plugins/codex/nocode/`，不会读取 Claude 发布物或 Cl
 
 ### Open Design
 
-Claude 与 Codex 统一使用 Open Design。发布物内置的 `.mcp.json` 直接启动 `scripts/open-design-launch.mjs`；配置不写用户名绝对路径，也不会把 Claude/Codex 的插件数据目录混用。
+Claude 与 Codex 统一通过 `open-design` Skill 的封装 CLI 按需使用 Open Design。插件不注册全局 Open Design MCP，也不会在普通 Session 启动时探测或连接 Open Design。
 
-Open Design App 需要单独安装并启动。Nocode 不自动安装 App、不修改 App 数据，也不猜测未声明的本地服务地址或私有目录。App、授权、IPC 或布局不可用时，agent 明确报告缺失能力，不伪造成功结果。
+Open Design App 需要单独安装。Nocode 不自动安装 App、不修改 App 数据，也不猜测未声明的本地服务地址或私有目录；只有任务实际使用 Open Design 时，Skill 才通过打包 CLI 连接或启动 headless daemon。App、授权或布局不可用时，agent 明确报告缺失能力，不伪造成功结果。
 
 ## 开发与校验
 

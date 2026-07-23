@@ -266,7 +266,6 @@ test('Claude adapter builds native skills and direct runtime overlays', () => {
   const tree = buildExpectedTree({ root: REPO_ROOT, metadata, adapter: claudeAdapter });
   const required = [
     '.claude-plugin/plugin.json',
-    '.mcp.json',
     'hooks/hooks.json',
     'model/agent-about.md',
     'references/skill-integration-map.md',
@@ -276,7 +275,6 @@ test('Claude adapter builds native skills and direct runtime overlays', () => {
     'skills/task/SKILL.md',
     'runtime/context-budget.json',
     'runtime/plugin-data-entry.mjs',
-    'scripts/open-design-launch.mjs',
   ];
   for (const relative of required) {
     assert.ok(tree.has(relative), `Claude artifact missing ${relative}`);
@@ -290,10 +288,8 @@ test('Claude adapter builds native skills and direct runtime overlays', () => {
     'scripts/vendor-sync.mjs',
     'scripts/lib/domain-registry.mjs',
   ]) assert.equal(tree.has(developmentOnly), false, `${developmentOnly} must not be published`);
-  const claudeMcp = tree.get('.mcp.json').toString();
-  assert.match(claudeMcp, /scripts\/open-design-launch\.mjs/);
-  assert.doesNotMatch(claudeMcp, /using-nocode|providers\//);
-  assert.doesNotMatch(claudeMcp, /\/Users\//);
+  assert.equal(tree.has('.mcp.json'), false);
+  assert.equal(tree.has('scripts/open-design-launch.mjs'), false);
   for (const nonComponentDoc of [
     'agents/AGENTS.md',
     'agents/README.md',
@@ -339,7 +335,6 @@ test('Codex adapter builds native skills and direct runtime overlays', () => {
   const tree = buildExpectedTree({ root: REPO_ROOT, metadata, adapter: codexAdapter });
   const required = [
     '.codex-plugin/plugin.json',
-    '.mcp.json',
     'skills/sow/scripts/script.py',
     'hooks/hooks.json',
     'model/agent-about.md',
@@ -351,18 +346,14 @@ test('Codex adapter builds native skills and direct runtime overlays', () => {
     'skills/task/SKILL.md',
     'runtime/context-budget.json',
     'runtime/plugin-data-entry.mjs',
-    'scripts/open-design-launch.mjs',
   ];
   for (const relative of required) {
     assert.ok(tree.has(relative), `Codex artifact missing ${relative}`);
   }
   assert.equal(tree.has('model/agent-nocode.md'), false);
   assert.equal(tree.has('skills/sow/scripts/test_script.py'), false);
-  const codexMcp = tree.get('.mcp.json').toString();
-  assert.match(codexMcp, /scripts\/open-design-launch\.mjs/);
-  assert.equal(JSON.parse(codexMcp).mcpServers['open-design'].startup_timeout_sec, 60);
-  assert.doesNotMatch(codexMcp, /using-nocode|providers\//);
-  assert.doesNotMatch(codexMcp, /\/Users\//);
+  assert.equal(tree.has('.mcp.json'), false);
+  assert.equal(tree.has('scripts/open-design-launch.mjs'), false);
   assert.equal([...tree.keys()].some((relative) => relative.startsWith('vendor/codex/')), false);
   assert.equal(tree.has('scripts/package.platform.mjs'), false);
   assert.equal(tree.has('scripts/lib/platform-compiler.mjs'), false);
