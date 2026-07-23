@@ -10,6 +10,8 @@ disable-model-invocation: true
 
 > dev-design 内部协议，不独立注册。由 dev-design 协调器在 decision 阶段 Read 并执行。
 
+跨阶段设计项 ID 与四态契约 Read `{NOCODE_SKILL_REF}/design-traceability.md`。Decision 阶段不生成最终 Registry，但必须把所有已确认且影响实现的决策、领域覆盖结论和测试目标标记为 writing 的 Registry 输入；已有 Q / BF / TO ID 后续必须复用。
+
 **Iron Law: 方案未对比的设计是假设不是设计。只提一个方案就让用户确认 = 假共识。**
 
 decision 回答"走哪条路"——**先扩散再收敛**:探索 approach、多方案差异化对比,扩散结果交用户拍方向(Step 4a),再收敛下钻,产出结构化 **决策包 Decision Packet** 交给 writing 阶段写详细设计。本阶段只做决策,不做详细设计、不评审;Packet 落盘为设计文档初稿(见下)。

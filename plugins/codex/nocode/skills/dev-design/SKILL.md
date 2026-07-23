@@ -7,7 +7,7 @@ description: "\"Use for technical design, solution selection, design documents, 
 
 **Iron Law: 协调器只编排，不做任何阶段的领域工作。选方案在 decision，写文档 + 评审在 writing，渲染在 render——协调器一个字的领域内容都不产出。**
 
-dev-design 是设计流程的**薄协调器**：持有总流程图 / 阶段状态机 / 路由 / 全流程确认策略 / 异常回退 / handoff。三段领域工作各归其位——决策形成 → `decision/SKILL.md`，文档产出 + 唯一评审 → `writing/SKILL.md`，渲染（可选终点）→ 共享 reference `${PLUGIN_ROOT}/skills/references/doc-render.md`。三段协议均不独立注册，由协调器 Read 后按协议执行；render 协议已抽为共享 reference（PRD / RFC / 调研报告共用，260716）。
+dev-design 是设计流程的**薄协调器**：持有总流程图 / 阶段状态机 / 路由 / 全流程确认策略 / 异常回退 / handoff。三段领域工作各归其位——决策形成 → `decision/SKILL.md`，文档产出 + 唯一评审 → `writing/SKILL.md`，渲染（可选终点）→ 共享 reference `${PLUGIN_ROOT}/skills/references/doc-render.md`。跨 Design / Plan / Build / Verify 的设计项契约统一 Read `${PLUGIN_ROOT}/skills/references/design-traceability.md`。三段协议均不独立注册，由协调器 Read 后按协议执行；render 协议已抽为共享 reference（PRD / RFC / 调研报告共用，260716）。
 
 > Leading word: **协调**。协调是横切关注点（状态机 / 路由 / 确认 / 回退），和任何具体阶段的收敛工作分层。
 
@@ -84,6 +84,7 @@ Read `writing/SKILL.md`，按协议执行，传入 Decision Packet。收回 **re
 - **只验 verdict**（`approved: true` + 无 Critical）——不重新评审。
 - writing 返回 `replan_required` → 走「replan 处理」回退 decision。
 - writing 返回 `needs_user_input` → 走「确认策略」统一弹。
+- writing 返回的同一 `docPath` 必须包含 Implementation Item Registry；协调器只校验 verdict、frontmatter `status: approved`、单一设计文档完整性和 Registry 存在性，不重做领域评审。
 
 ### Step 3:（可选）路由 → render
 
@@ -96,6 +97,8 @@ Read `writing/SKILL.md`，按协议执行，传入 Decision Packet。收回 **re
 ### Step 4: final gate + 硬交接
 
 final gate = 本轮设计流程的**计划内总确认窗口**：向用户报告方案摘要（← Packet `selectedApproach`）+ 关键决策（← `alternatives` 反方 + `[已确认]/[假定]`）+ 测试目标（← `testObjectives`）+ 文档路径 + 渲染产物（如有）。用户可对任意决策提异议要求回退。通过后建议进 Plan，等用户拍板调 `Capability(workflow.skill.invoke, {"skill":"dev-plan","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})`。
+
+交接前按 `${PLUGIN_ROOT}/skills/references/design-traceability.md` 检查四项必须同时成立：review verdict approved、同一 `docPath` 的 frontmatter 为 `approved`、Implementation Item Registry 存在且与来源章节双向无 orphan、没有未声明补充文档承载规范性设计。任一失败都回 writing，不把不完整基线交给 Plan。
 
 ## 确认策略（单一所有者：协调器）
 
@@ -123,6 +126,8 @@ render 纯输出、不碰输入文档；**产物关系由协调器在 final gate
 
 - [ ] decision 产出合法 Decision Packet（requiredFields 齐），协调器已校验
 - [ ] writing 返回 reviewed 文档 + review verdict（`approved`），协调器只验未重审
+- [ ] 同一设计文档 frontmatter 为 `approved`，且 Implementation Item Registry ↔ 来源章节双向无 orphan
+- [ ] 规范性设计只存在于单一 `docPath`，没有未声明补充设计文档形成第二事实源
 - [ ] replan（如有）已处理：失效决策已在文档中标 superseded 留痕 + revision 递增 + 回 decision 重选完成
 - [ ] render（如选）receipt 已收，输入文档未被改动，产物关系已在 final gate 报告 `sourceDoc`↔`output` 映射
 - [ ] 全流程确认按「确认策略」清单落实（总窗口 + 列举确认 + 异常统一弹）

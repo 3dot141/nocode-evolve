@@ -7,6 +7,8 @@ description: Use to implement confirmed tasks, resume coding, or enter devflow B
 
 Build 是编排入口：读 Plan 阶段用户选定的 `Execution` 字段，走对应的执行协议——`subagent-lite`（顺序派发 implementer，仅风险 task 派审查）、`subagent-full`（per-task spec review + checkpoint 批量 quality review）或 `executing`（主 agent 自己顺序执行 plan 已写代码）。Build skill 本身只负责 devflow 阶段编排（Enter/Exit Gate、里程碑、硬交接），具体执行细节在对应 reference 文件里。
 
+进入 Build 时 Read `{NOCODE_SKILL_REF}/design-traceability.md`。`designCovers` 是已确认 task scope 的一部分：执行方只能实现并回报，不能自行增加、删除或改成别的 Design ID。
+
 ## 非本 skill 请求
 
 解释代码 / 知识问答 → 直接回答不进 Build。无计划无目标（"帮我做个东西"）→ 回 Define。"整个项目重构" → scope 过大回 Plan 拆。
@@ -16,6 +18,7 @@ Build 是编排入口：读 Plan 阶段用户选定的 `Execution` 字段，走�
 - [ ] Plan 任务序列已产出且用户确认
 - [ ] Plan 已标注 `Execution` 字段（`subagent-lite` / `subagent-full` / `executing`；旧计划的 `subagent` 按 `subagent-full` 处理）
 - [ ] Full 场景：Design 测试目标可用（指导 TDD 写什么测试）
+- [ ] Full 场景：Plan 已有 Design → Task Coverage Matrix，且每个 task 都有 `designCovers`
 
 ## 协议
 
@@ -55,6 +58,14 @@ Task 3: 硬交接 — 调用下一步 skill
    - `approved=false` 时，把 `issues[]` 明确嵌入新的单 task 修复 objective，execute→wait→collect 后重新执行同一 review；lite 风险 task 的 quality review 与 full checkpoint 批审也使用独立 graph。前一个 task 的应派 Spec/Quality Gate 全通过（或 lite 明确记录跳过）后，才创建下一 task 的 execution
 3. `Execution: executing` → Read `references/dev-build-executing.md`，主 agent 自己顺序执行 plan 已写的代码，不派 subagent
 
+无论执行协议是哪一种，每个 task 终态结果都必须显式包含：
+
+- `completedDesignCovers`：实际完成且与 task `designCovers` 完全一致的 Design ID。
+- `changedFiles`：本 task 实际修改文件。
+- `evidence`：本 task 测试命令与结果。
+
+缺 ID、额外冒领 ID 或结果未带 `completedDesignCovers`，该 task 保持未完成。
+
 ### Step 2: 编排者验证（两种协议跑完后统一执行）
 
 不管走的是哪条协议，Build 收尾前都要独立验证（不信执行方自报）：
@@ -63,6 +74,7 @@ Task 3: 硬交接 — 调用下一步 skill
 2. **独立跑测试**：跑完整测试套件，不只依赖执行方的测试输出
 3. **spec 核对（抽查）**：`subagent-lite/full` 协议下抽查 1-2 个 task 的 spec reviewer 判断是否站得住（lite 档跳过审查的 task 优先抽）；`executing` 协议下抽查 1-2 个 task 的实现是否匹配 plan 声明的验收标准
 4. **空壳扫描（确定性脚本，非 LLM 判断）**：用 grep/AST 模式匹配扫全量 diff——空函数体、placeholder 注释（`// TODO`、`// implement`）、`throw new Error('not implemented')`、只有类型签名没有逻辑的方法。lint + typecheck 通过不代表功能完整，空函数合法但无用。发现空壳 → 视为 task 未完成，重新处理
+5. **Design 覆盖汇总**：以 Plan Coverage Matrix 中的 `required` Design ID 为左表，反查所有已完成 task 的 `completedDesignCovers`。任何 required Design ID 无完成结果、task 漏报或冒领都使 Build Gate 失败，并点名对应 ID。
 
 ### Step 3: 统一 Commit
 
@@ -81,6 +93,7 @@ Task 3: 硬交接 — 调用下一步 skill
 
 - [ ] 所有 plan task 完成
 - [ ] 编排者独立验证通过（diff + 测试 + spec 核对 + 空壳扫描）
+- [ ] Full 场景所有 required Design ID 均由完成 task 的 `completedDesignCovers` 报告，零漏报/冒领
 - [ ] 零空壳：无空函数体、无 TODO/implement placeholder、无 `throw not implemented`
 - [ ] 全部测试通过（整个相关套件，不只新写的）
 - [ ] build 通过

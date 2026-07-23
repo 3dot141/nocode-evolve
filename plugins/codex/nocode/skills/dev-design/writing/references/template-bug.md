@@ -58,4 +58,8 @@ bug 的结构骨架 = **问题现象 + 复现 + 影响范围**：
 - [ ] 修复前后业务流对比
 - [ ] 文件影响 + 回归测试方案
 
+## 实施设计项清单
+
+按 `${PLUGIN_ROOT}/skills/references/design-traceability.md` 汇总修复、回归、兼容、日志和验证等规范性设计项。每项标四态并回链来源章节；不能因为 bug 局部就省略 Registry。
+
 （汇总 → 主 SKILL.md 通用 Step 5）

@@ -125,6 +125,7 @@ src/services/
 ## 状态机 + 文档生命周期
 
 - **Design Doc**：`draft → in-review → approved → implemented → archived`（**living**，approved 后仍可修改）
+- **approved 的原子收口**：Review verdict、frontmatter `status: approved`、`## 实施设计项清单` 和单一 `docPath` 完整性必须同时成立。详细字段与四态只从 `{NOCODE_SKILL_REF}/design-traceability.md` 读取，不在写作原则里复制 schema。
 
 **推翻式修订：保持单一有效版**——当前有效内容就是正文，读者不需要在「顶部 banner + 正文 + 尾部 Review Log」三处对账才知道「现在到底信哪段」。大改时直接改正文，把旧结论移入 Review Log 留痕，正文只留当前有效版。
 

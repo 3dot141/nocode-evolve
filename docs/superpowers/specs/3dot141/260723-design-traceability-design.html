@@ -1,0 +1,653 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>设计项端到端追踪｜批准工程设计</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📐</text></svg>">
+  <style>
+    :root {
+      --bg:      oklch(98% 0.004 95);
+      --surface: oklch(100% 0.002 95);
+      --fg:      oklch(20% 0.018 70);
+      --muted:   oklch(48% 0.012 70);
+      --border:  oklch(90% 0.006 95);
+      --accent:  oklch(52% 0.10 28);
+      --font-display: 'Iowan Old Style', 'Charter', Georgia, serif;
+      --font-body:    -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      --trace: oklch(66% 0.145 205);
+      --trace-soft: oklch(95% 0.035 205);
+      --amber: oklch(69% 0.14 74);
+      --amber-soft: oklch(96% 0.035 74);
+      --fail: oklch(52% 0.18 28);
+      --fail-soft: oklch(96% 0.03 28);
+      --graphite: oklch(26% 0.018 70);
+      --mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      --sidebar: 286px;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; scroll-padding-top: 24px; }
+    body { margin: 0; color: var(--fg); background: var(--bg); font-family: var(--font-body); line-height: 1.72; }
+    body::before { content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 20; opacity: .035; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.35'/%3E%3C/svg%3E"); }
+    a { color: inherit; }
+    .shell { display: grid; grid-template-columns: var(--sidebar) minmax(0, 1fr); min-height: 100dvh; }
+    .sidebar { position: sticky; top: 0; height: 100dvh; padding: 28px 22px 24px; border-right: 1px solid var(--border); background: color-mix(in oklch, var(--bg) 92%, var(--surface)); overflow: auto; z-index: 10; }
+    .brand { display: grid; grid-template-columns: 32px 1fr; gap: 12px; align-items: center; padding-bottom: 22px; border-bottom: 1px solid var(--fg); }
+    .brand-mark { width: 32px; aspect-ratio: 1; display: grid; place-items: center; border: 1px solid var(--fg); font-family: var(--mono); font-size: 12px; }
+    .brand strong { display: block; font-family: var(--font-display); font-size: 17px; letter-spacing: .02em; }
+    .brand span { display: block; color: var(--muted); font: 10px/1.5 var(--mono); text-transform: uppercase; letter-spacing: .12em; }
+    .progress-wrap { margin: 20px 0 18px; }
+    .progress-meta { display: flex; justify-content: space-between; margin-bottom: 7px; color: var(--muted); font: 10px var(--mono); letter-spacing: .06em; }
+    .progress-track { height: 2px; background: var(--border); }
+    .progress-bar { width: 0; height: 100%; background: var(--trace); transition: transform 500ms cubic-bezier(.32,.72,0,1); transform-origin: left; }
+    nav ul { margin: 0; padding: 0; list-style: none; }
+    nav li { border-top: 1px solid color-mix(in oklch, var(--border) 74%, transparent); }
+    nav a { display: grid; grid-template-columns: 28px 1fr; gap: 7px; padding: 8px 2px; text-decoration: none; color: var(--muted); font-size: 12px; line-height: 1.35; transition: color 350ms cubic-bezier(.32,.72,0,1), transform 350ms cubic-bezier(.32,.72,0,1); }
+    nav a::before { content: attr(data-n); font: 9px var(--mono); color: color-mix(in oklch, var(--muted) 70%, transparent); padding-top: 2px; }
+    nav a:hover, nav a.active { color: var(--fg); transform: translateX(3px); }
+    nav a.active::before { color: var(--trace); }
+    .side-foot { margin-top: 20px; padding-top: 14px; border-top: 1px solid var(--fg); color: var(--muted); font: 10px/1.6 var(--mono); }
+    .mobile-bar { display: none; }
+    main { min-width: 0; }
+    .hero, .content { width: min(1180px, calc(100% - 80px)); margin: 0 auto; }
+    .hero { min-height: 92dvh; display: grid; grid-template-rows: auto 1fr auto; padding: 34px 0 44px; }
+    .hero-top { display: flex; justify-content: space-between; align-items: start; padding-bottom: 18px; border-bottom: 1px solid var(--fg); font: 11px var(--mono); }
+    .approval { color: var(--trace); text-transform: uppercase; letter-spacing: .12em; }
+    .hero-grid { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(300px, .65fr); gap: clamp(40px, 7vw, 100px); align-items: center; padding: 70px 0 56px; }
+    .kicker { margin: 0 0 16px; color: var(--muted); font: 11px var(--mono); letter-spacing: .15em; text-transform: uppercase; }
+    h1 { max-width: 860px; margin: 0; font: 600 clamp(54px, 7.2vw, 112px)/.92 var(--font-display); letter-spacing: -.055em; }
+    .hero-dek { max-width: 760px; margin: 28px 0 0; font-size: clamp(18px, 1.6vw, 25px); line-height: 1.45; }
+    .thesis { border-top: 3px solid var(--graphite); border-bottom: 1px solid var(--graphite); padding: 20px 0 24px; }
+    .thesis .label { font: 10px var(--mono); letter-spacing: .15em; color: var(--muted); }
+    .thesis strong { display: block; margin-top: 14px; font: 600 clamp(25px, 3vw, 43px)/1.15 var(--font-display); }
+    .thesis p { margin: 15px 0 0; color: var(--muted); font-size: 14px; }
+    .hero-bottom { display: grid; grid-template-columns: 1fr 1fr 1fr; border-top: 1px solid var(--fg); border-bottom: 1px solid var(--fg); }
+    .hero-stat { padding: 16px 18px 18px 0; }
+    .hero-stat + .hero-stat { padding-left: 18px; border-left: 1px solid var(--border); }
+    .hero-stat b { display: block; font: 500 28px var(--mono); }
+    .hero-stat span { color: var(--muted); font-size: 12px; }
+    .content { padding-bottom: 100px; }
+    .section { padding: 110px 0 30px; border-top: 1px solid var(--fg); }
+    .section-head { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 32px; margin-bottom: 46px; }
+    .section-no { font: 11px var(--mono); color: var(--trace); letter-spacing: .12em; }
+    h2 { margin: 0; font: 600 clamp(38px, 5vw, 72px)/1.02 var(--font-display); letter-spacing: -.04em; }
+    h3 { margin: 54px 0 18px; font: 600 clamp(25px, 3vw, 38px)/1.15 var(--font-display); letter-spacing: -.025em; }
+    h4 { margin: 30px 0 10px; font-size: 16px; }
+    p { max-width: 78ch; }
+    .lede { max-width: 790px; font-size: 20px; color: var(--graphite); }
+    .meta-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); border-top: 1px solid var(--fg); }
+    .meta-item { padding: 20px 24px 22px 0; border-bottom: 1px solid var(--border); }
+    .meta-item:nth-child(even) { padding-left: 24px; border-left: 1px solid var(--border); }
+    .meta-item b { display: block; margin-bottom: 7px; font: 11px var(--mono); color: var(--trace); letter-spacing: .06em; }
+    .meta-item p { margin: 0; }
+    .signal-note { margin: 34px 0; padding: 18px 22px; border-left: 3px solid var(--trace); background: var(--trace-soft); }
+    .warning-note { border-left-color: var(--amber); background: var(--amber-soft); }
+    .fail-note { border-left-color: var(--fail); background: var(--fail-soft); }
+    .compact-list { padding-left: 1.25em; }
+    .compact-list li { margin: 8px 0; }
+    .id { font-family: var(--mono); font-size: .88em; }
+    .status { display: inline-flex; align-items: center; gap: 7px; white-space: nowrap; font: 11px var(--mono); }
+    .status::before { content: ""; width: 7px; height: 7px; background: currentColor; }
+    .required { color: oklch(47% .13 205); }
+    .verify { color: var(--graphite); }
+    .deferred { color: oklch(55% .13 74); }
+    .na { color: var(--muted); }
+    .failed { color: var(--fail); }
+    .state-grammar { display: grid; grid-template-columns: repeat(4, 1fr); border-top: 1px solid var(--fg); border-bottom: 1px solid var(--fg); }
+    .state { min-height: 170px; padding: 20px; }
+    .state + .state { border-left: 1px solid var(--border); }
+    .state code { display: block; margin-bottom: 18px; font: 600 14px var(--mono); }
+    .state p { margin: 0 0 12px; font-size: 13px; }
+    .state small { color: var(--muted); }
+    .flow-shell { padding: 10px; border: 1px solid var(--border); background: color-mix(in oklch, var(--surface) 70%, var(--bg)); overflow-x: auto; }
+    .flow { min-width: 900px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; position: relative; padding: 28px; border: 1px solid var(--border); background: var(--surface); }
+    .flow::before { content: ""; position: absolute; left: 12%; right: 12%; top: 80px; height: 2px; background: var(--trace); }
+    .stage { position: relative; padding-top: 32px; }
+    .stage::before { content: ""; position: absolute; top: 18px; left: 0; width: 13px; height: 13px; background: var(--surface); border: 3px solid var(--trace); z-index: 2; }
+    .stage h3 { margin: 0 0 16px; font: 600 28px var(--font-display); }
+    .stage dl { margin: 0; }
+    .stage dt { margin-top: 12px; color: var(--muted); font: 9px var(--mono); letter-spacing: .12em; text-transform: uppercase; }
+    .stage dd { margin: 3px 0 0; font-size: 12px; line-height: 1.5; }
+    .gate { margin-top: 16px; padding: 10px; border-top: 2px solid var(--graphite); font: 10px/1.5 var(--mono); }
+    .loop { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; padding-top: 18px; border-top: 1px dashed var(--amber); color: oklch(48% .11 74); font: 11px var(--mono); }
+    .loop span::before { content: "↺ "; }
+    .table-wrap { width: 100%; overflow-x: auto; margin: 20px 0 38px; border-top: 2px solid var(--fg); border-bottom: 1px solid var(--fg); }
+    table { width: 100%; min-width: 720px; border-collapse: collapse; font-size: 13px; line-height: 1.45; }
+    th { padding: 12px 14px; text-align: left; color: var(--muted); font: 10px var(--mono); letter-spacing: .05em; background: color-mix(in oklch, var(--bg) 86%, var(--surface)); }
+    td { padding: 13px 14px; vertical-align: top; border-top: 1px solid var(--border); }
+    tbody tr:hover { background: var(--trace-soft); }
+    td:first-child, th:first-child { padding-left: 4px; }
+    code, pre { font-family: var(--mono); }
+    code { font-size: .9em; }
+    pre { margin: 20px 0 38px; padding: 24px; overflow: auto; border: 1px solid var(--border); background: oklch(23% .012 70); color: oklch(91% .01 190); font-size: 12px; line-height: 1.65; tab-size: 2; }
+    .route-map { display: grid; grid-template-columns: 240px 1fr; border-top: 1px solid var(--fg); border-bottom: 1px solid var(--fg); }
+    .route-source { padding: 28px 24px 28px 0; border-right: 1px solid var(--border); }
+    .route-source code { color: var(--trace); }
+    .routes { padding: 10px 0 10px 28px; }
+    .route { display: grid; grid-template-columns: 110px 1fr; gap: 18px; padding: 14px 0; border-bottom: 1px solid var(--border); }
+    .route:last-child { border: 0; }
+    .route b { font-family: var(--font-display); }
+    .route span { font-size: 13px; }
+    .decision { display: grid; grid-template-columns: 72px 1fr; gap: 24px; padding: 26px 0; border-top: 1px solid var(--border); }
+    .decision-key { font: 24px var(--mono); color: var(--trace); }
+    .decision h3 { margin: 0 0 10px; }
+    .decision p { margin: 8px 0; }
+    .selected { padding-left: 16px; border-left: 3px solid var(--trace); }
+    .test-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); }
+    .test-case { padding: 24px; background: var(--surface); }
+    .test-case h4 { margin-top: 0; }
+    .test-case p { margin: 6px 0; font-size: 13px; }
+    .label { color: var(--muted); font: 10px var(--mono); text-transform: uppercase; letter-spacing: .08em; }
+    .file-tree { white-space: pre; min-width: 760px; }
+    .coverage { margin-top: 80px; padding: 48px 0; border-top: 4px solid var(--trace); border-bottom: 1px solid var(--fg); }
+    .coverage-grid { display: grid; grid-template-columns: 1.2fr .8fr; gap: 60px; align-items: end; }
+    .coverage h2 { font-size: clamp(44px,6vw,84px); }
+    .coverage-stamp { padding: 24px; border: 2px solid var(--trace); color: oklch(42% .12 205); font: 12px/1.7 var(--mono); transform: rotate(-1deg); }
+    .muted { color: var(--muted); }
+    .only-mobile { display: none; }
+    @media (max-width: 920px) {
+      .shell { display: block; }
+      .sidebar { position: fixed; inset: 0 auto 0 0; width: min(86vw, 330px); transform: translateX(-105%); transition: transform 650ms cubic-bezier(.32,.72,0,1); box-shadow: 20px 0 60px color-mix(in oklch, var(--fg) 12%, transparent); }
+      .sidebar.open { transform: translateX(0); }
+      .mobile-bar { display: flex; position: sticky; top: 0; z-index: 9; justify-content: space-between; align-items: center; padding: 12px 18px; border-bottom: 1px solid var(--border); background: color-mix(in oklch, var(--bg) 92%, transparent); backdrop-filter: blur(14px); }
+      .menu-btn { min-width: 44px; min-height: 44px; padding: 0 12px; border: 1px solid var(--fg); background: transparent; color: var(--fg); font: 11px var(--mono); }
+      .mobile-progress { width: 84px; height: 2px; background: var(--border); }
+      .mobile-progress i { display: block; height: 100%; background: var(--trace); transform-origin: left; }
+      .hero, .content { width: min(100% - 32px, 760px); }
+      .hero { min-height: auto; padding-top: 24px; }
+      .hero-grid { grid-template-columns: 1fr; padding: 58px 0 45px; }
+      .hero-bottom { grid-template-columns: 1fr; }
+      .hero-stat + .hero-stat { padding-left: 0; border-left: 0; border-top: 1px solid var(--border); }
+      .section { padding-top: 80px; }
+      .section-head { grid-template-columns: 1fr; gap: 10px; }
+      .state-grammar { grid-template-columns: 1fr 1fr; }
+      .state:nth-child(3) { border-left: 0; border-top: 1px solid var(--border); }
+      .state:nth-child(4) { border-top: 1px solid var(--border); }
+      .coverage-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 600px) {
+      .hero-top { gap: 18px; }
+      h1 { font-size: clamp(48px, 16vw, 74px); }
+      .meta-grid, .test-grid { grid-template-columns: 1fr; }
+      .meta-item:nth-child(even) { padding-left: 0; border-left: 0; }
+      .state-grammar { grid-template-columns: 1fr; }
+      .state + .state { border-left: 0; border-top: 1px solid var(--border); }
+      .route-map { grid-template-columns: 1fr; }
+      .route-source { border-right: 0; border-bottom: 1px solid var(--border); }
+      .routes { padding-left: 0; }
+      .decision { grid-template-columns: 48px 1fr; gap: 14px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after { animation: none !important; transition: none !important; }
+    }
+    @media print {
+      @page { margin: 16mm 14mm; }
+      body { background: white; font-size: 10pt; }
+      body::before, .sidebar, .mobile-bar { display: none !important; }
+      .shell { display: block; }
+      .hero, .content { width: 100%; }
+      .hero { min-height: auto; page-break-after: always; }
+      .section { padding: 18mm 0 0; break-before: page; }
+      .table-wrap { overflow: visible; }
+      table { min-width: 0; font-size: 8pt; }
+      pre { white-space: pre-wrap; color: black; background: white; }
+      .flow { min-width: 0; }
+      a { text-decoration: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="mobile-bar" data-od-id="mobile-navigation">
+    <button class="menu-btn" id="menuBtn" aria-expanded="false" aria-controls="sidebar">目录</button>
+    <span class="id">DESIGN / APPROVED</span>
+    <span class="mobile-progress" aria-hidden="true"><i id="mobileProgress"></i></span>
+  </div>
+  <div class="shell">
+    <aside class="sidebar" id="sidebar" data-od-id="chapter-navigation">
+      <div class="brand"><div class="brand-mark">D↔E</div><div><strong>设计追踪协议</strong><span>Traceability lattice</span></div></div>
+      <div class="progress-wrap"><div class="progress-meta"><span>READING SIGNAL</span><span id="progressText">0%</span></div><div class="progress-track"><div class="progress-bar" id="progressBar"></div></div></div>
+      <nav aria-label="全文章节">
+        <ul>
+          <li><a href="#compass" data-n="01">罗盘与约束</a></li>
+          <li><a href="#decisions" data-n="02">方案决策</a></li>
+          <li><a href="#coverage" data-n="03">领域覆盖与协议</a></li>
+          <li><a href="#lattice" data-n="04">四阶段闭环</a></li>
+          <li><a href="#contract" data-n="05">文档契约</a></li>
+          <li><a href="#flows" data-n="06">BF1–BF4</a></li>
+          <li><a href="#failures" data-n="07">异常与失败模式</a></li>
+          <li><a href="#testing" data-n="08">测试设计</a></li>
+          <li><a href="#registry" data-n="09">实施设计项清单</a></li>
+          <li><a href="#files" data-n="10">文件影响</a></li>
+          <li><a href="#verification" data-n="11">验证与发布</a></li>
+          <li><a href="#glossary" data-n="12">术语</a></li>
+          <li><a href="#review" data-n="13">Review Log</a></li>
+        </ul>
+      </nav>
+      <div class="side-foot">SCENARIO / FEAT · FULL<br>DEFINE → DESIGN → BUILD<br>2026-07-23 · 3dot141</div>
+    </aside>
+    <main id="main">
+      <header class="hero" data-od-id="hero">
+        <div class="hero-top"><span>ENGINEERING DESIGN / 2026—07—23</span><span class="approval">● approved</span></div>
+        <div class="hero-grid">
+          <div>
+            <p class="kicker">nocode devflow · design traceability</p>
+            <h1 data-od-id="hero-title">设计有了，<br>实施却可能失联。</h1>
+            <p class="hero-dek">现有流程只能证明 Plan task 完成，不能证明每个设计项都被承接。日志、安全、Metrics、迁移与回滚会在 Design 之后无声遗漏。</p>
+          </div>
+          <aside class="thesis" data-od-id="selected-solution">
+            <span class="label">选定方案 / Q1–Q3</span>
+            <strong>单文档稳定 ID<br>＋ 双向覆盖矩阵<br>＋ 四态 stage closure</strong>
+            <p>Design 建清单，Plan 查 orphan，Build 保留映射，Verify 逐项取证。</p>
+          </aside>
+        </div>
+        <div class="hero-bottom">
+          <div class="hero-stat"><b>4</b><span>阶段 Gate，端到端闭环</span></div>
+          <div class="hero-stat"><b>20</b><span>实施设计项，稳定 ID</span></div>
+          <div class="hero-stat"><b>1</b><span>approved Design，唯一事实源</span></div>
+        </div>
+      </header>
+
+      <div class="content">
+        <section class="section" id="compass" data-od-id="section-compass">
+          <div class="section-head"><span class="section-no">01 / DEFINE RESTATE</span><h2>罗盘与执行边界</h2></div>
+          <p class="lede"><strong>Outcome：</strong>修复 nocode 工程流中的设计追踪断链，使日志、安全、Metrics、迁移等规范性设计项不会在 Design 之后无声遗漏。</p>
+          <div class="meta-grid">
+            <div class="meta-item"><b>USER</b><p>使用 nocode Devflow 进行复杂工程任务的开发者。</p></div>
+            <div class="meta-item"><b>WHY NOW</b><p>断点续传案例证明：日志已存在于 Design，后续仍可能遗漏。</p></div>
+            <div class="meta-item"><b>SCENARIO</b><p>Full；自定义执行路径 Define → Design → Build；Design 不使用 DDD。</p></div>
+            <div class="meta-item"><b>FACT SOURCE</b><p>单一 approved 设计文档；不引入独立 RTM/manifest。</p></div>
+          </div>
+          <h3>成功标准 SC-1–SC-8</h3>
+          <ol class="compact-list">
+            <li><span class="id">SC-1</span> Dev Design 产出可识别的规范性设计项，覆盖 BF、接口、日志、安全、Metrics、迁移、TO 等类型。</li>
+            <li><span class="id">SC-2</span> 运行时功能缺少基础日志设计时，Design Gate 必须失败。</li>
+            <li><span class="id">SC-3</span> Plan 能反向检查每个 required 设计项是否对应 task、verify-only 或明确延期。</li>
+            <li><span class="id">SC-4</span> Build/Verify 能保留 Design ID，并提供代码或测试证据。</li>
+            <li><span class="id">SC-5</span> <code>in-review</code> 或不完整的 Design 不能进入下游。</li>
+            <li><span class="id">SC-6</span> “主文档 + 未纳入交接的补充文档”不能绕过覆盖检查。</li>
+            <li><span class="id">SC-7</span> 断点续传日志案例回归中，所有日志项都能追踪到实施落点。</li>
+            <li><span class="id">SC-8</span> 相关测试、插件版本及双平台生成物保持一致。</li>
+          </ol>
+          <h3>路径与系统阻断</h3>
+          <div class="table-wrap"><table><thead><tr><th>路径</th><th>定义</th><th>绑定 SC</th></tr></thead><tbody>
+            <tr><td class="id">工作流.P1</td><td>Design 生成规范性设计项 → Review → approved → 下游消费</td><td>SC-1、2、5、6</td></tr>
+            <tr><td class="id">工作流.P2</td><td>Plan 读取设计项 → 映射 task → 反向孤儿检查 → 通过或退回</td><td>SC-3、7</td></tr>
+            <tr><td class="id">工作流.P3</td><td>Build 完成 task → 保留设计项映射 → 产生实现证据</td><td>SC-4、8</td></tr>
+            <tr><td class="id">工作流.P4</td><td>Verify 按设计项核对代码、测试或人工证据</td><td>SC-4</td></tr>
+            <tr><td class="id">系统.1–4</td><td>缺基础日志、未批准 Design、orphan required、未声明附件均拒绝</td><td>SC-2、5、3、6</td></tr>
+            <tr><td class="id">约束.1–4</td><td>不做 DDD；不建第二事实源；跳过独立 Env/Plan/Verify/Review/Land；Build 内完成取证</td><td>SC-8</td></tr>
+          </tbody></table></div>
+          <div class="signal-note"><strong>Always：</strong>单一事实源；required 不得无声遗漏；结论有本地证据或明确来源。<br><strong>Ask First：</strong>独立 manifest、改变四态语义、删除兼容字段。<br><strong>Never：</strong>修改附件业务项目；把全部自然语言转成追踪项；手改双平台生成物。</div>
+          <h3>约束、范围与假设</h3>
+          <div class="meta-grid">
+            <div class="meta-item"><b>CONSTRAINT</b><p>不采用 DDD；单一 approved Design 为事实源；本轮不经过独立 Dev Plan，Design 批准后直接 Build。</p></div>
+            <div class="meta-item"><b>OUT OF SCOPE</b><p>不改断点续传业务项目；不逐句编号；不强制每个日志事件成 task；不建通用需求平台；不引入第二 manifest。</p></div>
+            <div class="meta-item"><b>ASSUMPTIONS</b><p>规范性设计项影响代码、配置或验证；批准后的实施清单直接作为 Build 输入；虽跳过 Verify，仍修改 <code>dev-verify</code> 协议。</p></div>
+            <div class="meta-item"><b>QUALITY BAR</b><p>required 全有下游状态；无无解释 orphan；日志案例确定性回归；Skill/模板/Gate/示例一致；测试与双平台检查通过；SemVer minor。</p></div>
+          </div>
+          <h3>探索胶囊</h3>
+          <p><span class="id">scanBase: b54cbd4</span>。实际历史 Plan/Build 产物不可用，因此本轮用附件作为确定性回归 fixture，不追溯当时究竟在 Plan 还是 Build 丢失。</p>
+          <div class="table-wrap"><table><thead><tr><th>高置信发现</th><th>来源</th></tr></thead><tbody>
+            <tr><td>Dev Design 已要求运行时功能必须设计基础日志，但下游没有强制消费每个日志项。</td><td><code>skills/dev-design/decision/SKILL.md:109-153</code><br><code>skills/dev-plan/SKILL.md:128-145</code></td></tr>
+            <tr><td>Plan 的 <code>covers</code> 只追踪 restate 路径/约束，最终 Validation 没有 Design → Task 反向孤儿检查。</td><td><code>skills/dev-plan/SKILL.md:242-286</code></td></tr>
+            <tr><td>Build 只能证明已有 Plan task 完成，无法发现从未进入 Plan 的设计项。</td><td><code>skills/dev-build/SKILL.md:14-18</code><br><code>skills/dev-build/SKILL.md:80-89</code></td></tr>
+            <tr><td>Verify 的强制证据对象仍是 Define SC、路径与约束，不是全部规范性设计项。</td><td><code>skills/dev-verify/SKILL.md:141-166</code></td></tr>
+            <tr><td>日志案例有 9 个结构化日志事件，但位于链接主文档的 <code>in-review</code> 补充文档。</td><td><code>/Users/yes365/.codex/attachments/b97af9ad-c424-48c3-8dbf-498ca1ec2538/pasted-text.txt:1-15,332-371</code></td></tr>
+          </tbody></table></div>
+          <h3>背景与前置调研</h3>
+          <p><strong>主因：</strong>现有流程追踪的是 Define 路径和 Plan task，不是 Design 中全部需要实施或验证的规范性设计项。因此，日志已经写进设计文档，仍可能因为没有进入任何 task 而无声遗漏。</p>
+          <ul class="compact-list">
+            <li>Design 的 <code>approved: true</code> verdict 与文档 frontmatter 状态没有形成同一个 Gate。</li>
+            <li>当前单文档契约缺少下游入口校验，“主文档 + 补充文档”可能只被消费一半。</li>
+            <li>Build 和 Verify 只验证已经进入 task/SC 的内容，无法识别上游 orphan。</li>
+          </ul>
+          <p>这不是日志专项问题。日志只是最先暴露断链的横切项；安全、Metrics、迁移、回滚和 eval 都受同一缺口影响。外部工程资料把这类问题称为双向可追踪性：正向确认每项设计有下游，反向识别没有上游或没有承接者的 orphan。本方案采用这一完整性原则，但不引入重型合规工具。</p>
+          <p><strong>Open Questions：</strong>无。已确认执行约束：本轮不走独立 Plan/Verify 阶段，但实现范围仍包含 <code>dev-plan</code>、<code>dev-build</code>、<code>dev-verify</code> 的协议修改。</p>
+        </section>
+
+        <section class="section" id="decisions" data-od-id="section-decisions">
+          <div class="section-head"><span class="section-no">02 / DECISIONS</span><h2>三项决定，切断三类盲区</h2></div>
+          <div class="decision"><div class="decision-key">Q1</div><div><h3>追踪事实源放在哪里？</h3><p>A：只补 Plan/Verify checklist，改动小但依赖记忆；C：另建 JSON/YAML manifest，机器校验直接但产生第二事实源。</p><p class="selected"><strong>选择 B：</strong>单一设计文档内稳定 ID + 下游双向矩阵。保持单一事实源，并可反向识别 orphan。影响 P1–P4。</p></div></div>
+          <div class="decision"><div class="decision-key">Q2</div><div><h3>设计项编号到什么粒度？</h3><p>A：章节级会掩盖局部遗漏；C：逐句/逐字段会把解释文字变成维护噪声。</p><p class="selected"><strong>选择 B：</strong>独立可实施、验证、延期或判定不适用的最小单元。影响 SC-1、SC-3、SC-4。</p></div></div>
+          <div class="decision"><div class="decision-key">Q3</div><div><h3>Gate 覆盖到哪些阶段？</h3><p>A：只在 Plan 检查仍无法保证输入批准与最终留证；C：所有项立即实现，无法表达合理延期、仅验证或不适用。</p><p class="selected"><strong>选择 B：</strong>Design 建清单、Plan 查孤儿、Build 保留映射、Verify 查证据，并使用四态。影响 P1–P4。</p></div></div>
+          <h3>失败预演 Top 3</h3>
+          <div class="table-wrap"><table><thead><tr><th>#</th><th>三个月后失败原因</th><th>早期信号</th><th>应对</th></tr></thead><tbody>
+            <tr><td>1</td><td>agent 机械给每句话编号</td><td>设计项远多于文件影响和测试目标</td><td>按“可独立实施/验证/延期/N/A”判定，Review 排除解释性文字</td></tr>
+            <tr><td>2</td><td>Plan 只做正向映射</td><td>路径全绿但日志/安全无 task</td><td>强制 Design → Task 反向矩阵，空白项阻断</td></tr>
+            <tr><td>3</td><td>verdict approved 与 frontmatter in-review</td><td>下游消费未批准或分裂文档</td><td>Exit Gate 同时校验 verdict、frontmatter、单 docPath</td></tr>
+          </tbody></table></div>
+        </section>
+
+        <section class="section" id="coverage" data-od-id="section-domain-coverage">
+          <div class="section-head"><span class="section-no">03 / NON-DDD COVERAGE</span><h2>一个协议单源，四个消费者</h2></div>
+          <p class="lede">不做 DDD 拆域。共享 reference 只定义跨阶段协议，不保存任何项目设计项；项目事实始终只在其 approved Design 文档中。</p>
+          <div class="route-map" data-od-id="protocol-routing-map">
+            <div class="route-source"><span class="label">Protocol source</span><p><code>skills/references/<br>design-traceability.md</code></p><small class="muted">ID / 类型 / 四态<br>三张矩阵 schema<br>Gate 与回退</small></div>
+            <div class="routes">
+              <div class="route"><b>Dev Design</b><span>生成 Implementation Item Registry；校验 approved + 单 docPath。</span></div>
+              <div class="route"><b>Dev Plan</b><span><code>task.designCovers</code>；生成 Design → Task 反向覆盖矩阵。</span></div>
+              <div class="route"><b>Dev Build</b><span>按 task 保留 <code>designCovers</code>；汇总 required 实施状态。</span></div>
+              <div class="route"><b>Dev Verify</b><span>建立 Design ID → evidence 证据矩阵。</span></div>
+            </div>
+          </div>
+          <h3>领域覆盖决策</h3>
+          <div class="meta-grid">
+            <div class="meta-item"><b>ARCHITECTURE</b><p>Registry → Plan <code>designCovers</code> → Build 完成记录 → Verify 证据矩阵；可正查下游，也可反查上游。</p></div>
+            <div class="meta-item"><b>API / CONTRACT</b><p>新增 Markdown 契约：Registry 字段、Plan task 新字段、Coverage Matrix、Evidence Matrix；不引入运行时 API。</p></div>
+            <div class="meta-item"><b>SECURITY</b><p>fixture 不复制敏感 payload；日志设计中的禁记字段或脱敏约束不得在 Plan/Verify 丢弃。</p></div>
+            <div class="meta-item"><b>PERFORMANCE</b><p>不引入运行时扫描器；矩阵在既有文档处理步骤生成与核对，无线上性能成本。</p></div>
+            <div class="meta-item"><b>OBSERVABILITY</b><p>纯 Skill/文档变更，无基础业务日志；确定性失败必须点名 orphan ID 与缺失状态/理由。</p></div>
+            <div class="meta-item"><b>MIGRATION / COMPATIBILITY</b><p>保留 <code>covers</code>；新增 <code>designCovers</code>。Standard 写 N/A；Full 旧文档缺 Registry 必须明确回填。</p></div>
+          </div>
+          <h3>ID 与类型</h3>
+          <div class="table-wrap"><table><thead><tr><th>类型</th><th>ID 示例</th><th>使用场景</th></tr></thead><tbody>
+            <tr><td>Decision</td><td class="id">Q1</td><td>已确认、影响实现的方案决策</td></tr>
+            <tr><td>Business Flow</td><td class="id">BF1</td><td>主路径或可独立验证的业务流</td></tr>
+            <tr><td>API / Contract</td><td class="id">API-1 / CONTRACT-1</td><td>外部接口或跨阶段契约</td></tr>
+            <tr><td>Data / Log</td><td class="id">DATA-1 / LOG-1</td><td>schema、持久化、日志事件或规则</td></tr>
+            <tr><td>Metric / Alert</td><td class="id">METRIC-1 / ALERT-1</td><td>指标与告警</td></tr>
+            <tr><td>Security / Performance</td><td class="id">SEC-1 / PERF-1</td><td>横切约束</td></tr>
+            <tr><td>Migration</td><td class="id">MIG-1</td><td>兼容、迁移、回滚</td></tr>
+            <tr><td>Eval / Test Objective</td><td class="id">EVAL-1 / TO-1</td><td>AI 评估和测试目标</td></tr>
+            <tr><td>Gate</td><td class="id">GATE-1</td><td>阶段阻断条件</td></tr>
+          </tbody></table></div>
+          <p>使用“语义前缀 + 连续整数”；分配后不可复用或重排。已有 <code>Q1</code>、<code>BF1</code>、<code>TO-1</code> 与约束 ID 原样复用。类型不是封闭枚举；新增前缀必须解释现有类型为何不足。</p>
+        </section>
+
+        <section class="section" id="lattice" data-od-id="section-stage-lattice">
+          <div class="section-head"><span class="section-no">04 / SIGNAL ROUTING</span><h2>Design → Plan → Build → Verify</h2></div>
+          <div class="flow-shell"><div class="flow" role="img" aria-label="四阶段设计追踪流程，包含输入输出、Gate 与失败回路">
+            <article class="stage"><h3>Design</h3><dl><dt>Input</dt><dd>reviewed 单一 docPath</dd><dt>Action</dt><dd>枚举规范项；复用/分配 ID；标四态</dd><dt>Output</dt><dd>Implementation Item Registry</dd></dl><div class="gate">GATE-1 · approved + Registry + 单文档完整</div></article>
+            <article class="stage"><h3>Plan</h3><dl><dt>Input</dt><dd>approved Registry</dd><dt>Action</dt><dd>task.designCovers；从 Registry 反向遍历</dd><dt>Output</dt><dd>Design → Task Matrix</dd></dl><div class="gate">GATE-2 · required 无 orphan；四态补充完整</div></article>
+            <article class="stage"><h3>Build</h3><dl><dt>Input</dt><dd>锁定 task scope + designCovers</dd><dt>Action</dt><dd>实现、测试、收集文件与证据</dd><dt>Output</dt><dd>completed designCovers</dd></dl><div class="gate">GATE-3 · required IDs 全部由完成 task 报告</div></article>
+            <article class="stage"><h3>Verify</h3><dl><dt>Input</dt><dd>Registry + Coverage + Build result</dd><dt>Action</dt><dd>运行/采集新鲜证据</dd><dt>Output</dt><dd>Design → Evidence Matrix</dd></dl><div class="gate">GATE-4 · required / verify-only 均有证据</div></article>
+            <div class="loop"><span>状态不明 / 文档分裂 → Design</span><span>orphan / 未知 ID → Plan 或 Design</span><span>漏报 / 缺证据 → Build</span></div>
+          </div></div>
+          <h3>四态 stage closure</h3>
+          <div class="state-grammar" data-od-id="status-legend">
+            <div class="state"><code class="required">required</code><p>本迭代必须实施。</p><small>必填：下游 task</small></div>
+            <div class="state"><code class="verify">verify-only</code><p>不要求改代码，但必须验证。</p><small>必填：验证方法</small></div>
+            <div class="state"><code class="deferred">deferred</code><p>已确认延期。</p><small>必填：原因 + 用户确认</small></div>
+            <div class="state"><code class="na">n/a</code><p>对本场景不适用。</p><small>必填：判定依据</small></div>
+          </div>
+          <div class="fail-note signal-note"><strong>Gate 语法：</strong>空状态、未知状态、缺少必填补充一律失败。红色只标失败或阻断；延期与例外使用琥珀色，不伪装成通过。</div>
+        </section>
+
+        <section class="section" id="contract" data-od-id="section-document-contract">
+          <div class="section-head"><span class="section-no">05 / DOCUMENT CONTRACT</span><h2>三张表，双向核对</h2></div>
+          <h3>Implementation Item Registry</h3>
+          <div class="table-wrap"><table><thead><tr><th>ID</th><th>类型</th><th>设计项</th><th>来源章节</th><th>影响范围</th><th>状态</th><th>验证/理由</th></tr></thead><tbody>
+            <tr><td class="id">LOG-1</td><td>Log</td><td>task.created 结构化日志</td><td>基础日志设计</td><td>coordinator</td><td><span class="status required">required</span></td><td>集成测试检查事件与字段</td></tr>
+          </tbody></table></div>
+          <ul class="compact-list"><li>可独立实施、验证、延期或判定不适用的内容必须单列。</li><li>同一行为在 Q、BF、TO 中已有 ID 时复用。</li><li>背景、解释、被否决方案与非规范性示例不进入清单。</li><li>每个规范性章节正向找到 Registry 项；每个 Registry 项反向找到来源章节。</li></ul>
+          <h3>Plan task 字段</h3>
+          <pre><code>**designCovers**
+- BF1
+- LOG-1
+- SEC-1</code></pre>
+          <p><code>covers</code> 继续表示 Define 路径与约束；<code>designCovers</code> 只表示 Registry 中 <code>required</code> ID。Standard 无 Design 时写 <code>designCovers: N/A (Standard)</code>。两类 ID 不得混入同一字段。</p>
+          <h3>Design → Task 覆盖矩阵</h3>
+          <div class="table-wrap"><table><thead><tr><th>Design ID</th><th>Task / Verify</th><th>处理方式</th><th>理由</th></tr></thead><tbody>
+            <tr><td class="id">LOG-1</td><td>Task 3</td><td>implement</td><td>跟随 coordinator 实现</td></tr>
+            <tr><td class="id">ALERT-1</td><td>Verify</td><td><span class="status verify">verify-only</span></td><td>人工检查告警配置</td></tr>
+            <tr><td class="id">MIG-2</td><td>—</td><td><span class="status deferred">deferred</span></td><td>用户确认下一迭代处理</td></tr>
+          </tbody></table></div>
+          <p>矩阵必须以 Registry 为左表反向遍历；不能只汇总 task 已有 <code>designCovers</code>，否则永远看不到无人引用项。</p>
+          <h3>Design → Evidence 证据矩阵</h3>
+          <div class="table-wrap"><table><thead><tr><th>Design ID</th><th>结果</th><th>证据类型</th><th>证据</th></tr></thead><tbody>
+            <tr><td class="id">LOG-1</td><td><span class="status required">通过</span></td><td>test</td><td>日志事件与脱敏字段测试</td></tr>
+            <tr><td class="id">SEC-1</td><td><span class="status required">通过</span></td><td>inspection</td><td>diff 中无敏感 payload 字段</td></tr>
+          </tbody></table></div>
+          <p><code>required</code> 与 <code>verify-only</code> 都必须有证据；<code>deferred</code>、<code>n/a</code> 原样带入并显示理由，不伪装成通过。</p>
+        </section>
+
+        <section class="section" id="flows" data-od-id="section-business-flows">
+          <div class="section-head"><span class="section-no">06 / BUSINESS FLOWS</span><h2>BF1–BF4：协议如何运行</h2></div>
+          <h3><span class="id">BF1</span> · Design 生成实施设计项清单</h3>
+          <pre><code>function Writing.finalizeDesignDocument(docPath):
+  read reviewed document
+  collect normative decisions and cross-cuts
+  assign or reuse stable IDs
+  classify each item into required | verify-only | deferred | n/a
+  reject missing status or required rationale
+  append Implementation Item Registry
+  verify registry ↔ source sections both ways
+  set frontmatter status to approved after verdict</code></pre>
+          <p><strong>异常：</strong>未声明补充文档承载规范内容 → 停止 approved 并合并回 <code>docPath</code>；状态无法判断 → Open Questions；Registry 无来源 → 删除错误项或补来源。</p>
+          <h3><span class="id">BF2</span> · Plan 建立双向覆盖</h3>
+          <pre><code>function Plan.validateDesignCoverage(designDoc, tasks):
+  require designDoc.status == approved
+  read Implementation Item Registry
+  validate every task.designCovers reference
+  for each item in Registry:
+    required    → require at least one task covers item.id
+    verify-only → require verification method
+    deferred/n/a → require rationale and confirmation
+  output Design → Task Coverage Matrix</code></pre>
+          <p><strong>异常：</strong>Full 旧文档无 Registry → 回 Design 回填；Standard 无 Design → <code>N/A (Standard)</code>；task 引用未知 ID → 计划与设计版本漂移，停止确认。</p>
+          <h3><span class="id">BF3</span> · Build 保留实施映射</h3>
+          <pre><code>function Build.completeTask(task, implementationResult):
+  lock task scope and designCovers
+  implement and verify task
+  collect changed files and test evidence
+  report completed designCovers
+  reject missing or extra claimed IDs</code></pre>
+          <p>所有 task 完成后汇总 <code>designCovers</code>。Plan 有、但没有任何已完成 task 报告的 required ID，Build Gate 失败。</p>
+          <h3><span class="id">BF4</span> · Verify 建立设计符合性证据</h3>
+          <pre><code>function Verify.auditDesignConformance(designDoc, plan, buildResult):
+  read Registry and Coverage Matrix
+  for each required or verify-only item:
+    identify test, inspection, demo or manual proof
+    run or collect fresh evidence
+    record pass or fail with evidence
+  if any item failed or lacks evidence:
+    return to Build</code></pre>
+          <p>Verify 继续保留现有 SC、路径和约束核对；Design Evidence 是新增维度，不替代 Define 验收。</p>
+        </section>
+
+        <section class="section" id="failures" data-od-id="section-failures">
+          <div class="section-head"><span class="section-no">07 / FAILURE ROUTING</span><h2>异常必须有明确回路</h2></div>
+          <div class="table-wrap"><table><thead><tr><th>所属 BF</th><th>场景</th><th>触发</th><th>处理</th><th>上抛</th></tr></thead><tbody>
+            <tr><td class="id">BF1</td><td>文档拆分</td><td>规范性内容只在补充文档</td><td>合并回单一 <code>docPath</code>，Review 重跑</td><td>Design</td></tr>
+            <tr><td class="id">BF1</td><td>状态不明</td><td>设计项没有四态</td><td>进入 Open Questions</td><td>用户</td></tr>
+            <tr><td class="id">BF2</td><td>设计未批准</td><td>frontmatter 不是 approved</td><td>拒绝 Plan Enter Gate</td><td>Design</td></tr>
+            <tr><td class="id">BF2</td><td>orphan required</td><td>required ID 无 task</td><td>补 task 或回 Design 改状态</td><td>Plan</td></tr>
+            <tr><td class="id">BF2</td><td>未知 ID</td><td>task 引用 Registry 外 ID</td><td>停止确认，重新加载 Design</td><td>Plan</td></tr>
+            <tr><td class="id">BF3</td><td>实施漏报</td><td>task 完成但结果缺 designCovers</td><td>task 未完成</td><td>Build</td></tr>
+            <tr><td class="id">BF4</td><td>证据缺失</td><td>required/verify-only 无新鲜证据</td><td><span class="status failed">失败</span>，回 Build</td><td>Verify</td></tr>
+          </tbody></table></div>
+        </section>
+
+        <section class="section" id="testing" data-od-id="section-testing">
+          <div class="section-head"><span class="section-no">08 / TEST DESIGN</span><h2>确定性测试，不靠“看起来对”</h2></div>
+          <div class="test-grid">
+            <article class="test-case"><span class="label">BF1 / Registry 完整生成</span><h4>多类型设计项进入同一清单</h4><p><b>Given</b> BF、日志、安全、迁移、TO。</p><p><b>When</b> Writing 汇总与 Review。</p><p><b>Then</b> 每个独立项进入 Registry，复用 BF/TO ID。</p></article>
+            <article class="test-case"><span class="label">BF1 / 补充文档阻断</span><h4>9 个日志事件不能静默旁路</h4><p><b>Given</b> 主文档链接日志补充文档。</p><p><b>When</b> 尝试 approved。</p><p><b>Then</b> Gate 失败并要求合并回单一 docPath。</p></article>
+            <article class="test-case"><span class="label">BF2 / required orphan</span><h4>明确点名 LOG-1</h4><p><b>Given</b> <code>LOG-1 required</code> 无 task 覆盖。</p><p><b>When</b> 反向遍历 Registry。</p><p><b>Then</b> Plan 不确认，并报告 orphan。</p></article>
+            <article class="test-case"><span class="label">BF2 / 合法四态</span><h4>补充字段齐全才通过</h4><p><b>Given</b> required 有 task，verify-only 有方法，deferred/n/a 有理由。</p><p><b>Then</b> 矩阵保留全部四态并通过。</p></article>
+            <article class="test-case"><span class="label">BF2 / 旧文档</span><h4>Full 不静默降级</h4><p><b>Given</b> approved 但无 Registry。</p><p><b>When</b> 进入 Plan。</p><p><b>Then</b> 回 Design 回填。</p></article>
+            <article class="test-case"><span class="label">BF3 / Build 漏报</span><h4>task 保持未完成</h4><p><b>Given</b> task 覆盖 LOG-1，但结果未报告。</p><p><b>Then</b> Build Gate 失败。</p></article>
+            <article class="test-case"><span class="label">BF4 / 证据缺失</span><h4>verify-only 不能口头通过</h4><p><b>Given</b> SEC-1 声明通过但无证据。</p><p><b>Then</b> SEC-1 标失败并回 Build。</p></article>
+          </div>
+          <h3>测试目标 TO-1–TO-6</h3>
+          <div class="table-wrap"><table><thead><tr><th>TO</th><th>覆盖</th><th>层级</th><th>目标</th></tr></thead><tbody>
+            <tr><td class="id">TO-1</td><td>P1、系统.1/.4、约束.2</td><td>结构检查</td><td>模板、Review、Exit Gate 识别规范项、基础日志与单文档完整性，不产生第二事实源</td></tr>
+            <tr><td class="id">TO-2</td><td>P2、系统.2/.3</td><td>结构检查</td><td>Plan 拒绝 in-review、orphan required、缺方法 verify-only、缺理由 deferred/n/a</td></tr>
+            <tr><td class="id">TO-3</td><td>P3</td><td>结构检查</td><td>Build 完成协议保留 designCovers，并报告缺失设计项</td></tr>
+            <tr><td class="id">TO-4</td><td>P4</td><td>结构检查</td><td>Verify 为 required/verify-only 输出逐项证据</td></tr>
+            <tr><td class="id">TO-5</td><td>SC-7</td><td>fixture 回归</td><td>9 个日志事件全部有稳定 ID 与下游状态</td></tr>
+            <tr><td class="id">TO-6</td><td>SC-8、约束.1/.3/.4</td><td>仓库验证</td><td>不引入 DDD/独立 Plan；Build 内完成 Skill 测试、vendor 与平台编译检查</td></tr>
+          </tbody></table></div>
+        </section>
+
+        <section class="section" id="registry" data-od-id="section-registry">
+          <div class="section-head"><span class="section-no">09 / IMPLEMENTATION REGISTRY</span><h2>实施设计项清单</h2></div>
+          <div class="table-wrap"><table><thead><tr><th>ID</th><th>类型</th><th>设计项</th><th>来源章节</th><th>影响范围</th><th>状态</th><th>验证/理由</th></tr></thead><tbody>
+            <tr><td class="id">Q1</td><td>Decision</td><td>单一设计文档内稳定 ID + 双向矩阵</td><td>方案决策 Q1</td><td>全链路</td><td><span class="status required">required</span></td><td>TO-1–TO-5</td></tr>
+            <tr><td class="id">Q2</td><td>Decision</td><td>独立可实施项级粒度</td><td>方案决策 Q2</td><td>Design/Plan</td><td><span class="status required">required</span></td><td>TO-1、TO-2</td></tr>
+            <tr><td class="id">Q3</td><td>Decision</td><td>四态 + 分阶段闭环</td><td>方案决策 Q3</td><td>全链路</td><td><span class="status required">required</span></td><td>TO-1–TO-4</td></tr>
+            <tr><td class="id">CONTRACT-1</td><td>Contract</td><td>共享 reference 定义三张表和 Gate</td><td>协议单源</td><td>四个 Skill</td><td><span class="status required">required</span></td><td>结构测试检查消费者引用同一 reference</td></tr>
+            <tr><td class="id">BF1</td><td>Business Flow</td><td>Design 生成 Registry 并收口 approved</td><td>业务流 BF1</td><td>dev-design</td><td><span class="status required">required</span></td><td>TO-1</td></tr>
+            <tr><td class="id">BF2</td><td>Business Flow</td><td>Plan 反向检查 orphan</td><td>业务流 BF2</td><td>dev-plan</td><td><span class="status required">required</span></td><td>TO-2、TO-5</td></tr>
+            <tr><td class="id">BF3</td><td>Business Flow</td><td>Build 保留并汇总 designCovers</td><td>业务流 BF3</td><td>dev-build</td><td><span class="status required">required</span></td><td>TO-3</td></tr>
+            <tr><td class="id">BF4</td><td>Business Flow</td><td>Verify 输出 Evidence Matrix</td><td>业务流 BF4</td><td>dev-verify</td><td><span class="status required">required</span></td><td>TO-4</td></tr>
+            <tr><td class="id">GATE-1</td><td>Gate</td><td>Full Design 必须 approved 且含 Registry</td><td>文档契约</td><td>Design/Plan</td><td><span class="status required">required</span></td><td>TO-1、TO-2</td></tr>
+            <tr><td class="id">GATE-2</td><td>Gate</td><td>required orphan 阻断 Plan</td><td>文档契约</td><td>Plan</td><td><span class="status required">required</span></td><td>TO-2</td></tr>
+            <tr><td class="id">GATE-3</td><td>Gate</td><td>Build 完成结果覆盖 Plan required IDs</td><td>文档契约</td><td>Build</td><td><span class="status required">required</span></td><td>TO-3</td></tr>
+            <tr><td class="id">GATE-4</td><td>Gate</td><td>required/verify-only 必须有新鲜证据</td><td>文档契约</td><td>Verify</td><td><span class="status required">required</span></td><td>TO-4</td></tr>
+            <tr><td class="id">MIG-1</td><td>Migration</td><td>Standard 显式 N/A；Full 旧文档回填</td><td>Migration</td><td>Plan</td><td><span class="status required">required</span></td><td>TO-2</td></tr>
+            <tr><td class="id">LOG-1</td><td>Log</td><td>本功能无运行时路径，不新增业务日志</td><td>Observability</td><td>插件运行时</td><td><span class="status na">n/a</span></td><td>纯 Skill/协议变更；测试消息承担诊断</td></tr>
+            <tr><td class="id">TO-1</td><td>Test Objective</td><td>Design Registry 与 approved/单文档 Gate</td><td>测试目标</td><td>Design</td><td><span class="status verify">verify-only</span></td><td>结构测试</td></tr>
+            <tr><td class="id">TO-2</td><td>Test Objective</td><td>Plan 四态与 orphan Gate</td><td>测试目标</td><td>Plan</td><td><span class="status verify">verify-only</span></td><td>结构测试</td></tr>
+            <tr><td class="id">TO-3</td><td>Test Objective</td><td>Build designCovers 汇总</td><td>测试目标</td><td>Build</td><td><span class="status verify">verify-only</span></td><td>结构测试</td></tr>
+            <tr><td class="id">TO-4</td><td>Test Objective</td><td>Verify Evidence Matrix</td><td>测试目标</td><td>Verify</td><td><span class="status verify">verify-only</span></td><td>结构测试</td></tr>
+            <tr><td class="id">TO-5</td><td>Test Objective</td><td>9 个日志事件 fixture 回归</td><td>测试目标</td><td>Plan</td><td><span class="status verify">verify-only</span></td><td>fixture 测试</td></tr>
+            <tr><td class="id">TO-6</td><td>Test Objective</td><td>仓库生成链与测试通过</td><td>测试目标</td><td>发布物</td><td><span class="status verify">verify-only</span></td><td>Node tests + compile/vendor checks</td></tr>
+          </tbody></table></div>
+        </section>
+
+        <section class="section" id="files" data-od-id="section-file-impact">
+          <div class="section-head"><span class="section-no">10 / FILE IMPACT</span><h2>文件影响与不可触碰区</h2></div>
+          <pre class="file-tree"><code>skills/references/
+├── design-traceability.md                    NEW · ID/类型/四态；三张表 schema；Gate/回退
+└── path-conventions.md                       改 · 设计项 ID 与下游消费
+
+skills/dev-design/
+├── SKILL.md                                  改 · final gate、approved、单 docPath
+├── decision/SKILL.md                         改 · 决策/领域覆盖进入 Registry
+└── writing/
+    ├── SKILL.md                              改 · 汇总 Registry、同步 approved
+    └── references/
+        ├── template-feat.md                  改 · 实施设计项清单
+        ├── template-bug.md                   改 · 实施设计项清单
+        ├── template-refactor.md              改 · 实施设计项清单
+        ├── writing-principles.md             改 · 规范性内容识别
+        └── design-doc-review.md              改 · 双向完整性、单文档 Gate
+
+skills/dev-plan/
+├── SKILL.md                                  改 · Enter Gate、designCovers、反向矩阵
+└── references/
+    ├── task-template.md                      改 · designCovers
+    └── examples/example-plan-output.md       改 · 覆盖矩阵示例
+
+skills/dev-build/
+├── SKILL.md                                  改 · designCovers 汇总 Gate
+└── references/
+    ├── dev-build-executing.md                改 · task 结果保留 Design ID
+    └── dev-build-subagent.md                 改 · objective/result 保留 Design ID
+
+skills/dev-verify/SKILL.md                    改 · Evidence Matrix、逐项证据
+skills/devflow/SKILL.md                       改 · 四阶段 Gate 摘要同步
+hooks/design-traceability.test.mjs            NEW · 单源/四态/orphan/9 日志 fixture
+plugin/metadata.json                          改 · minor 版本升级
+plugins/claude/nocode/                        生成 · compile.platform.mjs
+plugins/codex/nocode/                         生成 · compile.platform.mjs</code></pre>
+          <div class="warning-note signal-note"><strong>保护范围：</strong>不得修改当前工作树中已有的 <code>skills/agents-launcher/</code> 及其双平台生成物改动；它们属于用户的另一项工作。</div>
+        </section>
+
+        <section class="section" id="verification" data-od-id="section-verification-release">
+          <div class="section-head"><span class="section-no">11 / VERIFY & RELEASE</span><h2>验证策略、部署与回滚</h2></div>
+          <h3>验证策略</h3>
+          <ol class="compact-list">
+            <li>使用 <code>rg</code>/Node 测试检查关键协议文本、字段与 Gate 同时存在，避免只改一层。</li>
+            <li>为断点续传附件建立最小匿名化 fixture，验证 9 个日志项不会成为 orphan。</li>
+            <li>运行相关 Node 测试与 hooks 测试。</li>
+            <li>运行 <code>node scripts/vendor-sync.mjs --check</code>。</li>
+            <li>运行 <code>node scripts/compile.platform.mjs</code> 后再执行 <code>--check</code>。</li>
+          </ol>
+          <div class="table-wrap"><table><thead><tr><th>TO</th><th>验证方式</th><th>通过标准</th></tr></thead><tbody>
+            <tr><td class="id">TO-1</td><td><code>hooks/design-traceability.test.mjs</code></td><td>协调器、decision、writing、review 同时落实 Registry、approved、单文档 Gate</td></tr>
+            <tr><td class="id">TO-2</td><td>同上</td><td>Plan 反向遍历 Registry；四态缺字段会失败</td></tr>
+            <tr><td class="id">TO-3</td><td>同上</td><td>Build 两种执行模式和协调器均保留 designCovers</td></tr>
+            <tr><td class="id">TO-4</td><td>同上</td><td>Verify 生成 Evidence Matrix，缺证据回 Build</td></tr>
+            <tr><td class="id">TO-5</td><td>匿名 fixture</td><td>9 事件均有 ID 与下游状态；删除任一映射即失败</td></tr>
+            <tr><td class="id">TO-6</td><td>Node tests + vendor/platform checks</td><td>命令全部 exit 0，双平台无漂移</td></tr>
+          </tbody></table></div>
+          <h3>部署与回滚</h3>
+          <div class="meta-grid">
+            <div class="meta-item"><b>DEPLOYMENT</b><p>Skill/文档协议更新；无服务部署、数据库迁移或运行时配置变更。升级 minor，生成 Claude/Codex 两个平台发布物。</p></div>
+            <div class="meta-item"><b>ROLLOUT</b><p>无需 Feature Flag；发布前以完整测试和平台 diff 为 Gate。</p></div>
+            <div class="meta-item"><b>ROLLBACK</b><p>回滚同一 commit，同时恢复源码、版本与双平台生成物。</p></div>
+            <div class="meta-item"><b>MONITORING</b><p>无线上指标；测试失败、平台漂移检查与真实工作流 dogfood 作为反馈。</p></div>
+          </div>
+          <h3>基础日志设计</h3>
+          <p><code>LOG-1</code> 为 <span class="status na">n/a</span>：本功能不新增运行时代码路径。失败可诊断性由确定性测试消息承担；任何 orphan、未知 ID、缺理由或缺证据都必须点名对应 Design ID。</p>
+        </section>
+
+        <section class="section" id="glossary" data-od-id="section-glossary">
+          <div class="section-head"><span class="section-no">12 / GLOSSARY</span><h2>术语与缩略语</h2></div>
+          <div class="table-wrap"><table><thead><tr><th>术语</th><th>定义</th></tr></thead><tbody>
+            <tr><td>规范性设计项</td><td>会影响代码、配置或验证结果，必须被实施、验证、延期或判定不适用的设计内容</td></tr>
+            <tr><td>Implementation Item Registry</td><td>Design 文档中全部规范性设计项的单一清单</td></tr>
+            <tr><td>双向可追踪性</td><td>既能从设计项找到下游，也能从下游反查设计来源，并能识别 orphan</td></tr>
+            <tr><td>orphan</td><td>没有下游承接者或没有合法来源的悬空项</td></tr>
+            <tr><td><code>covers</code></td><td>Plan task 对 Define 路径和约束的覆盖字段</td></tr>
+            <tr><td><code>designCovers</code></td><td>Plan/Build task 对 Design Registry ID 的覆盖字段</td></tr>
+            <tr><td>Design Evidence Matrix</td><td>Verify 输出的 Design ID 到实现证据映射</td></tr>
+          </tbody></table></div>
+        </section>
+
+        <section class="section" id="review" data-od-id="section-review-log">
+          <div class="section-head"><span class="section-no">13 / REVIEW LOG</span><h2>2026-07-23 Writing 自查</h2></div>
+          <div class="meta-grid">
+            <div class="meta-item"><b>设计意图</b><p>主因、辅助问题、Out of Scope 清楚，SC 全部有落点。</p></div>
+            <div class="meta-item"><b>决策质量</b><p>Q1–Q3 均有三个真备选、否决理由、确认状态和影响范围。</p></div>
+            <div class="meta-item"><b>完整性</b><p>成功/失败路径、四态、兼容、测试、部署、回滚与可诊断性齐全。</p></div>
+            <div class="meta-item"><b>可执行性</b><p>共享 reference、消费 Skill、模板、测试、版本和生成物均有真实路径。</p></div>
+            <div class="meta-item"><b>内部一致性</b><p>Registry、BF、异常、测试与 TO 可互相追踪；无未知 ID。</p></div>
+            <div class="meta-item"><b>范围</b><p>只改跨阶段协议；不引入 DDD、运行时 parser、业务项目或第二事实源。</p></div>
+            <div class="meta-item"><b>可读性</b><p>总图、状态表、契约示例与 BF 分层展开，无长段落墙。</p></div>
+            <div class="meta-item"><b>验证覆盖</b><p>TO-1–TO-6 覆盖 P1–P4、系统.1–4 与约束.1–4。</p></div>
+          </div>
+          <div class="signal-note"><strong>Findings：</strong>无 Critical、Warning、Open Questions 或 Self-Audit 遗留。<br><strong>Verdict：</strong>✅ Pass。用户已确认详细设计并选择 Render，frontmatter 已切换为 <code>approved</code>。</div>
+          <footer class="coverage" data-od-id="coverage-confirmation">
+            <div class="coverage-grid">
+              <div><p class="kicker">coverage confirmation</p><h2>覆盖确认</h2><p class="lede">本 Artifact 覆盖 <code>source.md</code> 全文：罗盘、决策、协议、四态、三张矩阵、BF1–BF4、异常、测试、Registry、文件影响、验证、发布回滚、日志、术语与 Review Log。</p></div>
+              <div class="coverage-stamp">STATUS / APPROVED<br>SOURCE / source.md<br>COVERAGE / COMPLETE<br>OPEN QUESTIONS / NONE<br>ARTIFACT / index.html</div>
+            </div>
+          </footer>
+        </section>
+      </div>
+    </main>
+  </div>
+  <script>
+    (() => {
+      const sidebar = document.querySelector('#sidebar');
+      const menuBtn = document.querySelector('#menuBtn');
+      const progressBar = document.querySelector('#progressBar');
+      const mobileProgress = document.querySelector('#mobileProgress');
+      const progressText = document.querySelector('#progressText');
+      const links = [...document.querySelectorAll('nav a')];
+      const sections = [...document.querySelectorAll('main section[id]')];
+      menuBtn.addEventListener('click', () => {
+        const open = sidebar.classList.toggle('open');
+        menuBtn.setAttribute('aria-expanded', String(open));
+        menuBtn.textContent = open ? '关闭' : '目录';
+      });
+      links.forEach(link => link.addEventListener('click', () => {
+        sidebar.classList.remove('open');
+        menuBtn.setAttribute('aria-expanded', 'false');
+        menuBtn.textContent = '目录';
+      }));
+      const updateProgress = () => {
+        const max = document.documentElement.scrollHeight - innerHeight;
+        const ratio = max > 0 ? Math.min(1, scrollY / max) : 0;
+        progressBar.style.transform = `scaleX(${ratio})`;
+        mobileProgress.style.transform = `scaleX(${ratio})`;
+        progressText.textContent = `${Math.round(ratio * 100)}%`;
+      };
+      const observer = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+          if (!entry.isIntersecting) return;
+          links.forEach(link => link.classList.toggle('active', link.getAttribute('href') === `#${entry.target.id}`));
+        });
+      }, { rootMargin: '-18% 0px -68% 0px' });
+      sections.forEach(section => observer.observe(section));
+      document.addEventListener('scroll', updateProgress, { passive: true });
+      updateProgress();
+    })();
+  </script>
+</body>
+</html>

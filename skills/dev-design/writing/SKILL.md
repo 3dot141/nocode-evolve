@@ -10,6 +10,8 @@ disable-model-invocation: true
 
 > dev-design 内部协议，不独立注册。由 dev-design 协调器在 writing 阶段 Read 并执行。
 
+开始前 Read `{NOCODE_SKILL_REF}/design-traceability.md`。Writing 是 Implementation Item Registry 的唯一生成者：从 Decision Packet 和详细设计中收集规范性内容，写回同一 `docPath`，不得另建 manifest 或补充设计事实源。
+
 **Iron Law: 详细设计不是"写文档"——领域怎么拆、模块怎么组织、接口长什么样，这些是设计决策。文档只是这些决策的载体。**
 
 decision 阶段选完方案（"走哪条路"，产出 Decision Packet），本阶段做详细设计（"选定的路怎么走"）：领域划分、模块设计、接口设计、业务流、文件影响。设计文档是详细设计的自然产出物，不是额外"写"出来的。
@@ -184,6 +186,16 @@ Task 7: 保存 + 渲染确认 + handoff（步 13-14）
 - [ ] 文件影响总表产出
 - [ ] 验证策略总表产出（覆盖每条使用路径）
 
+### Step 5a: 汇总 Implementation Item Registry
+
+按共享 traceability 协议执行：
+
+1. 收集 Q / BF / API / DATA / LOG / METRIC / ALERT / SEC / PERF / MIG / EVAL / TO / GATE 等规范性设计项，已有 ID 原样复用。
+2. 每项标记 `required` / `verify-only` / `deferred` / `n/a`：`required` 写清实现意图，另外三态补齐验证方法、延期确认或不适用依据；下游 task 由 Plan 建立。
+3. 在同一设计文档写入 `## 实施设计项清单`。
+4. 双向检查 `Registry ↔ 来源章节`：规范性章节无 Registry ID、Registry ID 无来源章节都算 orphan。
+5. 发现规范性内容只存在于附件或补充设计文档时停止收口，合并回单一 `docPath` 后重跑 Review。
+
 → 进入「通用收尾」（Review + 保存）。
 
 ---
@@ -220,11 +232,16 @@ Task 7: 保存 + 渲染确认 + handoff（步 13-14）
 
 **返回标准化 review verdict（交协调器）**：本 Review 收口后向协调器返回 verdict（`approved: true|false` + 未决 Open Questions + 剩余风险），schema 套 `findings-contract` 的 verdict 层。**协调器只验这个 verdict、不重新评审**——评审的唯一所有者是本步。
 
+verdict `approved:true` 时，在返回协调器前把同一 `docPath` 的 frontmatter `status` 同步为 `approved`。verdict 与 frontmatter 必须同一事务收口；任一未成功都返回 `approved:false`，不得出现“正文通过但生命周期仍是 in-review”。
+
 **Exit Gate:**
 - [ ] 8 维自查完成（design-doc-review 维度逐维过；用户显式要求时改为已调 reviewing 引擎）
 - [ ] findings 已产出（五档 C/W/S/Q/SA；升审时含独立路来源标注）
 - [ ] 用户逐条确认 fix / skip
 - [ ] 修订完成 + Review Log 已追加
+- [ ] Implementation Item Registry 完整，且 Registry ↔ 来源章节双向无 orphan
+- [ ] 没有规范性内容只存在于未声明附件或第二设计文档
+- [ ] verdict approved 与同一 `docPath` 的 frontmatter `status: approved` 已同步收口
 - [ ] 标准化 review verdict 已产出（交协调器，供其验证不重审）
 
 ### 保存 + 渲染确认

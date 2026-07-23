@@ -104,4 +104,8 @@ feat 的结构骨架 = **领域划分 + 总图**：
 - [ ] 每域有业务流（BF 伪代码）+ 文件影响 + 验证方案
 - [ ] 战术建模触发时：聚合根 / 实体 / 域服务已标注，跨上下文引用方向表已列且逐条过四规则
 
+## 实施设计项清单
+
+按 `${PLUGIN_ROOT}/skills/references/design-traceability.md` 汇总所有规范性设计项，复用已有 Q / BF / TO ID，补齐类型、来源章节、影响范围、四态和验证/理由，并检查 Registry ↔ 来源章节双向无 orphan。
+
 （汇总 → 主 SKILL.md 通用 Step 5）

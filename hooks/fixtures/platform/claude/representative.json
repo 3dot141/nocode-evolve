@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
   "files": {
-    "skills/devflow/SKILL.md": "3cbfce01fa31b7b3feda53e5b1512c80b869a2f26362816701ddd8c1968c5016",
-    "skills/dev-build/SKILL.md": "8466048a4b6866201a86485b2bbea21332c79796ac937a86d09ad3a8186c5280",
+    "skills/devflow/SKILL.md": "59df65000bd7778bcebd2dbdb50b33cb4b20f8b57cdbf4f30a6d10db7c7cf6d1",
+    "skills/dev-build/SKILL.md": "6280678a409f46f3f9aa07f9526d443cacfcc32f429330d1ca5ccab38d520698",
     "skills/dev-review/SKILL.md": "560a4d87d9ffd9b8c56da3dd82bb7b9936ec825d1e487edf4fae7b7ed2e86c31",
     "rules/rule-codex-review.md": "24c2ef126058a766ce35a20ae56694c910e080700631278a2014e471680786b7",
     "hooks/hooks.json": "fcdabbf8802b9367e867957cd4ed862139e85d2c9e6c79dbd65836ec9e33617e",

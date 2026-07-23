@@ -11,6 +11,8 @@ Build 完成后的 **evidence** 门。"看起来对"不是证据，跑一下才�
 
 > Leading word: **evidence**。每一项断言背后都要有一条可贴出来的命令 + 输出。没有输出 = 没有断言。
 
+Full 场景开始前 Read `{NOCODE_SKILL_REF}/design-traceability.md`。Design → Evidence Matrix 是新增的逐 ID 证据维度，不替代 Define 的 SC、路径和约束验收。
+
 ## 非本 skill 请求
 
 "读代码确认逻辑对" → 不算 verify（读代码是推断不是 evidence）。用户只是陈述"CI 绿了"未请求验证 → 不主动宣称完成。写代码 → 走 Build。
@@ -20,6 +22,7 @@ Build 完成后的 **evidence** 门。"看起来对"不是证据，跑一下才�
 - [ ] Build Gate 已过（所有 task 完成 + 全测试通过 + build 通过）
 - [ ] Design 测试目标可用（Full 场景）
 - [ ] Design verify 策略可用（Full 场景）——读设计文档「验证策略」章节（TO 表 + 分层测试方案 + 不测项 + 路径覆盖状态表）
+- [ ] approved Design 的 Implementation Item Registry + Plan Coverage Matrix + Build `completedDesignCovers` 可用（Full 场景）
 - [ ] Define 验收标准 + 路径清单可用
 
 ## 领域指南（验证时按需 Read）
@@ -60,8 +63,8 @@ Task 5: 韧性检查（Step 5，有外部依赖时）
   Gate: 降级验过或标注跳过
 
 Task 6: 验收逐条核对（Step 6）
-  Sub-steps: Define 验收标准 + 路径 + 约束逐条 ✅/❌ 附证据
-  Gate: 逐条通过，任一 ❌ 回 Build
+  Sub-steps: Define 验收标准 + 路径 + 约束逐条 ✅/❌ 附证据 → required / verify-only Design ID 逐项采集新鲜证据并生成 Design → Evidence Matrix
+  Gate: Define 与 Design 两个维度逐条通过，任一 ❌ 或缺证据回 Build
 
 Task 7: 硬交接 — 调用下一步 skill
   Sub-steps: 按 Exit Gate 硬交接报告 Verify 完成（验收通过率 + 证据）→ 建议进 Review → 等用户拍板后调 Capability(workflow.skill.invoke, {"skill":"dev-review","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})
@@ -153,6 +156,19 @@ Core Web Vitals：LCP ≤ 2.5s、INP ≤ 200ms、CLS ≤ 0.1。详见 `reference
 
 每条有编号 + 标准/路径/约束原文 + ✅/❌ + 证据（命令+输出）。任一条 ❌ → 回 Build 修复。
 
+Full 场景随后以 Registry 为左表生成 Design → Evidence Matrix：
+
+```markdown
+| Design ID | 结果 | 证据类型 | 证据 |
+|---|---|---|---|
+| LOG-1 | ✅ | test | 日志事件与脱敏字段测试 |
+| SEC-1 | ❌ | inspection | 未找到敏感字段排除证据 |
+```
+
+- `required` 和 `verify-only` 必须逐项运行或采集本轮新鲜证据，不能复用“代码看起来对”或 Build 自报。
+- `deferred` / `n/a` 原样带入理由，不计作通过。
+- 任一必验 ID 失败或证据为空，点名该 Design ID 并回 Build。
+
 **完整示例**：一次走完 Step 1→Step 2→Step 6（含一条 SC ❌ 回 Build）见 `references/examples/example-verify-session.md`。
 
 **Subagent 验证规则**：如果用了 subagent 执行 Build，subagent 报 success 不可信——独立查 VCS diff 确认真有改动、独立跑测试确认真通过。不信 agent 自报状态。
@@ -161,6 +177,7 @@ Core Web Vitals：LCP ≤ 2.5s、INP ≤ 200ms、CLS ≤ 0.1。详见 `reference
 
 - [ ] 全部验证证据已收集（三元组齐全）
 - [ ] 验收标准 + 路径 + 约束逐条通过
+- [ ] Full 场景 Design → Evidence Matrix 已产出，required / verify-only Design ID 逐项有新鲜证据且全部通过
 - [ ] 性能达标（有需求时）
 - [ ] 后续 Review 可开始
 - [ ] **硬交接**：Exit Gate 全部通过后，向用户报告 Verify 完成（含验收标准通过率 + 证据摘要），建议下一阶段：Review（`nocode:dev-review`）。列出 Review 阶段的 sub-steps + 关键决策（devflow Step 5 格式）。等用户拍板，不自行进入下一阶段

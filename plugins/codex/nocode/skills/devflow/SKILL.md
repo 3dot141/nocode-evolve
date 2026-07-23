@@ -9,6 +9,8 @@ description: "工程任务流程领航（8 阶段 · 4 场景路由）。可被 
 >
 > 各阶段只通过下文列出的 `Capability(workflow.skill.invoke, ...)` 进入对应 Skill；不读取路由层或其它插件内部实现。
 
+跨 Design / Plan / Build / Verify 的设计项追踪 Gate 统一 Read `${PLUGIN_ROOT}/skills/references/design-traceability.md`；devflow 只展示阶段摘要，不复制四态或表结构。
+
 ## 协议
 
 > **顺序推进纪律（硬约束）**：禁止自动跳步。推进只有一条路：todo 写好流程 → 进入当前节点 → 顺序执行子步骤 → 逐条验证 Gate → 全部通过 → 报告用户 → 等用户拍板 → 才进下一阶段。agent 不得自行跳过、合并、快进任何阶段或子步骤。"这步简单直接过" / "上一轮做过" / "用户说快点" / "用户说自主执行到 land" 都不是跳步的理由——快≠跳，可以每步简洁，不能省步骤。用户授权自主推进免除的是等待拍板的时间，不是阶段本身。
@@ -119,10 +121,10 @@ Land 有 5 个子步骤（8a Create PR → 8b ... → 8e Cleanup），只说"pus
 |---|---|---|---|---|
 | 1 | **Define** | `nocode:dev-define` | — | 问题边界收敛 + 场景分类 + 用户确认 |
 | 2 | **Env** | Gate Base → `nocode:using-git-worktrees` → `workspace.worktree.enter` | `rule-git-worktree` | worktree 已建并进入（注：Env 不需要独立 nocode skill，逻辑完全由 superpowers skill + rule-git-worktree 覆盖） |
-| 3 | **Design** | `nocode:dev-design` | — | 方案确认 + 测试目标 + 设计文档评审通过 + 用户 approve |
-| 4 | **Plan** | `nocode:dev-plan` | — | 计划已产出 + 所有 task ≤ M + 用户确认 |
-| 5 | **Build** | `nocode:dev-build` | — | 所有 task 完成 + 测试通过 + build 通过 |
-| 6 | **Verify** | `nocode:dev-verify` | — | 验收标准逐条通过 + 证据收集 |
+| 3 | **Design** | `nocode:dev-design` | — | 方案确认 + approved 单文档 + Implementation Item Registry 双向无 orphan |
+| 4 | **Plan** | `nocode:dev-plan` | — | 计划已产出 + Design → Task 反向矩阵零 required orphan + 用户确认 |
+| 5 | **Build** | `nocode:dev-build` | — | 所有 task 完成 + required Design ID 全部回报 + 测试/build 通过 |
+| 6 | **Verify** | `nocode:dev-verify` | — | Define 验收逐条通过 + Design → Evidence Matrix 逐 ID 有新鲜证据 |
 | 7 | **Review** | `nocode:dev-review` | — | Critical 全 fix + 用户 approve（默认主会话五轴自查；独立交叉仅用户显式要求） |
 | 8 | **Land** | `nocode:dev-land` | — | 意图推定 → 全景计划 → 全自动执行(PR/merge/keep/discard + post-merge) |
 
@@ -306,9 +308,9 @@ PDCA 循环：
 | 4a. 只读加载 | 读 restate→设计文档→代码→pattern | 开始改文件即停（在跳过 Plan） |
 | 4b. 画依赖图 | 列块 + 标依赖方向 | 底层先建 |
 | 4c. 垂直切片 | Slicing + Risk-first 排序 | 形态选择：Vertical / Contract-First |
-| 4d. 写 task | 贴真实代码零占位符 | ≤M（≤5 文件），标 HITL/AFK |
+| 4d. 写 task | 贴真实代码零占位符，标 `covers` + `designCovers` | ≤M（≤5 文件），标 HITL/AFK |
 | 4e. 插 checkpoint | 每 2-3 task 一个 | rollback 边界 |
-| 4f. Plan Validation | 需求覆盖+任务可验证+依赖无环 | 不过回 4d 补 |
+| 4f. Plan Validation | 需求/路径覆盖 + Design Registry 反向 orphan 检查 + 任务可验证 + 依赖无环 | 不过回 4d 或 Design 补 |
 | 4g. 用户确认 | `workflow.decision.request` | 确认计划 |
 
 #### Build sub-flow
@@ -316,8 +318,8 @@ PDCA 循环：
 | Sub-step | 做什么 | 决策 |
 |---|---|---|
 | 5a. 加载计划 | 读 Plan 任务序列 + 测试目标 | — |
-| 5b. 逐 task slice 循环 | 每 task: Scope Lock → Test First → Implement → Verify | ≤5 文件否则回 Plan；HITL 停等用户 |
-| 5c. Gate 检查 | 全 task 完成 + 测试通过 + build 通过 | 同测试修 3 次失败 → Debug 横切 |
+| 5b. 逐 task slice 循环 | 每 task: Scope Lock（含 `designCovers`）→ Test First → Implement → Verify → 回报 `completedDesignCovers` | ≤5 文件否则回 Plan；HITL 停等用户 |
+| 5c. Gate 检查 | 全 task 完成 + required Design ID 无漏报 + 测试/build 通过 | 同测试修 3 次失败 → Debug 横切 |
 | 5d. 统一 Commit | Gate 通过后一次性 commit 覆盖全部 task 改动，不按 task 拆分 | — |
 
 #### Verify sub-flow
@@ -328,7 +330,7 @@ PDCA 循环：
 | 6b. 集成测试 | 跨模块契约 + 数据流端到端 | requirements 逐行核对 |
 | 6c. E2E/Browser | golden path + 边界 case + 截图 | 无 UI 变更标注跳过 |
 | 6d. 性能检查 | Core Web Vitals / benchmark | 无性能需求标注跳过 |
-| 6e. 验收逐条核对 | SC + 测试目标逐条 ✅/❌ 附证据 | 任一 ❌ 回 Build |
+| 6e. 验收逐条核对 | SC/路径/约束 + required/verify-only Design ID 逐条 ✅/❌，输出 Design → Evidence Matrix | 任一 ❌ 或缺证据回 Build |
 
 #### Review sub-flow
 

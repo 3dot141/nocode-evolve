@@ -131,6 +131,8 @@
 - frontmatter 字段齐全（scenario / topic / date / author / status）
 - scenario 是 feat / bug / refactor 之一
 - status 符合 Design Doc 状态机（draft → in-review → approved → implemented → archived）
+- approved 文档必须有「实施设计项清单」；按 `{NOCODE_SKILL_REF}/design-traceability.md` 检查 Registry ↔ 来源章节双向完整，任一方向 orphan 都是 Critical
+- 规范性内容不得只存在于附件或补充文档；发现第二事实源必须合并回单一 `docPath` 后重跑 Review
 - H2 章节名是内容实体；**含「上半 / 下半 / Human Review / Agent Implementation」等元标签作 H2 直接上 Critical**
 - **决策速查表（①）**：有多个决策时「方案选择」章节开头必有速查表（Q + 定 + 确认状态 + 影响）
 - **文末术语表（⑤）**：用了缩写 / 自创词时文末必有「术语与缩略语」表；首次出现用「中文 英文全称 - 缩写」三段式

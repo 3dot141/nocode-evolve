@@ -16,6 +16,8 @@
 
 **covers**: [订单.P1, 订单.P2, 约束.1]   # 必填：本 task 覆盖的路径/约束 ID（见 path-conventions.md）
 
+**designCovers**: [BF1, LOG-1]          # 必填：Full 填 Design Registry ID；Standard 写 N/A (Standard)
+
 **验证命令**:
 - `npm test -- --grep "xxx"`        # 预期输出: 1 passing
 - `npm run build`                   # 预期输出: build succeeded
@@ -34,6 +36,7 @@
 要点：
 - `Size` 只能是 XS / S / M。L、XL 不允许，必须拆成多个 task。
 - `covers` 必填——标注本 task 覆盖的路径/约束 ID（来自 restate 路径清单）。所有 task 的 covers 汇总后必须覆盖 restate 每条路径，否则 Plan Exit Gate 不通过。
+- `designCovers` 必填——Full 场景标注本 task 承接的 approved Design Registry `required` ID；Standard 显式写 `N/A (Standard)`。Plan 必须从 Registry 反向生成 Design → Task Coverage Matrix，不能只汇总 task 自报。
 - `验证命令` 要带预期输出——"跑这个，应该看到这个"。没有预期输出的命令无法判定通过。
 - `真实改动` 是 HARD-GATE：不允许 `<your code here>` / `TODO` / `...`。
 

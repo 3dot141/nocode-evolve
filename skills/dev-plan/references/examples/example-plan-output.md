@@ -13,6 +13,7 @@
 **Design Doc**: N/A (Standard 场景)
 **Test Objectives**: 跨页导出全量 / UTF-8 BOM 不乱码 / 权限复用列表页
 **Execution**: subagent-lite
+**Design Coverage**: N/A (Standard)
 ```
 
 ## 依赖图
@@ -27,6 +28,8 @@ T2 (query 去分页参数) ─┘
 
 ### T1 — CSV 序列化工具 [AFK] [S, 1 文件]
 
+**designCovers**: N/A (Standard)
+
 ```ts
 // src/util/csv.ts
 export function toCsv(rows: Record<string, unknown>[], cols: string[]): string {
@@ -40,6 +43,8 @@ export function toCsv(rows: Record<string, unknown>[], cols: string[]): string {
 
 ### T2 — query 支持取消分页 [AFK] [S, 1 文件]
 
+**designCovers**: N/A (Standard)
+
 ```ts
 // api/orders/query.ts:88 — 加一个 unbounded 选项
 function buildQuery(filter: Filter, opts?: { unbounded?: boolean }) {
@@ -51,6 +56,8 @@ function buildQuery(filter: Filter, opts?: { unbounded?: boolean }) {
 **验证**：`npm test -- query.test.ts` → unbounded 时不带 LIMIT
 
 ### T3 — export 端点 [HITL, 权限确认] [M, 2 文件]
+
+**designCovers**: N/A (Standard)
 
 **领域指南消费**：碰权限校验 → 读 `{NOCODE_SKILL_REF}/security-guide.md` 的 Broken Access Control 段，确认中间件复用而非重开一套校验逻辑
 
@@ -67,6 +74,8 @@ router.get('/export', requireOrderRead, async (req, res) => {  // 复用列表�
 **验证**：`curl -s '/api/orders/export?status=paid' | head -1` → 期望 BOM + 表头
 
 ### T4 — 前端导出按钮 [AFK] [S, 1 文件]
+
+**designCovers**: N/A (Standard)
 
 ```tsx
 // admin/orders/list.tsx:40 — 筛选栏加按钮
@@ -116,8 +125,9 @@ T1+T2 完成后插 checkpoint：两个工具单测通过 + build 通过 → 再�
 
 **8b 需求覆盖**：跨页导出→T2+T3 ✅；BOM 不乱码→T1 ✅；权限复用→T3 ✅。三条 SC 全覆盖。
 **8c 路径覆盖**：路径→task 映射表已产出，无漏路径 ✅。
-**8d 任务可验证**：T1-T4 各有验证命令 ✅。
-**8e 依赖无环**：T1/T2 → T3 → T4，无环，底层先 ✅。
+**8d Design → Task Coverage Matrix**：Standard 场景无 Design Registry；显式 `N/A (Standard)` ✅。
+**8e 任务可验证**：T1-T4 各有验证命令 ✅。
+**8f 依赖无环**：T1/T2 → T3 → T4，无环，底层先 ✅。
 
 全过 → 进 Step 9 用户确认。
 

@@ -16,6 +16,8 @@ description: Use to turn a confirmed goal into implementation tasks or when devf
 输入：Define 的 restate + dev-design 的设计文档（含领域划分、模块设计、接口、业务流、测试目标）（Full 场景）。
 输出：用户确认的任务序列。
 
+进入 Full Plan 时 Read `{NOCODE_SKILL_REF}/design-traceability.md`。Design Registry 是 task `designCovers` 与反向 orphan 检查的唯一协议来源；不得在 Plan 内另造一套状态或 schema。
+
 ## 非本 skill 请求
 
 知识问答 / 目标不明确（缺 restate）→ 回 Define。单步太小不需拆 → 直接给验收标准走 Build，不硬拆。写代码 → 走 Build。用户在问"你准备怎么做 / 让我先确认"（元提问，要的是陈述打算）→ 用回合末尾文本陈述打算并等用户拍板，不进本协议；拍板后确需拆任务再进。
@@ -23,7 +25,7 @@ description: Use to turn a confirmed goal into implementation tasks or when devf
 ## Enter Gate
 
 - [ ] Define restate 存在且已确认
-- [ ] Full 场景：Design 设计文档 + 测试目标已产出
+- [ ] Full 场景：Design 设计文档 frontmatter `status: approved`，且测试目标与 Implementation Item Registry 已产出
 - [ ] Standard 场景：restate 足够指导任务拆分
 
 **Plan 的两种合法产出**：
@@ -133,6 +135,7 @@ Round 1 写骨架——定清楚**改什么、覆盖什么、谁做**，代码�
 
 - **Files**：Create / Modify / Test 精确路径
 - **covers（必填）**：覆盖 restate 哪些路径/约束 ID
+- **designCovers（必填）**：Full 填该 task 承接的 Registry `required` ID；Standard 写 `N/A (Standard)`
 - **设计文档段落**：指向 dev-design 的哪个域/模块/BF（Round 2 读这里写代码）
 - **HITL / AFK**
 - **UI 设计源**（涉及 UI 时）
@@ -267,11 +270,23 @@ restate 的每条 Success Criteria 至少被一个 task 覆盖。逐条核对，
 
 汇总所有 task 的 `covers` 字段，对照 restate 路径清单——**每条路径/约束至少被一个 task 覆盖**。有路径没被任何 task 覆盖 → 补 task，或显式说明该路径在当前迭代不实现（标注原因）。产出路径→task 映射表。
 
-#### 8d. 任务可验证
+#### 8d. Design 覆盖（Full）
+
+以 approved Design 的 Implementation Item Registry 为左表反向遍历，生成 Design → Task Coverage Matrix：
+
+- `required`：至少一个 task 的 `designCovers` 包含该 ID，否则报告 `required orphan <ID>`，回 Step 4 补 task 或回 Design 改状态。
+- `verify-only`：必须有验证方法，交 Verify 取证。
+- `deferred`：必须有原因与用户确认。
+- `n/a`：必须有判定依据。
+- task 引用 Registry 外 ID：报告未知 ID 并停止确认。
+- Full 旧文档没有 Registry：明确回 Design 回填；不得静默当作覆盖通过。
+- Standard：矩阵写 `N/A (Standard)`。
+
+#### 8e. 任务可验证
 
 每个 task 声明了怎么验证完成（测试命令/预期输出/人工确认项）。"写完就算完"不算验证——验证命令不存在的 task 在 Build 阶段会卡住。
 
-#### 8e. 依赖无环
+#### 8f. 依赖无环
 
 task 间依赖不成环，底层 task 排前面。循环依赖说明切片方式有问题。
 
@@ -280,6 +295,7 @@ task 间依赖不成环，底层 task 排前面。循环依赖说明切片方式
 - [ ] 成立的质疑已修正到计划中
 - [ ] 8b 需求覆盖：每条 SC 被 ≥1 task 覆盖
 - [ ] 8c 路径覆盖：路径→task 映射表产出，无漏路径
+- [ ] 8d Design 覆盖：Design → Task Coverage Matrix 产出，无 required orphan / 未知 ID / 四态缺项
 - [ ] 8d 可验证：每 task 有验证命令
 - [ ] 8e 无环：依赖图无环
 
@@ -321,6 +337,7 @@ task 间依赖不成环，底层 task 排前面。循环依赖说明切片方式
 - [ ] 所有 task 过粒度三重约束（≤5 文件 + 一个逻辑动作 + 2-5 分钟节奏），零占位符
 - [ ] 每个 task 标了 HITL/AFK
 - [ ] 每个 task 标了 `covers`，所有 task 汇总覆盖 restate 每条路径（路径→task 映射表已产出）
+- [ ] 每个 task 标了 `designCovers`；Full 场景从 Registry 反向遍历且 required 零 orphan，Standard 显式 N/A
 - [ ] 测试目标已分配到 slice
 - [ ] Round 1 骨架自查通过 + 骨架已修正（Step 6）
 - [ ] Round 2 checklist 核查 + 跨 task 一致性自查 + Plan Validation 通过（Step 8）

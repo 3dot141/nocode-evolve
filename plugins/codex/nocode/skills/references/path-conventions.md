@@ -14,6 +14,7 @@
 | 约束 | `约束.{N}` | 约束.1 | PRD（全局递增） |
 | 验收标准 | `SC-{N}` | SC-1 | **Define 独占**，PRD 不分配 |
 | 测试目标 | `TO-{N}` | TO-1 | Design |
+| 实施设计项 | `{TYPE}-{N}` | LOG-1 / SEC-1 / MIG-1 | Design Registry |
 
 **铁律**：ID 一经分配不可复用、不可重排。删除的 ID 留空，不回收。改措辞不改 ID。
 
@@ -69,8 +70,10 @@
 | PRD | — | 路径 + 领域 + 约束（含 ID + 状态 + US 来源） | 合批确认 |
 | vis | PRD 使用路径 | 交互级路径（保留 ID）+ 页面状态覆盖 | 路径覆盖核对 |
 | Define | PRD 路径 + 领域 | SC(独占分配) + 路径↔SC 绑定 | 每条路径绑 SC |
-| Design | restate 路径 + SC | TO 表 + verify 策略（落盘设计文档） | 路径覆盖审核 |
-| Plan | TO + 路径 | task（必填 `covers`） | 每条路径被 task 覆盖 |
-| Build | task + covers | 代码 + 测试 | — |
+| Design | restate 路径 + SC | TO 表 + verify 策略 + Implementation Item Registry（落盘设计文档） | Registry ↔ 来源章节双向无 orphan |
+| Plan | TO + 路径 + approved Registry | task（必填 `covers` + `designCovers`） | 每条路径被 task 覆盖；每个 required Design ID 被 task 覆盖 |
+| Build | task + covers + designCovers | 代码 + 测试 + completed designCovers | required Design ID 全部由完成 task 报告 |
 | Review | PRD 路径 + TO + diff | 路径覆盖报告 | Spec 轴路径级检查 |
-| Verify | verify 策略 + PRD 路径 | 证据 + 反向审计报告 | 逐层验证 + PRD 回扫 |
+| Verify | verify 策略 + PRD 路径 + Design Registry | 证据 + 反向审计报告 + Design → Evidence Matrix | 逐层验证 + PRD 回扫 + required/verify-only 逐项证据 |
+
+设计项 ID、四态、三张表和分阶段 Gate 的单源见 `${PLUGIN_ROOT}/skills/references/design-traceability.md`。
