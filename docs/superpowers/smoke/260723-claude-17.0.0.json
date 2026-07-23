@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-07-23T15:19:03+08:00",
+  "client": {
+    "name": "Claude Code",
+    "version": "not probed"
+  },
+  "plugin": {
+    "name": "nocode",
+    "version": "17.0.0",
+    "marketplace": "nocode-market"
+  },
+  "artifact": {
+    "path": "plugins/claude/nocode",
+    "packageDriftCheck": "passed",
+    "platformIsolationCheck": "passed"
+  },
+  "installedArtifactStatus": "not_installed",
+  "overallStatus": "static_pass_interactive_pending",
+  "checks": {
+    "normalQuestionWithoutAgent": {
+      "status": "pending",
+      "blocker": "Requires installing nocode 17.0.0 and restarting Claude Code."
+    },
+    "parallelAgentTask": {
+      "status": "pending",
+      "staticEvidence": "Generated Claude skills contain native Agent/Task instructions and exclude Codex agent tool names.",
+      "blocker": "Requires an authenticated restarted Claude Code client."
+    },
+    "planUpdate": {
+      "status": "pending",
+      "staticEvidence": "Generated Claude workflows use native plan/task instructions without Capability routing.",
+      "blocker": "Requires an authenticated restarted Claude Code client."
+    },
+    "userDecision": {
+      "status": "pending",
+      "staticEvidence": "Generated Claude workflows use AskUserQuestion directly.",
+      "blocker": "Requires an authenticated restarted Claude Code client."
+    },
+    "hookInterception": {
+      "status": "partial",
+      "evidence": "The generated Claude hook entrypoints, SessionStart context injection, and PreToolUse behavior pass the repository integration suite."
+    },
+    "openDesign": {
+      "status": "partial",
+      "evidence": "The packaged Open Design launcher and generated MCP configuration pass launcher and package regression tests; interactive model invocation remains pending."
+    }
+  },
+  "secretsRecorded": false
+}

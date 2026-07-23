@@ -38,7 +38,7 @@
 | `/instinct-export` | 已停用：源码保留，但不发布到 Claude/Codex 生成产物 |
 | `/instinct-import` | 已停用：源码保留，但不发布到 Claude/Codex 生成产物 |
 | `/instinct-status` | 已停用：源码保留，但不发布到 Claude/Codex 生成产物 |
-| `/eval` | eval-driven development 工作流管理（定义/检查/生成报告/列出 eval），转发到 `[provider-neutral skill boundary]` |
+| `/eval` | eval-driven development 工作流管理（定义/检查/生成报告/列出 eval），转发到 `平台原生 Skill 调用` |
 
 ### 巡检型（scan → propose → confirm 自维护，5 个）
 

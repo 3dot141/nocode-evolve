@@ -3,7 +3,16 @@ description: rule / skill 双轨写入——新增/优化 plugin rule（三步�
 argument-hint: <描述> | (被 /distill 传结构化候选)
 ---
 
-> 本文写“结构化决策”时，必须把当前步骤的完整问题与 2–3 个互斥选项编译为 `Capability(workflow.decision.request, {"question":"<self-contained current-step question>","options":[{"label":"<option-label>","description":"<impact or tradeoff>"}],"allowFreeform":false})`；示例只展示单项形状，真实调用需带齐本步骤列出的选项，不得回退到平台专属提问工具。
+<!-- nocode:platform claude -->
+本文所说“调用 `<skill>` Skill”使用 `Skill(nocode:<skill>)`；“结构化决策”使用 `AskUserQuestion`。
+<!-- /nocode:platform -->
+
+<!-- nocode:platform codex -->
+本文所说“调用 `<skill>` Skill”使用 `$<skill>`；“结构化决策”使用 `request_user_input`。
+<!-- /nocode:platform -->
+
+
+> 本文写“结构化决策”时，必须使用当前平台原生决策工具，传入完整问题与 2–3 个互斥选项；示例只展示单项形状，真实调用需带齐本步骤列出的选项。
 
 # /plugin-distill：plugin rule / skill 写入
 
@@ -58,7 +67,7 @@ argument-hint: <描述> | (被 /distill 传结构化候选)
    > `description` **必填**且要自成一句——它同时是渲染进常驻 catalog 表格的唯一内容（不再有单独的
    > `trigger_short`/`trigger_desc` 两层），漏写或写得太粗会让 catalog 那一行失去筛选价值。
 2. **跑生成器**：`node scripts/compile.rule.js`，再跑 `node scripts/compile.rule.js --check` 验零漂移。
-3. **升版本**：新增 rule → `minor`（默认）；语义反转既有规则 → `major`（需会话里明确出现"反转既有规则"信号）；纯文案 → `patch`（少见）。判据现读 `${NOCODE_EVOLVE_REPO}/CLAUDE.md` 规则2 原文，不自行发明或简化。Read `plugin/metadata.json` → bump → Write 回，再运行 `node scripts/compile.platform.mjs`
+3. **升版本**：新增 rule → `minor`（默认）；语义反转既有规则 → `major`（需会话里明确出现"反转既有规则"信号）；纯文案 → `patch`（少见）。判据现读 `${NOCODE_EVOLVE_REPO}/CLAUDE.md` 规则2 原文，不自行发明或简化。Read `plugin/metadata.json` → bump → Write 回，再运行 `node scripts/package.platform.mjs`
 
 三步契约：必须按顺序；任一步失败后续不执行；三步内不回滚已成功步（文件保留比删了更易恢复）；commit/push 不进本逻辑。
 
@@ -73,7 +82,7 @@ compile: node scripts/compile.rule.js 重新生成 catalog
 ### skill 委托
 
 1. 从描述推导信号词（`create a skill` / `improve this skill` / `fix trigger accuracy`），让 `skill-writing` 的 Entry Routing 自判 Create/Edit/Description-only，不替它选模式
-2. `Capability(workflow.skill.invoke, {"skill":"skill-writing","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})`。skill-writing 走到 Phase 7（描述优化）收敛即可，Phase 8 Package（打包 `.skill` 分发）对本仓无意义（marketplace 直接读 git），明确不需要
+2. 调用 `skill-writing` Skill，传入 `arguments={"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}`。skill-writing 走到 Phase 7（描述优化）收敛即可，Phase 8 Package（打包 `.skill` 分发）对本仓无意义（marketplace 直接读 git），明确不需要
 3. **Gate**：只有 skill 文件确有改动（对比委托前后的 `git status`/`git diff` 有实际变更）才继续；委托中止 / 用户放弃 / 无改动 → 报告"skill 未改动"，**不升版本**
 4. 有改动 → 升 `plugin.json` 版本（`minor`，判据同上现读 CLAUDE.md）——**skill-writing 本身不碰 plugin.json，这一步必须自己补**
 5. 报告：`skill 已更新: <skillPath>，版本: <old> → <new> (minor)，请 review + commit，push 需询问`

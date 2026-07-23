@@ -68,9 +68,17 @@ test('Claude-discovered frontmatter quotes values that contain YAML syntax', () 
   }
 });
 
-test('domain registry replaces the legacy global capability contract', () => {
-  assert.equal(existsSync(path.join(ROOT, 'core/capabilities/contract.json')), false);
-  const domains = ['design', 'lifecycle', 'personal-knowledge', 'runtime-state', 'workflow', 'workspace'];
-  for (const domain of domains) assert.ok(readJson(`core/domains/${domain}/domain.json`), domain);
-  assert.equal(existsSync(path.join(ROOT, 'core/contracts/provider-attempt.schema.json')), false);
+test('obsolete capability architecture cannot reappear', () => {
+  for (const obsolete of [
+    'core/domains',
+    'scripts/lib/domain-registry.mjs',
+    'scripts/lib/domain-renderer.mjs',
+    'scripts/lib/schema-validator.mjs',
+    'scripts/lib/workflow-provider.mjs',
+    'scripts/lib/workflow-control.mjs',
+    'scripts/lib/workspace-provider.mjs',
+    'scripts/workflow-state.mjs',
+    'skills/using-nocode',
+    'agents',
+  ]) assert.equal(existsSync(path.join(ROOT, obsolete)), false, obsolete);
 });

@@ -3,7 +3,10 @@ name: dev-define
 description: "Use when starting any non-trivial task, when requirements are unclear (\"build me X\" without \"fo…"
 ---
 
-> 本文写“结构化决策”时，必须把当前步骤的完整问题与 2–3 个互斥选项编译为 `Capability(workflow.decision.request, {"question":"<self-contained current-step question>","options":[{"label":"<option-label>","description":"<impact or tradeoff>"}],"allowFreeform":false})`；示例只展示单项形状，真实调用需带齐本步骤列出的选项，不得回退到平台专属提问工具。
+本文写“结构化决策”时，必须带齐当前步骤的完整问题与 2–3 个互斥选项：
+
+
+在 `request_user_input` 可用时提交完整问题和全部选项；若当前模式未提供该工具，则在回合末尾直接提出同一问题并等待回答。
 
 # define — 从模糊到明确
 
@@ -59,16 +62,18 @@ Task 7: 用户确认 — 三选 + define-review
   Gate: 用户显式确认 + 无 Critical findings +（Full）罗盘已落盘
 
 Task 8: 硬交接 — 调用下一步 skill
-  Sub-steps: 按 Exit Gate 硬交接报告 Define 完成（场景分类 + restate 摘要）→ 按场景建议下一步：Full/Standard/Fix → Env（调 Capability(workflow.skill.invoke, {"skill":"using-git-worktrees","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})）；Mini → Build-lite → 等用户拍板
+  Sub-steps: 按 Exit Gate 硬交接报告 Define 完成（场景分类 + restate 摘要）→ 按场景建议下一步：Full/Standard/Fix → Env（按下方平台指令调用 worktree skill，传入当前 request、stage、restate、artifacts、constraints 和用户 decision）；Mini → Build-lite → 等用户拍板
   Gate: 用户拍板进入下一阶段（这一步不勾，Define 不算收尾）
   metadata: {handoff: true}（供防跳步 Hook B 识别交接 task）
 ```
 
-调用时把上面**每一条** Task 编译成一个稳定 item：`id` 固定、`subject` 为标题、`description` 完整包含 Sub-steps + Gate、初始 `status=pending`，仅最后一项设置 `handoff`。不得只改名后继续依赖平台 task 工具，也不得传空 items：
 
-`Capability(workflow.plan.create, {"items":[{"id":"<stable-task-id>","subject":"<task-title>","description":"<complete Sub-steps and Gate>","status":"pending","handoff":"<final-item-only; otherwise omit>"}]})`
+Env handoff 使用 `$using-git-worktrees`。
 
-示例只展示单项形状；真实调用必须包含本段清单的全部 items。保存返回的 `planRef`。每次状态变化都用 `Capability(workflow.plan.update, {"planRef":"<planRef>","items":[{"id":"<same-stable-id>","subject":"<same-title>","description":"<same-complete-description>","status":"<pending|in_progress|completed>","handoff":"<preserve-final-item-handoff; otherwise omit>"}]})` 提交**完整快照**（示例仍只展示单项形状）；每次 update 必须原样保留最终 item 的 `handoff`，其它 item 继续省略该字段，不得发送单项 patch。
+调用时把上面**每一条** Task 建成稳定计划项，不得传空计划：
+
+
+使用 `update_plan` 提交全部计划项；每次状态变化都提交完整列表，保持稳定顺序，且同时最多一个 `in_progress`。
 
 每完成一个标 done。
 
@@ -120,9 +125,7 @@ Standard/Full → 进 Step 2。
 - `depth`: `shallow`
 - `systemPrompt`（追加）: `只搜问题定义层面的参考（行业标准/规范/问题框架），不搜解法——解法是 Design 的事。`
 
-Standard 场景网络探索可简化为 `Capability(workflow.execute, {"tasks":[{"id":"standard-research","objective":"围绕已确认问题做 1–2 个定向查询；返回来源、关键事实、不确定项及其与当前需求的关系；只读","profile":"research.shallow","dependsOn":[],"writeScope":"none","timeoutMs":120000,"continueOnError":false}],"maxParallel":1,"fallbackPolicy":"inline"})`，不走完整 research-workflow。
-
-保存返回的 `executionId`；若 `status=running`，反复执行 `Capability(workflow.wait, {"executionId":"<execution-id>","timeoutMs":120000})` 到终态，再执行 `Capability(workflow.collect, {"executionId":"<execution-id>"})` 从 `tasks[0].result` 读取来源与事实。不得把 execute 的调度回执当研究结论。
+Standard 场景网络探索由当前会话使用可用的搜索工具做 1–2 个定向查询，返回来源、关键事实、不确定项及其与当前需求的关系；不走完整 research-workflow，也不为了浅搜强制派 agent。
 
 **综合 → 探索胶囊**：两路结果回来后，产出「探索胶囊」——不把 findings 压缩成一段散文总结，下游要按证据复用它（Full 场景给 Design Step 1a，Standard 场景给 Plan Step 1）：
 
@@ -230,7 +233,10 @@ Standard 场景网络探索可简化为 `Capability(workflow.execute, {"tasks":[
 
 用户确认前做 define-review：Read `references/define-review.md`（restate 7 维度）拿维度，**主会话就地逐维自查**——不调 reviewing 引擎、不派 subagent/Codex。发现的问题按 Critical / Warning / Suggestion 粗分，Critical 级必须修复再让用户确认。
 
-**升审只在两种情况**：① 用户显式要求（「审一下 / 深审 / 独立审」）→ 调 `Capability(workflow.skill.invoke, {"skill":"reviewing","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"dev-define","restate":"<complete-confirmed-restate>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<user-approved-independent-review>"},"payload":{"object":{"type":"restate","ref":"<complete-confirmed-restate>"},"dimensions":["<all-7-define-review-axes>"],"method":"checklist","contextCapsule":{"facts":["<verified-fact>"],"decisions":["<confirmed-decision>"],"rejectedAlternatives":["<alternative-and-reason>"],"constraints":["<constraint>"],"nonGoals":["<non-goal>"]},"depth":"independent"}}})` 传 7 维度；② restate 命中敏感面（权限 / 计费 / 数据迁移 / 对外接口 / 不可逆）→ 向用户**一句话建议**升审，用户点头才调，不自动派发。
+**升审只在两种情况**：① 用户显式要求（「审一下 / 深审 / 独立审」）→ 按下方平台指令调用 reviewing，传入完整 restate、7 个 define-review 维度、checklist 方法、context capsule 和 independent 深度；② restate 命中敏感面（权限 / 计费 / 数据迁移 / 对外接口 / 不可逆）→ 向用户**一句话建议**升审，用户点头才调，不自动派发。
+
+
+独立审查 handoff 使用 `$reviewing`。
 
 ## Exit Gate
 

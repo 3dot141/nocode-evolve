@@ -17,12 +17,12 @@
 
 | | Open Design 线 | 本地 HTML 线 |
 |---|---|---|
-| 怎么出 | pd-vd 以 workspace receipt 调用 `design.artifact.generate` | 本地写多个 `.html` 文件 |
+| 怎么出 | pd-vd 创建项目后调用 `start_run` | 本地写多个 `.html` 文件 |
 | 喂什么 | brief = IA + 交互清单 + 场景脚本 + 视觉方向；绑 Step 3d 的 DS 项目（design_system_id）+ 挂 template | IA + 交互清单 + 场景脚本 + 视觉方向 + 冻结 tokens/components/样张 |
 | 拆分 | 每个独立页面一个文件（含宿主内嵌入组件） | 每个独立页面一个文件（含宿主内嵌入组件） |
 | 组合 | 额外一个组合文件（融合全部主链路页面代码，JS tab 切换/弹窗） | 多文件之间用 URL 跳转，每个文件内做弹窗 |
 | 组合的代价 | 内容在独立页面和组合文件中重复，改一处要同步改另一处 | 无重复，每个文件只存在一份 |
-| 产物在哪 | receipt 指向的 Open Design workspace（与 DS workspace 分离） | `{pd_vd_output}` 目录落本地 repo |
+| 产物在哪 | Open Design project（与 DS project 分离） | `{pd_vd_output}` 目录落本地 repo |
 | 适合 | 团队 canvas 协作、复用组织设计系统 | 版本控制、离线、无重复维护 |
 
 **行为语义单源在 `.ix.md`**：交互怎么触发、维持、退出，按行为规格实现，不就地发明；需要 IX 未定义的行为 → 先在 `.ix.md`「下游澄清回流」节登记；时序参数（浮层退出缓冲时长等）原型定值后同步登记。
@@ -33,7 +33,7 @@
 
 ### 生成 brief 写法
 
-pd-vd 创建 prototype workspace 后，把结构化 brief 交给 `design.artifact.generate`。Open Design 基于已冻结的设计系统生成多屏设计/原型；provider 细节不进入 brief。
+pd-vd 调 `create_project` 创建 prototype 项目后，把结构化 brief 交给 `start_run`。Open Design 基于已冻结的设计系统生成多屏设计/原型。
 
 **brief 必含五块：**
 
@@ -147,10 +147,10 @@ subagent 只产本地文件、只引用冻结 tokens 变量（禁硬编码）。
 
 **提交流程：**
 ```
-1. 创建或读取目标 workspace receipt
-2. 已有 artifact 时先按完整 receipt 回读版本
-3. 所有文件（主链路 + 孤立）作为一次 artifact 变更提交到同一 workspace
-4. prototype.html 与独立页面一起提交；更新时沿用返回的新 receipt
+1. 创建目标 project，或复用调用方明确提供的真实 project id
+2. 已有 artifact 时先用 `get_artifact` 回读版本
+3. 所有文件（主链路 + 孤立）作为一次 `start_run` 的目标提交到同一 project
+4. prototype.html 与独立页面一起生成；更新时沿用同一 project id
 ```
 
 **最终产物结构：**
@@ -178,7 +178,7 @@ project/
 
 ### 拉回本地（Step 5 验证必做）
 
-Step 5 Playwright 验证需要本地文件。pd-vd 用完整 artifact receipt 执行 `design.artifact.read`，在 receipt 的 `artifact.localPath` 上跑 `prototype-verify.mjs`，流程与本地 HTML 线一致。若无法物化但 receipt 提供 preview URL，则用 `design.preview.open` 做人工预览并把自动验证缺口显式记入报告；不得跨 provider 重建 receipt。
+Step 5 Playwright 验证需要本地文件。pd-vd 用 `get_artifact` 取得项目完整文件并物化到验证目录，再运行 `prototype-verify.mjs`。若只有 `get_run` 返回的 preview URL，则做人工预览并把自动验证缺口显式记入报告，不得把预览冒充 Playwright 证据。
 
 ---
 
@@ -251,4 +251,4 @@ Step 4 产出后、进 Step 5 前，列一份原型清单：每个 IA 页面/视
 - token 零硬编码、零改名（与 Step 3 冻结表逐一比对）
 - 行为语义与 `.ix.md` 行为规格一致；新增行为已回流登记
 - 所有可操作元素有 `data-testid`（Step 5 Playwright 验证依赖）
-- Open Design 线：prototype receipt 已引用 Step 3d 的 DS workspace + 完整 receipt 已保存 + artifact 可物化到本地 / HTML 线：文件已保存到 `{pd_vd_output}`
+- Open Design 线：prototype project 已绑定 Step 3d 的 DS project + project id/run id 已保存 + artifact 可物化到本地 / HTML 线：文件已保存到 `{pd_vd_output}`

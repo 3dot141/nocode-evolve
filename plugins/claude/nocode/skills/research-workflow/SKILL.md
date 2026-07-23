@@ -12,7 +12,7 @@ description: Generic research engine (structured search + verification) for othe
 两个原因：
 
 1. **"搜完就信"是最常见的研究错误。** shallow 模式至少保证多角度覆盖（不只搜一个方向）；deep 模式加对抗验证（搜到的东西经得住反驳吗？），把博客 / 营销 / 过时信息杀掉，只留站得住的声明。
-2. **工具链和降级逻辑不该在每个调用方重复。** 抓网页 WebFetch 失败要降级 ScraplingServer、代码搜 semble-search 失败要降级 grep——这些写一次，按 `type` 复用，调用方不用每次都抄一遍。
+2. **工具选择和降级逻辑不该在每个调用方重复。** 抓网页失败时换备用抓取方式、语义代码搜索不可用时降级到 `rg` / 文件搜索——这些写一次，按 `type` 复用，调用方不用每次都抄一遍。
 
 ## 非本 skill 请求
 
@@ -20,31 +20,33 @@ description: Generic research engine (structured search + verification) for othe
 
 ## 调用方式
 
-调用方把问题参数传给本 skill；本 skill 将每个研究阶段动态编译为 Workflow task graph，不依赖本地固定编排脚本。**一次 execution 只完成当前轮次**：
+调用方把问题参数传给本 skill；本 skill 由主会话按研究阶段派发平台原生 agent。**一次派发只完成当前轮次**。例如第一轮两个搜索角度分别使用以下自足 objective：
 
-```js
-Capability(workflow.execute, {"tasks":[{"id":"search-angle-1-round-1","objective":"围绕 <question> 的 <angle-1> 执行第 1 轮检索；按 <type> 工具链返回 SearchResult JSON：angle/query/sources[{ref,title,excerpt,quality}]/summary/learnedTerms/gaps","profile":"research.<type>","dependsOn":[],"writeScope":"none","timeoutMs":300000,"continueOnError":false},{"id":"search-angle-2-round-1","objective":"围绕 <question> 的 <angle-2> 执行第 1 轮检索；返回同一 SearchResult JSON；只读","profile":"research.<type>","dependsOn":[],"writeScope":"none","timeoutMs":300000,"continueOnError":false}],"maxParallel":2,"fallbackPolicy":"inline"})
-```
+- `search-angle-1-round-1`：围绕 `<question>` 的 `<angle-1>` 执行第 1 轮检索；按 `<type>` 工具链返回 SearchResult JSON：`angle/query/sources[{ref,title,excerpt,quality}]/summary/learnedTerms/gaps`；只读。
+- `search-angle-2-round-1`：围绕 `<question>` 的 `<angle-2>` 执行第 1 轮检索；返回同一 SearchResult JSON；只读。
 
-保存 `executionId`。当 `status=running` 时反复执行 `Capability(workflow.wait, {"executionId":"<execution-id>","timeoutMs":300000})` 直到终态；再执行 `Capability(workflow.collect, {"executionId":"<execution-id>"})`，由主会话直接读取并验证 `tasks[].result` 为本轮约定 JSON（`resultRef` 只作追踪元数据）。不得让同一 graph 的下游 task 猜测前序 resultRef：scheduler 只保证依赖顺序，不把前序结果内容注入后续 objective。
+使用原生 `Agent` 为每个独立角度派发一个 agent；先完成本轮全部派发并保存原生句柄，再等待每个 agent 的终态结果。
+
+
+主会话直接读取并校验每个原生 agent 的终态结果，再把必要内容显式嵌入下一轮任务的 objective。不得让下一阶段猜测前一阶段输出。平台无法提供独立 agent 时，由主会话按相同阶段顺序执行，并明确报告没有获得隔离性或并行性。
 
 ### 可执行编译协议
 
-固定数据流为 **Scope → Search → Evaluate → Refine → Extract → Verify → Synthesize**，每个箭头都是“上一轮终态后 collect，主会话读取并把必要内容显式嵌入下一轮 objective”，不是 graph 内隐式传值：
+固定数据流为 **Scope → Search → Evaluate → Refine → Extract → Verify → Synthesize**。每个箭头都表示：上一轮全部 agent 终态后，主会话读取结果并把必要内容显式嵌入下一轮 objective；不存在隐式传值：
 
-1. **Scope**：未传 `angles` 时单独 execute 一个 `research.scope` task，collect 后校验得到 2–3 个 `{label,query,rationale}`；传了 angles 时直接校验调用方输入。空 angles 立即返回结构化空结果，不创建空 graph。
-2. **Search**：按 angle 并行 execute，objective 必须含完整 `question/type/angle/query/systemPrompt`，返回上例 `SearchResult`；wait 到终态并 collect。
-3. **Evaluate**：`targeted` 或 `iterate=1` 跳过；否则为每个 angle 创建独立只读 evaluator task，objective 显式嵌入该 angle 的 `<collected-search-results>`，返回 `{score,coverage,gaps,nextQuery,stop}`。不得让搜索 task 自评。
-4. **Refine**：若 evaluator 的 `stop=false` 且未达 iterate 上限，用 `nextQuery + learnedTerms + gaps` 创建下一轮 Search；然后重新 Evaluate。每轮都使用新的 executionId，最多运行 `iterate` 轮。
-5. **Extract**：仅 deep。按来源创建 extract task；objective 显式嵌入去重后的来源条目与 question，输出可证伪 claims `{claim,evidence,source}`。主会话按规范化 `claim+source` 去重，并执行来源/claim budget，超限项按 quality、相关度排序截断且记录 stats。
-6. **Verify**：仅 deep。每条 claim 创建 3 个彼此无依赖的 skeptic task；每个 objective 都显式带 claim、evidence、source，默认 `refuted=true`，输出 `{refuted,reason,evidence}`。三票中至少 2 票 refute 就进入 `refuted`，否则保留并记录票型。
-7. **Synthesize**：最后单独 execute 一个 task，objective 显式嵌入 `<collected-search-results>`；deep 还要嵌入保留 claims、三票结果与 refuted 清单。要求严格返回「返回值」schema 的 JSON。wait/collect 后由主会话校验字段并补齐 stats；没有可用来源时返回 `findings=[]`、具体 `caveats` 与 `openQuestions`，不得编造结论。
+1. **Scope**：未传 `angles` 时单独派一个只读 scope agent，终态后校验得到 2–3 个 `{label,query,rationale}`；传了 angles 时直接校验调用方输入。空 angles 立即返回结构化空结果，不派 agent。
+2. **Search**：按 angle 并行派发，objective 必须含完整 `question/type/angle/query/systemPrompt`，返回上例 `SearchResult`；等待本轮全部终态。
+3. **Evaluate**：`targeted` 或 `iterate=1` 跳过；否则为每个 angle 派独立只读 evaluator，objective 显式嵌入该 angle 的 `<terminal-search-results>`，返回 `{score,coverage,gaps,nextQuery,stop}`。不得让搜索 agent 自评。
+4. **Refine**：若 evaluator 的 `stop=false` 且未达 iterate 上限，用 `nextQuery + learnedTerms + gaps` 派发下一轮 Search，然后重新 Evaluate。每轮都创建新的原生 agent，最多运行 `iterate` 轮。
+5. **Extract**：仅 deep。按来源派 extract agent；objective 显式嵌入去重后的来源条目与 question，输出可证伪 claims `{claim,evidence,source}`。主会话按规范化 `claim+source` 去重，并执行来源/claim budget，超限项按 quality、相关度排序截断且记录 stats。
+6. **Verify**：仅 deep。每条 claim 派 3 个互不共享上下文的 skeptic agent；每个 objective 都显式带 claim、evidence、source，默认 `refuted=true`，输出 `{refuted,reason,evidence}`。三票中至少 2 票 refute 就进入 `refuted`，否则保留并记录票型。
+7. **Synthesize**：最后单独派一个 synthesize agent，objective 显式嵌入 `<terminal-search-results>`；deep 还要嵌入保留 claims、三票结果与 refuted 清单。要求严格返回「返回值」schema 的 JSON。主会话校验终态结果并补齐 stats；没有可用来源时返回 `findings=[]`、具体 `caveats` 与 `openQuestions`，不得编造结论。
 
-各档的确定性裁剪：`targeted = [可选 Scope] → Search → Synthesize`；`shallow = Scope → Search ⇄ Evaluate/Refine → Synthesize`；`deep = shallow → Extract → Verify(3 票) → Synthesize`。实际 task 数按角度、轮次与 claim 数动态生成，但任何一次 execute 都不能传空 `tasks`。
+各档的确定性裁剪：`targeted = [可选 Scope] → Search → Synthesize`；`shallow = Scope → Search ⇄ Evaluate/Refine → Synthesize`；`deep = shallow → Extract → Verify(3 票) → Synthesize`。实际 agent 数按角度、轮次与 claim 数动态生成，但没有有效 objective 时不得派发空任务。
 
-大多数情况只需要 `question` + `type` + `depth`。`type` 决定工具链、降级链和迭代轮数；调用方不需要知道平台 provider。
+大多数情况只需要 `question` + `type` + `depth`。`type` 决定工具链、降级链和迭代轮数；调用方不需要知道平台实现细节。
 
-**约束：session owner 负责推进 graph。** 子任务只处理自己的 objective，不递归创建同一研究 workflow；动态的下一轮查询和 deep 验证 graph 由本 skill 所在主会话根据上一轮 result refs 创建。
+**约束：主会话负责推进所有轮次。** 子 agent 只处理自己的 objective，不递归创建同一研究流程；动态的下一轮查询和 deep 验证由主会话根据上一轮终态结果创建。
 
 ## 参数
 
@@ -76,8 +78,8 @@ Capability(workflow.execute, {"tasks":[{"id":"search-angle-1-round-1","objective
 | type | 搜索工具 | 抓取 / 降级 | 默认 iterate | 适用 |
 |---|---|---|---|---|
 | `web` | WebSearch / Exa | WebFetch → ScraplingServer（反爬严的站用 stealthy_fetch）；开源库用 deepwiki | 1 | 网络调研、竞品、用户信号、市场 |
-| `code` | semble-search → grep → Explore | Read | 3 | 代码库现状、已有实现、可复用 pattern |
-| `mixed` | semble-search + WebSearch / Exa | WebFetch → ScraplingServer；deepwiki | 2 | 技术选型（既看代码又看外部方案） |
+| `code` | 当前平台代码搜索 → `rg` / 文件搜索 | Read | 3 | 代码库现状、已有实现、可复用 pattern |
+| `mixed` | 当前平台代码搜索 + WebSearch / Exa | WebFetch → ScraplingServer；deepwiki | 2 | 技术选型（既看代码又看外部方案） |
 | `custom` | 调用方在 systemPrompt 里自定义 | 调用方定义 | 1 | 不属于上述任何一类的特殊场景 |
 
 **为什么 code 默认 iterate=3，web 默认 1：**
@@ -91,16 +93,19 @@ Capability(workflow.execute, {"tasks":[{"id":"search-angle-1-round-1","objective
 
 | 档位 | 管线 | agent 数 | 适用 |
 |---|---|---|---|
-| `inline` | 不走 workflow，主 agent 直接搜 | 0~1 | 已知看哪，一两个查询能答 |
+| `inline` | 不派研究 agent，主 agent 直接搜 | 0~1 | 已知看哪，一两个查询能答 |
 | `targeted` | Scope（预设 angles 则跳过）→ Search（每角度 1 轮）→ Synthesize | 3~5 | 知道搜什么，只要并行铺开覆盖 |
 | `shallow` | Scope → Search（每角度按 iterate 轮收敛）→ Synthesize | 8~17 | 不知道搜什么，要迭代逼近术语 |
 | `deep` | shallow + Extract → Verify（3 票对抗） | 20+ | 结论要经得住反驳、进正式报告 |
 
-**升降档有疑点不自作主张**：调用方拿不准该用哪档（要不要从 targeted 升 shallow / deep）时，调 `Capability(workflow.decision.request, {"question":"这次调研需要哪种深度？","options":[{"label":"targeted","description":"已知方向，单轮并行覆盖"},{"label":"shallow","description":"多角度迭代搜索，不做对抗验证"},{"label":"deep","description":"提取声明并做独立反证验证"}],"allowFreeform":false})` 让用户拍板，不默认往重档跑。
+**升降档有疑点不自作主张**：调用方拿不准该用哪档（要不要从 targeted 升 shallow / deep）时，让用户在 `targeted`（已知方向，单轮并行覆盖）、`shallow`（多角度迭代搜索，不做对抗验证）、`deep`（提取声明并做独立反证验证）之间拍板，不默认往重档跑。
+
+使用 `AskUserQuestion` 请求这个选择。
+
 
 ### inline —— 不调本 workflow（0~1 个 agent）
 
-这一档是给调用方的判断标准，不是 workflow 参数：主会话已经知道要看哪（讨论里定过方向、有明确路径或术语），直接做一次精确代码搜索或一次网络搜索即可——**别创建 Workflow execution**，省掉 scope / synthesize 的固定开销。误传 `depth: 'inline'` 会直接报错提醒。
+这一档是给调用方的判断标准，不是研究 agent 参数：主会话已经知道要看哪（讨论里定过方向、有明确路径或术语），直接做一次精确代码搜索或一次网络搜索即可——**别派研究 agent**，省掉 scope / synthesize 的固定开销。误传 `depth: 'inline'` 会直接报错提醒。
 
 ### targeted —— 定向覆盖（最轻 workflow 档）
 
@@ -163,7 +168,7 @@ Scope → Search+Extract（pipeline，无 barrier）→ Verify（3 票对抗）�
 
 ## 迭代检索原理
 
-> 思路源自 everything-claude-code v1.2.0 iterative-retrieval skill (MIT)，在本 workflow 里落成显式的多轮 execution/collect 协议（不靠 prompt 猜测前序结果）。
+> 思路源自 everything-claude-code v1.2.0 iterative-retrieval skill (MIT)，在本流程里落成显式的多轮原生 agent 协议（不靠 prompt 猜测前序结果）。
 
 每个搜索角度走一个最多 `iterate` 轮的循环：
 
@@ -201,7 +206,7 @@ Scope → Search+Extract（pipeline，无 barrier）→ Verify（3 票对抗）�
     { label: '已有同类实现', query: '<从 restate 提炼的具体查询>' },
     { label: '受影响调用链', query: '<关键 caller / contract 查询>' },
   ],
-  // 每角度 1 轮，跳过 scope，工具链自动绑 semble-search → grep → Explore
+  // 每角度 1 轮，跳过 scope；优先当前平台的代码搜索，降级到 rg / 文件搜索
 }
 ```
 

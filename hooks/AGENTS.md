@@ -27,7 +27,7 @@
    node --test 'hooks/*.test.mjs'        # 全量单测应全绿
    ```
 
-5. **本目录文件全部参与插件运行或生成 → 任何改动都算插件更新**：编辑 `plugin/metadata.json` 的 `version`，运行 `node scripts/compile.platform.mjs`，按 SemVer 升级并入同一个 commit（新增 hook/skill 名单项 = minor；bug fix/文案 = patch；路径改名/行为语义反转 = major）。
+5. **本目录文件全部参与插件运行或生成 → 任何改动都算插件更新**：编辑 `plugin/metadata.json` 的 `version`，运行 `node scripts/package.platform.mjs`，按 SemVer 升级并入同一个 commit（新增 hook/skill 名单项 = minor；bug fix/文案 = patch；路径改名/行为语义反转 = major）。
 
 6. **测试文件位置与被测模块可能不在同一目录**：`hooks/` 下多个 `*.test.mjs`（`dream-baseline` / `plugin-dream-baseline` / `personal-migrate` / `personal-snapshot` / `project-tree-detect` / `repo-lock` / `git-exec`）测试的其实是 `../scripts/` 里的同名模块——这是为了让 `node --test 'hooks/*.test.mjs'` 一条命令覆盖 hook 链间接依赖的全部底层模块。新增同类测试时遵循同一约定：测试文件放 `hooks/`，`import` 从 `../scripts/` 引入源模块。
 

@@ -36,26 +36,32 @@ Task 2: 编排者验证
   Gate: 全部 task 通过编排者独立验证（不信执行方自报）
 
 Task 3: 硬交接 — 调用下一步 skill
-  Sub-steps: 按 Exit Gate 硬交接报告 Build 完成（完成 task 数 + 测试 + build 状态）→ 建议进 Verify → 等用户拍板后调 Capability(workflow.skill.invoke, {"skill":"dev-verify","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})
+  Sub-steps: 按 Exit Gate 硬交接报告 Build 完成（完成 task 数 + 测试 + build 状态）→ 建议进 Verify → 等用户拍板后按下方平台指令调用 Verify，传入当前 request、stage、restate、artifacts、constraints、计划文件路径和用户 decision
   Gate: 用户拍板进入 Verify（这一步不勾，Build 不算收尾）
   metadata: {handoff: true}（供防跳步 Hook B 识别交接 task）
 ```
 
-调用时把上面**每一条** Task 编译成一个稳定 item：`id` 固定、`subject` 为标题、`description` 完整包含 Sub-steps + Gate、初始 `status=pending`，仅最后一项设置 `handoff`。不得只改名后继续依赖平台 task 工具，也不得传空 items：
+Verify handoff 使用 `Skill(nocode:dev-verify)`。
 
-`Capability(workflow.plan.create, {"items":[{"id":"<stable-task-id>","subject":"<task-title>","description":"<complete Sub-steps and Gate>","status":"pending","handoff":"<final-item-only; otherwise omit>"}]})`
 
-示例只展示单项形状；真实调用必须包含本段清单的全部 items。保存返回的 `planRef`。每次状态变化都用 `Capability(workflow.plan.update, {"planRef":"<planRef>","items":[{"id":"<same-stable-id>","subject":"<same-title>","description":"<same-complete-description>","status":"<pending|in_progress|completed>","handoff":"<preserve-final-item-handoff; otherwise omit>"}]})` 提交**完整快照**（示例仍只展示单项形状）；每次 update 必须原样保留最终 item 的 `handoff`，其它 item 继续省略该字段，不得发送单项 patch。
+调用时把上面**每一条** Task 建成稳定计划项，不得传空计划：
+
+使用 `TaskCreate` 逐项创建三个编排里程碑并保存 task id；状态变化时使用 `TaskUpdate` 更新对应项。
+
 
 每完成一个标 done。
 
 ### Step 1: 读 Execution 字段，分发执行
 
 1. 读 Plan 文档 header 的 `Execution` 字段
-2. `Execution: subagent-lite` / `subagent-full`（旧值 `subagent` 按 `subagent-full` 处理）→ Read `references/dev-build-subagent.md`，先拓扑排序，再逐个 task 执行。每次 graph 只含当前一个 plan task：`Capability(workflow.execute, {"tasks":[{"id":"<plan-task-id>","objective":"<完整 task 文本 + 实现纪律 + 验证命令>","profile":"implementation.general","dependsOn":[],"writeScope":"<该 task 允许修改的最小路径>","timeoutMs":600000,"continueOnError":false}],"maxParallel":1,"fallbackPolicy":"inline"})`。顺序由编排者和 review Gate 控制，不得把所有 plan task 放进同一 graph 让 scheduler 自动续派；所有 objective/写范围必须自足，不能传空数组。审查密度按档位分叉（lite：仅风险 task 派审查；full：per-task spec + checkpoint 批量 quality）
-   - 保存 `executionId`；当 `status=running` 时反复执行 `Capability(workflow.wait, {"executionId":"<execution-id>","timeoutMs":600000})` 直到终态，再执行 `Capability(workflow.collect, {"executionId":"<execution-id>"})` 从 `tasks[0].result` 取得当前 task 的终态结果；不得用初始 execute 回执代替实现结果
-   - 需要 spec review 时，另建单 task graph：`Capability(workflow.execute, {"tasks":[{"id":"<plan-task-id>-spec-review","objective":"独立核对当前 task 是否满足计划要求；计划要求：<complete-task-requirements>；实现结果：<collected-implementation-result>；diff 范围：<changed-files>；返回 {approved,issues[]}","profile":"review.spec","dependsOn":[],"writeScope":"none","timeoutMs":600000,"continueOnError":false}],"maxParallel":1,"fallbackPolicy":"inline"})`，同样 wait→collect 并从 `tasks[0].result` 读取 verdict
-   - `approved=false` 时，把 `issues[]` 明确嵌入新的单 task 修复 objective，execute→wait→collect 后重新执行同一 review；lite 风险 task 的 quality review 与 full checkpoint 批审也使用独立 graph。前一个 task 的应派 Spec/Quality Gate 全通过（或 lite 明确记录跳过）后，才创建下一 task 的 execution
+2. `Execution: subagent-lite` / `subagent-full`（旧值 `subagent` 按 `subagent-full` 处理）→ Read `references/dev-build-subagent.md`，先拓扑排序，再逐个 task 执行。**每次只派发当前一个 plan task**；不得一次把后续 task 全部派出。实现 objective 必须自足，至少包含完整 task 文本、实现纪律、允许修改的最小路径、验证命令和期望返回的证据。审查密度按档位分叉（lite：仅风险 task 派审查；full：per-task spec + checkpoint 批量 quality）。
+
+   - 使用原生 `Agent` 派发当前 implementer，保存原生 agent 句柄，并用平台原生方式等待它进入终态。若需要追加上下文或修复要求，恢复同一 agent；若任务失控则取消它。平台无法提供独立 agent 时，由主会话执行并明确记录“未获得隔离执行”。
+
+
+   - 只以 agent 的终态结果和实际 diff 为实现证据，不把“已派发”当作完成。
+   - 需要 spec review 时，另派一个只读 reviewer，任务 id 使用 `<plan-task-id>-spec-review`；objective 必须显式包含完整计划要求、implementer 的终态结果、实际改动文件和返回格式 `{approved,issues[]}`。reviewer 与 implementer 必须是不同的隔离上下文；只有平台明确报告不同模型时才能称为跨模型审查。
+   - `approved=false` 时，把 `issues[]` 明确放入 implementer 的修复 objective，等待修复终态后重新派发独立 reviewer。lite 风险 task 的 quality review 与 full checkpoint 批审也遵循同一原生 agent 生命周期。前一个 task 的应派 Spec/Quality Gate 全通过（或 lite 明确记录跳过）后，才派发下一 task。
 3. `Execution: executing` → Read `references/dev-build-executing.md`，主 agent 自己顺序执行 plan 已写的代码，不派 subagent
 
 无论执行协议是哪一种，每个 task 终态结果都必须显式包含：

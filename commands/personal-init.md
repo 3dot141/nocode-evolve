@@ -3,7 +3,16 @@ description: 在当前项目初始化 .agents-personal/ 结构（变量覆盖 + 
 argument-hint: (无参数)
 ---
 
-> 本文写“结构化决策”时，必须把当前步骤的完整问题与 2–3 个互斥选项编译为 `Capability(workflow.decision.request, {"question":"<self-contained current-step question>","options":[{"label":"<option-label>","description":"<impact or tradeoff>"}],"allowFreeform":false})`；示例只展示单项形状，真实调用需带齐本步骤列出的选项，不得回退到平台专属提问工具。
+<!-- nocode:platform claude -->
+本文所说“调用 `<skill>` Skill”使用 `Skill(nocode:<skill>)`；“结构化决策”使用 `AskUserQuestion`。
+<!-- /nocode:platform -->
+
+<!-- nocode:platform codex -->
+本文所说“调用 `<skill>` Skill”使用 `$<skill>`；“结构化决策”使用 `request_user_input`。
+<!-- /nocode:platform -->
+
+
+> 本文写“结构化决策”时，必须使用当前平台原生决策工具，传入完整问题与 2–3 个互斥选项；示例只展示单项形状，真实调用需带齐本步骤列出的选项。
 
 # /personal-init: 初始化项目本地 agent 资源
 

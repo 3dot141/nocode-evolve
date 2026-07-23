@@ -237,7 +237,7 @@ interactions.json 示例（selector 统一用 `data-testid`，每个场景至少
 
 ### Open Design 线
 
-由 pd-vd 使用完整 artifact receipt 执行 `design.artifact.read`，再对返回的 `artifact.localPath` 运行 `prototype-verify.mjs`，流程与本地 HTML 线一致。无法物化但存在 preview URL 时，执行 `design.preview.open` 做人工预览并记录自动验证缺口；不得把预览截图冒充 Playwright 全量证据。
+由 pd-vd 使用 `get_artifact` 取得项目完整文件并物化到验证目录，再运行 `prototype-verify.mjs`，流程与本地 HTML 线一致。无法物化但 `get_run` 返回 preview URL 时，做人工预览并记录自动验证缺口；不得把预览截图冒充 Playwright 全量证据。
 
 ### 产出
 

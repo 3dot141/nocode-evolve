@@ -179,7 +179,7 @@ fi
 _REF="${NOCODE_SKILL_REF:-${PLUGIN_ROOT}/skills/references}"
 content="${header}"$'\n'"$(sed "s|\${CLAUDE_PLUGIN_ROOT}|${PLUGIN_ROOT}|g; s|\${NOCODE_SKILL_REF}|${_REF}|g" "$file")"
 
-budget="${NOCODE_CONTEXT_BUDGET_FILE:-${PLUGIN_ROOT}/skills/using-nocode/scripts/providers/codex-hooks/context-budget.json}"
+budget="${NOCODE_CONTEXT_BUDGET_FILE:-${PLUGIN_ROOT}/runtime/context-budget.json}"
 if [ "$SEG" = "project" ]; then
   mode="dynamic"
   source_name="${file}"

@@ -5,6 +5,11 @@ description: "当用户提供飞书/Lark/豆包文档或飞书项目 URL，或�
 
 # larkhub：飞书工具集聚合入口
 
+仓库内目标使用 `Skill(nocode:lark-read)`、`Skill(nocode:lark-project)`；其余目标调用已安装的 `lark-doc`、`lark-wiki`、`lark-shared` Skill。
+
+
+每次 handoff 传入原始 request、URL、stage、restate、artifacts、constraints 和用户 decision。目标 Skill 或连接器不可用时，明确报告缺失能力，不经过私有 fallback。
+
 统一入口，按 URL pattern 或意图关键词分发到对应的 Lark 子 skill。可由用户 `/larkhub` 显式调用，也可被 Claude 识别到飞书链接 / 意图时主动调起。
 
 ## 用法
@@ -15,21 +20,21 @@ description: "当用户提供飞书/Lark/豆包文档或飞书项目 URL，或�
 
 | URL pattern | 分发到 | 说明 |
 |---|---|---|
-| `feishu.cn/docx/*` | `Capability(workflow.skill.invoke, {"skill":"lark-doc","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})` | 飞书文档读写 |
-| `feishu.cn/wiki/*` | `Capability(workflow.skill.invoke, {"skill":"lark-doc","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})` 或 `Capability(workflow.skill.invoke, {"skill":"lark-wiki","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})` | 内容读写走 doc，空间管理走 wiki |
-| `project.feishu.cn/*` | `Capability(workflow.skill.invoke, {"skill":"lark-project","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})` | 飞书项目工作项 |
-| `doubao.com/docx/*` 或 `/wiki/*` | `Capability(workflow.skill.invoke, {"skill":"lark-doc","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})` | 豆包文档（同 Lark API） |
+| `feishu.cn/docx/*` | lark-doc | 飞书文档读写 |
+| `feishu.cn/wiki/*` | lark-doc 或 lark-wiki | 内容读写走 doc，空间管理走 wiki |
+| `project.feishu.cn/*` | lark-project | 飞书项目工作项 |
+| `doubao.com/docx/*` 或 `/wiki/*` | lark-doc | 豆包文档（同 Lark API） |
 
 ## 子动作路由
 
 | 子动作 | 做什么 | 转发到 |
 |---|---|---|
-| `read` | 完整读取飞书文档（含图片） | `Capability(workflow.skill.invoke, {"skill":"lark-read","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})` |
-| `project` | 飞书项目管理（MCP） | `Capability(workflow.skill.invoke, {"skill":"lark-project","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})` |
-| `doc` | 文档读写 API | `Capability(workflow.skill.invoke, {"skill":"lark-doc","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})` |
-| `wiki` | 知识空间管理 | `Capability(workflow.skill.invoke, {"skill":"lark-wiki","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})` |
+| `read` | 完整读取飞书文档（含图片） | lark-read |
+| `project` | 飞书项目管理（MCP） | lark-project |
+| `doc` | 文档读写 API | lark-doc |
+| `wiki` | 知识空间管理 | lark-wiki |
 | `task` | 飞书任务管理 | **待接入/暂不可用**——当前没有可转发目标；命中时如实告知用户该能力暂缺 |
-| `auth` | 认证/scope 配置 | `Capability(workflow.skill.invoke, {"skill":"lark-shared","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})` |
+| `auth` | 认证/scope 配置 | lark-shared |
 
 ## 执行
 

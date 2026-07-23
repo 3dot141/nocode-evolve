@@ -7,9 +7,17 @@ description: Use when feature work or an implementation plan needs an isolated G
 
 ## Overview
 
-Ensure work happens in an isolated workspace. Resolve the branch and absolute target directory in the business flow, then let the selected Workspace provider create and enter it.
+Ensure work happens in an isolated workspace. Resolve the branch and absolute target directory in the business flow, then use the current platform's native worktree behavior.
 
-**Core principle:** Detect existing isolation first. The caller chooses the directory; Workspace capabilities own platform-specific Git and session behavior.
+**Core principle:** Detect existing isolation first. The caller chooses the directory; the platform must use that exact absolute path.
+
+<!-- nocode:platform claude -->
+Inspect Git state with read-only commands. Create the worktree with `git worktree add "<absolute-worktree-path>" -b "<branch>" "<confirmed-base>"`, then use `EnterWorktree` with the returned absolute path.
+<!-- /nocode:platform -->
+
+<!-- nocode:platform codex -->
+Inspect Git state with read-only commands. Create the worktree with `git worktree add "<absolute-worktree-path>" -b "<branch>" "<confirmed-base>"`; continue every subsequent file and command operation with that absolute path as `workdir`. Do not simulate a session-wide directory switch.
+<!-- /nocode:platform -->
 
 **Announce at start:** "I'm using the using-git-worktrees skill to set up an isolated workspace."
 
@@ -17,11 +25,11 @@ Ensure work happens in an isolated workspace. Resolve the branch and absolute ta
 
 **Before creating anything, check if you are already in an isolated workspace.**
 
-Call `Capability(workspace.worktree.current, {})` and inspect its receipt for the current root, branch and linked-worktree status.
+Use `git rev-parse --show-toplevel`, `git rev-parse --git-dir`, `git rev-parse --git-common-dir`, `git branch --show-current`, and `git status --short` to inspect the current root, branch and linked-worktree status.
 
 **Submodule guard:** `GIT_DIR != GIT_COMMON` is also true inside git submodules. Before concluding "already in a worktree," verify you are not in a submodule:
 
-The provider must distinguish a linked worktree from a submodule before returning `linked=true`; a submodule is treated as a normal checkout.
+Distinguish a linked worktree from a submodule before treating it as isolated; a submodule is treated as a normal checkout.
 
 **If `GIT_DIR != GIT_COMMON` (and not a submodule):** You are already in a linked worktree. Before deciding whether to reuse it or create another worktree, inspect the current branch and `git status --short`.
 
@@ -45,7 +53,7 @@ Honor any existing declared preference without asking. If the user declines cons
 
 ## Step 1: Create the Worktree
 
-**Always create through `workspace.worktree.create` with an explicit branch and absolute path.** When Step 0 selected a default base worktree, also pass its confirmed branch as `startPoint`. The provider may use Git internally, but it cannot choose a different directory or silently enter creation mode.
+**Always create with an explicit branch, confirmed base and absolute path.** The platform cannot choose a different directory or silently reuse another workspace.
 
 ### Directory Selection
 
@@ -85,8 +93,8 @@ Global directories (`~/.config/superpowers/worktrees/`) need no verification.
 
 ### Create the Worktree
 
-```text
-Capability(workspace.worktree.create, {"branch":"<BRANCH_NAME>","path":"<absolute-worktree-path>","startPoint":"<confirmed-base-branch>"})
+```bash
+git worktree add "<absolute-worktree-path>" -b "<BRANCH_NAME>" "<confirmed-base-branch>"
 ```
 
 Omit `startPoint` only when no explicit base was selected. A dirty base worktree contributes its committed branch tip only; never imply that uncommitted changes were copied.
@@ -97,23 +105,17 @@ Omit `startPoint` only when no explicit base was selected. A dirty base worktree
 
 Creation does not implicitly change the active workspace. Enter it before doing anything else.
 
-### 2a. Enter through the Workspace provider
+### 2a. Enter using the platform block above
 
-```
-Capability(workspace.worktree.enter, {"path":"<absolute-worktree-path>"})
-```
-
-The provider either persists the session workspace or binds subsequent workspace operations to that explicit workdir. Enter never creates or removes a worktree.
-
-- **Claude:** may use its native worktree session switch.
-- **Codex:** does not change a process-wide or session-wide cwd. The provider returns the target as `workdir` plus a `git -C <target>` command prefix. Every subsequent file and command operation must therefore use the target's absolute path/workdir. If a later call omits that binding, treat entry as incomplete and stop rather than operating in the old workspace.
+- **Claude:** use the platform-native entry operation with the absolute existing path.
+- **Codex:** bind every subsequent file and command operation to the target's absolute `workdir`. If a later call omits that binding, stop rather than operating in the old workspace.
 
 - Never omit `path` or pass `.`; the contract requires the absolute existing worktree path.
 - To leave later, enter the absolute main-worktree path. Entering does not remove the feature worktree.
 
-### 2b. Provider fallback
+### 2b. Failure handling
 
-There is no business-layer `cd` fallback. Codex uses explicit per-operation workdir binding; Claude may use its native session switch. Both expose the same receipt.
+There is no implicit path fallback. If native entry or explicit workdir binding fails, report it and stop before editing the old workspace.
 
 ## Step 3: Project Setup
 
@@ -162,8 +164,8 @@ Ready to implement <feature-name>
 | Linked worktree on `release`/`feature`/`main`/`master`/`persist` | Confirm it as `startPoint`, then create a new task worktree (Step 0) |
 | Other linked worktree | Confirm reuse, then skip creation (Step 0) |
 | In a submodule | Treat as normal repo (Step 0 guard) |
-| Creating from a confirmed base | `Capability(workspace.worktree.create, {"branch":"<branch>","path":"<absolute-path>","startPoint":"<base>"})` |
-| Entering the worktree | `Capability(workspace.worktree.enter, {"path":"<absolute-path>"})` |
+| Creating from a confirmed base | `git worktree add "<absolute-path>" -b "<branch>" "<base>"` |
+| Entering the worktree | Claude: native session entry; Codex: bind absolute `workdir` |
 | `.worktrees/` exists | Use it (verify ignored) |
 | `worktrees/` exists | Use it (verify ignored) |
 | Both exist | Use `.worktrees/` |
@@ -176,7 +178,7 @@ Ready to implement <feature-name>
 
 ## Common Mistakes
 
-### Letting the provider choose a path
+### Leaving the path implicit
 
 - **Problem:** a missing or relative path makes workspace identity ambiguous
 - **Fix:** calculate the destination first, create with explicit branch + absolute path, then enter that exact path
@@ -211,7 +213,7 @@ Ready to implement <feature-name>
 **Never:**
 - Create from a linked worktree unless its branch is exactly `release`, `feature`, `main`, `master`, or `persist` and the user confirmed it as the base
 - Continue from an existing linked worktree without explicit user confirmation
-- Call enter as if it could create a worktree. Creation and entry are separate capabilities.
+- Call the platform entry operation as if it could create a worktree. Creation and entry are separate steps.
 - Run Codex operations without the entered worktree's explicit workdir after `git worktree add`
 - Create worktree without verifying it's ignored (project-local)
 - Skip baseline test verification
@@ -219,8 +221,8 @@ Ready to implement <feature-name>
 
 **Always:**
 - Run Step 0 detection first
-- Create with `workspace.worktree.create` using the chosen absolute path
-- Enter with `workspace.worktree.enter`; let the provider implement platform-specific workdir behavior
+- Create with `git worktree add` using the chosen absolute path
+- Enter with Claude's native worktree entry; on Codex bind every later command to the absolute `workdir`
 - Follow directory priority: existing > global legacy > instruction file > default
 - Verify directory is ignored for project-local
 - Auto-detect and run project setup

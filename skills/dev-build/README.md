@@ -13,11 +13,11 @@ devflow 第 5 阶段——读 Plan 的 `Execution` 字段，分发到 `dev-build
 
 `260701` 红蓝军评审后改。
 
-**原来的设计**：Build 生成一段 Workflow 脚本，用 `[provider-neutral workflow boundary]` 按依赖图拓扑分层——同层 task 并行、跨层顺序，走 pipeline 三阶段。Plan 阶段让用户选 `workflow-parallel` / `workflow-sequential` 记到 Execution 字段。
+**原来的设计**：Build 生成一段 Workflow 脚本，用 `平台原生 agent/plan/decision 工具` 按依赖图拓扑分层——同层 task 并行、跨层顺序，走 pipeline 三阶段。Plan 阶段让用户选 `workflow-parallel` / `workflow-sequential` 记到 Execution 字段。
 
 **为什么改**：红蓝军独立审查（Claude subagent + Codex 双路）合并出一个 Critical——并行派发的 subagent 共享同一工作目录，「依赖图无依赖」≠「文件不冲突」，两个 task 改到同一个 lockfile / 快照 / 共享类型就互相覆盖。这正是上游 superpowers 明确禁止并行 implementer 的原因，Workflow 的进程隔离不解决文件系统层的冲突。并行省下的 wall-clock，换来的是"合并后才炸、无法二分定位"的语义冲突。
 
-**现在怎么办**：Build 固定由主 agent 用 `[provider-neutral workflow boundary]` 逐个 task 顺序派发，走 implement → spec review → quality review 三阶段。不生成 Workflow 脚本、不读 Plan 的 `Execution` 字段、不并行。用少量 wall-clock 换可靠性 + 可二分定位。
+**现在怎么办**：Build 固定由主 agent 用 `平台原生 agent/plan/decision 工具` 逐个 task 顺序派发，走 implement → spec review → quality review 三阶段。不生成 Workflow 脚本、不读 Plan 的 `Execution` 字段、不并行。用少量 wall-clock 换可靠性 + 可二分定位。
 
 ## 设计决策：删除 Final Review
 

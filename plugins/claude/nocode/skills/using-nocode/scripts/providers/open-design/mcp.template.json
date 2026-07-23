@@ -1,5 +1,0 @@
-{
-  "name": "open-design",
-  "transport": "stdio",
-  "launcher": "scripts/open-design-launch.mjs"
-}

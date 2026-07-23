@@ -1,7 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
   "name": "nocode",
-  "version": "16.3.0",
+  "version": "17.0.0",
   "description": "Harrison 的个人工程工作流与规则工具箱，支持 Claude Code 和 Codex",
   "author": {
     "name": "Harrison",

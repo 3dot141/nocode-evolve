@@ -5,7 +5,7 @@ export function renderClaudeContent({ targetPath, content, contextPlan = new Map
       .replaceAll('__NOCODE_PLATFORM__', 'claude')
       .replaceAll(
         '__NOCODE_CONTEXT_BUDGET__',
-        '${PLUGIN_ROOT}/skills/using-nocode/scripts/providers/claude-hooks/context-budget.json',
+        '${PLUGIN_ROOT}/runtime/context-budget.json',
       );
   }
   if (targetPath === 'hooks/hooks.json') {
@@ -32,7 +32,7 @@ export function renderClaudeContent({ targetPath, content, contextPlan = new Map
           const command = argv.map((part) => part.includes('${CLAUDE_PLUGIN_ROOT}') ? `"${part}"` : part);
           hook.command = argv.at(-1) === '${CLAUDE_PLUGIN_ROOT}/hooks/session-open.mjs'
             ? [
-              'node', '"${CLAUDE_PLUGIN_ROOT}/skills/using-nocode/scripts/providers/claude-plugin-data/scripts/entry.mjs"', '--',
+              'node', '"${CLAUDE_PLUGIN_ROOT}/runtime/plugin-data-entry.mjs"', '--',
               ...command,
             ].join(' ')
             : command.join(' ');

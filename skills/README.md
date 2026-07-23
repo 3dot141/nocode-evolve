@@ -44,7 +44,7 @@ skills/
 |---|---|
 | `agents-launcher` | 本仓 fx-data-agents 三服务（web/agents/server）本地 dev 启停编排 |
 | `bkt` | Bitbucket CLI（仓库 / PR / 分支 / issue / webhook / pipeline） |
-| `open-design` | provider-neutral Design 操作入口（Open Design 主路，本地 HTML 显式降级） |
+| `open-design` | Open Design 原生创建、生成、读取与预览流程 |
 | `lark-project` | 飞书项目管理（工作项读取含附件 / 状态流转 / 搜索 / 创建更新） |
 | `lark-read` | 完整读取飞书文档（文字 + 嵌入图片） |
 | `signoz-cli` | 查询 SigNoz 的 trace / log / metric，跑 PromQL/ClickHouse SQL |
@@ -66,11 +66,11 @@ skills/
 | `skill-writing` | 创建 / 编辑 / 测试 / 优化 skill 的 TDD 方法论，替代 writing-skills 和 skill-creator |
 | `strategic-compact` | 在逻辑阶段边界建议手动 `/compact`，而非依赖任意时机的自动压缩（vendor: everything-claude-code） |
 | `systematic-debugging` | 提出修复前先系统化定位根因（vendor: superpowers） |
-| `using-git-worktrees` | 建立 / 清理隔离工作区（`git worktree add -b` 创建 + `[provider-neutral workflow boundary]` 进入）（vendor: superpowers，fork 改造版） |
+| `using-git-worktrees` | 建立 / 清理隔离工作区（`git worktree add -b` 创建 + `平台原生 agent/plan/decision 工具` 进入）（vendor: superpowers，fork 改造版） |
 
 ## 与 commands/、agents/ 的关系
 
 - **commands/**：入口 Skill 的作者态单源，由两个 adapter 统一生成到 `skills/<name>/SKILL.md`，不再发布原生 `commands/`。
-- **agents/**：agent profile 的作者态单源，由两个 adapter 统一生成到 `using-nocode/references/agents/`，再由 workflow provider 执行。
+- **平台原生 agent**：调度说明直接位于所属 Skill 的 platform block 中，不存在独立 profile/router 生成链。
 
 新增 skill、修改 SKILL.md、workflow 类登记流程等细节见本目录 `AGENTS.md`。

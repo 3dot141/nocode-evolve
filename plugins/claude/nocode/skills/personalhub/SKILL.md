@@ -4,6 +4,10 @@ description: ".agents-personal/ 聚合入口（hub），分发到 7 个子动作
 argument-hint: <sub-action> [args]
 ---
 
+本文所说“调用 `<skill>` Skill”使用 `Skill(nocode:<skill>)`；“结构化决策”使用 `AskUserQuestion`。
+
+
+
 # /personalhub：.agents-personal/ 管理入口
 
 统一入口，分发到 7 个子动作。每个子动作也可以直接用独立命令调用。
@@ -16,12 +20,12 @@ argument-hint: <sub-action> [args]
 
 | 子动作 | 做什么 | 转发到 | 独立命令 |
 |---|---|---|---|
-| `init` | 初始化 .agents-personal/ 结构 | `Capability(workflow.skill.invoke, {"skill":"personal-init","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})` | `/personal-init` |
-| `write` | 写入 wiki / rules / AGENTS.md（变量·语气·命名·约定） | `Capability(workflow.skill.invoke, {"skill":"personal-distill","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})` | `/personal-distill` |
-| `search` | 检索 .agents-personal/ 内容（wiki + rules + AGENTS.md 各分节） | `Capability(workflow.skill.invoke, {"skill":"personal-recall","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})` | `/personal-recall` |
-| `check` | 健康检查 | `Capability(workflow.skill.invoke, {"skill":"personal-lint","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})` | `/personal-lint` |
-| `tidy` | 自主维护（stale/prune/merge/promote） | `Capability(workflow.skill.invoke, {"skill":"personal-dream","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})` | `/personal-dream` |
-| `snap` | 手动触发备份快照 | `Capability(workflow.skill.invoke, {"skill":"personal-snapshot","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})` | `/personal-snapshot` |
+| `init` | 初始化 .agents-personal/ 结构 | 调用 `personal-init` Skill，传入 `arguments={"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}` | `/personal-init` |
+| `write` | 写入 wiki / rules / AGENTS.md（变量·语气·命名·约定） | 调用 `personal-distill` Skill，传入 `arguments={"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}` | `/personal-distill` |
+| `search` | 检索 .agents-personal/ 内容（wiki + rules + AGENTS.md 各分节） | 调用 `personal-recall` Skill，传入 `arguments={"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}` | `/personal-recall` |
+| `check` | 健康检查 | 调用 `personal-lint` Skill，传入 `arguments={"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}` | `/personal-lint` |
+| `tidy` | 自主维护（stale/prune/merge/promote） | 调用 `personal-dream` Skill，传入 `arguments={"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}` | `/personal-dream` |
+| `snap` | 手动触发备份快照 | 调用 `personal-snapshot` Skill，传入 `arguments={"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}` | `/personal-snapshot` |
 | `status` | 概览当前状态 | 内联执行（见下方） | — |
 
 ## 执行

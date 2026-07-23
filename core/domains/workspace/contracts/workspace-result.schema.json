@@ -1,7 +1,0 @@
-{
-  "$id": "workspace.workspace-result",
-  "type": "object",
-  "required": ["operation", "ok"],
-  "properties": { "operation": { "type": "string" }, "ok": { "type": "boolean" }, "path": { "type": ["string", "null"] }, "output": { "type": ["string", "null"] }, "details": { "type": "object", "additionalProperties": true } },
-  "additionalProperties": false
-}

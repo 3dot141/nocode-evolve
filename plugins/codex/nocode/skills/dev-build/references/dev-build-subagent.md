@@ -1,6 +1,6 @@
 # dev-build-subagent — 顺序派发独立 subagent，分档审查
 
-对应 plan `Execution` 字段值 `subagent-lite` / `subagent-full`（旧计划的 `subagent` 按 `subagent-full` 处理）。dev-build 编排者用 `[provider-neutral workflow boundary]` 逐个 task **顺序**派发独立 subagent 执行；两档共用同一条实现链，差别只在**审查派发密度**。实现链改编自上游 superpowers `subagent-driven-development`；审查分档是本仓库为墙钟成本加的本地扩展（per-task 双 review 随 task 数线性增长，是全链路重触点墙钟的最大来源）。
+对应 plan `Execution` 字段值 `subagent-lite` / `subagent-full`（旧计划的 `subagent` 按 `subagent-full` 处理）。dev-build 编排者用 `平台原生 agent/plan/decision 工具` 逐个 task **顺序**派发独立 subagent 执行；两档共用同一条实现链，差别只在**审查派发密度**。实现链改编自上游 superpowers `subagent-driven-development`；审查分档是本仓库为墙钟成本加的本地扩展（per-task 双 review 随 task 数线性增长，是全链路重触点墙钟的最大来源）。
 
 开始前 Read `${PLUGIN_ROOT}/skills/references/design-traceability.md`。派发 objective 必须原样包含当前 task 的 `designCovers`，并要求 result 返回 `completedDesignCovers`、`changedFiles` 和测试 `evidence`；implementer 不得自行改 Design ID 覆盖范围。
 
@@ -32,7 +32,7 @@
 
 **每个 task 的阶段：**
 
-1. **Implement** — 派 implementer subagent（`[provider-neutral workflow boundary]`，prompt 见 `implementer-prompt.md`）。要求它按下面格式结构化报告：
+1. **Implement** — 派 implementer subagent（`平台原生 agent/plan/decision 工具`，prompt 见 `implementer-prompt.md`）。要求它按下面格式结构化报告：
    - `status`：`DONE` / `DONE_WITH_CONCERNS` / `BLOCKED` / `NEEDS_CONTEXT`
    - `summary` / `filesChanged` / `concerns` / `testResults`
    - `completedDesignCovers`：必须与 task `designCovers` 完全一致

@@ -8,8 +8,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { claudeAdapter } from '../adapters/claude/adapter.mjs';
 import { codexAdapter } from '../adapters/codex/adapter.mjs';
-import { loadDomainRegistry } from '../scripts/lib/domain-registry.mjs';
-import { buildExpectedTree } from '../scripts/lib/platform-compiler.mjs';
+import { buildExpectedTree } from '../scripts/lib/platform-packager.mjs';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 const METADATA = JSON.parse(readFileSync(path.join(ROOT, 'plugin/metadata.json'), 'utf8'));
@@ -38,11 +37,9 @@ function hashSource(relative) {
 
 test('Continuous Learning sources remain byte-identical and are absent from both artifacts', () => {
   const before = Object.fromEntries(EXCLUDED.map((relative) => [relative, hashSource(relative)]));
-  const registry = loadDomainRegistry(ROOT);
   for (const platform of ['claude', 'codex']) {
     const tree = buildExpectedTree({
       root: ROOT, metadata: METADATA, adapter: ADAPTERS[platform],
-      resolution: registry.resolvePlatform(platform), registry,
     });
     const files = [...tree.keys()];
     assert.equal(files.some((file) => file.startsWith('skills/continuous-learning-v2/')), false);
@@ -68,11 +65,9 @@ test('compilation does not inspect or mutate legacy learning data', () => {
   const previousHome = process.env.HOME;
   try {
     process.env.HOME = fakeHome;
-    const registry = loadDomainRegistry(ROOT);
     for (const platform of ['claude', 'codex']) {
       const tree = buildExpectedTree({
         root: ROOT, metadata: METADATA, adapter: ADAPTERS[platform],
-        resolution: registry.resolvePlatform(platform), registry,
       });
       assert.equal([...tree.values()].some((value) => value.toString('utf8').includes(LEGACY_DATA_DIR)), false);
     }

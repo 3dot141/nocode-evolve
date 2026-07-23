@@ -7,7 +7,6 @@ import {
   abandonHandoff, completeHandoff, handoffStatus, openHandoff,
 } from '../scripts/handoff-state.mjs';
 import { closeSession, openSession } from '../scripts/session-state.mjs';
-import { executeStateCapability } from '../core/domains/runtime-state/providers/claude-plugin-data/scripts/state.mjs';
 
 function root(t) {
   const value = mkdtempSync(path.join(os.tmpdir(), 'nocode-handoff-state-'));
@@ -57,16 +56,16 @@ test('handoff generations are idempotent, terminal, and session isolated', (t) =
   assert.deepEqual(handoffStatus({ sessionId: 'two' }, { dataRoot }).handoffs, []);
 });
 
-test('active handoff blocks session close and provider bridge exposes explicit operations', (t) => {
+test('active handoff blocks session close and direct operations remain explicit', (t) => {
   const dataRoot = root(t);
   openSession({ sessionId: 'bridge', workspace: '/work/bridge' }, { dataRoot });
-  const opened = executeStateCapability('state.handoff.open', {
+  const opened = openHandoff({
     sessionId: 'bridge', handoffId: 'define-to-design', from: 'define', to: 'design',
   }, { dataRoot });
   assert.equal(opened.status, 'active');
   assert.throws(() => closeSession({ sessionId: 'bridge' }, { dataRoot }),
     (error) => error.code === 'SESSION_BUSY');
-  assert.equal(executeStateCapability('state.handoff.complete', {
+  assert.equal(completeHandoff({
     sessionId: 'bridge', handoffId: opened.handoffId, generation: opened.generation,
   }, { dataRoot }).status, 'completed');
   assert.doesNotThrow(() => closeSession({ sessionId: 'bridge' }, { dataRoot }));

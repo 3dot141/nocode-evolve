@@ -67,7 +67,7 @@ Step 1 视觉参考集里的定性描述（「深色底、紧凑行高」）落�
 
 ### 1. 盘点现有
 
-用已有 design receipt 回读 workspace，查看 tokens/、components/、patterns/ 各层现有文件并建立现状基线。receipt 缺失或不完整时不得猜 provider/project ID；本地 HTML 线扫描 receipt 中的 localPath。
+已有 Open Design 项目用真实 project id 调 `get_artifact` 回读，查看 tokens/、components/、patterns/ 各层文件并建立现状基线。project id 缺失时不得猜；本地 HTML 线直接扫描明确的本地目录。
 
 ### 2. 逐交互列缺口
 
@@ -124,7 +124,7 @@ Step 1 视觉参考集里的定性描述（「深色底、紧凑行高」）落�
 
 拍板后执行 3d 落点。**这一步不专属并行流程**——串行生产、复用已有设计系统同样要走：
 
-- Open Design 线：由 pd-vd 对完整 workspace receipt 执行一次批量 `design.artifact.generate` 或 `design.artifact.write`，提交全部组件、tokens 与样张
+- Open Design 线：由 pd-vd 对已创建的项目执行一次 `start_run`，在 prompt 中提交全部组件、tokens 与样张要求；完成后用 `get_artifact` 回读
 - 本地 HTML 线：直接落 `{pd_vd_output}` 目录
 
 ## 五、单页样张（styleguide.html）
@@ -163,12 +163,12 @@ Step 1 视觉参考集里的定性描述（「深色底、紧凑行高」）落�
 
 **交付线 = Open Design ⇒ 冻结结果必须成为独立 DS 项目**（与 Step 4 原型项目分离，可被 `design_system_id` 绑定），**设计真源在代码库也不豁免**——推送物是冻结时点快照（标注上游来源 + 冻结日期），单向同步，不构成双主。tokens 内联进原型文件只解决渲染（平台每个文件独立渲染，页面文件本就需要自包含 token 定义）；DS 面板可浏览、跨项目可绑定、协作可见，靠的是 DS 项目——内联不能替代落点。
 
-内容来源按项目当前状态选，提交方式始终是 Design domain receipt：
+内容来源按项目当前状态选，Open Design 线始终复用真实 project id：
 
 | 方式 | 适用 | 推什么 |
 |---|---|---|
 | **Open Design 辅助生成** | 无代码的产品设计阶段 | 用结构化 brief 生成设计系统，再以本地样张校验 |
-| **提取现有 React/Storybook** | 已有组件库 | 从真实组件生成冻结 snapshot；bundle 是否受支持由 provider preflight 决定 |
+| **提取现有 React/Storybook** | 已有组件库 | 从真实组件生成冻结 snapshot；bundle 是否受支持由 Open Design 工具返回结果决定 |
 | **`.dc.html` 手写** | 无代码且需要逐文件控制 | 手写静态 HTML 展示卡片（见第七节格式），由编排者批量提交 |
 
 ### 选型决策
@@ -181,25 +181,25 @@ Step 1 视觉参考集里的定性描述（「深色底、紧凑行高」）落�
    └─ 需要逐文件控制 → .dc.html 手写后批量提交
 ```
 
-> provider 的 MCP 工具名、IPC 和大文件传输策略全部封装在 Design domain 内。业务流程只传 brief、localPath 与完整 receipt，不按文件大小选择 provider-native 命令。
+> Open Design 线只使用已注册的 `create_project`、`start_run`、`get_run`、`get_artifact`；App、授权或工具不可用时直接报告，不猜 IPC 或私有路径。
 
 **复用已有设计系统 ≠ 跳过 Step 3**：取值来源变为「提取对齐已有 tokens」（3a）、gap analysis 只补缺口（3b）、样张仍然渲染拍板（3c，已有系统 + 新组件同页展示）、**落点仍然执行（3d）**——Open Design 线已有 DS 项目则增量推缺口，没有则新建。
 
-## 七、Design receipt 操作参考
+## 七、Open Design 项目操作参考
 
 ### 写入流程
 
-由拥有 Design capability 的 pd-vd 统一操作：workspace create 返回完整 receipt；首次生成以 workspace receipt 为输入；增量更新、回读和预览始终传回完整 artifact receipt。小文件内容和大文件 localPath 都是领域输入，provider 自己决定受支持的传输方式。
+由 pd-vd 统一操作：`create_project` 返回 project id；`start_run` 发起首次或增量生成；`get_run` 等到终态；`get_artifact` 回读项目文件。每一步都复用工具返回的真实 id，不从 URL 或路径反推。
 
 ### DS 项目与卡片索引（3d 必查）
 
-DS workspace 必须从 `kind=design-system` 创建，不能把 prototype receipt 改写成 DS receipt。组件卡是否可索引属于 provider 提交结果；只有 receipt 明确成功才可通过 Gate，不能从“文件已写”推断“面板已可用”。
+DS 项目与 prototype 项目必须分开创建并保存各自 project id。组件卡是否可索引以 `get_run`/`get_artifact` 的真实结果为准，不能从“文件已写”推断“面板已可用”。
 
 ### 并发限制（重要）
 
-不要对同一 workspace receipt 并发提交——并发写会争用 provider 的版本与索引，存在互相覆盖风险。
+不要对同一 project id 并发执行写入 run——并发生成会争用版本与索引，存在互相覆盖风险。
 
-正确做法：**并行生产所有 `.dc.html`（纯本地文件）→ 编排者用同一 receipt 单次批量提交**。即「并行算、批量提交」。
+正确做法：**并行生产所有 `.dc.html`（纯本地文件）→ 编排者对同一 project id 发起一次批量 run**。即「并行算、批量提交」。
 
 ### `.dc.html` 格式要点
 
@@ -212,9 +212,9 @@ DS workspace 必须从 `kind=design-system` 创建，不能把 prototype receipt
 
 补齐后验证：
 
-- 回读后的 receipt 仍指向同一 provider/workspace，文件清单完整
+- `get_artifact` 回读的是同一 project id，文件清单完整
 - workspace 类型 = 设计系统（不是普通 prototype），可被原型生成 brief 引用
-- provider 返回的组件索引状态成功；未返回时标为待验证，不猜测
+- 工具返回的组件索引状态成功；未返回时标为待验证，不猜测
 - 新组件引用的 token 在 tokens 里都有定义（零硬编码）
 - 组件变体覆盖了交互的行为规格与状态覆盖会用到的状态
 - 样张已渲染且经用户拍板

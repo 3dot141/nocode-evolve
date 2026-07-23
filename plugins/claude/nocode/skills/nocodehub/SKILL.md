@@ -4,6 +4,10 @@ description: "nocode 插件自维护聚合入口（hub），分发到 3 个子�
 argument-hint: <sub-action> [args]
 ---
 
+本文所说“调用 `<skill>` Skill”使用 `Skill(nocode:<skill>)`；“结构化决策”使用 `AskUserQuestion`。
+
+
+
 # /nocodehub：插件自维护聚合入口
 
 统一入口，聚合插件自身（rules/skills/manifest/commands）的维护动作。每个子动作也可以直接用独立命令调用。
@@ -25,8 +29,8 @@ argument-hint: <sub-action> [args]
 
 | 子动作 | 做什么 | 转发到 | 独立命令 |
 |---|---|---|---|
-| `write` | 新增/优化 plugin rule 或 skill | `Capability(workflow.skill.invoke, {"skill":"plugin-distill","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})` | `/plugin-distill` |
-| `dream` | 插件仓库自维护巡检（客观漂移+边界符合性） | `Capability(workflow.skill.invoke, {"skill":"plugin-dream","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})` | `/plugin-dream` |
+| `write` | 新增/优化 plugin rule 或 skill | 调用 `plugin-distill` Skill，传入 `arguments={"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}` | `/plugin-distill` |
+| `dream` | 插件仓库自维护巡检（客观漂移+边界符合性） | 调用 `plugin-dream` Skill，传入 `arguments={"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}` | `/plugin-dream` |
 | `status` | 概览当前插件健康状态 | 内联执行（见下方） | — |
 
 ## 执行
@@ -58,7 +62,7 @@ argument-hint: <sub-action> [args]
 3. 统计 `skills/*/SKILL.md` 数量（精确，skill 数）
 4. 跑 `node scripts/vendor-sync.mjs --check`（展示级，人工核验）
 5. 跑 `node --test 'hooks/*.test.mjs'`（展示级，测试通过/失败数）
-6. 跑 `node scripts/compile.rule.js --check` + `node scripts/compile.hooks.js --check` + `node scripts/compile.platform.mjs --check`（展示级，漂移状态）
+6. 跑 `node scripts/compile.rule.js --check` + `node scripts/compile.hooks.js --check` + `node scripts/package.platform.mjs --check`（展示级，漂移状态）
 
 输出格式：
 

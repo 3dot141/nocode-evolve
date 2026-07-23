@@ -7,7 +7,7 @@ import { test } from 'node:test';
 import {
   ContextBudgetError, loadContextBudget, renderDynamicContext, splitStaticContext, utf8Bytes,
 } from '../scripts/lib/context-budget.mjs';
-import { contextSegmentPlan } from '../scripts/lib/platform-compiler.mjs';
+import { contextSegmentPlan } from '../scripts/lib/platform-packager.mjs';
 
 test('UTF-8 byte upper bound and deterministic static splitting stay within budget', () => {
   assert.equal(utf8Bytes('中a'), 4);
@@ -37,9 +37,9 @@ test('Codex delegates oversized dynamic context to its native spill mechanism', 
   }, 'project/AGENTS.md'), content);
 });
 
-test('provider budgets record the Claude release policy and Codex documented limit', () => {
-  const claude = loadContextBudget('core/domains/lifecycle/providers/claude-hooks/context-budget.json');
-  const codex = loadContextBudget('core/domains/lifecycle/providers/codex-hooks/context-budget.json');
+test('platform budgets record the Claude release policy and Codex documented limit', () => {
+  const claude = loadContextBudget('platform/claude/runtime/context-budget.json');
+  const codex = loadContextBudget('platform/codex/runtime/context-budget.json');
   assert.equal(claude.safeBytes, 8000);
   assert.equal(claude.policy, 'nocode release injection budget');
   assert.equal(codex.safeBytes, 2000);
@@ -47,7 +47,7 @@ test('provider budgets record the Claude release policy and Codex documented lim
   assert.equal(codex.dynamicOverflow, 'passthrough');
 });
 
-test('generated SessionStart hooks load their colocated provider budget', () => {
+test('generated SessionStart hooks load their colocated platform budget', () => {
   for (const platform of ['claude', 'codex']) {
     const script = path.resolve(`plugins/${platform}/nocode/hooks/session-context.mjs`);
     const result = spawnSync(process.execPath, [script], {
@@ -82,12 +82,12 @@ test('generated Codex project injection preserves a 2654-byte AGENTS file', (t) 
   assert.doesNotMatch(output, /CONTEXT_SEGMENT_TOO_LARGE|omitted/);
 });
 
-test('compiler attributes an unsplittable static segment by segment and source path', (t) => {
+test('packager attributes an unsplittable static segment by segment and source path', (t) => {
   const root = mkdtempSync(path.join(os.tmpdir(), 'nocode-context-plan-'));
   t.after(() => rmSync(root, { recursive: true, force: true }));
-  mkdirSync(path.join(root, 'core/domains/lifecycle/providers/codex-hooks'), { recursive: true });
+  mkdirSync(path.join(root, 'platform/codex/runtime'), { recursive: true });
   mkdirSync(path.join(root, 'model'), { recursive: true });
-  writeFileSync(path.join(root, 'core/domains/lifecycle/providers/codex-hooks/context-budget.json'),
+  writeFileSync(path.join(root, 'platform/codex/runtime/context-budget.json'),
     JSON.stringify({ safeBytes: 300 }));
   writeFileSync(path.join(root, 'model/agent-about.md'), 'x'.repeat(50));
   assert.throws(() => contextSegmentPlan(root, 'codex'), (error) =>

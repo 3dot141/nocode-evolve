@@ -1,7 +1,0 @@
-{
-  "$id": "personal-knowledge.page-read-result",
-  "type": "object",
-  "required": ["path", "content", "usageRecorded", "warnings"],
-  "properties": { "path": { "type": "string" }, "content": { "type": "string" }, "usageRecorded": { "type": "boolean" }, "warnings": { "type": "array", "items": { "type": "string" } } },
-  "additionalProperties": false
-}

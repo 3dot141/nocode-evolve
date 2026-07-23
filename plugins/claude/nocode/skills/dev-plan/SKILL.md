@@ -3,7 +3,12 @@ name: dev-plan
 description: Use to turn a confirmed goal into implementation tasks or when devflow enters Plan. Not for coding, unclear requirements, product interaction design, or simple questions about intended next steps.
 ---
 
-> 本文写“结构化决策”时，必须把当前步骤的完整问题与 2–3 个互斥选项编译为 `Capability(workflow.decision.request, {"question":"<self-contained current-step question>","options":[{"label":"<option-label>","description":"<impact or tradeoff>"}],"allowFreeform":false})`；示例只展示单项形状，真实调用需带齐本步骤列出的选项，不得回退到平台专属提问工具。
+本文写“结构化决策”时，必须带齐当前步骤的完整问题与 2–3 个互斥选项：
+
+使用 `AskUserQuestion` 提交完整问题和全部选项。
+
+
+不得拆成多个不完整问题，也不得替用户选择。
 
 # plan — 把目标拆成任务序列
 
@@ -85,16 +90,18 @@ Task 9: 用户确认计划
   Gate: 用户确认计划
 
 Task 10: 硬交接 — 调用下一步 skill
-  Sub-steps: 按 Exit Gate 硬交接报告 Plan 完成（task 数 + 首个 slice）→ 建议进 Build → 等用户拍板后调 Capability(workflow.skill.invoke, {"skill":"dev-build","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})
+  Sub-steps: 按 Exit Gate 硬交接报告 Plan 完成（task 数 + 首个 slice）→ 建议进 Build → 等用户拍板后按下方平台指令调用 Build，传入当前 request、stage、restate、artifacts、constraints、计划文件路径和用户 decision
   Gate: 用户拍板进入 Build（这一步不勾，Plan 不算收尾）
   metadata: {handoff: true}（供防跳步 Hook B 识别交接 task）
 ```
 
-调用时把上面**每一条** Task 编译成一个稳定 item：`id` 固定、`subject` 为标题、`description` 完整包含 Sub-steps + Gate、初始 `status=pending`，仅最后一项设置 `handoff`。不得只改名后继续依赖平台 task 工具，也不得传空 items：
+Build handoff 使用 `Skill(nocode:dev-build)`。
 
-`Capability(workflow.plan.create, {"items":[{"id":"<stable-task-id>","subject":"<task-title>","description":"<complete Sub-steps and Gate>","status":"pending","handoff":"<final-item-only; otherwise omit>"}]})`
 
-示例只展示单项形状；真实调用必须包含本段清单的全部 items。保存返回的 `planRef`。每次状态变化都用 `Capability(workflow.plan.update, {"planRef":"<planRef>","items":[{"id":"<same-stable-id>","subject":"<same-title>","description":"<same-complete-description>","status":"<pending|in_progress|completed>","handoff":"<preserve-final-item-handoff; otherwise omit>"}]})` 提交**完整快照**（示例仍只展示单项形状）；每次 update 必须原样保留最终 item 的 `handoff`，其它 item 继续省略该字段，不得发送单项 patch。
+调用时把上面**每一条** Task 建成稳定计划项：`id` 固定、`subject` 为标题、`description` 完整包含 Sub-steps + Gate、初始 `status=pending`，仅最后一项标注 handoff。不得传空计划：
+
+使用 `TaskCreate` 逐项创建全部计划项，并保存每项返回的 task id。状态变化时使用 `TaskUpdate` 更新对应 task id；最终 handoff 项的描述始终保留交接要求。
+
 
 每完成一个标 done。
 
@@ -104,8 +111,7 @@ Task 10: 硬交接 — 调用下一步 skill
 1. restate（成果物/验收标准/约束/Out of Scope）
 2. dev-design 产出的设计文档（含领域划分、模块设计、接口、业务流、测试目标）
 3. **定向加载**：设计文档「前置调研」章节的 `path:line` 引用就是加载清单——要改的文件、关键 caller、pattern 参照、类型/接口定义大多已被 Design 探索过并引用，逐条定向 Read（含对应测试文件），不重新自由探索。Standard 场景（无设计文档）用 restate 附录探索胶囊的 findings sources 作加载清单，同样定向 Read
-4. 清单没覆盖、本次拆解又需要的文件，再补搜（精确匹配走 rg；语义查找走 `Capability(workflow.execute, {"tasks":[{"id":"plan-gap-search","objective":"只补齐当前计划缺失的实现位置；返回路径、符号、证据和它对应的计划缺口；不得重扫已覆盖范围，不修改工作树","profile":"search.semantic","dependsOn":[],"writeScope":"none","timeoutMs":120000,"continueOnError":false}],"maxParallel":1,"fallbackPolicy":"inline"})`）——补缺，不是重扫
-   - 保存 `executionId`；若 `status=running`，反复执行 `Capability(workflow.wait, {"executionId":"<execution-id>","timeoutMs":120000})` 直到终态，再执行 `Capability(workflow.collect, {"executionId":"<execution-id>"})` 从 `tasks[0].result` 读取补搜结果
+4. 清单没覆盖、本次拆解又需要的文件，由当前会话使用 `rg` 或可用的代码搜索工具补搜；只返回路径、符号、证据和对应的计划缺口，不重扫已覆盖范围，不修改工作树。只有搜索本身能独立成边界清楚的任务时，才按当前平台原生 agent 机制派发，不因“语义搜索”强制派 agent
 
 发现自己开始改文件 → 停——你在跳过 Plan 直接 Build。
 
@@ -175,7 +181,10 @@ Round 1 骨架完成，在填充代码前对计划骨架做一遍自查。骨架
 
 > 「这份计划的骨架合理吗？切片策略（垂直还是横切？每片独立可验证吗？）、依赖图（有没有隐式耦合遗漏？）、risk-first 排序（最不确定的真的排前面了吗？）、task 粒度（sizing 准吗？有 and 该拆的吗？）、restate 覆盖（有遗漏路径吗？）」
 
-自查纪律：放下"当时为什么这么排"的推理，只看骨架本身现在站不站得住；每条给一句判断 + 依据，不是走过场打勾。用户显式要求对抗审视（「红蓝军 / 深审」）才调 `Capability(workflow.skill.invoke, {"skill":"red-blue-deep","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})`。
+自查纪律：放下"当时为什么这么排"的推理，只看骨架本身现在站不站得住；每条给一句判断 + 依据，不是走过场打勾。用户显式要求对抗审视（「红蓝军 / 深审」）才按下方平台指令调用 red-blue-deep，传入当前 request、stage、restate、artifacts、constraints、计划文件路径和用户 decision。
+
+对抗审视使用 `Skill(nocode:red-blue-deep)`。
+
 
 **结论落地**：自查中成立的质疑修正到骨架中（回 Step 3/4/5 对应调整）。
 
@@ -258,7 +267,7 @@ Round 1 的骨架定了"改什么"，Round 2 填"怎么改"——每个 task 补
 
 > 「前置 task 的产出（接口/数据结构/约定）够后续 task 用吗？多个 task 之间有没有隐含冲突的假设？执行顺序对吗？」
 
-对着依赖图 + 接口约定 + 假设清单逐条核，每条给判断 + 依据。**升审只在两种情况**：① 用户显式要求（「红蓝军 / 深审 / 找 codex」）→ 调 `Capability(workflow.skill.invoke, {"skill":"red-blue-deep","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})` 重档，喂依赖图 + 接口约定 + 假设清单（不喂完整实现代码）；② 计划命中敏感面（认证 / 敏感数据 / schema·migration / 资金 / 跨模块接口 / 不可逆动作）→ 向用户**一句话建议**升审，用户点头才调，不自动派发。
+对着依赖图 + 接口约定 + 假设清单逐条核，每条给判断 + 依据。**升审只在两种情况**：① 用户显式要求（「红蓝军 / 深审 / 找 codex」）→ 使用上方平台对应的 red-blue-deep 调用进入重档，传入依赖图 + 接口约定 + 假设清单（不传完整实现代码）；② 计划命中敏感面（认证 / 敏感数据 / schema·migration / 资金 / 跨模块接口 / 不可逆动作）→ 向用户**一句话建议**升审，用户点头才调，不自动派发。
 
 **结论落地**：checklist 发现的问题 + 自查中成立的质疑，都修正到计划中（回 Step 7 修正对应 task）。
 

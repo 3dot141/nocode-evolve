@@ -3,7 +3,10 @@ name: dev-design-writing
 description: "Private writing protocol used by dev-design to expand an approved Decision Packet into the fina…"
 ---
 
-> 本文写“结构化决策”时，必须把当前步骤的完整问题与 2–3 个互斥选项编译为 `Capability(workflow.decision.request, {"question":"<self-contained current-step question>","options":[{"label":"<option-label>","description":"<impact or tradeoff>"}],"allowFreeform":false})`；示例只展示单项形状，真实调用需带齐本步骤列出的选项，不得回退到平台专属提问工具。
+本文写“结构化决策”时，必须带齐当前步骤的完整问题与 2–3 个互斥选项：
+
+
+在 `request_user_input` 可用时提交完整问题和全部选项；若当前模式未提供该工具，则在回合末尾直接提出同一问题并等待回答。
 
 # writing — 设计完善
 
@@ -58,11 +61,10 @@ Task 7: 保存 + 渲染确认 + handoff（步 13-14）
   metadata: {handoff: true}
 ```
 
-调用时把上面**每一条** Task 编译成一个稳定 item：`id` 固定、`subject` 为标题、`description` 完整包含 Sub-steps + Gate、初始 `status=pending`，仅最后一项设置 `handoff`。不得只改名后继续依赖平台 task 工具，也不得传空 items：
+调用时把上面**每一条** Task 建成稳定计划项，不得传空计划：
 
-`Capability(workflow.plan.create, {"items":[{"id":"<stable-task-id>","subject":"<task-title>","description":"<complete Sub-steps and Gate>","status":"pending","handoff":"<final-item-only; otherwise omit>"}]})`
 
-示例只展示单项形状；真实调用必须包含本段清单的全部 items。保存返回的 `planRef`。每次状态变化都用 `Capability(workflow.plan.update, {"planRef":"<planRef>","items":[{"id":"<same-stable-id>","subject":"<same-title>","description":"<same-complete-description>","status":"<pending|in_progress|completed>","handoff":"<preserve-final-item-handoff; otherwise omit>"}]})` 提交**完整快照**（示例仍只展示单项形状）；每次 update 必须原样保留最终 item 的 `handoff`，其它 item 继续省略该字段，不得发送单项 patch。
+使用 `update_plan` 提交全部计划项；每次状态变化都提交完整列表，保持稳定顺序，且同时最多一个 `in_progress`。
 
 每完成一个标 done。
 
@@ -211,7 +213,10 @@ Task 7: 保存 + 渲染确认 + handoff（步 13-14）
 **默认自查（主路）**：Read `references/design-doc-review.md` 拿设计文档评审维度，**主会话就地逐维过全文**——不调 reviewing 引擎、不派 subagent/Codex。自查纪律：放下写作过程中的推理，只看文档本身现在站不站得住；发现的问题产出 findings（五档 C/W/S/Q/SA，短编号 `C1/W1/S1/Q1/SA1`），代码/事实类 finding 要带章节锚点 + 原文摘录，缺锚点的降 Q 档不硬上 Critical/Warning。
 
 **升审只在两种情况**：
-- **用户显式要求**（「审一下 / 深审 / 独立审 / 找 codex」）→ 调 `Capability(workflow.skill.invoke, {"skill":"reviewing","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"dev-design-writing","restate":"<confirmed-restate-or-omit>","artifacts":["<absolute-design-document-path>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"},"payload":{"object":{"type":"design-document","ref":"<absolute-design-document-path>"},"dimensions":["<all-8-design-doc-review-axes>"],"method":"checklist","contextCapsule":{"facts":["<verified-fact>"],"decisions":["<confirmed-decision>"],"rejectedAlternatives":["<alternative-and-reason>"],"constraints":["<constraint>"],"nonGoals":["<non-goal>"]},"depth":"independent"}}})`，声明：对象 = 设计文档；领域维度 = design-doc-review 8 维；Context Capsule = 已拍板决策 / 被否决方案及原因 / 非目标 / 预算（不带作者预期结论）——派发 / CLAIM 剥离 / 降级由引擎承载
+- **用户显式要求**（「审一下 / 深审 / 独立审 / 找 codex」）→ 按下方平台指令调用 reviewing，传入设计文档绝对路径、design-doc-review 全部 8 维、checklist 方法、已拍板决策/被否决方案及原因/非目标/预算组成的 Context Capsule，以及 independent 深度；不传作者预期结论
+
+
+独立审查 handoff 使用 `$reviewing`。
 - **文档命中敏感面**（认证 / 敏感数据 / schema·migration / 资金 / 对外接口 / 不可逆决策）→ 向用户**一句话建议**升审，用户点头才调，不自动派发
 
 自查（或升审后引擎返回）的 findings 进下面的收口确认。

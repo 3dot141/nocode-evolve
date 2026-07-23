@@ -1,7 +1,0 @@
-{
-  "$id": "runtime-state.session-state",
-  "type": "object",
-  "required": ["sessionId", "status"],
-  "properties": { "sessionId": { "type": "string" }, "workspace": { "type": "string" }, "status": { "enum": ["open", "closed"] } },
-  "additionalProperties": false
-}

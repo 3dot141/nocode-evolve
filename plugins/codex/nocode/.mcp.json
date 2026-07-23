@@ -3,7 +3,7 @@
     "open-design": {
       "command": "node",
       "args": [
-        "${PLUGIN_ROOT}/skills/using-nocode/scripts/providers/open-design/scripts/launch.mjs"
+        "${PLUGIN_ROOT}/scripts/open-design-launch.mjs"
       ],
       "startup_timeout_sec": 60
     }

@@ -71,22 +71,3 @@ export function generateCommandSkills(root, {
   }
   return output;
 }
-
-export function generateAgentReferences(root, {
-  isExcluded = () => false,
-  renderMarkdown = String,
-} = {}) {
-  const agentRoot = path.join(root, 'agents');
-  const output = new Map();
-  for (const file of readdirSync(agentRoot).sort()) {
-    if (!file.endsWith('.md') || ['AGENTS.md', 'README.md'].includes(file)) continue;
-    if (isExcluded(`agents/${file}`)) continue;
-    const raw = readFileSync(path.join(agentRoot, file), 'utf8');
-    parseFrontmatter(raw, 'Agent reference', file);
-    output.set(
-      `skills/using-nocode/references/agents/${file}`,
-      renderMarkdown(raw),
-    );
-  }
-  return output;
-}

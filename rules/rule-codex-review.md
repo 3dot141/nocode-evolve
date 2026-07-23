@@ -2,14 +2,14 @@
 name: codex-review
 description: >-
   独立 review 路由规则。仅在 reviewing 引擎或上游流程明确要求独立审查时触发，
-  通过 workflow capability 请求跨模型优先的隔离 reviewer，并如实记录实际独立性。
+  使用当前平台的原生 agent 请求隔离 reviewer，并如实记录实际独立性。
   默认自审、普通代码检查、未获用户授权的升审不触发。
 skip: false
 ---
 
 # 独立 review 路由（兼容名：codex-review）
 
-这个 rule 的历史名字保留为 `codex-review`，但业务层不再绑定 Codex CLI、某个本地脚本或特定 agent 工具。它只声明需要“独立 review”；当前平台的 Workflow provider 决定如何实现。
+这个 rule 的历史名字保留为 `codex-review`，但业务层不绑定 Codex CLI 或本地脚本。它只声明需要“独立 review”，并由各平台直接使用自己的原生 agent。
 
 ## 触发边界
 
@@ -26,33 +26,38 @@ skip: false
 
 先做 CLAIM 剥离：给 reviewer 的 Context Capsule 只包含对象、事实、已确认约束、非目标、证据位置和审查维度；不带作者结论、期望 verdict 或“应该通过”的暗示。
 
-然后提交一个只读 review task：
+构造一个只读、可独立执行的 objective：
 
 ```text
-Capability(workflow.execute, {"tasks":[{"id":"independent-review","objective":"独立审查 <对象>；按 <维度> 输出带证据的 findings 与 verdict；只读，不修改工作树；Context Capsule: <事实与约束>","profile":"review.cross-model-preferred","dependsOn":[],"writeScope":"none","timeoutMs":600000,"continueOnError":false}],"maxParallel":1,"fallbackPolicy":"inline"})
+独立审查 <对象>；按 <维度> 输出带证据的 findings 与 verdict；只读，不修改工作树；Context Capsule: <事实与约束>
 ```
 
-保存返回的 `executionId`。若回执 `status=running`，反复执行 `Capability(workflow.wait, {"executionId":"<execution-id>","timeoutMs":600000})`，直到进入 `completed|partial|failed|cancelled` 终态；随后执行 `Capability(workflow.collect, {"executionId":"<execution-id>"})`，只从 collect 回执的 `tasks[].result` 读取 findings/verdict，并读取同一 task 的 `resultRef` 与 `reviewMode` 作为追踪元数据。不得把初始 `running` 回执当审查结果。
+<!-- nocode:platform claude -->
+使用原生 `Agent` 派发 reviewer，保存原生句柄并等待终态结果。若平台无法提供独立 agent，则由主会话自审，并明确标注“不具备独立性”。
+<!-- /nocode:platform -->
+
+<!-- nocode:platform codex -->
+使用 `spawn_agent` 派发 reviewer，保存 agent id，并用 `wait_agent` 等待终态结果。若平台无法提供独立 agent，则由主会话自审，并明确标注“不具备独立性”。
+<!-- /nocode:platform -->
+
+不得把“已派发”当作审查结果。只有原生工具明确报告 reviewer 使用了不同模型或实现族时，才可声称“跨模型独立审查”；通常的原生 subagent 应表述为“同模型隔离审查”。
 
 约束：
 
-- 一个 review 对象对应一个 task；需要两条真正独立的审查路时，使用两个无依赖、无写范围的 task，并明确不同视角。
-- `writeScope` 固定为 `none`，reviewer 只读；修复由主会话或后续 Build task 完成。
-- 不在业务 rule 中写平台 agent 调用、Bash、Codex CLI、plugin root 或 vendor 路径。
-- provider 失败后的 fallback 只由 `fallbackPolicy` 和 selection receipt 决定；业务层不探活、不重复启动第二套私有实现。
+- 一个 review 对象对应一个 agent；需要两条真正独立的审查路时，派发两个互不共享上下文的只读 reviewer，并明确不同视角。
+- reviewer 只读；修复由主会话或后续 Build task 完成。
+- 不启动 Bash、Codex CLI，不引用 plugin root 或 vendor 路径。
+- 原生 agent 不可用时只做一次主会话自审，不重复启动私有实现。
 
 ## 回执与独立性
 
-逐项读取 execution receipt 的 `tasks[].reviewMode`：
+| 实际执行方式 | 对外表述 |
+|---|---|
+| 原生工具明确报告不同模型/实现族 | “已完成跨模型独立审查” |
+| 独立上下文，但未证明模型不同 | “已完成同模型隔离审查；不是跨模型” |
+| 主会话自审 | “已降级为主会话自审；不具备独立性” |
 
-| `reviewMode` | 含义 | 对外表述 |
-|---|---|---|
-| `cross-model` | 实际使用了不同模型/实现族 | “已完成跨模型独立审查” |
-| `isolated-same-model` | 独立上下文，但模型同源 | “已完成同模型隔离审查；不是跨模型” |
-| `inline-self-review` | provider 不可用后由主会话降级自审 | “已降级为主会话自审；不具备独立性” |
-| `null` | 非 review task 或 provider 未声明 | 对 review task 视为回执不完整，不得声称独立审查完成 |
-
-`status=failed|partial` 时逐条报告失败；不得把 fallback、超时或无 `reviewMode` 包装成“Codex 已审”。
+agent 失败、超时或被取消时逐条报告；不得包装成“Codex 已审”。
 
 ## 四类对象
 
