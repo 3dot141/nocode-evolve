@@ -116,7 +116,7 @@ Claude Code 内置的"功能型"工具，按用途分组。基础文件工具（
 
 | 工具 | 干嘛 | 关键点 |
 |---|---|---|
-| `workspace.worktree.enter` / `ExitWorktree` | 建隔离 git worktree 并把会话切进去 | **只在用户或 CLAUDE.md 明确要 worktree 时才用**；`path` 进已存在的 worktree、`name` 建新的 |
+| worktree entry / `ExitWorktree` | 建隔离 git worktree 并把会话切进去 | **只在用户或 CLAUDE.md 明确要 worktree 时才用**；`path` 进已存在的 worktree、`name` 建新的 |
 | `EnterPlanMode` / `ExitPlanMode` | 进/出计划模式（只读探索 → 拿批准再执行） | `ExitPlanMode` 把计划提交给用户批 |
 
 **G. 工具加载与产出**

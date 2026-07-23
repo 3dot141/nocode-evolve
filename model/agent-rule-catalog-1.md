@@ -7,7 +7,7 @@
 
 | 文件相对地址 | 描述 |
 |---|---|
-| rules/rule-codex-review.md | 独立 review 路由规则。仅在 reviewing 引擎或上游流程明确要求独立审查时触发， 通过 workflow capability 请求跨模型优先的隔离 reviewer，并如实记录实际独立性。 默认自审、普通代码检查、未获用户授权的升审不触发。 |
+| rules/rule-codex-review.md | 独立 review 路由规则。仅在 reviewing 引擎或上游流程明确要求独立审查时触发， 使用当前平台的原生 agent 请求隔离 reviewer，并如实记录实际独立性。 默认自审、普通代码检查、未获用户授权的升审不触发。 |
 | rules/rule-cross-repo-lookup.md | 从当前仓库进入另一个物理 git repo 只读检查代码 (Read / rg / git log / 对照实现) 前触发——同一逻辑仓库磁盘上常有主仓 + 多份平级 worktree 拷贝, 先 git worktree list 枚举唯一候选集, 与当前分支同名的 worktree 优先, 进入后 branch --show-current 验证再读, 不沿用记忆/上下文残留路径。 不触发: 在当前仓库内部检索、要去改那个仓库的文件 (走 rule-git-worktree 关联仓库节)、本会话已按本流程验证过且分支未切换的路径复用。 |
 | rules/rule-database-logical-relations.md | 设计或修改数据库表结构、DDL、migration、ORM model/entity，且涉及表间关系时触发—— 默认不创建物理外键约束 (FOREIGN KEY)，通过关联字段和应用层逻辑维护关系；仅当用户明确要求时 才创建物理外键。不触发: 只读查询数据、查看既有 schema、或不涉及表间关系的单表改动。 |
 | rules/rule-figma-design-read.md | 用户给 figma.com/design 或 figma.com/file 链接, 要求读取设计稿、提取 设计值 (字号/颜色/间距/圆角)、对齐 UI 实现、检查样式差异时触发——走 Figma REST API, 不依赖 MCP/agent-browser 登录。不触发: 只看用户贴的 设计稿截图 (不需要 API)、Figma 原型预览链接 (无 inspect 需求)。 |

@@ -25,7 +25,7 @@
 | `prototype-verify.mjs` | `skills/pd-vd/SKILL.md` + `references/*`、`skills/dev-verify/SKILL.md` | CLI，委托 `_prototype-verify-impl.py`（需 python3 + playwright） |
 | `repo-lock.mjs` | `dream-baseline.mjs` / `personal-migrate.mjs` / `personal-snapshot.mjs` / `wiki-read.mjs`（内部 import） | library only |
 | `context-bar.sh` | 不在插件自动化链路内——`hooks/hooks.json` 没有 statusLine 挂载点；供用户手动配置到个人 `~/.claude/settings.json` 的 `statusLine.command` | 独立脚本 |
-| `codex-companion.mjs` | legacy symlink → `../vendor/codex/scripts/codex-companion.mjs` | 已由 workflow review provider 取代，不进入默认发布物；改动 vendor 前先确认升级记录 |
+| `codex-companion.mjs` | legacy symlink → `../vendor/codex/scripts/codex-companion.mjs` | 已由平台原生 review 流程取代，不进入默认发布物；改动 vendor 前先确认升级记录 |
 
 被两个以上调用方共用的脚本（`git-exec.mjs` / `repo-lock.mjs` / `dream-baseline.mjs` / `personal-snapshot.mjs`）
 是高风险改动点——改导出函数签名前用 `grep -rn "scripts/<name>.mjs"` 摸清全部调用方（含 `hooks/*.test.mjs`
@@ -67,7 +67,7 @@ node --test hooks/*.test.mjs scripts/*.test.mjs
 `skills/`、`agents/`、`commands/`、`.claude-plugin/`、`.mcp.json`），但这里的脚本是那些目录的
 **运行时依赖**：`personal-snapshot.mjs` 直接被 SessionStart hook 调用，其余脚本被 `rules/`、
 `commands/`、`skills/` 里的指令文本以命令行 / `import()` 形式内嵌引用。改了脚本的实际行为，
-效果等同于改了引用它的插件文件——同样要按 CLAUDE.md 规则 2 升级 `plugin/metadata.json`，并运行 `node scripts/compile.platform.mjs`
+效果等同于改了引用它的插件文件——同样要按 CLAUDE.md 规则 2 升级 `plugin/metadata.json`，并运行 `node scripts/package.platform.mjs`
 的 `version`（patch/minor/major 判断标准不变），并把版本变更放进同一个 commit。
 
 `context-bar.sh` 例外：它不在插件自动化链路内（见上表），改动不受此约束，但仍要遵守规则 1

@@ -4,6 +4,10 @@ description: "项目子目录 AGENTS.md + README.md 聚合入口（hub），分�
 argument-hint: <sub-action> [args]
 ---
 
+
+本文所说“调用 `<skill>` Skill”使用 `$<skill>`；“结构化决策”使用 `request_user_input`。
+
+
 # /projecthub：项目子目录文档管理入口
 
 统一入口，管理项目子目录的 AGENTS.md（agent 工作约束）和 README.md（人类可读文档）。每个子动作也可以直接用独立命令调用。
@@ -25,10 +29,10 @@ argument-hint: <sub-action> [args]
 
 | 子动作 | 做什么 | 转发到 | 独立命令 |
 |---|---|---|---|
-| `write` | 为指定目录写入/更新 AGENTS.md + README.md | `Capability(workflow.skill.invoke, {"skill":"project-distill","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})` | `/project-distill` |
-| `dream` | 递归：选定目录，逐层扫子目录，批量生成 | `Capability(workflow.skill.invoke, {"skill":"project-dream","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})` | `/project-dream` |
-| `search` | 搜索项目内所有子目录 AGENTS.md / README.md | `Capability(workflow.skill.invoke, {"skill":"project-recall","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})` | `/project-recall` |
-| `check` | 健康检查（stale 引用 / 覆盖缺口） | `Capability(workflow.skill.invoke, {"skill":"project-lint","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})` | `/project-lint` |
+| `write` | 为指定目录写入/更新 AGENTS.md + README.md | 调用 `project-distill` Skill，传入 `arguments={"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}` | `/project-distill` |
+| `dream` | 递归：选定目录，逐层扫子目录，批量生成 | 调用 `project-dream` Skill，传入 `arguments={"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}` | `/project-dream` |
+| `search` | 搜索项目内所有子目录 AGENTS.md / README.md | 调用 `project-recall` Skill，传入 `arguments={"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}` | `/project-recall` |
+| `check` | 健康检查（stale 引用 / 覆盖缺口） | 调用 `project-lint` Skill，传入 `arguments={"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}` | `/project-lint` |
 | `init` | TBD | — | `/project-init` |
 | `status` | 覆盖率概览 | 内联执行（见下方） | — |
 

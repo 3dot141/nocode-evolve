@@ -13,7 +13,18 @@ review 这件事在仓库里被重造了十几遍：每个 review 都重新发�
 
 调用方在自己的 review step 里执行：
 
-`Capability(workflow.skill.invoke, {"skill":"reviewing","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"},"payload":{"object":{"type":"<review-object-type>","ref":"<stable-path-diff-range-or-receipt>"},"dimensions":["<complete-caller-owned-axis>"],"method":"<method-or-auto>","contextCapsule":{"facts":["<fact>"],"decisions":["<confirmed-decision>"],"rejectedAlternatives":["<alternative-and-reason>"],"constraints":["<constraint>"],"nonGoals":["<non-goal>"]},"depth":"<self|independent|auto>"}}})`
+调用方直接调用 `Skill(nocode:reviewing)`，并提供以下完整输入：
+
+
+```text
+request: 用户当前请求原文
+context: stage / restate / artifacts / constraints / plan path / decision
+object: type + 稳定的 path、diff range 或原生工具结果引用
+dimensions: 调用方拥有的完整审查维度
+method: 明确方法或 auto
+contextCapsule: facts / decisions / rejected alternatives / constraints / non-goals
+depth: self / independent / auto
+```
 
 `payload` 不是旁边 prose 的提示，而是实际传给引擎的数据；以下各项必须在 JSON 中物化：
 

@@ -3,7 +3,7 @@
   "sources": [
     {
       "path": "skills/continuous-learning-v2",
-      "reason": "disabled: Continuous Learning is not part of the Claude/Codex 14.1.0 runtime"
+      "reason": "disabled: Continuous Learning is not part of the published Claude/Codex runtime"
     },
     {
       "path": "commands/evolve.md",

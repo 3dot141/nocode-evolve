@@ -1,6 +1,6 @@
 # nocode 原生平台块与静态打包设计
 
-> 状态：approved / implementation pending
+> 状态：implemented / interactive client smoke pending
 >
 > 日期：2026-07-23
 >
@@ -431,17 +431,17 @@ Claude/Codex 各至少执行：
 
 ## 13. 验收清单
 
-- [ ] 平台块语法与失败行为有测试。
-- [ ] 新打包器只执行 §6 allowlist。
-- [ ] 所有业务 `Capability(...)` 消费者迁移完成。
-- [ ] profile 和 `using-nocode` 删除。
-- [ ] capability/provider/domain registry 删除。
-- [ ] Claude/Codex 生成物语法隔离通过。
-- [ ] Hook、Open Design、personal knowledge、worktree 代表性回归通过。
-- [ ] `node scripts/vendor-sync.mjs --check` 通过。
-- [ ] 平台发布物 drift check 通过。
-- [ ] Claude/Codex 客户端 smoke 完成。
-- [ ] 版本按 major 升级，源码、生成物与版本同 commit。
+- [x] 平台块语法与失败行为有测试。
+- [x] 新打包器只执行 §6 allowlist。
+- [x] 所有业务 `Capability(...)` 消费者迁移完成。
+- [x] profile 和 `using-nocode` 删除。
+- [x] capability/provider/domain registry 删除。
+- [x] Claude/Codex 生成物语法隔离通过。
+- [x] Hook、Open Design、personal knowledge、worktree 代表性回归通过。
+- [x] `node scripts/vendor-sync.mjs --check` 通过。
+- [x] 平台发布物 drift check 通过。
+- [ ] Claude/Codex 客户端交互 smoke 完成（自动化覆盖已通过；需安装 17.0.0 并整体重启客户端）。
+- [x] 版本按 major 升级，源码、生成物与版本同 commit。
 
 ## 14. 最终决策
 

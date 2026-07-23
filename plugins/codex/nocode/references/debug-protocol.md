@@ -80,7 +80,7 @@
 
 | 调用 | 方式 | 降级 |
 |---|---|---|
-| systematic-debugging | `[provider-neutral skill boundary]` | 按上述 D1-D6 手动执行，明说 fallback |
+| systematic-debugging | `平台原生 Skill 调用` | 按上述 D1-D6 手动执行，明说 fallback |
 | browser DevTools | agent-browser / computer-use | 手动浏览器检查，记录步骤 |
 
 ## Common Rationalizations

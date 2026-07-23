@@ -3,7 +3,16 @@ description: 把当前会话沉淀分流到 wiki/rules/agents/docs 七个出口�
 argument-hint: [optional-topic]
 ---
 
-> 本文写“结构化决策”时，必须把当前步骤的完整问题与 2–3 个互斥选项编译为 `Capability(workflow.decision.request, {"question":"<self-contained current-step question>","options":[{"label":"<option-label>","description":"<impact or tradeoff>"}],"allowFreeform":false})`；示例只展示单项形状，真实调用需带齐本步骤列出的选项，不得回退到平台专属提问工具。
+<!-- nocode:platform claude -->
+本文所说“调用 `<skill>` Skill”使用 `Skill(nocode:<skill>)`；“结构化决策”使用 `AskUserQuestion`。
+<!-- /nocode:platform -->
+
+<!-- nocode:platform codex -->
+本文所说“调用 `<skill>` Skill”使用 `$<skill>`；“结构化决策”使用 `request_user_input`。
+<!-- /nocode:platform -->
+
+
+> 本文写“结构化决策”时，必须使用当前平台原生决策工具，传入完整问题与 2–3 个互斥选项；示例只展示单项形状，真实调用需带齐本步骤列出的选项。
 
 # /distill：会话沉淀分流命令
 
@@ -32,7 +41,7 @@ argument-hint: [optional-topic]
 | `rules:project` | 融进现有 rule，或新建 `<proj>/.agents-personal/rules/<slug>.md` + 改 `AGENTS.md` 触发条件 | 当前指令，项目专属；**先整合判断**（融合优先），否则双写新建 |
 | `agents:project` | `<proj>/.agents-personal/AGENTS.md` 对应分节 | 项目级偏好——变量覆盖 / 语气风格 / 命名惯例 / 协作约定等；直接写入 AGENTS.md，融合已有分节或新增分节 |
 | `docs:subdir` | `<proj>/<dir>/AGENTS.md` 和/或 `README.md` | 子目录工程约束/文档，入仓共享；走 project-distill |
-| `rules:plugin` | 委托 `Capability(workflow.skill.invoke, {"skill":"plugin-distill","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})` 处理（融合优先，否则三步联动；rule/skill 双轨） | 当前指令，跨项目通用；**先整合判断**（融合优先），否则三步联动建新 |
+| `rules:plugin` | 委托并调用 `plugin-distill` Skill，传入 `arguments={"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}` 处理（融合优先，否则三步联动；rule/skill 双轨） | 当前指令，跨项目通用；**先整合判断**（融合优先），否则三步联动建新 |
 | `skip` | （不写）| 列出原因供用户最后反悔 |
 
 ---
@@ -52,7 +61,7 @@ argument-hint: [optional-topic]
 
 ### 0. 静默 Lint
 
-若 `<proj>/.agents-personal/` 已存在，调 `Capability(workflow.skill.invoke, {"skill":"personal-lint","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})` 做健康检查。结果附在 Step 2 表格底部。不存在则跳过。
+若 `<proj>/.agents-personal/` 已存在，调用 `personal-lint` Skill，传入 `arguments={"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}` 做健康检查。结果附在 Step 2 表格底部。不存在则跳过。
 
 ### 1. 扫会话 + 生成候选
 
@@ -74,7 +83,7 @@ argument-hint: [optional-topic]
 
 **整合判断（候选阶段就做，让表格诚实）**：对 `wiki:project` / `rules:project` / `agents:project` / `rules:plugin` 候选，先读对应索引判与现有内容关系，设 `disposition`：
 
-`wiki/index.md` 是控制文件，普通 Read 不计使用次数；一旦需要核对 `pages/` 或 `draft/` 的候选正文，必须调用 `Capability(personal-knowledge.page.read, {"sessionId":"<current-session-id>","path":"<wiki-page-path>"})`，并使用返回 receipt 的 content。
+`wiki/index.md` 是控制文件，普通 Read 不计使用次数；一旦需要核对 `pages/` 或 `draft/` 的候选正文，必须调用 `node "${CLAUDE_PLUGIN_ROOT}/scripts/wiki-read.mjs" --project-root "$PWD" --path "<wiki-page-path>" --session-id "<current-session-id>"`，并使用返回 receipt 的 content。
 
 | 出口 | 读的索引 | 强相关 → 融合目标 |
 |---|---|---|
@@ -168,7 +177,7 @@ no → 整次 distill 终止；yes → 进入分发。
 
 #### `wiki:project` 出口
 
-调 `Capability(workflow.skill.invoke, {"skill":"personal-distill","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"distill-dispatch","restate":"<confirmed-restate-or-omit>","artifacts":["<source-conversation-or-distill-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-candidate-disposition>"},"payload":{"candidates":[{"id":"<candidate-id>","target":"wiki","disposition":"<create|merge|supersede|promote|skip>","body":"<complete-candidate-body>","target_layer":"<wiki/pages|wiki/draft>","path":"<target-or-new-page-path>"}]}}})`，传入本出口的候选列表。personal-distill 必须从 `arguments.payload.candidates[]` 读取 canonical English disposition，负责完整的 wiki 写入协议（两层目录 / 整合判断 / frontmatter / index 重建 / log 追加）。
+调用 `personal-distill` Skill，传入 `arguments={"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"distill-dispatch","restate":"<confirmed-restate-or-omit>","artifacts":["<source-conversation-or-distill-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-candidate-disposition>"},"payload":{"candidates":[{"id":"<candidate-id>","target":"wiki","disposition":"<create|merge|supersede|promote|skip>","body":"<complete-candidate-body>","target_layer":"<wiki/pages|wiki/draft>","path":"<target-or-new-page-path>"}]}}`，传入本出口的候选列表。personal-distill 必须从 `arguments.payload.candidates[]` 读取 canonical English disposition，负责完整的 wiki 写入协议（两层目录 / 整合判断 / frontmatter / index 重建 / log 追加）。
 
 #### `wiki:cross-project` 出口（advisor）
 
@@ -185,15 +194,15 @@ no → 整次 distill 终止；yes → 进入分发。
 
 #### `rules:project` 出口
 
-调 `Capability(workflow.skill.invoke, {"skill":"personal-distill","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"distill-dispatch","restate":"<confirmed-restate-or-omit>","artifacts":["<source-conversation-or-distill-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-candidate-disposition>"},"payload":{"candidates":[{"id":"<candidate-id>","target":"rules","disposition":"<create|merge|skip>","body":"<complete-rule-body>","slug":"<rule-slug>","path":"<merge-target-or-new-rule-path>"}]}}})`，传入本出口的候选列表。personal-distill 必须从 `arguments.payload.candidates[]` 读取 canonical English disposition，负责 rules 文件写入 + AGENTS.md 触发条目管理。
+调用 `personal-distill` Skill，传入 `arguments={"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"distill-dispatch","restate":"<confirmed-restate-or-omit>","artifacts":["<source-conversation-or-distill-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-candidate-disposition>"},"payload":{"candidates":[{"id":"<candidate-id>","target":"rules","disposition":"<create|merge|skip>","body":"<complete-rule-body>","slug":"<rule-slug>","path":"<merge-target-or-new-rule-path>"}]}}`，传入本出口的候选列表。personal-distill 必须从 `arguments.payload.candidates[]` 读取 canonical English disposition，负责 rules 文件写入 + AGENTS.md 触发条目管理。
 
 #### `agents:project` 出口
 
-调 `Capability(workflow.skill.invoke, {"skill":"personal-distill","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"distill-dispatch","restate":"<confirmed-restate-or-omit>","artifacts":["<source-conversation-or-distill-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-candidate-disposition>"},"payload":{"candidates":[{"id":"<candidate-id>","target":"agents","disposition":"<create|merge|skip>","section_type":"<agents-section-type>","body":"<complete-section-body>"}]}}})`，传入本出口的候选列表。personal-distill 必须从 `arguments.payload.candidates[]` 读取候选，负责 AGENTS.md 分节写入——融合已有分节或新增分节。
+调用 `personal-distill` Skill，传入 `arguments={"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"distill-dispatch","restate":"<confirmed-restate-or-omit>","artifacts":["<source-conversation-or-distill-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-candidate-disposition>"},"payload":{"candidates":[{"id":"<candidate-id>","target":"agents","disposition":"<create|merge|skip>","section_type":"<agents-section-type>","body":"<complete-section-body>"}]}}`，传入本出口的候选列表。personal-distill 必须从 `arguments.payload.candidates[]` 读取候选，负责 AGENTS.md 分节写入——融合已有分节或新增分节。
 
 #### `docs:subdir` 出口
 
-调 `Capability(workflow.skill.invoke, {"skill":"project-distill","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"distill-dispatch","restate":"<confirmed-restate-or-omit>","artifacts":["<source-conversation-or-distill-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-candidate-disposition>"},"payload":{"candidates":[{"id":"<candidate-id>","target_dir":"<project-relative-target-directory>","target_file":"<agents|readme|both>","body":"<complete-document-body>"}]}}})`，传入本出口的候选列表。project-distill 必须从 `arguments.payload.candidates[]` 读取 target_dir / target_file / body，负责分析目标目录 + 写入 AGENTS.md 和/或 README.md。
+调用 `project-distill` Skill，传入 `arguments={"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"distill-dispatch","restate":"<confirmed-restate-or-omit>","artifacts":["<source-conversation-or-distill-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-candidate-disposition>"},"payload":{"candidates":[{"id":"<candidate-id>","target_dir":"<project-relative-target-directory>","target_file":"<agents|readme|both>","body":"<complete-document-body>"}]}}`，传入本出口的候选列表。project-distill 必须从 `arguments.payload.candidates[]` 读取 target_dir / target_file / body，负责分析目标目录 + 写入 AGENTS.md 和/或 README.md。
 
 与 `agents:project` 的落地路径完全不同：
 - `agents:project` → `.agents-personal/AGENTS.md`（gitignored，个人配置）
@@ -201,7 +210,7 @@ no → 整次 distill 终止；yes → 进入分发。
 
 #### `rules:plugin` 出口（委托 plugin-distill）
 
-调 `Capability(workflow.skill.invoke, {"skill":"plugin-distill","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"distill-dispatch","restate":"<confirmed-restate-or-omit>","artifacts":["<source-conversation-or-distill-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-candidate-disposition>"},"payload":{"candidates":[{"id":"<candidate-id>","disposition":"<merge|create|skip>","body":"<complete-rule-or-skill-body>","target":"<rule-or-skill-path>","description":"<routing-description>"}]}}})`，传入本出口的候选列表（含 disposition / body / target / description 等）。plugin-distill 负责完整的融合判断 + 三步联动写入协议（rule 文件 frontmatter + compile.rule.js + 版本升级），本文件不再重复维护该逻辑。
+调用 `plugin-distill` Skill，传入 `arguments={"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"distill-dispatch","restate":"<confirmed-restate-or-omit>","artifacts":["<source-conversation-or-distill-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-candidate-disposition>"},"payload":{"candidates":[{"id":"<candidate-id>","disposition":"<merge|create|skip>","body":"<complete-rule-or-skill-body>","target":"<rule-or-skill-path>","description":"<routing-description>"}]}}`，传入本出口的候选列表（含 disposition / body / target / description 等）。plugin-distill 负责完整的融合判断 + 三步联动写入协议（rule 文件 frontmatter + compile.rule.js + 版本升级），本文件不再重复维护该逻辑。
 
 #### `skip` 出口
 
@@ -234,13 +243,13 @@ no → 整次 distill 终止；yes → 进入分发。
 
 ---
 
-> **wiki + rules 写入协议已搬到 `/personal-distill`**（`commands/personal-distill.md`）。distill 通过 `Capability(workflow.skill.invoke, {"skill":"personal-distill","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})` 委派写入，不在本文件内重复。
+> **wiki + rules 写入协议已搬到 `/personal-distill`**（`commands/personal-distill.md`）。distill 通过调用 `personal-distill` Skill，传入 `arguments={"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}` 委派写入，不在本文件内重复。
 
 ---
 
 ## rules:plugin 分发（已迁移到 plugin-distill）
 
-`rules:plugin` 出口的融合判断 + 三步联动写入协议已整体搬到 `Capability(workflow.skill.invoke, {"skill":"plugin-distill","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})`（`commands/plugin-distill.md`）——单一权威实现，本文件不再重复。委托方式见上方「`rules:plugin` 出口」节。
+`rules:plugin` 出口的融合判断 + 三步联动写入协议已整体搬到 调用 `plugin-distill` Skill，传入 `arguments={"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}`（`commands/plugin-distill.md`）——单一权威实现，本文件不再重复。委托方式见上方「`rules:plugin` 出口」节。
 
 孤儿 rule 划界（distill 不主动补，归 `/nocodehub dream` 巡检）等边界情况同样已在 `plugin-distill.md` 里维护。
 

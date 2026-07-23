@@ -24,7 +24,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { parseFrontmatter, ROOT } from './compile.rule.js';
-import { loadPluginExclusions } from './lib/platform-compiler.mjs';
+import { loadPluginExclusions } from './lib/platform-packager.mjs';
 
 // Skill(nocode:X) 里 X 是文档示例而非真实路由目标, 跳过存在性检查
 const PLACEHOLDER_TARGETS = new Set(['xxx', 'name', 'x', 'y', 'foo', 'bar']);

@@ -4,7 +4,11 @@ description: "插件仓库自维护巡检——客观漂移(3项) + 边界符合
 argument-hint: (无参数)
 ---
 
-> 本文写“结构化决策”时，必须把当前步骤的完整问题与 2–3 个互斥选项编译为 `Capability(workflow.decision.request, {"question":"<self-contained current-step question>","options":[{"label":"<option-label>","description":"<impact or tradeoff>"}],"allowFreeform":false})`；示例只展示单项形状，真实调用需带齐本步骤列出的选项，不得回退到平台专属提问工具。
+本文所说“调用 `<skill>` Skill”使用 `Skill(nocode:<skill>)`；“结构化决策”使用 `AskUserQuestion`。
+
+
+
+> 本文写“结构化决策”时，必须使用当前平台原生决策工具，传入完整问题与 2–3 个互斥选项；示例只展示单项形状，真实调用需带齐本步骤列出的选项。
 
 # /plugin-dream：插件仓库自维护巡检
 
@@ -25,7 +29,7 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/plugin-dream-baseline.mjs" "${CLAUDE_PLUGIN_
 | `diff` | `changed` | 处理 |
 |---|---|---|
 | `null`（首次运行，或 baseline 指向的 commit 因 rebase 等原因不可达） | `true` | 走全量：Phase 1 Layer1 + Layer2 都对全部对象跑；本轮 Phase 3 执行完毕后进入 **Phase 4**，调用 `setBaseline` 记录本次 HEAD 为新 baseline |
-| 非 `null` 且 `commitDiff`/`dirtyFiles` 均为空 | `false` | **秒回**，不进入 Phase 1，直接输出：`✓ plugin-dream：自上次检查以来业务源码、adapter、compiler、plugin/metadata.json 与 marketplace 无变化，无需维护`，命令结束 |
+| 非 `null` 且 `commitDiff`/`dirtyFiles` 均为空 | `false` | **秒回**，不进入 Phase 1，直接输出：`✓ plugin-dream：自上次检查以来业务源码、adapter、packager、plugin/metadata.json 与 marketplace 无变化，无需维护`，命令结束 |
 | 非 `null` 且 `commitDiff`/`dirtyFiles` 至少一个非空 | `true` | 合并 `commitDiff ∪ dirtyFiles` 得到"变更文件集合"，继续 Phase 1；Layer2 只对该集合覆盖到的 rule/skill/command 对象跑检测；本轮 Phase 3 执行完毕后**同样进入 Phase 4**，调用 `setBaseline` 把 baseline 推进到本次 HEAD（处理过一轮变化后必须前移，不止首次运行才前移，否则 diff 范围只会越滚越大，秒回永久失效）|
 
 > 这一步不可跳过——即使用户在参数里指定了范围（如"只查 rule"），也先跑本判断决定 Layer2 的候选文件集合是"全部 rule"还是"变更文件集合 ∩ rule"。
@@ -94,7 +98,7 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/plugin-dream-baseline.mjs" "${CLAUDE_PLUGIN_
 ### Phase 3: Execute（按类型分派）
 
 - **自动类**（Layer1 全部）：直接重跑对应命令
-- **建议式**（Layer2 全部）：不自动改——rule 类委托 `Capability(workflow.skill.invoke, {"skill":"plugin-distill","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})`，skill 类委托 `Capability(workflow.skill.invoke, {"skill":"skill-writing","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})`，由用户在委托流程里最终拍板
+- **建议式**（Layer2 全部）：不自动改——rule 类调用 `plugin-distill` Skill，skill 类调用 `skill-writing` Skill；两者都传入当前 request、stage、restate、artifacts、constraints、planRef 和 decision，由用户在委托流程里最终拍板
 
 > Layer1 当前均为自动可修复类型，不涉及删除；若未来新增会造成数据丢失的检测（如涉及删文件/删条目），走护栏原则：回显路径 + 原因 + 影响，二次确认后执行——不要因为当前没有这类项就跳过这条原则。
 
@@ -113,8 +117,8 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/plugin-dream-baseline.mjs" --set "${CLAUDE_P
 ```
 plugin-dream 完成：
   ✓ compile.rule.js 重新生成 catalog（漂移已修复）
-  → 委托: plugin rule `foo` description 优化，转 Capability(workflow.skill.invoke, {"skill":"plugin-distill","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})
-  → 委托: skills/bar/SKILL.md description 优化，转 Capability(workflow.skill.invoke, {"skill":"skill-writing","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})
+  → 委托: plugin rule `foo` description 优化，调用 `plugin-distill` Skill
+  → 委托: skills/bar/SKILL.md description 优化，调用 `skill-writing` Skill
   ✗ 跳过: #4（用户未勾选）
 
 ℹ 状态：0 error / 1 warn（含未处理的 Layer2 建议）

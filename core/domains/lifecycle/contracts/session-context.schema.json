@@ -1,7 +1,0 @@
-{
-  "$id": "lifecycle.session-context",
-  "type": "object",
-  "required": ["sessionId", "segments"],
-  "properties": { "sessionId": { "type": "string" }, "segments": { "type": "array", "items": { "type": "string" } } },
-  "additionalProperties": false
-}

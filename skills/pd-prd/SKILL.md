@@ -3,7 +3,15 @@ name: pd-prd
 description: Use when the user wants to write a product requirements document. Use when the user says "写 PRD/产品需求/产品设计/产品 brief/写需求文档", or after research skill completes and the user wants to synthesize findings into a document. Also use when devflow Full-scene suggests running the product flow. Not for technical design docs (use nocode:dev-design) or code comments/README.
 ---
 
-> 本文写“结构化决策”时，必须把当前步骤的完整问题与 2–3 个互斥选项编译为 `Capability(workflow.decision.request, {"question":"<self-contained current-step question>","options":[{"label":"<option-label>","description":"<impact or tradeoff>"}],"allowFreeform":false})`；示例只展示单项形状，真实调用需带齐本步骤列出的选项，不得回退到平台专属提问工具。
+> 本文写“结构化决策”时，必须提交当前步骤的完整问题与 2–3 个互斥选项。
+
+<!-- nocode:platform claude -->
+计划使用 `TaskCreate` / `TaskUpdate`，决策使用 `AskUserQuestion`；handoff 使用 `Skill(nocode:pd-ix)`，评审使用 `Skill(nocode:reviewing)`。
+<!-- /nocode:platform -->
+
+<!-- nocode:platform codex -->
+计划使用 `update_plan`，决策使用 `request_user_input`；handoff 使用 `$pd-ix`，评审使用 `$reviewing`。
+<!-- /nocode:platform -->
 
 # prd — 收敛成产品需求文档
 
@@ -68,16 +76,12 @@ Task 9: 保存
   Gate: 文件保存 + 提示下一步
 
 Task 10: 硬交接 — 调用下一步 skill
-  Sub-steps: 报告 PRD 完成 → 按需求形态建议：涉及界面 → 调 Capability(workflow.skill.invoke, {"skill":"pd-ix","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})（之后可续 pd-vd）；纯后端 / 无界面 → 进 devflow 开发流 → 等用户拍板
+  Sub-steps: 报告 PRD 完成 → 按需求形态建议：涉及界面 → 调用 pd-ix 并传入完整上下文信封（之后可续 pd-vd）；纯后端 / 无界面 → 进 devflow 开发流 → 等用户拍板
   Gate: 用户拍板进入下一阶段（这一步不勾，PRD 不算收尾）
   metadata: {handoff: true}（供防跳步 Hook B 识别交接 task）
 ```
 
-调用时把上面**每一条** Task 编译成一个稳定 item：`id` 固定、`subject` 为标题、`description` 完整包含 Sub-steps + Gate、初始 `status=pending`，仅最后一项设置 `handoff`。不得只改名后继续依赖平台 task 工具，也不得传空 items：
-
-`Capability(workflow.plan.create, {"items":[{"id":"<stable-task-id>","subject":"<task-title>","description":"<complete Sub-steps and Gate>","status":"pending","handoff":"<final-item-only; otherwise omit>"}]})`
-
-示例只展示单项形状；真实调用必须包含本段清单的全部 items。保存返回的 `planRef`。每次状态变化都用 `Capability(workflow.plan.update, {"planRef":"<planRef>","items":[{"id":"<same-stable-id>","subject":"<same-title>","description":"<same-complete-description>","status":"<pending|in_progress|completed>","handoff":"<preserve-final-item-handoff; otherwise omit>"}]})` 提交**完整快照**（示例仍只展示单项形状）；每次 update 必须原样保留最终 item 的 `handoff`，其它 item 继续省略该字段，不得发送单项 patch。
+调用时把上面**每一条** Task 建成稳定计划项，不得提交空计划。每次状态变化都使用上方平台原生计划工具提交稳定顺序的完整状态；Codex 同时最多一个 `in_progress`。
 
 每完成一个标 done。
 
@@ -333,7 +337,7 @@ DDD 域划分的正式规格，被 §4 的流程图引用。每个域围绕一�
 
 ### Step 7a: prd-review（有异议升档）
 
-用户确认前做 PRD 评审：Read `references/prd-review.md`（PRD 8 维度）拿维度，然后 `Capability(workflow.skill.invoke, {"skill":"reviewing","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"pd-prd","restate":"<confirmed-restate-or-omit>","artifacts":["<absolute-prd-path>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"},"payload":{"object":{"type":"prd","ref":"<absolute-prd-path>"},"dimensions":["<all-8-prd-review-axes>"],"method":"checklist","contextCapsule":{"facts":["<verified-fact>"],"decisions":["<confirmed-decision>"],"rejectedAlternatives":["<alternative-and-reason>"],"constraints":["<constraint>"],"nonGoals":["<non-goal>"]},"depth":"auto"}}})`，声明：**对象** = PRD；**领域维度** = PRD 8 维度；**方法** = checklist（或让引擎按对象自选）。引擎产 findings + verdict——流程 / 执行者 / 档位 / 升档 / 降级 / 分级全由引擎承载，本节不复述。Critical 必须修复再让用户确认。
+用户确认前做 PRD 评审：Read `references/prd-review.md`（PRD 8 维度）拿维度，然后按上方平台语法调用 reviewing。传入 request、stage=`pd-prd`、PRD 绝对路径、约束和决策，以及业务 payload：对象 = PRD、领域维度 = 全部 8 维、方法 = checklist、完整 Context Capsule、深度 = auto。引擎产 findings + verdict——流程 / 执行者 / 档位 / 升档 / 降级 / 分级全由引擎承载，本节不复述。Critical 必须修复再让用户确认。
 
 ### Step 8: 用户最终确认
 

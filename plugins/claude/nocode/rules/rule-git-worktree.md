@@ -12,6 +12,9 @@ skip: false
 
 # nocode:using-git-worktrees 行为覆盖
 
+创建 worktree 使用 `git worktree add "<absolute-worktree-path>" -b "<BRANCH_NAME>" "<optional-base-ref>"`；创建成功后使用 `EnterWorktree` 进入同一绝对路径。
+
+
 执行 `nocode:using-git-worktrees` skill 时，本文规则覆盖 skill 内默认值。
 若与 skill 内文冲突，**以本规则为准**。
 
@@ -70,14 +73,13 @@ if [ -n "$base_ref" ]; then
     # ahead>0（本地有独有 commit）→ start_point 留空, 走「何时弹问 base」, 不要在此静默基于远程
 fi
 
-# 将已确认的 branch / absolute path / start-point 交给创建 capability。
-Capability(workspace.worktree.create, {"branch":"<BRANCH_NAME>","path":"<absolute-worktree-path>","startPoint":"<optional-base-ref>"})
+# 使用已确认的 branch / absolute path / start-point 创建。
+git worktree add "$worktree_path" -b "$BRANCH_NAME" "${start_point:-HEAD}"
 
 # 记录 freshness base (freshness-check.mjs 最高优先级读此 config, 不随 push -u 漂移)
 [ -n "$base_ref" ] && git -C "$worktree_path" config branch."$BRANCH_NAME".nocode-base "$base_ref"
 
-# 切 cwd 不在此处用 cd——见下文「Worktree 创建后: 切到 worktree 工作目录」:
-# 创建成功后调用 workspace.worktree.enter 进入同一个绝对路径；provider 负责平台差异。
+# 创建成功后按上方平台块进入或绑定同一个绝对路径。
 ```
 
 > 注意：`-b` 后传的仍是**原始** `BRANCH_NAME`（含 `/`），git 分支名本身不变；只有**目录名**做扁平化。
@@ -206,17 +208,17 @@ skill `SKILL.md` 中下列默认行为**全部失效**，按本文执行：
 
 后续所有动作 (cp env / link personal / run setup / verify baseline / git 操作) 都该在 worktree **内**执行, 必须把 cwd 切过去**并让切换持久化**.
 
-### 标准：`workspace.worktree.create` + `workspace.worktree.enter` 两步组合
+### 标准：原生创建 + 平台原生进入
 
 ```
-1. Capability(workspace.worktree.create, {"branch":"<BRANCH_NAME>","path":"<absolute-worktree-path>","startPoint":"<optional-base-ref>"})
-2. Capability(workspace.worktree.enter, {"path":"<absolute-worktree-path>"})
+1. `git worktree add "<absolute-worktree-path>" -b "<BRANCH_NAME>" "<optional-base-ref>"`
+2. Claude 使用原生会话进入；Codex 为后续操作绑定绝对 `workdir`
 ```
 
 为什么必须两步：
 
-- `workspace.worktree.create` 只按业务层给出的绝对路径创建，不隐式切换 session。
-- `workspace.worktree.enter` 只进入已存在的 worktree，不创建、不删除。
+- `git worktree add` 只按业务层给出的绝对路径创建，不隐式切换 session。
+- Claude 原生进入只接受已存在的 worktree，不创建、不删除；Codex 使用显式 workdir。
 - 退出时传主 worktree 的绝对路径；不能用 `.`，否则当前 workspace 身份不明确。
 
 ### 触发
@@ -227,21 +229,15 @@ skill `SKILL.md` 中下列默认行为**全部失效**，按本文执行：
 
 变量沿用「路径推导」段的 `worktree_path`.
 
-**强制动作**：
-
-```
-Capability(workspace.worktree.enter, {"path":"<absolute-worktree-path>"})
-```
-
-Claude provider 可持久化 session cwd；Codex provider 将后续 Workspace 操作绑定到显式 workdir。业务规则只读取统一回执，不自行选择 `cd` 或原生工具。
+**强制动作**：执行文件顶部当前平台对应的进入/绑定指令。Claude 可持久化 session cwd；Codex 将每次后续操作绑定到显式 `workdir`。
 
 ### 不要
 
-- 不要省略路径、传 `.`，或把 enter 当 create；创建和进入是两个独立 capability
+- 不要省略路径、传 `.`，或把进入当创建；创建和进入是两个独立动作
 - 不要把 `git -C "$worktree_path" <cmd>` 当常规用法——偶发 OK, 常态化 cwd 跟参数路径分裂, 容易把主仓 working tree 改坏
 - 不要假设创建会自动切换；创建成功后必须显式进入相同绝对路径
 - 不要切过去后又 cd 回主仓做事——后续动作链 (cp env / link personal / setup / baseline) 应一气在 worktree 内做完
-- 不要在业务层拼平台相关 cwd 前缀；后续调用继续走 Workspace provider 的 active workdir
+- Codex 后续调用不得遗漏绝对 `workdir`
 
 ## Worktree 创建后：调 worktree-setup.mjs 补齐 gitignored 运行物
 
@@ -342,7 +338,7 @@ IDE 的 run/debug 配置目录（VS Code 的 `.vscode/`、JetBrains 的 `.idea/`
 但为了**显式控制 + 跨平台稳健**, 用 teardown verb——它封装"先拆 `.agents-personal` symlink（只删 symlink 自身、target 不动）→ `git worktree remove`"的固定顺序（顺序反了 remove 会因 untracked symlink 拒绝）。销毁前先进入主 worktree 的绝对路径（否则 cwd 卡在被删目录里）：
 
 ```bash
-# 先 Capability(workspace.worktree.enter, {"path":"<absolute-main-worktree-path>"})，再：
+# 先按平台原生方式进入/绑定 `<absolute-main-worktree-path>`，再：
 node "${CLAUDE_PLUGIN_ROOT}/scripts/worktree-setup.mjs" teardown \
     --worktree-path "$worktree_path"
 # remove 被拒绝(有其他 untracked)→ 进 needsAttention, 不自动 --force; 人工判后再处理

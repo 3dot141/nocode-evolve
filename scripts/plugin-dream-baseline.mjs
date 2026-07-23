@@ -8,7 +8,7 @@
 //   key 按分支隔离，不用全局 key —— 避免多 worktree/分支同时跑 /plugin-dream 时互相覆盖 baseline（红军 C7 修复，
 //   与 rule-git-worktree.md 已验证的 branch.<branch>.nocode-base 模式一致）.
 //
-// 监控 Common Core 源、adapter、metadata、compiler 与双 marketplace；plugins/ 是生成物，不作源变化判断。
+// 监控共享源、adapter、metadata、packager 与双 marketplace；plugins/ 是生成物，不作源变化判断。
 //
 // Review 复审 C1 修复：分支名允许包含 `$`/`;` 等 shell 元字符（git check-ref-format 只禁空格/
 // 控制字符等），此前这里用字符串拼接 `branch.${branch}...` 塞进 execSync 的 shell 命令，

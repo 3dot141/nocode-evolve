@@ -5,7 +5,7 @@
 **Tech Stack**: Node.js ESM、`node:test`、Markdown、JSON、Claude Code/Codex 原生工具说明。
 **Design Doc**: `docs/superpowers/specs/3dot141/260723-native-platform-block-packaging-design.md`
 **Test Objectives**: 平台块解析失败可定位；双端原生语法互斥；生成树确定且兼容 `umask=077`；Hook、workflow、Open Design、personal knowledge 和 worktree 代表路径回归；源码和发布物无旧运行时语义。
-**Execution**: pending user selection
+**Execution**: executing
 
 ## Restate 与边界
 
@@ -41,6 +41,7 @@ Out of Scope：
 T1 platform-block parser
  └─ T2 packager integration
      ├─ T3 overlay + permissions + CLI rename
+     │   └─ T3a import migration
      └─ T4 syntax-isolation guard
          └─ T5 workflow tracer slice
              ├─ T6 engineering workflow
@@ -161,7 +162,7 @@ function selectPlatformContent({ sourcePath, content, platform }) {
 
 ## Task 3: 收窄为静态 packager 并修正文件模式 [Size: M]
 
-**描述**: 将 CLI/核心模块改名为 packager，移除 domain registry 输入，按源执行位或显式 overlay 生成文件，并在迁移期保留旧 CLI 兼容包装。
+**描述**: 将机械 CLI/核心模块改名为 packager，按源执行位或显式 overlay 生成文件，并在迁移期把 domain reference 生成隔离成明确的 legacy supplement；旧消费者归零后再删除 supplement。
 
 **文件**:
 
@@ -200,7 +201,7 @@ process.stderr.write('compile.platform.mjs is deprecated; use package.platform.m
 main(process.argv.slice(2));
 ```
 
-仓库内脚本、测试和 AGENTS 在最终切换任务统一改用新命令。
+仓库内脚本、测试和 AGENTS 在最终切换任务统一改用新命令。迁移期 `package.platform.mjs` 可从独立 legacy supplement 取得旧 references，但 `platform-packager.mjs` 不导入或解析 domain registry；Task 14 在消费者归零后删除 supplement。
 
 **验证命令**:
 
@@ -208,6 +209,33 @@ main(process.argv.slice(2));
   预期：在宿主严格 umask 下仍 PASS。
 - `node scripts/package.platform.mjs --check`  
   预期：当前迁移阶段仅报告预期 drift，不出现 registry/provider 读取错误。
+
+## Task 3a: 迁移 packager 模块 import [Size: S]
+
+**描述**: 将仍使用旧 `platform-compiler.mjs` 名称的维护脚本和测试切换到 `platform-packager.mjs`，迁移期旧模块只保留 re-export。
+
+**文件**:
+
+- Modify: `scripts/check-skills.mjs`
+- Modify: `hooks/wiki-read.test.mjs`
+- Modify: `hooks/runtime-entry.test.mjs`
+- Modify: `hooks/context-budget.test.mjs`
+- Modify: `hooks/continuous-learning-exclusion.test.mjs`
+
+**covers**: `P2, C2, C3`
+**依赖**: Task 3
+**HITL / AFK**: AFK
+
+**真实改动**:
+
+所有 import 的模块路径从 `platform-compiler.mjs` 改为 `platform-packager.mjs`；Task 14c 在旧引用归零后删除 re-export 文件。
+
+**验证命令**:
+
+- `rg -n 'platform-compiler\\.mjs' scripts hooks`
+  预期：只剩迁移期 re-export 文件自身和明确的删除断言。
+- `node --test hooks/wiki-read.test.mjs hooks/runtime-entry.test.mjs hooks/context-budget.test.mjs hooks/continuous-learning-exclusion.test.mjs`
+  预期：全部 PASS。
 
 ## Task 4: 建立双平台语法隔离护栏 [Size: S]
 
@@ -735,7 +763,7 @@ Skill handoff 改成直接点名 `Skill(nocode:dev-build)`；若平台没有显�
 
 ## Task 14: 删除 domain registry、contracts 与 workflow state [Size: M]
 
-**描述**: 在消费者归零后物理删除 capability/provider/domain runtime，并把测试改为禁止旧架构复生。
+**描述**: 在消费者归零后物理删除 capability/provider/domain runtime 与 package CLI 的 legacy supplement，并把测试改为禁止旧架构复生。
 
 **文件**:
 
@@ -1042,5 +1070,5 @@ smoke 记录六类场景的 `platform`、`version`、`scenario`、`result`、`ev
 - [x] 无环：依赖图无环。
 - [x] checkpoint：跨模块接口或删除后立即插入，且不超过连续三个迁移 task。
 - [x] 零占位符：核心 parser、原生平台块、禁止模式和版本均给出真实内容；批量迁移使用已确定的规范块。
-- [ ] 用户确认计划。
-- [ ] 用户选择 `subagent-lite`、`subagent-full` 或 `executing`。
+- [x] 用户确认计划。
+- [x] 用户选择 `executing`。

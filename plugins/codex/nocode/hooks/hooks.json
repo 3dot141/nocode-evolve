@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${PLUGIN_ROOT}/skills/using-nocode/scripts/runtime-entry.mjs\" -- node \"${PLUGIN_ROOT}/skills/using-nocode/scripts/providers/codex-plugin-data/scripts/entry.mjs\" -- node \"${PLUGIN_ROOT}/hooks/session-open.mjs\""
+            "command": "node \"${PLUGIN_ROOT}/runtime/plugin-data-entry.mjs\" -- node \"${PLUGIN_ROOT}/hooks/session-open.mjs\""
           },
           {
             "type": "command",
@@ -31,10 +31,6 @@
           {
             "type": "command",
             "command": "bash \"${PLUGIN_ROOT}/hooks/inject-nocode.sh\" model-about 6"
-          },
-          {
-            "type": "command",
-            "command": "bash \"${PLUGIN_ROOT}/hooks/inject-nocode.sh\" model-about 7"
           },
           {
             "type": "command",

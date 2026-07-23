@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-07-23T15:19:03+08:00",
+  "client": {
+    "name": "Codex",
+    "version": "current desktop session; exact build not probed"
+  },
+  "plugin": {
+    "name": "nocode",
+    "version": "17.0.0",
+    "marketplace": "nocode-market"
+  },
+  "artifact": {
+    "path": "plugins/codex/nocode",
+    "packageDriftCheck": "passed",
+    "platformIsolationCheck": "passed"
+  },
+  "installedArtifactStatus": "not_installed",
+  "overallStatus": "static_pass_interactive_pending",
+  "checks": {
+    "normalQuestionWithoutAgent": {
+      "status": "pending",
+      "blocker": "Requires installing nocode 17.0.0 and restarting the Codex App."
+    },
+    "parallelAgentTask": {
+      "status": "pending",
+      "staticEvidence": "Generated Codex skills call spawn_agent/wait_agent/followup_task directly and exclude Claude task tool names.",
+      "blocker": "The current Codex process has not reloaded the newly built plugin."
+    },
+    "planUpdate": {
+      "status": "pending",
+      "staticEvidence": "Generated Codex workflows call update_plan directly without Capability routing.",
+      "blocker": "The current Codex process has not reloaded the newly built plugin."
+    },
+    "userDecision": {
+      "status": "pending",
+      "staticEvidence": "Generated Codex workflows call request_user_input directly.",
+      "blocker": "The current Codex process has not reloaded the newly built plugin."
+    },
+    "hookInterception": {
+      "status": "partial",
+      "evidence": "The generated Codex hook entrypoints, SessionStart context injection, and PreToolUse behavior pass the repository integration suite."
+    },
+    "openDesign": {
+      "status": "partial",
+      "evidence": "The packaged Open Design launcher and generated MCP configuration pass launcher and package regression tests; interactive model invocation remains pending."
+    }
+  },
+  "secretsRecorded": false
+}

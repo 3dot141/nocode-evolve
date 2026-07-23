@@ -4,6 +4,10 @@ description: ".agents-personal/ 的统一写入层（wiki + rules + AGENTS.md）
 argument-hint: "[wiki|rules|agents] [optional-content-description]"
 ---
 
+
+本文所说“调用 `<skill>` Skill”使用 `$<skill>`；“结构化决策”使用 `request_user_input`。
+
+
 # /personal-distill：.agents-personal/ 写入
 
 统一管理 `.agents-personal/` 的所有写入操作——wiki 知识沉淀、rules 指令写入、AGENTS.md 变量/分节更新。
@@ -36,7 +40,7 @@ distill 传入 `arguments.payload.candidates` 结构化候选列表，每个候�
 
 ### Step 0: 写入前检查
 
-调 `Capability(workflow.skill.invoke, {"skill":"personal-lint","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})` 做健康检查。结果附在最终报告底部。error 不阻断写入（用户可选先修复或继续），但结论必须明确指出。
+调用 `personal-lint` Skill，传入 `arguments={"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}` 做健康检查。结果附在最终报告底部。error 不阻断写入（用户可选先修复或继续），但结论必须明确指出。
 
 `.agents-personal/` 不存在 → 报 "未初始化" + 建议 `/personal-init`，停。
 
@@ -142,7 +146,7 @@ tags: []
 
 #### 整合判断决策树
 
-对每个 wiki 候选，先普通 Read 控制文件 `wiki/index.md`；需要核对已有 `pages/`/`draft/` 正文时用 `Capability(personal-knowledge.page.read, {"sessionId":"<current-session-id>","path":"<wiki-page-path>"})`，再判与已有页关系：
+对每个 wiki 候选，先普通 Read 控制文件 `wiki/index.md`；需要核对已有 `pages/`/`draft/` 正文时用 `node "${PLUGIN_ROOT}/scripts/wiki-read.mjs" --project-root "$PWD" --path "<wiki-page-path>" --session-id "<current-session-id>"`，再判与已有页关系：
 
 ```
 ┌─ 强相关 + 补充（不推翻原有决策）       → 融合进该页

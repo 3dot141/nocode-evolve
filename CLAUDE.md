@@ -18,7 +18,7 @@
 只要改动了插件业务源码、平台适配器或运行时文件，就视为插件更新，必须更新版本：
 
 - 范围：`hooks/`、`model/`、`rules/`、`skills/`、`agents/`、`commands/`、`core/`、`adapters/`、`scripts/` 中参与插件运行或生成的文件，以及 `.mcp.json` 等平台运行时配置。
-- 操作：编辑版本单源 `plugin/metadata.json` 的 `version`，按 SemVer 升级，再运行 `node scripts/compile.platform.mjs` 生成两个平台发布物，并把源码、版本与生成物包含在同一个 commit 里：
+- 操作：编辑版本单源 `plugin/metadata.json` 的 `version`，按 SemVer 升级，再运行 `node scripts/package.platform.mjs` 生成两个平台发布物，并把源码、版本与生成物包含在同一个 commit 里：
   - **patch**：bug fix / 文案修订
   - **minor**：新增 hook / skill / 兼容性增强
   - **major**：破坏性变更（路径改名、规则语义反转等）
@@ -32,7 +32,7 @@
 
 - **触发路由**（catalog 里的一行）：改对应 `rules/rule-<id>.md` 顶部 frontmatter（`name` / `description` / `skip`，新增规则则新建文件）→ 跑 `node scripts/compile.rule.js` 重新生成 `model/agent-rule-catalog-*.md`
 - **PreToolUse 硬拦截**（Bash 命令级拦截，与上面那条完全独立）：改 `scripts/compile.hooks.js` 内硬编码的规则数组 → 跑 `node scripts/compile.hooks.js` 重新生成 `hooks/pretooluse-rules.json`
-- 一致性由 SessionStart 的 `node scripts/compile.rule.js --check` + `node scripts/compile.hooks.js --check` 兜底报警（漂移只 warn 不阻断 session）；修改后还要运行 `node scripts/compile.platform.mjs` 同步双平台发布物
+- 一致性由 SessionStart 的 `node scripts/compile.rule.js --check` + `node scripts/compile.hooks.js --check` 兜底报警（漂移只 warn 不阻断 session）；修改后还要运行 `node scripts/package.platform.mjs` 同步双平台发布物
 - 测试：`node --test 'hooks/*.test.mjs'`
 
 ### 4. vendor 同步（commit 前）
@@ -44,7 +44,7 @@ commit 前跑一次确保一致：
 ```bash
 node scripts/vendor-sync.mjs --check   # 检查是否一致，不一致 exit 1
 node scripts/vendor-sync.mjs           # 执行同步（copy/extract/remove）
-node scripts/compile.platform.mjs --check # 检查 Claude/Codex 发布物是否与源码一致
+node scripts/package.platform.mjs --check # 检查 Claude/Codex 发布物是否与源码一致
 ```
 
 - 上游更新时：替换 `vendor/superpowers/` 内容 → 更新 `vendor-integration.json` 的 upstream 字段 → 跑 `vendor-sync.mjs`

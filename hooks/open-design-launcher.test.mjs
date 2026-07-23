@@ -5,7 +5,7 @@ import path from 'node:path';
 import { test } from 'node:test';
 import {
   OpenDesignLaunchError, launchOpenDesign, resolveOpenDesignLaunch,
-} from '../core/domains/design/providers/open-design/scripts/launch.mjs';
+} from '../scripts/open-design-launch.mjs';
 
 function fixture(t, { layout = true, namespace = `test-${process.pid}-${Date.now()}` } = {}) {
   const home = mkdtempSync(path.join(os.tmpdir(), 'open-design-home-'));

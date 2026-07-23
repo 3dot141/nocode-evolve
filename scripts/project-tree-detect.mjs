@@ -43,7 +43,7 @@ export function detectGitRepo(dirPath) {
 
 // findUpperProjectRoot(dirPath) —— "上层项目根"推断算法：
 //   从 dirPath 逐级向上找最近的 .git 目录，找到即为该仓库根；
-//   一路到文件系统根都没有 .git → 退化为 dirPath 本身（AskUserQuestion 的两个候选在这种情况下等价）。
+//   一路到文件系统根都没有 .git → 退化为 dirPath 本身（两个用户候选在这种情况下等价）。
 export function findUpperProjectRoot(dirPath) {
   const toplevel = gitToplevel(dirPath);
   if (toplevel) return toplevel;

@@ -3,7 +3,10 @@ name: pd-research
 description: Use for product discovery, market/competitor research, or exploring a vague problem before scope is fixed. Not for technical solution comparison or work with an already-defined PRD.
 ---
 
-> 本文写“结构化决策”时，必须把当前步骤的完整问题与 2–3 个互斥选项编译为 `Capability(workflow.decision.request, {"question":"<self-contained current-step question>","options":[{"label":"<option-label>","description":"<impact or tradeoff>"}],"allowFreeform":false})`；示例只展示单项形状，真实调用需带齐本步骤列出的选项，不得回退到平台专属提问工具。
+> 本文写“结构化决策”时，必须提交当前步骤的完整问题与 2–3 个互斥选项。
+
+计划使用 `TaskCreate` / `TaskUpdate`，决策使用 `AskUserQuestion`；handoff 使用 `Skill(nocode:pd-prd)`。
+
 
 # research — 发散探索问题空间
 
@@ -55,16 +58,12 @@ Task 6: 保存
   Gate: 文件保存 + 提示下一步
 
 Task 7: 硬交接 — 调用下一步 skill
-  Sub-steps: 报告调研完成（Go/No-Go 结论）→ 建议写 PRD → 等用户拍板后调 Capability(workflow.skill.invoke, {"skill":"pd-prd","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})
+  Sub-steps: 报告调研完成（Go/No-Go 结论）→ 建议写 PRD → 等用户拍板后调用 pd-prd 并传入完整上下文信封
   Gate: 用户拍板进入 PRD（这一步不勾，Research 不算收尾）
   metadata: {handoff: true}（供防跳步 Hook B 识别交接 task）
 ```
 
-调用时把上面**每一条** Task 编译成一个稳定 item：`id` 固定、`subject` 为标题、`description` 完整包含 Sub-steps + Gate、初始 `status=pending`，仅最后一项设置 `handoff`。不得只改名后继续依赖平台 task 工具，也不得传空 items：
-
-`Capability(workflow.plan.create, {"items":[{"id":"<stable-task-id>","subject":"<task-title>","description":"<complete Sub-steps and Gate>","status":"pending","handoff":"<final-item-only; otherwise omit>"}]})`
-
-示例只展示单项形状；真实调用必须包含本段清单的全部 items。保存返回的 `planRef`。每次状态变化都用 `Capability(workflow.plan.update, {"planRef":"<planRef>","items":[{"id":"<same-stable-id>","subject":"<same-title>","description":"<same-complete-description>","status":"<pending|in_progress|completed>","handoff":"<preserve-final-item-handoff; otherwise omit>"}]})` 提交**完整快照**（示例仍只展示单项形状）；每次 update 必须原样保留最终 item 的 `handoff`，其它 item 继续省略该字段，不得发送单项 patch。
+调用时把上面**每一条** Task 建成稳定计划项，不得提交空计划。每次状态变化都使用上方平台原生计划工具提交稳定顺序的完整状态；Codex 同时最多一个 `in_progress`。
 
 每完成一个标 done。
 

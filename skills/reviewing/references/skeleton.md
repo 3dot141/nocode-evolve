@@ -1,6 +1,6 @@
 # reviewing 流程骨架 — 通用 review 的"怎么走一遍"
 
-> 这是 `reviewing` 引擎的**流程骨架**。引擎（被 `[provider-neutral skill boundary]` 调用）按本文走流程；调用方只传"评审维度"（现由引擎用于识别场景，见 §2），不 Read 本文。骨架管"怎么走"，方法库管"用什么打法"，findings 契约管"产出长什么样"。
+> 这是 `reviewing` 引擎的**流程骨架**。引擎（被 `平台原生 Skill 调用` 调用）按本文走流程；调用方只传"评审维度"（现由引擎用于识别场景，见 §2），不 Read 本文。骨架管"怎么走"，方法库管"用什么打法"，findings 契约管"产出长什么样"。
 >
 > **单一源契约（多对一）**：review 怎么执行——档位深度（§1）、升档判据（§1a）、场景/视角/方法三层模型（§3）、主路执行方式（§4.0：档位=执行位数量与身份，所有场景打包进执行位统一处理）、Verify（§4.7：场景内部独立第三方逐条判定）、异源派发与降级链（§4.2）——**只在本文定义**。任何细则 / 调用方 skill / rule 涉及 review，一律写「按 reviewing skeleton 流程走」+ 自己的领域维度 / 材料 / Gate，**不复述执行机制**（模型、升档信号、降级链等不出现在本文以外）。要改默认行为（换 reviewer 模型、改升档阈值）**只改本文**——别处是引用不是副本，改了本文就全生效。
 >
@@ -156,7 +156,7 @@ review 不是越重越好。先按**评审对象的风险 + 可逆性**定深度
 **Codex 单审档 —— 1 次 Codex 调用顺序过全部场景**：主会话多半是工件作者，自己审自己看不出自己的假设错，盲区结构性存在——把整份打包任务派给 Codex（经 §4.2 `rule-codex-review` 通道）：
 
 ```
-[provider-neutral workflow boundary]
+平台原生 agent/plan/decision 工具
 ```
 
 - **prompt 同样吃 §4.1 CLAIM 剥离**：只传对象原文 + 约束 + 场景清单 + 中立事实包，不传作者的预期结论 / "我觉得没问题的地方"——Codex 单审的价值就是不带作者视角、且异源。
@@ -199,7 +199,7 @@ Capsule 不装：
 
 异源攻击/审查**统一走 `rule-codex-review`**（`{CLAUDE_PLUGIN_ROOT}/rules/rule-codex-review.md`），不另起通道：
 
-1. **不预先探活，直接派发**：决策/选型类用 `task`（只读，传 CLAIM 剥离后的对象 + 约束 + 场景清单）；对应一段具体 diff 用 `adversarial-review --wait`；纯缺陷查代码用 `review`。**实际调用派 subagent 执行**（`[provider-neutral workflow boundary]` 包一层 Bash），不在主 agent 直接 Bash 跑这条命令——原始输出别堆进主 agent context。具体派发模板见 `rule-codex-review.md`。
+1. **不预先探活，直接派发**：决策/选型类用 `task`（只读，传 CLAIM 剥离后的对象 + 约束 + 场景清单）；对应一段具体 diff 用 `adversarial-review --wait`；纯缺陷查代码用 `review`。**实际调用派 subagent 执行**（`平台原生 agent/plan/decision 工具` 包一层 Bash），不在主 agent 直接 Bash 跑这条命令——原始输出别堆进主 agent context。具体派发模板见 `rule-codex-review.md`。
 2. **降级**：subagent 返回报错（未装 / 未登录 / 其他运行时错误）→ **不静默跳过**，fallback 改派 general-purpose subagent 单跑整份打包任务（prompt 同样 CLAIM 剥离 + Context Capsule）+ 明说"codex 调用失败，fallback 至 subagent 独立审查"，独立性声明标"同模型（降级）"而非"异源"。subagent 也不可用（极端环境）才由主会话自评替代，独立性标"无"并明说。**不许主会话"自演红军/独立路"替代隔离执行**——自攻自手下留情，隔离上下文是独立性的最低保障。
 
 > codex 是**异源独立性**的来源；它不可用时降级不阻断，但必须在 verdict 里如实标独立性档位下降。

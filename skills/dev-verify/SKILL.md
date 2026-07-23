@@ -64,16 +64,28 @@ Task 6: 验收逐条核对（Step 6）
   Gate: 逐条通过，任一 ❌ 回 Build
 
 Task 7: 硬交接 — 调用下一步 skill
-  Sub-steps: 按 Exit Gate 硬交接报告 Verify 完成（验收通过率 + 证据）→ 建议进 Review → 等用户拍板后调 Capability(workflow.skill.invoke, {"skill":"dev-review","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})
+  Sub-steps: 按 Exit Gate 硬交接报告 Verify 完成（验收通过率 + 证据）→ 建议进 Review → 等用户拍板后按下方平台指令调用 Review，传入当前 request、stage、restate、artifacts、constraints、计划文件路径和用户 decision
   Gate: 用户拍板进入 Review（这一步不勾，Verify 不算收尾）
   metadata: {handoff: true}（供防跳步 Hook B 识别交接 task）
 ```
 
-调用时把上面**每一条** Task 编译成一个稳定 item：`id` 固定、`subject` 为标题、`description` 完整包含 Sub-steps + Gate、初始 `status=pending`，仅最后一项设置 `handoff`。不得只改名后继续依赖平台 task 工具，也不得传空 items：
+<!-- nocode:platform claude -->
+Review handoff 使用 `Skill(nocode:dev-review)`。
+<!-- /nocode:platform -->
 
-`Capability(workflow.plan.create, {"items":[{"id":"<stable-task-id>","subject":"<task-title>","description":"<complete Sub-steps and Gate>","status":"pending","handoff":"<final-item-only; otherwise omit>"}]})`
+<!-- nocode:platform codex -->
+Review handoff 使用 `$dev-review`。
+<!-- /nocode:platform -->
 
-示例只展示单项形状；真实调用必须包含本段清单的全部 items。保存返回的 `planRef`。每次状态变化都用 `Capability(workflow.plan.update, {"planRef":"<planRef>","items":[{"id":"<same-stable-id>","subject":"<same-title>","description":"<same-complete-description>","status":"<pending|in_progress|completed>","handoff":"<preserve-final-item-handoff; otherwise omit>"}]})` 提交**完整快照**（示例仍只展示单项形状）；每次 update 必须原样保留最终 item 的 `handoff`，其它 item 继续省略该字段，不得发送单项 patch。
+调用时把上面**每一条** Task 建成稳定计划项，不得传空计划：
+
+<!-- nocode:platform claude -->
+使用 `TaskCreate` 逐项创建全部计划项并保存 task id；状态变化时使用 `TaskUpdate` 更新对应项。
+<!-- /nocode:platform -->
+
+<!-- nocode:platform codex -->
+使用 `update_plan` 提交全部计划项；每次状态变化都提交完整列表，保持稳定顺序，且同时最多一个 `in_progress`。
+<!-- /nocode:platform -->
 
 每完成一个标 done。
 
@@ -96,7 +108,7 @@ Task 7: 硬交接 — 调用下一步 skill
 
 ### Step 3: E2E / Browser（有 UI 变更时）
 
-**先读 UI 设计**：Read `.ix.md`（交互流 + IA）+ `.vd.md`（视觉方向 + 覆盖矩阵 + testid 命名）+ prototype。`[design-receipt: <path>]` 指向完整 receipt 时，用 `Capability(design.artifact.read, {"artifactRef":{"provider":"open-design","workspace":{"type":"project","ref":"<workspace-ref>"},"artifact":{"kind":"prototype","localPath":"<local-path>","previewUrl":null},"degraded":false,"degradedFrom":null,"warnings":[]}})` 物化；需要人工核验时用 `Capability(design.preview.open, {"artifactRef":{"provider":"open-design","workspace":{"type":"project","ref":"<workspace-ref>"},"artifact":{"kind":"prototype","localPath":"<local-path>","previewUrl":null},"degraded":false,"degradedFrom":null,"warnings":[]}})`。本地 prototype 则直接读 HTML。E2E 验证的基准是 UI 设计，不是"看起来能用"。
+**先读 UI 设计**：Read `.ix.md`（交互流 + IA）+ `.vd.md`（视觉方向 + 覆盖矩阵 + testid 命名）+ prototype。设计记录包含 Open Design project/file 时，用其原生 `get_artifact` 回读完整产物；需要人工核验时打开记录中的真实 `previewUrl`。Open Design 不可用或产物是本地 prototype 时，直接读取本地 HTML 并使用当前平台可用的浏览器验证工具。E2E 验证的基准是 UI 设计，不是"看起来能用"。
 
 **有 pd-vd 产出时直接复用**：
 - `.vd.md` 的覆盖矩阵（页面 + 交互）→ E2E 验收清单，逐条核对实现是否和设计一致

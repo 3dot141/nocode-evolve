@@ -43,7 +43,7 @@ export function renderCodexContent({ targetPath, content, contextPlan = new Map(
       .replaceAll('__NOCODE_PLATFORM__', 'codex')
       .replaceAll(
         '__NOCODE_CONTEXT_BUDGET__',
-        '${PLUGIN_ROOT}/skills/using-nocode/scripts/providers/codex-hooks/context-budget.json',
+        '${PLUGIN_ROOT}/runtime/context-budget.json',
       );
   }
   if (targetPath === 'hooks/hooks.json') {
@@ -70,7 +70,6 @@ export function renderCodexContent({ targetPath, content, contextPlan = new Map(
         for (const hook of group.hooks || []) {
           const argv = hook.command
             .replaceAll('${CLAUDE_PLUGIN_ROOT}', '${PLUGIN_ROOT}')
-            .replaceAll('/providers/claude-hooks/', '/skills/using-nocode/scripts/providers/codex-hooks/')
             .trim().split(/\s+/);
           if (argv.some((part) => !/^[A-Za-z0-9_./${}-]+$/.test(part))) {
             throw new Error(`unsupported hook command token: ${hook.command}`);
@@ -78,9 +77,7 @@ export function renderCodexContent({ targetPath, content, contextPlan = new Map(
           const command = argv.map((part) => part.includes('${PLUGIN_ROOT}') ? `"${part}"` : part);
           hook.command = argv.at(-1) === '${PLUGIN_ROOT}/hooks/session-open.mjs'
             ? [
-              'node', '"${PLUGIN_ROOT}/skills/using-nocode/scripts/runtime-entry.mjs"',
-              '--', 'node', '"${PLUGIN_ROOT}/skills/using-nocode/scripts/providers/codex-plugin-data/scripts/entry.mjs"',
-              '--',
+              'node', '"${PLUGIN_ROOT}/runtime/plugin-data-entry.mjs"', '--',
               ...command,
             ].join(' ')
             : command.join(' ');

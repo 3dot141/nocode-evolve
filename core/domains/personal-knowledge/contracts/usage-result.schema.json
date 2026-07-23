@@ -1,7 +1,0 @@
-{
-  "$id": "personal-knowledge.usage-result",
-  "type": "object",
-  "required": ["recorded"],
-  "properties": { "recorded": { "type": "boolean" }, "count": { "type": ["integer", "null"] }, "warning": { "type": ["string", "null"] } },
-  "additionalProperties": false
-}

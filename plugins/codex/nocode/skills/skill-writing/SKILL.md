@@ -5,6 +5,9 @@ description: "Use when creating, restructuring, simplifying, testing, or optimiz
 
 # Skill Writing
 
+
+需要隔离 baseline 时使用 `spawn_agent`，保存 agent id 并用 `wait_agent` 等待终态；需要修正输入时用 `followup_task`，需要终止时用 `interrupt_agent`。平台未明确报告不同模型时，标记“未证明跨模型”。
+
 把模糊的 skill 诉求，先聊成清晰骨架，再逐块填成一个想清楚了的 skill；重型验证（baseline / eval / 打包）按需取用。
 
 **核心原则**：需求没聊清、骨架没浮现，不许动手写。一个解错问题的 skill，写得再漂亮也是负资产。
@@ -20,7 +23,7 @@ description: "Use when creating, restructuring, simplifying, testing, or optimiz
 
 **Iron Law 是这把尺的实证版**：拿不准答案时不许猜——跑 baseline 去*观察*那个坏行为（`references/baseline.md`）。行为纪律型内容必须实测答尺；轻量事实型内容可以推理答尺。
 
-需要交叉模型 baseline 时，由本 skill 执行 `Capability(workflow.execute, {"tasks":[{"id":"cross-model-baseline","objective":"<完整场景 prompt，与主路相同，不加载待测 skill；包含输入、失败判据和输出格式>","profile":"review.cross-model-preferred","dependsOn":[],"writeScope":"none","timeoutMs":600000,"continueOnError":false}],"maxParallel":1,"fallbackPolicy":"inline"})`。返回 `running` 时用 `Capability(workflow.wait, {"executionId":"<execution-id>","timeoutMs":600000})` 等到终态，再用 `Capability(workflow.collect, {"executionId":"<execution-id>"})` 读取 `tasks[0].result` 和 `reviewMode`。`reviewMode` 不是 `cross-model` 时必须如实标记降级。
+需要隔离 baseline 时，按上方平台语法派发一个只读 agent。objective 必须包含完整场景 prompt、与主路相同的输入、失败判据和输出格式，并明确不加载待测 skill。只消费 agent 的终态结果；只有平台明确证明使用不同模型时才称“跨模型 baseline”，否则标记“同模型隔离，未证明跨模型”。
 
 ## Entry Routing
 
@@ -66,7 +69,7 @@ description: "Use when creating, restructuring, simplifying, testing, or optimiz
 - **证必要**：过那把尺；行为纪律型 → baseline 实测（`references/baseline.md`）
 - **验证**：改动大 / 关键 skill → eval 定量（`references/eval.md`）；轻改 → 自审即可（自审清单在 `references/writing-styles.md` 尾部）
 
-需要交叉模型 baseline 时，把 reference 里选定的场景编译为单任务 graph：`Capability(workflow.execute, {"tasks":[{"id":"cross-model-baseline","objective":"Run this complete baseline scenario without loading the skill; return structured observations and failed criteria: <scenario-prompt-input-failure-criteria-output-format>","profile":"review.cross-model-preferred","dependsOn":[],"writeScope":"none","timeoutMs":600000,"continueOnError":false}],"maxParallel":1,"fallbackPolicy":"inline"})`。receipt 若为 `running`，反复调用 `Capability(workflow.wait, {"executionId":"<execution-id>","timeoutMs":600000})` 到终态，再调用 `Capability(workflow.collect, {"executionId":"<execution-id>"})`；只消费 `tasks[0].result`，并如实记录 `reviewMode`。不得直接启动平台 CLI，不得把 opaque `resultRef` 当成结果正文。
+需要隔离 baseline 时，把 reference 里选定场景组成一个自足 objective：`Run this complete baseline scenario without loading the skill; return structured observations and failed criteria: <scenario-prompt-input-failure-criteria-output-format>`。按上方平台语法派发并等待终态，只消费终态正文。不得直接启动平台 CLI；派发确认不是结果。
 
 写作硬约束（始终生效）：
 

@@ -3,7 +3,10 @@ name: dev-land
 description: "Use when implementation is complete and you need to land the work — merge locally, create a PR, keep, or discard. Use when devflow routes to Land stage, or when user says \"land/着陆/提PR/收尾/合并/创建PR/完成worktree/discard worktree/PR合了/流转任务\". Not for: PR review (dev-review), work-in-progress pushes, or git queries."
 ---
 
-> 本文写“结构化决策”时，必须把当前步骤的完整问题与 2–3 个互斥选项编译为 `Capability(workflow.decision.request, {"question":"<self-contained current-step question>","options":[{"label":"<option-label>","description":"<impact or tradeoff>"}],"allowFreeform":false})`；示例只展示单项形状，真实调用需带齐本步骤列出的选项，不得回退到平台专属提问工具。
+> 本文写“结构化决策”时，必须提交当前步骤的完整问题与 2–3 个互斥选项。
+
+结构化决策使用 `AskUserQuestion`；合并后项目流转使用 `Skill(nocode:lark-project)`。
+
 
 # land — 3 步着陆，干净收场
 
@@ -197,7 +200,7 @@ PR body 回链：Requirements Addressed（引用 Define 的 restate）+ Verifica
 
 ### 合并后流转
 
-合并后调 `Capability(workflow.skill.invoke, {"skill":"lark-project","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})` 把任务流转到全景计划定好的目标状态。详见 `references/post-merge.md`。
+合并后按上方平台语法调用 lark-project，传入 request/stage/restate/artifacts/constraints/decision，把任务流转到全景计划定好的目标状态。连接器不可用时明确报告缺失能力，不伪造完成。详见 `references/post-merge.md`。
 
 - 前置：有任务号 + FeishuProjectMcp 可用。不满足 → 跳过，报告原因
 - 典型映射：缺陷/任务类 `组员开发 → 研发已改待BUILD`

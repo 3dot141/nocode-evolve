@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT}/skills/using-nocode/scripts/providers/claude-plugin-data/scripts/entry.mjs\" -- node \"${CLAUDE_PLUGIN_ROOT}/hooks/session-open.mjs\""
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/runtime/plugin-data-entry.mjs\" -- node \"${CLAUDE_PLUGIN_ROOT}/hooks/session-open.mjs\""
           },
           {
             "type": "command",

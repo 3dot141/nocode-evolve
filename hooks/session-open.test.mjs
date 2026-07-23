@@ -48,10 +48,7 @@ test('generated Claude and Codex hook chains open fresh state without a Stop gua
         ? { CLAUDE_PLUGIN_ROOT: pluginRoot, CLAUDE_PLUGIN_DATA: dataRoot }
         : { PLUGIN_ROOT: pluginRoot, PLUGIN_DATA: dataRoot }),
     };
-    const providerEntry = join(pluginRoot, 'skills', 'using-nocode', 'scripts', 'providers', `${platform}-plugin-data`, 'scripts', 'entry.mjs');
-    const prefix = platform === 'claude'
-      ? [process.execPath, providerEntry, '--']
-      : [process.execPath, join(pluginRoot, 'skills/using-nocode/scripts/runtime-entry.mjs'), '--', process.execPath, providerEntry, '--'];
+    const prefix = [process.execPath, join(pluginRoot, 'runtime/plugin-data-entry.mjs'), '--'];
     const sessionId = `${platform}-fresh-session`;
     const start = spawnSync(prefix[0], [
       ...prefix.slice(1), process.execPath, join(pluginRoot, 'hooks/session-open.mjs'),
@@ -136,5 +133,6 @@ test('generated Codex hook resolves the injector from PLUGIN_ROOT when cwd is th
     assert.equal(result.status, 0, result.stderr);
     return JSON.parse(result.stdout).systemMessage;
   }).join('\n');
-  assert.match(context, /nocode Capability Bootstrap/);
+  assert.match(context, /# 平台原生调用/);
+  assert.match(context, /语义搜索默认由当前会话/);
 });

@@ -4,7 +4,17 @@ description: >-
   Use after pd-ix for visual direction, design systems, high-fidelity prototypes, or prototype iteration/fixes. Not for interaction architecture, technical design, production UI code, or work without an .ix.md.
 ---
 
-> 本文写“结构化决策”时，必须把当前步骤的完整问题与 2–3 个互斥选项编译为 `Capability(workflow.decision.request, {"question":"<self-contained current-step question>","options":[{"label":"<option-label>","description":"<impact or tradeoff>"}],"allowFreeform":false})`；示例只展示单项形状，真实调用需带齐本步骤列出的选项，不得回退到平台专属提问工具。
+> 本文写“结构化决策”时，必须提交当前步骤的完整问题与 2–3 个互斥选项。
+
+<!-- nocode:platform claude -->
+计划使用 `TaskCreate` / `TaskUpdate`，决策使用 `AskUserQuestion`；Skill handoff 使用 `Skill(nocode:pd-ix)`、`Skill(nocode:prototype-verify)`、`Skill(nocode:reviewing)`、`Skill(nocode:devflow)`。
+<!-- /nocode:platform -->
+
+<!-- nocode:platform codex -->
+计划使用 `update_plan`，决策使用 `request_user_input`；Skill handoff 使用 `$pd-ix`、`$prototype-verify`、`$reviewing`、`$devflow`。
+<!-- /nocode:platform -->
+
+Open Design 线直接使用 `create_project`、`start_run`、`get_run`、`get_artifact`；保存原生 project id / run id / previewUrl，不构造统一中间回执。
 
 # pd-vd — 视觉设计
 
@@ -41,7 +51,7 @@ description: >-
 ## Enter Gate
 
 - [ ] pd-vd skill 已加载
-- [ ] `.ix.md` 存在（交互阶段已完成）——无 `.ix.md` 时建议先跑 `Capability(workflow.skill.invoke, {"skill":"pd-ix","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})`
+- [ ] `.ix.md` 存在（交互阶段已完成）——无 `.ix.md` 时按上方平台语法调用 pd-ix
 
 ## 模式分流：全流程 or 迭代
 
@@ -51,7 +61,7 @@ Enter 时检测——**已有 `.vd.md` + 原型，且本次请求是局部修改
 迭代模式（轻路径，带回归网）
 1. workflow.plan.create 轻量版：Task A「迭代: 定位→修改→重验→登记」+ Task B「Handoff」(metadata: {handoff: true})
 2. 定位改动：哪个页面 / 哪个交互（引用交互 ID）
-3. 修改：视觉值只用冻结 tokens；Open Design artifact 用 `Capability(design.artifact.write, {"artifactRef":{"provider":"open-design","workspace":{"type":"project","ref":"<workspace-ref>"},"artifact":{"kind":"prototype","localPath":"<local-path>","previewUrl":null},"degraded":false,"degradedFrom":null,"warnings":[]},"patch":{"brief":"<approved-local-change>"}})` 沿用完整 receipt；行为语义查 .ix.md 行为规格——
+3. 修改：视觉值只用冻结 tokens；Open Design artifact 在原 project id 上用 `start_run` 提交 `<approved-local-change>`，等待 `get_run` 终态后用 `get_artifact` 读取结果；行为语义查 .ix.md 行为规格——
    需要 IX 未定义的行为 → 先回流登记再实现，不就地发明
 4. 重验（修改后必重验）：受影响页面 Phase 1 + 该页相关 Phase 2 场景重跑
    （场景已从行为规格转译，断言判挂）
@@ -93,11 +103,7 @@ Task 6: 保存 + Handoff
   metadata: {handoff: true}（供防跳步 Hook B 识别交接 task）
 ```
 
-调用时把上面**每一条** Task 编译成一个稳定 item：`id` 固定、`subject` 为标题、`description` 完整包含 Sub-steps + Gate、初始 `status=pending`，仅最后一项设置 `handoff`。不得只改名后继续依赖平台 task 工具，也不得传空 items：
-
-`Capability(workflow.plan.create, {"items":[{"id":"<stable-task-id>","subject":"<task-title>","description":"<complete Sub-steps and Gate>","status":"pending","handoff":"<final-item-only; otherwise omit>"}]})`
-
-示例只展示单项形状；真实调用必须包含本段清单的全部 items。保存返回的 `planRef`。每次状态变化都用 `Capability(workflow.plan.update, {"planRef":"<planRef>","items":[{"id":"<same-stable-id>","subject":"<same-title>","description":"<same-complete-description>","status":"<pending|in_progress|completed>","handoff":"<preserve-final-item-handoff; otherwise omit>"}]})` 提交**完整快照**（示例仍只展示单项形状）；每次 update 必须原样保留最终 item 的 `handoff`，其它 item 继续省略该字段，不得发送单项 patch。
+调用时把上面**每一条** Task 建成稳定计划项，不得提交空计划。每次状态变化都使用上方平台原生计划工具提交稳定顺序的完整状态；Codex 同时最多一个 `in_progress`。
 
 每完成一个标 done。
 
@@ -226,7 +232,7 @@ tokens 取值来源
 | | Open Design 线 | 本地 HTML 线 |
 |---|---|---|
 | **落点** | **独立 DS 项目**（与 Step 4 原型项目分离） | `{pd_vd_output}` 目录 |
-| **动作** | `Capability(design.workspace.create, {"projectRoot":"<absolute-project-root>","kind":"design-system","name":"<topic>-design-system"})` 建 DS workspace → `Capability(design.artifact.generate, {"workspaceRef":{"type":"project","ref":"<workspace-ref>"},"kind":"design-system","brief":"<frozen-tokens-components-and-styleguide>","outputDir":"<absolute-pd-vd-output>"})` → 保存完整 receipt | `tokens.css` + components + `styleguide.html` 落盘 |
+| **动作** | `create_project` 建 DS project → `start_run` 传入冻结的 tokens/components/styleguide brief → `get_run` 等终态 → `get_artifact` 读取并落盘；保存 project id | `tokens.css` + components + `styleguide.html` 落盘 |
 | **复用已有** | 已有 DS 项目 → gap analysis 增量推缺口 | 已有代码库 tokens → 提取对齐后落盘冻结快照 |
 
 **交付线 = Open Design ⇒ 设计系统必须落成 DS 项目，设计真源在代码库也不豁免**——推送物是冻结时点快照（标注上游来源 + 冻结日期，单向同步，不构成双主）。tokens 内联进原型文件只解决渲染；DS 面板可浏览、跨项目可绑定、协作可见，靠的是 DS 项目——内联不能替代落点。
@@ -249,13 +255,13 @@ tokens 取值来源
 **Enter Gate:**
 - [ ] Step 3 完成（tokens + components + 样张已冻结，3d 落点完成）
 - [ ] 回查交付线：Open Design / 本地 HTML
-- [ ] Open Design 线：Step 3d 的 DS workspace receipt 完整且可复用
+- [ ] Open Design 线：Step 3d 的 DS project id 已保存且可复用
 
 **Core Actions:**
 
 | | Open Design 线 | 本地 HTML 线 |
 |---|---|---|
-| **怎么出** | `Capability(design.workspace.create, {"projectRoot":"<absolute-project-root>","kind":"prototype","name":"<topic>-prototype"})` → `Capability(design.artifact.generate, {"workspaceRef":{"type":"project","ref":"<workspace-ref>"},"kind":"prototype","brief":"<approved-brief-with-design-system-receipt>","outputDir":"<absolute-pd-vd-output>"})` | 本地写多个 `.html` 文件 |
+| **怎么出** | `create_project` 建 prototype project → `start_run` 传入已批准 brief 与 DS project id → `get_run` 等终态 → `get_artifact` 读取产物 | 本地写多个 `.html` 文件 |
 | **喂什么** | brief = IA + 交互清单 + 场景脚本 + 视觉方向；绑 Step 3d 的 DS 项目（design_system_id）+ 挂 template | IA + 交互清单 + 场景脚本 + 视觉方向 + Step 3 冻结的 tokens/components/样张 |
 | **结构** | 每个独立页面一个文件（含宿主内的嵌入组件）+ 一个组合文件（融合全部主链路页面，JS tab 切换/弹窗） | 每个独立页面一个 `.html`（含宿主内的嵌入组件），多文件之间用 URL 跳转，每个文件内做弹窗 |
 | **产物** | claude.ai 原型项目（记 projectId，与 DS 项目分离） | `{pd_vd_output}` 目录 |
@@ -276,7 +282,7 @@ tokens 取值来源
    - 分析 IA 导航图，找出**连通子图**
    - **连通的页面** → 融合到同一 prototype
    - **孤立页面** → 保留为独立文件
-4. **提交**：所有文件作为一次 `design.artifact.generate`/`design.artifact.write` 操作提交到同一 workspace；只保存领域 receipt，不在业务流程中调用 provider-native 工具
+4. **提交**：所有文件在同一 Open Design project 中用一次 `start_run` 提交，等待终态后保存原生 project id、run id 与 previewUrl
 
 > 展开：并行流程、page-brief 模板、合流策略 → `references/prototype-gen.md`
 
@@ -345,7 +351,7 @@ PRD 路径覆盖的状态必须由下面两个矩阵聚合得出，不能单独�
 
 ### 5b. Playwright 渲染验证（两条线都做）
 
-基于审批通过的测试方案写 `interactions.json`，再调用 `Capability(workflow.skill.invoke, {"skill":"prototype-verify","arguments":{"request":"<prototype-dir> [--interactions interactions.json]","context":{"stage":"pd-vd/Step 5b","restate":"<approved-test-plan>","artifacts":["<materialized-prototype-dir>","<interactions-json-if-present>"],"constraints":["selectors use data-testid"],"planRef":"<current-planRef-or-omit>","decision":"test plan approved"}}})`。Open Design 线先用 `Capability(design.artifact.read, {"artifactRef":{"provider":"open-design","workspace":{"type":"project","ref":"<workspace-ref>"},"artifact":{"kind":"prototype","localPath":"<local-path>","previewUrl":null},"degraded":false,"degradedFrom":null,"warnings":[]}})` 按完整 receipt 物化本地文件；需要人工预览时用 `Capability(design.preview.open, {"artifactRef":{"provider":"open-design","workspace":{"type":"project","ref":"<workspace-ref>"},"artifact":{"kind":"prototype","localPath":"<local-path>","previewUrl":null},"degraded":false,"degradedFrom":null,"warnings":[]}})`。
+基于审批通过的测试方案写 `interactions.json`，再按上方平台语法调用 prototype-verify，传入 prototype 目录、交互文件、已批准方案和 `data-testid` 约束。Open Design 线先用 `get_artifact` 取得本地文件；需要人工预览时直接打开 `get_run` 返回的 previewUrl。
 
 产出：`verify-output/screenshots/` + `verify-report.json`。errors > 0 → 修原型后重跑。
 
@@ -384,7 +390,7 @@ PRD 路径覆盖的状态必须由下面两个矩阵聚合得出，不能单独�
 
 ### 5e. vis-review 评审
 
-按 `references/vis-review.md`（视觉 9 维度 + 档位判据）做视觉评审——Read 它拿维度，然后 `Capability(workflow.skill.invoke, {"skill":"reviewing","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"pd-vd","restate":"<confirmed-restate-or-omit>","artifacts":["<absolute-ix-path> + <absolute-vd-path>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"},"payload":{"object":{"type":"visual-design","ref":"<absolute-ix-path> + <absolute-vd-path>"},"dimensions":["<all-9-vis-review-axes>"],"method":"checklist","contextCapsule":{"facts":["<verified-fact>"],"decisions":["<confirmed-decision>"],"rejectedAlternatives":["<alternative-and-reason>"],"constraints":["<constraint>"],"nonGoals":["<non-goal>"]},"depth":"<full-heavy|iteration-light>"}}})`，声明：**对象** = 设计文档（`.ix.md` + `.vd.md`）；**领域维度** = vis-review 视觉 9 维度；**方法** = checklist（或让引擎按对象自选）；**档位** = 全流程默认重档（9 维度全量），迭代模式单页局部修改 → 轻档。引擎按 reviewing 流程产 findings + verdict——流程 / 执行者 / 升档 / 降级 / 分级全由引擎承载，本节不复述。
+按 `references/vis-review.md`（视觉 9 维度 + 档位判据）做视觉评审——Read 它拿维度，然后按上方平台语法调用 reviewing。传入 `.ix.md` + `.vd.md`、全部 9 个维度、checklist、完整 Context Capsule，以及 `<full-heavy|iteration-light>` 深度。**对象** = 设计文档；**档位** = 全流程默认重档，迭代模式单页局部修改 → 轻档。引擎按 reviewing 流程产 findings + verdict。
 
 本步把以下材料连同 `.ix.md` / `.vd.md` 一起喂给 vis-review 评审：
 - 5c/5d 矩阵完整性
@@ -424,7 +430,7 @@ verify-report.json errors = 0 才过 Gate。
 1. `.vd.md` → `{pd_vd_output}`（按 `references/vd-doc-template.md`）
 2. 原型：Open Design 线记 projectId（原型项目）+ dsProjectId（DS 项目）/ HTML → `{pd_vd_output}` 同目录下 `{topic}.prototype.html`；样张 `styleguide.html` 同目录保存
 3. **回流检查**：原型阶段新产生的设计决策（行为补充、时序参数）已登记——行为类回 `.ix.md`「下游澄清回流」节，视觉类落 `.vd.md`「原型阶段补充决策」节；原型内 token 名与 Step 3 冻结表逐一一致（**禁改名**，下游 devflow 按名继承）
-4. 提示用户进入 devflow；用户确认后调用 `Capability(workflow.skill.invoke, {"skill":"devflow","arguments":{"request":"以 PRD + .ix.md + .vd.md 进入开发流","context":{"stage":"pd-vd/Step 6 handoff","restate":"<confirmed-product-and-design-scope>","artifacts":["<absolute-prd-path>","<absolute-ix-path>","<absolute-vd-path>","<prototype-artifact>"],"constraints":["preserve frozen token names"],"planRef":"<current-planRef-or-omit>","decision":"user approved devflow handoff"}}})`。
+4. 提示用户进入 devflow；用户确认后按上方平台语法调用 devflow，传入 PRD、`.ix.md`、`.vd.md`、prototype artifact、确认范围和“保留冻结 token 名”约束。
 
 **Exit Gate:**
 - [ ] `.vd.md` + 原型 + 样张已保存

@@ -1,7 +1,0 @@
-{
-  "$id": "lifecycle.hook-event",
-  "type": "object",
-  "required": ["sessionId", "event"],
-  "properties": { "sessionId": { "type": "string" }, "event": { "type": "string" }, "toolInput": { "type": "object", "additionalProperties": true }, "toolResult": {} },
-  "additionalProperties": false
-}

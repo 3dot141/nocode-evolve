@@ -4,9 +4,13 @@ description: "eval-driven development 工作流管理（定义/检查/生成报�
 argument-hint: "[define|check|report|list|clean] [feature-name]"
 ---
 
+本文所说“调用 `<skill>` Skill”使用 `Skill(nocode:<skill>)`；“结构化决策”使用 `AskUserQuestion`。
+
+
+
 # /eval：eval-driven development 工作流
 
-统一入口，转发到 `Capability(workflow.skill.invoke, {"skill":"eval-harness","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})` 执行 EDD（eval-driven development）方法论——定义能力/回归 eval、跑 eval、生成报告、列出所有 eval 定义。
+统一入口，转发到 `eval-harness` Skill，传入 `arguments={"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}` 执行 EDD（eval-driven development）方法论——定义能力/回归 eval、跑 eval、生成报告、列出所有 eval 定义。
 
 ## 用法
 
@@ -14,7 +18,7 @@ argument-hint: "[define|check|report|list|clean] [feature-name]"
 
 ## 执行
 
-调 `Capability(workflow.skill.invoke, {"skill":"eval-harness","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})`，把 `$ARGUMENTS` 原样传入：
+调用 `eval-harness` Skill，传入 `arguments={"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}`，把 `$ARGUMENTS` 原样传入：
 
 - `define <name>` — 创建新的 eval 定义
 - `check <name>` — 跑并检查 eval

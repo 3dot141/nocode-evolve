@@ -64,11 +64,15 @@ Task 4: final gate + 硬交接 dev-plan
   metadata: {handoff: true}
 ```
 
-调用时把上面**每一条** Task 编译成一个稳定 item：`id` 固定、`subject` 为标题、`description` 完整包含 Sub-steps + Gate、初始 `status=pending`，仅最后一项设置 `handoff`。不得只改名后继续依赖平台 task 工具，也不得传空 items：
+调用时把上面**每一条** Task 建成稳定计划项，不得传空计划：
 
-`Capability(workflow.plan.create, {"items":[{"id":"<stable-task-id>","subject":"<task-title>","description":"<complete Sub-steps and Gate>","status":"pending","handoff":"<final-item-only; otherwise omit>"}]})`
+<!-- nocode:platform claude -->
+使用 `TaskCreate` 逐项创建全部计划项并保存 task id；状态变化时使用 `TaskUpdate` 更新对应项。
+<!-- /nocode:platform -->
 
-示例只展示单项形状；真实调用必须包含本段清单的全部 items。保存返回的 `planRef`。每次状态变化都用 `Capability(workflow.plan.update, {"planRef":"<planRef>","items":[{"id":"<same-stable-id>","subject":"<same-title>","description":"<same-complete-description>","status":"<pending|in_progress|completed>","handoff":"<preserve-final-item-handoff; otherwise omit>"}]})` 提交**完整快照**（示例仍只展示单项形状）；每次 update 必须原样保留最终 item 的 `handoff`，其它 item 继续省略该字段，不得发送单项 patch。
+<!-- nocode:platform codex -->
+使用 `update_plan` 提交全部计划项；每次状态变化都提交完整列表，保持稳定顺序，且同时最多一个 `in_progress`。
+<!-- /nocode:platform -->
 
 每完成一个标 done。
 
@@ -87,15 +91,24 @@ Read `writing/SKILL.md`，按协议执行，传入 Decision Packet。收回 **re
 
 ### Step 3:（可选）路由 → render
 
-用户在 writing 收尾选了渲染 → Read `{NOCODE_SKILL_REF}/doc-render.md`，按协议执行。收回 **render receipt**：
-- 用 `Capability(design.workspace.create, {"projectRoot":"<absolute-project-root>","kind":"document","name":"<document-name>"})` 创建文档 workspace，再用 `Capability(design.artifact.generate, {"workspaceRef":{"type":"project","ref":"<workspace-ref>"},"kind":"document","brief":"<render-the-reviewed-document-faithfully>","outputDir":"<absolute-document-output-dir>"})` 发布。
-- 更新时执行 `Capability(design.artifact.write, {"artifactRef":{"provider":"open-design","workspace":{"type":"project","ref":"<workspace-ref>"},"artifact":{"kind":"document","localPath":"<local-path>","previewUrl":null},"degraded":false,"degradedFrom":null,"warnings":[]},"patch":{"brief":"<approved-render-change>"}})`；回读执行 `Capability(design.artifact.read, {"artifactRef":{"provider":"open-design","workspace":{"type":"project","ref":"<workspace-ref>"},"artifact":{"kind":"document","localPath":"<local-path>","previewUrl":null},"degraded":false,"degradedFrom":null,"warnings":[]}})`；预览执行 `Capability(design.preview.open, {"artifactRef":{"provider":"open-design","workspace":{"type":"project","ref":"<workspace-ref>"},"artifact":{"kind":"document","localPath":"<local-path>","previewUrl":null},"degraded":false,"degradedFrom":null,"warnings":[]}})`。三者都必须使用真实完整 receipt，不重建字段。
+用户在 writing 收尾选了渲染 → Read `{NOCODE_SKILL_REF}/doc-render.md`，按协议执行：
+- Open Design 可用时，先用其原生 `create_project` 建立项目，再用 `start_run` 传入“忠实渲染已评审文档”的完整 prompt；保存 project id 和 run id。
+- 用 `get_run` 按原生状态轮询到终态；成功后保存 `previewUrl`，并用 `get_artifact` 回读产物。批准的更新作为新的 `start_run` prompt 提交，不重建插件内部 receipt。
+- Open Design 不可用时明确说明未生成交互渲染，Markdown 仍是最终交付；不伪造 local provider fallback。
 - render **不改输入文档**（已评审文档不可变——render 回写会让评审结论不再覆盖当前内容）；协调器**记录产物关系**（见「产物记录」）。
 - 用户不渲染 → 跳过，markdown 即最终交付。
 
 ### Step 4: final gate + 硬交接
 
-final gate = 本轮设计流程的**计划内总确认窗口**：向用户报告方案摘要（← Packet `selectedApproach`）+ 关键决策（← `alternatives` 反方 + `[已确认]/[假定]`）+ 测试目标（← `testObjectives`）+ 文档路径 + 渲染产物（如有）。用户可对任意决策提异议要求回退。通过后建议进 Plan，等用户拍板调 `Capability(workflow.skill.invoke, {"skill":"dev-plan","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}})`。
+final gate = 本轮设计流程的**计划内总确认窗口**：向用户报告方案摘要（← Packet `selectedApproach`）+ 关键决策（← `alternatives` 反方 + `[已确认]/[假定]`）+ 测试目标（← `testObjectives`）+ 文档路径 + 渲染产物（如有）。用户可对任意决策提异议要求回退。通过后建议进 Plan，等用户拍板后按下方平台指令调用 Plan，并传入当前 request、stage、restate、artifacts、constraints、设计文档路径和用户 decision。
+
+<!-- nocode:platform claude -->
+Plan handoff 使用 `Skill(nocode:dev-plan)`。
+<!-- /nocode:platform -->
+
+<!-- nocode:platform codex -->
+Plan handoff 使用 `$dev-plan`。
+<!-- /nocode:platform -->
 
 ## 确认策略（单一所有者：协调器）
 

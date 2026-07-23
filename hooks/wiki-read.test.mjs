@@ -9,10 +9,7 @@ import { execFileSync } from 'node:child_process';
 import {
   DEFAULT_PREAMBLE, parseStatusMd, readWikiPage, writeStatusAtomic,
 } from '../scripts/wiki-read.mjs';
-import { executeProjectWiki } from '../core/domains/personal-knowledge/providers/project-wiki/scripts/wiki-read.mjs';
-import { buildExpectedTree } from '../scripts/lib/platform-compiler.mjs';
-import { loadDomainRegistry } from '../scripts/lib/domain-registry.mjs';
-import { assertSchemaValue } from '../scripts/lib/schema-validator.mjs';
+import { buildExpectedTree } from '../scripts/lib/platform-packager.mjs';
 import { claudeAdapter } from '../adapters/claude/adapter.mjs';
 import { codexAdapter } from '../adapters/codex/adapter.mjs';
 
@@ -113,44 +110,15 @@ test('direct filesystem or shell reads bypass usage accounting', () => {
   } finally { rmSync(f.root, { recursive: true, force: true }); }
 });
 
-test('project-wiki provider returns domain results and generated integration', () => {
-  const f = fixture();
-  try {
-    const read = executeProjectWiki('personal-knowledge.page.read', { sessionId: 's', path: f.page }, { projectRoot: f.root });
-    assert.equal(read.usageRecorded, true);
-    const usage = executeProjectWiki('personal-knowledge.usage.record', { sessionId: 's', path: f.page }, {
-      projectRoot: f.root, recordUsage: () => ({ recorded: true, count: 2, warning: null }),
+test('both platform artifacts package the direct wiki reader without provider wrappers', () => {
+  for (const platform of ['claude', 'codex']) {
+    const tree = buildExpectedTree({
+      root: ROOT, metadata: METADATA, adapter: PLATFORM_ADAPTERS[platform],
     });
-    assert.deepEqual(usage, { recorded: true, count: 2, warning: null });
-    const lockedUsage = executeProjectWiki('personal-knowledge.usage.record', { sessionId: 's', path: f.page }, {
-      projectRoot: f.root,
-      recordUsage: () => ({ recorded: false, count: null, warning: 'WIKI_USAGE_LOCKED' }),
-    });
-    const usageSchema = JSON.parse(readFileSync(path.join(
-      ROOT, 'core/domains/personal-knowledge/contracts/usage-result.schema.json',
-    ), 'utf8'));
-    assert.doesNotThrow(() => assertSchemaValue(usageSchema, lockedUsage));
-    const snapshotResult = executeProjectWiki('personal-knowledge.snapshot', {
-      sessionId: 's', snapshotMessage: 'smoke',
-    }, {
-      projectRoot: f.root, createSnapshot: () => ({ created: true, commit: 'abc123' }),
-    });
-    assert.deepEqual(snapshotResult, { created: true, commit: 'abc123' });
-    const registry = loadDomainRegistry(ROOT);
-    for (const platform of ['claude', 'codex']) {
-      const tree = buildExpectedTree({
-        root: ROOT, metadata: METADATA, adapter: PLATFORM_ADAPTERS[platform],
-        registry, resolution: registry.resolvePlatform(platform),
-      });
-      const names = new Set(tree.keys());
-      assert.ok(names.has('skills/using-nocode/scripts/providers/project-wiki/scripts/wiki-read.mjs'));
-      assert.ok(names.has('skills/using-nocode/references/personal-knowledge.md'));
-      const generated = tree.get('skills/using-nocode/references/personal-knowledge.md').toString('utf8');
-      for (const entry of ['personal-knowledge.page.read', 'personal-knowledge.usage.record', 'personal-knowledge.snapshot']) {
-        assert.match(generated, new RegExp(entry.replace('.', '\\.')));
-      }
-      const hooks = tree.get('hooks/hooks.json').toString('utf8');
-      assert.doesNotMatch(hooks, /usage-tracker|"matcher"\s*:\s*"Read"/);
-    }
-  } finally { rmSync(f.root, { recursive: true, force: true }); }
+    assert.ok(tree.has('scripts/wiki-read.mjs'));
+    assert.equal([...tree.keys()].some((name) => name.includes('project-wiki')
+      || name.includes('personal-knowledge')), false);
+    const hooks = tree.get('hooks/hooks.json').toString('utf8');
+    assert.doesNotMatch(hooks, /usage-tracker|"matcher"\s*:\s*"Read"/);
+  }
 });

@@ -1,15 +1,10 @@
 import { renderClaudeContent } from './content.mjs';
 import { renderClaudeManifest } from './manifest.mjs';
-import { generateAgentReferences, generateCommandSkills } from '../shared/skill-renderers.mjs';
+import { generateCommandSkills } from '../shared/skill-renderers.mjs';
 
 export const claudeAdapter = {
   platform: 'claude',
-  providerSupport: [
-    'claude-control', 'claude-hooks', 'claude-native', 'claude-plugin-data',
-    'claude-workspace', 'inline', 'local-html', 'open-design', 'project-wiki',
-  ],
   sourceRoots: [
-    { source: 'agents', target: 'agents' },
     { source: 'commands', target: 'commands' },
     { source: 'hooks', target: 'hooks' },
     { source: 'model', target: 'model' },
@@ -17,6 +12,7 @@ export const claudeAdapter = {
     { source: 'rules', target: 'rules' },
     { source: 'scripts', target: 'scripts' },
     { source: 'skills', target: 'skills' },
+    { source: 'platform/claude/runtime', target: 'runtime' },
   ],
   manifestPath: '.claude-plugin/plugin.json',
   renderManifest: renderClaudeManifest,
@@ -27,7 +23,14 @@ export const claudeAdapter = {
         isExcluded,
         argumentLabel: '$ARGUMENTS',
       }),
-      ...generateAgentReferences(root, { isExcluded }),
+      ['.mcp.json', `${JSON.stringify({
+        mcpServers: {
+          'open-design': {
+            command: 'node',
+            args: ['${CLAUDE_PLUGIN_ROOT}/scripts/open-design-launch.mjs'],
+          },
+        },
+      }, null, 2)}\n`],
     ]);
   },
 };

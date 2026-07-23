@@ -11,6 +11,9 @@ skip: false
 
 # superpowers skill 行为覆盖
 
+用户显式要求独立评审时调用 `Skill(nocode:reviewing)`。
+
+
 执行下列 superpowers skill 时，本文规则覆盖 skill 内默认值。
 若与 skill 内文冲突，**以本规则为准**。
 
@@ -38,7 +41,7 @@ skip: false
    - 输出路径按 `{dev_design_output}` 变量（落在 step 1 创建的 worktree 内）
 
 3. **评审**（dev-design writing 阶段的 Review 环节，维度用 `references/design-doc-review.md`）
-   - 评审：**默认主会话逐维自查**（design-doc-review 维度核心审查 + AI patterns 附带检查 + Self-Audit），不调 reviewing 引擎、不派 subagent/Codex；用户显式要求（「审一下 / 深审 / 独立审」）才调 `Capability(workflow.skill.invoke, {"skill":"reviewing","arguments":{"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"brainstorming-rule","restate":"<confirmed-restate-or-omit>","artifacts":["<absolute-design-document-path>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"},"payload":{"object":{"type":"design-document","ref":"<absolute-design-document-path>"},"dimensions":["<design-doc-review-axes>","ai-patterns","self-audit"],"method":"checklist","contextCapsule":{"facts":["<verified-fact>"],"decisions":["<confirmed-decision>"],"rejectedAlternatives":["<alternative-and-reason>"],"constraints":["<constraint>"],"nonGoals":["<non-goal>"]},"depth":"independent"}}})`；文档命中敏感面（认证 / 数据迁移 / 资金 / 对外接口 / 不可逆决策）→ 一句话建议升审，用户点头才派
+   - 评审：**默认主会话逐维自查**（design-doc-review 维度核心审查 + AI patterns 附带检查 + Self-Audit），不调 reviewing 引擎、不派 subagent/Codex；用户显式要求（「审一下 / 深审 / 独立审」）才按上方平台语法调用 reviewing，传入设计文档绝对路径、全部设计审查维度、AI patterns、self-audit、checklist、完整 Context Capsule 和 independent 深度；文档命中敏感面（认证 / 数据迁移 / 资金 / 对外接口 / 不可逆决策）→ 一句话建议升审，用户点头才派
    - 输出分级 Review Report（Critical / Warning / Suggestion），每条带短编号（C1/W1/S1...）
    - **不自动循环修订**：Report 原样呈现给用户，逐条勾选 fix / skip（也可一键全修/全跳过/自由指示）
    - 据用户决定修订主体后，**本轮 Report 全文 + 用户决定 + 修订摘要 append 到文档末尾 `## Review Log`**

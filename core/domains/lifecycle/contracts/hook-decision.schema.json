@@ -1,7 +1,0 @@
-{
-  "$id": "lifecycle.hook-decision",
-  "type": "object",
-  "required": ["allow"],
-  "properties": { "allow": { "type": "boolean" }, "reason": { "type": "string" }, "context": { "type": "string" } },
-  "additionalProperties": false
-}

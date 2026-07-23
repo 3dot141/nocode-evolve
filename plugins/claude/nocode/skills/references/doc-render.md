@@ -4,7 +4,7 @@
 
 整个文档都渲染,章节树变成页面导航;图、表、代码怎么呈现不设协议约束,全由 artifact-design 现场设计做主。本协议返回 render receipt,输入文档一字不动。
 
-**设计能力来自 artifact-design**:渲染前调用 CC 内置的 `[provider-neutral skill boundary]`(原则型设计指导:角色锚定 / token 双主题 / 反模板化负面清单 / 先 design plan 再编码),为**这份文档的主题**现场设计页面——每份文档得到定制的视觉语言,而不是套同一个壳。这也是 `Artifact` 工具的硬性前置(工具说明要求发布前必须加载该 skill)。
+**设计能力来自 artifact-design**:渲染前调用 CC 内置的 `平台原生 Skill 调用`(原则型设计指导:角色锚定 / token 双主题 / 反模板化负面清单 / 先 design plan 再编码),为**这份文档的主题**现场设计页面——每份文档得到定制的视觉语言,而不是套同一个壳。这也是 `Artifact` 工具的硬性前置(工具说明要求发布前必须加载该 skill)。
 
 artifact-design 按请求分两档(utilitarian / editorial),工程文档会被它默认归入 utilitarian 保守档。它的优先级规则是 user's words > project system > its choices——本协议即 project system,显式要求**充分发挥**它的设计风格:不取保守档,不因「工程文档」自我设限。
 
@@ -75,21 +75,21 @@ Task 4: 收口 — 交回主流程
 
 **Core Actions:**
 
-按调用方拥有的 Design capability 执行，本文只定义渲染方法与 receipt 语义：
+本文只定义渲染方法；发布时直接使用当前平台已注册的 Open Design 工具：
 
 1. **先写 design plan 再编码**(按 artifact-design 的 Process):4-6 个命名色值 + 2+ 字体角色 + 一句布局概念——**为这份文档的主题选**(数据产品 PRD 和底层重构设计不该长一样),不落负面清单里的模板化默认。
    - **充分发挥,不取保守档**:字号跨度、字重对比、行高节奏、配色、图/表/代码的呈现方式全由现场设计做主,用足 artifact-design 的设计能力;不因「工程文档 = 实用型」自我设限,把页面做成加了配色的 markdown。
    - **图 DOM 化**:按 Step 1 的图清单逐张决定呈现方式(timeline / 管道 / 卡片流 / mermaid / 内联 SVG),源里的 ASCII 只是素材不是样式约束。
-2. **写页面文件**,落源文档同目录、同 basename 的 `.html`(如 `foo-prd.md` → `foo-prd.html`),设一个简洁稳定的 `<title>`。发布载体遵守 Design domain provider 的 CSP、主题与页面结构约束。render 侧唯一领域约束是**可导航**:
+2. **写页面文件**,落源文档同目录、同 basename 的 `.html`(如 `foo-prd.md` → `foo-prd.html`),设一个简洁稳定的 `<title>`。render 侧唯一领域约束是**可导航**:
    - 章节树 → 侧边/顶部导航,把文档结构解释清楚即可——不要求与章节一一对应,可按内容归组取舍;长文档要有当前章节高亮
-3. **Design 发布**：由拥有能力的调用 Skill 执行 `design.workspace.create` + `design.artifact.generate`，保存完整 `design.design-result` receipt。
-   - favicon：更新沿用 receipt 对应页面的既有图标；新页面默认 `📐`
-   - **更新必须传完整原 receipt** 给 `design.artifact.write`，保持 provider ownership 和稳定 URL；不得凭 URL 或路径重建 receipt
+3. **Design 发布**：调用 `create_project`（已有项目则复用真实 project id）→ `start_run` → `get_run` → `get_artifact`。
+   - favicon：更新沿用项目既有图标；新页面默认 `📐`
+   - 更新必须复用真实 project id；不得凭 URL 或路径重建 id
 
 **Exit Gate:**
 - [ ] design plan 已产出且不落负面清单默认
 - [ ] 所有章节已渲染,导航把文档结构解释清楚
-- [ ] Design artifact 已发布，完整 receipt 已保存，URL 或 localPath 已拿到
+- [ ] Design artifact 已发布，project id / run id / preview URL 或物化文件已保存
 
 ### Step 3: 验证 + 保存
 
@@ -120,7 +120,7 @@ Task 4: 收口 — 交回主流程
 
 ## Red Flags
 
-- 不调 `[provider-neutral skill boundary]` 就裸写页面——设计原则是质量下限,也是 Artifact 工具的硬性前置;跳过 = 回到模板化默认
+- 不调 `平台原生 Skill 调用` 就裸写页面——设计原则是质量下限,也是 Artifact 工具的硬性前置;跳过 = 回到模板化默认
 - artifact-design 调用成功却跳过 design plan 直接编码——先计划后编码是该 skill 的 Process,跳过等于没加载
 - 以「工程文档 = 实用型」收着设计(层级压平、页面主体是加了配色的 markdown)——本协议要求充分发挥 artifact-design 的设计风格
 - **把「内容忠实」扩大成「呈现镜像」**——保留源文件 ASCII pre 块、逐节复刻 markdown 排版(实测案例 260716:agent 把"镜像 md"当成不存在的约束,PRD 渲染成加配色的 markdown,用户纠偏后按本协议重渲染)
