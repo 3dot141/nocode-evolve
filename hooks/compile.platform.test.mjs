@@ -117,6 +117,63 @@ use spawn_agent
   }
 });
 
+test('buildExpectedTree applies source exclusions only to selected platforms', (t) => {
+  const root = fixtureRepo(t);
+  mkdirSync(path.join(root, 'plugin'), { recursive: true });
+  writeFileSync(
+    path.join(root, 'plugin', 'exclusions.json'),
+    `${JSON.stringify({
+      schemaVersion: 1,
+      sources: [{
+        path: 'skills/hello',
+        platforms: ['claude'],
+        reason: 'Codex-only fixture',
+      }],
+      hookCommands: [],
+    }, null, 2)}\n`,
+  );
+
+  const claudeTree = buildExpectedTree({
+    root,
+    metadata: fixtureMetadata(),
+    adapter: fixtureAdapter('claude'),
+  });
+  const codexTree = buildExpectedTree({
+    root,
+    metadata: fixtureMetadata(),
+    adapter: fixtureAdapter('codex'),
+  });
+
+  assert.equal(claudeTree.has('skills/hello/SKILL.md'), false);
+  assert.equal(codexTree.has('skills/hello/SKILL.md'), true);
+});
+
+test('buildExpectedTree rejects unknown source exclusion platforms', (t) => {
+  const root = fixtureRepo(t);
+  mkdirSync(path.join(root, 'plugin'), { recursive: true });
+  writeFileSync(
+    path.join(root, 'plugin', 'exclusions.json'),
+    `${JSON.stringify({
+      schemaVersion: 1,
+      sources: [{
+        path: 'skills/hello',
+        platforms: ['cursor'],
+        reason: 'invalid fixture',
+      }],
+      hookCommands: [],
+    }, null, 2)}\n`,
+  );
+
+  assert.throws(
+    () => buildExpectedTree({
+      root,
+      metadata: fixtureMetadata(),
+      adapter: fixtureAdapter('claude'),
+    }),
+    /exclusion platforms must contain claude and\/or codex/,
+  );
+});
+
 test('buildExpectedTree selects platform blocks in adapter-generated Markdown', (t) => {
   const root = fixtureRepo(t);
   const adapter = {
@@ -280,6 +337,7 @@ test('Claude adapter builds native skills and direct runtime overlays', () => {
     assert.ok(tree.has(relative), `Claude artifact missing ${relative}`);
   }
   assert.equal(tree.has('model/agent-nocode.md'), false);
+  assert.equal(tree.has('skills/codex-restart/SKILL.md'), false);
   assert.equal(tree.has('skills/sow/scripts/test_script.py'), false);
   assert.equal([...tree.keys()].some((relative) => relative.startsWith('vendor/codex/')), false);
   for (const developmentOnly of [
@@ -342,6 +400,7 @@ test('Codex adapter builds native skills and direct runtime overlays', () => {
     'scripts/compile.rule.js',
     'skills/references/testing-guide.md',
     'skills/agents-launcher/agents/openai.yaml',
+    'skills/codex-restart/SKILL.md',
     'skills/devflow/SKILL.md',
     'skills/task/SKILL.md',
     'runtime/context-budget.json',

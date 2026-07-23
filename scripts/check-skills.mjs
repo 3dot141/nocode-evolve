@@ -224,7 +224,9 @@ export function checkAll({
   const warnings = [];
   const targets = routeTargetSet(root);
   const explicitExclusions = fs.existsSync(path.join(root, 'plugin', 'exclusions.json'))
-    ? loadPluginExclusions(root).sources.map((entry) => entry.path)
+    ? loadPluginExclusions(root).sources
+      .filter((entry) => entry.platforms == null || entry.platforms.includes(platform))
+      .map((entry) => entry.path)
     : [];
   const excludedSkills = new Set(explicitExclusions
     .filter((entry) => /^skills\/[^/]+$/.test(entry))

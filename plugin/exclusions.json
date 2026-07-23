@@ -24,6 +24,13 @@
     {
       "path": "vendor/codex",
       "reason": "disabled: legacy Claude-only Codex companion is replaced by the workflow review provider"
+    },
+    {
+      "path": "skills/codex-restart",
+      "platforms": [
+        "claude"
+      ],
+      "reason": "Codex-only: manages the Codex app-server daemon, Remote Control, and Codex App restart"
     }
   ],
   "hookCommands": [

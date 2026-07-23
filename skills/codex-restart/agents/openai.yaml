@@ -1,0 +1,4 @@
+interface:
+  display_name: "Codex Restart"
+  short_description: "Configure and safely restart managed Codex services"
+  default_prompt: "Use $codex-restart to configure Codex remote control or perform a confirmed full Codex restart."

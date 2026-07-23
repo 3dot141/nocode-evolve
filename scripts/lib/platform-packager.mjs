@@ -31,7 +31,15 @@ export function loadPluginExclusions(root) {
     if (typeof entry.reason !== 'string' || !entry.reason.trim()) {
       throw new Error(`exclusion reason is required for ${relative}`);
     }
-    return { path: relative, reason: entry.reason.trim() };
+    let platforms = null;
+    if (entry.platforms != null) {
+      if (!Array.isArray(entry.platforms) || entry.platforms.length === 0
+        || entry.platforms.some((platform) => !PLATFORMS.has(platform))) {
+        throw new Error(`exclusion platforms must contain claude and/or codex for ${relative}`);
+      }
+      platforms = [...new Set(entry.platforms)];
+    }
+    return { path: relative, reason: entry.reason.trim(), platforms };
   });
   const hookCommands = parsed.hookCommands.map((entry) => {
     if (typeof entry?.contains !== 'string' || !entry.contains.trim()
@@ -43,8 +51,12 @@ export function loadPluginExclusions(root) {
   return { schemaVersion: 1, sources, hookCommands };
 }
 
-function sourceIsExcluded(relative, exclusions) {
-  return exclusions.sources.some((entry) => relative === entry.path || relative.startsWith(`${entry.path}/`));
+export function sourceIsExcluded(relative, exclusions, platform) {
+  return exclusions.sources.some((entry) => {
+    const appliesToPlatform = entry.platforms == null || entry.platforms.includes(platform);
+    return appliesToPlatform
+      && (relative === entry.path || relative.startsWith(`${entry.path}/`));
+  });
 }
 
 const DEVELOPMENT_ONLY_FILES = new Set([
@@ -196,7 +208,7 @@ export function buildExpectedTree({ root, metadata, adapter }) {
     for (const relative of listFiles(sourceRoot)) {
       const sourcePath = `${source}/${relative}`;
       const targetPath = `${target}/${relative}`;
-      if (sourceIsExcluded(sourcePath, exclusions) || !isPublishable(sourcePath)) continue;
+      if (sourceIsExcluded(sourcePath, exclusions, adapter.platform) || !isPublishable(sourcePath)) continue;
       let content = readFileSync(path.join(root, sourcePath));
       if (sourcePath === 'hooks/hooks.json' && exclusions.hookCommands.length) {
         content = filterExcludedHooks(content, exclusions);
@@ -222,7 +234,7 @@ export function buildExpectedTree({ root, metadata, adapter }) {
   if (typeof adapter.generateFiles === 'function') {
     const generated = adapter.generateFiles({
       root, metadata,
-      isExcluded: (relative) => sourceIsExcluded(relative, exclusions),
+      isExcluded: (relative) => sourceIsExcluded(relative, exclusions, adapter.platform),
     });
     for (const [relative, content] of generated) {
       const targetPath = safeRelative(relative, 'generated file path');
