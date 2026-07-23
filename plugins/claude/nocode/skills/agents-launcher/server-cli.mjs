@@ -62,19 +62,43 @@ function dirHasFiles(dir) {
 // bash force_local_infra 里带 ${VAR:-default} 语义（尊重已有环境变量）的 key；其余 key 强制覆盖为 localhost。
 const RESPECT_EXISTING = ['DB_USERNAME', 'DB_PASSWORD', 'CACHE_MONGO_USERNAME', 'CACHE_MONGO_PASSWORD', 'DATASOURCE_MONGO_USERNAME', 'DATASOURCE_MONGO_PASSWORD', 'POLARS_MASTER_CONFIG_STR'];
 
-// 完整 app 链（orchestrator T7 import 直调的入口；等价 dev-start.sh app 子命令
-// = .env 加载 → force_local_infra → start_infra → start_app，对应原 1117-1121 行）。
-export async function start({ serverDir, ports, killOld = false, log = console.log } = {}) {
+export async function infra({
+  serverDir,
+  env = process.env,
+  log = console.log,
+  startInfraFn = startInfra,
+} = {}) {
+  return startInfraFn({ serverDir, env, log });
+}
+
+// 完整 app 链（standalone 默认包含 infra；orchestrator 已显式起过 docker 时传 ensureInfra:false，
+// 避免同一次 full 启动重复生成和执行 dockerstart 派生脚本）。
+export async function start({
+  serverDir,
+  ports,
+  killOld = false,
+  ensureInfra = true,
+  log = console.log,
+  baseEnv = process.env,
+  infraFn = infra,
+  detectGraalvmFn = detectGraalvm,
+  startAppFn = startApp,
+} = {}) {
   // 局部 env：不污染 process.env——orchestrator 同进程直调，后续起 web 不能继承 server 的
   // DB/S3/代理配置（红蓝裁决 E；bash 时代 dev-start.sh 是子进程天然隔离，node 直调必须显式隔离）
-  const env = { ...process.env };
+  const env = {
+    ...baseEnv,
+    // fx-data-server 的 dev profile 默认执行 `open http://localhost/decision`。
+    // launcher 是后台编排入口，每次显式关闭，且覆盖调用环境里可能残留的 true。
+    OPENPROJECT_ISOPEN: 'false',
+  };
   loadDotEnv({ serverDir, env });   // 原 60-64 行：.env 先载入（不覆盖已有值）
   Object.assign(env, localInfraEnv({
     overrides: Object.fromEntries(RESPECT_EXISTING.filter((k) => env[k] !== undefined).map((k) => [k, env[k]])),
   }));   // 原 force_local_infra：本地模式强制基础设施指向 localhost
-  await startInfra({ env, log, serverDir });
-  const graalvm = detectGraalvm({ serverDir, env });
-  return startApp({ serverDir, appPort: ports?.server ?? 8081, graalvm, env, killOld, log });
+  if (ensureInfra) await infraFn({ env, log, serverDir });
+  const graalvm = detectGraalvmFn({ serverDir, env });
+  return startAppFn({ serverDir, appPort: ports?.server ?? 8081, graalvm, env, killOld, log });
 }
 
 // teardown 用的同步 kill 命令段（orchestrator execFileSync 逐条跑）。
@@ -106,7 +130,7 @@ async function main() {
       await prepare({ serverDir });
       break;
     case 'infra':
-      await startInfra({ serverDir });
+      await infra({ serverDir });
       break;
     case 'start':
       await start({ serverDir, killOld: flags.includes('--kill-old') });

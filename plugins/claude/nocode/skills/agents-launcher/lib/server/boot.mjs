@@ -95,6 +95,9 @@ export async function startApp({ serverDir, appPort = 8081, graalvm, env = proce
         ...Object.entries(localInfraEnv({ overrides: {} })),
         ['APP_PORT', String(appPort)], ['GRPC_PORT', '9090'], ['MGMT_PORT', '8075'],
         ['SPRING_PROFILES_ACTIVE', 'dev'],
+        ...(env.OPENPROJECT_ISOPEN !== undefined
+          ? [['OPENPROJECT_ISOPEN', String(env.OPENPROJECT_ISOPEN)]]
+          : []),
       ],
     });
     log(`[start] 本地无 GraalVM，用容器方案启动 (docker run …${args.length} args)`);

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, mkdirSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { prepare, killCommands } from './server-cli.mjs';
+import { prepare, infra, start, killCommands } from './server-cli.mjs';
 
 function fakeServerRepo({ withAntlrOutput = true } = {}) {
   const serverDir = mkdtempSync(join(tmpdir(), 'srv-'));
@@ -74,4 +74,58 @@ test('prepare: 返回 graalvm 检测结果（容器降级场景）', async () =>
   };
   const result = await prepare({ serverDir, exec: mockExec, log: () => {} });
   assert.equal(result.graalvm.mode, 'container');
+});
+
+test('infra: 将显式 serverDir 交给基础设施入口', async () => {
+  const calls = [];
+  const result = await infra({
+    serverDir: '/srv/worktree',
+    env: { TEST_ENV: '1' },
+    log: () => {},
+    startInfraFn: async (opts) => {
+      calls.push(opts);
+      return { portsReady: true, esReady: true };
+    },
+  });
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].serverDir, '/srv/worktree');
+  assert.equal(calls[0].env.TEST_ENV, '1');
+  assert.equal(result.esReady, true);
+});
+
+test('start: ensureInfra=false 时不重复启动 Docker', async () => {
+  let infraRuns = 0;
+  let appOptions;
+  const result = await start({
+    serverDir: '/srv/worktree',
+    ports: { server: 18081 },
+    ensureInfra: false,
+    infraFn: async () => { infraRuns++; },
+    detectGraalvmFn: () => ({ mode: 'local', javaHome: '/graalvm' }),
+    startAppFn: (opts) => {
+      appOptions = opts;
+      return { pid: 123 };
+    },
+    log: () => {},
+  });
+  assert.equal(infraRuns, 0);
+  assert.equal(appOptions.serverDir, '/srv/worktree');
+  assert.equal(appOptions.appPort, 18081);
+  assert.deepEqual(result, { pid: 123 });
+});
+
+test('start: 每次显式关闭 fx-data-server 的自动打开浏览器行为', async () => {
+  let appOptions;
+  await start({
+    serverDir: '/srv/worktree',
+    ensureInfra: false,
+    baseEnv: { OPENPROJECT_ISOPEN: 'true' },
+    detectGraalvmFn: () => ({ mode: 'local', javaHome: '/graalvm' }),
+    startAppFn: (opts) => {
+      appOptions = opts;
+      return { pid: 123 };
+    },
+    log: () => {},
+  });
+  assert.equal(appOptions.env.OPENPROJECT_ISOPEN, 'false');
 });

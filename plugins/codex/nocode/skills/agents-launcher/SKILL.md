@@ -74,7 +74,7 @@ Workspace 三档按用户表述路由 (**默认 `ui`**, 不擅自升级):
 
 | CLI | 动词 | 用途 |
 |---|---|---|
-| `server-cli.mjs` | `prepare` / `infra` / `start` / `stop` / `status` | prepare = ANTLR 生成类预热 + GraalVM 检测缓存（新建 server worktree 后必跑一次, 否则 IDE 报红）; start = 原 dev-start.sh app 链的 node 实现 |
+| `server-cli.mjs` | `prepare` / `infra` / `start` / `stop` / `status` | prepare = ANTLR 生成类预热 + GraalVM 检测缓存（新建 server worktree 后必跑一次, 否则 IDE 报红）; infra = 从目标 server 仓 `dockerstart.sh` 每次生成临时派生脚本并执行; start = 本地 infra + Spring app（orchestrator 已跑 infra 时跳过重复执行） |
 | `web-cli.mjs` | `prepare` / `env` / `pkgmgr` / `align` / `start` / `stop` / `status` | prepare = cp .env.local（`FX_WEB_FROM=<源仓>`）; env = 写 AGENTS_LOCAL_SRC 等四键; pkgmgr = corepack 缓存检查+packageManager patch（`--patch=<version>`）; align = fork 对齐检查（`--reset` 显式才 reset）; start = 清 Vite 预构建缓存后起 vite dev（orchestrator 与独立 CLI 两条路径共享, 防切 worktree 后缓存路径失效） |
 | `agents-cli.mjs` | `prepare` / `start` / `stop` / `status` | prepare = cp config.yaml（`FX_AGENTS_FROM=<源仓>`） |
 
@@ -88,11 +88,17 @@ FX_AGENTS_DIR=<agents 仓根> FX_AGENTS_FROM=<主仓根> node ${PLUGIN_ROOT}/ski
 
 CLI 全部非交互, 只认显式 flag。不可逆动作（align --reset / 改**主仓**文件）由本 skill 的 Gate 问过用户后才调; worktree 内的 prepare cp / env upsert 无损, 按 launch plan 自动调。
 
-### server (Spring) 由 server-cli 承载
+### server 与 Docker 由 server-cli 承载
 
-launcher 不裸跑 `gradlew bootRun`. `full` 档起 server 时 orchestrator 直调 `server-cli` 的完整 app 链（`.env` 加载 → 本地基础设施 env → 基础设施容器检查/启动 → bootRun）, 自动获得: GraalVM 检测(候选路径 + `.java-home` 缓存写在 server 仓根, 无 GraalVM 时容器方案降级) / ZGC→G1GC+EnableJVMCI patch(GraalJS 沙箱必需) / macOS 代理清除(防 localhost gRPC 被系统代理劫持 502) / `-Drpc.host` Polars 回连注入 / wait_for_es / 增量编译(`bootRun --no-build-cache`, 非 clean).
+orchestrator 只负责选择并显式传入目标 `FX_SERVER_DIR`, 调用 `serverCli.infra/start`, 不实现 Compose 服务筛选、`IMAGE_PREFIX`、Harbor 登录等 server 规则。
 
+每次 `infra` 都读取目标 server 主仓/worktree 的 `dockerstart.sh`, 在系统临时目录生成一次严格模式派生脚本并从目标仓根执行。派生只做两项定向变化: 在 `up` 前拉取当前 Compose 中所有最新镜像, 并从 pull/up 服务集合排除 `fx-data-agents`（本地 agents 由 `agents-cli` 启动）。其余模板复制、分支映射、`IMAGE_PREFIX`、Harbor 登录及前后处理原样继承目标脚本。上游脚本结构不再匹配唯一活动 `docker compose up -d` 时 fail loud, 不猜测转换；执行成功或失败都会删除临时脚本，不在 plugin/server 仓留生成物。
+
+launcher 不裸跑 `gradlew bootRun`. `full` 档起 server 时 orchestrator 直调 `server-cli`; Docker 已在该轮显式启动时不重复执行, standalone `server-cli start` 则默认补齐 infra。Spring 启动自动获得: GraalVM 检测(候选路径 + `.java-home` 缓存写在 server 仓根, 无 GraalVM 时容器方案降级) / ZGC→G1GC+EnableJVMCI patch(GraalJS 沙箱必需) / macOS 代理清除(防 localhost gRPC 被系统代理劫持 502) / `-Drpc.host` Polars 回连注入 / wait_for_es / 增量编译(`bootRun --no-build-cache`, 非 clean).
+
+- 手动只起 Docker: `FX_SERVER_DIR=<server仓根> node <插件根>/skills/agents-launcher/server-cli.mjs infra`
 - 手动跑: `FX_SERVER_DIR=<server仓根> node <插件根>/skills/agents-launcher/server-cli.mjs start [--kill-old]`（端口占用默认 fail loud, `--kill-old` 显式杀旧）
+- `server-cli start` 固定向 Spring 注入 `OPENPROJECT_ISOPEN=false`（本地 GraalVM / 容器降级两条路径一致），覆盖 server `dev` profile 默认的 `openProject.isOpen: true`，避免每次后台启动都执行 `open http://localhost/decision`
 - **server 日志不进 launcher stdout**, 在 `<FX_SERVER_DIR>/dev-start.log`; bootRun 进程后台脱管(PID 记 server 仓根 `.dev-start.pid`), 停服由 `--stop`（gradlew --stop + 容器清理 + 端口 kill）或 `server-cli stop` 覆盖
 - **副作用**: 会 patch server 仓 `build.gradle.kts`(ZGC→G1GC, 幂等)且**不还原**——server 仓 `git status` 会脏, **勿把该改动误提交**
 
@@ -311,7 +317,7 @@ FX_WEB_DIR=<web-worktree> node <插件根>/skills/agents-launcher/web-cli.mjs al
 
 ### 3.1 启动前预检
 
-**中间件预检已内置**: ui 档(无 docker)启动 agents 前, launcher 自动 tcp 预检 pg5432 + minio9000, 未就绪 fail loud 退出(报错给出 `--workspace=agents` / 手动 compose up 两条路), 不需要手工 lsof.
+**中间件预检已内置**: ui 档(无 docker)启动 agents 前, launcher 自动 tcp 预检 pg5432 + minio9000, 未就绪 fail loud 退出(报错给出 `--workspace=agents` / 手动启动两条路), 不需要手工 lsof. `agents/full` 档由 `server-cli infra` 执行目标仓派生脚本后等待 pg/minio/ES 健康；脚本非零退出或健康超时都直接失败。
 
 **幂等检查用 `--status`**(一次调用替代手工 lsof/curl, 命令里 `${PLUGIN_ROOT}` 先换插件真实绝对路径):
 
@@ -438,7 +444,7 @@ cd ../fx-data-server && docker compose down
 `sync-polars-localhost` 是共享 sync 网络栈的 socat sidecar (`network_mode: "service:sync"`, 见 fx-data-server `docker-compose.template.yml`). 主容器 `<IMAGE_PREFIX>-sync` (如 `test-sync`) 重启 / 重建后, sidecar 还挂在旧网络命名空间上, socat 转发绑定失效——**Excel 导入会静默写出空表, 表还标 valid, 无任何报错, 极具迷惑性**.
 
 - 重启 sync 时两个一起重启: `docker restart <IMAGE_PREFIX>-sync sync-polars-localhost` (sidecar 在后)
-- launcher 自身的 docker 步骤是 `compose down → up -d` 全量重建, sidecar 一起重建, **不受此坑影响**; 只有单独重启 sync 容器才踩
+- launcher 自身完整执行目标仓 `dockerstart.sh` 的既有流程，并让同一轮 compose up 覆盖全部非 agents 服务；目标脚本包含全量重建时 sidecar 会一起重建。只有脱离脚本单独重启 sync 容器才踩
 - compose 已有 `depends_on: - sync`, 但短语法只管启动顺序**不传播 restart**; 长期修法是在 fx-data-server compose 改 depends_on 长语法加 `restart: true` (compose 命令重建 sync 时连带重启 sidecar; 裸 `docker restart` 不经过 compose, 仍需手动两个一起)
 
 ## 必踩坑速查
@@ -456,7 +462,7 @@ cd ../fx-data-server && docker compose down
 11. 单独重启 sync 容器 (如 `test-sync`) 必须连带重启 `sync-polars-localhost` — socat sidecar 共享 sync 网络栈, 主容器重启后绑定失效, Excel 导入静默写空表 (表还标 valid, 无报错)
 12. server-cli 有副作用: 会 patch server 仓 `build.gradle.kts` (ZGC→G1GC, 幂等) 且不还原, **勿把该改动误提交**; server 日志在 `<FX_SERVER_DIR>/dev-start.log` 不在 launcher stdout
 13. 新建 server worktree 后先跑 `server-cli prepare`, 否则 IDE 对 ANTLR 生成类报红 (dev 启动不受影响, gradle 自愈); prepare 已自动解析 JAVA_HOME (本机默认 JDK 过新会 build 失败)
-14. docker 步骤的 `--scale fx-data-agents=0` 已按 compose 实际 service 列表条件化 (launcher 内置 `docker compose config --services` 探测)——不同分支 compose 模板不一定有该 service (release 分支就没有). up 失败 fail loud 且报错里带恢复命令; 但 down→up 是全量重建, up 失败时中间件已被 down 清空, 按报错提示手动 `IMAGE_PREFIX=<pfx> docker compose up -d` 恢复
+14. Docker 每次都由 `server-cli` 读取目标仓 `dockerstart.sh` 重新生成临时派生脚本；服务列表来自 `docker compose config --services`, `fx-data-agents` 不存在也能正常工作。派生脚本固定先 pull 最新非 agents 镜像再 up；上游脚本锚点漂移、脚本非零退出或健康检查失败都会 fail loud
 
 ## 不要做
 
@@ -464,6 +470,7 @@ cd ../fx-data-server && docker compose down
 - 不要在 skill 里硬编码端口 — 端口在 `lib/ports.mjs`, 让 launcher 自己读
 - 不要绕过 launcher 直接 `pnpm dev:server` — 失去 kill 旧 + healthy 等待 + teardown
 - 不要绕过 `server-cli` 手拼 `gradlew bootRun` 起 server — 丢 GraalVM/ZGC patch/代理清除/rpc.host 修补, GraalJS 沙箱和 Polars 联调会挂
+- 不要在 orchestrator/skill 里重写 Compose 服务筛选、`IMAGE_PREFIX`、Harbor 登录或 `fx-data-agents` 排除规则 — 只传明确 `FX_SERVER_DIR` 给 `server-cli infra`, 其余继承目标仓 `dockerstart.sh`
 - 不要手写 lsof/curl/nc 查状态或 pkill 停服 — 用 `--status` / `--stop`, 杀法和坑都固化在脚本里
 - 不要默认 `--workspace=full` — Spring 慢且需 GraalVM, 模糊信号下 askUser
 - 不要因"停 docker"擅自 `docker compose down` — 影响其他容器
@@ -487,7 +494,7 @@ cd ../fx-data-server && docker compose down
 | 配套仓主仓停在别的分支 (如 persist-ai) | 不问「主仓切到 <base>?」——有 base worktree 直接用; 没有则 Gate 0 推荐挂 base worktree, 主仓现场 (未提交改动 / 在跑进程) 一概不动 |
 | "停服" | `TaskStop <已知 task ID>`; 未知则 fallback `--stop --workspace=<范围>` |
 | "看服务状态" | `--status` (web/agents/server/pg/minio 端口 + PID, 一次调用) |
-| "重启 docker" | **不进 skill** — 是 docker compose 的事 |
+| "重启 docker" | 显式确认目标 server 主仓/worktree 后调用 `server-cli infra`；每次拉最新非 agents 镜像并执行目标仓脚本 |
 | "重启 test-sync / sync 容器" | `docker restart <IMAGE_PREFIX>-sync sync-polars-localhost` — sidecar 必须连带重启, 见「docker 中间件」节 |
 | "看 agents 日志" | **不进 skill** — Read 后台 task 的 output 文件 |
 | "重启 mac" | **不进 skill** |

@@ -51,7 +51,7 @@ if (args.stop) {
 // ---- 前置校验（fail loud）----
 const need = ['AGENTS_DIR'];
 if (args.services.web) need.push('WEB_DIR');
-if (args.services.server) need.push('SERVER_DIR');
+if (args.services.server || args.services.docker) need.push('SERVER_DIR');
 validateRepos(repos, { need });
 
 if (args.services.agents) {
@@ -93,7 +93,11 @@ async function main() {
   console.log(`[debug] SERVER=${repos.SERVER_DIR} [${repos.sources.SERVER_DIR}]`);
 
   // ---- 路径确认：相关路径有 auto（未用 FX_*_DIR 指定）则起前 y/N 确认；全 env 指定 / --yes / dry-run 跳过 ----
-  const relevant = ['AGENTS_DIR', ...(args.services.web ? ['WEB_DIR'] : []), ...(args.services.server ? ['SERVER_DIR'] : [])];
+  const relevant = [
+    'AGENTS_DIR',
+    ...(args.services.web ? ['WEB_DIR'] : []),
+    ...(args.services.server || args.services.docker ? ['SERVER_DIR'] : []),
+  ];
   const hasAuto = relevant.some((k) => repos.sources[k] === 'auto');
   if (!args.dryRun && !args.yes && hasAuto) {
     const ok = await confirm('[debug] 以上路径含自动解析项（[auto]）。确认按此继续? (y/N) ');
@@ -130,35 +134,11 @@ async function main() {
 
   if (args.dryRun) { console.log('[debug] dry-run 结束，未起任何服务'); return; }
 
-  // ---- Step 1: docker（跨服务编排知识，留 orchestrator）----
-  // 不走 dockerstart.sh 的 up（它写死 up 全栈含 fx-data-agents, 且该服务 pull_policy:always 每次重拉）。
-  // 这里复用 cp template + 按分支算 IMAGE_PREFIX，跳过 harbor login（依赖已缓存镜像；首次未缓存先手动 ./dockerstart.sh 拉一次）。
+  // ---- Step 1: docker ----
+  // Docker 规则单源在目标 server 仓的 dockerstart.sh。server-cli 每次生成临时派生脚本，
+  // 只注入“拉最新镜像 + 排除 fx-data-agents”，并负责退出码和健康检查。
   if (args.services.docker) {
-    // scale 排除参数按 compose 实际 service 列表条件化——不同分支的 compose 模板不一定有
-    // fx-data-agents service（release 分支就没有），硬编码 --scale 会让 up 报 "no such service"，
-    // 且 down 已先执行，中间件被清空、现场比启动前更糟。
-    const scaleProbe = args.services.agents
-      ? `SCALE=$(docker compose config --services 2>/dev/null | grep -qx 'fx-data-agents' && echo '--scale fx-data-agents=0' || true)`
-      : `SCALE=""`;
-    // set -e 多行脚本而非 && 平铺——平铺时成员内的 `|| true` 因左结合会兜掉整个前缀链，语义漂移
-    const up = [
-      `set -e`,
-      `cd ${repos.SERVER_DIR}`,
-      `[ -f docker-compose.yml ] || cp docker-compose.template.yml docker-compose.yml`,  // 先保证文件在，config/down 都要用
-      scaleProbe,
-      `docker compose down || true`,                                          // 关旧（全量重建，sidecar 一起重建防 socat 失效）
-      `BR=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || true)`,
-      `case "$BR" in *release*) PFX=test;; *persist*) PFX=prod;; *) PFX=dev;; esac`,
-      `IMAGE_PREFIX=$PFX docker compose up -d $SCALE`,                         // 起新
-    ].join('\n');
-    const code = await runToEnd('docker', 'sh', ['-c', up]);
-    if (code !== 0) {
-      throw new Error(
-        `[docker] compose up 失败（退出码 ${code}）。注意: down 已执行、中间件可能已被清空——`
-        + `请到 ${repos.SERVER_DIR} 检查 docker-compose.yml 后手动 IMAGE_PREFIX=<pfx> docker compose up -d 恢复`
-      );
-    }
-    await waitHealthy('docker', async () => (await tcpOpen(5432)) && (await tcpOpen(9000)), { tries: 60, intervalMs: 1000 });
+    await serverCli.infra({ serverDir: repos.SERVER_DIR });
   }
 
   // ---- Step 2: agents + server ----
@@ -175,10 +155,15 @@ async function main() {
     await waitHealthy('agents', () => httpOk(`http://127.0.0.1:${PORTS.agents}/health`), { tries: 60, intervalMs: 1000 });
   }
   if (args.services.server) {
-    // server 启动知识单源在 server-cli（原 dev-start.sh app 链的 node 重写：
-    // .env 加载 + force_local_infra + start_infra + start_app，含内部健康等待）。
+    // server 启动知识单源在 server-cli。docker 已在 Step 1 显式完成时不重复执行；
+    // 仅启动 server 的 standalone 场景仍由 server-cli.start 默认补齐 infra。
     // killOld:true = 沿用旧行为（orchestrator Step 0 已杀旧，这里是二道保险，start 内不再交互确认）。
-    await serverCli.start({ serverDir: repos.SERVER_DIR, ports: PORTS, killOld: true });
+    await serverCli.start({
+      serverDir: repos.SERVER_DIR,
+      ports: PORTS,
+      killOld: true,
+      ensureInfra: !args.services.docker,
+    });
     await waitHealthy('server', () => httpOk(`http://127.0.0.1:${PORTS.server}/`), { tries: 30, intervalMs: 2000 });
   }
 

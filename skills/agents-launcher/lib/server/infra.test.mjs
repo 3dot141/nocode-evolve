@@ -1,17 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { INFRA_SERVICES, containerNameOf, waitForEs, startInfra } from './infra.mjs';
+import { waitForEs, waitForInfraPorts, startInfra } from './infra.mjs';
 
 const noSleep = () => Promise.resolve();
-
-test('INFRA_SERVICES: 7 个固定服务，与 dev-start.sh 106 行一致', () => {
-  assert.deepEqual(INFRA_SERVICES, ['postgresql', 'redis', 'mongodb', 'rabbitmq', 'neo4j', 'minio', 'elasticsearch']);
-});
-
-test('containerNameOf: postgresql 映射为 postgres，其余原样', () => {
-  assert.equal(containerNameOf('postgresql'), 'postgres');
-  assert.equal(containerNameOf('redis'), 'redis');
-});
 
 test('waitForEs: 第二次探测 status=yellow 返回 true', async () => {
   let n = 0;
@@ -24,68 +15,58 @@ test('waitForEs: 一直不健康则超时返回 false', async () => {
   assert.equal(await waitForEs({ fetchFn: mockFetch, maxRetries: 3, sleep: noSleep }), false);
 });
 
-test('startInfra: 全部容器已运行时不调 compose up，直接返回', async () => {
-  const calls = [];
-  const mockExec = (cmd, args) => {
-    calls.push(args?.[1] || '');
-    if (args?.[1]?.includes('docker ps')) return 'postgres\nredis\nmongodb\nrabbitmq\nneo4j\nminio\nelasticsearch\n';
-    return '';
+test('waitForInfraPorts: 等到 pg 和 minio 同时就绪', async () => {
+  let pgChecks = 0;
+  const tcpCheck = async (port) => {
+    if (port === 5432) return ++pgChecks >= 2;
+    return port === 9000;
   };
-  const result = await startInfra({ exec: mockExec, fetchFn: async () => ({ json: async () => ({ status: 'green' }) }), sleep: noSleep, log: () => {} });
-  assert.deepEqual(result.started, []);
-  assert.ok(!calls.some((c) => c.includes('compose up')));
+  assert.equal(await waitForInfraPorts({ tcpCheck, maxRetries: 3, sleep: noSleep }), true);
 });
 
-test('startInfra: 缺容器时调 compose up 起缺的那些', async () => {
+test('startInfra: 每次先运行目标仓派生脚本，再做健康检查和收尾', async () => {
   const calls = [];
   const mockExec = (cmd, args) => {
     const s = args?.[1] || '';
     calls.push(s);
-    if (s.includes('docker ps')) return 'postgres\nredis\n';   // 缺 mongodb/rabbitmq/neo4j/minio/elasticsearch
-    if (s.includes('pg_isready')) return '';
+    if (s.includes('rabbitmqadmin') && s.includes('list queues')) return '';
     return '';
   };
-  const result = await startInfra({ exec: mockExec, fetchFn: async () => ({ json: async () => ({ status: 'green' }) }), sleep: noSleep, log: () => {} });
-  assert.deepEqual(result.started, ['mongodb', 'rabbitmq', 'neo4j', 'minio', 'elasticsearch']);
-  assert.ok(calls.some((c) => c.includes('compose up -d mongodb rabbitmq neo4j minio elasticsearch')));
+  let generatedRuns = 0;
+  const result = await startInfra({
+    exec: mockExec,
+    fetchFn: async () => ({ json: async () => ({ status: 'green' }) }),
+    tcpCheck: async () => true,
+    runDocker: ({ serverDir }) => {
+      generatedRuns++;
+      assert.equal(serverDir, '/srv');
+      return { sourcePath: '/srv/dockerstart.sh' };
+    },
+    sleep: noSleep,
+    log: () => {},
+    serverDir: '/srv',
+  });
+
+  assert.equal(generatedRuns, 1);
+  assert.equal(result.portsReady, true);
+  assert.equal(result.esReady, true);
+  assert.ok(calls.some((c) => c.includes('rabbitmqadmin')));
 });
 
-test('startInfra: serverDir 提供时按 compose services 过滤缺失服务，compose 在 server 仓根执行', async () => {
+test('startInfra: 健康检查失败时 fail loud，不执行收尾', async () => {
   const calls = [];
-  const mockExec = (cmd, args, opts) => {
-    const s = args?.[1] || '';
-    calls.push({ s, cwd: opts?.cwd });
-    if (s.includes('docker ps')) return 'postgres\nredis\nmongodb\nrabbitmq\nminio\n';   // 缺 neo4j + elasticsearch
-    if (s.includes('config --services')) return 'postgresql\nredis\nmongodb\nrabbitmq\nminio\nelasticsearch\n';   // release 分支无 neo4j
-    return '';
-  };
-  const result = await startInfra({ exec: mockExec, fetchFn: async () => ({ json: async () => ({ status: 'green' }) }), sleep: noSleep, log: () => {}, serverDir: '/srv' });
-  assert.deepEqual(result.started, ['elasticsearch']);   // neo4j 不在 compose 里，不再尝试起它
-  const up = calls.find((c) => c.s.includes('compose up'));
-  assert.equal(up.cwd, '/srv');
-});
-
-test('startInfra: compose services 探测失败时 fallback 全量清单（旧行为）', async () => {
-  const mockExec = (cmd, args) => {
-    const s = args?.[1] || '';
-    if (s.includes('docker ps')) return INFRA_SERVICES.map(containerNameOf).join('\n');
-    if (s.includes('config --services')) throw new Error('no configuration file');
-    return '';
-  };
-  const result = await startInfra({ exec: mockExec, fetchFn: async () => ({ json: async () => ({ status: 'green' }) }), sleep: noSleep, log: () => {}, serverDir: '/srv' });
-  assert.deepEqual(result.started, []);   // 全量清单下所有容器都在跑 → 早返回
-});
-
-test('startInfra: PG 未就绪时不跑 ensureRabbitmqQueues/fixDbPermissions（收尾动作跳过）', async () => {
-  const calls = [];
-  const mockExec = (cmd, args) => {
-    const s = args?.[1] || '';
-    calls.push(s);
-    if (s.includes('docker ps')) return '';
-    if (s.includes('pg_isready')) throw new Error('not ready');
-    return '';
-  };
-  const result = await startInfra({ exec: mockExec, fetchFn: async () => ({ json: async () => ({ status: 'green' }) }), sleep: noSleep, log: () => {} });
-  assert.equal(result.pgReady, false);
+  await assert.rejects(
+    startInfra({
+      exec: (_cmd, args) => { calls.push(args?.[1] || ''); return ''; },
+      fetchFn: async () => ({ json: async () => ({ status: 'green' }) }),
+      tcpCheck: async () => false,
+      runDocker: () => ({ sourcePath: '/srv/dockerstart.sh' }),
+      sleep: noSleep,
+      log: () => {},
+      serverDir: '/srv',
+      portRetries: 2,
+    }),
+    /PostgreSQL.*MinIO.*未就绪/,
+  );
   assert.ok(!calls.some((c) => c.includes('rabbitmqadmin')));
 });

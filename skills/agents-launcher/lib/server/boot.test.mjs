@@ -97,3 +97,22 @@ test('startApp: 端口被占用且 killOld=true 时先杀旧进程再继续', as
   await startApp({ serverDir: dir, graalvm: { mode: 'local', javaHome: '/opt/graal' }, exec: mockExec, spawn: mockSpawn, fetchFn: async () => ({ json: async () => ({ status: 'green' }) }), waitFn: async () => true, killOld: true, log: () => {} });
   assert.deepEqual(killed, ['99999']);
 });
+
+test('startApp: 容器降级路径透传禁止自动打开浏览器的 Spring 配置', async () => {
+  let dockerRunArgs;
+  const mockExec = (cmd, args) => {
+    if (cmd === 'docker' && args?.[0] === 'run') dockerRunArgs = args;
+    return '';
+  };
+  const dir = fakeRepo('no zgc');
+  await startApp({
+    serverDir: dir,
+    graalvm: { mode: 'container', image: 'eclipse-temurin:21-jdk' },
+    env: { OPENPROJECT_ISOPEN: 'false' },
+    exec: mockExec,
+    fetchFn: async () => ({ json: async () => ({ status: 'green' }) }),
+    waitFn: async () => true,
+    log: () => {},
+  });
+  assert.ok(dockerRunArgs.includes('OPENPROJECT_ISOPEN=false'));
+});
