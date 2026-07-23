@@ -1,0 +1,4 @@
+interface:
+  display_name: "Open Design CLI"
+  short_description: "Operate Open Design through its packaged CLI"
+  default_prompt: "Use the Open Design CLI, serve the Web UI by default, and return the verified project artifact."
