@@ -8,6 +8,7 @@
 
 | 路径 | 主题 | 状态 |
 |---|---|---|
+| `3dot141/260723-codex-restart-script-design.md` | codex-restart 状态检查、proxy 告警与 daemon-only fire-and-forget 重启脚本 | **approved / implementation pending** |
 | `3dot141/260723-native-platform-block-packaging-design.md` | 原生平台块 + 静态打包：删除 Capability/profile/provider，Skill 明文使用平台原生工具 | **approved / implementation pending** |
 | `3dot141/260603-strategic-review-v3.4.0.md` | v3.4.0 双路 audit + 红蓝军推演后的战略级架构改进 spec (Batch 1 P0 = v3.5.0 落地依据; Batch 2/3 未实施) | **draft / 落地中** |
 | `3dot141/260602-worktree-setup-script-design.md` | worktree-setup.mjs (新建分支走 worktree, 落 `<project>-<branch_flat>/`, setup verb 补 env/IDE/node_modules + symlink) | **active** (主仓 git-worktree 增强已实施) |
