@@ -24,11 +24,13 @@ toolchain 检测（`github.com`→gh / `bitbucket.`→bkt）与 base 解析见 S
 ```
 [全景计划] <branch> → PR → <target_remote>/<target_branch>（来源: <解析来源>），确认后全自动:
   1. commit 整理   <建议内容 or 无建议>（默认: 跳过，原样进 PR）
-  2. push + 建 PR  title「<title>」
+  2. push + 建 PR  push: <普通（默认） / force-with-lease（仅已知 non-ff）>
+                   title「<title>」
                    body 与 Affected 见下；reviewer: <名单 or 空>
-  3. 合并方式      approve 后自动合并（默认）；cron 每 5min 查一次（本会话内有效）
-  4. 合并后清理    worktree <path> + 本地 branch <branch>；远程 <remote>/<remote_branch>: 删除（默认）
-  5. 合并后流转    #<task>: <当前状态> → <目标状态>    ← 无任务号则写「无流转」
+  3. 发布策略      <全量（默认） / 灰度 / dark launch>    ← 生产改动才展示
+  4. 合并方式      approve 后自动合并（默认）；cron 每 5min 查一次（本会话内有效）
+  5. 合并后清理    worktree <path> + 本地 branch <branch>；远程 <remote>/<remote_branch>: 删除（默认）
+  6. 合并后流转    #<task>: <当前状态> → <目标状态>    ← 无任务号则写「无流转」
 
 --- body ---
 <body 全文>
@@ -36,23 +38,26 @@ toolchain 检测（`github.com`→gh / `bitbucket.`→bkt）与 base 解析见 S
 <Affected 目录树，规格见 Step 1 第 4 项>
 
 回「OK」全自动到底；或直接说改哪项（target / title / body / reviewer / 合并方式 / 远程分支处置 / 目标状态）。
-回「我先整理 commit」暂停整理；回「分步确认」降级逐项确认。
+回「我先整理 commit」暂停整理。
 ```
 
-- 改 target / reviewer / 合并方式 / 远程分支处置 / 目标状态 → 局部更新，**不重生成** title/body，两行复述后执行
+- 改 target / reviewer / 发布策略 / 合并方式 / 远程分支处置 / 目标状态并同时确认 → 局部更新，**不重生成** title/body，两行复述后执行
+- 只改参数但未确认 → 更新并重展同一份全景，不执行
 - 改 title / body 语义 → 重生成，重展全景
+- 只有用户主动明确要求「分步确认」时才覆盖单次全景协议；模板不主动提供该选项
 - **合并方式**二选一：「approve 后自动合并」（默认；判据 = 平台可合并 + ≥1 approve，缺一不合）／「只盯不合」（合并权在别人手里的仓库用，只在可合并时通知一次）。gh 可附加策略 merge/squash/rebase（默认 merge）；bkt 走仓库默认策略
 - **远程分支处置**：PR 路径**默认合并后删除**（source 分支专为 PR 而生，平台 PR 页面永久保留分支记录）；可改「保留」。护栏：source 分支名是 main/master/release/develop 等长期分支 → 强制保留，不给删除选项
-- 主仓直接跑（非 worktree）→ 第 4 行去掉 worktree 与本地 branch（当前分支删不了），只处置远程；流转仍有效
+- 主仓直接跑（非 worktree）→ 第 5 行去掉 worktree 与本地 branch（当前分支删不了），只处置远程；流转仍有效
 
-## Step 3: push（永不自动 force）
+## Step 3: push（只执行全景已授权方式）
 
 ```bash
 git push -u origin HEAD
 ```
 
 - no permission / auth fail → 报错 + 不进 PR 阶段，worktree 保留
-- **non-fast-forward**（rebase/amend 改过 history）→ 安全例外：用户 typed `force` **字面**才 `git push --force-with-lease origin HEAD`；任何非 `force` 字面（含 yes/y/OK）→ 不 force。（gh/bkt 无差异，纯 git）
+- 准备段已知 non-fast-forward 且全景明确授权 `force-with-lease` → `git push --force-with-lease origin HEAD`
+- 执行时才撞 non-fast-forward → 停止并报告，不追加询问、不 force；用户要求继续时重新收集远端状态并生成一份包含 `force-with-lease` 风险的新全景
 
 ## Step 4: 建 PR（不带 reviewer）
 

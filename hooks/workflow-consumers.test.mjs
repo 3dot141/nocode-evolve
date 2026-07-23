@@ -203,6 +203,20 @@ test('remaining workflow coordinators use native control and honest independence
   assert.match(read('skills/larkhub/SKILL.md'), /\$lark-doc/);
 });
 
+test('dev-land has one panorama gate and never adds a runtime confirmation', () => {
+  const land = read('skills/dev-land/SKILL.md');
+  const prflow = read('skills/dev-land/references/prflow.md');
+
+  assert.match(land, /用户只确认一次完整全景/);
+  assert.match(land, /推不定 → 不提问，进入候选全景/);
+  assert.match(land, /发布策略直接进入全景/);
+  assert.match(land, /执行失败或出现全景未覆盖的新风险.*不临时追问是否继续/s);
+  assert.doesNotMatch(land, /AskUserQuestion|request_user_input|askUser|四选一菜单|全景确认前追问/);
+
+  assert.match(prflow, /执行时才撞 non-fast-forward → 停止并报告，不追加询问/);
+  assert.doesNotMatch(prflow, /typed `force`|安全例外/);
+});
+
 test('skill handoffs use a self-contained context envelope instead of an ambient-context placeholder', () => {
   for (const file of [
     'model/agent-about.md', 'rules/rule-superpowers-brainstorming.md',

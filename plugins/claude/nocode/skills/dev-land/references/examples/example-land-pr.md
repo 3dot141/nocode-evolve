@@ -4,7 +4,7 @@
 
 ---
 
-## Step 1-4（全部无交互）
+## Step 1-4（全部无独立 Gate）
 
 ```
 Step 1 工具栈: remote 含 github.com → gh；补清检测: gh pr view → no pull requests found → 继续
@@ -82,5 +82,6 @@ PR 合并，worktree / 本地 branch / 远程分支三件套全清，任务已�
 ## 变体提醒
 
 - 用户中途关会话 → cron job 消失；下次进 dev-land 由 Step 2b 补清检测兜底
-- tests fail + 用户说「提 PR」→ hard stop 不进全景；用户说「discard」→ 不跑 tests 直接走 Discard 全景
+- tests fail + 用户说「提 PR」→ 作为风险项进入 PR 全景，由唯一一次全景确认决定；用户说「discard」→ 不跑 tests 直接走 Discard 全景
 - PR 被 reviewer 关闭 → cron 轮报告「PR 被关未合，全部保留」+ 自删
+- push 执行时意外撞 non-fast-forward → 停止并报告，不追加 force 询问；用户要求继续时生成一份明确包含 `force-with-lease` 风险的新全景

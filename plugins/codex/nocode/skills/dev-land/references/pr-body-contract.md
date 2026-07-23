@@ -24,7 +24,7 @@
 <重点评审哪些内容: reviewer 该把时间花在哪——风险决策点 / 强约束 / 未验证项>
 ```
 
-确认 push range (核对描述是否遗漏实质变更, 二选一):
+核对 push range（检查描述是否遗漏实质变更，二选一）:
 
 - push 前确认: `git log origin/<branch>..HEAD --oneline`
 - push 后回看: `git log <old-sha>..<new-sha> --oneline` (`<old-sha>..<new-sha>` 即 `git push` output 给出的那段 range)

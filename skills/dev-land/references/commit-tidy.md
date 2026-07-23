@@ -66,7 +66,7 @@ git log origin/<branch>..HEAD --oneline    # 仅本地未 push 的, 可安心 re
 git log "$(git merge-base HEAD $base)..HEAD" --oneline   # 全 range, 含已 push (改了要 force-push)
 ```
 
-> 已 push 的 commit rebase 后重 push 会撞 non-ff → 走 typed `force` 安全例外 (prflow Step 3)。
+> 已 push 的 commit rebase 后重 push 会撞 non-ff → 重展全景时必须把 `force-with-lease` 写成显式风险动作；未进入全景不得执行。
 
 ## Step 4: 等「好了」→ 重收材料
 
