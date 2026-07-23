@@ -1,6 +1,6 @@
 # nocode Claude / Codex 双运行时兼容设计
 
-> 状态：已确认并实施
+> 状态：superseded（被 `260723-native-platform-block-packaging-design.md` 取代）
 > 日期：2026-07-21
 
 ## 1. 目标
