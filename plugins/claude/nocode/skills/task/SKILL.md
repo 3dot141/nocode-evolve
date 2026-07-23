@@ -8,7 +8,7 @@ argument-hint: <自然语言意图>
 
 把用户的自然语言输入解析成 8 个 sub-action 之一, 操作 `$USER_VAULT_PATH/Flow/05-Tasks/yymm/<yymmdd>-<slug>.md` task 文件 + 跟 Obsidian Bases 视图渲染配合.
 
-**设计文档**: `docs/plans/3dot141/260521-task-management-system-design.md` (含完整业务流 BF0-BF7 + 单测 case + 方案选型).
+**设计文档**: `docs/dev/3dot141/260521-02-task-management-system/task-management-system-design.md` (含完整业务流 BF0-BF7 + 单测 case + 方案选型).
 
 ## 入参 ($ARGUMENTS)
 
@@ -32,7 +32,7 @@ argument-hint: <自然语言意图>
 - `$USER_VAULT_PATH/Flow/05-Tasks/views/tasks.base` 已建
 - `$USER_VAULT_PATH/Meta/Templates/Templater/Template/Task.md` 已建 (备用录入入口)
 
-任一不满足 → 报错 + 引导用户走 plan 文档 (`docs/plans/3dot141/260521-task-management-system-plan.md`) 对应 Task; env 未设 → 报错 + 指引在 zshrc 加 `export USER_VAULT_PATH=<your-vault-root>`.
+任一不满足 → 报错 + 引导用户走 plan 文档 (`docs/dev/3dot141/260521-02-task-management-system/task-management-system-plan.md`) 对应 Task; env 未设 → 报错 + 指引在 zshrc 加 `export USER_VAULT_PATH=<your-vault-root>`.
 
 ---
 

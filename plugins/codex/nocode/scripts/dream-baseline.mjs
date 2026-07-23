@@ -4,7 +4,7 @@
 // project-dream (按目标路径参数化 ref, 可能是子目录 pathspec, 不传 prepareFn) 共用.
 // 不硬编码调用任何特定 snapshot 函数, 不强制整树 diff — 通过 options.prepareFn / options.pathspec 收窄.
 //
-// 设计: docs/superpowers/specs/3dot141/260701-dream-incremental-design.md #BaselineTracker 模块
+// 设计: docs/dev/3dot141/260701-01-dream-incremental/dream-incremental-design.md #BaselineTracker 模块
 // 依赖: scripts/repo-lock.mjs (Task 1, acquire/release)、scripts/git-exec.mjs (共享安全 git 调用)
 //
 // Review 复审修复：git 子进程调用改用 git-exec.mjs 的 execFileSync 参数数组，不再自己维护

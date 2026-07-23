@@ -4,7 +4,7 @@
 //   node project-tree-detect.mjs detect <dir-path>
 //   node project-tree-detect.mjs find-root <dir-path>
 //   node project-tree-detect.mjs ref-name <dir-path> <git-root>
-// 设计: docs/superpowers/specs/3dot141/260701-dream-incremental-design.md ProjectTreeBaseline 域
+// 设计: docs/dev/3dot141/260701-01-dream-incremental/dream-incremental-design.md ProjectTreeBaseline 域
 import { execFileSync } from 'node:child_process';
 import { realpathSync } from 'node:fs';
 import path from 'node:path';

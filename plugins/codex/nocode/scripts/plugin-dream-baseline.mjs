@@ -16,7 +16,7 @@
 // setBaseline 里触发任意命令执行（已用 PoC 复现）。改用 git-exec.mjs 的 execFileSync 参数
 // 数组调用——分支名无论含什么字符都只是一个 argv 元素，不会被 shell 解释。
 //
-// 设计: docs/superpowers/specs/3dot141/260701-dream-incremental-design.md（PluginRepo 域）
+// 设计: docs/dev/3dot141/260701-01-dream-incremental/dream-incremental-design.md（PluginRepo 域）
 import { fileURLToPath } from 'node:url';
 import { git, parsePorcelain } from './git-exec.mjs';
 

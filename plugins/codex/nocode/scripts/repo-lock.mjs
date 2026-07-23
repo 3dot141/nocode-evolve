@@ -13,7 +13,7 @@
 //   const handle = RepoLock.acquire(personalDir, 2000);
 //   ... RepoLock.release(handle);
 //
-// 设计: docs/superpowers/specs/3dot141/260701-dream-incremental-design.md
+// 设计: docs/dev/3dot141/260701-01-dream-incremental/dream-incremental-design.md
 //   § PersonalHistory 域 / RepoLock 模块 (C1 修正: 原子操作代替 exists-then-write,
 //   锁文件位置从 .git/ 内移到 .agents-personal/ 根)
 //

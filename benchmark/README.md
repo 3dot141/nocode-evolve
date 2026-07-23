@@ -17,7 +17,7 @@ devflow-benchmark：用 Executor→Evaluator 隔离评测法，给 nocode 插件
 | `scripts/evaluate.mjs` | case 加载 + executor/evaluator prompt 组装 + 分数汇总 |
 | `scripts/split.mjs` | 按 skill 分层抽样生成 train/val 切分 |
 
-设计依据：`docs/superpowers/specs/3dot141/260619-devflow-benchmark-design.md`
+设计依据：`docs/dev/3dot141/260619-01-devflow-benchmark/devflow-benchmark-design.md`
 （评分维度、锚点、通过标准、防污染规则的唯一来源）。
 
 ## 如何跑

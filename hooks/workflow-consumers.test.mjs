@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { test } from 'node:test';
 
 const read = (file) => readFileSync(new URL(`../${file}`, import.meta.url), 'utf8');
@@ -72,6 +72,27 @@ test('worktree consumers use platform-native create and enter contracts', () => 
     assert.match(source, /绝对路径|absolute path/);
     assert.doesNotMatch(source, /Capability\(|"profile"\s*:|fallbackPolicy/);
   }
+});
+
+test('using-git-worktrees uses the flat sibling path and rejects legacy containers', () => {
+  const source = read('skills/using-git-worktrees/SKILL.md');
+  assert.match(source, /<project-parent>\/<project-name>-<branch-flat>/);
+  assert.match(source, /branch_flat/);
+  assert.doesNotMatch(source, /~\/\.config\/superpowers\/worktrees/);
+  assert.doesNotMatch(source, /(?:^|[^\w])\.worktrees\//m);
+  assert.doesNotMatch(source, /(?:^|[^\w])worktrees\//m);
+});
+
+test('development documents use topic directories under docs/dev', () => {
+  const brainstorming = read('skills/brainstorming/SKILL.md');
+  const about = read('model/agent-about.md');
+
+  assert.match(brainstorming, /\{dev_design_output\}/);
+  assert.doesNotMatch(brainstorming, /docs\/superpowers\/(?:specs|plans)/);
+  assert.match(about, /docs\/dev\/\{username\}\/\{yymmdd\}-\{serial\}-\{topic\}/);
+  assert.equal(existsSync(new URL('../docs/dev/INDEX.md', import.meta.url)), true);
+  assert.equal(existsSync(new URL('../docs/plans', import.meta.url)), false);
+  assert.equal(existsSync(new URL('../docs/superpowers', import.meta.url)), false);
 });
 
 test('global model and brainstorming rule avoid forced semantic-search agents', () => {

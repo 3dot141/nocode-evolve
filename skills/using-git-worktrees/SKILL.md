@@ -57,39 +57,30 @@ Honor any existing declared preference without asking. If the user declines cons
 
 ### Directory Selection
 
-Follow this priority order. Explicit user preference always beats observed filesystem state.
+Use one flat sibling template for every repository:
 
-1. **Check your instructions for a declared worktree directory preference.** If the user has already specified one, use it without asking.
-
-2. **Check for an existing project-local worktree directory:**
-   ```bash
-   ls -d .worktrees 2>/dev/null     # Preferred (hidden)
-   ls -d worktrees 2>/dev/null      # Alternative
-   ```
-   If found, use it. If both exist, `.worktrees` wins.
-
-3. **Check for an existing global directory:**
-   ```bash
-   project=$(basename "$(git rev-parse --show-toplevel)")
-   ls -d ~/.config/superpowers/worktrees/$project 2>/dev/null
-   ```
-   If found, use it (backward compatibility with legacy global path).
-
-4. **If there is no other guidance available**, default to `.worktrees/` at the project root.
-
-### Safety Verification (project-local directories only)
-
-**MUST verify directory is ignored before creating worktree:**
-
-```bash
-git check-ignore -q .worktrees 2>/dev/null || git check-ignore -q worktrees 2>/dev/null
+```text
+<project-parent>/<project-name>-<branch-flat>/
 ```
 
-**If NOT ignored:** Add to .gitignore, commit the change, then proceed.
+Derive it deterministically:
 
-**Why critical:** Prevents accidentally committing worktree contents to repository.
+```bash
+project_root="$(git rev-parse --show-toplevel)"
+project_parent="$(dirname "$project_root")"
+project_name="$(basename "$project_root")"
+branch_flat="${BRANCH_NAME//\//_}"
+worktree_path="${project_parent}/${project_name}-${branch_flat}"
+```
 
-Global directories (`~/.config/superpowers/worktrees/`) need no verification.
+Do not inspect or reuse project-local or user-level worktree container directories. The sibling path is outside
+the repository, so it cannot pollute the main checkout and does not require a `.gitignore` change.
+
+If the derived path already exists, inspect `git worktree list --porcelain` and the directory before acting:
+
+- registered worktree for the intended branch → ask whether to reuse it;
+- empty or clearly stale unregistered directory → ask before removing it;
+- any other content → report the conflict and stop.
 
 ### Create the Worktree
 
@@ -166,12 +157,8 @@ Ready to implement <feature-name>
 | In a submodule | Treat as normal repo (Step 0 guard) |
 | Creating from a confirmed base | `git worktree add "<absolute-path>" -b "<branch>" "<base>"` |
 | Entering the worktree | Claude: native session entry; Codex: bind absolute `workdir` |
-| `.worktrees/` exists | Use it (verify ignored) |
-| `worktrees/` exists | Use it (verify ignored) |
-| Both exist | Use `.worktrees/` |
-| Neither exists | Check instruction file, then default `.worktrees/` |
-| Global path exists | Use it (backward compat) |
-| Directory not ignored | Add to .gitignore + commit |
+| Worktree location | `<project-parent>/<project-name>-<branch-flat>/` |
+| Derived path exists | Classify registered reuse, stale directory, or real conflict before acting |
 | Permission error on create | Sandbox fallback, work in place |
 | Tests fail during baseline | Report failures + ask |
 | No package.json/Cargo.toml | Skip dependency install |
@@ -193,15 +180,10 @@ Ready to implement <feature-name>
 - **Problem:** Reusing a task worktree as an unintended base, or missing an allowed default base worktree
 - **Fix:** Always run Step 0 and classify the exact current branch before creating anything
 
-### Skipping ignore verification
-
-- **Problem:** Worktree contents get tracked, pollute git status
-- **Fix:** Always use `git check-ignore` before creating project-local worktree
-
 ### Assuming directory location
 
 - **Problem:** Creates inconsistency, violates project conventions
-- **Fix:** Follow priority: existing > global legacy > instruction file > default
+- **Fix:** Always derive the flat sibling path from project root and flattened branch name
 
 ### Proceeding with failing tests
 
@@ -215,15 +197,14 @@ Ready to implement <feature-name>
 - Continue from an existing linked worktree without explicit user confirmation
 - Call the platform entry operation as if it could create a worktree. Creation and entry are separate steps.
 - Run Codex operations without the entered worktree's explicit workdir after `git worktree add`
-- Create worktree without verifying it's ignored (project-local)
+- Create a worktree inside a repository or a user-level container instead of the flat sibling path
 - Skip baseline test verification
 - Proceed with failing tests without asking
 
 **Always:**
 - Run Step 0 detection first
+- Derive `<project-parent>/<project-name>-<branch-flat>/` before creation
 - Create with `git worktree add` using the chosen absolute path
 - Enter with Claude's native worktree entry; on Codex bind every later command to the absolute `workdir`
-- Follow directory priority: existing > global legacy > instruction file > default
-- Verify directory is ignored for project-local
 - Auto-detect and run project setup
 - Verify clean test baseline

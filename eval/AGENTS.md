@@ -9,7 +9,7 @@ SessionStart 上下文（`model/*.md` + `agent-catalog-*.md`）+ 任务动量 pr
 "压力下是否真的遵守"——后者在设计文档"后记"里已经 pivot 到另一条路（`UserPromptSubmit`
 hook 硬提醒机制），不再靠这套 eval 覆盖。
 
-设计依据：`docs/plans/3dot141/260526-rule-trigger-eval-design.md`（judge 机制、判分公式、
+设计依据：`docs/dev/3dot141/260526-02-rule-trigger-eval/rule-trigger-eval-design.md`（judge 机制、判分公式、
 fixture 格式、负样本分型、混淆矩阵、失败分型全部在这）。改判分逻辑或加 fixture 前先读。
 
 ## 跑评测的命令入口 —— 重要：不在插件分发范围内

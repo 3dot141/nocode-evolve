@@ -18,7 +18,7 @@ argument-hint: [optional-topic]
 
 把当前会话里值得跨会话保留的内容沉淀到合适出口——AI 识别候选 + 自动贴分类标签 → 用户表格短码勾选/调整 → 七出口分发。
 
-**设计文档**：`docs/plans/3dot141/260519-sediment-design.md`
+**设计文档**：`docs/dev/3dot141/260519-01-sediment/sediment-design.md`
 
 **姊妹命令 / 关联**：
 - `/sow`（必填意图、围绕主题浓缩并归档到 `$USER_VAULT_PATH/Memory/<layer>/`，v2 支持 Inbox/Inputs/Outputs 三层）—— `/distill` 在 cross-project 出口仅作 advisor，建议用户跑 `/sow`，不替执行、不替判层

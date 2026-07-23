@@ -336,6 +336,7 @@ test('Claude adapter builds native skills and direct runtime overlays', () => {
   for (const relative of required) {
     assert.ok(tree.has(relative), `Claude artifact missing ${relative}`);
   }
+  assert.equal(tree.has('skills/codex-restart/scripts/codex-restart.mjs'), false);
   assert.equal(tree.has('model/agent-nocode.md'), false);
   assert.equal(tree.has('skills/codex-restart/SKILL.md'), false);
   assert.equal(tree.has('skills/sow/scripts/test_script.py'), false);
@@ -361,7 +362,7 @@ test('Claude adapter builds native skills and direct runtime overlays', () => {
     false,
     'Claude agents and commands must be compiled into shared skills instead of published natively',
   );
-  assert.equal(tree.has('docs/superpowers/specs/INDEX.md'), false);
+  assert.equal(tree.has('docs/dev/INDEX.md'), false);
   assert.deepEqual(
     JSON.parse(tree.get('.claude-plugin/plugin.json').toString()),
     claudeAdapter.renderManifest(metadata),
@@ -401,6 +402,7 @@ test('Codex adapter builds native skills and direct runtime overlays', () => {
     'skills/references/testing-guide.md',
     'skills/agents-launcher/agents/openai.yaml',
     'skills/codex-restart/SKILL.md',
+    'skills/codex-restart/scripts/codex-restart.mjs',
     'skills/devflow/SKILL.md',
     'skills/task/SKILL.md',
     'runtime/context-budget.json',

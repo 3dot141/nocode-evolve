@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // worktree post-create 补齐 + teardown 的确定性步骤 (方案3 部分脚本化)。
-// 设计: docs/superpowers/specs/3dot141/260602-worktree-setup-script-design.md
+// 设计: docs/dev/3dot141/260602-02-worktree-setup-script/worktree-setup-script-design.md
 //
 // 计划层 (plan*/parse*/detect*): 只读 fs, 决定"要做什么", 单测打这里。
 // 执行层 (run/copyWithFallback/setup/teardown): execFileSync 跑 cp/ln/git, 有副作用; --dry-run 不调。

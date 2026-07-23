@@ -19,7 +19,7 @@
 // 替换, 避免"替换到一半"的中间态. 临时目录建在 projectDir 下 (与 personalDir 同一
 // 文件系统/卷), 保证 rename 是同卷操作、真正原子 (跨卷 rename 会报 EXDEV).
 //
-// 设计: docs/superpowers/specs/3dot141/260701-dream-incremental-design.md
+// 设计: docs/dev/3dot141/260701-01-dream-incremental/dream-incremental-design.md
 //   § PersonalHistory 域 / MigrationRunner 模块
 import { execFileSync } from 'node:child_process';
 import { existsSync, mkdirSync, mkdtempSync, renameSync, rmSync } from 'node:fs';

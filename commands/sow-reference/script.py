@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """/sow v2 命令的 frontmatter + 路径生成脚本。
 
-设计文档：docs/plans/3dot141/260521-sow-multi-layer-design.md
+设计文档：docs/dev/3dot141/260521-01-sow-multi-layer/sow-multi-layer-design.md
 
 v2 vs v1 变更：
 - env 改名 + 上移：USER_WIKI_PATH (v1, 指 Memory/05-Outputs 子目录)

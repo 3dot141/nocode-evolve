@@ -19,7 +19,7 @@ rg -l "<不带扩展名的文件名>" --glob '!references/*' -g '!.git' -g '!ven
 确认谁在读它，理由：
 
 1. **有些文件是 vendor 同步管理的**（下表"来源"列标 vendor 的行）——手改会在下次 `node scripts/vendor-sync.mjs` 时被上游覆盖。真要改，应该去改 `vendor/superpowers/vendor-integration.json` 的抽取规则，或者去改 vendor 侧的上游源，而不是直接编辑 `references/` 下的落点文件。
-2. **有些文件已经没有活跃引用方**——是早期 skill-fusion RFC（`docs/superpowers/specs/3dot141/rfc-skill-fusion-pipeline.md`）阶段的产物，后来被各 skill 自己 `references/` 目录下的演化版本取代（例如 `implementer-prompt.md` / `spec-reviewer-prompt.md` 已被 `skills/dev-build/references/` 下同名但内容已明显分叉的版本取代——两者做了 diff，措辞、结构、字段都不一样了）。改这类文件前先确认是不是在改一份"没人读"的历史遗留；如果是，价值有限，优先考虑改真正被消费的那份。
+2. **有些文件已经没有活跃引用方**——是早期 skill-fusion RFC（`docs/dev/3dot141/260616-01-skill-fusion-pipeline/skill-fusion-pipeline-design.md`）阶段的产物，后来被各 skill 自己 `references/` 目录下的演化版本取代（例如 `implementer-prompt.md` / `spec-reviewer-prompt.md` 已被 `skills/dev-build/references/` 下同名但内容已明显分叉的版本取代——两者做了 diff，措辞、结构、字段都不一样了）。改这类文件前先确认是不是在改一份"没人读"的历史遗留；如果是，价值有限，优先考虑改真正被消费的那份。
 3. **`receiving-code-review.md` 是重复文件**：内容与正式 skill `skills/receiving-code-review/SKILL.md`（`vendor/superpowers/vendor-integration.json` 标记 `keep-as-skill`）基本一致，是一份未清理的旧副本。不要在这两处各改一半——真正生效的是 `skills/receiving-code-review/SKILL.md`。
 
 ## 引用方速查（写本文档时核实，日后改动请重新核实一遍）
@@ -37,4 +37,4 @@ rg -l "<不带扩展名的文件名>" --glob '!references/*' -g '!.git' -g '!ven
 | `code-quality-reviewer-prompt.md` | 无活跃引用方 | 对应的演化版本是 `skills/dev-build/references/quality-reviewer-prompt.md` |
 | `receiving-code-review.md` | 无活跃引用方 | 与 `skills/receiving-code-review/SKILL.md` 内容重复，真源在后者 |
 
-> 判定方法：命中 `skills/*/SKILL.md` 或 `hooks/` 下的脚本才算活跃引用；命中 `docs/superpowers/specs/` 下的 RFC/设计文档不算——那是历史决策记录，不是当前消费者。
+> 判定方法：命中 `skills/*/SKILL.md` 或 `hooks/` 下的脚本才算活跃引用；命中 `docs/dev/` 下的 RFC/设计文档不算——那是历史决策记录，不是当前消费者。

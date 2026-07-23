@@ -23,7 +23,7 @@
 // cache 结构 (v2): { entries: { "<branch>\0<base>": { last_fetch_ms, behind, ahead } } }
 //   旧 v1 格式 (顶层 branch/base) 读到即作废 → 视为无记录, 触发一次冷启动后写入新格式.
 //
-// 设计: rules/rule-git-freshness.md, docs/superpowers/specs/3dot141/260603-strategic-review-v3.4.0.md (Batch 1 follow-up)
+// 设计: rules/rule-git-freshness.md, docs/dev/3dot141/260603-02-strategic-review-v3.4.0/strategic-review-v3.4.0.md (Batch 1 follow-up)
 import { execSync } from 'node:child_process';
 import fs from 'node:fs';
 

@@ -12,7 +12,7 @@ subagent 跑）只看 `input` + `context`；Evaluator（另一个独立 subagent
 目的是驱动类 SkillOpt 的 skill 优化循环，评分不是给人看的报告，是决定"这版 skill 改动是否
 达标"的 gate 输入。
 
-设计依据全部在 `docs/superpowers/specs/3dot141/260619-devflow-benchmark-design.md`
+设计依据全部在 `docs/dev/3dot141/260619-01-devflow-benchmark/devflow-benchmark-design.md`
 （每个 skill 的评分维度锚点表 0/3/5 分、防污染规则、正例:边界:反例 ≈5:3:2 配比、
 train/val 70/30 切分规则、通过标准）。**改 case 或加新维度前先读这份文档**，不要凭空造维度 ID。
 

@@ -11,7 +11,7 @@
 // 模式已废弃, 改为 .agents-personal/ 目录自身内嵌 .git (贴近 Codex `morpheus` 原版, 自包含).
 // 旧 bare repo 不会被 SessionStart 自动读取或迁移；需要时显式运行 personal-migrate.mjs。
 //
-// 设计: docs/superpowers/specs/3dot141/260701-dream-incremental-design.md
+// 设计: docs/dev/3dot141/260701-01-dream-incremental/dream-incremental-design.md
 //   § PersonalHistory 域 / SnapshotWriter 模块
 //
 // Review 复审修复：

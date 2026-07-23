@@ -154,7 +154,7 @@ node --test hooks/*.test.mjs scripts/*.test.mjs
 - 两端验证 Open Design、原生 plan/decision/agent/worktree、handoff-state、Wiki usage、session/data isolation 与 Continuous Learning 缺席。
 - 两端确认 `runtime/plugin-data-entry.mjs` 将各自隔离数据根直接映射到 `NOCODE_PLUGIN_DATA`。
 
-真实客户端结果记录在 `docs/superpowers/smoke/`；静态测试或 manifest validator 不能替代安装与会话 smoke。
+真实客户端结果记录在 `docs/dev/{username}/{yymmdd}-{serial}-platform-smoke-<version>/`；静态测试或 manifest validator 不能替代安装与会话 smoke。
 
 ## License
 

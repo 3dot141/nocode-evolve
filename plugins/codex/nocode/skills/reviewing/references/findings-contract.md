@@ -2,7 +2,7 @@
 
 > **本文件是 `reviewing` 框架的 findings 单源**。所有引入框架的细则（dev-review / 四件套 / 嵌入式 step / method card）产出的 review 结论都套这套结构。
 > 被 `skeleton.md`（框架骨架）的步骤 6/7 Read，也可被任一 method card 直接引用。
-> 设计依据：`docs/superpowers/specs/3dot141/260630-reviewing-design.md` §4.4。
+> 设计依据：`docs/dev/3dot141/260630-02-reviewing/reviewing-design.md` §4.4。
 
 仓库里历史上长出 **5 种分级体系**（C/W/S、C/W/S/Q/SA、Critical/High/Medium/Low、CRITICAL/HIGH/MEDIUM、`{approved,issues}`），各 review 各报各的。本契约把它们统一为**一个 finding schema + 一张映射表**——细则只管按自己领域产 finding，分级语义由这里收口。
 

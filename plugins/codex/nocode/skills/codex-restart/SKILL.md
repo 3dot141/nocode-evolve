@@ -1,23 +1,25 @@
 ---
 name: codex-restart
-description: "Use when the user asks to bootstrap or inspect the managed Codex app-server daemon, enable or p…"
+description: "Use when the user asks to inspect, bootstrap, configure, pair, or restart the managed Codex app…"
 ---
 
 # Codex Restart
 
-Manage the Codex daemon and Remote Control through supported CLI commands. Treat a full restart as a disconnecting operation: inspect first, ask immediately before restart, and never touch Claude.
+Inspect first, explain the actual impact, and require immediate confirmation before a disconnecting action.
+The managed daemon is the persistent service, Remote Control is one of its settings, and each
+`app-server proxy` is an active connection rather than a separate service.
 
 ## Step 0: Create the workflow plan
 
 For a state-changing request, call `update_plan` and create these tasks at once:
 
-1. Inspect daemon, installation, Remote Control, and plugin state.
-2. Configure bootstrap or Remote Control only when required.
-3. Prepare the requested restart and obtain explicit confirmation.
-4. Restart Codex through the supported lifecycle command.
-5. Verify from the reconnected or new Codex session.
+1. Inspect daemon, Remote Control, active connections, Codex App, and plugin state.
+2. Configure bootstrap, Remote Control, or pairing only when requested and missing.
+3. Explain the exact restart scope and obtain immediate confirmation.
+4. Submit the supported restart command and end.
 
-Each task must retain its gate below. For a read-only explanation or status question, perform only Step 1 and report; do not create an action plan.
+For a read-only status or explanation request, perform only Step 1 and report. Do not create a
+state-changing plan.
 
 ## Step 1: Inspect without changing state
 
@@ -26,145 +28,155 @@ Each task must retain its gate below. For a read-only explanation or status ques
 - [ ] The target is Codex, not Claude.
 - [ ] No restart or configuration command has run.
 
+Resolve the directory containing this `SKILL.md`, then set:
+
+```bash
+RESTART_HELPER="<this-skill-directory>/scripts/codex-restart.mjs"
+```
+
 Run:
 
 ```bash
-codex --version
-codex doctor --json
-codex app-server daemon version
-codex plugin list
+node "$RESTART_HELPER" inspect
 ```
 
-Interpret the results:
+Interpret the JSON without flattening distinct concepts:
 
-- `app_server.status.details.mode == "persistent"` means durable daemon bootstrap is installed.
-- `daemon version` succeeding with `"status":"running"` means the managed app-server is alive.
-- `Connection refused` means the socket is not serving; it does not by itself prove bootstrap was never installed.
-- Read `app_server.status.details.settings` or `${CODEX_HOME:-$HOME/.codex}/app-server-daemon/settings.json` to inspect `remoteControlEnabled`. Do not expose credential files or tokens.
-- Record the expected plugin version and active path before restart.
+- `daemon.mode` classifies durable bootstrap; `persistent` means it is installed.
+- `daemon.status` and `daemon.pid` describe the managed app-server process.
+- `remoteControl.enabled` is a daemon setting, not another daemon.
+- `connections.proxyCount` counts active proxy connections that a restart can disconnect.
+- `app.status` is best effort; `unknown` is not the same as stopped.
+- `plugin` reports the installed nocode version and path when present.
+- `errors[]` means the corresponding field is incomplete; never turn unknown into a confident false.
+
+The helper outputs only an allowlisted status schema. Do not print settings files, credentials, tokens,
+or unrelated doctor output.
 
 **Exit Gate:**
 
-- [ ] Bootstrap state is classified as persistent, absent, or unresolved.
-- [ ] Daemon running state and Remote Control setting are recorded separately.
-- [ ] Expected plugin version/path is recorded when plugin reload is the reason for restart.
+- [ ] Bootstrap and daemon state are classified separately.
+- [ ] Remote Control and proxy count are reported separately.
+- [ ] Unknown fields and errors are stated without guessing.
 
-## Step 2: Configure only the missing capability
+## Step 2: Configure only the requested missing capability
 
 **Enter Gate:**
 
-- [ ] Step 1 Exit Gate passed.
+- [ ] Step 1 passed.
 - [ ] The user requested setup, or inspection proved a requested capability is missing.
 
 Use this decision tree:
 
 ```text
 Managed daemon mode is persistent?
-  ├─ no  → first-time setup:
-  │        codex app-server daemon bootstrap --remote-control
+  ├─ no  → codex app-server daemon bootstrap --remote-control
   └─ yes → Remote Control enabled?
            ├─ no  → codex app-server daemon enable-remote-control
            └─ yes → no configuration change
 ```
 
-Pairing is separate from enabling Remote Control. Create a short-lived pairing code only when the user requests a new pairing:
+Pairing is separate from enabling Remote Control. Create a short-lived pairing code only when the
+user asks for one:
 
 ```bash
 codex remote-control pair
 ```
 
-Do not expose app-server directly on a public interface. For SSH hosts, use normal authenticated SSH configuration rather than a public app-server listener.
+Do not expose app-server on a public interface. Never read or repeat authentication material.
 
 **Exit Gate:**
 
 - [ ] Durable bootstrap exists if requested.
-- [ ] `remoteControlEnabled` is true if requested.
-- [ ] Pairing was performed only when requested.
+- [ ] Remote Control is enabled if requested.
+- [ ] Pairing ran only when requested.
 
-## Step 3: Prepare and confirm the restart
+## Step 3: Explain scope and confirm immediately
 
 **Enter Gate:**
 
 - [ ] Step 1 passed, and Step 2 passed or was unnecessary.
-- [ ] The exact restart scope is known.
+- [ ] The requested scope is daemon-only or full Codex App reload.
 
-Explain that restarting the managed daemon disconnects remote sessions, and fully quitting Codex App ends the current App session. Tell the user to save or finish active work.
+### Daemon-only
 
-Immediately before any disconnecting action, ask one explicit question:
+Use the inspected values to explain:
 
-> Codex work is saved. Shall I restart the managed app-server daemon and fully restart Codex App now? This will disconnect the current session; Claude will not be touched.
+- the managed daemon will restart;
+- the reported number of active proxy connections can disconnect;
+- Remote Control clients can lose their current connection;
+- Codex App will not be quit or reopened;
+- this does not claim a complete plugin, Skill, or Hook reload.
 
-Do not interpret an earlier general request as confirmation at this gate. Wait for an explicit yes.
+Tell the user to save active work. Immediately before submission, ask one explicit yes/no question
+that includes the actual `proxyCount`. An earlier general request to restart is not confirmation.
+
+### Full Codex App reload
+
+Explain that complete plugin registry, Skill, or Hook reload requires saving work, fully quitting Codex
+App, restarting the daemon from an independent Terminal, reopening the App, and starting a new Session.
+Do not route this scope through the daemon-only success message.
 
 **Exit Gate:**
 
-- [ ] The user explicitly confirmed after seeing the disconnect warning.
+- [ ] The user explicitly confirmed after seeing the scope and current impact.
 
-## Step 4: Restart Codex
+## Step 4: Submit daemon restart and end
 
 **Enter Gate:**
 
-- [ ] Step 3 Exit Gate passed.
+- [ ] Step 3 confirmed daemon-only restart.
 
-For daemon-only or headless use:
+Run:
 
 ```bash
+node "$RESTART_HELPER" restart --confirmed
+```
+
+The helper submits only:
+
+```text
 codex app-server daemon restart
 ```
 
-For a complete plugin reload on macOS:
+through an argv array with no shell, waits only until the detached child is spawned, then returns a
+`status: "scheduled"` receipt. The receipt means the command was submitted; it does not mean the daemon
+has already restarted successfully.
 
-1. Fully quit Codex App with `Command-Q`.
-2. From a separate local terminal, run:
+When the receipt is scheduled, reply only with:
+
+> Restart command submitted.
+
+Then end. Do not wait, poll, reconnect, verify, inspect again, or discuss whether the current connection
+will be interrupted. A later user request for status starts a new Step 1 inspection.
+
+If submission fails before spawn, report that the restart command was not submitted. Do not claim
+scheduled and do not fall back to `kill`, `pkill`, or direct proxy termination.
+
+**Exit Gate:**
+
+- [ ] The official daemon restart command was submitted, or pre-spawn failure was reported.
+- [ ] No post-submission action ran.
+
+## Full App reload instructions
+
+For a confirmed full reload on macOS, the user performs this outside the current Codex App session:
+
+1. Save work and fully quit Codex App with `Command-Q`.
+2. In an independent local Terminal, run:
 
    ```bash
    codex app-server daemon restart
    open -a Codex
    ```
 
-3. Open a new Codex session after the App relaunches.
+3. Start a new Codex Session after the App opens.
 
-If the current agent is running inside the App or through this daemon, give the external-terminal instructions rather than claiming it can quit its own host and continue. Do not use raw `kill` or `pkill`, and do not stop or restart Claude.
-
-**Exit Gate:**
-
-- [ ] The supported daemon restart command was used.
-- [ ] Codex App was fully relaunched when plugin registry, Skills, or Hooks needed reloading.
-- [ ] Claude was untouched.
-
-## Step 5: Verify after reconnection
-
-**Enter Gate:**
-
-- [ ] Step 4 completed and a Codex session is connected again.
-
-Run:
-
-```bash
-codex app-server daemon version
-codex doctor --json
-codex plugin list
-```
-
-Verify:
-
-- daemon status is running and CLI/app-server versions are expected;
-- Remote Control remains enabled when required;
-- the plugin reports the expected version and path;
-- the new session exposes the expected Skills and Hooks;
-- current errors no longer reference a known old plugin cache version.
-
-Search only an exact old version/path supplied by the update context. Do not broadly scan private session history.
-
-**Exit Gate:**
-
-- [ ] Daemon, Remote Control, and plugin checks pass.
-- [ ] Any failure is reported with the exact failing check; do not claim a complete restart without post-reconnect evidence.
+Do not claim the current agent can quit its own host and continue. Never stop or restart Claude.
 
 ## Global Exit Gate
 
-- [ ] Bootstrap and Remote Control were changed only when needed.
-- [ ] The user confirmed immediately before restart.
-- [ ] The managed daemon and Codex App were restarted to the requested scope.
-- [ ] Claude was not changed.
-- [ ] Post-reconnect verification passed or remaining failures were reported.
+- [ ] Bootstrap, Remote Control, and pairing changed only when requested.
+- [ ] Disconnecting actions had an immediate explicit confirmation.
+- [ ] Daemon-only and full App reload claims stayed distinct.
+- [ ] No credential, raw kill, direct proxy termination, or Claude operation occurred.

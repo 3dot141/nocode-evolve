@@ -14,7 +14,7 @@ argument-hint: <一句话意图：想抽取什么内容>
 
 把当前会话围绕用户指定的意图沉淀为一条文档, AI 判 layer (`Inbox` / `Inputs` / `Outputs`) + 用户 NL 单候选确认 loop, 归档到 `$USER_VAULT_PATH/Memory/<layer-dir>/<yymm>/<yymmdd>-<title>.md`.
 
-设计文档：`docs/plans/3dot141/260521-sow-multi-layer-design.md` (含 Review 1 + Review 2 修订全程).
+设计文档：`docs/dev/3dot141/260521-01-sow-multi-layer/sow-multi-layer-design.md` (含 Review 1 + Review 2 修订全程).
 上游命令：`/distill`（识别到跨项目可复用内容时会建议跑本命令; distill 不替判层）.
 
 > v1 → v2 关键变化: env 改名 `USER_WIKI_PATH` → `USER_VAULT_PATH` 并上移到 vault 根; 加 layer 维度; 加 AI 判层 + NL loop 确认环节; body 按 layer 走三套骨架.

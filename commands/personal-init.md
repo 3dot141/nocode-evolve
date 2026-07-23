@@ -125,6 +125,8 @@ Phase 2 完成后直接进入扫描。扫描只读不写，结果呈现给用户
 把检测结果和推断出的变量覆盖值呈现给用户：
 
 ```
+以下仅演示识别已有项目的旧 superpowers 布局并保留其覆盖值，不代表新项目的默认写入路径：
+
 检测到 docs 布局: docs/superpowers/{specs,plans}/3dot141/（旧 superpowers 布局）
   - 日期格式: yymmdd
   - 无 serial

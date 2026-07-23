@@ -13,7 +13,7 @@ rule-eval：测 nocode 插件规则路由的**触发率**——给定一句该/�
 | `preambles/cold.md` | 冷启动情境铺垫（无前序任务） |
 | `preambles/mid-task-momentum.md` | 任务动量情境铺垫（模拟深陷另一任务、注意力被占满的压力场景） |
 
-设计依据：`../docs/plans/3dot141/260526-rule-trigger-eval-design.md`
+设计依据：`../docs/dev/3dot141/260526-02-rule-trigger-eval/rule-trigger-eval-design.md`
 （判分公式、fixture 格式、失败分型、混淆矩阵的唯一来源）。
 
 ## 如何跑
