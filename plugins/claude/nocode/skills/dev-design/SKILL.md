@@ -108,7 +108,7 @@ Plan handoff 使用 `Skill(nocode:dev-plan)`。
 协调器持有一张确认点清单，诚实列举：
 
 1. **计划内总窗口**：Step 4 final gate（方案摘要 + 关键决策 + 测试目标 + 文档，一次性过目）。
-2. **列举的阶段内确认**（协调器已知、不隐藏）：decision 的每轮方案确认（Step 4a——每个决策层级 L1/L2/L3 两回合展示方案对比,用户拍方向）与 Decision Packet 终审（Step 8a——完整 Packet 展示 → 用户审核确认）,每次必过、由 decision 自行执行；writing 的文档结构确认（Step 2 章节大纲 + 结构骨架）、writing 唯一评审的 findings 逐条 fix/skip、render 的"是否渲染"选择。
+2. **列举的阶段内确认**（协调器已知、不隐藏）：decision 由 agent 自主完成至少 3 轮设计图下钻,不逐轮弹确认,只在 Decision Packet 终审（Step 8a——完整端到端路径 + 架构图 + 决策链展示 → 用户审核确认）例行确认一次；writing 的文档结构确认（Step 2 章节大纲 + 结构骨架）、writing 唯一评审的 findings 逐条 fix/skip、render 的"是否渲染"选择。
 3. **异常确认**：阶段协议返回 `needs_user_input`（打平手 / 冲突需拍板 / 信息缺口 / 不可逆 + 高影响）时，**协调器统一弹**——同一 `dedupeKey` 的确认不重复弹。
 
 **单一所有者** = 协调器。阶段协议遇确认返回 `needs_user_input`，不自行弹。
