@@ -13,19 +13,20 @@
 - 复核 `git status` / `git diff`，创建 commit（message 参考 `git log` 历史风格）。
 - **不要自动 push**——commit 后向用户明确询问是否需要 `git push`，由用户确认后再执行。
 
-### 2. 修改插件后，升级版本号
+### 2. 插件版本号由用户决定
 
-只要改动了插件业务源码、平台适配器或运行时文件，就视为插件更新，必须更新版本：
+修改插件业务源码、平台适配器或运行时文件时，**不要自动升级版本号**。只有用户明确要求发布或指定新版本时，才编辑版本单源 `plugin/metadata.json` 的 `version`：
 
 - 范围：`hooks/`、`model/`、`rules/`、`skills/`、`agents/`、`commands/`、`core/`、`adapters/`、`scripts/` 中参与插件运行或生成的文件，以及 `.mcp.json` 等平台运行时配置。
-- 操作：编辑版本单源 `plugin/metadata.json` 的 `version`，按 SemVer 升级，再运行 `node scripts/package.platform.mjs` 生成两个平台发布物，并把源码、版本与生成物包含在同一个 commit 里。当前处于 `0.x` 阶段，在用户明确决定发布稳定版 `1.0.0` 前，major 固定为 `0`；非破坏性更新不得自动升级 major：
+- 无论版本号是否变化，只要上述源码发生改动，都要运行 `node scripts/package.platform.mjs` 生成两个平台发布物，并把源码与生成物包含在同一个 commit 里。
+- 用户要求升级版本时按 SemVer 执行。当前处于 `0.x` 阶段，在用户明确决定发布稳定版 `1.0.0` 前，major 固定为 `0`；非破坏性更新不得自动升级 major：
   - **patch**：bug fix / 文案修订
   - **minor**：新增 hook / skill / 兼容性增强
   - **0.x breaking change**：路径改名、规则语义反转等破坏性变更升级 minor，不自动进入 `1.0.0`
   - **major**：仅在用户明确决定进入新的稳定主版本时升级
 - `plugins/claude/nocode/` 与 `plugins/codex/nocode/` 是生成物，**禁止手改**；marketplace 直接从 git 读取它们，不需要 tarball/npm 打包。
 
-纯文档/元数据修订（README、本文件、AGENTS.md 等）不需要升版本，但仍遵守规则 1。
+纯文档/元数据修订（README、本文件、AGENTS.md 等）同样不自动升级版本，仍遵守规则 1。
 
 ### 3. rule 改动：每文件自带 frontmatter，两条独立生成链
 
