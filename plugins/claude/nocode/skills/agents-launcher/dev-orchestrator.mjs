@@ -63,6 +63,16 @@ if (args.services.agents) {
   }
 }
 
+let dockerScriptPath = process.env.FX_DOCKER_START_SCRIPT;
+if (args.services.docker && !args.dryRun) {
+  try {
+    dockerScriptPath = serverCli.validatePreparedDockerScript({ scriptPath: dockerScriptPath });
+  } catch (error) {
+    console.error(`[debug] 失败: ${error.message}`);
+    process.exit(1);
+  }
+}
+
 async function confirm(q) {
   const rl = createInterface({ input: process.stdin, output: process.stdout });
   try { const a = (await rl.question(q)).trim().toLowerCase(); return a === 'y' || a === 'yes'; }
@@ -132,13 +142,19 @@ async function main() {
     });
   }
 
+  if (args.dryRun && args.services.docker) {
+    console.log('[debug] would REQUIRE an Agent-generated Docker script via FX_DOCKER_START_SCRIPT');
+  }
   if (args.dryRun) { console.log('[debug] dry-run 结束，未起任何服务'); return; }
 
   // ---- Step 1: docker ----
-  // Docker 规则单源在目标 server 仓的 dockerstart.sh。server-cli 每次生成临时派生脚本，
-  // 只注入“拉最新镜像 + 排除 fx-data-agents”，并负责退出码和健康检查。
+  // Docker 脚本由 Agent 按 references/server.md 读取当前 dockerstart.sh 后生成。
+  // launcher 只校验、执行、清理临时脚本，并负责后续健康检查。
   if (args.services.docker) {
-    await serverCli.infra({ serverDir: repos.SERVER_DIR });
+    await serverCli.infra({
+      serverDir: repos.SERVER_DIR,
+      dockerScriptPath,
+    });
   }
 
   // ---- Step 2: agents + server ----

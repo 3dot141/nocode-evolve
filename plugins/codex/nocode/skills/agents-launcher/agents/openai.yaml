@@ -1,5 +1,5 @@
 interface:
   display_name: "agents-launcher"
-  short_description: "Use when starting, stopping, restarting, or checking the local fx-data-agents w…"
+  short_description: "Use when explicitly starting, stopping, restarting, or checking the local fx-da…"
 policy:
   allow_implicit_invocation: false

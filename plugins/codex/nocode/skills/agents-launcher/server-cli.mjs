@@ -9,7 +9,7 @@ import { join } from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { validateRepos } from './lib/paths.mjs';
 import { detectGraalvm, resolveJdk21ForBuild } from './lib/server/graalvm.mjs';
-import { startInfra } from './lib/server/infra.mjs';
+import { startInfra, validatePreparedDockerScript } from './lib/server/infra.mjs';
 import { startApp } from './lib/server/boot.mjs';
 import { localInfraEnv, loadDotEnv } from './lib/server/env.mjs';
 import { stopApp, serverStatus } from './lib/server/lifecycle.mjs';
@@ -67,12 +67,20 @@ export async function infra({
   env = process.env,
   log = console.log,
   startInfraFn = startInfra,
+  dockerScriptPath = env.FX_DOCKER_START_SCRIPT,
 } = {}) {
-  return startInfraFn({ serverDir, env, log });
+  return startInfraFn({
+    serverDir,
+    dockerScriptPath,
+    env,
+    log,
+  });
 }
 
+export { validatePreparedDockerScript };
+
 // 完整 app 链（standalone 默认包含 infra；orchestrator 已显式起过 docker 时传 ensureInfra:false，
-// 避免同一次 full 启动重复生成和执行 dockerstart 派生脚本）。
+// 避免同一次 full 启动重复执行 Agent 生成的临时 Docker 脚本）。
 export async function start({
   serverDir,
   ports,

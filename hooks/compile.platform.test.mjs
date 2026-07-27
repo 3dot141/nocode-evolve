@@ -446,8 +446,14 @@ test('Codex adapter builds native skills and direct runtime overlays', () => {
   assert.doesNotMatch(launcher, /disable-model-invocation/);
   assert.match(
     tree.get('skills/agents-launcher/agents/openai.yaml').toString(),
-    /interface:\n  display_name: "agents-launcher"\n  short_description: "Use when starting, stopping, restarting, or checking the local fx-data-agents.+"\npolicy:\n  allow_implicit_invocation: false/,
+    /interface:\n  display_name: "agents-launcher"\n  short_description: "Use when explicitly starting, stopping, restarting, or checking the local fx-da.+"\npolicy:\n  allow_implicit_invocation: false/,
   );
+  const launcherServer = tree.get('skills/agents-launcher/references/server.md').toString();
+  assert.match(
+    launcherServer,
+    /printf '%s' "\$\{HARBOR_PASSWORD:\?HARBOR_PASSWORD 未设置\}" \| docker login -u "\$\{HARBOR_USERNAME:-develop\}" --password-stdin harbor\.jsydevelop\.com/,
+  );
+  assert.doesNotMatch(launcherServer, /docker login[^\n]*\s-p(?:\s|=)/);
   for (const nested of ['decision', 'writing']) {
     assert.match(
       tree.get(`skills/dev-design/${nested}/SKILL.md`).toString(),
