@@ -4,14 +4,14 @@
 
 ## 何时读本文件（两个时机）
 
-1. **材料收集阶段**（SKILL.md Step 2e）：有任务号时读，拿「典型流转映射」+ 查当前状态 → **推定目标状态写进全景计划**（PR 路径同时写死进 cron prompt），合并后不再问
-2. **合并后执行**：Merge 路径 merge 成功后 / PR 路径 cron 的 MERGED 轮 / 用户直接说「PR 合了 / 流转任务 / 任务状态改一下」
+1. **材料收集阶段**（SKILL.md Step 2e）：有任务号时读，拿「典型流转映射」+ 查当前状态 → **推定目标状态写进全景计划和定时监控上下文**，合并后不再问
+2. **合并后执行**：Merge 路径 merge 成功后 / PR 路径 pr-check 命中 MERGED 后 / 用户直接说「PR 合了 / 流转任务 / 任务状态改一下」
 
 ## Step 1: 任务号来源
 
 飞书任务号格式：`#f-xxx` / `#g-xxx` / `#m-xxx`（Meego 工作项 ID）。
 
-- **PR 路径**：cron prompt 里已写死（材料收集时提取），直接用
+- **PR 路径**：监控上下文里已捕获（材料收集时提取），直接用
 - **Merge 路径**：材料收集时从 push range 提取
   ```bash
   git log "<base>..HEAD" --format=%B | grep -oE '#[fgm]-[a-z0-9]+' | sort -u

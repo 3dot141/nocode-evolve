@@ -127,14 +127,14 @@ fi
 ```
 最后报告漏哪几个。
 
-## pr-check 调用（prflow Step 6 cron 轮）
+## pr-check 调用（prflow Step 6 定时监控）
 
 ```bash
 node "<REF>/pr-check.mjs" --toolchain bkt --pr <pr-id> \
   --target-project "<PROJECT_KEY>" --repo-slug "<repo_slug>"
 ```
 
-输出 `PR_CHECK state=<S> mergeable=<M> approved=<A>`（归一化见 `pr-check.mjs` `normalizeBkt`：DECLINED→CLOSED；mergeable=`/merge` 的 `.canMerge`；approved=`.reviewers[].approved` 任一 true）。
+持续监控时在同一命令增加 `--watch --interval-seconds 300`。输出 `PR_CHECK state=<S> mergeable=<M> approved=<A>`；命中可处置状态时再输出 `PR_WATCH reason=<READY|MERGED|CLOSED> runs=<N>`（归一化见 `pr-check.mjs` `normalizeBkt`：DECLINED→CLOSED；mergeable=`/merge` 的 `.canMerge`；approved=`.reviewers[].approved` 任一 true）。
 
 ## 合并 PR（prflow Step 6 自动合并分支）
 
@@ -146,11 +146,11 @@ bkt api "/rest/api/1.0/projects/<KEY>/repos/<slug>/pull-requests/<id>/merge?vers
 ```
 
 - 合并策略走仓库默认（DC 端配置），不在命令侧选
-- 失败（409 version 过期 → 重取一次再试；conflict / veto / 权限 → 通知转人工 + 删 cron，不重试）
+- 失败（409 version 过期 → 重取一次再试；conflict / veto / 权限 → 通知转人工 + 停止监控，不重试）
 
 ## 远程分支清理（prflow Step 6 MERGED 收尾 c）
 
-全景默认删：cron MERGED 轮内 `git push origin --delete <remote_branch>`。
+全景默认删：MERGED 收尾时 `git push origin --delete <remote_branch>`。
 
 - 仓库配了 "Auto delete branch on merge" → 报 ref 不存在 = 平台已删，当成功
 - protected / 权限不足 → 报原因不阻塞收尾

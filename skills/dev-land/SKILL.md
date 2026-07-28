@@ -5,10 +5,12 @@ description: "Use when implementation is complete and you need to land the work 
 
 <!-- nocode:platform claude -->
 合并后项目流转使用 `Skill(nocode:lark-project)`。
+PR 定时监控用 Bash managed background 启动 `references/pr-check.mjs --watch`，保存 task id；完成通知后读取输出继续处置。
 <!-- /nocode:platform -->
 
 <!-- nocode:platform codex -->
 合并后项目流转使用 `$lark-project`。
+PR 定时监控用 `exec_command` 启动 `references/pr-check.mjs --watch`，保存 session id；后续用 `write_stdin` 续取输出继续处置。
 <!-- /nocode:platform -->
 
 # land — 3 步着陆，干净收场
@@ -68,7 +70,7 @@ remote_url=$(git -C "$MAIN_ROOT" remote get-url origin)
 
 #### 2b. 补清检测
 
-上次会话 cron 中断的兜底——跨会话唯一恢复点，不可删。当前在 worktree 时查当前分支对应 PR：
+上次会话定时进程中断的兜底——跨会话唯一恢复点，不可删。当前在 worktree 时查当前分支对应 PR：
 
 - gh：`gh pr view --json state`（报 "no pull requests found" → 无 PR，静默继续）
 - bkt：按分支搜（见 `references/pr-flow-bkt.md`「按分支搜 PR」）
@@ -139,7 +141,7 @@ remote_url=$(git -C "$MAIN_ROOT" remote get-url origin)
   2. push + 建 PR  push: <普通（默认） / force-with-lease（仅已知 non-ff）>;
                    title「<title>」; reviewer: <名单 or 空>
   3. 发布策略      <全量（默认） / 灰度 / dark launch>    ← 生产改动才展示
-  4. 合并方式      approve 后自动合并（默认）; cron 每 5min（本会话有效）
+  4. 合并方式      approve 后自动合并（默认）; pr-check 每 5min（定时进程存活期间）
   5. 合并后清理    worktree + branch + 远程: 删除（默认）
   6. 合并后流转    #<task>: <当前> → <目标>
 
@@ -187,7 +189,7 @@ remote_url=$(git -C "$MAIN_ROOT" remote get-url origin)
 - 「先去 Review」→ 暂停，交回 dev-review
 - **Discard 特例**：只认字面 `discard`，其它一律取消
 
-**非 worktree 场景**：去掉 worktree 与本地 branch 清理行（当前分支删不了），**其余全部照走**——全景计划 / PR body 契约 / reviewer / cron / 任务流转一项不省。
+**非 worktree 场景**：去掉 worktree 与本地 branch 清理行（当前分支删不了），**其余全部照走**——全景计划 / PR body 契约 / reviewer / 定时监控 / 任务流转一项不省。
 
 **devflow 路由入口额外约束**（仅对生产改动）：
 
@@ -201,7 +203,7 @@ PR body 回链：Requirements Addressed（引用 Define 的 restate）+ Verifica
 
 | disposition | 自动段 |
 |---|---|
-| **PR** | 按全景选定的普通 push 或 `force-with-lease` → 建 PR → 加 reviewer → 注册 cron 监控 → (cron 合并后) 三件套清理 → 任务流转 → cron 自删 |
+| **PR** | 按全景选定的普通 push 或 `force-with-lease` → 建 PR → 加 reviewer → 启动 pr-check 定时监控 → 就绪后合并 → 三件套清理 → 任务流转 |
 | **Merge** | merge → 三件套清理 → 任务流转 |
 | **Discard** | 清 worktree → `branch -D` → (全景选删) 删远程；字面 `discard` 就是本全景的唯一确认 |
 | **Keep** | 一行报告现状 |
@@ -219,11 +221,11 @@ PR body 回链：Requirements Addressed（引用 Define 的 restate）+ Verifica
 - 识别 4 种 worktree 路径模式：`.worktrees/` / `worktrees/` / `~/.config/superpowers/worktrees/` / 插件平级路径
 - 非 worktree → 跳过 worktree remove 和本地 branch delete，只处置远程
 
-### PR 路径 cron 监控
+### PR 路径定时监控
 
-用 `CronCreate` 注册轮询（`cron: "2-59/5 * * * *"`），prompt 必须自足——PR 号 / worktree / MAIN_ROOT / 任务号 / 目标状态 / 合并方式全部写进 prompt 字面值。详见 `references/prflow.md` Step 6。
+统一运行 `node <REF>/pr-check.mjs --watch --interval-seconds 300 ...`，不依赖平台专属 cron。`<REF>` 是本 skill 的 `references/` 目录；`pr-check` 引用 `periodic-runner.mjs` 的定时能力，查到 READY / MERGED / CLOSED 后退出；agent 根据最终状态执行合并、清理和任务流转。详见 `references/prflow.md` Step 6。
 
-会话级边界如实告知：CronCreate 的 job 随会话消亡，跨会话由 Step 2b 补清检测兜底。
+生命周期边界如实告知：定时进程只在当前执行宿主和长进程句柄存活期间有效；句柄丢失或宿主退出后，由 Step 2b 补清检测兜底。禁止用 `nohup` / 系统 cron 把无人监管的合并动作留在后台。
 
 ### 合并后流转
 
@@ -249,7 +251,7 @@ PR body 回链：Requirements Addressed（引用 Define 的 restate）+ Verifica
 
 ## Worktree 清理安全规则
 
-- Merge / Discard → 必清理 worktree；PR → cron 合并后自动清；Keep → 不清理
+- Merge / Discard → 必清理 worktree；PR → pr-check 就绪并合并后自动清；Keep → 不清理
 - 先 remove worktree 再删 branch（反了 `branch -d` 会 fail）
 - `git worktree remove` 前必须 cd 到主仓根（在 worktree 内跑会静默失败）
 - 未提交改动 → remove 报错，不加 `--force`，用户先 stash
@@ -273,7 +275,7 @@ Mini 场景的 Land-lite：检查并报告 commit 已完成即可，不进完整
 | "worktree 保着占空间，顺手删了" | 全景让用户选 |
 | "任务号懒得填" | 流转闭环是 Land 的一部分 |
 | "force push 一下就好" | 先把 `force-with-lease` 风险写进新的完整全景；不做执行期追加确认 |
-| "不在 worktree 里，全景/PR契约/reviewer/cron 不适用" | **非 worktree 只影响清理项，其余全部照走** |
+| "不在 worktree 里，全景/PR契约/reviewer/定时监控不适用" | **非 worktree 只影响清理项，其余全部照走** |
 | "用户说了提PR，直接 push + 建 PR 就行" | 「提PR」是 Step 1 意图推定的输入，不是跳过全景的授权 |
 | "这个改动简单，跳过某 Step" | 进了 skill 就走完。"简单"不是跳 Step 的授权 |
 
@@ -295,5 +297,6 @@ Mini 场景的 Land-lite：检查并报告 commit 已完成即可，不进完整
 - 不要假设 toolchain — 私域 git host 在全景中标待指定
 - 不要在 worktree 内跑 `git worktree remove` — 先 cd 到 `$MAIN_ROOT`
 - 不要删 branch 前没 remove worktree
-- cron 只用 CronCreate 轮询 — 不要 `run_in_background`，不要 ScheduleWakeup
+- PR 轮询只走 `pr-check.mjs --watch` + `periodic-runner.mjs` 定时单源；不要再造平台专属 cron 分支
+- 不要用 `nohup` / 系统 cron 托管自动合并——进程失联后无法处置冲突、权限变化和任务流转失败
 - gh / bkt 特有坑 → 见 `references/pr-flow-gh.md` / `references/pr-flow-bkt.md`

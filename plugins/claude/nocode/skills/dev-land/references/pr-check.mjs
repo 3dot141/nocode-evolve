@@ -1,21 +1,24 @@
 #!/usr/bin/env node
-// pr-check.mjs — 单轮查 PR 状态，归一化输出一行；动作（合并/清理/流转）由调用方执行
+// pr-check.mjs — 查 PR 状态；默认单轮，--watch 时按固定间隔查到可处置状态
 //
-// 由 dev-finish-branch PR 路径的 cron 监控每轮调用（注册与处置见 prflow.md Step 6）。
-// 前身是常驻轮询的 pr-watch.mjs——cron 化后动作上移给每轮在场的 agent，本脚本只承担
-// 确定性判定：查一次、归一化、打一行、退出。
+// 定时能力来自 periodic-runner.mjs；本脚本只定义 PR 的查询、归一化与停止条件，
+// 合并/清理/流转仍由调用方执行。
 //
 // 用法:
 //   node pr-check.mjs --toolchain gh  --pr 123
 //   node pr-check.mjs --toolchain bkt --pr 45 --target-project <KEY> --repo-slug <slug>
+//   node pr-check.mjs --watch --interval-seconds 300 --toolchain gh --pr 123
 //
-// 输出（唯一 stdout 行，cron 轮 agent 的识别契约）:
+// 每次成功查询输出:
 //   PR_CHECK state=OPEN|MERGED|CLOSED mergeable=true|false approved=true|false
-// 查询失败 → stderr + exit 1（agent 本轮不做任何动作，下轮再查）。
+// watch 命中可处置状态后再输出:
+//   PR_WATCH reason=READY|MERGED|CLOSED runs=<N>
+// 单轮查询失败 → stderr + exit 1；watch 连续失败达到 --max-errors（默认 3）→ exit 1。
 //
 // 设计: 纯判定(normalizeGh/normalizeBkt/statusLine)与副作用(queryStatus)分离——纯函数单测。
 
 import { execFileSync } from 'node:child_process';
+import { runPeriodically } from './periodic-runner.mjs';
 
 // ═══ 纯判定逻辑（可测，无副作用）═══
 
@@ -40,9 +43,16 @@ export function normalizeBkt(pr, merge) {
   };
 }
 
-// 识别契约: cron 轮 agent 读这一行分支处置
+// 识别契约: 调用方读取这一行分支处置
 export function statusLine(s) {
   return `PR_CHECK state=${s.state} mergeable=${s.mergeable} approved=${s.approved}`;
+}
+
+export function stopReason(s) {
+  if (s.state === 'MERGED') return 'MERGED';
+  if (s.state === 'CLOSED') return 'CLOSED';
+  if (s.state === 'OPEN' && s.mergeable && s.approved) return 'READY';
+  return null;
 }
 
 // --key value / --flag 解析（照 worktree-setup.mjs 风格）
@@ -79,6 +89,58 @@ export function queryStatus(cfg, run = defaultRun) {
   return normalizeBkt(pr, merge);
 }
 
+export async function watchStatus(cfg, options = {}) {
+  const {
+    intervalMs = 300_000,
+    maxRuns = Infinity,
+    maxErrors = 3,
+    run = defaultRun,
+    sleep,
+    onStatus = () => {},
+    onError = () => {},
+  } = options;
+
+  if (maxErrors !== Infinity && (!Number.isInteger(maxErrors) || maxErrors < 1)) {
+    throw new RangeError('maxErrors must be a positive integer or Infinity');
+  }
+
+  let consecutiveErrors = 0;
+  const periodicOptions = {
+    intervalMs,
+    maxRuns,
+    sleep,
+    task: () => {
+      try {
+        const status = queryStatus(cfg, run);
+        consecutiveErrors = 0;
+        return { status };
+      } catch (error) {
+        consecutiveErrors += 1;
+        onError(error, { consecutiveErrors });
+        if (consecutiveErrors >= maxErrors) throw error;
+        return { status: null };
+      }
+    },
+    onResult: ({ status }) => {
+      if (status) onStatus(status);
+    },
+    shouldStop: ({ status }) => status !== null && stopReason(status) !== null,
+  };
+
+  const result = await runPeriodically(periodicOptions);
+  const status = result.value?.status ?? null;
+  return { ...result, status, stopReason: status ? stopReason(status) : null };
+}
+
+const parsePositiveInteger = (value, name, fallback) => {
+  if (value === undefined) return fallback;
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || parsed < 1) {
+    throw new RangeError(`${name} must be a positive integer`);
+  }
+  return parsed;
+};
+
 // ═══ CLI 入口（仅直接执行时跑；import 测试不触发）═══
 
 if (import.meta.url === `file://${process.argv[1]}`) {
@@ -97,7 +159,28 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     repoSlug: a['repo-slug'],
   };
   try {
-    console.log(statusLine(queryStatus(cfg)));
+    if (!a.watch) {
+      console.log(statusLine(queryStatus(cfg)));
+    } else {
+      const intervalSeconds = parsePositiveInteger(a['interval-seconds'], '--interval-seconds', 300);
+      const maxRuns = parsePositiveInteger(a['max-runs'], '--max-runs', Infinity);
+      const maxErrors = parsePositiveInteger(a['max-errors'], '--max-errors', 3);
+      const result = await watchStatus(cfg, {
+        intervalMs: intervalSeconds * 1000,
+        maxRuns,
+        maxErrors,
+        onStatus: (status) => console.log(statusLine(status)),
+        onError: (error, meta) => {
+          console.error(`[pr-check] query failed (${meta.consecutiveErrors}/${maxErrors}): ${error.message}`);
+        },
+      });
+      if (result.reason === 'max-runs') {
+        console.error(`[pr-check] watch stopped after ${result.runs} runs without actionable state`);
+        process.exitCode = 3;
+      } else {
+        console.log(`PR_WATCH reason=${result.stopReason} runs=${result.runs}`);
+      }
+    }
   } catch (e) {
     console.error(`[pr-check] query failed: ${e.message}`);
     process.exit(1);

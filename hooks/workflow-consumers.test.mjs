@@ -235,6 +235,7 @@ test('remaining workflow coordinators use native control and honest independence
 test('dev-land has one panorama gate and never adds a runtime confirmation', () => {
   const land = read('skills/dev-land/SKILL.md');
   const prflow = read('skills/dev-land/references/prflow.md');
+  const prCheck = read('skills/dev-land/references/pr-check.mjs');
 
   assert.match(land, /用户只确认一次完整全景/);
   assert.match(land, /推不定 → 不提问，进入候选全景/);
@@ -244,6 +245,10 @@ test('dev-land has one panorama gate and never adds a runtime confirmation', () 
 
   assert.match(prflow, /执行时才撞 non-fast-forward → 停止并报告，不追加询问/);
   assert.doesNotMatch(prflow, /typed `force`|安全例外/);
+  assert.match(land, /pr-check\.mjs --watch/);
+  assert.match(prflow, /periodic-runner\.mjs/);
+  assert.match(prCheck, /from '\.\/periodic-runner\.mjs'/);
+  assert.doesNotMatch(`${land}\n${prflow}`, /CronCreate|CronList|CronDelete/);
 });
 
 test('skill handoffs use a self-contained context envelope instead of an ambient-context placeholder', () => {

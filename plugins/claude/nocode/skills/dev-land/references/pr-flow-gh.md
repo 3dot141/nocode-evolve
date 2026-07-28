@@ -51,13 +51,13 @@ gh pr edit <pr-number> --add-reviewer "alice,bob,charlie"
 - 整体 fail（rate limit/auth）→ 报错 + 不 retry
 - 单个 fail（"user X not found" / "X cannot be added as reviewer"）→ GitHub **无大小写坑**（不需要 case fallback），单个 = 无 read 权限 / 不存在 → 跳过该 reviewer 不阻断，最后报 "PR <url> 创建成功, reviewer X 添加失败已跳过"
 
-## pr-check 调用（prflow Step 6 cron 轮）
+## pr-check 调用（prflow Step 6 定时监控）
 
 ```bash
 node "<REF>/pr-check.mjs" --toolchain gh --pr <pr-number>
 ```
 
-输出 `PR_CHECK state=<S> mergeable=<M> approved=<A>`（归一化：mergeable = `MERGEABLE` 且 mergeStateStatus=`CLEAN`；approved = reviewDecision=`APPROVED`）。
+持续监控时在同一命令增加 `--watch --interval-seconds 300`。输出 `PR_CHECK state=<S> mergeable=<M> approved=<A>`；命中可处置状态时再输出 `PR_WATCH reason=<READY|MERGED|CLOSED> runs=<N>`（归一化：mergeable = `MERGEABLE` 且 mergeStateStatus=`CLEAN`；approved = reviewDecision=`APPROVED`）。
 
 ## 合并 PR（prflow Step 6 自动合并分支）
 
@@ -65,11 +65,11 @@ node "<REF>/pr-check.mjs" --toolchain gh --pr <pr-number>
 gh pr merge <pr-number> --merge      # 策略按全景选择: --merge / --squash / --rebase
 ```
 
-- 失败（并发 push / branch protection 变化 / 权限）→ 通知转人工 + 删 cron，不重试
+- 失败（并发 push / branch protection 变化 / 权限）→ 通知转人工 + 停止监控，不重试
 
 ## 远程分支清理（prflow Step 6 MERGED 收尾 c）
 
-全景默认删：cron MERGED 轮内 `git push origin --delete <remote_branch>`。
+全景默认删：MERGED 收尾时 `git push origin --delete <remote_branch>`。
 
 - 仓库配了 "Automatically delete head branches" → 报 `remote ref does not exist` = 平台已删，当成功
 - protected branch / 权限不足 → 报原因不阻塞收尾
@@ -77,6 +77,6 @@ gh pr merge <pr-number> --merge      # 策略按全景选择: --merge / --squash
 ## 不要（gh 特有）
 
 - **不要 `gh pr create` 时塞 `--reviewer`** — 见「建 PR」
-- **不要 `gh pr merge` 不带策略 flag** — 非交互环境会失败/挂起，cron 轮里必须显式 `--merge`/`--squash`/`--rebase`
+- **不要 `gh pr merge` 不带策略 flag** — 非交互环境会失败/挂起，定时监控处置时必须显式 `--merge`/`--squash`/`--rebase`
 - **不要假设 default reviewer 一定有** — branch protection 没配 / CODEOWNERS 不存在 = 空列表，全景计划里用户手补
-- **不要在主流程同步阻塞等 GitHub Actions / CI** — cron 轮询是异步盯，不算同步等
+- **不要在 PR 创建主流程里反复手工查询 GitHub Actions / CI** — 统一交给 `pr-check.mjs --watch`

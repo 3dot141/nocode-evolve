@@ -23,7 +23,7 @@ Step 4 材料收集: base=main(nocode-base) · push range 3 commits · 整理建
   1. commit 整理   建议 squash d4e5f6a+b7c8d9e 进 a1b2c3d（默认: 跳过，原样进 PR）
   2. push + 建 PR  title「feat(search): 中文分词接入 ik analyzer」
                    body 与 Affected 见下；reviewer: 空
-  3. 合并方式      approve 后自动合并（默认）；cron 每 5min 查一次（本会话内有效）
+  3. 合并方式      approve 后自动合并（默认）；pr-check 每 5min 查一次（定时进程存活期间）
   4. 合并后清理    worktree ~/AI/acme-search-feat-search-zh + 本地 branch feat/search-zh；
                    远程 origin/feat/search-zh: 删除（默认）
   5. 合并后流转    #m-8f3k2: 组员开发 → 研发已改待BUILD
@@ -53,24 +53,24 @@ $ git push -u origin HEAD                            # 新分支无 non-ff
 $ gh pr create --title "..." --base main --body "..."
 → https://github.com/acme/acme-search/pull/142
 # reviewer 空 → 跳过加 reviewer
-CronCreate(cron: "2-59/5 * * * *", prompt: "[pr-watch #142] 单轮检查…（prompt 自足:
-  worktree/MAIN_ROOT/任务号 m-8f3k2/目标状态 研发已改待BUILD/远程坐标全写死）")
-→ 报告: PR 已创建 #142，已注册 cron 监控（每 5min，本会话内有效）
+node pr-check.mjs --watch --interval-seconds 300 --toolchain gh --pr 142
+→ managed long process 保存句柄
+→ 报告: PR 已创建 #142，已启动 pr-check 定时监控（每 5min，执行进程存活期间有效）
 ```
 
-## cron 轮（每 5min 自动）
+## pr-check 定时进程（每 5min 自动）
 
 ```
-第 1..N 轮: node pr-check.mjs --toolchain gh --pr 142
-           → PR_CHECK state=OPEN mergeable=false approved=false → 本轮结束
-第 N+1 轮: → PR_CHECK state=OPEN mergeable=true approved=true
-           → gh pr merge 142 --merge ✅
-第 N+2 轮: → PR_CHECK state=MERGED ...
-           a. git worktree remove + prune ✅
-           b. git branch -D feat/search-zh ✅
-           c. git push origin --delete feat/search-zh ✅（全景默认删）
-           d. Read post-merge.md → 平台原生 Skill 调用 → #m-8f3k2 流转「研发已改待BUILD」✅
-           e. 通知用户 + CronList 找 "[pr-watch #142]" → CronDelete ✅
+第 1..N 轮: PR_CHECK state=OPEN mergeable=false approved=false
+第 N+1 轮: PR_CHECK state=OPEN mergeable=true approved=true
+             PR_WATCH reason=READY runs=N+1 → 进程退出并通知 agent
+agent:       gh pr merge 142 --merge ✅
+             单轮 pr-check → MERGED
+             a. git worktree remove + prune ✅
+             b. git branch -D feat/search-zh ✅
+             c. git push origin --delete feat/search-zh ✅（全景默认删）
+             d. Read post-merge.md → 平台原生 Skill 调用 → #m-8f3k2 流转「研发已改待BUILD」✅
+             e. 通知用户 ✅
 ```
 
 ## 终态
@@ -81,7 +81,7 @@ PR 合并，worktree / 本地 branch / 远程分支三件套全清，任务已�
 
 ## 变体提醒
 
-- 用户中途关会话 → cron job 消失；下次进 dev-land 由 Step 2b 补清检测兜底
+- 执行宿主退出或 managed process 句柄丢失 → 定时进程停止；下次进 dev-land 由 Step 2b 补清检测兜底
 - tests fail + 用户说「提 PR」→ 作为风险项进入 PR 全景，由唯一一次全景确认决定；用户说「discard」→ 不跑 tests 直接走 Discard 全景
-- PR 被 reviewer 关闭 → cron 轮报告「PR 被关未合，全部保留」+ 自删
+- PR 被 reviewer 关闭 → pr-check 输出 `PR_WATCH reason=CLOSED`，agent 报告「PR 被关未合，全部保留」
 - push 执行时意外撞 non-fast-forward → 停止并报告，不追加 force 询问；用户要求继续时生成一份明确包含 `force-with-lease` 风险的新全景

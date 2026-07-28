@@ -15,7 +15,7 @@ toolchain 检测（`github.com`→gh / `bitbucket.`→bkt）与 base 解析见 S
 5. **target 解析**：`base_branch` 已由 SKILL.md Step 2e 单源解析；映射 `target_remote` + `target_branch`（fork 场景 `origin/<branch>`→`upstream/<base>`；单仓 `origin/<base>`）。项目本地 override 仅读 `.agents-personal/rules/personal-repo-pr.md`，不存在即无约定
 6. **default reviewer** → 见 `pr-flow-gh`「default reviewer」/ `pr-flow-bkt`「default reviewer」（gh 走 branch protection/CODEOWNERS，bkt 走 default-reviewers API）。**名单全量采用（只排除 PR 作者），agent 不得自行精简或挑选**——「挑最相关的人减少打扰」「合并只需一个 approve」都不是精简理由：default 名单是团队配置的应加集合，取舍权在用户；仅当用户在全景回应中显式指定名单/点名增删时才偏离（实测教训：agent 曾自行把 10 人名单精简为 2 人，被用户事后纠正）
 7. **任务号 + 目标状态**：SKILL.md Step 2e 已提取推定（有任务号时已 Read `post-merge.md` 拿映射），直接引用结果
-8. **远程坐标**（合并后清理用，此刻捕获写死进 cron prompt——删 branch 后 `branch.<name>.remote/merge` 配置即消失）：`remote=$(git config branch.<current>.remote)`（空则 origin）+ `remote_branch=$(git config branch.<current>.merge | sed 's|^refs/heads/||')`（空则同名）
+8. **远程坐标**（合并后清理用，此刻捕获进监控上下文——删 branch 后 `branch.<name>.remote/merge` 配置即消失）：`remote=$(git config branch.<current>.remote)`（空则 origin）+ `remote_branch=$(git config branch.<current>.merge | sed 's|^refs/heads/||')`（空则同名）
 
 ## Step 2: 全景计划展示 + 确认
 
@@ -28,7 +28,7 @@ toolchain 检测（`github.com`→gh / `bitbucket.`→bkt）与 base 解析见 S
                    title「<title>」
                    body 与 Affected 见下；reviewer: <名单 or 空>
   3. 发布策略      <全量（默认） / 灰度 / dark launch>    ← 生产改动才展示
-  4. 合并方式      approve 后自动合并（默认）；cron 每 5min 查一次（本会话内有效）
+  4. 合并方式      approve 后自动合并（默认）；pr-check 每 5min 查一次（定时进程存活期间）
   5. 合并后清理    worktree <path> + 本地 branch <branch>；远程 <remote>/<remote_branch>: 删除（默认）
   6. 合并后流转    #<task>: <当前状态> → <目标状态>    ← 无任务号则写「无流转」
 
@@ -71,7 +71,7 @@ git push -u origin HEAD
 
 → 命令见 `pr-flow-gh`「加 reviewer」/ `pr-flow-bkt`「加 reviewer」（bkt 有大小写 409 坑，需 fallback）。
 
-## Step 6: 注册 cron 监控（或按全景选择手动收尾）
+## Step 6: 启动统一定时监控（或按全景选择手动收尾）
 
 先检测是否在 worktree：
 
@@ -80,45 +80,47 @@ git_dir=$(git rev-parse --git-dir); common_dir=$(git rev-parse --git-common-dir)
 [ "$git_dir" != "$common_dir" ] && is_worktree=true || is_worktree=false
 ```
 
-`is_worktree == false` → cron prompt 里去掉清 worktree 步（无任务号且非 worktree → 不注册 cron，直接报告 PR URL 结束）。
+`is_worktree == false` → 监控上下文去掉清 worktree 步（无任务号且非 worktree → 不启动监控，直接报告 PR URL 结束）。
 
-### 注册 cron（默认路径）
+### 启动 pr-check watch（默认路径）
 
-用 `CronCreate` 注册轮询 job（`cron: "2-59/5 * * * *"`，错开整点分钟），**prompt 必须自足**——PR 号 / worktree / MAIN_ROOT / 任务号 / 目标状态 / 合并方式全部写进 prompt 字面值，每轮不依赖会话记忆（盯合并常隔数小时，context 可能已压缩）。模板：
+统一用 `pr-check.mjs --watch` 定时轮询。定时实现单源是同目录 `periodic-runner.mjs`；gh / bkt 只提供查询参数，不各写一套 sleep/cron。按 SKILL.md 顶部的平台区块启动 managed long process 并保存句柄：
 
-```
-[pr-watch #<pr>] 单轮检查 PR 并按状态处置，本 prompt 自足：
-1. 跑 node <REF>/pr-check.mjs <toolchain 参数，见 pr-flow-gh/bkt「pr-check 调用」>
-   → 读输出行 PR_CHECK state=<S> mergeable=<M> approved=<A>
-2. 按状态处置:
-   - OPEN 且 (M=false 或 A=false) → 本轮结束，不输出任何内容
-   - OPEN 且 M=true 且 A=true → 执行合并（命令见 pr-flow-gh/bkt「合并 PR」，策略 <s>）;
-     合并失败 → 通知用户需手动处理 + 删本 cron（见步骤 4），不重试
-   - MERGED → 完整收尾，按序:
-     a. cd <MAIN_ROOT> && git worktree remove <worktree> && git worktree prune
-        （remove 报错=有未提交改动 → 不加 --force，提示用户手动清，跳过 b 保留 branch）
-     b. git -C <MAIN_ROOT> branch -D <branch>
-        （平台已 MERGED 内容必在 target，squash/rebase 合并下 -d 会误报 not merged 故用 -D）
-     c. <全景选删远程时> git -C <MAIN_ROOT> push <remote> --delete <remote_branch>
-        （失败=protected/已删 → 报原因不阻塞）
-     d. 任务号 <ids> 非空 → Read <REF>/post-merge.md 流转到「<目标状态>」
-     e. 通知用户已合并 + 收尾清单; 删本 cron（见步骤 4）
-   - CLOSED → 通知用户 PR 被关未合，worktree / branch / 远程全保留; 删本 cron（见步骤 4）
-3. <is_worktree=false 时步骤 2 的 MERGED 分支去掉 a、b（当前分支删不了自己）: 只做 c-e>
-4. 删本 cron: CronList 找 prompt 含 "[pr-watch #<pr>]" 的 job → CronDelete
+```bash
+node <REF>/pr-check.mjs --watch --interval-seconds 300 \
+  <toolchain 参数，见 pr-flow-gh/bkt「pr-check 调用」>
 ```
 
-注册后报告「PR 已创建 <url>，已注册 cron 监控（每 5min，**本会话内有效**）：approve 后自动合并 → 清 worktree → 流转」，本轮结束。
+脚本每次成功查询输出 `PR_CHECK ...`；命中停止条件后输出 `PR_WATCH reason=<READY|MERGED|CLOSED> runs=<N>` 并退出。连续查询失败 3 次会失败退出，避免静默挂死。
 
-> **会话级边界（如实告知用户）**：CronCreate 的 job 只活在本会话内存，关掉 Claude Code 即失效（recurring 亦有 7 天上限）——跨会话由 SKILL.md Step 2b 的补清检测兜底。不要用 `run_in_background` 常驻脚本替代 cron 轮：常驻脚本动作硬编码，撞上合并冲突 / 流转失败无法处置；cron 每轮 agent 在场，意外当场处理。
+长进程完成后按最终 reason 处置：
 
-### 全景选了「只盯不合」→ cron prompt 去掉 auto-merge 分支
+- `READY` + 全景为自动合并 → 执行 pr-flow-gh/bkt 的合并命令；成功后立即单轮查询确认 MERGED，再走收尾
+- `READY` + 全景为只盯不合 → 通知一次“已可合并”，保留 worktree / branch / 远程，停止监控
+- `MERGED` → 直接走收尾
+- `CLOSED` → 通知 PR 被关未合，worktree / branch / 远程全保留
+- 脚本失败 / 句柄丢失 → 报告原因，所有内容保留；下次进入 dev-land 由 SKILL.md Step 2b 补清
 
-步骤 2 的「OPEN 且可合已批」分支改为：通知用户可合并，然后 CronDelete 本 job + CronCreate 一个去掉本分支的新 job（只等 MERGED / CLOSED 做清理与流转）——保证「可合并」只提醒一次，不每 5min 骚扰。
+MERGED 收尾按序：
+
+1. `cd <MAIN_ROOT> && git worktree remove <worktree> && git worktree prune`
+   - remove 报错=有未提交改动 → 不加 `--force`，提示用户手动清，跳过本地 branch 删除
+2. `git -C <MAIN_ROOT> branch -D <branch>`
+   - 平台已 MERGED 内容必在 target；squash/rebase 合并下 `-d` 会误报 not merged，故用 `-D`
+3. 全景选删远程时：`git -C <MAIN_ROOT> push <remote> --delete <remote_branch>`
+   - protected / 已删 → 报原因，不阻塞任务流转
+4. 任务号非空 → 按 `post-merge.md` 流转到全景目标状态
+5. 通知用户已合并 + 收尾清单
+
+非 worktree 时去掉第 1、2 步（当前分支删不了自己），只做远程处置与任务流转。
+
+启动后报告「PR 已创建 <url>，已启动 pr-check 定时监控（每 5min，执行进程存活期间有效）：approve 后自动合并 → 清 worktree → 流转」。
+
+> **生命周期边界（如实告知用户）**：定时进程依赖当前执行宿主和 managed process 句柄；宿主退出或句柄丢失后不会继续。不要改成 `nohup` / 系统 cron 自动合并——无人监管时无法处置 merge veto、权限变化和流转失败。跨会话由 SKILL.md Step 2b 补清检测兜底。
 
 ### 全景选了「不盯」→ 手动保留
 
-不注册 cron，报告「PR <url> 创建成功，worktree 保留，你后续 iterate / 合并后自己清」。清理时识别 4 种 provenance 路径模式（见 SKILL.md）。
+不启动 pr-check watch，报告「PR <url> 创建成功，worktree 保留，你后续 iterate / 合并后自己清」。清理时识别 4 种 provenance 路径模式（见 SKILL.md）。
 
 ### 远程分支清理提示
 
