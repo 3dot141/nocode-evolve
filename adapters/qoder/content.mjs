@@ -1,0 +1,57 @@
+export function renderQoderMarkdown(text) {
+  return String(text)
+    .replaceAll('${CLAUDE_PLUGIN_ROOT}', '${QODER_PLUGIN_ROOT}')
+    .replaceAll('{CLAUDE_PLUGIN_ROOT}', '{QODER_PLUGIN_ROOT}')
+    .replaceAll('${NOCODE_SKILL_REF}', '${QODER_PLUGIN_ROOT}/skills/references')
+    .replaceAll('{NOCODE_SKILL_REF}', '{QODER_PLUGIN_ROOT}/skills/references')
+    .replaceAll('CLAUDE_PROJECT_DIR', 'QODER_PROJECT_DIR');
+}
+
+export function renderQoderContent({ targetPath, content, contextPlan = new Map() }) {
+  if (targetPath.startsWith('agents/') || targetPath.startsWith('commands/')) return null;
+  if (targetPath === 'hooks/inject-nocode.sh') {
+    return content.toString('utf8')
+      .replaceAll('__NOCODE_PLATFORM__', 'qoder')
+      .replaceAll(
+        '__NOCODE_CONTEXT_BUDGET__',
+        '${PLUGIN_ROOT}/runtime/context-budget.json',
+      );
+  }
+  if (targetPath === 'hooks/hooks.json') {
+    const config = JSON.parse(content.toString('utf8'));
+    if (Array.isArray(config.hooks.SessionStart)) {
+      for (const group of config.hooks.SessionStart) {
+        group.hooks = (group.hooks || []).flatMap((hook) => {
+          const segment = /inject-nocode\.sh\s+([a-z0-9-]+)/.exec(hook.command)?.[1];
+          const count = contextPlan.get(segment)?.chunks || 1;
+          return Array.from({ length: count }, (_, index) => ({
+            ...hook,
+            command: count > 1 ? `${hook.command} ${index + 1}` : hook.command,
+          }));
+        });
+      }
+    }
+    for (const groups of Object.values(config.hooks || {})) {
+      for (const group of groups || []) {
+        for (const hook of group.hooks || []) {
+          const argv = hook.command
+            .replaceAll('${CLAUDE_PLUGIN_ROOT}', '${QODER_PLUGIN_ROOT}')
+            .trim().split(/\s+/);
+          if (argv.some((part) => !/^[A-Za-z0-9_./${}-]+$/.test(part))) {
+            throw new Error(`unsupported hook command token: ${hook.command}`);
+          }
+          const command = argv.map((part) => part.includes('${QODER_PLUGIN_ROOT}') ? `"${part}"` : part);
+          hook.command = argv.at(-1) === '${QODER_PLUGIN_ROOT}/hooks/session-open.mjs'
+            ? [
+              'node', '"${QODER_PLUGIN_ROOT}/runtime/plugin-data-entry.mjs"', '--',
+              ...command,
+            ].join(' ')
+            : command.join(' ');
+        }
+      }
+    }
+    return `${JSON.stringify(config, null, 2)}\n`;
+  }
+  if (!targetPath.endsWith('.md')) return content;
+  return renderQoderMarkdown(content.toString('utf8'));
+}

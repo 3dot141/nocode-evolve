@@ -170,7 +170,7 @@ test('buildExpectedTree rejects unknown source exclusion platforms', (t) => {
       metadata: fixtureMetadata(),
       adapter: fixtureAdapter('claude'),
     }),
-    /exclusion platforms must contain claude and\/or codex/,
+    /exclusion platforms must contain claude.*codex.*qoder/,
   );
 });
 
@@ -254,7 +254,7 @@ test('writeExpectedTree refuses to clean a path outside repo plugins/<platform>'
   const expected = new Map([['safe.txt', Buffer.from('safe')]]);
   assert.throws(
     () => writeExpectedTree(expected, path.join(root, 'skills'), root),
-    /plugins\/(claude|codex)\/nocode/,
+    /plugins\/\{claude,codex,qoder\}\/nocode/,
   );
 });
 
@@ -282,7 +282,7 @@ test('writeExpectedTree preserves the source executable bit without assuming uma
 });
 
 test('package CLI argument parser defaults to both platforms and rejects unknown input', () => {
-  assert.deepEqual(parseArgs([]), { check: false, platforms: ['claude', 'codex'] });
+  assert.deepEqual(parseArgs([]), { check: false, platforms: ['claude', 'codex', 'qoder'] });
   assert.deepEqual(parseArgs(['--check', '--platform=codex']), {
     check: true,
     platforms: ['codex'],

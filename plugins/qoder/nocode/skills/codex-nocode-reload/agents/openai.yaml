@@ -1,0 +1,4 @@
+interface:
+  display_name: "Codex nocode reload"
+  short_description: "Reinstall nocode and restart the Codex daemon"
+  default_prompt: "Use $codex-nocode-reload to inspect or explicitly reload nocode in Codex."

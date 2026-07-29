@@ -1,8 +1,8 @@
-const OPEN = /^<!-- nocode:platform (claude|codex) -->$/;
+const OPEN = /^<!-- nocode:platform (claude|codex|qoder) -->$/;
 const CLOSE = '<!-- /nocode:platform -->';
 
 export function renderPlatformBlocks(source, { platform, file = '<markdown>' }) {
-  if (!['claude', 'codex'].includes(platform)) {
+  if (!['claude', 'codex', 'qoder'].includes(platform)) {
     throw new Error(`${file}: unknown target platform: ${platform}`);
   }
 
@@ -23,7 +23,7 @@ export function renderPlatformBlocks(source, { platform, file = '<markdown>' }) 
     if (/^<!-- \/?nocode:platform\b/.test(line)) {
       throw new Error(`${file}:${index + 1}: invalid platform block`);
     }
-    if (!active || active.platform === platform) output.push(line);
+    if (!active || active.platform === platform || (platform === 'qoder' && active.platform === 'claude')) output.push(line);
   }
 
   if (active) {

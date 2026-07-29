@@ -1,6 +1,6 @@
 # NoCode
 
-Harrison 的 Claude Code / Codex 双平台工程工作流插件。仓库只维护一份业务语义，通过平台 adapter 确定性生成两个可独立安装的插件。
+Harrison 的 Claude Code / Codex / Qoder 三平台工程工作流插件。仓库只维护一份业务语义，通过平台 adapter 确定性生成三个可独立安装的插件。
 
 ```text
 共享业务源码
@@ -8,20 +8,21 @@ skills / commands / rules / model / hooks
                          │
                  static packager
                          │
-              ┌──────────┴──────────┐
-              │                     │
-       Claude adapter         Codex adapter
-              │                     │
-plugins/claude/nocode   plugins/codex/nocode
+        ┌────────────────┼────────────────┐
+        │                │                │
+ Claude adapter    Codex adapter    Qoder adapter
+        │                │                │
+plugins/claude/   plugins/codex/   plugins/qoder/
+    nocode            nocode            nocode
 ```
 
 核心原则：
 
 - `skills/`、`commands/`、`rules/`、`model/` 与平台无关的 Hook 判断是业务单源。
-- Markdown 中用成对 platform block 写 Claude/Codex 原生工具差异；共享正文保留业务流程与 handoff payload。
-- `adapters/claude/`、`adapters/codex/` 负责 manifest、命令 Skill 化、路径变量与 Hook codec。
-- `platform/claude/`、`platform/codex/` 只保存必须不同的非 Markdown runtime overlay。
-- `plugins/claude/nocode/`、`plugins/codex/nocode/` 是只读生成物，禁止手改。
+- Markdown 中用成对 platform block 写 Claude/Codex 原生工具差异；Qoder 构建时 fallback 到 Claude 块内容；共享正文保留业务流程与 handoff payload。
+- `adapters/claude/`、`adapters/codex/`、`adapters/qoder/` 负责 manifest、命令 Skill 化、路径变量与 Hook codec。
+- `platform/claude/`、`platform/codex/`、`platform/qoder/` 只保存必须不同的非 Markdown runtime overlay。
+- `plugins/claude/nocode/`、`plugins/codex/nocode/`、`plugins/qoder/nocode/` 是只读生成物，禁止手改。
 - `plugin/metadata.json` 是 name/version/author/license 单源。
 
 ## 平台行为
@@ -46,15 +47,17 @@ nocode-evolve/
 ├── adapters/
 │   ├── claude/                          # Claude manifest/content renderer
 │   ├── codex/                           # Codex manifest/component/hook renderer
-│   └── shared/                          # 双平台入口 Skill renderer
-├── platform/{claude,codex}/runtime/     # 平台 runtime overlay
+│   ├── qoder/                           # Qoder manifest/content renderer
+│   └── shared/                          # 三平台入口 Skill renderer
+├── platform/{claude,codex,qoder}/runtime/  # 平台 runtime overlay
 ├── skills/ commands/                    # workflow 与入口业务源码
 ├── rules/ model/ references/            # 规则、会话上下文与参考材料源码
 ├── hooks/                               # hook 注册源、平台 codec、测试
-├── scripts/package.platform.mjs         # 双平台静态 packager
+├── scripts/package.platform.mjs         # 三平台静态 packager
 ├── plugins/
 │   ├── claude/nocode/                   # Claude 发布物（生成，禁手改）
-│   └── codex/nocode/                    # Codex 发布物（生成，禁手改）
+│   ├── codex/nocode/                    # Codex 发布物（生成，禁手改）
+│   └── qoder/nocode/                    # Qoder 发布物（生成，禁手改）
 ├── .claude-plugin/marketplace.json      # Claude marketplace 入口
 └── .agents/plugins/marketplace.json     # Codex marketplace 入口
 ```
@@ -101,9 +104,24 @@ codex plugin add nocode@nocode-market
 
 Codex 只会加载 `plugins/codex/nocode/`，不会读取 Claude 发布物或 Claude-only Hook 协议。
 
-安装或升级后需要整体重启 Codex App；如果通过 remote-control 使用 Codex，则重启对应 daemon / app-server，然后再新建 Session。已运行的进程可能继续持有旧版插件注册表、Skill 根目录和 Hook 配置，仅新建对话或 Session 不保证重新加载成功。
+安装或升级后需要整体重启 Codex App；如果通过 remote-control 使用 Codex，则重启对应 daemon / app-server，然后再新建 Session。已运行的进程可能继续持有旧版插件注册表、Skill 根目录和 Hook 配置，仅新建对话或 Session 不保证重新加载成功。重启前先保存当前工作，因为连接会中断。重启后应确认 SessionStart、Skills 和 Hook 均来自新版本；如果日志或报错仍引用 `~/.codex/plugins/cache/.../nocode/<旧版本>/`，说明旧进程尚未完成重载。
 
-重启前先保存当前工作，因为连接会中断。重启后应确认 SessionStart、Skills 和 Hook 均来自新版本；如果日志或报错仍引用 `~/.codex/plugins/cache/.../nocode/<旧版本>/`，说明旧进程尚未完成重载。
+### Qoder CLI
+
+开发期直接安装本地生成物：
+
+```bash
+qodercli plugins install ./plugins/qoder/nocode
+```
+
+通过 Git marketplace 安装：
+
+```bash
+qodercli plugins marketplace add 3dot141/nocode-evolve
+qodercli plugins install nocode
+```
+
+Qoder 的 Hook 协议与 Claude Code 一致（SessionStart additionalContext、PreToolUse permissionDecision），工具命名也相同（TaskCreate、AskUserQuestion、Skill、Agent 等），因此 Qoder 发布物复用 Claude 平台块内容。安装后运行 `/plugins reload` 或重启 CLI 生效。
 
 ### Open Design
 

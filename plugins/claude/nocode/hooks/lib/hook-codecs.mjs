@@ -1,7 +1,8 @@
 export function detectPlatform(env = process.env) {
-  if (env.NOCODE_PLATFORM === 'claude' || env.NOCODE_PLATFORM === 'codex') {
+  if (env.NOCODE_PLATFORM === 'claude' || env.NOCODE_PLATFORM === 'codex' || env.NOCODE_PLATFORM === 'qoder') {
     return env.NOCODE_PLATFORM;
   }
+  if (env.QODER_PLUGIN_ROOT) return 'qoder';
   return env.PLUGIN_ROOT ? 'codex' : 'claude';
 }
 
@@ -42,7 +43,7 @@ export function encodeSessionContext(content, platform) {
 
 export function encodeStopDecision(decision, platform) {
   if (!decision) return null;
-  if (platform === 'codex') {
+  if (platform === 'codex' || platform === 'qoder') {
     return { continue: false, stopReason: decision.reason };
   }
   return { decision: 'block', reason: decision.reason };

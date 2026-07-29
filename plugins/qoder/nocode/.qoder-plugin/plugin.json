@@ -1,0 +1,18 @@
+{
+  "name": "nocode",
+  "version": "0.10.0",
+  "description": "Harrison 的个人工程工作流与规则工具箱，支持 Claude Code、Codex 和 Qoder",
+  "author": {
+    "name": "Harrison",
+    "url": "https://github.com/3dot141"
+  },
+  "homepage": "https://github.com/3dot141/nocode-evolve",
+  "repository": "https://github.com/3dot141/nocode-evolve",
+  "license": "MIT",
+  "keywords": [
+    "personal",
+    "rules",
+    "skills",
+    "workflow"
+  ]
+}

@@ -12,7 +12,7 @@ import path from 'node:path';
 import { loadContextBudget, splitStaticContext } from './context-budget.mjs';
 import { renderPlatformBlocks } from './platform-blocks.mjs';
 
-const PLATFORMS = new Set(['claude', 'codex']);
+const PLATFORMS = new Set(['claude', 'codex', 'qoder']);
 const SEMVER = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/;
 
 export function loadJson(file) {
@@ -35,7 +35,7 @@ export function loadPluginExclusions(root) {
     if (entry.platforms != null) {
       if (!Array.isArray(entry.platforms) || entry.platforms.length === 0
         || entry.platforms.some((platform) => !PLATFORMS.has(platform))) {
-        throw new Error(`exclusion platforms must contain claude and/or codex for ${relative}`);
+        throw new Error(`exclusion platforms must contain claude, codex and/or qoder for ${relative}`);
       }
       platforms = [...new Set(entry.platforms)];
     }
@@ -284,8 +284,8 @@ function assertSafeOutputRoot(outputRoot, repoRoot) {
   const resolvedRepo = path.resolve(repoRoot);
   const resolvedOutput = path.resolve(outputRoot);
   const relative = path.relative(resolvedRepo, resolvedOutput).replaceAll('\\', '/');
-  if (!/^plugins\/(claude|codex)\/nocode$/.test(relative)) {
-    throw new Error('refusing to clean outside <repo>/plugins/claude/nocode or <repo>/plugins/codex/nocode');
+  if (!/^plugins\/(claude|codex|qoder)\/nocode$/.test(relative)) {
+    throw new Error('refusing to clean outside <repo>/plugins/{claude,codex,qoder}/nocode');
   }
   return resolvedOutput;
 }
