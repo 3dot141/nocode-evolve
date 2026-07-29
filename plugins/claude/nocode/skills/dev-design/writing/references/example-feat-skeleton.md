@@ -305,36 +305,22 @@ src/components/import/
 
 对应总流程的 "写入 → 同步 → 结果报告" 段。
 
-**交互流程 + 时序**：
+**交互流程**（调用链跨 Browser / api-server / Agent API → 调用时序图，格式单源 `references/writing-principles.md` §4）：
 
 ```
-前端                   后端                    Agent API
- │  POST /execute       │                       │
- │ ────────────→       │                       │
- │                      │ 事务写入 [资源.P3]     │
- │                      │                       │
- │                      │ syncOne [BF3]          │
- │                      │ ─────────────→        │
- │                      │      200 OK           │
- │                      │ ←─────────────        │
- │ SSE: r1 synced       │                       │
- │ ←───────────        │                       │
- │                      │ syncOne [BF3]          │
- │                      │ ─────────────→        │
- │                      │      500 fail         │
- │                      │ ←─────────────        │
- │                      │ retry [BF3 异常]       │
- │                      │ ─────────────→        │
- │                      │      200 OK           │
- │                      │ ←─────────────        │
- │ SSE: r2 synced       │                       │
- │ ←───────────        │                       │
- │ SSE: complete        │                       │
- │ ←───────────        │                       │
- │                      │                       │
- │ 结果报告             │                       │
- │ 成功 18 / 跳过 4     │                       │
- │ 失败 2 → [重试]      │                       │
+Browser
+  │ POST /api/import/execute   入参: resolved（用户决策后的导入清单）
+  ↓
+api-server /execute
+  │ 事务写入 resources 表 [资源.P3]
+  │ 逐条串行 syncOne(resource, agent) [BF3] ──→ Agent API
+  │                                           ├── 200 → 记录 synced
+  │                                           └── 500 → retry 1 次 [BF3 异常]
+  │                                               ├── 成功 → synced
+  │                                               └── 仍失败 → failed，继续不中断
+  │ 每条完成 ── SSE { resource, status } ──→ Browser（SyncProgress 实时更新）
+  ↓
+终态：SSE complete → ImportResult 渲染结果报告 { synced: 18, skipped: 4, failed: 2 }，失败项可 [重试]
 ```
 
 **前端组件**：
