@@ -1,5 +1,5 @@
 interface:
   display_name: "dev-design-writing"
-  short_description: "Private writing protocol used by dev-design to expand an approved Decision Pack…"
+  short_description: "Private writing protocol used by dev-design to turn a validated Decision Packet…"
 policy:
   allow_implicit_invocation: false

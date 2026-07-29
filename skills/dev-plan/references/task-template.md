@@ -83,6 +83,10 @@
 
 > 来源：Define restate（成果物 / 验收标准 / 约束 / Out of Scope）
 
+**Design Doc**: [Full 场景路径；Standard 写 N/A]
+**designRevision**: [Full 场景正整数；Standard 写 N/A (Standard)]
+**designDigest**: [Full 场景 sha256:...；Standard 写 N/A (Standard)]
+
 ## 依赖图
 - A (无依赖)
 - B → 依赖 A
@@ -109,6 +113,7 @@
 ## 退出条件
 - [ ] 所有 task 过粒度三重约束（≤5 文件 + 一个逻辑动作 + 2-5 分钟节奏）
 - [ ] 每个 task 零占位符，贴了真实代码 / 命令 / 预期输出
+- [ ] Full 场景 header 的 designRevision / designDigest 与 approved Design 完全一致
 - [ ] checkpoint 风险驱动插入（风险 task 后必有）+ fallback 3 无遗漏
 - [ ] 用户已确认
 ```

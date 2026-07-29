@@ -7,7 +7,7 @@ description: "Use to implement confirmed tasks, resume coding, or enter devflow 
 
 Build 是编排入口：读 Plan 阶段用户选定的 `Execution` 字段，走对应的执行协议——`subagent-lite`（顺序派发 implementer，仅风险 task 派审查）、`subagent-full`（per-task spec review + checkpoint 批量 quality review）或 `executing`（主 agent 自己顺序执行 plan 已写代码）。Build skill 本身只负责 devflow 阶段编排（Enter/Exit Gate、里程碑、硬交接），具体执行细节在对应 reference 文件里。
 
-进入 Build 时 Read `${PLUGIN_ROOT}/skills/references/design-traceability.md`。`designCovers` 是已确认 task scope 的一部分：执行方只能实现并回报，不能自行增加、删除或改成别的 Design ID。
+进入 Build 时 Read `${PLUGIN_ROOT}/skills/references/design-traceability.md`。Plan 的 `designRevision` / `designDigest` 是不可变基线，`designCovers` 是已确认 task scope 的一部分：执行方只能实现并回报，不能自行更换基线或 Design ID。
 
 ## 非本 skill 请求
 
@@ -19,6 +19,7 @@ Build 是编排入口：读 Plan 阶段用户选定的 `Execution` 字段，走�
 - [ ] Plan 已标注 `Execution` 字段（`subagent-lite` / `subagent-full` / `executing`；旧计划的 `subagent` 按 `subagent-full` 处理）
 - [ ] Full 场景：Design 测试目标可用（指导 TDD 写什么测试）
 - [ ] Full 场景：Plan 已有 Design → Task Coverage Matrix，且每个 task 都有 `designCovers`
+- [ ] Full 场景：Plan header 与当前 approved Design 的 `designRevision` / `designDigest` 完全一致；不一致立即回 Plan
 
 ## 协议
 
@@ -54,7 +55,8 @@ Verify handoff 使用 `$dev-verify`。
 ### Step 1: 读 Execution 字段，分发执行
 
 1. 读 Plan 文档 header 的 `Execution` 字段
-2. `Execution: subagent-lite` / `subagent-full`（旧值 `subagent` 按 `subagent-full` 处理）→ Read `references/dev-build-subagent.md`，先拓扑排序，再逐个 task 执行。**每次只派发当前一个 plan task**；不得一次把后续 task 全部派出。实现 objective 必须自足，至少包含完整 task 文本、实现纪律、允许修改的最小路径、验证命令和期望返回的证据。审查密度按档位分叉（lite：仅风险 task 派审查；full：per-task spec + checkpoint 批量 quality）。
+2. Full 场景重新读取 Design，校验 `designRevision` / `designDigest`；把这两个字段注入每个执行与 review objective。任何时点发现变化都停止并回 Plan。
+3. `Execution: subagent-lite` / `subagent-full`（旧值 `subagent` 按 `subagent-full` 处理）→ Read `references/dev-build-subagent.md`，先拓扑排序，再逐个 task 执行。**每次只派发当前一个 plan task**；不得一次把后续 task 全部派出。实现 objective 必须自足，至少包含完整 task 文本、实现纪律、允许修改的最小路径、验证命令和期望返回的证据。审查密度按档位分叉（lite：仅风险 task 派审查；full：per-task spec + checkpoint 批量 quality）。
 
 
    - 使用 `spawn_agent` 派发当前 implementer，保存返回的 agent id，并用 `wait_agent` 等待终态。需要追加上下文或修复时用 `followup_task`；任务失控时用 `interrupt_agent`。平台无法提供独立 agent 时，由主会话执行并明确记录“未获得隔离执行”。
@@ -62,11 +64,12 @@ Verify handoff 使用 `$dev-verify`。
    - 只以 agent 的终态结果和实际 diff 为实现证据，不把“已派发”当作完成。
    - 需要 spec review 时，另派一个只读 reviewer，任务 id 使用 `<plan-task-id>-spec-review`；objective 必须显式包含完整计划要求、implementer 的终态结果、实际改动文件和返回格式 `{approved,issues[]}`。reviewer 与 implementer 必须是不同的隔离上下文；只有平台明确报告不同模型时才能称为跨模型审查。
    - `approved=false` 时，把 `issues[]` 明确放入 implementer 的修复 objective，等待修复终态后重新派发独立 reviewer。lite 风险 task 的 quality review 与 full checkpoint 批审也遵循同一原生 agent 生命周期。前一个 task 的应派 Spec/Quality Gate 全通过（或 lite 明确记录跳过）后，才派发下一 task。
-3. `Execution: executing` → Read `references/dev-build-executing.md`，主 agent 自己顺序执行 plan 已写的代码，不派 subagent
+4. `Execution: executing` → Read `references/dev-build-executing.md`，主 agent 自己顺序执行 plan 已写的代码，不派 subagent
 
 无论执行协议是哪一种，每个 task 终态结果都必须显式包含：
 
 - `completedDesignCovers`：实际完成且与 task `designCovers` 完全一致的 Design ID。
+- `designRevision` / `designDigest`：必须与 Plan header 和当前 approved Design 完全一致。
 - `changedFiles`：本 task 实际修改文件。
 - `evidence`：本 task 测试命令与结果。
 
@@ -80,7 +83,7 @@ Verify handoff 使用 `$dev-verify`。
 2. **独立跑测试**：跑完整测试套件，不只依赖执行方的测试输出
 3. **spec 核对（抽查）**：`subagent-lite/full` 协议下抽查 1-2 个 task 的 spec reviewer 判断是否站得住（lite 档跳过审查的 task 优先抽）；`executing` 协议下抽查 1-2 个 task 的实现是否匹配 plan 声明的验收标准
 4. **空壳扫描（确定性脚本，非 LLM 判断）**：用 grep/AST 模式匹配扫全量 diff——空函数体、placeholder 注释（`// TODO`、`// implement`）、`throw new Error('not implemented')`、只有类型签名没有逻辑的方法。lint + typecheck 通过不代表功能完整，空函数合法但无用。发现空壳 → 视为 task 未完成，重新处理
-5. **Design 覆盖汇总**：以 Plan Coverage Matrix 中的 `required` Design ID 为左表，反查所有已完成 task 的 `completedDesignCovers`。任何 required Design ID 无完成结果、task 漏报或冒领都使 Build Gate 失败，并点名对应 ID。
+5. **Design 覆盖汇总**：先复核当前 Design 的 `designRevision` / `designDigest`，再以 Plan Coverage Matrix 中的 `required` Design ID 为左表，反查所有已完成 task 的 `completedDesignCovers`。基线变化、required ID 无完成结果、task 漏报或冒领都使 Build Gate 失败；基线变化回 Plan，其余点名 ID 修复。
 
 ### Step 3: 统一 Commit
 
@@ -100,6 +103,7 @@ Verify handoff 使用 `$dev-verify`。
 - [ ] 所有 plan task 完成
 - [ ] 编排者独立验证通过（diff + 测试 + spec 核对 + 空壳扫描）
 - [ ] Full 场景所有 required Design ID 均由完成 task 的 `completedDesignCovers` 报告，零漏报/冒领
+- [ ] Full 场景所有 task 结果与当前 Design / Plan 的 `designRevision` / `designDigest` 一致
 - [ ] 零空壳：无空函数体、无 TODO/implement placeholder、无 `throw not implemented`
 - [ ] 全部测试通过（整个相关套件，不只新写的）
 - [ ] build 通过

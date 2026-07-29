@@ -20,6 +20,13 @@ You are reviewing code quality for {Task N: task_name | Checkpoint 批量: Task 
 
 {FILES_LIST — implementer 报告的改动文件；批量模式下为合并清单}
 
+## Design Baseline
+
+designRevision={DESIGN_REVISION}
+designDigest={DESIGN_DIGEST}
+
+If any reviewed task reports a different baseline, mark it Critical and do not approve the batch.
+
 ## Your Job
 
 Review the implementation for code quality:

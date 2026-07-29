@@ -30,7 +30,7 @@ description: Use to turn a confirmed goal into implementation tasks or when devf
 ## Enter Gate
 
 - [ ] Define restate 存在且已确认
-- [ ] Full 场景：Design 设计文档 frontmatter `status: approved`，且测试目标与 Implementation Item Registry 已产出
+- [ ] Full 场景：Design frontmatter `status: approved`，`designRevision` / `designDigest` 可用，且测试目标与 Implementation Item Registry 已产出
 - [ ] Standard 场景：restate 足够指导任务拆分
 
 **Plan 的两种合法产出**：
@@ -109,7 +109,7 @@ Build handoff 使用 `Skill(nocode:dev-build)`。
 
 读，不写。按以下顺序加载上下文：
 1. restate（成果物/验收标准/约束/Out of Scope）
-2. dev-design 产出的设计文档（含领域划分、模块设计、接口、业务流、测试目标）
+2. dev-design 产出的设计文档（含领域划分、模块设计、接口、业务流、测试目标）；记录其 `designRevision` / `designDigest`，并在只读加载完成后重算 / 复核 digest
 3. **定向加载**：设计文档「前置调研」章节的 `path:line` 引用就是加载清单——要改的文件、关键 caller、pattern 参照、类型/接口定义大多已被 Design 探索过并引用，逐条定向 Read（含对应测试文件），不重新自由探索。Standard 场景（无设计文档）用 restate 附录探索胶囊的 findings sources 作加载清单，同样定向 Read
 4. 清单没覆盖、本次拆解又需要的文件，由当前会话使用 `rg` 或可用的代码搜索工具补搜；只返回路径、符号、证据和对应的计划缺口，不重扫已覆盖范围，不修改工作树。只有搜索本身能独立成边界清楚的任务时，才按当前平台原生 agent 机制派发，不因“语义搜索”强制派 agent
 
@@ -136,6 +136,8 @@ Build handoff 使用 `Skill(nocode:dev-build)`。
 ### Step 4: 写 task 骨架（Round 1）
 
 每个 task 用 `references/task-template.md` 格式。路径/约束 ID 约定见 `{QODER_PLUGIN_ROOT}/skills/references/path-conventions.md`。
+
+Full 场景所有 task 共享 Plan header 中冻结的 `designRevision` / `designDigest`；task 不得引用另一 revision 的 Registry ID。
 
 Round 1 写骨架——定清楚**改什么、覆盖什么、谁做**，代码留空给 Round 2 填：
 
@@ -283,6 +285,7 @@ restate 的每条 Success Criteria 至少被一个 task 覆盖。逐条核对，
 
 以 approved Design 的 Implementation Item Registry 为左表反向遍历，生成 Design → Task Coverage Matrix：
 
+- Plan header 的 `designRevision` / `designDigest` 必须与此刻重新读取的 Design 完全一致；不一致说明基线已变，废弃当前计划并从 Step 1 重做。
 - `required`：至少一个 task 的 `designCovers` 包含该 ID，否则报告 `required orphan <ID>`，回 Step 4 补 task 或回 Design 改状态。
 - `verify-only`：必须有验证方法，交 Verify 取证。
 - `deferred`：必须有原因与用户确认。
@@ -336,6 +339,8 @@ task 间依赖不成环，底层 task 排前面。循环依赖说明切片方式
 **Architecture**: [2-3 句]
 **Tech Stack**: [关键技术/库]
 **Design Doc**: [路径（Full 场景）]
+**designRevision**: [正整数；Standard 写 N/A (Standard)]
+**designDigest**: [sha256:...；Standard 写 N/A (Standard)]
 **Test Objectives**: [测试目标摘要]
 **Execution**: [subagent-lite | subagent-full | executing]
 ```
@@ -347,6 +352,7 @@ task 间依赖不成环，底层 task 排前面。循环依赖说明切片方式
 - [ ] 每个 task 标了 HITL/AFK
 - [ ] 每个 task 标了 `covers`，所有 task 汇总覆盖 restate 每条路径（路径→task 映射表已产出）
 - [ ] 每个 task 标了 `designCovers`；Full 场景从 Registry 反向遍历且 required 零 orphan，Standard 显式 N/A
+- [ ] Full 场景 Plan header 的 `designRevision` / `designDigest` 与交接时 Design 仍完全一致
 - [ ] 测试目标已分配到 slice
 - [ ] Round 1 骨架自查通过 + 骨架已修正（Step 6）
 - [ ] Round 2 checklist 核查 + 跨 task 一致性自查 + Plan Validation 通过（Step 8）

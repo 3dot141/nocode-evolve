@@ -4,7 +4,7 @@
 
 从 A 状态到 B 状态。形状：现状 → 目标 → before/after → 迁移。
 
-> 产出骨架示例见 `references/example-refactor-skeleton.md`
+> 产出骨架示例见 `references/example-refactor-skeleton.md`。结构变化的横切落层必须 Read `references/cross-cutting-design.md`。
 
 ## 产出骨架示例
 
@@ -47,6 +47,8 @@ refactor 的结构骨架 = **现状结构 + 目标结构（before/after）**：
 2. **目标结构**：
    - **目标结构**（总图：重构后的模块 / 域关系）
    - **Before/After 对比**（两张图并排，标出每个变更点）
+   - **节点标状态**：现状 / 目标两张总图的节点都标 新建 / 改造 / 已有·复用（对齐 feat 总图约定——refactor 的 before/after 天然承载状态变化，标了状态变更点不言自明）
+   - **横切影响**：按 `references/cross-cutting-design.md` 渲染 Packet `crossCutting.items` 或明确 exemption，尤其核对结构变化前后的 provider / consumer 与 enforcement point
 
 产出标准：现状结构图 + 问题诊断（DDD 视角）+ 目标结构图 + Before/After 对比。→ 交 Step 2 确认、Step 3 架构审核（审目标架构是否解决现状问题、依赖方向是否改善）。
 

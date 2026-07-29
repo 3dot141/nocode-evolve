@@ -21,6 +21,13 @@ You are implementing Task {N}: {task_name}
 
 {SCENE_SETTING — 这个 task 在整体中的位置、依赖了哪些已完成的 task、架构背景}
 
+## Design Baseline
+
+- designRevision: {DESIGN_REVISION}
+- designDigest: {DESIGN_DIGEST}
+
+This baseline is locked. If the approved Design no longer matches it, report BLOCKED and do not implement against a different revision.
+
 ## Before You Begin
 
 If you have questions about:
@@ -81,6 +88,8 @@ If you find issues during self-review, fix them now before reporting.
 - **Status:** DONE | DONE_WITH_CONCERNS | BLOCKED | NEEDS_CONTEXT
 - What you implemented (or what you attempted, if blocked)
 - What you tested and test results
+- designRevision and designDigest actually used
+- completedDesignCovers
 - Files changed
 - Self-review findings (if any)
 - NOTICED BUT NOT TOUCHING items (if any)

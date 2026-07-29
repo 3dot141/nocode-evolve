@@ -4,14 +4,14 @@
 
 > **同源 note**：本文准则与 `references/design-doc-review.md`《核心审查》是同一套规则的两个视角——writer 视角「做什么」 vs reviewer 视角「挑什么」。改一处务必同步检查另一处。
 
-## 1. DDD：域按实体拆，每域自包含
+## 1. DDD：按业务边界建模，每个章节自包含
 
-域名是名词（订单 / Agent / 会话），不是动词（创建 / 同步 / 更新）。同一实体被拆到多个「域」 = 拆错了。每个域 / 模块章节自包含：接口 + 业务流 + 文件影响 + 验证 + 安全/性能 都在自己的章节里，reviewer 读一个域不用跳来跳去。
+限界上下文优先按**业务能力、统一语言和一致性边界**划分；实体与名词用来验证模型是否清楚，不是“见一个名词建一个域”的机械规则。仓、服务、团队或部署单元是边界信号，不是边界本身。每个域 / 模块章节自包含：接口 + 业务流 + 文件影响 + 验证 + 安全/性能，reviewer 读一个域不用跳来跳去。
 
-> ✅「资源域 / Agent 域」（实体）
-> ❌「导入解析 / 存储去重 / 同步」（动词 = 流水线阶段，不是 DDD 域）
+> ✅「订单履约」与「计费」拥有不同业务能力、语言和一致性边界，即使当前部署在同一服务也可分属不同上下文
+> ❌ 因为有“订单”这个名词就把所有订单相关行为塞进一个巨型上下文，或把每个流水线动词都建成一个域
 
-**战术层（条件触发：≥2 限界上下文，或涉及持久化数据模型）**：域词汇升级到战术 DDD——每个限界上下文（一套域语言的适用边界，通常对应一个仓 / 服务）内找出聚合根（身份锚点 + 事务边界），实体挂根（FK 指聚合根），不归属实体的操作建域服务。跨上下文引用四规则：只存 ID 不存对方业务数据 / 各上下文有自己的聚合根和独立身份 / 通信 = ID 传递 + API 调用不共享实体 / 同名字段跨上下文语义在术语表显式澄清。术语 + 建模步骤 + 检查清单单源在 `references/ddd-modeling.md`。
+**战术层（条件触发：≥2 个候选限界上下文，或涉及持久化数据模型）**：一个限界上下文可以包含多个聚合；每个聚合由自己的聚合根守住一致性边界。跨上下文默认传稳定 ID，通过 API / 事件协作，不共享可变实体；确需数据副本时必须声明所有权、同步语义和陈旧容忍度，而不是把“只存 ID”当无条件教条。术语、建模步骤与检查清单单源在 `references/ddd-modeling.md`。
 
 > ✅ Agent 上下文的 `project_id` 只存 ID（TEXT 引用），项目业务数据走对方 API 拿
 > ❌ Agent 表冗余存项目名 / 负责人，或直接 join 项目上下文的表
@@ -145,8 +145,8 @@ src/services/
 
 ## 状态机 + 文档生命周期
 
-- **Design Doc**：`draft → in-review → approved → implemented → archived`（**living**，approved 后仍可修改）
-- **approved 的原子收口**：Review verdict、frontmatter `status: approved`、`## 实施设计项清单` 和单一 `docPath` 完整性必须同时成立。详细字段与四态只从 `${PLUGIN_ROOT}/skills/references/design-traceability.md` 读取，不在写作原则里复制 schema。
+- **Design Doc**：`draft → in-review → approved → implemented → archived`（living，但 approved 后的规范性修改必须回到 in-review）
+- **approved 的原子收口**：当前 revision 的 Review verdict、frontmatter `status: approved`、`designRevision` / `designDigest`、`## 实施设计项清单` 和单一 `docPath` 完整性必须同时成立。规范性修订递增 revision、重算 digest，并使旧 verdict 与下游产物失效。详细 schema 只从 `${PLUGIN_ROOT}/skills/references/design-traceability.md` 读取。
 
 **推翻式修订：保持单一有效版**——当前有效内容就是正文，读者不需要在「顶部 banner + 正文 + 尾部 Review Log」三处对账才知道「现在到底信哪段」。大改时直接改正文，把旧结论移入 Review Log 留痕，正文只留当前有效版。
 

@@ -6,7 +6,7 @@
 
 **设计思路**：从现象追到根因，用代码追踪链（每步标 `[Read path:line]`）让 reviewer 能跟着走一遍推理过程。修复方案用「修复前 vs 修复后」的伪代码对比——不只说改了什么，要说「改之前是怎么走的、改之后怎么走」。总图画出问题在系统里的位置，reviewer 能判断修复会不会影响其他模块。
 
-> 产出骨架示例见 `references/example-bug-skeleton.md`
+> 产出骨架示例见 `references/example-bug-skeleton.md`。涉及或豁免横切关注点时必须 Read `references/cross-cutting-design.md`。
 
 ## 章节大纲示例（喂 Step 2）
 
@@ -15,7 +15,8 @@
 2. 问题现象（症状 + 复现步骤 + 影响范围）
 3. 根因分析（代码追踪链 + 问题位置图）
 4. 修复方案（修复前后对比 + 文件影响）
-5. 验证策略（回归测试 + 复现用例）
+5. 横切影响（按 `references/cross-cutting-design.md` 渲染相关 placement 或明确豁免）
+6. 验证策略（回归测试 + 复现用例）
 ```
 
 ## 结构骨架（喂 Step 2 → Step 3 架构审核）
@@ -52,6 +53,7 @@ bug 的结构骨架 = **问题现象 + 复现 + 影响范围**：
 - 文件影响
 - **验证方案**：回归测试（先复现 bug → 修复后验证）+ 复现用例
 - 安全 / 性能影响（如涉及）
+- **横切影响**：按 `references/cross-cutting-design.md` 处理 Packet `crossCutting.items`；纯局部修复无适用项时保留带证据的 exemption，不能静默跳过
 
 **Exit Gate:**
 - [ ] 修复方案 + 理由

@@ -23,6 +23,7 @@ Full 场景开始前 Read `${PLUGIN_ROOT}/skills/references/design-traceability.
 - [ ] Design 测试目标可用（Full 场景）
 - [ ] Design verify 策略可用（Full 场景）——读设计文档「验证策略」章节（TO 表 + 分层测试方案 + 不测项 + 路径覆盖状态表）
 - [ ] approved Design 的 Implementation Item Registry + Plan Coverage Matrix + Build `completedDesignCovers` 可用（Full 场景）
+- [ ] Full 场景：Design、Plan、所有 Build result 的 `designRevision` / `designDigest` 完全一致；任一漂移回 Plan
 - [ ] Define 验收标准 + 路径清单可用
 
 ## 领域指南（验证时按需 Read）
@@ -42,8 +43,8 @@ Full 场景开始前 Read `${PLUGIN_ROOT}/skills/references/design-traceability.
 **进入后第一件事**，创建以下全部 task：
 
 ```
-Task 1: 证据收集（Step 1）
-  Sub-steps: 跑完整测试套件 + build，记录命令+输出+通过/失败三元组
+Task 1: 基线核对 + 证据收集（Step 1）
+  Sub-steps: 核对 designRevision/designDigest → 跑完整测试套件 + build，记录命令+输出+通过/失败三元组
   Gate: 三元组齐全，证据新鲜
 
 Task 2: 集成测试（Step 2）
@@ -84,6 +85,7 @@ Review handoff 使用 `$dev-review`。
 
 ### Step 1: 证据收集
 
+- Full 场景先重新读取 approved Design，核对 Design、Plan、Build result 的 `designRevision` / `designDigest`。不一致时旧 coverage / evidence 失效，停止并回 Plan
 - 跑**完整**测试套件（不只是本次 slice 的单测）
 - Build/编译成功，输出干净（无 error/warning/stack trace）
 - 每项证据：**命令 + 输出 + 通过/失败**（模板见 `references/evidence-template.md`）
@@ -101,7 +103,7 @@ Review handoff 使用 `$dev-review`。
 
 ### Step 3: E2E / Browser（有 UI 变更时）
 
-**先读 UI 设计**：Read `.ix.md`（交互流 + IA）+ `.vd.md`（视觉方向 + 覆盖矩阵 + testid 命名）+ prototype。设计记录包含 Open Design project/file 时，用其原生 `get_artifact` 回读完整产物；需要人工核验时打开记录中的真实 `previewUrl`。Open Design 不可用或产物是本地 prototype 时，直接读取本地 HTML 并使用当前平台可用的浏览器验证工具。E2E 验证的基准是 UI 设计，不是"看起来能用"。
+**先读 UI 设计**：Read `.ix.md`（交互流 + IA）+ `.vd.md`（视觉方向 + 覆盖矩阵 + testid 命名）+ prototype。设计记录包含 Open Design receipt 时，先校验 `sourceDigest`，再读取 receipt 的 `entryFile` 与真实 `previewUrl`；需要 provider 侧回读或更新时 handoff `open-design`，不硬编码其工具面。Open Design 不可用或产物是本地 prototype 时，直接读取本地 HTML 并使用当前平台可用的浏览器验证工具。E2E 验证的基准是 UI 设计，不是"看起来能用"。
 
 **有 pd-vd 产出时直接复用**：
 - `.vd.md` 的覆盖矩阵（页面 + 交互）→ E2E 验收清单，逐条核对实现是否和设计一致
@@ -161,6 +163,9 @@ Core Web Vitals：LCP ≤ 2.5s、INP ≤ 200ms、CLS ≤ 0.1。详见 `reference
 Full 场景随后以 Registry 为左表生成 Design → Evidence Matrix：
 
 ```markdown
+designRevision: 3
+designDigest: sha256:...
+
 | Design ID | 结果 | 证据类型 | 证据 |
 |---|---|---|---|
 | LOG-1 | ✅ | test | 日志事件与脱敏字段测试 |
@@ -180,6 +185,7 @@ Full 场景随后以 Registry 为左表生成 Design → Evidence Matrix：
 - [ ] 全部验证证据已收集（三元组齐全）
 - [ ] 验收标准 + 路径 + 约束逐条通过
 - [ ] Full 场景 Design → Evidence Matrix 已产出，required / verify-only Design ID 逐项有新鲜证据且全部通过
+- [ ] Evidence Matrix 的 `designRevision` / `designDigest` 与当前 approved Design、Plan、Build result 一致
 - [ ] 性能达标（有需求时）
 - [ ] 后续 Review 可开始
 - [ ] **硬交接**：Exit Gate 全部通过后，向用户报告 Verify 完成（含验收标准通过率 + 证据摘要），建议下一阶段：Review（`nocode:dev-review`）。列出 Review 阶段的 sub-steps + 关键决策（devflow Step 5 格式）。等用户拍板，不自行进入下一阶段

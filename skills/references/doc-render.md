@@ -1,134 +1,144 @@
-# doc-render — 已定稿 markdown 文档 → Artifact 页面
+# doc-render — approved Markdown → Open Design 页面
 
-共享 reference,渲染已定稿 markdown 文档(技术设计 / PRD / RFC / ADR / 调研报告等)为 Artifact 页面时 Read 本文并照协议执行。
+共享 render 协议，供技术设计、PRD、RFC、ADR 与研究报告使用。它只负责忠实呈现和持久化产物关系，不修改源文档，不复制 Open Design 的实现命令。
 
-整个文档都渲染,章节树变成页面导航;图、表、代码怎么呈现不设协议约束,全由 artifact-design 现场设计做主。本协议返回 render receipt,输入文档一字不动。
+## Iron Law
 
-**设计能力来自 artifact-design**:渲染前调用 CC 内置的 `平台原生 Skill 调用`(原则型设计指导:角色锚定 / token 双主题 / 反模板化负面清单 / 先 design plan 再编码),为**这份文档的主题**现场设计页面——每份文档得到定制的视觉语言,而不是套同一个壳。这也是 `Artifact` 工具的硬性前置(工具说明要求发布前必须加载该 skill)。
-
-artifact-design 按请求分两档(utilitarian / editorial),工程文档会被它默认归入 utilitarian 保守档。它的优先级规则是 user's words > project system > its choices——本协议即 project system,显式要求**充分发挥**它的设计风格:不取保守档,不因「工程文档」自我设限。
-
-**内容忠实 ≠ 呈现镜像**(硬规则):忠实指措辞、结论、章节完整不失真;呈现(图 / 表 / 排版)全由现场设计做主。markdown 源里的 ASCII 图是为终端友好 + 版本控制可 diff 而生的**源格式**,页面上应 DOM 化重绘(流程图 → 垂直 timeline / 步骤卡,结构图 → 管道 / 卡片流 / IO 卡),不保留 pre 块镜像。
+- Markdown 是唯一规范性内容源。
+- render 是纯输出；页面和 receipt 都不能反向改变已评审结论。
+- provider 能力统一 handoff 给 `open-design`，本协议不维护一套会漂移的 CLI / tool surface。
 
 ## Enter Gate
 
-- [ ] 源文档已定稿(评审 / 用户确认已完成),路径已知
+- 源文档路径存在且内容已定稿。
+- 对 Design 文档，frontmatter 必须 `status: approved`，且 `designDigest` 可用。
+- 调用方已明确选择 render。
 
-## 协议
+## StagePlan
 
-### Step 0: workflow.plan.create
+render 维护内部阶段清单，不覆盖主流程计划：
 
-```
-Task 1: 分析文档结构
-  Sub-steps: 读源文档 → 提取章节树 + 图清单 + 表格清单
-  Gate: 文档结构分析完成
-
-Task 2: 渲染 + 发布
-  Sub-steps: 调 artifact-design 现场设计 → 写页面文件 → Artifact 发布
-  Gate: Artifact URL 已产出
-
-Task 3: 验证 + 保存
-  Sub-steps: 核对渲染完整性 → 产出 receipt
-  Gate: 产出已保存
-
-Task 4: 收口 — 交回主流程
-  Sub-steps: 向主流程返回 render receipt(Artifact URL + 页面文件路径 + 输入文档未改动);产物关系由主流程记录
-  Gate: 已交回主流程(渲染是终点分支,无下游阶段)
-  metadata: {handoff: true}
+```text
+1. 读取源文档并提取章节、图、表与代码清单
+2. handoff Open Design，忠实生成与发布
+3. 回读产物并做覆盖核对
+4. 写非规范性 receipt sidecar，返回调用方
 ```
 
-### Step 1: 分析文档结构
+## Step 1：分析源文档
 
-**Enter Gate:**
-- [ ] 源文档路径已知
+只读源文档并记录：
 
-**Core Actions:**
+- `sourceDoc`
+- `sourceDigest`：Design 使用 frontmatter `designDigest`；其他文档计算文件 SHA-256
+- 章节树
+- 图清单：位置、类型、复杂度
+- 表格 / 代码清单
 
-读源文档,提取:
+“内容忠实”指结论、措辞、章节和约束不失真，不要求逐像素镜像 Markdown。ASCII 图可转为 DOM / SVG / Mermaid 等更适合页面的呈现，但语义节点与关系不得丢失。
 
+## Step 2：handoff Open Design
+
+把完整文档、结构分析和以下要求传给 Open Design：
+
+- 忠实覆盖全部规范性章节
+- 长文档提供可定位的导航
+- 视觉语言与文档主题匹配
+- 生成 / 更新可回读的页面产物
+- 返回真实 project、conversation、run、preview 和入口文件信息
+
+<!-- nocode:platform claude -->
+Open Design handoff 使用 `Skill(nocode:open-design)`。
+<!-- /nocode:platform -->
+
+<!-- nocode:platform codex -->
+Open Design handoff 使用 `$open-design`。
+<!-- /nocode:platform -->
+
+Open Design 不可用或执行失败时，明确返回 render 未完成；Markdown 仍是最终交付。不得伪造 provider ID、URL 或本地 fallback。
+
+## Step 3：覆盖核对
+
+回读 Open Design 产物，至少检查：
+
+1. 源文档所有规范性章节均有页面落点。
+2. Q / BF / API / DATA / SEC / IDEM / TO 等 Registry ID 没有因视觉重组丢失。
+3. 决策表、失败路径、关键契约和验证目标完整。
+4. 导航可定位主要章节。
+5. `sourceDoc` 内容与 `sourceDigest` 在 render 期间未变化。
+
+将结果写入 `coverage`：
+
+```yaml
+coverage:
+  sourceSections: integer
+  renderedSections: integer
+  missingSections: []
+  registryIdsChecked: integer
+  missingRegistryIds: []
+  navigationChecked: true | false
 ```
-章节树(生成导航用):
-  ## 背景
-  ## 核心流程
-    ### 场景 A
-  ...
 
-图清单(标注类型与复杂度,供设计时决定 DOM 化呈现方式):
-  | 位置 | 类型 | 复杂度 |
-  |---|---|---|
-  | ## 领域划分 | 域关系图 | 3 节点,清晰 |
-  | ## 核心流程 | 流程图(带异常分支) | 8 步串行 + 4 异常 |
-  | ## 跨域交互 | 时序图 | 3 角色 |
+任一规范性章节或 Registry ID 缺失都算 render 失败，不能只给 preview URL。
 
-表格清单:接口表、决策速查表、TO 表(同图清单,供现场设计参考)
+## Step 4：持久化 receipt
+
+成功后生成：
+
+```yaml
+RenderReceipt:
+  sourceDoc: /absolute/path/to/doc.md
+  sourceDigest: sha256:...
+  projectId: string
+  conversationId: string
+  runId: string
+  previewUrl: string
+  entryFile: string
+  coverage: object
+  receiptPath: /absolute/path/to/doc.render-receipt.json
 ```
 
-**Exit Gate:**
-- [ ] 章节树提取完成
-- [ ] 图清单 + 类型/复杂度标注
-- [ ] 表格清单
+receipt 固定写到源文档同目录的 `<basename>.render-receipt.json`。它是**非规范性元数据** sidecar：
 
-### Step 2: 渲染 + 发布
+- 不参与 Design `designDigest`
+- 不承载新的设计结论
+- 可随相同 `sourceDigest` 更新 provider 状态
+- 源 digest 变化后立即 stale，必须重新 render，不能复用旧 receipt
 
-**Enter Gate:**
-- [ ] 文档结构分析完成
+返回调用方前再次确认：
 
-**Core Actions:**
+- receipt 文件已落盘，字段齐全
+- `entryFile` 可回读
+- `previewUrl` 来自真实 provider 结果
+- coverage 无缺口
+- 源 Markdown 未变化
 
-本文只定义渲染方法；发布时直接使用当前平台已注册的 Open Design 工具：
+## 返回
 
-1. **先写 design plan 再编码**(按 artifact-design 的 Process):4-6 个命名色值 + 2+ 字体角色 + 一句布局概念——**为这份文档的主题选**(数据产品 PRD 和底层重构设计不该长一样),不落负面清单里的模板化默认。
-   - **充分发挥,不取保守档**:字号跨度、字重对比、行高节奏、配色、图/表/代码的呈现方式全由现场设计做主,用足 artifact-design 的设计能力;不因「工程文档 = 实用型」自我设限,把页面做成加了配色的 markdown。
-   - **图 DOM 化**:按 Step 1 的图清单逐张决定呈现方式(timeline / 管道 / 卡片流 / mermaid / 内联 SVG),源里的 ASCII 只是素材不是样式约束。
-2. **写页面文件**,落源文档同目录、同 basename 的 `.html`(如 `foo-prd.md` → `foo-prd.html`),设一个简洁稳定的 `<title>`。render 侧唯一领域约束是**可导航**:
-   - 章节树 → 侧边/顶部导航,把文档结构解释清楚即可——不要求与章节一一对应,可按内容归组取舍;长文档要有当前章节高亮
-3. **Design 发布**：调用 `create_project`（已有项目则复用真实 project id）→ `start_run` → `get_run` → `get_artifact`。
-   - favicon：更新沿用项目既有图标；新页面默认 `📐`
-   - 更新必须复用真实 project id；不得凭 URL 或路径重建 id
+成功：
 
-**Exit Gate:**
-- [ ] design plan 已产出且不落负面清单默认
-- [ ] 所有章节已渲染,导航把文档结构解释清楚
-- [ ] Design artifact 已发布，project id / run id / preview URL 或物化文件已保存
+```yaml
+status: completed
+receipt: <RenderReceipt>
+```
 
-### Step 3: 验证 + 保存
+失败：
 
-**Enter Gate:**
-- [ ] Design receipt 已产出
+```yaml
+status: failed
+sourceDoc: string
+sourceDigest: string
+reason: string
+partialProviderRefs: {}
+```
 
-**Core Actions:**
-
-1. **渲染完整性核对**:
-   - [ ] 章节数量:页面章节数 = 原文档章节数(无漏渲染)
-   - [ ] 导航:结构解释清楚,读者能凭导航定位内容(不要求与章节一一对应)
-
-2. **产出渲染回执 render receipt**(**不碰输入文档**——源文档在 render 之前已定稿,回写它会让评审/确认结论不再覆盖当前内容,"已定稿"就失效了):
-   ```
-   RenderReceipt {
-     sourceDoc      // 输入文档路径(只读,未改动)
-     htmlFile       // <basename>.html 路径(Artifact 源文件,留档 + redeploy 锚点)
-     artifactUrl    // Artifact 页面 URL(可分享)
-     coverage       // 章节渲染计数 + 导航核对结果
-   }
-   ```
-   **产物关系由主流程记录**——render 只返回 receipt,输入文档一个字不动。
-
-**Exit Gate:**
-- [ ] 渲染完整性核对通过
-- [ ] 页面文件已保存(源文档同目录),Artifact URL 有效
-- [ ] render receipt 已产出,**输入文档 `git diff` 为空**(未改动)
+失败不得修改源 Markdown，也不得写看似成功的 receipt。
 
 ## Red Flags
 
-- 不调 `平台原生 Skill 调用` 就裸写页面——设计原则是质量下限,也是 Artifact 工具的硬性前置;跳过 = 回到模板化默认
-- artifact-design 调用成功却跳过 design plan 直接编码——先计划后编码是该 skill 的 Process,跳过等于没加载
-- 以「工程文档 = 实用型」收着设计(层级压平、页面主体是加了配色的 markdown)——本协议要求充分发挥 artifact-design 的设计风格
-- **把「内容忠实」扩大成「呈现镜像」**——保留源文件 ASCII pre 块、逐节复刻 markdown 排版(实测案例 260716:agent 把"镜像 md"当成不存在的约束,PRD 渲染成加配色的 markdown,用户纠偏后按本协议重渲染)
-- 在 artifact-design 之外给呈现叠加协议约束(图必须怎么画、表必须怎么排)——render 只管导航一条领域约束,呈现全由现场设计做主
-- 只落本地文件不发 Artifact、或发完不把 URL 写进 receipt——"通过 Artifact 渲染"是本协议的交付定义
-- 更新时换 file_path 或不带 `url=`——会另开新 URL,旧链接失效
-- redeploy 时更换 favicon——用户靠图标找 tab,跨 redeploy 稳定是 Artifact 工具硬规则
-- 页面里的章节数跟原文档对不上(漏渲染了),或导航解释不清结构、凭导航找不到内容
-- 没有定稿文档就直接渲染(定稿在先,渲染在后)
-- **改了输入文档**(追加「## 可视化」等)——输入已定稿,render 回写会让评审/确认失效;render 必须纯输出,产物关系交主流程记录
-- 因"任务简单 / 还在概览 / 用户说了'继续'"跳过某 Step、不建 Step 0 workflow.plan.create、或漏掉最后的交接 task
+- 在本协议硬编码 provider 命令，和 open-design skill 形成双实现
+- 只在会话里报告 URL，没有持久化 `receiptPath`
+- receipt 没有 `sourceDigest`，无法判断是否过期
+- 页面好看但漏了规范性章节、Registry ID 或失败路径
+- render 回写“可视化说明”到 approved Markdown
+- provider 不可用时伪造本地页面或 ID

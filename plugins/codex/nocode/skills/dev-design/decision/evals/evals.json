@@ -5,7 +5,7 @@
     "prompt": "为现有通知系统设计多渠道发送，支持站内信、邮件、短信；单渠道失败不能阻塞其它渠道；不引入消息队列。",
     "assertions": [
       "建立至少两条端到端路径和架构关系图",
-      "自主完成至少三轮拆分、对比、推荐、暂定和传播",
+      "先按影响与风险选择 focused 或 full，并记录理由",
       "每轮候选包含推荐度、推荐原因、证据和改选条件",
       "不逐轮要求用户确认，只在完整 Decision Packet 终审时例行确认"
     ]
@@ -74,6 +74,50 @@
       "下钻覆盖系统拓扑、边界、数据流一致性和运行时故障",
       "每个跨组件箭头有接口、事件或数据契约",
       "至少三轮后仍按高影响缺口决定是否继续"
+    ]
+  },
+  {
+    "id": "validation-focused-design",
+    "split": "validation",
+    "prompt": "为一个现有内部 CLI 增加 --json 输出；只改一个命令和对应测试，不改变公开 API、数据模型或部署。",
+    "assertions": [
+      "选择 designDepth focused 并说明影响面有限",
+      "至少比较一轮真实方案，不为凑三轮制造伪方案",
+      "仓内证据充分时可记录理由并跳过外部研究",
+      "Packet 使用 schemaVersion 1、packetRevision 1 和 mode solution"
+    ]
+  },
+  {
+    "id": "validation-replan-revision",
+    "split": "validation",
+    "prompt": "Writing 发现选定的事件总线不支持必须的顺序保证，证据推翻 Decision Packet revision 2 的核心 approach；请执行 replan。",
+    "assertions": [
+      "返回 replan_required 并携带 originalPacketRevision 2、invalidatedDecision、evidence 和 resumeState",
+      "保留失效决策为 superseded 而非删除",
+      "新 Packet 保持 schemaVersion 1 且 packetRevision 递增为 3",
+      "旧 review verdict、design digest 和 render receipt 全部判定失效"
+    ]
+  },
+  {
+    "id": "validation-cross-cutting-provider-consumer",
+    "split": "validation",
+    "prompt": "设计统一幂等能力：API 网关提供 key 校验，订单与退款两个 consumer 使用，数据库唯一约束兜底；领域决策已经确认。",
+    "assertions": [
+      "domainDecisions 保存权威幂等结论，crossCutting.items 只保存 placement",
+      "条目包含 decisionRefs、providerOrOwner、layerResponsibilities、enforcementPoints 和 dataOwners",
+      "纵向走查 provider 以及订单、退款两个 consumer",
+      "domain decision 与 placement 双向引用且 Registry 输入可追踪"
+    ]
+  },
+  {
+    "id": "validation-cross-cutting-exemption",
+    "split": "validation",
+    "prompt": "修正文档生成器的一处纯格式化 bug：输入已是可信内部 AST，不涉及权限、持久化、并发、外部调用或运行时状态。",
+    "assertions": [
+      "crossCutting.items 为空",
+      "crossCutting.exemption 包含具体 reason 和可复核 evidence",
+      "items 与 exemption 不同时成立",
+      "Writing 保留豁免小节而不是静默省略横切检查"
     ]
   },
   {

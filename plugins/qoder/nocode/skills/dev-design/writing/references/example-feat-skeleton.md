@@ -46,7 +46,9 @@ pd-ix 产出了导入流程的交互设计（`.ix.md`）。
 | Q2 | 同步串行还是并行 | **串行逐条** | `[假定]` | BF3、Agent.P1 |
 | Q3 | 实时进度怎么推 | **SSE** | `[假定]` | 场景 3 |
 | Q4 | 冲突怎么处理 | **让用户选** | `[已确认]` 用户 | BF2、约束.2 |
+| Q5 | 重复提交怎么保证幂等 | **Header + 服务查重 + UNIQUE** | `[已确认]` | IDEM-1 |
 
+<!-- design-item: Q1 -->
 ### Q1: 导入格式怎么统一？→ 影响 BF1
 
 | 方案 | 思路 | 优势 | 代价 |
@@ -57,6 +59,7 @@ pd-ix 产出了导入流程的交互设计（`.ix.md`）。
 
 **选 B**。`[假定]` 区别只在解析层，后续逻辑相同。**否决 A（每格式独立链）**：省了中间格式定义，但代价是加一种新格式要重写整条链（解析+校验+去重+写入），3 条链维护成本随格式数线性涨。**否决 C（插件式 adapter）**：最灵活，但 3 种格式引入注册分发框架是 over-engineering，收益要第 4+ 种格式才显现，当前换不到——等 6+ 种再考虑。
 
+<!-- design-item: Q2 -->
 ### Q2: 同步串行还是并行？→ 影响 BF3, Agent.P1
 
 | 方案 | 思路 | 优势 | 代价 |
@@ -67,6 +70,7 @@ pd-ix 产出了导入流程的交互设计（`.ix.md`）。
 
 **选 B（串行）**。`[假定]` 6 秒可接受。**否决 A（并行 Promise.all）**：理论最快，但实测触发 Claude 10 req/s 限流，反而更慢 + 不稳定。**否决 C（并行+限流器）**：快且可控，但为省这 6 秒引入限流器复杂度，当前规模不值——≥100 资源再考虑。
 
+<!-- design-item: Q3 -->
 ### Q3: 实时进度怎么推？→ 影响 场景 3
 
 | 方案 | 思路 | 优势 | 代价 |
@@ -77,6 +81,7 @@ pd-ix 产出了导入流程的交互设计（`.ix.md`）。
 
 **选 B（SSE）**。`[假定]` **否决 A（轮询）**：简单，但延迟高、大量空请求浪费。**否决 C（WebSocket）**：最灵活，但进度推送是纯单向，双向能力全浪费，overkill——SSE 单向足够且自动重连。
 
+<!-- design-item: Q4 -->
 ### Q4: 冲突怎么处理？→ 影响 BF2, 约束.2
 
 | 方案 | 思路 | 优势 | 代价 |
@@ -87,17 +92,28 @@ pd-ix 产出了导入流程的交互设计（`.ix.md`）。
 
 **选 C（让用户选）**。`[已确认·用户]` **否决 A（静默覆盖）**：零交互，但用户改的 rule 被覆盖却不知道，信任崩塌。**否决 B（静默跳过）**：零交互，但用户想更新时更新不了，同样意外。用户对"rule 会不会被覆盖"敏感，多一步交互换掉的是"被意外覆盖/跳过"的惊吓——值得。
 
+<!-- design-item: Q5 -->
+### Q5: 重复提交怎么保证幂等？→ 影响 IDEM-1
+
+| 方案 | 思路 | 优势 | 代价 |
+|---|---|---|---|
+| A. 仅前端禁用按钮 | 客户端阻止重复点击 | 实现最少 | 网络重试与多客户端仍会重复 |
+| B. 仅数据库 UNIQUE | 冲突时依赖 DB 报错 | 并发安全 | 错误语义差，无法返回原任务 |
+| **C. 三层幂等** | Header + 服务查重 + UNIQUE | 既能返回原任务又能兜底并发 | 多一个幂等记录与过期策略 |
+
+**选 C（三层幂等）**。`[已确认]` 入口键表达请求身份，服务层返回既有任务，数据库约束只作为并发兜底；否决 A 是因为覆盖不了重试，否决 B 是因为只剩异常而没有可恢复业务语义。
+
 ## 领域划分
 
 ### 拆分思路
 
-从 PRD 使用路径出发，识别核心实体：
+从 PRD 使用路径出发，先识别业务能力、统一语言与一致性边界，再用实体验证模型：
 
 ```
 PRD 资源库.P3 批量导入
-  → "资源"被创建、校验、去重、写入 → Resource 实体
-  → "Agent"被查询连接状态、推送资源 → Agent 实体
-  → 两个不同的实体 → 两个域
+  → 资源目录能力：创建、校验、去重与保存；语言核心是 Resource / Manifest
+  → Agent 分发能力：连接状态、目标支持度与同步结果；语言核心是 Agent / DeliveryResult
+  → 两套规则与数据 owner 可独立变化，通过显式同步契约协作
 ```
 
 验证变更独立性（确认拆分合理）：
@@ -111,17 +127,17 @@ PRD 资源库.P3 批量导入
 
 ### 域清单
 
-| 域 | 核心实体 | 路径 ID 范围 | 变更独立性 |
-|---|---|---|---|
-| 资源域 | Resource | 资源.P1-P3 | 加格式/改策略不碰 Agent |
-| Agent 域 | Agent | Agent.P1 | 加 Agent 类型不碰资源 |
-| 跨域 | — | 跨域.1 | 导入流程穿越两域 |
+| 域 | 核心实体 | 路径 ID 范围 | 状态 | 变更独立性 |
+|---|---|---|---|---|
+| 资源域 | Resource | 资源.P1-P3 | 新建 | 加格式/改策略不碰 Agent |
+| Agent 域 | Agent | Agent.P1 | 改造（复用 AgentClient） | 加 Agent 类型不碰资源 |
+| 跨域 | — | 跨域.1 | — | 导入流程穿越两域 |
 
 ### 总图（域间关系 + 路径 ID）
 
 ```
 ┌───────────────────┐                    ┌──────────────────┐
-│     资源域          │                    │     Agent 域      │
+│     资源域 新建     │                    │    Agent 域 改造  │
 │   Resource         │   跨域.1 导入流程   │     Agent        │
 │                    │ ─────────────────→ │                  │
 │ 资源.P1 解析校验    │                    │ Agent.P1 批量同步 │
@@ -189,6 +205,31 @@ PostgreSQL resources 表
   ↓ batchSync（串行）
 Agent APIs → SSE 推送进度
 ```
+
+---
+
+## 横切设计
+
+> 各关注点沿架构分层的纵向走查结果（来源：Decision Packet crossCutting）。
+> 空格 = 漏层；「无责 + 理由」是合法答案，沉默空格不是。
+
+### 关注点总览矩阵
+
+| item / 关注点 | decisionRefs | providerOrOwner | layerResponsibilities（provider → consumers） | enforcementPoints | dataOwners | Registry |
+|---|---|---|---|---|---|---|
+| XCAT-ERR / 错误处理 | Q2 | ImportService | Routes: 标准错误码；Domain consumers: BF 内上抛业务异常；PG / Agent consumer: 回滚与独立 retry | exception mapper、事务边界、AgentClient retry | 资源域 | Q2, BF3 |
+| XCAT-IDEM / 幂等 | Q5 | ImportService | Routes: 校验 Header；Domain consumers: batchCreate 查重；PG consumer: UNIQUE 兜底 | `POST /api/import`、`ImportService.create`、唯一索引 | 资源域 | IDEM-1 |
+| XCAT-OBS / 基础日志 | LOG-1 | 已有 logger 封装 / 平台团队 | Routes: 入口出口；Domain consumers: BF 关键分支；PG / Agent consumers: 慢查询和调用失败 | route middleware、ImportService、AgentClient | 可观测平台；业务字段由资源域负责 | LOG-1 |
+
+<!-- design-item: IDEM-1 -->
+### 幂等（走查明细）
+
+- 覆盖路径：资源.P1 上传解析（用户重复提交 / 网络重试）
+- 入口层：`POST /api/import` 缺 `X-Import-Key` → 400（→ IDEM-1）
+- 服务层：`ImportService.create` 先按 key 查 `imports` 表，命中 → 直接返回已有任务句柄
+- 数据层：`imports.idempotency_key` 建 UNIQUE 约束兜底并发
+- 数据所有者：资源域
+- 未决：无
 
 ---
 
@@ -388,6 +429,7 @@ class ImportParser {
 }
 ```
 
+<!-- design-item: BF1 -->
 **BF1 — 批量解析**：
 
 流程图：
@@ -424,6 +466,7 @@ function ImportParser.parse(input):
 
 #### Deduplicator 模块
 
+<!-- design-item: BF2 -->
 **BF2 — 去重决策**：
 
 流程图：
@@ -528,6 +571,7 @@ src/routes/
 
 #### SyncService 模块
 
+<!-- design-item: BF3 -->
 **BF3 — 批量同步**：
 
 流程图：
@@ -624,6 +668,18 @@ src/routes/
 | TO-3 | 资源.P1, 约束.1 | E2E | GitHub URL→SSRF 拦截（内网 URL 被拒）|
 | TO-4 | 资源.P1 | 集成 | 大文件 (10MB ZIP)→streaming + 解压限制 |
 
+<!-- design-item: TO-1 -->
+TO-1 的规范性来源：验证 JSON 导入的完整成功路径，结果同时覆盖写入、同步和最终报告。
+
+<!-- design-item: TO-2 -->
+TO-2 的规范性来源：验证冲突选择与部分同步失败可恢复，不能只覆盖 happy path。
+
+<!-- design-item: TO-3 -->
+TO-3 的规范性来源：验证 GitHub URL 的 SSRF 防护在实现缺失时会失败。
+
+<!-- design-item: TO-4 -->
+TO-4 的规范性来源：验证 10MB ZIP 走 streaming 且解压上限生效。
+
 ## 部署注意事项
 
 **容器/服务**：
@@ -646,6 +702,7 @@ src/routes/
 - ZIP 解压在 api-server 内存里做，大文件（>50MB）会占内存。当前单实例够用，高并发场景需考虑队列化
 - Agent API 调用在主线程串行，不阻塞其他请求（已有 async 处理）
 
+<!-- design-item: LOG-1 -->
 ## 基础日志设计（必写）
 
 > **每个功能的默认必写项**——关键路径 / 异常分支 / 模块出入口都要打 log。这不是"要不要上监控"的可选项；基础日志落在门槛之下成了三不管地带，就是"很多 `logger.info` 都没有"的根因（⑥）。来源：Decision Packet 的 `domainDecisions.observability.basicLogging`。
@@ -792,6 +849,31 @@ trace: import_abc123
 
 ---
 
+## 实施设计项清单
+
+> `sourceAnchor` 对应正文中的稳定 `<!-- design-item: ... -->`；本表覆盖本示例出现的全部 Q / BF / IDEM / TO 规范性 ID。
+
+| ID | 状态 | sourceAnchor | 摘要 | decisionRefs | 验证 / 依据 |
+|---|---|---|---|---|---|
+| Q1 | required | `design-item: Q1` | 三种输入统一为 ImportManifest | Q1 | BF1 单测 + TO-1 / TO-4 |
+| Q2 | required | `design-item: Q2` | Agent 同步采用串行逐条策略 | Q2 | BF3 集成测试 + TO-1 / TO-2 |
+| Q3 | required | `design-item: Q3` | 进度通过 SSE 推送 | Q3 | 场景 3 组件测试 + TO-1 |
+| Q4 | required | `design-item: Q4` | 冲突由用户一次性选择策略 | Q4 | BF2 集成测试 + TO-2 |
+| Q5 | required | `design-item: Q5` | 重复提交采用三层幂等 | Q5 | IDEM-1 并发重复提交测试 |
+| BF1 | required | `design-item: BF1` | 解析并规范化 JSON / ZIP / GitHub 输入 | Q1 | 解析单测 + TO-1 / TO-3 / TO-4 |
+| BF2 | required | `design-item: BF2` | 检测重复并应用用户冲突决策 | Q4 | 去重集成测试 + TO-2 |
+| BF3 | required | `design-item: BF3` | 串行同步、一次重试、失败继续 | Q2 | 同步集成测试 + TO-1 / TO-2 |
+| IDEM-1 | required | `design-item: IDEM-1` | Header、服务查重与 UNIQUE 三层幂等 | Q5 | 并发重复提交测试 |
+| LOG-1 | required | `design-item: LOG-1` | 入口、关键分支与依赖失败的结构化日志 | Q2 | 日志字段与脱敏集成测试 |
+| TO-1 | verify-only | `design-item: TO-1` | JSON 导入成功端到端路径 | Q1, Q2, Q3 | E2E evidence |
+| TO-2 | verify-only | `design-item: TO-2` | 冲突与部分失败恢复路径 | Q2, Q4 | E2E evidence |
+| TO-3 | verify-only | `design-item: TO-3` | GitHub URL SSRF 拦截 | Q1 | 安全 E2E evidence |
+| TO-4 | verify-only | `design-item: TO-4` | 大 ZIP streaming 与解压限制 | Q1 | 集成性能 evidence |
+
+双向检查：正文列出的 Q1–Q5、BF1–BF3、IDEM-1、LOG-1、TO-1–TO-4 均有 Registry 行；每个 Registry `sourceAnchor` 也都在正文存在，无 orphan。
+
+---
+
 ## 附：单域骨架对比
 
 > 只涉及一个域时，总图从"域间关系"变成"域内模块关系"。拆分思路和图标注方式不变。
@@ -839,7 +921,7 @@ trace: import_abc123
 |---|---|
 | 业务流 Business Flow - BF | 一条业务逻辑的伪代码流程（带编号 BF1/BF2）|
 | 测试目标 Test Objective - TO | 每条使用路径要验证什么（不是具体测试用例）|
-| 领域驱动设计 Domain-Driven Design - DDD | 按业务实体拆域、高内聚低耦合的设计方法 |
+| 领域驱动设计 Domain-Driven Design - DDD | 按业务能力、统一语言和一致性边界建模的方法 |
 | 服务端推送 Server-Sent Events - SSE | 服务端向浏览器单向实时推送的协议 |
 | 服务端请求伪造 Server-Side Request Forgery - SSRF | 诱导服务端访问非预期地址的攻击 |
 | 端到端 End-to-End - E2E | 走完整链路的测试层级 |

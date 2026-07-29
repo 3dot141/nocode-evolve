@@ -4,7 +4,7 @@
 >
 > **怎么用**：dev-design writing 的 Review step Read 本文拿维度，**默认主会话就地逐维自查**（不调 reviewing 引擎、不派 subagent/Codex）；用户显式要求升审时才调 `平台原生 Skill 调用`，声明「对象 = 设计文档、方法 = checklist、领域维度 = 本文 8 维度 + 附带检查」（此时 reviewer 纪律 / Evidence Gate / 分级 schema 由引擎自带）。自查时的编号（C/W/S/Q/SA）与 Evidence 纪律见 SKILL.md Review 节。
 >
-> **评审两层**：架构骨架已在 Step 3「架构审核」过（域拆分/边界/依赖），本步（唯一全文评审）审**完整性 / 一致性 / 可执行**，不重复审纯架构骨架问题。
+> **评审两层**：架构骨架已在 Step 3「架构审核」过（业务边界/依赖），本步（唯一全文评审）审**完整性 / 一致性 / 可执行**，不重复审纯架构骨架问题。
 >
 > **设计文档审查顺序**（领域特化，通用步骤走 skeleton）：Read 文档全文 + frontmatter + 相关 ADR/wiki → 按 scenario（feat/bug/refactor）加载检查项 → 第一遍 8 维度核心审查 + 附带检查 → Evidence Gate 核实（触发清单见引擎的 reviewer-discipline）→ 第二遍 Self-Audit 换位。
 
@@ -19,7 +19,7 @@
 - 「目标」是否真反映"背景.主因"的解法？还是答非所问？
 - （如有）入口段 / Summary / TL;DR 是否能独立成立？（不需读全文也能 grasp 核心）
 - （PRD）「验收标准.明确排除」节是否具体？还是「其他都不做」敷衍？
-- **罗盘对齐**：首章「罗盘」是否存在且未被 Design 改写（罗盘所有者是 Define，writing/decision 只读）？全文是否与罗盘对齐——每条 SC 在设计中有落点、无越 Out of Scope 的内容？罗盘被改写 / 缺失 → Warning；SC 无落点 / 越界扩范围 → Critical
+- **罗盘对齐**：首章「罗盘」是否存在，`restateOwner` 是否明确？owner=define 时 Design 不得改写；owner=design-lite 时每次修订是否有协调器 checkpoint？全文是否与罗盘对齐——每条 SC 有落点且不越 Out of Scope？非法改写 / 缺失 → Warning；SC 无落点 / 越界扩范围 → Critical
 
 ### 2. 决策是否站得住脚
 
@@ -43,7 +43,7 @@
 - 数据流（成功 + 至少一条失败路径——「实现.业务流」每条 BF 必含 catch 块或失败分支）
 - 测试与验证：「实现.单测设计」必须按 BF 分组，每条 case 用 Given/When/Then 三行；覆盖每条 BF 主路径 + 每个异常分支；**不写代码** (无 `@Test` / mock setup / assertion 语法)。覆盖缺失（异常表第 N 行无对应 case） → Critical
 - 部署：「其他.部署」必填（无运行时部署的纯库内重构可一行写"无部署变更"）；含灰度策略 + 回滚预案 + 监控指标三件套；详细命令/manifest 出现在本节 → Warning（越 ops doc 边界）
-- Security / Performance / Migration 等横切关注点——**新骨架不要求 Checklist 形式**，但 reviewer 仍判断 writer 是否在合适位置（如「业务流 BFx」「异常与失败模式」「部署」节）回应了这些维度。**未回应不是 Critical**，但跨权限边界 / 涉及数据迁移 / 高频路径却完全不提 → Warning
+- Security / Performance / Migration 等横切关注点——按 `references/cross-cutting-design.md` 审：`domainDecisions` 是否为权威结论，placement 是否用 `decisionRefs` 双向回链？`providerOrOwner`、所有 consumer 的 `layerResponsibilities`、`enforcementPoints`、`dataOwners` 是否齐全？items 为空时 exemption 是否有理由与证据？——SC 级横切要求无落点、权威结论与 placement 矛盾 → Critical；provider / consumer 漏走查、层留空无理由、豁免空泛 → Warning
 
 ### 4. 实施层面是否可执行
 
@@ -51,7 +51,7 @@
 - 「实现.接口设计」按面分 3 段 (对外 API / 数据模型 / 内部接口), 按需展开:
   - **对外 API** (前后台对接 / 跨服务): 涉及 HTTP/RPC endpoint 时必有本段, 列表含 Method / Path / Request / Response / 错误码 / 鉴权; 若业务流伪代码出现 `/foo/bar` 等 endpoint 但本段未汇总 → Critical
   - **数据模型** (DB schema + 表关联): 涉及多表外键关联**必画 ER 图**, 单表 schema 可不画; 关键索引 + UNIQUE 约束必须标; 缺 ER 图 → Warning (multi-table) / 缺 UNIQUE 约束 → Critical (语义易遗漏)
-  - **跨限界上下文** (设计跨 ≥2 仓/服务时, 判据单源 `references/ddd-modeling.md` 检查清单): 跨上下文引用是否只存 ID? 冗余存被引用上下文业务字段 / 跨上下文 join / 共享实体表 → Critical; 子实体 FK 未锚聚合根、同名字段跨上下文语义未在术语表澄清 → Warning
+  - **跨限界上下文**（按业务能力、统一语言与一致性边界识别；仓 / 服务 / 部署只是信号，判据见 `references/ddd-modeling.md`）：数据 owner 是否唯一？共享可变实体 / 跨上下文 join / 直写对方存储 → Critical；必要副本未写同步、陈旧度与修复语义，或同名概念未映射 → Warning
   - **内部接口** (类签名 + 类图): 给出 public 方法签名 / 字段名 / 状态字段类型, 还是只描述"提供 X 接口"? 多类协作 (≥3) 时是否画 ASCII 类图?
   - 触发 Evidence Gate: **指控"签名 / 字段 / 类型 / endpoint / schema 与现有代码不符"→ 必须 Read 代码或 OpenAPI/migration 文件**
 - **「实现.业务流」必须 BF 编号 + 伪代码**（`function`/`method` 签名 + 函数体行），且**每行必有 `//` 注释**讲清"这行干什么 / 为什么"
@@ -131,6 +131,7 @@
 
 **通用**：
 - frontmatter 字段齐全（scenario / topic / date / author / status）
+- approved 文档必须有 `designRevision` / `designDigest`，且当前 `DesignReviewVerdict.reviewedRevision / reviewedDigest` 完全匹配；不匹配即 Critical
 - scenario 是 feat / bug / refactor 之一
 - status 符合 Design Doc 状态机（draft → in-review → approved → implemented → archived）
 - approved 文档必须有「实施设计项清单」；按 `${PLUGIN_ROOT}/skills/references/design-traceability.md` 检查 Registry ↔ 来源章节双向完整，任一方向 orphan 都是 Critical
@@ -140,9 +141,9 @@
 - **文末术语表（⑤）**：用了缩写 / 自创词时文末必有「术语与缩略语」表；首次出现用「中文 英文全称 - 缩写」三段式
 - **可观测（⑥）**：涉及运行时逻辑必有「基础日志设计」节（关键路径 / 异常 / 出入口打点）；AI 功能类必有「eval 设计」节（③）
 
-**feat**：必有节「背景 / 调研 / 方案选择 / 领域划分 + 总图 / 表现层设计 / 领域层设计 / 汇总」；域按实体拆（名词非动词）；每域自包含（接口 + 业务流 + 文件影响 + 验证）；业务流必须 BF1/BF2/... 编号 + 每行 `//` 注释；接口按四层按需（对外 API / 类接口 / 事件接口 / 数据契约）；跨 ≥2 限界上下文时总图节点必标上下文归属 + 各上下文聚合根，跨上下文引用有引用方向表；交互场景逐个有流程图（跨 ≥2 服务 / 部署单元的场景 = 调用时序图），纯文字场景必有「单步无分支」inline 声明
-**bug**：必有节「问题现象 + 复现 + 影响范围 / 根因分析（推理链带 `[Read path:line]` + 问题位置图）/ 修复方案（修复前 vs 修复后对比）/ 验证（回归测试能在没 fix 时失败）」
-**refactor**：必有节「现状分析（结构图 + DDD 诊断）/ 目标设计（Before/After 对比 + 变更点理由）/ 迁移策略（每步可回滚）/ 汇总（含行为不变的回归验证）」
+**feat**：必有节「背景 / 调研 / 方案选择 / 业务边界 + 总图 / 横切设计（或豁免声明）/ 表现层设计 / 领域层设计 / 汇总」；边界由业务能力、统一语言与一致性边界解释；总图节点标 新建/改造/已有·复用，被复用的已有能力进图（缺状态标注 → Suggestion；复用决策完全不可见 → Warning）；每域自包含（接口 + 业务流 + 文件影响 + 验证）；业务流必须 BF1/BF2/... 编号 + 每行 `//` 注释；接口按四层按需；跨限界上下文时总图节点标上下文归属，并允许一个上下文含多个聚合，跨上下文协作有引用方向表；交互场景逐个有流程图，纯文字场景必有「单步无分支」inline 声明
+**bug**：必有节「问题现象 + 复现 + 影响范围 / 根因分析（推理链带 `[Read path:line]` + 问题位置图）/ 修复方案（修复前 vs 修复后对比）/ 验证（回归测试能在没 fix 时失败）」；修复涉横切关注点变更时有「横切影响」小节
+**refactor**：必有节「现状分析（结构图 + DDD 诊断）/ 目标设计（Before/After 对比 + 变更点理由）/ 迁移策略（每步可回滚）/ 汇总（含行为不变的回归验证）」；before/after 总图节点标 新建/改造/已有·复用；结构变化影响横切落层时有「横切设计」章
 
 ### AI Writing Patterns（humanizer 风格抽样 10 类，降级为 Warning/Suggestion）
 
@@ -203,6 +204,6 @@
 ❌ Has issues — 见上方编号清单，用户决定修哪些 / 答哪些。
 ```
 
-无问题时：`✅ Pass — 没有发现 Critical / Warning / Open Questions。` + `## Verdict\n✅ Pass`。
+无问题时也必须返回绑定当前基线的 `DesignReviewVerdict`。Open Questions 先分 `blocking` / `non-blocking`：blocking 未解决时不得 Pass；non-blocking 必须记录 reason、owner、target stage。正文修订后旧 verdict 一律失效，按 Writing 协议执行 Delta Verification 或完整重审。
 
 > 编号规则 / Evidence Gate / Self-Audit 判据 / verdict schema 全见 reviewer-discipline + findings-contract，本文不复述。

@@ -2,7 +2,7 @@
 
 对应 plan `Execution` 字段值 `subagent-lite` / `subagent-full`（旧计划的 `subagent` 按 `subagent-full` 处理）。dev-build 编排者用 `平台原生 agent/plan/decision 工具` 逐个 task **顺序**派发独立 subagent 执行；两档共用同一条实现链，差别只在**审查派发密度**。实现链改编自上游 superpowers `subagent-driven-development`；审查分档是本仓库为墙钟成本加的本地扩展（per-task 双 review 随 task 数线性增长，是全链路重触点墙钟的最大来源）。
 
-开始前 Read `{QODER_PLUGIN_ROOT}/skills/references/design-traceability.md`。派发 objective 必须原样包含当前 task 的 `designCovers`，并要求 result 返回 `completedDesignCovers`、`changedFiles` 和测试 `evidence`；implementer 不得自行改 Design ID 覆盖范围。
+开始前 Read `{QODER_PLUGIN_ROOT}/skills/references/design-traceability.md`。派发 objective 必须原样包含 Plan 的 `designRevision` / `designDigest` 与当前 task 的 `designCovers`，并要求 result 返回相同基线、`completedDesignCovers`、`changedFiles` 和测试 `evidence`；implementer 不得自行改设计基线或 ID 覆盖范围。
 
 ## 为什么顺序，不并行
 
@@ -35,6 +35,7 @@
 1. **Implement** — 派 implementer subagent（`平台原生 agent/plan/decision 工具`，prompt 见 `implementer-prompt.md`）。要求它按下面格式结构化报告：
    - `status`：`DONE` / `DONE_WITH_CONCERNS` / `BLOCKED` / `NEEDS_CONTEXT`
    - `summary` / `filesChanged` / `concerns` / `testResults`
+   - `designRevision` / `designDigest`：必须与 objective 完全一致
    - `completedDesignCovers`：必须与 task `designCovers` 完全一致
 2. **Spec Review** — 仅当 `status ∈ {DONE, DONE_WITH_CONCERNS}` 且 `completedDesignCovers` 无漏报/冒领时，才按上表决定是否派发（prompt 见 `spec-reviewer-prompt.md`）。Design ID 不一致先退回 implementer，不得用 review 掩盖。reviewer 报 `{approved, issues[]}`。lite 档非风险 task 跳过本阶段，记「lite 跳过」。
 3. **Quality Review** — lite 档：风险 task 在 spec `approved === true` 后立即派发；full 档：spec 通过的 task 进入当前批，checkpoint 批边界统一批审（prompt 见 `quality-reviewer-prompt.md`，批量模式）。reviewer 报 `{approved, issues[]}`。
