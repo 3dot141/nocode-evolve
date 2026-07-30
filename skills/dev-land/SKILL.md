@@ -149,7 +149,14 @@ remote_url=$(git -C "$MAIN_ROOT" remote get-url origin)
 ## 背景
 <...>
 ## 方案
-<...>
+### 方案 1：<语义标题>
+**问题**：<...>
+**方案**：<...>
+## 重点评审
+> <为什么优先看这些高影响 / 复杂 / 高风险位置>
+1. 看 **<Affected 中的真实文件路径>**：<为什么看、看什么、怎样算有问题>
+
+<仅 devflow 生产改动追加 Requirements Addressed + Verification Evidence，结构见 pr-body-contract>
 
 --- Affected（仅展示，不进 body）---
 <Affected 目录树>
@@ -195,7 +202,7 @@ remote_url=$(git -C "$MAIN_ROOT" remote get-url origin)
 
 发布策略直接进入全景，默认「全量」，可在同一次全景回应中改为「灰度 / dark launch」；禁止全景前追问。
 
-PR body 回链：Requirements Addressed（引用 Define 的 restate）+ Verification Evidence（引用 Verify 证据）。
+PR body 按 `references/pr-body-contract.md` 的生产改动回链结构追加 Requirements Addressed（引用 Define 的 restate）+ Verification Evidence（引用 Verify 的本轮证据）；不得挤进「方案」或省略为一句结论。
 
 ---
 

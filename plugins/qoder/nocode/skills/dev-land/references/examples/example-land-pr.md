@@ -32,8 +32,12 @@ Step 4 材料收集: base=main(nocode-base) · push range 3 commits · 整理建
 ## 背景
 中文查询在搜索接口直接落空——现有 analyzer 是默认英文分词器，无法切分中文词。
 ## 方案
-搜索索引与查询链路接入 ik analyzer；配置集中在 src/search/analyzer.ts。重点评审：
-ik 词典加载时机（冷启动首查延迟）与旧索引兼容性——旧索引需重建，本 PR 未含重建脚本。
+搜索索引与查询链路接入 ik analyzer；配置集中在 src/search/analyzer.ts。
+## 重点评审
+> analyzer 配置同时影响索引和查询，优先检查配置一致性与旧索引兼容路径。
+1. 看 **src/search/analyzer.ts**：核对冷启动首查是否同步加载词典；若是，首查延迟可能超出接口目标。
+2. 看 **src/search/query.ts**：确认查询与建索引使用相同 analyzer；配置不一致会导致已索引内容无法命中。
+3. 看 **test/search-zh.test.ts**：确认覆盖旧索引兼容或明确要求重建；缺少两者时，本 PR 的迁移路径不完整。
 --- Affected（仅此处展示，不进 body）---
 src/search/
 ├── analyzer.ts
