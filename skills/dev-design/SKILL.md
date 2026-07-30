@@ -138,30 +138,27 @@ renderBrief:
     - 节点先写人类可读名称，ID、method、path、事件名和 Registry ID 作为次级细节保留
     - 大图按场景或边界拆分，避免微小字号、线条交叉和把整份 Markdown 塞进单张图
     - 正文讲设计思路与因果关系；Packet schema、Review Log、Registry 全表和 Agent 工作流信息降到附录
-  variantSet:
-    count: 3
-    mode: draw-later
-    distinctBy: [信息布局, 视觉语言, 叙事强调]
-    invariant: 设计结论、规范性内容、阅读目标、必需图表和 Registry 覆盖完全一致
 ```
 
 图表不是装饰：只要源文档中存在对应关系，就必须生成适合页面阅读的 DOM / SVG / Mermaid 图；文字说明不能代替应有的图。不得为了视觉效果新增设计结论、隐藏失败路径或丢失规范性 ID。
 
-Open Design 必须在**同一生成批次**直接创建 `card-a`、`card-b`、`card-c` 三个完整、可独立阅读的候选和一个三卡入口，不在生成前要求用户选风格。三张卡要有真正不同的版式、视觉语言和叙事强调，不能只换颜色、字体或标题；但不得借“创意方向”改变任何设计事实。生成完成后保持 `selection.status: pending`，由用户以后抽卡；未选择不阻断本轮 render 或 final gate。
+候选拓扑统一服从共享 `doc-render`：只创建一个 Open Design project，在其中用 A / B / C 三个 conversation 并行生成三个完整候选。三张卡要有真正不同的版式、视觉语言和叙事强调，不能只换颜色、字体或标题；但不得借“创意方向”改变任何设计事实。生成完成后保持 `selection.status: pending`，由用户以后抽卡；未选择不阻断本轮 render 或 final gate。
 
 渲染不得改规范性 Markdown。成功必须得到并持久化三卡 receipt：
 
 ```text
 {
-  sourceDoc, sourceDigest, projectId, conversationId, runId,
-  previewUrl, entryFile, variantCount: 3,
-  variants: [{ variantId, directionSummary, previewUrl, entryFile, coverage }],
+  sourceDoc, sourceDigest, projectId,
+  execution: { projectCount: 1, conversationCount: 3, runCount: 3, dispatch: parallel },
+  variantCount: 3,
+  variants: [{ variantId, directionId, directionSummary, conversationId,
+               runId, outputRoot, previewUrl, entryFile, coverage }],
   selection: { status: pending, selectedVariantId: null },
   receiptPath
 }
 ```
 
-顶层 `previewUrl` / `entryFile` 指向三卡入口，每个 variant 指向自己的完整页面。receipt 写入与设计文档同目录的 `<basename>.render-receipt.json`，是非规范性 sidecar。以后抽卡只更新 receipt 的 `selection`；Markdown 仍是设计事实源，未选中的卡保留。渲染不可用或用户跳过时不伪造 receipt。
+三个 variant 共享 `projectId`，但各自绑定独立 `conversationId`、`runId`、输出根和完整页面。receipt 写入与设计文档同目录的 `<basename>.render-receipt.json`，是非规范性 sidecar。以后抽卡只更新 receipt 的 `selection`；Markdown 仍是设计事实源，未选中的卡保留。渲染不可用或用户跳过时不伪造 receipt。
 
 ### Step 4：final gate 与 handoff
 

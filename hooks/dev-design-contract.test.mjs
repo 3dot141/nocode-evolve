@@ -159,23 +159,37 @@ test("technical design render explains the design to humans with development dia
   assert.match(render, /图表缺失[\s\S]*render 失败/);
 });
 
-test("technical design render creates three complete cards for deferred selection", async () => {
-  const [coordinator, render] = await Promise.all([
+test("shared render creates three cards in parallel conversations under one project", async () => {
+  const [coordinator, render, openDesign] = await Promise.all([
     read("skills/dev-design/SKILL.md"),
     read("skills/references/doc-render.md"),
+    read("skills/open-design/SKILL.md"),
   ]);
 
-  assert.match(coordinator, /variantSet:[\s\S]*count:\s*3[\s\S]*mode:\s*draw-later/);
-  assert.match(coordinator, /card-a.*card-b.*card-c/);
-  assert.match(coordinator, /同一生成批次[\s\S]*不在生成前要求用户选风格/);
+  assert.match(render, /技术设计、PRD、RFC、ADR 与研究报告[\s\S]*所有文档类型/);
+  assert.match(render, /variantCount:\s*3[\s\S]*projectCount:\s*1[\s\S]*conversationCount:\s*3[\s\S]*dispatch:\s*parallel/);
+  assert.match(render, /只创建一个 project[\s\S]*conversation 映射为 `card-a`/);
+  assert.match(render, /三个 run 全部异步启动[\s\S]*不得等待 A 完成/);
+  assert.match(render, /variants\/card-a\/[\s\S]*variants\/card-b\/[\s\S]*variants\/card-c\//);
+  assert.match(render, /status:\s*pending[\s\S]*selectedVariantId:\s*null/);
+  assert.match(coordinator, /一个 Open Design project[\s\S]*A \/ B \/ C 三个 conversation 并行生成/);
+  assert.doesNotMatch(coordinator, /variantSet:/);
   assert.match(coordinator, /不能只换颜色、字体或标题/);
-  assert.match(coordinator, /status:\s*pending[\s\S]*selectedVariantId:\s*null/);
-  assert.match(render, /每个候选都是覆盖完整源文档的独立页面/);
-  assert.match(render, /variantCount/);
-  assert.match(render, /directionSummary/);
-  assert.match(render, /多候选模式中任一候选[\s\S]*整个 render 失败/);
+  assert.match(openDesign, /conversation new "\$PROJECT_ID"/);
+  assert.match(openDesign, /CONVERSATION_A_ID="\$CONVERSATION_ID"/);
+  assert.match(openDesign, /Do not create or duplicate three projects/);
+
+  const conversationBlock = openDesign.match(/CONVERSATION_A_ID=[\s\S]*?```/);
+  assert.ok(conversationBlock);
+  assert.equal((conversationBlock[0].match(/conversation new/g) ?? []).length, 2);
+
+  const parallelRunBlock = openDesign.match(/Start all three runs without `--follow`[\s\S]*?```bash([\s\S]*?)```/);
+  assert.ok(parallelRunBlock);
+  assert.equal((parallelRunBlock[1].match(/run start/g) ?? []).length, 3);
+  assert.doesNotMatch(parallelRunBlock[1], /--follow/);
+  assert.match(openDesign, /only then begin watching or waiting/);
+  assert.match(openDesign, /exclusive output root/);
   assert.match(render, /未选择不是 render 失败/);
-  assert.match(render, /单候选沿用原有 receipt 字段/);
 });
 
 test("DDD guidance treats service boundaries as signals and permits multiple aggregates", async () => {

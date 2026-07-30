@@ -8,7 +8,7 @@
 |---|---|---|
 | `api-design-guide.md` | API / 接口设计（REST、GraphQL、模块边界、组件 props），核心是"让正确的事容易做、错误的事难做" | dev-design、dev-review |
 | `architecture-principles.md` | 架构原则：deep modules、Hyrum's Law、简单性判据、命名原则、code smell 检测 | dev-design、dev-review |
-| `doc-render.md` | 已定稿 markdown 文档 → Design artifact 的渲染协议（四步 + receipt；内容忠实 ≠ 呈现镜像、图 DOM 化、不取保守档） | dev-design、superpowers 四步链渲染步、pd 系产物渲染 |
+| `doc-render.md` | 已定稿 markdown 文档 → 同一 Open Design project 内 A/B/C 三线程并行候选（四步 + receipt；内容忠实、图 DOM 化、后续抽卡） | dev-design、superpowers 四步链渲染步、pd 系产物渲染 |
 | `frontend-guide.md` | 前端 / UI 工程指南：组件架构、可访问性、避免"AI 美学" | dev-build、dev-review、pd-vd |
 | `ix-vd-contract.md` | IX↔VD 分工契约：状态覆盖 / 行为规格 / 控件四态术语单源 + 判据 + tokens/components/patterns 三层命名 + 禁令 | pd-ix、pd-vd |
 | `migration-guide.md` | 迁移与废弃纪律：代码是负债，拆比造更少组织擅长 | dev-design、dev-review |
