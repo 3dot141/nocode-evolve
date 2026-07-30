@@ -34,7 +34,7 @@ render 维护内部阶段清单，不覆盖主流程计划：
 - 章节树
 - 图清单：位置、类型、复杂度
 - 表格 / 代码清单
-- 调用方的 `renderBrief`：文档类型、目标人类读者、沟通目标、阅读顺序、图表要求与呈现规则；缺失字段从源文档补推并标记为 inference，不能默认为 Agent 或机器消费
+- 调用方的 `renderBrief`：文档类型、目标人类读者、沟通目标、阅读顺序、图表要求、呈现规则与 `variantSet`；缺失字段从源文档补推并标记为 inference，不能默认为 Agent 或机器消费
 
 “内容忠实”指结论、措辞、章节和约束不失真，不要求逐像素镜像 Markdown。ASCII 图可转为 DOM / SVG / Mermaid 等更适合页面的呈现，但语义节点与关系不得丢失。
 
@@ -52,6 +52,14 @@ render 维护内部阶段清单，不覆盖主流程计划：
 - 生成 / 更新可回读的页面产物
 - 返回真实 project、conversation、run、preview 和入口文件信息
 
+当 `renderBrief.variantSet.count > 1` 时：
+
+- 同一次 handoff、同一生成批次创建全部候选，不在候选完成前要求用户选方向
+- 每个候选都是覆盖完整源文档的独立页面，不把章节拆成若干“卡”冒充多个方案
+- 候选按稳定 `variantId` 命名，并用 `directionSummary` 说明差异；差异必须达到 `distinctBy`，只换色、字体、标题或装饰不算不同
+- `invariant` 中的设计事实和覆盖必须一致；视觉探索不得产生新的规范性结论
+- 额外生成一个候选入口，清楚展示各候选的名称、方向摘要、预览和入口，供用户以后选择
+
 Open Design handoff 使用 `Skill(nocode:open-design)`。
 
 
@@ -68,6 +76,7 @@ Open Design 不可用或执行失败时，明确返回 render 未完成；Markdo
 5. `sourceDoc` 内容与 `sourceDigest` 在 render 期间未变化。
 6. 页面无需会话上下文即可按 `renderBrief.communicationGoal` 读懂；正文不是 Agent 指令、执行轨迹或原始 schema 堆叠。
 7. `diagramRequirements` 逐项有对应图，且图的类型、标题、标注、解释和可读尺寸符合要求；该画而未画、用散文替代或大图不可读都算缺口。
+8. 多候选模式逐个检查完整性与 coverage；候选数、稳定 ID、差异程度和共同 `invariant` 均符合 `variantSet`，候选入口能打开每个页面。
 
 将结果写入 `coverage`：
 
@@ -85,7 +94,7 @@ coverage:
   missingDiagrams: []
 ```
 
-任一规范性章节、Registry ID、`renderBrief` 必需图表缺失，或 `humanReadabilityChecked: false`，都算 render 失败，不能只给 preview URL。
+任一规范性章节、Registry ID、`renderBrief` 必需图表缺失，或 `humanReadabilityChecked: false`，都算 render 失败。多候选模式中任一候选缺失、不完整、不可回读、coverage 有缺口或只有表面差异，也算整个 render 失败，不能只给候选入口 URL。
 
 ## Step 4：持久化 receipt
 
@@ -102,7 +111,21 @@ RenderReceipt:
   entryFile: string
   coverage: object
   receiptPath: /absolute/path/to/doc.render-receipt.json
+
+# 仅 renderBrief.variantSet.count > 1 时追加
+  variantCount: integer
+  variants:
+    - variantId: string
+      directionSummary: string
+      previewUrl: string
+      entryFile: string
+      coverage: object
+  selection:
+    status: pending | selected
+    selectedVariantId: string | null
 ```
+
+单候选沿用原有 receipt 字段，不要求多候选扩展。多候选时顶层 `previewUrl` / `entryFile` 指向候选入口，各候选页面记录在 `variants`。`draw-later` 完成时写 `selection.status: pending` 与 `selectedVariantId: null`，未选择不是 render 失败。用户以后选择时，只把 selection 更新为 `selected` 并记录真实 `variantId`；不得改源 Markdown、删除未选候选或伪造新的生成结果。
 
 receipt 固定写到源文档同目录的 `<basename>.render-receipt.json`。它是**非规范性元数据** sidecar：
 
@@ -117,6 +140,8 @@ receipt 固定写到源文档同目录的 `<basename>.render-receipt.json`。它
 - `entryFile` 可回读
 - `previewUrl` 来自真实 provider 结果
 - coverage 无缺口
+- 多候选时，`variantCount` 与可回读的 `variants` 数量一致，且每个 variant coverage 无缺口
+- 多候选时，候选入口可打开全部 variant，且 `selection` 与 `variantSet.mode` 一致
 - 源 Markdown 未变化
 
 ## 返回
@@ -149,5 +174,8 @@ partialProviderRefs: {}
 - 把页面做成 Agent prompt、工作流日志、schema dump 或逐段 Markdown 镜像
 - 技术关系只用长段落解释，缺少应有的流程图、架构图、时序图或状态图
 - 为追求“图多”生成一张不可读的超大关系图，或图没有标题、标注和解释
+- 用户要求多个候选时逐个询问方向、只生成一个，或把一个页面的三个章节冒充三张卡
+- 三个候选只换颜色 / 字体 / 标题，或某张卡为了求新而改了设计事实、漏了 coverage
+- 还没抽卡就自动选中或删除其它候选
 - render 回写“可视化说明”到 approved Markdown
 - provider 不可用时伪造本地页面或 ID

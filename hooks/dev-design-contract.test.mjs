@@ -159,6 +159,25 @@ test("technical design render explains the design to humans with development dia
   assert.match(render, /图表缺失[\s\S]*render 失败/);
 });
 
+test("technical design render creates three complete cards for deferred selection", async () => {
+  const [coordinator, render] = await Promise.all([
+    read("skills/dev-design/SKILL.md"),
+    read("skills/references/doc-render.md"),
+  ]);
+
+  assert.match(coordinator, /variantSet:[\s\S]*count:\s*3[\s\S]*mode:\s*draw-later/);
+  assert.match(coordinator, /card-a.*card-b.*card-c/);
+  assert.match(coordinator, /同一生成批次[\s\S]*不在生成前要求用户选风格/);
+  assert.match(coordinator, /不能只换颜色、字体或标题/);
+  assert.match(coordinator, /status:\s*pending[\s\S]*selectedVariantId:\s*null/);
+  assert.match(render, /每个候选都是覆盖完整源文档的独立页面/);
+  assert.match(render, /variantCount/);
+  assert.match(render, /directionSummary/);
+  assert.match(render, /多候选模式中任一候选[\s\S]*整个 render 失败/);
+  assert.match(render, /未选择不是 render 失败/);
+  assert.match(render, /单候选沿用原有 receipt 字段/);
+});
+
 test("DDD guidance treats service boundaries as signals and permits multiple aggregates", async () => {
   const [principles, ddd] = await Promise.all([
     read("skills/dev-design/writing/references/writing-principles.md"),
