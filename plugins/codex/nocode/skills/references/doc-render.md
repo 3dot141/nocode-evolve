@@ -14,7 +14,7 @@
 - 对 Design 文档，frontmatter 必须 `status: approved`，且 `designDigest` 可用。
 - 调用方已明确选择 render。
 
-## StagePlan
+## 内部执行清单
 
 render 维护内部阶段清单，不覆盖主流程计划：
 

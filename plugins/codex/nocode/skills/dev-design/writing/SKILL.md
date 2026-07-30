@@ -3,9 +3,9 @@ name: dev-design-writing
 description: "Private writing protocol used by dev-design to turn a validated Decision Packet into one review…"
 ---
 
-# writing — 详细设计、Registry 与唯一评审
+# writing — 详细设计、Registry 与唯一评审 playbook
 
-> 本协议只能由 dev-design 协调器 Read 后执行。直接设计请求必须先进入 dev-design / decision；Writing 不接受无 Packet 的旁路输入。
+> 本 playbook 只能由 dev-design 主流程 Read 后在当前会话中执行。直接设计请求必须先进入 dev-design / decision；Writing 不接受无 Packet 的旁路输入，也不调用平台计划或用户提问工具。
 
 **Iron Law：忠实展开已确认的战略决策；正文发生任何修订都必须验证新 revision，不得沿用旧 verdict。**
 
@@ -41,23 +41,11 @@ docPath: string
 5. `crossCutting.items` 与 `crossCutting.exemption` 满足互斥规则。
 6. `docPath` 是唯一规范性设计文档；不得另建 Packet、restate 或补充设计作为事实源。
 
-输入缺失时返回协调器补齐。不得从用户描述自行重造 Packet。
+输入缺失时由主流程停下并补齐。不得从用户描述自行重造 Packet。
 
-## StagePlan
+## 执行方式与确认点
 
-进入阶段先建立内部阶段清单，不写平台全局计划：
-
-```text
-StagePlan {
-  steps[],
-  currentStep,
-  checkpoints[],
-  documentRevision,
-  completedSteps[]
-}
-```
-
-建议步骤：
+这是主流程的一段执行指南，不是有独立状态的阶段。按下面顺序推进：
 
 1. 校验 Packet，加载模板与参考
 2. 产出章节大纲和结构骨架
@@ -67,24 +55,9 @@ StagePlan {
 6. 全文 Review
 7. findings triage 与修订
 8. Delta Verification / 必要时重新 Review
-9. 保存、返回 verdict 和 render 选择 checkpoint
+9. 保存 verdict 并询问 render 选择
 
-## 用户交互协议
-
-Writing 不调用用户提问工具，也不直接结束回合等待回答。所有交互返回协调器：
-
-```yaml
-status: checkpoint_required | needs_user_input
-checkpoint:
-  checkpointType: structure-review | finding-triage | render-choice | local-decision | risk-acceptance
-  question: string
-  options: []
-  preview: string | object
-  resumeState: object
-  dedupeKey: string
-```
-
-长大纲或图先放完整 `preview`，协调器负责可读展示，再呈现选项。用户答案必须和 `resumeState` 一起送回才能继续。
+`structure-review`、`finding-triage`、`risk-acceptance` 与 `render-choice` 都是由当前 dev-design 主流程执行的普通会话暂停：先展示完整内容和动作，再结束当前回合等待答复。下一回合重读同一文档、当前 `packetRevision` / `designRevision` 和用户答案继续，不构造额外控制对象。
 
 ## Step 1：加载与映射
 
@@ -111,7 +84,7 @@ checkpoint:
 
 当设计包含多个候选限界上下文或持久化数据模型时 Read `references/ddd-modeling.md`。限界上下文按业务能力、统一语言和一致性边界判断；仓、服务和部署单元只是信号。
 
-## Step 2：结构骨架 checkpoint
+## Step 2：结构骨架确认（`structure-review`）
 
 基于模板产出章节大纲和结构骨架：
 
@@ -119,23 +92,9 @@ checkpoint:
 - bug：现象、复现、影响边界与问题位置
 - refactor：现状与目标结构 before / after
 
-返回协调器：
+主流程展示完整结构骨架、章节大纲和结构图，再给出“确认 / 调整 / 返回方案决策”三个动作；然后结束当前回合等待用户答复。
 
-```yaml
-status: checkpoint_required
-checkpoint:
-  checkpointType: structure-review
-  question: 请确认章节大纲和结构骨架，或指出要调整的边界。
-  options: [确认, 调整, 返回方案决策]
-  preview: <完整大纲和结构图>
-  resumeState:
-    stage: writing
-    step: structure
-    packetRevision: <current>
-  dedupeKey: writing-structure-r<packetRevision>-v1
-```
-
-调整后更新 preview 并使用新 dedupeKey；不得把用户没看清的长骨架塞进短选项。
+用户要求调整时，在同一文档修改骨架并再次完整展示；不得把用户没看清的长骨架塞进短选项。用户选择返回方案决策时，只有满足 replan 严格判据才回到 Decision，否则说明为何应在 Writing 内完成。
 
 ## Step 3：架构审核
 
@@ -153,7 +112,7 @@ checkpoint:
 - 每个聚合有自己的聚合根与一致性边界
 - 跨上下文通过稳定 ID / API / 事件协作，不共享可变实体
 
-结构问题若只需细化模块或内部 contract，由 Writing 就地修正并重新返回 `structure-review`。只有触发下节严格判据才允许 replan。
+结构问题若只需细化模块或内部 contract，由 Writing 就地修正并重新执行 `structure-review`。只有触发下节严格判据才允许 replan。
 
 ## Step 4：逐章详细设计
 
@@ -172,11 +131,11 @@ Writing 本地拥有：
 - 类、事件、存储契约的详细形态
 - 不改变硬约束的算法细化
 
-这些变化可用 `local-decision` checkpoint 确认高影响细节，但不能因为“新增了 API 字段”就回退 Decision。
+这些变化可在必要时通过 `local-decision` 普通会话暂停确认高影响细节，但不能因为“新增了 API 字段”就回退 Decision。
 
 ### replan 严格判据
 
-仅以下事实失效时返回 `replan_required`：
+仅以下事实失效时回到 Decision：
 
 1. 选定 approach 无法成立。
 2. 核心业务能力、限界上下文或关键数据所有权必须重划。
@@ -184,17 +143,17 @@ Writing 本地拥有：
 4. 硬约束被新证据推翻。
 
 ```yaml
-status: replan_required
-originalPacketRevision: <current>
-invalidatedDecision: string
-evidence: []
-affectedSections: []
-resumeState:
-  writingStep: string
-  preservedDraftSections: []
+replan:
+  originalPacketRevision: <current>
+  invalidatedDecision: string
+  evidence: []
+  affectedSections: []
+  preservedContext:
+    writingStep: string
+    preservedDraftSections: []
 ```
 
-协调器回 Decision 后，新 Packet 必须保持 `schemaVersion`，令 `packetRevision + 1`。旧 draft 中失效决策标 `superseded`，旧 verdict 失效。
+主流程把记录写入同一设计文档并将全局计划切回 Decision。新 Packet 必须保持 `schemaVersion`，令 `packetRevision + 1`；旧 draft 中失效决策标 `superseded`，旧 verdict 失效。
 
 ## Step 5：汇总与基线
 
@@ -245,7 +204,7 @@ Read `references/design-doc-review.md`，按其全部维度检查当前完整文
 默认可由主会话自查，但命中认证、敏感数据、schema / migration、资金、公开外部 API 或不可逆决策时，必须二选一：
 
 1. 使用独立 review，记录 `independence: independent`；或
-2. 返回 `risk-acceptance` checkpoint，由协调器取得用户显式接受，记录范围、理由和时间。
+2. 在 `risk-acceptance` 普通会话暂停中完整展示风险，由主流程取得用户显式接受，记录范围、理由和时间。
 
 不得只“建议升审”后仍自动批准。
 
@@ -280,24 +239,11 @@ DesignReviewVerdict:
 - verdict revision / digest 与当前文档一致
 - 敏感面满足独立性规则
 
-## Step 7：findings triage
+## Step 7：findings triage（`finding-triage`）
 
-若有 findings，返回协调器：
+若有 findings，主流程展示 C / W / S / Q / SA 完整清单、当前 `designRevision` 和每项证据，再给出“修复所有阻塞项 / 逐条处理 / 退回重写”三个动作，然后结束当前回合等待用户答复。
 
-```yaml
-status: checkpoint_required
-checkpoint:
-  checkpointType: finding-triage
-  question: 请决定每条 finding 的 fix、answer 或 defer/skip。
-  options: [修复所有阻塞项, 逐条处理, 退回重写]
-  preview: <C/W/S/Q/SA 完整清单>
-  resumeState:
-    reviewedRevision: <current>
-    findingIds: []
-  dedupeKey: writing-findings-r<designRevision>-<review-round>
-```
-
-Critical 和 blocking Q 不提供 skip；非阻塞项 defer / skip 时记录理由与 owner。协调器返回决定前不改正文。
+Critical 和 blocking Q 不提供 skip；非阻塞项 defer / skip 时记录理由与 owner。用户决定前不改正文。
 
 ## Step 8：修订与 Delta Verification
 
@@ -314,39 +260,21 @@ Critical 和 blocking Q 不提供 skip；非阻塞项 defer / skip 时记录理�
 
 最终把 findings、决定、修订摘要、Delta Verification 证据和 verdict 追加到 `## Review Log`。Review Log 自身是非规范性审计记录，不触发新 revision。
 
-## Step 9：批准、保存与 render 选择
+## Step 9：批准、保存与 render 选择（`render-choice`）
 
 只有当前 verdict 合法时，才在同一事务中把 frontmatter 改为 `status: approved` 并保存到原 `docPath`。任一失败都返回 `approved: false`。
 
-随后返回 render 选择 checkpoint：
+随后主流程展示 `docPath`、`designRevision`、`designDigest`，询问是否将已批准 Markdown 忠实渲染为 Open Design 页面，给出“渲染 / 跳过”两个动作，然后结束当前回合等待用户答复。
+
+答复后，Writing 的完成产物为：
 
 ```yaml
-status: checkpoint_required
-checkpoint:
-  checkpointType: render-choice
-  question: 是否将已批准 Markdown 忠实渲染为 Open Design 页面？
-  options: [渲染, 跳过]
-  preview:
-    docPath: string
-    designRevision: integer
-    designDigest: string
-  resumeState:
-    stage: writing
-    step: complete
-  dedupeKey: writing-render-choice-<designDigest>
-```
-
-协调器返回选择后，Writing 返回：
-
-```yaml
-status: completed
 docPath: string
 designRevision: integer
 designDigest: string
 packetRevision: integer
 reviewVerdict: <DesignReviewVerdict>
 renderRequested: boolean
-stagePlan: <StagePlan>
 ```
 
 Writing 自己不执行 render。
@@ -354,7 +282,7 @@ Writing 自己不执行 render。
 ## Exit Gate
 
 - [ ] Packet `schemaVersion` / `packetRevision` 合法且 mode 为 solution
-- [ ] 结构 checkpoint 已由协调器确认
+- [ ] 结构骨架已由主流程确认
 - [ ] 详细设计忠实落地 Packet，局部细化未误触 replan
 - [ ] crossCutting placement 与 domain decision 双向一致
 - [ ] Registry 与 sourceAnchor 双向无 orphan
@@ -362,7 +290,7 @@ Writing 自己不执行 render。
 - [ ] verdict 绑定当前 revision / digest，阻塞问题为空
 - [ ] 正文修订后已做 Delta Verification，必要时已完整重审
 - [ ] 敏感面独立审查或风险接受已记录
-- [ ] render 选择由协调器取得
+- [ ] render 选择由主流程取得
 
 ## 写作边界
 

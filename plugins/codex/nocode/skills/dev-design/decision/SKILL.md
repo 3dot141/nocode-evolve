@@ -3,11 +3,11 @@ name: dev-design-decision
 description: "Private decision protocol used by dev-design to compare approaches and produce a Decision Packe…"
 ---
 
-# decision — 方案决策与预研协议
+# decision — 方案决策与预研 playbook
 
-> 本协议只能由 dev-design 协调器 Read 后执行。它不独立注册，不持有全局流程，也不直接与用户交互。
+> 本 playbook 只能由 dev-design 主流程 Read 后在当前会话中执行。它不独立注册，不持有全局流程，也不调用平台计划或用户提问工具。
 
-**Iron Law：未比较真实替代方案的选择不是设计；未经协调器 checkpoint 的用户确认不是合法状态迁移。**
+**Iron Law：未比较真实替代方案的选择不是设计；未展示完整决策上下文的用户确认不是有效确认。**
 
 Decision 只负责：
 
@@ -36,40 +36,9 @@ Decision 只负责：
 
 外部研究是条件步骤：涉及当前版本、外部技术选型、不熟悉 API、标准或生态成熟度时执行；纯仓内且证据充分时可跳过，并记录理由。不得把“必须联网”当成每个设计的固定税。
 
-## 用户交互协议
+## 执行方式
 
-阶段不得调用用户提问工具，也不得在回合末尾直接提问。计划内确认和异常输入都返回给协调器：
-
-```yaml
-status: checkpoint_required | needs_user_input
-checkpoint:
-  checkpointType: packet-review | local-decision
-  question: string
-  options: []
-  preview: object
-  resumeState: object
-  dedupeKey: string
-```
-
-- `packet-review`：唯一例行终审点。
-- `local-decision`：只用于打平手、与既有决策冲突、agent 无法取得的信息、不可逆高影响选择。
-- 协调器将答案与 `resumeState` 送回后，Decision 才继续。
-
-## StagePlan
-
-进入阶段先建立内部 `StagePlan`，它只是返回给协调器的阶段进度，不写平台全局计划：
-
-```text
-StagePlan {
-  steps[],
-  currentStep,
-  checkpoints[],
-  evidenceCollected[],
-  completedSteps[]
-}
-```
-
-建议步骤：
+这是主流程的一段执行指南，不是有独立状态的阶段。按下面顺序推进：
 
 1. 校验输入与 restate ownership
 2. 探索仓内证据、既有决策及条件性外部证据
@@ -77,8 +46,10 @@ StagePlan {
 4. 按 `designDepth` 比较、验证、传播
 5. 失败预演、领域覆盖与横切走查
 6. 形成 TO、Registry 输入和 Packet
-7. 返回 `packet-review` checkpoint
-8. 根据协调器答复完成或修订
+7. 在 `packet-review` 做普通会话暂停
+8. 根据用户答复完成或修订
+
+`packet-review` 是唯一例行确认点。`local-decision` 只用于证据打平、与既有决策冲突、agent 无法取得的信息或不可逆高影响选择；已有可靠答案时直接继续。两者都由当前 dev-design 主流程展示完整上下文并结束当前回合，不构造额外控制对象。
 
 ## 执行协议
 
@@ -95,8 +66,8 @@ successSignals: []
 restateOwner: define | design-lite
 ```
 
-- `define` 所有的罗盘若需改变目标、范围或硬约束，返回协调器要求回 Define。
-- `design-lite` 可提出修订，但必须返回 checkpoint，由协调器确认。
+- `define` 所有的罗盘若需改变目标、范围或硬约束，由主流程要求回 Define。
+- `design-lite` 可提出修订，但必须展示差异并取得用户确认。
 
 判断 `mode`、`designDepth` 和场景，并在 Packet 中记录选择理由。
 
@@ -173,33 +144,20 @@ TO 描述“什么结果证明设计成立”，不展开 Plan 的逐步 TDD 操
 唯一规范性文件为 `docPath`：
 
 - 若已有 Define 罗盘，原样保留首章并追加决策账本。
-- 若是 `design-lite`，创建同一文档并以经 checkpoint 确认的罗盘开篇。
+- 若是 `design-lite`，创建同一文档并以经用户确认的罗盘开篇。
 - 不创建 `decision-packet.md`、`restate.md` 或研究附件作为第二事实源。
 
 稳定决策与路径增加来源锚点，供 Writing 汇总 Registry。
 
-### Step 8：Packet 终审
+### Step 8：Packet 终审（`packet-review`）
 
-形成 Packet 后不直接问用户，返回：
+主流程展示完整 Packet 摘要、架构图、决策链、TO 与风险，并给出“确认 / 修改 / 退回”三个动作；然后结束当前回合等待用户答复。这是普通会话暂停。
 
-```yaml
-status: checkpoint_required
-checkpoint:
-  checkpointType: packet-review
-  question: 请审核完整 Decision Packet，确认、修改或退回指定决策。
-  options: [确认, 修改, 退回]
-  preview: <完整 Packet 摘要、架构图、决策链、TO 与风险>
-  resumeState:
-    stage: decision
-    packetRevision: 1
-  dedupeKey: decision-packet-review-r1
-```
+下一回合：
 
-协调器返回答案后：
-
-- 确认：将相关状态转为 `confirmed`，返回 `completed`。
-- 修改：更新 Packet；内容修订令 `packetRevision + 1`，重新返回新的 dedupeKey。
-- 退回：按指定决策恢复，不从零开始。
+- 确认：将相关决策状态转为 `confirmed`，继续校验 Packet。
+- 修改：在同一文档更新 Packet，令 `packetRevision + 1`，再次展示完整修订版。
+- 退回：按用户指定的决策与文档中保留的证据继续，不从零开始。
 
 ## Decision Packet schema
 
@@ -258,34 +216,26 @@ decisionHistory: []
 
 `requiredFields` 为：`schemaVersion / packetRevision / mode / designDepth / scenario / docPath / restate / restateOwner / selectedApproach / alternatives / constraints / domainDecisions / crossCutting / openQuestions / testObjectives / verifyStrategy / sources / registryInputs / decisionHistory`；`evalSpec` 按条件必填。
 
-## replan envelope
+## replan 记录
 
 Writing 只有在选定 approach、核心业务能力或数据所有权、已承诺外部兼容契约、硬约束失效时才能请求 replan：
 
 ```yaml
-status: replan_required
-originalPacketRevision: 1
-invalidatedDecision: string
-evidence: []
-affectedSections: []
-resumeState:
-  decisionId: string
-  graphFrontier: []
+replan:
+  originalPacketRevision: 1
+  invalidatedDecision: string
+  evidence: []
+  affectedSections: []
+  preservedContext:
+    decisionId: string
+    graphFrontier: []
 ```
 
-Decision 收到后从 `resumeState` 恢复，保留 `superseded` 历史，输出相同 `schemaVersion` 且 `packetRevision = originalPacketRevision + 1` 的新 Packet。
+主流程重读这条记录和同一设计文档，保留 `superseded` 历史，从受影响的决策前沿继续，输出相同 `schemaVersion` 且 `packetRevision = originalPacketRevision + 1` 的新 Packet。
 
-## 返回结果
+## 完成产物
 
-成功：
-
-```yaml
-status: completed
-packet: <Decision Packet>
-stagePlan: <StagePlan>
-```
-
-失败必须返回结构化原因，不得把不完整 Packet 伪装成 completed。
+完成时，合法 Packet 已写入唯一 `docPath`，并通过 `packet-review`。校验失败时明确说明缺失字段或证据，不得把不完整 Packet 交给 Writing。
 
 ## Exit Gate
 
@@ -294,8 +244,8 @@ stagePlan: <StagePlan>
 - [ ] domain decision 与 cross-cutting placement 双向一致
 - [ ] TO、风险、sources 与 Registry 输入齐全
 - [ ] Packet schema 与 revision 合法
-- [ ] Packet 已通过协调器持有的 `packet-review`
-- [ ] research 模式明确返回协调器直接终止，不流入 Writing
+- [ ] Packet 已通过主流程的 `packet-review`
+- [ ] research 模式由主流程直接完成，不流入 Writing
 
 ## References
 

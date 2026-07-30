@@ -215,13 +215,13 @@ Fix 类任务的 Review 通过后，问一句：**"什么能预防这个 bug？"
 
 #### Design sub-flow
 
-> Design 阶段是**薄协调器 dev-design** 编排三个阶段 skill（重构后架构）：选方案 → 详细设计+评审 → 渲染。协调器自己不做领域工作。
+> Design 阶段由 **dev-design 单一会话流程**执行：依次读取 decision / writing 私有 playbook，再按用户选择渲染。dev-design 独占全局计划和用户确认；私有 playbook 不创建第二套状态。
 
 | Sub-step | 做什么 | 决策 |
 |---|---|---|
-| 3a. 进 dev-design（薄协调器） | 持状态机，编排下面三阶段，自己不选方案不写文档 | 路由 decision→writing→(可选)render |
-| 3b. 选方案（decision） | 探索 + 多方案差异化对比选定 + 领域覆盖(含可观测两层) + 测试目标 TO + eval | 产出 Decision Packet（含 alternatives 供 writing 反方配平） |
-| 3c. 详细设计 + 唯一评审（writing） | 消费 Decision Packet → feat/bug/refactor 详细设计 + 架构审核前置 + 唯一评审（design-doc-review 8 维度） | 遇方案级决策 replan_required → 协调器回 decision 重选 |
+| 3a. 进 dev-design（单一会话） | 创建唯一全局计划，按普通会话暂停处理所有确认 | 路由 decision→writing→(可选)render |
+| 3b. 选方案（decision playbook） | 探索 + 多方案差异化对比选定 + 领域覆盖(含可观测两层) + 测试目标 TO + eval | 产出并确认 Decision Packet（含 alternatives 供 writing 反方配平） |
+| 3c. 详细设计 + 唯一评审（writing playbook） | 消费 Decision Packet → feat/bug/refactor 详细设计 + 架构审核前置 + 唯一评审（design-doc-review 8 维度） | 方案级证据推翻原决策 → 主流程回 decision 重选 |
 | 3d.（可选）渲染（render） | 设计文档 → Artifact 页面 + 产物引用，不改输入文档 | 产物关系由协调器在 final gate 报告 |
 | 3e. Decompose 判断 | 架构产出后评估是否需要拆分子任务（见下） | 不需要 → 正常进 Plan；需要 → 拆分后各子任务走独立 devflow |
 

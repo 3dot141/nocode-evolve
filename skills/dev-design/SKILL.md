@@ -5,35 +5,40 @@ description: "Use for technical design, solution selection, design documents, or
 
 # dev-design — 设计流程协调器
 
-**Iron Law：协调器只编排，不做阶段领域工作；它是全局 plan 的唯一写入者，也是整个 Design 流程唯一的用户确认所有者。**
+**Iron Law：dev-design 是单一会话流程；它是全局 plan 的唯一写入者，也是整个 Design 流程唯一的用户确认所有者。**
 
-方案选择归 `decision/SKILL.md`，详细设计与唯一评审归 `writing/SKILL.md`，可选渲染归 `{NOCODE_SKILL_REF}/doc-render.md`。跨 Design / Plan / Build / Verify 的基线契约统一 Read `{NOCODE_SKILL_REF}/design-traceability.md`。
+`decision/SKILL.md` 与 `writing/SKILL.md` 是主流程依次读取并执行的私有 playbook，不是独立 agent、子进程或可恢复运行时：它们不创建自己的计划、不返回控制信封，也不直接调用用户提问工具。可选渲染归 `{NOCODE_SKILL_REF}/doc-render.md`。跨 Design / Plan / Build / Verify 的基线契约统一 Read `{NOCODE_SKILL_REF}/design-traceability.md`。
 
 ## 总状态机
 
 ```text
-                    ┌─────────────────────────────┐
-                    │ dev-design                  │
-                    │ 全局计划 / 路由 / 确认 / 回退 │
-                    └──────────────┬──────────────┘
-                                   ▼
-decision ── solution Packet ──→ writing ── reviewed doc + verdict ──→ render? ──→ final gate
+decision ── solution Packet ──→ writing ── reviewed doc + verdict ──→ render? ──→ final-gate
    ▲                                  │
-   └──────── replan_required ─────────┘
+   └──────── 方案级证据推翻 ──────────┘
 
-decision ── mode: research ──→ research final gate
-                              writing 与 render 均跳过
+decision ── mode: research ──→ research final-gate
+                              writing / render 跳过
 ```
 
-阶段协议只能返回结果，不得直接操作平台全局计划，也不得直接向用户提问或要求确认。允许的阶段结果：
+## 确认模型：普通会话暂停
 
-- `completed`
-- `checkpoint_required`
-- `needs_user_input`
-- `replan_required`
-- `failed`
+所有确认都是主流程中的普通会话暂停，不模拟一套工作流引擎。固定确认点：
 
-`checkpoint_required` 与 `needs_user_input` 都由协调器呈现；前者是计划内确认，后者只用于无法由 agent 获取的信息、相互冲突且需要用户偏好或不可逆高影响决策。
+- `packet-review`：确认完整 Decision Packet
+- `structure-review`：确认章节与架构骨架
+- `finding-triage`：决定评审问题如何处理
+- `risk-acceptance`：敏感面无法独立复核时显式接受风险
+- `render-choice`：选择是否渲染
+- `final-gate`：确认设计完成及下一步
+- `local-decision`：仅用于证据无法消解的高影响局部选择
+
+每个确认点都按同一简单动作执行：
+
+1. 当前 dev-design 主流程先完整展示预览、问题和可选动作。
+2. 结束当前回合等待用户答复。
+3. 下一回合根据用户答案更新全局计划、同一份设计文档及其 revision，然后继续。
+
+续接依据只有当前会话、全局计划和设计文档中的显式状态；不声称存在隐藏的持久化游标或自动去重。若换了新会话，先重读设计文档和 revision，必要时重述当前确认点再继续。
 
 ## Enter Gate（宽进严出）
 
@@ -44,7 +49,7 @@ decision ── mode: research ──→ research final gate
 罗盘必须声明 `restateOwner`：
 
 - `define`：来自 Define 的已确认罗盘。Design 发现要改目标、范围或硬约束时返回 Define，不能静默改写。
-- `design-lite`：由本流程补出的轻量罗盘。任何修订通过 `StageCheckpoint` 交协调器确认后写回同一设计文档。
+- `design-lite`：由本流程补出的轻量罗盘。任何修订都由主流程展示差异并取得用户确认，再写回同一设计文档。
 
 不得为 restate、Packet 或 review 单独创建规范性文档。单一设计文档 `docPath` 始终是唯一规范性载体。
 
@@ -69,15 +74,13 @@ decision ── mode: research ──→ research final gate
 使用 `update_plan` 一次提交全部里程碑；更新时保持稳定顺序且最多一个 `in_progress`。
 <!-- /nocode:platform -->
 
-Decision 与 Writing 只维护自己的 `StagePlan`，不得调用上述平台工具。
-
 ### Step 1：执行 decision
 
-Read `decision/SKILL.md`，传入 request、restate、`restateOwner`、场景、约束和已知 artifacts。协调器处理返回值：
+Read `decision/SKILL.md`，在当前会话中按它的步骤执行，输入 request、restate、`restateOwner`、场景、约束和已知 artifacts。
 
-1. `checkpoint_required`：校验并展示 `StageCheckpoint`，记录 `dedupeKey`；用户答复后把答案与 `resumeState` 交回 decision。
-2. `needs_user_input`：同样由协调器询问；若已有可靠答案则直接注入，不重复打扰用户。
-3. `completed`：校验 Packet。
+- 到 `packet-review` 时，主流程展示完整 Packet、架构图、决策链、TO 与风险，结束当前回合等待答复。确认后再把 Packet 标为 confirmed。
+- 只有遇到 agent 无法自行取得的信息、证据打平或不可逆高影响选择时，才使用 `local-decision`；已有可靠答案时不重复打扰用户。
+- 用户要求修改或退回时，在同一文档保留决策历史，递增 `packetRevision` 后重新确认。
 
 合法 Packet 至少满足：
 
@@ -93,7 +96,9 @@ Read `decision/SKILL.md`，传入 request、restate、`restateOwner`、场景、
 
 仅 `mode: solution` 执行。Read `writing/SKILL.md`，传入经校验的 Packet。
 
-协调器只做契约验证，不重新评审正文：
+主流程按 playbook 完成 `structure-review`、全文 Review、必要的 `finding-triage` / `risk-acceptance` 和 `render-choice`。确认时完整展示对应内容并按“普通会话暂停”处理。
+
+Writing 完成后校验：
 
 - 文档 frontmatter `status: approved`
 - `DesignReviewVerdict.approved: true`
@@ -102,11 +107,11 @@ Read `decision/SKILL.md`，传入 request、restate、`restateOwner`、场景、
 - 敏感面满足 `independence: independent`，或 verdict 记录由协调器取得的显式 `riskAcceptance`
 - Implementation Item Registry 存在、双向无 orphan
 
-`checkpoint_required` / `needs_user_input` 仍由协调器统一处理。`replan_required` 进入下一节。
+若新证据推翻方案级决策，按下文 replan 处理；模块内部拆分、参数、内部 schema、命名或算法细化留在 Writing，不回退 Decision。
 
 ### Step 3：可选 render
 
-Writing 通过 `render-choice` checkpoint 收到用户选择后，协调器 Read `{NOCODE_SKILL_REF}/doc-render.md` 并按其 handoff 协议执行。协调器不复制 Open Design 的 provider 命令，也不硬编码具体工具面。
+用户在 `render-choice` 选择渲染后，主流程 Read `{NOCODE_SKILL_REF}/doc-render.md` 并按其 handoff 协议执行。主流程不复制 Open Design 的 provider 命令，也不硬编码具体工具面。
 
 渲染不得改规范性 Markdown。成功必须得到并持久化标准 receipt：
 
@@ -125,7 +130,7 @@ receipt 写入与设计文档同目录的 `<basename>.render-receipt.json`，是
 
 `research` 模式报告：研究结论、候选方案、证据、未决问题和 Packet 路径；明确 writing 与 render 已跳过，由用户选择继续 Design、进入 Plan 或结束。
 
-final gate 是 `StageCheckpoint(checkpointType: final-gate)`，仍由协调器呈现。通过后建议进入 Plan，并传入当前 request、stage、restate、constraints、设计文档路径、`designRevision`、`designDigest` 和用户决定；不得自行进入下一阶段。
+在 `final-gate` 完整展示上述结果并结束当前回合等待用户答复。用户确认进入 Plan 后，传入当前 request、stage、restate、constraints、设计文档路径、`designRevision`、`designDigest` 和用户决定；不得在确认前自行进入下一阶段。
 
 <!-- nocode:platform claude -->
 Plan handoff 使用 `Skill(nocode:dev-plan)`。
@@ -135,28 +140,9 @@ Plan handoff 使用 `Skill(nocode:dev-plan)`。
 Plan handoff 使用 `$dev-plan`。
 <!-- /nocode:platform -->
 
-## StageCheckpoint
-
-所有计划内和例外用户交互都用同一 envelope：
-
-```yaml
-status: checkpoint_required | needs_user_input
-checkpoint:
-  checkpointType: packet-review | structure-review | finding-triage | render-choice | local-decision | risk-acceptance | final-gate
-  question: string
-  options: []
-  preview: string | object
-  resumeState: object
-  dedupeKey: string
-```
-
-- 阶段只能返回 envelope，不能自行弹窗、在回合末尾直接提问或等待用户。
-- 协调器按 `dedupeKey` 去重，并把用户答案连同 `resumeState` 送回原阶段。
-- 对长文预览，协调器先完整展示，再发结构化选项；不能把骨架塞进会折叠的短字段。
-
 ## replan
 
-只有下列变化允许 Writing 返回 `replan_required`：
+只有下列变化允许从 Writing 回到 Decision：
 
 - 选定 approach 失效
 - 核心业务能力、限界上下文或关键数据所有权需要重划
@@ -165,11 +151,22 @@ checkpoint:
 
 模块内部拆分、接口参数、内部 schema、命名或算法细化由 Writing 本地完成，不回退 decision。
 
-replan envelope 必须带 `originalPacketRevision / invalidatedDecision / evidence / affectedSections / resumeState`。协调器：
+在同一设计文档记录：
+
+```yaml
+replan:
+  originalPacketRevision: integer
+  invalidatedDecision: string
+  evidence: []
+  affectedSections: []
+  preservedContext: []
+```
+
+主流程随后：
 
 1. 校验当前 Packet revision 与 `originalPacketRevision` 一致。
 2. 将原决策在同一文档标记 `superseded` 并保留证据。
-3. 回到 decision 的 `resumeState`，不从零开始。
+3. 把全局计划切回 decision，依据文档中的失效决策、证据和保留上下文继续，不从零开始。
 4. 新 Packet 保持 `schemaVersion: 1`，令 `packetRevision = originalPacketRevision + 1`。
 5. 新 Packet 重新进入 Writing；旧 verdict 与旧 render receipt 全部失效。
 
@@ -177,7 +174,7 @@ replan envelope 必须带 `originalPacketRevision / invalidatedDecision / eviden
 
 `solution` 模式：
 
-- [ ] Packet 合法且所有 checkpoint 已由协调器处理
+- [ ] Packet 合法且所有确认点已由主流程处理
 - [ ] 文档有唯一 `designRevision` 与 `designDigest`
 - [ ] verdict 审的是当前 revision，`blockingOpenQuestions` 为空
 - [ ] Registry ↔ 稳定来源锚点双向无 orphan
@@ -193,8 +190,9 @@ replan envelope 必须带 `originalPacketRevision / invalidatedDecision / eviden
 
 ## Red Flags
 
-- 阶段协议调用全局计划工具，导致同一计划被覆盖
-- Decision / Writing 直接问用户，绕过协调器与去重
+- 私有 playbook 创建第二份计划或假装自己是可恢复进程
+- 为确认发明控制信封、隐藏游标或自动去重语义
+- 未展示完整预览就让用户在短选项中拍板
 - 用 `version` 同时表达 schema 与内容修订
 - replan 后复用旧 verdict、旧 digest 或旧渲染 receipt
 - 把阻塞 Open Question 带入 `approved: true`

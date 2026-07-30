@@ -122,7 +122,7 @@ test('product workflows use native plans, decisions, and direct skill handoffs',
   assert.match(read('skills/pd-vd/SKILL.md'), /get_artifact/);
 });
 
-test('design coordinator owns the native plan while stage protocols use StagePlan and direct Skill calls', () => {
+test('design coordinator owns the native plan while private playbooks use direct conversational gates', () => {
   for (const file of [
     'skills/dev-design/decision/SKILL.md',
     'skills/dev-design/writing/SKILL.md',
@@ -141,8 +141,8 @@ test('design coordinator owns the native plan while stage protocols use StagePla
     'skills/dev-design/writing/SKILL.md',
   ]) {
     const source = read(file);
-    assert.match(source, /StagePlan/);
-    assert.doesNotMatch(source, /TaskCreate|TaskUpdate|update_plan/);
+    assert.match(source, /普通会话暂停/);
+    assert.doesNotMatch(source, /TaskCreate|TaskUpdate|update_plan|StagePlan|StageCheckpoint|resumeState|dedupeKey/);
   }
   assert.match(read('skills/dev-design/writing/SKILL.md'), /Skill\(nocode:reviewing\)/);
   assert.match(read('skills/red-blue-deep/SKILL.md'), /Skill\(nocode:reviewing\)/);

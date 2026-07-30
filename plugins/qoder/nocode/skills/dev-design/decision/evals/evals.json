@@ -27,7 +27,7 @@
     "prompt": "设计支付、退款、回调补偿和对账的一体化资金流程，已有 PostgreSQL，不允许丢单或重复退款。",
     "assertions": [
       "把支付、退款、回调、补偿和对账作为多路径设计图处理",
-      "遇不可逆高影响选择时使用 needs_user_input 而非静默暂定",
+      "遇不可逆高影响选择时由主流程完整展示上下文并暂停确认，而非静默暂定",
       "推荐原因绑定资金约束、证据、代价和改选条件",
       "端到端闭环前不把暂定选择标为 confirmed"
     ]
@@ -92,7 +92,7 @@
     "split": "validation",
     "prompt": "Writing 发现选定的事件总线不支持必须的顺序保证，证据推翻 Decision Packet revision 2 的核心 approach；请执行 replan。",
     "assertions": [
-      "返回 replan_required 并携带 originalPacketRevision 2、invalidatedDecision、evidence 和 resumeState",
+      "在同一设计文档写 replan 记录，包含 originalPacketRevision 2、invalidatedDecision、evidence、affectedSections 和 preservedContext",
       "保留失效决策为 superseded 而非删除",
       "新 Packet 保持 schemaVersion 1 且 packetRevision 递增为 3",
       "旧 review verdict、design digest 和 render receipt 全部判定失效"

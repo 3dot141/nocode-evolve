@@ -19,7 +19,7 @@
 - 「目标」是否真反映"背景.主因"的解法？还是答非所问？
 - （如有）入口段 / Summary / TL;DR 是否能独立成立？（不需读全文也能 grasp 核心）
 - （PRD）「验收标准.明确排除」节是否具体？还是「其他都不做」敷衍？
-- **罗盘对齐**：首章「罗盘」是否存在，`restateOwner` 是否明确？owner=define 时 Design 不得改写；owner=design-lite 时每次修订是否有协调器 checkpoint？全文是否与罗盘对齐——每条 SC 有落点且不越 Out of Scope？非法改写 / 缺失 → Warning；SC 无落点 / 越界扩范围 → Critical
+- **罗盘对齐**：首章「罗盘」是否存在，`restateOwner` 是否明确？owner=define 时 Design 不得改写；owner=design-lite 时每次修订是否有主流程用户确认记录？全文是否与罗盘对齐——每条 SC 有落点且不越 Out of Scope？非法改写 / 缺失 → Warning；SC 无落点 / 越界扩范围 → Critical
 
 ### 2. 决策是否站得住脚
 
@@ -115,7 +115,7 @@
 
 ### 8. 方案质量与验证覆盖（并入自 dev-design 设计评审）
 
-> dev-design 拆薄协调器后评审唯一化到本步，原 dev-design 独立 design-review 的方案层维度并入这里。
+> dev-design 将全文评审唯一化到本步，原独立 design-review 的方案层维度并入这里。
 
 - **TO 覆盖**：每条路径和约束都有对应测试目标（TO）？跨域 TO 和领域 TO 不重复也不遗漏？
 - **verify 策略可行**：测试分层合理？不测项的风险评估充分？

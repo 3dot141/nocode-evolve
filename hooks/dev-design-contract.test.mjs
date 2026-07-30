@@ -5,17 +5,18 @@ import test from "node:test";
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), "utf8");
 
 test("dev-design is the only owner of the platform workflow plan", async () => {
-  const [coordinator, decision, writing] = await Promise.all([
+  const [coordinator, decision, writing, render] = await Promise.all([
     read("skills/dev-design/SKILL.md"),
     read("skills/dev-design/decision/SKILL.md"),
     read("skills/dev-design/writing/SKILL.md"),
+    read("skills/references/doc-render.md"),
   ]);
 
   assert.match(coordinator, /全局 plan 的唯一写入者/);
-  assert.doesNotMatch(decision, /使用 `update_plan`/);
-  assert.doesNotMatch(writing, /使用 `update_plan`/);
-  assert.match(decision, /StagePlan[\s\S]*checkpoints\[\]/);
-  assert.match(writing, /StagePlan[\s\S]*checkpoints\[\]/);
+  for (const stage of [decision, writing, render]) {
+    assert.doesNotMatch(stage, /TaskCreate|TaskUpdate|update_plan/);
+    assert.doesNotMatch(stage, /StagePlan/);
+  }
 });
 
 test("Decision Packet separates schema version, instance revision, and mode", async () => {
@@ -33,19 +34,36 @@ test("Decision Packet separates schema version, instance revision, and mode", as
   assert.match(writing, /packetRevision/);
 });
 
-test("all planned user interactions return checkpoints to the coordinator", async () => {
+test("dev-design uses ordinary conversational pauses instead of a checkpoint runtime", async () => {
   const [coordinator, decision, writing] = await Promise.all([
     read("skills/dev-design/SKILL.md"),
     read("skills/dev-design/decision/SKILL.md"),
     read("skills/dev-design/writing/SKILL.md"),
   ]);
 
-  assert.match(coordinator, /checkpoint_required/);
-  assert.match(coordinator, /StageCheckpoint/);
-  assert.match(decision, /checkpoint_required/);
-  assert.match(writing, /checkpoint_required/);
-  assert.doesNotMatch(decision, /由 decision 阶段自行执行/);
-  assert.doesNotMatch(writing, /末尾问「这个结构可以吗/);
+  assert.match(coordinator, /单一会话流程/);
+  assert.match(coordinator, /普通会话暂停/);
+  assert.match(coordinator, /全局计划[\s\S]*设计文档[\s\S]*继续/);
+
+  for (const source of [coordinator, decision, writing]) {
+    assert.doesNotMatch(
+      source,
+      /StageCheckpoint|checkpoint_required|needs_user_input|resumeState|dedupeKey/,
+    );
+  }
+
+  for (const gate of [
+    "packet-review",
+    "structure-review",
+    "finding-triage",
+    "render-choice",
+    "risk-acceptance",
+    "final-gate",
+  ]) {
+    assert.match(coordinator, new RegExp(gate));
+  }
+  assert.match(decision, /展示完整 Packet[\s\S]*结束当前回合等待用户答复/);
+  assert.match(writing, /展示完整结构骨架[\s\S]*结束当前回合等待用户答复/);
 });
 
 test("cross-cutting contract represents items and an explicit empty exemption", async () => {
