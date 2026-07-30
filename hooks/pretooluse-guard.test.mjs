@@ -34,6 +34,88 @@ test('decide: 无命中 → null', () => {
   assert.equal(decide([]), null);
 });
 
+test('decide: execute 每次实际检查, 同一 rule 多 matcher 命中只执行一次', () => {
+  let calls = 0;
+  const executeHits = [
+    { rule: 'git-freshness', decision: 'execute', reason: 'check freshness' },
+    { rule: 'git-freshness', decision: 'execute', reason: 'check freshness' },
+  ];
+  const options = {
+    cwd: '/workspace',
+    spawnSync(command, args, options) {
+      calls += 1;
+      assert.equal(command, process.execPath);
+      assert.match(args[0], /scripts\/freshness-check\.mjs$/);
+      assert.deepEqual(args.slice(1), ['--max-behind=5', '--ttl=7200']);
+      assert.equal(options.cwd, '/workspace');
+      return {
+        status: 0,
+        stdout: JSON.stringify({ gate: 'ok', message: 'freshness ok' }),
+        stderr: '',
+      };
+    },
+  };
+  const first = decide(executeHits, 'claude', options);
+  const second = decide(executeHits, 'claude', options);
+  assert.equal(calls, 2, '两次 PreToolUse 各执行一次，同次重复 matcher 不重复执行');
+  assert.equal(first, null, '检查通过后无需再发文字提醒');
+  assert.equal(second, null, '后续每次检查通过同样静默放行');
+});
+
+test('decide: freshness gate 转成真正的 block 决策', () => {
+  const out = decide(
+    [{ rule: 'git-freshness', decision: 'execute', reason: 'check freshness' }],
+    'claude',
+    {
+      cwd: '/workspace',
+      spawnSync() {
+        return {
+          status: 2,
+          stdout: JSON.stringify({ gate: 'gate', message: 'main behind origin/main 5 commits. 三选' }),
+          stderr: '',
+        };
+      },
+    },
+  );
+  assert.equal(out.hookSpecificOutput.permissionDecision, 'deny');
+  assert.match(out.hookSpecificOutput.permissionDecisionReason, /behind origin\/main 5 commits.*三选/);
+});
+
+test('decide: Codex 也先实际检查，再把 gate 编码为安全消息', () => {
+  let calls = 0;
+  const out = decide(
+    [{ rule: 'git-freshness', decision: 'execute', reason: 'check freshness' }],
+    'codex',
+    {
+      spawnSync() {
+        calls += 1;
+        return {
+          status: 2,
+          stdout: JSON.stringify({ gate: 'gate', message: 'main 首次检查. 三选' }),
+          stderr: '',
+        };
+      },
+    },
+  );
+  assert.equal(calls, 1);
+  assert.deepEqual(Object.keys(out), ['systemMessage']);
+  assert.match(out.systemMessage, /无法硬阻断.*main 首次检查.*三选/);
+});
+
+test('decide: freshness 异常失败时 fail closed', () => {
+  const out = decide(
+    [{ rule: 'git-freshness', decision: 'execute', reason: 'check freshness' }],
+    'claude',
+    {
+      spawnSync() {
+        return { status: 1, stdout: '', stderr: 'unexpected failure' };
+      },
+    },
+  );
+  assert.equal(out.hookSpecificOutput.permissionDecision, 'deny');
+  assert.match(out.hookSpecificOutput.permissionDecisionReason, /freshness-check 执行失败.*unexpected failure/);
+});
+
 test('matchRules: 换行/行续 不能绕过 block 靶 (Codex review)', () => {
   // shell 行续: 反斜杠+换行
   assert.equal(matchRules('bkt api x \\\n  --method PUT', RULES).length, 1, '行续 PUT 应仍命中 block');

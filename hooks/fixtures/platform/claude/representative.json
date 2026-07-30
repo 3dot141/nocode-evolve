@@ -6,6 +6,6 @@
     "skills/dev-review/SKILL.md": "03639449f79072bb8217a9b5d59283abb516a928d3c2d459cfebe2b0ff31351f",
     "rules/rule-codex-review.md": "59d629de90615d149d031ec52859a0edcdf4f1075d1f81ef0543e1a25a602b2c",
     "hooks/hooks.json": "4ee2c0dcb777353b50f1f767fc9f49c16970107808a1cd3e5f1edcdd21f19ec2",
-    "hooks/pretooluse-guard.mjs": "1b76e7f532b0d438d891f9db85f204fa99f6983d82e13ce6166d88742248e99b"
+    "hooks/pretooluse-guard.mjs": "50793af789d1f52cc00ef5f27b2a30edb616598385b2513ce2506de1d9865ad2"
   }
 }

@@ -13,15 +13,9 @@
   },
   {
     "rule": "git-freshness",
-    "pattern": "\\b(grep\\s+(-[a-zA-Z]*r|-[a-zA-Z]*\\s+-r|--recursive)|rg\\s+)\\b",
-    "decision": "inject",
-    "reason": "代码搜索 (grep -r / rg) 前先跑 freshness-check.mjs 确认分支不过时"
-  },
-  {
-    "rule": "git-freshness",
-    "pattern": "\\bfind\\s+.*\\.(tsx?|jsx?|mjs|cjs|py|go|rs|java|rb|vue|svelte)\\b",
-    "decision": "inject",
-    "reason": "find 搜代码文件前先跑 freshness-check.mjs 确认分支不过时"
+    "pattern": "\\b(?:grep\\s+(?:-[a-zA-Z]*r|-[a-zA-Z]*\\s+-r|--recursive)|rg\\s+|find\\s+.*\\.(?:tsx?|jsx?|mjs|cjs|py|go|rs|java|rb|vue|svelte)\\b)",
+    "decision": "execute",
+    "reason": "代码搜索前由 hook 执行一次 freshness-check.mjs，脚本内部负责 TTL cache / fetch / gate"
   },
   {
     "rule": "personal-deletion-guard",

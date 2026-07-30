@@ -5,8 +5,8 @@
 //
 // 设计要点: 规则直接硬编码在本文件内, 不读 rules/rule-*.md frontmatter——
 // 触发路由(compile.rule.js 那条链)与命令层硬拦截(本链)是两件独立的事,
-// 各自单源, 互不耦合。hooks/pretooluse-guard.mjs 消费端字段不变
-// (rule/pattern/decision/reason)。
+// 各自单源, 互不耦合。hooks/pretooluse-guard.mjs 消费端字段为
+// rule/pattern/decision/reason；decision=execute 表示命中后由 hook 执行规则检查。
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -31,15 +31,9 @@ export const RULES = [
   },
   {
     rule: 'git-freshness',
-    pattern: '\\b(grep\\s+(-[a-zA-Z]*r|-[a-zA-Z]*\\s+-r|--recursive)|rg\\s+)\\b',
-    decision: 'inject',
-    reason: '代码搜索 (grep -r / rg) 前先跑 freshness-check.mjs 确认分支不过时',
-  },
-  {
-    rule: 'git-freshness',
-    pattern: '\\bfind\\s+.*\\.(tsx?|jsx?|mjs|cjs|py|go|rs|java|rb|vue|svelte)\\b',
-    decision: 'inject',
-    reason: 'find 搜代码文件前先跑 freshness-check.mjs 确认分支不过时',
+    pattern: '\\b(?:grep\\s+(?:-[a-zA-Z]*r|-[a-zA-Z]*\\s+-r|--recursive)|rg\\s+|find\\s+.*\\.(?:tsx?|jsx?|mjs|cjs|py|go|rs|java|rb|vue|svelte)\\b)',
+    decision: 'execute',
+    reason: '代码搜索前由 hook 执行一次 freshness-check.mjs，脚本内部负责 TTL cache / fetch / gate',
   },
   {
     rule: 'personal-deletion-guard',

@@ -3,11 +3,11 @@ import assert from 'node:assert/strict';
 import { RULES, render, check } from '../scripts/compile.hooks.js';
 
 test('RULES: 每条规则字段齐全, pattern 是合法正则', () => {
-  assert.ok(RULES.length >= 6);
+  assert.ok(RULES.length >= 5);
   for (const r of RULES) {
     assert.ok(r.rule, 'rule 字段不能为空');
     assert.ok(r.pattern, 'pattern 字段不能为空');
-    assert.ok(['block', 'inject'].includes(r.decision), `decision 只能是 block/inject: ${r.rule}`);
+    assert.ok(['block', 'inject', 'execute'].includes(r.decision), `decision 只能是 block/inject/execute: ${r.rule}`);
     assert.ok(r.reason, 'reason 字段不能为空');
     assert.doesNotThrow(() => new RegExp(r.pattern, 'i'), `pattern 应是合法正则: ${r.pattern}`);
   }
@@ -36,7 +36,14 @@ test('integration: RULES 能被 pretooluse-guard.mjs 的 matchRules 正确匹配
   assert.ok(worktreeHits.some((h) => h.rule === 'git-worktree'));
 
   const rgHits = matchRules('rg TODO src/', RULES);
-  assert.ok(rgHits.some((h) => h.rule === 'git-freshness'));
+  assert.equal(rgHits.filter((h) => h.rule === 'git-freshness').length, 1);
+
+  const findHits = matchRules("find . -name '*.ts'", RULES);
+  assert.equal(findHits.filter((h) => h.rule === 'git-freshness').length, 1);
+
+  const freshnessRules = RULES.filter((r) => r.rule === 'git-freshness');
+  assert.equal(freshnessRules.length, 1, 'git-freshness 应是一个逻辑规则');
+  assert.equal(freshnessRules[0].decision, 'execute', '命中后应实际执行 freshness check');
 
   const rmHits = matchRules('rm -rf .agents-personal/wiki/', RULES);
   assert.ok(rmHits.some((h) => h.rule === 'personal-deletion-guard'));

@@ -12,7 +12,9 @@ skip: false
 
 # git-freshness — 设计 / 方案 / 代码搜索前确保基于最新远程
 
-设计 / 方案 / 选型 / 重构 / **多文件代码搜索做方案分析**, 若建立在过时代码上 → 方案与现状脱节, 落地返工 / 搜索结果可能引用已删 / 重构代码. 动手前先用 `scripts/freshness-check.mjs` 一句拿差距, 必要时 gate 用户.
+设计 / 方案 / 选型 / 重构 / **多文件代码搜索做方案分析**, 若建立在过时代码上 → 方案与现状脱节, 落地返工 / 搜索结果可能引用已删 / 重构代码. 动手前运行 `scripts/freshness-check.mjs` 拿差距, 必要时 gate 用户.
+
+命令层的 `grep -r` / `rg` / 搜代码文件的 `find` 由 PreToolUse hook 每次命中时实际执行一次脚本；多个 matcher 命中同一 `git-freshness` rule 时按 rule ID 去重，一次 PreToolUse 最多执行一次。这里的“每次执行”不等于“每次 fetch”——脚本内部的 TTL cache 决定是否访问远程。
 
 ## 与 `rule-git-worktree` 的边界 (防重叠)
 
@@ -41,9 +43,9 @@ skip: false
 - 离线 (`fetch` 失败 → 脚本自动 warn + 继续, 不阻塞) — **但冷启动 (当前 branch+base 从无 cache 记录) 例外, 仍 gate 一次, 见下「Gate 行为」**
 - 同一 worktree / 分支 **2h 内已查过 freshness** (cache TTL 命中 → 脚本毫秒返回, 不打扰)
 
-## 门禁 — 一句调脚本
+## 门禁 — Hook 执行 / 行为入口一句调脚本
 
-机械逻辑封装到 `scripts/freshness-check.mjs`, agent 一句调:
+机械逻辑封装到 `scripts/freshness-check.mjs`。命令层搜索由 PreToolUse hook 调用；设计、语义搜索和多文件 Read 等无法由 Bash matcher 覆盖的行为入口，agent 一句调:
 
 ```bash
 node "${CLAUDE_PLUGIN_ROOT}/scripts/freshness-check.mjs" --max-behind=5 --ttl=7200
@@ -67,7 +69,7 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/freshness-check.mjs" --max-behind=5 --ttl=72
 
 ## Gate 行为 (脚本输出 `gate: "gate"` 时)
 
-脚本 `gate: "gate"` (exit 2) 有两个触发源: **(1) 冷启动** — 当前 branch+base 在 cache 从无记录 (机器 / 分支首次), 无条件 gate 一次; **(2) behind 超阈** — `behind >= 5`. 两者都 exit 2 + `message` 含三选. **停手**, 把 `message` 原样转述给用户, 等回复后再动手. 不替用户拍板.
+脚本 `gate: "gate"` (exit 2) 有两个触发源: **(1) 冷启动** — 当前 branch+base 在 cache 从无记录 (机器 / 分支首次), 无条件 gate 一次; **(2) behind 超阈** — `behind >= 5`. 两者都 exit 2 + `message` 含三选. Hook 将结果转成 block 决策；行为入口由 agent **停手**, 把 `message` 原样转述给用户, 等回复后再动手. 不替用户拍板.
 
 ```
 <branch> behind <base> N commits (>= 5, ahead=M). 三选:
@@ -87,4 +89,9 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/freshness-check.mjs" --max-behind=5 --ttl=72
 
 ## 机制化局限 (诚实标注)
 
-本 rule 是 **behavior 触发** — “即将搜代码 / 设计”不是单条命令，PreToolUse 无法覆盖所有语义搜索入口。主要靠 catalog Step 0 工序 + agent 自觉跑脚本。cache 机制大幅降低重复 fetch 成本（2h 内 0 网络开销），是性能上的兜底，但不是触发上的硬保证。
+本 rule 同时有命令层与 behavior 层触发：
+
+- 命令层：`grep -r` / `rg` / 搜代码文件的 `find` 由 PreToolUse 每次实际执行脚本，不依赖 agent 读完提醒后再补跑。
+- behavior 层：“即将设计 / 语义搜索 / 多文件 Read”不是单条 Bash 命令，PreToolUse 无法覆盖，仍靠 catalog Step 0 工序 + agent 主动调用。
+
+Codex 当前 PreToolUse codec 只能把 block 编码成安全 system message，不能像 Claude 一样返回 `permissionDecision: deny`；因此脚本会在原命令前真实执行，但 gate 的平台级硬阻断仍受 Codex hook 协议限制。
