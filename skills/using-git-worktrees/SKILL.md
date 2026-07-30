@@ -90,6 +90,20 @@ git worktree add "<absolute-worktree-path>" -b "<BRANCH_NAME>" "<confirmed-base-
 
 Omit `startPoint` only when no explicit base was selected. A dirty base worktree contributes its committed branch tip only; never imply that uncommitted changes were copied.
 
+### Carry Project-Local Environment Configuration
+
+Tracked configuration files are already materialized by `git worktree add`. After creation, copy the source checkout's root `mise.toml` and `.envrc` only when they exist there but are absent from the new worktree, such as when they are untracked local configuration:
+
+```bash
+for config_file in mise.toml .envrc; do
+  if [ -f "$project_root/$config_file" ] && [ ! -e "$worktree_path/$config_file" ]; then
+    cp "$project_root/$config_file" "$worktree_path/$config_file"
+  fi
+done
+```
+
+Never overwrite either file when present in the target worktree; the version from the confirmed base is authoritative. Report copied configuration as inherited baseline state and do not stage or commit it unless the task explicitly includes that file.
+
 **Sandbox fallback:** If `git worktree add` fails with a permission error (sandbox denial), tell the user the sandbox blocked worktree creation and you're working in the current directory instead. Then run setup and baseline tests in place.
 
 ## Step 2: Enter the Worktree
@@ -156,6 +170,7 @@ Ready to implement <feature-name>
 | Other linked worktree | Confirm reuse, then skip creation (Step 0) |
 | In a submodule | Treat as normal repo (Step 0 guard) |
 | Creating from a confirmed base | `git worktree add "<absolute-path>" -b "<branch>" "<base>"` |
+| Source-only root `mise.toml` / `.envrc` | Copy only when the target worktree lacks that file; never overwrite |
 | Entering the worktree | Claude: native session entry; Codex: bind absolute `workdir` |
 | Worktree location | `<project-parent>/<project-name>-<branch-flat>/` |
 | Derived path exists | Classify registered reuse, stale directory, or real conflict before acting |
