@@ -1,32 +1,38 @@
-const WORKSPACES = {
-  ui:     { web: true, agents: true, docker: false, server: false },
-  agents: { web: true, agents: true, docker: true,  server: false },
-  full:   { web: true, agents: true, docker: true,  server: true },
-};
-
-export function parseArgs(argv) {
+export function parseArgs(argv, catalog) {
+  if (!catalog?.workspaceIds?.length || !catalog?.serviceIds?.length) {
+    throw new Error('[topology] parseArgs 需要已验证的 workspace/service catalog');
+  }
   let workspace = 'ui';
   const flags = new Set();
   for (const arg of argv) {
-    const m = arg.match(/^--workspace=(.+)$/);
-    if (m) { workspace = m[1]; continue; }
-    if (arg.startsWith('--')) { flags.add(arg.slice(2)); continue; }
+    const match = arg.match(/^--workspace=(.+)$/);
+    if (match) {
+      workspace = match[1];
+      continue;
+    }
+    if (arg.startsWith('--')) flags.add(arg.slice(2));
   }
-  if (!WORKSPACES[workspace]) {
-    throw new Error(`未知 workspace: ${workspace}（可选 ui | agents | full）`);
+  if (!catalog.workspaceIds.includes(workspace)) {
+    throw new Error(
+      `[topology] 未知 workspace: ${workspace}（可选 ${catalog.workspaceIds.join(' | ')}）`,
+    );
   }
-  const services = { ...WORKSPACES[workspace] };
-  for (const s of ['web', 'agents', 'docker', 'server']) {
-    if (flags.has(`no-${s}`)) services[s] = false;
+
+  for (const flag of flags) {
+    if (!flag.startsWith('no-')) continue;
+    const serviceId = flag.slice('no-'.length);
+    if (!catalog.serviceIds.includes(serviceId)) {
+      throw new Error(`[topology] 未知 service: ${serviceId}`);
+    }
   }
+
   return {
     workspace,
-    services,
+    disabled: catalog.serviceIds.filter((serviceId) => flags.has(`no-${serviceId}`)),
     dryRun: flags.has('dry-run'),
     cssWatch: flags.has('css-watch'),
     dockerDownOnExit: flags.has('docker-down-on-exit'),
     yes: flags.has('yes'),
-    // 运维子命令：--status 查健康不起服务；--stop 按 services 杀进程不起服务
     status: flags.has('status'),
     stop: flags.has('stop'),
   };

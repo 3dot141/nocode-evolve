@@ -7,6 +7,7 @@
 
 | 路径 | 主题 | 状态 |
 |---|---|---|
+| `3dot141/260730-01-agents-launcher-declarative-topology/agents-launcher-declarative-topology-design.md` | agents-launcher 声明式服务拓扑 | **approved / Build complete / Verify pending** |
 | `3dot141/260723-03-native-platform-block-packaging/native-platform-block-packaging-design.md` | 原生平台块 + 静态打包 | **approved / implementation pending** |
 | `3dot141/260603-02-strategic-review-v3.4.0/strategic-review-v3.4.0.md` | v3.4.0 战略级架构改进 | **draft / 落地中** |
 | `3dot141/260602-02-worktree-setup-script/worktree-setup-script-design.md` | worktree-setup 与同级扁平 worktree | **active** |
@@ -31,6 +32,7 @@
 
 | 路径 | 配对设计 | 状态 |
 |---|---|---|
+| `3dot141/260730-01-agents-launcher-declarative-topology/agents-launcher-declarative-topology-plan.md` | 同目录 design | **confirmed / Build complete / Verify pending** |
 | `3dot141/260720-01-claude-codex-dual-runtime/claude-codex-dual-runtime-plan.md` | 同目录 design | **superseded** |
 | `3dot141/260602-01-skillify-route/skillify-route-plan.md` | 同目录 design | **superseded** |
 

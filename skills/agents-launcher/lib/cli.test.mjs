@@ -1,33 +1,47 @@
-import { test } from 'node:test';
+import test from 'node:test';
 import assert from 'node:assert/strict';
 import { parseArgs } from './cli.mjs';
 
-test('默认 workspace=ui → 只起 web+agents', () => {
-  const a = parseArgs([]);
-  assert.equal(a.workspace, 'ui');
-  assert.deepEqual(a.services, { web: true, agents: true, docker: false, server: false });
+const catalog = {
+  workspaceIds: ['ui', 'agents', 'full'],
+  serviceIds: ['docker', 'agents', 'server', 'web'],
+};
+
+test('默认 workspace 与 flags 兼容', () => {
+  const args = parseArgs(['--no-web', '--css-watch', '--yes'], catalog);
+  assert.equal(args.workspace, 'ui');
+  assert.deepEqual(args.disabled, ['web']);
+  assert.equal(args.cssWatch, true);
+  assert.equal(args.yes, true);
 });
 
-test('workspace=agents → 加 docker', () => {
-  assert.deepEqual(parseArgs(['--workspace=agents']).services, { web: true, agents: true, docker: true, server: false });
+test('workspace 值来自 catalog', () => {
+  assert.equal(
+    parseArgs(['--workspace=agents'], catalog).workspace,
+    'agents',
+  );
+  assert.throws(
+    () => parseArgs(['--workspace=ghost'], catalog),
+    /\[topology\] 未知 workspace: ghost（可选 ui \| agents \| full）/,
+  );
 });
 
-test('workspace=full → 全开', () => {
-  assert.deepEqual(parseArgs(['--workspace=full']).services, { web: true, agents: true, docker: true, server: true });
+test('四个 no-service flag 只形成 disabled 投影', () => {
+  assert.deepEqual(
+    parseArgs([
+      '--workspace=full',
+      '--no-docker',
+      '--no-agents',
+      '--no-server',
+      '--no-web',
+    ], catalog).disabled,
+    ['docker', 'agents', 'server', 'web'],
+  );
 });
 
-test('--no-web 裁剪，--dry-run / --css-watch 标志', () => {
-  const a = parseArgs(['--workspace=full', '--no-web', '--dry-run', '--css-watch']);
-  assert.equal(a.services.web, false);
-  assert.equal(a.dryRun, true);
-  assert.equal(a.cssWatch, true);
-});
-
-test('--yes 跳过确认标志', () => {
-  assert.equal(parseArgs(['--yes']).yes, true);
-  assert.equal(parseArgs([]).yes, false);
-});
-
-test('未知 workspace 抛错', () => {
-  assert.throws(() => parseArgs(['--workspace=bogus']), /workspace/);
+test('未知 no-service flag fail-loud', () => {
+  assert.throws(
+    () => parseArgs(['--no-shell'], catalog),
+    /\[topology\] 未知 service: shell/,
+  );
 });
