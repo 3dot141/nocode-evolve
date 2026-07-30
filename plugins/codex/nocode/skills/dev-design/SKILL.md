@@ -108,6 +108,35 @@ Writing 完成后校验：
 
 用户在 `render-choice` 选择渲染后，主流程 Read `${PLUGIN_ROOT}/skills/references/doc-render.md` 并按其 handoff 协议执行。主流程不复制 Open Design 的 provider 命令，也不硬编码具体工具面。
 
+调用共享协议时必须传入下面的技术设计 `renderBrief`。渲染目标是让需要理解、评审或实施方案的**人类读者**独立看懂完整思路，不是把设计文档改写成 Agent prompt、执行轨迹或控制协议：
+
+```yaml
+renderBrief:
+  documentType: technical-design
+  audience: human
+  communicationGoal: 不依赖会话上下文，读懂为什么这样选、系统如何协作、关键场景怎样运行、失败时如何恢复以及怎样验证
+  readingOrder:
+    - 一屏摘要：问题、选定方案、范围、关键取舍
+    - 端到端主流程与参与者
+    - 系统边界、组件职责、依赖和数据所有权
+    - 关键场景的调用时序、分支与返回
+    - 状态变化、失败恢复、可观测与验证
+    - 契约、Registry 和审计元数据附录
+  diagramRequirements:
+    - 用流程图解释端到端主路径、分支、异常与恢复
+    - 用架构图解释系统边界、组件、部署关系、依赖方向与数据所有权
+    - 跨两个及以上参与者或部署单元的关键场景逐个使用时序图
+    - 有生命周期时使用状态图；有重要数据变换或模型关系时使用数据流图或实体关系图
+    - refactor 补 before/after，bug 补故障传播与修复后路径，feat 补用户入口到结果的完整路径
+  presentationRules:
+    - 先图后文；每张图紧邻标题、图例和一段“这张图说明什么”
+    - 节点先写人类可读名称，ID、method、path、事件名和 Registry ID 作为次级细节保留
+    - 大图按场景或边界拆分，避免微小字号、线条交叉和把整份 Markdown 塞进单张图
+    - 正文讲设计思路与因果关系；Packet schema、Review Log、Registry 全表和 Agent 工作流信息降到附录
+```
+
+图表不是装饰：只要源文档中存在对应关系，就必须生成适合页面阅读的 DOM / SVG / Mermaid 图；文字说明不能代替应有的图。不得为了视觉效果新增设计结论、隐藏失败路径或丢失规范性 ID。
+
 渲染不得改规范性 Markdown。成功必须得到并持久化标准 receipt：
 
 ```text

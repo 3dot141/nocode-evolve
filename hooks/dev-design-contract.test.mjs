@@ -140,6 +140,25 @@ test("render delegates to open-design and persists a non-normative receipt", asy
   assert.doesNotMatch(coordinator, /create_project|start_run|get_run|get_artifact/);
 });
 
+test("technical design render explains the design to humans with development diagrams", async () => {
+  const [coordinator, render] = await Promise.all([
+    read("skills/dev-design/SKILL.md"),
+    read("skills/references/doc-render.md"),
+  ]);
+
+  assert.match(coordinator, /documentType:\s*technical-design/);
+  assert.match(coordinator, /audience:\s*human/);
+  assert.match(coordinator, /不是.*Agent prompt/);
+  for (const diagram of ["流程图", "架构图", "时序图", "状态图"]) {
+    assert.match(coordinator, new RegExp(diagram));
+    assert.match(render, new RegExp(diagram));
+  }
+  assert.match(coordinator, /一屏摘要[\s\S]*端到端主流程[\s\S]*系统边界[\s\S]*关键场景/);
+  assert.match(render, /humanReadabilityChecked/);
+  assert.match(render, /missingDiagrams/);
+  assert.match(render, /图表缺失[\s\S]*render 失败/);
+});
+
 test("DDD guidance treats service boundaries as signals and permits multiple aggregates", async () => {
   const [principles, ddd] = await Promise.all([
     read("skills/dev-design/writing/references/writing-principles.md"),
