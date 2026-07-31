@@ -37,6 +37,7 @@ designDigest: sha256:...
 | Observability | `LOG-1` / `METRIC-1` / `ALERT-1` |
 | Cross-cutting | `SEC-1` / `PERF-1` / `IDEM-1` |
 | Migration / Eval / Test | `MIG-1` / `EVAL-1` / `TO-1` |
+| Source comment | `COMMENT-1` |
 | Gate | `GATE-1` |
 
 ID 一旦分配不可因排序重排或复用。每个规范性来源在正文有稳定 `sourceAnchor`：

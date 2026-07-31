@@ -2,6 +2,8 @@
 
 每轴的具体检查点 + 好/坏代码对比。评审时逐轴过 diff，不跳轴。
 
+可读性轴涉及源码注释时 Read `{QODER_PLUGIN_ROOT}/skills/references/source-comment-contract.md`；以“代码外知识是否会丢失”为判据，不以注释数量判好坏。
+
 ---
 
 ## 轴 1：正确性（Correctness）
@@ -54,7 +56,10 @@ await db.account.update({
 - **结构**：嵌套 > 3 层？早返回能不能拍平？长函数能不能拆？
 - **复杂度**：一个函数同时做了几件事？圈复杂度爆炸？
 - **dead code**：注释掉的代码块、永远走不到的分支、没人调的函数？
-- **魔法值**：散落的数字 / 字符串字面量该不该提成常量？
+- **魔法值**：散落的数字 / 字符串字面量该不该提成常量？非显然取值是否保留了来源和变更条件？
+- **why-comment 覆盖**：顺序不变量、外部契约、失败语义、兼容或删除条件、workaround 根因是否只存在于作者脑中？
+- **注释可信度**：既有注释是否仍与代码、版本和失效条件一致？过期注释按实际风险报 finding。
+- **注释噪音**：是否用注释掩盖含糊命名或复杂结构，或逐行复述代码？零注释本身不是 finding。
 
 ```ts
 // BAD: 嵌套深 + 命名空泛
@@ -74,6 +79,18 @@ function getActiveUserName(record: Record | null): string | null {
   if (!record?.user?.active) return null;
   return record.user.name;
 }
+```
+
+```ts
+// BAD: 只翻译语法，真正的顺序约束仍然丢失
+// 发布失效事件
+await publishInvalidation(key);
+localCache.delete(key);
+
+// GOOD: 保存代码无法表达的失败原因
+// 先通知远端再删本地；反序会让远端 worker 在窗口期回填旧值。
+await publishInvalidation(key);
+localCache.delete(key);
 ```
 
 ---

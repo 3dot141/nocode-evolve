@@ -7,7 +7,7 @@ description: Use to implement confirmed tasks, resume coding, or enter devflow B
 
 Build 是编排入口：读 Plan 阶段用户选定的 `Execution` 字段，走对应的执行协议——`subagent-lite`（顺序派发 implementer，仅风险 task 派审查）、`subagent-full`（per-task spec review + checkpoint 批量 quality review）或 `executing`（主 agent 自己顺序执行 plan 已写代码）。Build skill 本身只负责 devflow 阶段编排（Enter/Exit Gate、里程碑、硬交接），具体执行细节在对应 reference 文件里。
 
-进入 Build 时 Read `{QODER_PLUGIN_ROOT}/skills/references/design-traceability.md`。Plan 的 `designRevision` / `designDigest` 是不可变基线，`designCovers` 是已确认 task scope 的一部分：执行方只能实现并回报，不能自行更换基线或 Design ID。
+进入 Build 时 Read `{QODER_PLUGIN_ROOT}/skills/references/design-traceability.md` 与 `{QODER_PLUGIN_ROOT}/skills/references/source-comment-contract.md`。Plan 的 `designRevision` / `designDigest` 是不可变基线，`designCovers` 是已确认 task scope 的一部分：执行方只能实现并回报，不能自行更换基线或 Design ID。
 
 ## 非本 skill 请求
 
@@ -79,7 +79,7 @@ Verify handoff 使用 `Skill(nocode:dev-verify)`。
 
 不管走的是哪条协议，Build 收尾前都要独立验证（不信执行方自报）：
 
-1. **独立查 diff**：Read 改动的文件，确认 scope 未越界
+1. **独立查 diff**：Read 改动的文件，确认 scope 未越界；按 Source Comment Contract 检查非平凡逻辑的 why-comment、过期注释和语法旁白，生成物只检查其单一源码 / 模板 / 编译器，不手改发布物
 2. **独立跑测试**：跑完整测试套件，不只依赖执行方的测试输出
 3. **spec 核对（抽查）**：`subagent-lite/full` 协议下抽查 1-2 个 task 的 spec reviewer 判断是否站得住（lite 档跳过审查的 task 优先抽）；`executing` 协议下抽查 1-2 个 task 的实现是否匹配 plan 声明的验收标准
 4. **空壳扫描（确定性脚本，非 LLM 判断）**：用 grep/AST 模式匹配扫全量 diff——空函数体、placeholder 注释（`// TODO`、`// implement`）、`throw new Error('not implemented')`、只有类型签名没有逻辑的方法。lint + typecheck 通过不代表功能完整，空函数合法但无用。发现空壳 → 视为 task 未完成，重新处理
@@ -107,6 +107,7 @@ Verify handoff 使用 `Skill(nocode:dev-verify)`。
 - [ ] 零空壳：无空函数体、无 TODO/implement placeholder、无 `throw not implemented`
 - [ ] 全部测试通过（整个相关套件，不只新写的）
 - [ ] build 通过
+- [ ] Source Comment Contract 已通过：必要理由未丢失、既有注释未过期、无为凑数量添加的语法旁白
 - [ ] 统一 commit 已完成
 - [ ] 后续 Verify 可开始
 - [ ] **硬交接**：Exit Gate 全部通过后，向用户报告 Build 完成（含完成 task 数 + 测试通过状态 + build 状态 + 各 task 审查覆盖情况——spec/quality 已审或 lite 跳过，供 Review 阶段决定增量/全量），建议下一阶段：Verify（`nocode:dev-verify`）。列出 Verify 阶段的 sub-steps + 关键决策（devflow Step 5 格式）。等用户拍板，不自行进入下一阶段

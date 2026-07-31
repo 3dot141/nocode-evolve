@@ -164,7 +164,7 @@ replan:
 3. Implementation Item Registry
 4. 非阻塞 Open Questions 与风险
 
-Registry 收集 Q / BF / API / DATA / LOG / METRIC / ALERT / SEC / PERF / MIG / IDEM / EVAL / TO / GATE 等规范性项。每项包含：
+Registry 收集 Q / BF / API / DATA / LOG / METRIC / ALERT / SEC / PERF / MIG / IDEM / EVAL / TO / GATE / COMMENT 等规范性项。每项包含：
 
 ```yaml
 id: string
@@ -175,6 +175,8 @@ decisionRefs: []
 verification: string
 deferOrNaEvidence: string | null
 ```
+
+当设计依赖代码无法表达的顺序不变量、外部契约、失败语义、兼容 / sunset 条件、magic value 来源或 workaround 删除条件时，Read `${PLUGIN_ROOT}/skills/references/source-comment-contract.md`，为需要在源码保留的理由登记 `COMMENT-*`。Registry 记录应保存的知识、来源与变更 / 删除条件，不预写具体代码注释；理由能由命名、类型或结构完整表达时不登记，不按文件数量批量制造 COMMENT 项。
 
 来源章节在对应规范性段落前写稳定锚点，例如：
 

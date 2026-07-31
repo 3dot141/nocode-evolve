@@ -32,7 +32,8 @@ Build 编排者在组装 implementer prompt 时注入本文件内容。这些纪
 
 最少代码让测试变绿。不多写一行未被测试覆盖的逻辑。
 Feature flags 包裹未完成功能。新功能默认关闭。
-**代码注释不搬运设计文档专用缩写**（BF1/BF2、Q1/Q2 等编号记号只在设计文档里做交叉引用用，进代码库对读者是噪音）——用自然语言说清楚这行/这段做什么。
+
+**源码注释契约**：Read `${PLUGIN_ROOT}/skills/references/source-comment-contract.md`。先用命名、类型和结构表达能表达的内容；代码无法表达的顺序不变量、外部契约、失败语义、兼容或删除条件、magic value 来源必须写 why-comment。不得用“测试已绿 / 代码自解释 / 赶时间”省略这些理由，也不写逐行翻译语法的旁白。代码注释不搬运 BF1/BF2、Q1/Q2 等设计文档编号。生成物不手改，理由落在单一源码、模板或编译器。
 
 ## Verify & Commit
 
@@ -41,6 +42,8 @@ commit message 说清 what + why。
 **同一命令成功后不重复跑**——成功跑过的验证命令在代码未变前不要再跑。
 
 **空壳自检**（commit 前必做）：检查本 task 产出的每个函数/方法是否有真实逻辑。空函数体、`throw new Error('not implemented')`、placeholder 注释（`// TODO`、`// implement later`）都算未完成——lint 和 typecheck 不管这些，但 spec review 会拦。发现空壳 → 填充完再 commit，或报 BLOCKED 说明为什么无法实现。
+
+**注释契约自检**：逐个检查本 task 改动的非平凡逻辑；必要 why-comment 缺失或既有注释已过期都要先修。没有隐藏理由时明确判定 `N/A`，不为通过检查制造“这行做什么”的注释。
 
 ## 偏差分级处置
 
