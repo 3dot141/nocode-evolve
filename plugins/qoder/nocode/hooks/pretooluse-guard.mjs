@@ -31,6 +31,7 @@ function failureHit(hit, detail) {
 export function executeRuleChecks(hits, {
   cwd = process.cwd(),
   spawnSync = nodeSpawnSync,
+  sessionId = '',
 } = {}) {
   const checkedRules = new Set();
   const remainingHits = [];
@@ -54,9 +55,11 @@ export function executeRuleChecks(hits, {
 
     let result;
     try {
+      const args = [FRESHNESS_SCRIPT, '--max-behind=5', '--ttl=7200'];
+      if (sessionId) args.push(`--session=${sessionId}`);
       result = spawnSync(
         process.execPath,
-        [FRESHNESS_SCRIPT, '--max-behind=5', '--ttl=7200'],
+        args,
         { cwd, encoding: 'utf8' },
       );
     } catch (error) {
@@ -115,7 +118,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     }
   }
 
-  const out = decide(hits, detectPlatform(), { cwd: payload.cwd || process.cwd() });
+  const out = decide(hits, detectPlatform(), { cwd: payload.cwd || process.cwd(), sessionId: payload.session_id || '' });
   if (out) process.stdout.write(JSON.stringify(out));
   process.exit(0);
 }

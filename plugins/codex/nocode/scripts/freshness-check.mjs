@@ -1,9 +1,11 @@
 #!/usr/bin/env node
 // 检查当前分支与 base 分支 (upstream / origin/HEAD) 的 freshness, 输出 JSON + exit code.
-// 用法: node "${CLAUDE_PLUGIN_ROOT}/scripts/freshness-check.mjs" [--max-behind=5] [--ttl=7200]
+// 用法: node "${CLAUDE_PLUGIN_ROOT}/scripts/freshness-check.mjs" [--max-behind=5] [--ttl=7200] [--gate-ttl=1800] [--session=<id>]
 //   --max-behind: behind 阈值 >= 此值 gate (默认 5)
-//   --ttl:       cache TTL 秒数 (默认 7200 = 2h)
-// 输出 stdout JSON: { branch, base, behind, ahead, age_seconds, cache_hit, cold_start, gate, message }
+//   --ttl:       fetch cache TTL 秒数 (默认 7200 = 2h)
+//   --gate-ttl:  gate 节流窗口秒数 (默认 1800 = 30min); 窗口内同会话重复命中 gate 条件 → 降级放行
+//   --session:   会话 ID (缺省读 NOCODE_SESSION_ID env; 都没有 → worktree 级节流)
+// 输出 stdout JSON: { branch, base, behind, ahead, age_seconds, cache_hit, cold_start, gate, gate_suppressed, message }
 // exit 0 = ok / exit 2 = gate (agent 应停手 + 三选). 离线 / fetch 失败: WARN + ok (不阻塞), 但冷启动除外 (见下).
 // cache 文件: git rev-parse --git-path nocode-freshness.json (worktree 独立, .git/ 内不会被 commit).
 //
@@ -20,8 +22,12 @@
 //      → eg. "origin/main"
 //   4) 兜底 "origin/main"
 //
-// cache 结构 (v2): { entries: { "<branch>\0<base>": { last_fetch_ms, behind, ahead } } }
+// cache 结构 (v2): { entries: { "<branch>\0<base>": { last_fetch_ms, behind, ahead, last_gate_ms?, gate_session? } } }
 //   旧 v1 格式 (顶层 branch/base) 读到即作废 → 视为无记录, 触发一次冷启动后写入新格式.
+//   last_gate_ms / gate_session: 最近一次实际 gate 的时刻与会话. gate 节流用——
+//   窗口 (--gate-ttl) 内再次命中 gate 条件时, 若调用方无 session 或 session 与记录一致 →
+//   降级为 ok (gate_suppressed=true), 避免同一会话被反复拦截. 宁多放行不少拦: 无 session 时
+//   任何新鲜 gate 记录都算数 (worktree 级节流). 离线冷启动无 entry 可写, 不参与节流 (仍每次拦).
 //
 // 设计: rules/rule-git-freshness.md, docs/dev/3dot141/260603-02-strategic-review-v3.4.0/strategic-review-v3.4.0.md (Batch 1 follow-up)
 import { execSync } from 'node:child_process';
@@ -29,6 +35,8 @@ import fs from 'node:fs';
 
 const MAX_BEHIND = parseInt(argFlag('--max-behind') || '5', 10);
 const TTL_SECONDS = parseInt(argFlag('--ttl') || '7200', 10);
+const GATE_TTL_SECONDS = parseInt(argFlag('--gate-ttl') || '1800', 10);
+const SESSION_ID = argFlag('--session') || process.env.NOCODE_SESSION_ID || '';
 
 function argFlag(name) {
   const a = process.argv.find((x) => x.startsWith(name + '='));
@@ -114,7 +122,7 @@ if (!cacheHit) {
     behind = parseInt(git(`rev-list --count HEAD..${base}`, true) || '0', 10);
     ahead = parseInt(git(`rev-list --count ${base}..HEAD`, true) || '0', 10);
     ageSeconds = 0;
-    store.entries[key] = { last_fetch_ms: now, behind, ahead };
+    store.entries[key] = { ...entry, last_fetch_ms: now, behind, ahead };
     writeCache(cp, store);
   } else if (entry) {
     // 离线: 用旧 entry (即使过期), 不阻塞
@@ -126,7 +134,22 @@ if (!cacheHit) {
 }
 
 const coldStart = !everChecked;
-const gate = coldStart || behind >= MAX_BEHIND ? 'gate' : 'ok';
+const wantGate = coldStart || behind >= MAX_BEHIND;
+
+// gate 节流: 窗口内已 gate 过 (且调用方无 session 或 session 匹配) → 降级放行.
+// 离线冷启动无 entry (lastGateMs=null) → 不参与节流, 维持「联网建立基线前每次拦」.
+const gateEntry = store.entries[key] || null;
+const lastGateMs = gateEntry?.last_gate_ms ?? null;
+const gateFresh = lastGateMs != null && (now - lastGateMs) < GATE_TTL_SECONDS * 1000;
+const gateSameScope = !SESSION_ID || !gateEntry?.gate_session || gateEntry.gate_session === SESSION_ID;
+const gateSuppressed = wantGate && gateFresh && gateSameScope;
+const gate = wantGate && !gateSuppressed ? 'gate' : 'ok';
+
+if (gate === 'gate' && gateEntry) {
+  gateEntry.last_gate_ms = now;
+  gateEntry.gate_session = SESSION_ID;
+  writeCache(cp, store);
+}
 
 const choices = '三选: a) pull --rebase 后继续 (推荐, 防过时方案; ahead>0 可能冲突) b) 接受当前状态继续 (你签 off 落后可能影响判断) c) 跳过 (取消本次动作)';
 let reason;
@@ -139,7 +162,9 @@ if (coldStart) {
 }
 const message = gate === 'gate'
   ? `${reason}. ${choices}`
-  : `freshness ok (behind=${behind}, ahead=${ahead}, age=${ageSeconds}s, cache=${cacheHit ? 'hit' : 'miss'}${fetchWarn ? `, ${fetchWarn}` : ''})`;
+  : gateSuppressed
+    ? `freshness ok (gate 抑制: ${GATE_TTL_SECONDS}s 窗口内已 gate 过, 本次放行; 原触发: ${reason})`
+    : `freshness ok (behind=${behind}, ahead=${ahead}, age=${ageSeconds}s, cache=${cacheHit ? 'hit' : 'miss'}${fetchWarn ? `, ${fetchWarn}` : ''})`;
 
-console.log(JSON.stringify({ branch, base, behind, ahead, age_seconds: ageSeconds, cache_hit: cacheHit, cold_start: coldStart, gate, message }, null, 2));
+console.log(JSON.stringify({ branch, base, behind, ahead, age_seconds: ageSeconds, cache_hit: cacheHit, cold_start: coldStart, gate, gate_suppressed: gateSuppressed, message }, null, 2));
 process.exit(gate === 'gate' ? 2 : 0);
