@@ -1,6 +1,15 @@
 # 飞书项目工作项状态流转 (PR merge 后)
 
-PR merge 后把飞书 issue 从「组员开发」流转到「研发已改待BUILD」。适用一体化产研团队空间 (`67d7ba04296cba3d3ece0694`) 的 issue (缺陷) 类型工作项。
+PR merge 后把飞书 issue 从「组员开发」流转到目标状态。适用一体化产研团队空间 (`67d7ba04296cba3d3ece0694`) 的 issue (缺陷) 类型工作项。
+
+**目标状态按工作项类型定**（与 dev-land `post-merge.md` 的典型映射同一单源语义）：
+
+| 工作项类型 | 目标状态 |
+|---|---|
+| issue (缺陷) | 创建者验收 |
+| 其他类型 | 本文件不覆盖，停手报告 |
+
+> 历史变更：缺陷目标状态原为「研发已改待BUILD」，260806 起改为「创建者验收」。旧目标的已知值备查：transition.id `20862226`，state_key `zBCdJmDgv`。
 
 ## 触发
 
@@ -42,15 +51,15 @@ get_workitem_brief(work_item_id="<数字部分>", project_key="67d7ba04296cba3d3
 get_transitable_states(work_item_id, work_item_type="issue", user_key="<当前用户>", project_key)
 ```
 
-找 `state_name == "研发已改待BUILD"` 的 `transition.id` (已知值: `20862226`)。
+从返回中找 `state_name == 目标状态`（缺陷为「创建者验收」）的条目，**同时取两个值**：`transition.id`（步骤 5 用）和该 state 的 `state_key`（步骤 4 用）。两者都从响应动态读取，不硬编码；「创建者验收」的已知值在首次成功执行后补录到本文。
 
 ### 4. 填必填字段
 
 ```
-get_transition_required(work_item_id, state_key="zBCdJmDgv", project_key, mode="unfinished")
+get_transition_required(work_item_id, state_key="<步骤 3 取到的 state_key>", project_key, mode="unfinished")
 ```
 
-返回未完成的必填字段。常见 4 个:
+返回未完成的必填字段。「研发已改待BUILD」transition 的已知必填（历史记录，供备查）：
 
 | field_key | 字段名 | 关联类型 | 默认策略 |
 |---|---|---|---|
@@ -59,7 +68,7 @@ get_transition_required(work_item_id, state_key="zBCdJmDgv", project_key, mode="
 | `field_ecff7b` | 缺陷来源于缺陷 | issue | **默认填本 issue 自身 id(自关联)** |
 | `field_630746` | 缺陷来源于子任务 | sub_task | 通常留空 |
 
-**实操**: 一般只填 `field_ecff7b`(缺陷来源于缺陷)。若用户指定了源缺陷 id 则填指定值,否则自关联(填自身 work_item_id)。
+「创建者验收」transition 的必填项以 `get_transition_required` 实际返回为准——若同样要求「缺陷来源于缺陷」(`field_ecff7b`)，默认自关联（填自身 work_item_id）；用户指定了源缺陷 id 则填指定值。**不确定语义的字段留空并报告用户，不猜测填充。**
 
 ```
 update_field(
@@ -78,12 +87,12 @@ update_field(
 ### 5. 执行流转
 
 ```
-transition_state(work_item_id, transition_id="20862226", project_key)
+transition_state(work_item_id, transition_id="<步骤 3 取到的 transition.id>", project_key)
 ```
 
 ### 6. 确认
 
-流转后再 `get_workitem_brief` 确认 `work_item_status.name` == `研发已改待BUILD`。
+流转后再 `get_workitem_brief` 确认 `work_item_status.name` == 目标状态（缺陷为「创建者验收」）。
 
 ## 多任务批量
 

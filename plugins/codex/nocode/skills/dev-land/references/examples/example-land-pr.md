@@ -1,6 +1,6 @@
 # Example: PR 路径全景计划着陆（happy path 1 拦）
 
-场景：worktree 内分支 `feat/search-zh`，base=main（`nocode-base` 配置），GitHub 仓库，push range 3 个 commit，commit 带任务号 `#m-8f3k2`（当前状态「组员开发」）。用户说「提 PR」。
+场景：worktree 内分支 `feat/search-zh`，base=main（`nocode-base` 配置），GitHub 仓库，push range 3 个 commit，commit 带任务号 `#m-8f3k2`（缺陷，当前状态「组员开发」）。用户说「提 PR」。
 
 ---
 
@@ -12,7 +12,7 @@ Step 2 意图推定: 「提 PR」→ PR，不出菜单
 Step 3 tests: npm test → 42 passing ✅
 Step 4 材料收集: base=main(nocode-base) · push range 3 commits · 整理建议(1 个 wip 串)
        title/body(pr-body-contract) · Affected 3 文件 · reviewer=空(无 protection/CODEOWNERS)
-       任务号 #m-8f3k2 → Read post-merge.md → 推定目标状态「研发已改待BUILD」
+       任务号 #m-8f3k2 → Read post-merge.md → 推定目标状态「创建者验收」
        远程坐标: origin/feat/search-zh
 ```
 
@@ -26,7 +26,7 @@ Step 4 材料收集: base=main(nocode-base) · push range 3 commits · 整理建
   3. 合并方式      approve 后自动合并（默认）；pr-check 每 5min 查一次（定时进程存活期间）
   4. 合并后清理    worktree ~/AI/acme-search-feat-search-zh + 本地 branch feat/search-zh；
                    远程 origin/feat/search-zh: 删除（默认）
-  5. 合并后流转    #m-8f3k2: 组员开发 → 研发已改待BUILD
+  5. 合并后流转    #m-8f3k2: 组员开发 → 创建者验收
 
 --- body ---
 ## 背景
@@ -73,7 +73,7 @@ agent:       gh pr merge 142 --merge ✅
              a. git worktree remove + prune ✅
              b. git branch -D feat/search-zh ✅
              c. git push origin --delete feat/search-zh ✅（全景默认删）
-             d. Read post-merge.md → 平台原生 Skill 调用 → #m-8f3k2 流转「研发已改待BUILD」✅
+             d. Read post-merge.md → 平台原生 Skill 调用 → #m-8f3k2 流转「创建者验收」✅
              e. 通知用户 ✅
 ```
 
