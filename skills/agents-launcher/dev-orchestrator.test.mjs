@@ -120,9 +120,6 @@ function injectedRun({ argv = ['--workspace=ui', '--yes'] } = {}) {
     webApi: {
       writeEnv: () => calls.push(['writeEnv']),
     },
-    serverApi: {
-      validatePreparedDockerScript: () => '/tmp/docker-start.sh',
-    },
     tcpOpen: async () => true,
     httpOk: async () => true,
     pidOnPort: () => '1',

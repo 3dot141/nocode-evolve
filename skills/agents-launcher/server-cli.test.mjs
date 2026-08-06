@@ -80,7 +80,6 @@ test('infra: 将显式 serverDir 交给基础设施入口', async () => {
   const calls = [];
   const result = await infra({
     serverDir: '/srv/worktree',
-    dockerScriptPath: '/tmp/agents-launcher-docker-example.sh',
     env: { TEST_ENV: '1' },
     log: () => {},
     startInfraFn: async (opts) => {
@@ -90,7 +89,7 @@ test('infra: 将显式 serverDir 交给基础设施入口', async () => {
   });
   assert.equal(calls.length, 1);
   assert.equal(calls[0].serverDir, '/srv/worktree');
-  assert.equal(calls[0].dockerScriptPath, '/tmp/agents-launcher-docker-example.sh');
+  assert.equal('dockerScriptPath' in calls[0], false);
   assert.equal(calls[0].env.TEST_ENV, '1');
   assert.equal(result.esReady, true);
 });

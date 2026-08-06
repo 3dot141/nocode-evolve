@@ -3,20 +3,62 @@ import assert from 'node:assert/strict';
 import {
   existsSync,
   mkdtempSync,
-  realpathSync,
   writeFileSync,
 } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import {
-  runPreparedDockerStart,
+  resolveDockerProfile,
+  resolveDockerScript,
+  runFixedDockerStart,
   startInfra,
-  validatePreparedDockerScript,
   waitForEs,
   waitForInfraPorts,
 } from './infra.mjs';
 
 const noSleep = () => Promise.resolve();
+
+test('resolveDockerProfile: persist/release 映射到固定 profile，其它分支使用 dev', () => {
+  assert.equal(resolveDockerProfile({ branchName: 'persist' }), 'persist');
+  assert.equal(resolveDockerProfile({ branchName: 'feature/foo-persist-cache' }), 'persist');
+  assert.equal(resolveDockerProfile({ branchName: 'release' }), 'release');
+  assert.equal(resolveDockerProfile({ branchName: 'feature/release-fix' }), 'release');
+  assert.equal(resolveDockerProfile({ branchName: 'feature/foo' }), 'dev');
+  assert.equal(resolveDockerProfile({ branchName: 'feature/foo', env: { FX_DOCKER_PROFILE: 'release' } }), 'release');
+});
+
+test('resolveDockerScript: 从目标 server worktree branch 选择已发布固定脚本', () => {
+  const result = resolveDockerScript({
+    serverDir: '/server',
+    exec: () => 'persist\n',
+  });
+  assert.equal(result.branchName, 'persist');
+  assert.equal(result.profile, 'persist');
+  assert.match(result.scriptPath, /skills\/agents-launcher\/docker\/persist\.sh$/);
+});
+
+test('runFixedDockerStart: 只校验并执行固定脚本，不删除脚本', () => {
+  const tempRoot = mkdtempSync(join(tmpdir(), 'infra-run-'));
+  const scriptPath = join(tempRoot, 'fixed.sh');
+  writeFileSync(scriptPath, '#!/bin/bash\n');
+  const calls = [];
+  const result = runFixedDockerStart({
+    serverDir: '/srv',
+    scriptPath,
+    exec: (command, args, options) => {
+      calls.push({ command, args, options });
+      return '';
+    },
+    log: () => {},
+  });
+  assert.deepEqual(calls.map(({ command, args }) => [command, args]), [
+    ['bash', ['-n', scriptPath]],
+    ['bash', [scriptPath]],
+  ]);
+  assert.ok(calls.every(({ options }) => options.cwd === '/srv'));
+  assert.equal(result.scriptPath, scriptPath);
+  assert.equal(existsSync(scriptPath), true);
+});
 
 test('waitForEs: 第二次探测 status=yellow 返回 true', async () => {
   let n = 0;
@@ -38,97 +80,29 @@ test('waitForInfraPorts: 等到 pg 和 minio 同时就绪', async () => {
   assert.equal(await waitForInfraPorts({ tcpCheck, maxRetries: 3, sleep: noSleep }), true);
 });
 
-test('validatePreparedDockerScript: 只接受系统临时目录内约定命名的脚本', () => {
-  const tempRoot = mkdtempSync(join(tmpdir(), 'infra-test-'));
-  const scriptPath = join(tempRoot, 'agents-launcher-docker-example.sh');
-  const invalidScriptPath = join(tempRoot, 'dockerstart.sh');
-  writeFileSync(scriptPath, '#!/bin/bash\n');
-  writeFileSync(invalidScriptPath, '#!/bin/bash\n');
-  const resolvedScriptPath = realpathSync(scriptPath);
-
-  assert.equal(validatePreparedDockerScript({ scriptPath }), resolvedScriptPath);
-  assert.throws(
-    () => validatePreparedDockerScript({ scriptPath: invalidScriptPath }),
-    /名称必须以/,
-  );
-  assert.throws(
-    () => validatePreparedDockerScript({ scriptPath: '' }),
-    /FX_DOCKER_START_SCRIPT 未设置/,
-  );
-});
-
-test('runPreparedDockerStart: 先校验语法、再执行，并始终删除临时脚本', () => {
-  const tempRoot = mkdtempSync(join(tmpdir(), 'infra-run-'));
-  const scriptPath = join(tempRoot, 'agents-launcher-docker-example.sh');
-  writeFileSync(scriptPath, '#!/bin/bash\n');
-  const resolvedScriptPath = realpathSync(scriptPath);
+test('startInfra: 固定脚本执行后做健康检查和收尾', async () => {
   const calls = [];
-
-  const result = runPreparedDockerStart({
-    serverDir: '/srv',
-    scriptPath,
-    exec: (command, args, options) => {
-      calls.push({ command, args, options });
+  const result = await startInfra({
+    exec: (cmd, args) => {
+      const s = args?.[1] || '';
+      calls.push(s);
+      if (s.includes('rabbitmqadmin') && s.includes('list queues')) return '';
       return '';
     },
-    log: () => {},
-  });
-
-  assert.deepEqual(calls.map(({ command, args }) => [command, args]), [
-    ['bash', ['-n', resolvedScriptPath]],
-    ['bash', [resolvedScriptPath]],
-  ]);
-  assert.ok(calls.every(({ options }) => options.cwd === '/srv'));
-  assert.equal(result.scriptPath, resolvedScriptPath);
-  assert.equal(existsSync(scriptPath), false);
-});
-
-test('runPreparedDockerStart: 脚本执行失败也删除临时文件', () => {
-  const tempRoot = mkdtempSync(join(tmpdir(), 'infra-fail-'));
-  const scriptPath = join(tempRoot, 'agents-launcher-docker-example.sh');
-  writeFileSync(scriptPath, '#!/bin/bash\n');
-
-  assert.throws(
-    () => runPreparedDockerStart({
-      serverDir: '/srv',
-      scriptPath,
-      exec: (_command, args) => {
-        if (!args.includes('-n')) throw new Error('docker failed');
-        return '';
-      },
-      log: () => {},
-    }),
-    /docker failed/,
-  );
-  assert.equal(existsSync(scriptPath), false);
-});
-
-test('startInfra: 每次先运行 Agent 提供的临时脚本，再做健康检查和收尾', async () => {
-  const calls = [];
-  const mockExec = (cmd, args) => {
-    const s = args?.[1] || '';
-    calls.push(s);
-    if (s.includes('rabbitmqadmin') && s.includes('list queues')) return '';
-    return '';
-  };
-  let scriptRuns = 0;
-  const result = await startInfra({
-    exec: mockExec,
     fetchFn: async () => ({ json: async () => ({ status: 'green' }) }),
     tcpCheck: async () => true,
     runDocker: ({ serverDir, scriptPath }) => {
-      scriptRuns++;
       assert.equal(serverDir, '/srv');
-      assert.equal(scriptPath, '/tmp/agents-launcher-docker-example.sh');
+      assert.match(scriptPath, /skills\/agents-launcher\/docker\/persist\.sh$/);
       return { scriptPath };
     },
     sleep: noSleep,
     log: () => {},
     serverDir: '/srv',
-    dockerScriptPath: '/tmp/agents-launcher-docker-example.sh',
+    env: { FX_DOCKER_PROFILE: 'persist' },
+    portRetries: 1,
   });
-
-  assert.equal(scriptRuns, 1);
+  assert.equal(result.profile, 'persist');
   assert.equal(result.portsReady, true);
   assert.equal(result.esReady, true);
   assert.ok(calls.some((c) => c.includes('rabbitmqadmin')));
@@ -141,11 +115,11 @@ test('startInfra: 健康检查失败时 fail loud，不执行收尾', async () =
       exec: (_cmd, args) => { calls.push(args?.[1] || ''); return ''; },
       fetchFn: async () => ({ json: async () => ({ status: 'green' }) }),
       tcpCheck: async () => false,
-      runDocker: () => ({ scriptPath: '/tmp/agents-launcher-docker-example.sh' }),
+      runDocker: () => ({ scriptPath: '/fixed.sh' }),
       sleep: noSleep,
       log: () => {},
       serverDir: '/srv',
-      dockerScriptPath: '/tmp/agents-launcher-docker-example.sh',
+      dockerScriptPath: '/fixed.sh',
       portRetries: 2,
     }),
     /PostgreSQL.*MinIO.*未就绪/,

@@ -69,7 +69,6 @@ launcher 位于插件目录，不能从自身位置推断 fx 仓。每次启动�
 | `FX_AGENTS_DIR` | fx-data-agents 主仓或目标 worktree |
 | `FX_WEB_DIR` | fx-data-web 主仓或目标 worktree |
 | `FX_SERVER_DIR` | fx-data-server 主仓或目标 worktree，仅 server 域需要 |
-| `FX_DOCKER_START_SCRIPT` | Agent 生成的临时 Docker 脚本，仅 Docker 域需要 |
 
 `${PLUGIN_ROOT}` 是文档占位符。构造命令时替换成当前插件根的真实绝对路径，不把占位符原样交给 shell。
 
@@ -111,7 +110,7 @@ launcher 位于插件目录，不能从自身位置推断 fx 仓。每次启动�
 
 按依赖顺序调用各域文档：
 
-1. server 域准备 Docker/Spring；需要 Docker 时先由 Agent 生成临时脚本。
+1. server 域准备 Docker/Spring；需要 Docker 时由 launcher 按 server 分支选择固定脚本。
 2. agents 域准备配置与本地服务。
 3. web 域准备 `.env.local`、包管理器和跨仓指向。
 
@@ -144,12 +143,6 @@ node <插件根>/skills/agents-launcher/dev-orchestrator.mjs \
 
 ```bash
 FX_SERVER_DIR=<server 路径>
-```
-
-涉及 Docker 时再追加：
-
-```bash
-FX_DOCKER_START_SCRIPT=<server.md 生成的临时脚本>
 ```
 
 launcher 是长驻进程，必须后台启动并记录 task/session ID。禁止绕过 launcher 直接运行 `pnpm dev:server`。

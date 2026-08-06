@@ -51,7 +51,6 @@ export function createServiceAdapters({
       async start() {
         await services.server.infra({
           serverDir: repos.SERVER_DIR,
-          dockerScriptPath: options.dockerScriptPath,
         });
         return { handles: [] };
       },

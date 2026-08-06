@@ -1,73 +1,56 @@
 import { execFileSync } from 'node:child_process';
 import {
   existsSync,
-  realpathSync,
-  rmSync,
   statSync,
 } from 'node:fs';
-import { basename, isAbsolute, relative } from 'node:path';
-import { tmpdir } from 'node:os';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { tcpOpen } from '../probe.mjs';
 
 const realSleep = (ms) => new Promise((r) => setTimeout(r, ms));
-const GENERATED_SCRIPT_PREFIX = 'agents-launcher-docker-';
+const DOCKER_SCRIPT_DIR = dirname(dirname(dirname(fileURLToPath(import.meta.url))));
+const DOCKER_SCRIPTS = Object.freeze({
+  persist: join(DOCKER_SCRIPT_DIR, 'docker', 'persist.sh'),
+  release: join(DOCKER_SCRIPT_DIR, 'docker', 'release.sh'),
+  dev: join(DOCKER_SCRIPT_DIR, 'docker', 'dev.sh'),
+});
 
-export function validatePreparedDockerScript({
-  scriptPath,
-  exists = existsSync,
-  realpath = realpathSync,
-  stat = statSync,
-  tempDir = tmpdir(),
-} = {}) {
-  if (!scriptPath) {
-    throw new Error('FX_DOCKER_START_SCRIPT 未设置：请先按 references/server.md 读取 dockerstart.sh 并生成临时脚本');
-  }
-  if (!exists(scriptPath)) {
-    throw new Error(`Agent 生成的 Docker 临时脚本不存在: ${scriptPath}`);
-  }
-
-  const resolvedScriptPath = realpath(scriptPath);
-  if (!stat(resolvedScriptPath).isFile()) {
-    throw new Error(`Docker 临时脚本不是普通文件: ${resolvedScriptPath}`);
-  }
-  const resolvedTempDir = realpath(tempDir);
-  const relativePath = relative(resolvedTempDir, resolvedScriptPath);
-  if (!relativePath || relativePath === '..' || relativePath.startsWith(`..${process.platform === 'win32' ? '\\' : '/'}`) || isAbsolute(relativePath)) {
-    throw new Error(`Docker 启动脚本必须位于系统临时目录: ${resolvedScriptPath}`);
-  }
-
-  const filename = basename(resolvedScriptPath);
-  if (!filename.startsWith(GENERATED_SCRIPT_PREFIX)) {
-    throw new Error(`Docker 临时脚本名称必须以 ${GENERATED_SCRIPT_PREFIX} 开头: ${filename}`);
-  }
-  return resolvedScriptPath;
+export function resolveDockerProfile({ branchName, env = process.env } = {}) {
+  const explicit = env.FX_DOCKER_PROFILE;
+  if (explicit && Object.hasOwn(DOCKER_SCRIPTS, explicit)) return explicit;
+  const branch = String(branchName || '').toLowerCase();
+  if (branch.includes('persist')) return 'persist';
+  if (branch.includes('release')) return 'release';
+  return 'dev';
 }
 
-export function runPreparedDockerStart({
+export function resolveDockerScript({ serverDir, exec = execFileSync, env = process.env } = {}) {
+  const branchName = String(exec('git', ['branch', '--show-current'], {
+    cwd: serverDir,
+    encoding: 'utf8',
+  })).trim();
+  const profile = resolveDockerProfile({ branchName, env });
+  const scriptPath = DOCKER_SCRIPTS[profile];
+  if (!existsSync(scriptPath) || !statSync(scriptPath).isFile()) {
+    throw new Error(`固定 Docker 启动脚本不存在: ${scriptPath}`);
+  }
+  return { branchName, profile, scriptPath };
+}
+
+export function runFixedDockerStart({
   serverDir,
   scriptPath,
-  exec = execFileSync,
   env = process.env,
+  exec = execFileSync,
   log = console.log,
-  remove = rmSync,
 } = {}) {
-  const resolvedScriptPath = validatePreparedDockerScript({ scriptPath });
-  try {
-    exec('bash', ['-n', resolvedScriptPath], {
-      cwd: serverDir,
-      env,
-      stdio: 'inherit',
-    });
-    log(`[infra] 执行 Agent 生成的临时 Docker 脚本: ${resolvedScriptPath}`);
-    exec('bash', [resolvedScriptPath], {
-      cwd: serverDir,
-      env,
-      stdio: 'inherit',
-    });
-    return { scriptPath: resolvedScriptPath };
-  } finally {
-    remove(resolvedScriptPath, { force: true });
+  if (!scriptPath || !existsSync(scriptPath) || !statSync(scriptPath).isFile()) {
+    throw new Error(`固定 Docker 启动脚本不存在: ${scriptPath || '(未解析)'}`);
   }
+  exec('bash', ['-n', scriptPath], { cwd: serverDir, env, stdio: 'inherit' });
+  log(`[infra] 执行固定 Docker 脚本: ${scriptPath}`);
+  exec('bash', [scriptPath], { cwd: serverDir, env, stdio: 'inherit' });
+  return { scriptPath };
 }
 
 export async function waitForEs({ fetchFn = fetch, maxRetries = 30, intervalMs = 2000, sleep = realSleep } = {}) {
@@ -131,7 +114,7 @@ export async function startInfra({
   exec = execFileSync,
   fetchFn = fetch,
   tcpCheck = tcpOpen,
-  runDocker = runPreparedDockerStart,
+  runDocker = runFixedDockerStart,
   env = process.env,
   sleep = realSleep,
   log = console.log,
@@ -140,9 +123,12 @@ export async function startInfra({
   portRetries = 60,
   esRetries = 30,
 } = {}) {
+  const resolved = dockerScriptPath
+    ? { profile: 'custom', branchName: '', scriptPath: dockerScriptPath }
+    : resolveDockerScript({ serverDir, exec, env });
   const docker = runDocker({
     serverDir,
-    scriptPath: dockerScriptPath,
+    scriptPath: resolved.scriptPath,
     exec,
     env,
     log,
@@ -168,5 +154,5 @@ export async function startInfra({
   ensureRabbitmqQueues({ exec });
   fixDbPermissions({ exec, dbUser: env.DB_USERNAME });
   disableEsDiskThreshold({ exec });
-  return { docker, portsReady, esReady };
+  return { docker, profile: resolved.profile, branchName: resolved.branchName, portsReady, esReady };
 }

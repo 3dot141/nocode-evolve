@@ -96,13 +96,6 @@ async function runPreflight({
     }
   }
 
-  let dockerScriptPath = env.FX_DOCKER_START_SCRIPT;
-  if (selected.has('docker')) {
-    dockerScriptPath = deps.serverApi.validatePreparedDockerScript({
-      scriptPath: dockerScriptPath,
-    });
-  }
-
   const relevant = [
     'AGENTS_DIR',
     ...(selected.has('web') ? ['WEB_DIR'] : []),
@@ -113,7 +106,7 @@ async function runPreflight({
     const confirmed = await deps.confirm(
       '[debug] 以上路径含自动解析项（[auto]）。确认按此继续? (y/N) ',
     );
-    if (!confirmed) return { cancelled: true, dockerScriptPath };
+    if (!confirmed) return { cancelled: true };
   }
 
   if (selected.has('web')) {
@@ -136,7 +129,7 @@ async function runPreflight({
       );
     }
   }
-  return { cancelled: false, dockerScriptPath };
+  return { cancelled: false };
 }
 
 export function installSignalHandlers({
@@ -270,7 +263,7 @@ export async function runLauncher({
   const adapters = deps.createServiceAdapters({
     repos,
     ports: PORTS,
-    options: { dockerScriptPath: preflight.dockerScriptPath },
+    options: {},
     services: {
       agents: deps.agentsApi,
       server: deps.serverApi,

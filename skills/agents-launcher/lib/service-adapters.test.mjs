@@ -37,7 +37,7 @@ function fixture({ runCode = 0 } = {}) {
   const adapters = createServiceAdapters({
     repos: { AGENTS_DIR: '/agents', WEB_DIR: '/web', SERVER_DIR: '/server' },
     ports: { agents: 8070, server: 8081, web: 10001 },
-    options: { dockerScriptPath: '/tmp/docker-start.sh' },
+    options: {},
     services,
     io,
   });
