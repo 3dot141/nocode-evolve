@@ -239,7 +239,7 @@ PR body 按 `references/pr-body-contract.md` 的生产改动回链结构追加 R
 合并后按上方平台语法调用 lark-project，传入 request/stage/restate/artifacts/constraints/decision，把任务流转到全景计划定好的目标状态。连接器不可用时明确报告缺失能力，不伪造完成。详见 `references/post-merge.md`。
 
 - 前置：有任务号 + FeishuProjectMcp 可用。不满足 → 跳过，报告原因
-- 典型映射：缺陷（issue）`组员开发 → 创建者验收`；任务类 `组员开发 → 研发已改待BUILD`
+- 典型映射：缺陷/任务类 `组员开发 → 创建者验收`
 
 ---
 
