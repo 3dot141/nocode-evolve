@@ -12,8 +12,9 @@
     ▼
 领域判断（平台无关）
     │
-    ├── Claude codec → deny / additionalContext / Stop decision
-    └── Codex codec  → systemMessage / unsupported lifecycle fallback
+    └── 平台 codec → PreToolUse deny / additionalContext
+                    ├── Claude SessionStart / Stop decision
+                    └── Codex systemMessage / lifecycle fallback
 ```
 
 ## 关键文件
@@ -40,7 +41,7 @@ Claude：
 Codex：
 
 - SessionStart 返回 `systemMessage`。
-- PreToolUse 使用完全相同的领域判断，但当前 Hook 输出能力不能表达 Claude 的硬 `deny`。block 命中时输出带“当前 Codex Hook 无法硬阻断，请不要执行”的 `systemMessage`，明确 fail-open，不伪造拦截成功。
+- PreToolUse 与 Claude 使用相同的标准输出：block 规则返回 `permissionDecision: deny`，inject 规则返回 `additionalContext`。
 - 与 Claude 使用相同的有效 hook 链和发布过滤；adapter 把所有插件内命令改写为带引号的 `${PLUGIN_ROOT}` 绝对路径。
 
 平台默认由运行时环境识别：`NOCODE_PLATFORM` 可显式指定；否则存在 `PLUGIN_ROOT` 时视为 Codex，回退为 Claude。生成的 Codex Hook 命令使用 `${PLUGIN_ROOT}`，Claude 使用 `${CLAUDE_PLUGIN_ROOT}`。业务状态脚本只读取 `NOCODE_PLUGIN_DATA`；映射只发生在 `runtime/plugin-data-entry.mjs`。

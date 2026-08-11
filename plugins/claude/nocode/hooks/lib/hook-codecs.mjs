@@ -8,12 +8,8 @@ export function detectPlatform(env = process.env) {
 
 export function encodePretoolDecision(decision, platform) {
   if (!decision) return null;
-  if (platform === 'codex') {
-    const prefix = decision.effect === 'deny'
-      ? '[nocode 安全规则：当前 Codex Hook 无法硬阻断，请不要执行] '
-      : '[nocode 规则提醒] ';
-    return { systemMessage: `${prefix}${decision.context}` };
-  }
+  // All supported platforms accept this PreToolUse schema. A systemMessage fallback
+  // would turn deny into an advisory warning and make safety gates fail open.
   if (decision.effect === 'deny') {
     return {
       hookSpecificOutput: {

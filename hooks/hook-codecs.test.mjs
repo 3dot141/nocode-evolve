@@ -38,20 +38,27 @@ test('detectPlatform prefers explicit override, then Codex PLUGIN_ROOT', () => {
   assert.equal(detectPlatform({ CLAUDE_PLUGIN_ROOT: '/plugin' }), 'claude');
 });
 
-test('Claude and Codex pretool codecs emit only supported fields', () => {
+test('Claude and Codex pretool codecs emit the same supported decisions', () => {
   const deny = decidePretool([RULES[1]]);
-  assert.deepEqual(encodePretoolDecision(deny, 'claude'), {
+  const expectedDeny = {
     hookSpecificOutput: {
       hookEventName: 'PreToolUse',
       permissionDecision: 'deny',
       permissionDecisionReason: '[rule:deny] do not run',
     },
-  });
-  const codex = encodePretoolDecision(deny, 'codex');
-  assert.deepEqual(Object.keys(codex), ['systemMessage']);
-  assert.match(codex.systemMessage, /无法硬阻断|do not run/);
-  assert.equal('continue' in codex, false);
-  assert.equal('stopReason' in codex, false);
+  };
+  assert.deepEqual(encodePretoolDecision(deny, 'claude'), expectedDeny);
+  assert.deepEqual(encodePretoolDecision(deny, 'codex'), expectedDeny);
+
+  const remind = decidePretool([RULES[0]]);
+  const expectedRemind = {
+    hookSpecificOutput: {
+      hookEventName: 'PreToolUse',
+      additionalContext: remind.context,
+    },
+  };
+  assert.deepEqual(encodePretoolDecision(remind, 'claude'), expectedRemind);
+  assert.deepEqual(encodePretoolDecision(remind, 'codex'), expectedRemind);
 });
 
 test('session and stop codecs expose the platform lifecycle difference', () => {

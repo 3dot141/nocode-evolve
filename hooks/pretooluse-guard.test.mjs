@@ -81,7 +81,7 @@ test('decide: freshness gate 转成真正的 block 决策', () => {
   assert.match(out.hookSpecificOutput.permissionDecisionReason, /behind origin\/main 5 commits.*三选/);
 });
 
-test('decide: Codex 也先实际检查，再把 gate 编码为安全消息', () => {
+test('decide: Codex 也先实际检查，再把 gate 编码为真正的 block 决策', () => {
   let calls = 0;
   const out = decide(
     [{ rule: 'git-freshness', decision: 'execute', reason: 'check freshness' }],
@@ -98,8 +98,8 @@ test('decide: Codex 也先实际检查，再把 gate 编码为安全消息', () 
     },
   );
   assert.equal(calls, 1);
-  assert.deepEqual(Object.keys(out), ['systemMessage']);
-  assert.match(out.systemMessage, /无法硬阻断.*main 首次检查.*三选/);
+  assert.equal(out.hookSpecificOutput.permissionDecision, 'deny');
+  assert.match(out.hookSpecificOutput.permissionDecisionReason, /main 首次检查.*三选/);
 });
 
 test('decide: freshness 异常失败时 fail closed', () => {
