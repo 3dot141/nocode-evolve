@@ -96,7 +96,7 @@
     },
     "expected_signals": [
       "识别目标尚未定义，不具备拆任务前提",
-      "建议先回 define 澄清具体改什么/给谁/成功标准",
+      "建议先回 dev-design 澄清目标、范围与 acceptance，并形成 DES obligations",
       "不凭空臆测生成任务清单"
     ],
     "anti_signals": [

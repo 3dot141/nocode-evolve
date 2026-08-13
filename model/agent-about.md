@@ -152,7 +152,7 @@
 | `{pd_prd_output}` | `{PD_BASE_DIR}/{topic}.prd.md` | pd-prd |
 | `{pd_ix_output}` | `{PD_BASE_DIR}/{topic}.ix.md` | pd-ix |
 | `{pd_vd_output}` | `{PD_BASE_DIR}/{topic}.vd.md` | pd-vd |
-| `{dev_design_output}` | `{DEV_BASE_DIR}/{topic}-design.md` | dev-design / brainstorming |
+| `{dev_design_output}` | `{DEV_BASE_DIR}/design.md` | dev-design |
 | `{dev_plan_output}` | `{DEV_BASE_DIR}/{topic}-plan.md` | dev-plan |
 
 ## 变量解析优先级（先命中即用）

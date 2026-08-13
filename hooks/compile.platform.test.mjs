@@ -369,9 +369,8 @@ test('Claude adapter builds native skills and direct runtime overlays', () => {
     claudeAdapter.renderManifest(metadata),
   );
   const claudeDevflow = tree.get('skills/devflow/SKILL.md').toString();
-  assert.match(claudeDevflow, /TaskCreate/);
-  assert.match(claudeDevflow, /TaskUpdate/);
-  assert.doesNotMatch(claudeDevflow, /update_plan|request_user_input/);
+  assert.match(claudeDevflow, /Skill\(nocode:dev-design\)/);
+  assert.doesNotMatch(claudeDevflow, /TaskCreate|TaskUpdate|update_plan|request_user_input/);
   const claudeTask = tree.get('skills/task/SKILL.md').toString();
   assert.match(claudeTask, /^---\nname: task\ndescription:/);
   assert.doesNotMatch(claudeTask, /x-nocode:/);
@@ -436,9 +435,8 @@ test('Codex adapter builds native skills and direct runtime overlays', () => {
   assert.ok(Array.isArray(manifest.interface.defaultPrompt));
 
   const devflow = tree.get('skills/devflow/SKILL.md').toString();
-  assert.match(devflow, /update_plan/);
-  assert.match(devflow, /request_user_input/);
-  assert.doesNotMatch(devflow, /TaskCreate|AskUserQuestion/);
+  assert.match(devflow, /\$dev-design/);
+  assert.doesNotMatch(devflow, /update_plan|request_user_input|TaskCreate|AskUserQuestion/);
   assert.match(
     tree.get('skills/dev-build/SKILL.md').toString(),
     /\$\{PLUGIN_ROOT\}\/skills\/references/,
@@ -451,17 +449,22 @@ test('Codex adapter builds native skills and direct runtime overlays', () => {
   );
   const launcherServer = tree.get('skills/agents-launcher/references/server.md').toString();
   assert.match(launcherServer, /未提供密码时复用本机已有 Docker 登录态/);
-  assert.doesNotMatch(launcherServer, /docker login[^\n]*\s-p(?:\s|=)/);
-  for (const nested of ['decision', 'writing']) {
-    assert.match(
-      tree.get(`skills/dev-design/${nested}/SKILL.md`).toString(),
-      /^---\nname: dev-design-(?:decision|writing)\ndescription:/,
-    );
-    assert.match(
-      tree.get(`skills/dev-design/${nested}/agents/openai.yaml`).toString(),
-      /allow_implicit_invocation: false/,
-    );
-  }
+  const launcherDocker = tree.get('skills/agents-launcher/docker/common.sh').toString();
+  assert.match(launcherDocker, /if \[\[ -n "\$\{HARBOR_PASSWORD:-\}" \]\]; then/);
+  assert.match(
+    launcherDocker,
+    /printf '%s' "\$HARBOR_PASSWORD" \| docker login \\\n\s+-u "\$\{HARBOR_USERNAME:-develop\}" \\\n\s+--password-stdin harbor\.jsydevelop\.com/,
+  );
+  assert.doesNotMatch(launcherDocker, /docker login[^\n]*\s-p(?:\s|=)/);
+  assert.equal(tree.has('skills/dev-design/decision/SKILL.md'), false);
+  assert.equal(tree.has('skills/dev-design/writing/SKILL.md'), false);
+  assert.equal(tree.has('skills/dev-define/SKILL.md'), false);
+  for (const relative of [
+    'skills/dev-design/references/grilling.md',
+    'skills/dev-design/references/bug/questions.md',
+    'skills/dev-design/references/feat/document.md',
+    'skills/dev-design/references/refactor/closure.md',
+  ]) assert.equal(tree.has(relative), true, relative);
   const commandTask = tree.get('skills/task/SKILL.md').toString();
   assert.match(commandTask, /^---\nname: task\ndescription:/);
   assert.doesNotMatch(commandTask, /x-nocode:/);
@@ -538,7 +541,7 @@ test('Pi adapter builds a package with prompts, skills, and an extension', () =>
   assert.match(about, /\/skill:red-blue-deep/);
   assert.doesNotMatch(about, /AskUserQuestion|Skill\(nocode:|request_user_input/);
   const devflow = tree.get('skills/devflow/SKILL.md').toString();
-  assert.match(devflow, /\/skill:<stage-skill>/);
+  assert.match(devflow, /\/skill:dev-design/);
   assert.doesNotMatch(devflow, /Skill\(nocode:|AskUserQuestion|update_plan/);
   const prompt = tree.get('prompts/task.md').toString();
   assert.match(prompt, /\$ARGUMENTS/);

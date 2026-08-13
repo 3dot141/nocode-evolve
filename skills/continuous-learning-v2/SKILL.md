@@ -1,7 +1,6 @@
 ---
 name: continuous-learning-v2
-disable-model-invocation: true
-description: Use when explaining or configuring the optional instinct-based continuous-learning architecture. Not for day-to-day instinct listing, clustering, import/export, or enabling excluded runtime components.
+description: Instinct-based learning system that observes sessions via hooks, creates atomic instincts with confidence scoring, and evolves them into skills/commands/agents.
 version: 2.0.0
 ---
 
@@ -91,15 +90,30 @@ Session Activity
 
 ## Quick Start
 
-### 1. Observation Hooks — Already Wired, No Setup Needed
+### 1. Enable Observation Hooks
 
-This plugin auto-registers the observation hooks — **you don't need to hand-edit `~/.claude/settings.json`**. `hooks/hooks.json` already wires `PreToolUse` and `PostToolUse` (matcher `*`) to:
+Add to your `~/.claude/settings.json`:
 
+```json
+{
+  "hooks": {
+    "PreToolUse": [{
+      "matcher": "*",
+      "hooks": [{
+        "type": "command",
+        "command": "~/.claude/skills/continuous-learning-v2/hooks/observe.sh pre"
+      }]
+    }],
+    "PostToolUse": [{
+      "matcher": "*",
+      "hooks": [{
+        "type": "command",
+        "command": "~/.claude/skills/continuous-learning-v2/hooks/observe.sh post"
+      }]
+    }]
+  }
+}
 ```
-${CLAUDE_PLUGIN_ROOT}/skills/continuous-learning-v2/hooks/observe.sh
-```
-
-Claude Code expands `${CLAUDE_PLUGIN_ROOT}` to the real plugin install directory when it loads `hooks.json` at session start — no path substitution required on your end. Every tool call is observed from the moment the plugin is installed.
 
 ### 2. Initialize Directory Structure
 
@@ -110,11 +124,11 @@ touch ~/.claude/homunculus/observations.jsonl
 
 ### 3. Run the Observer Agent (Optional)
 
-Background instinct analysis is **off by default** (`observer.enabled: false` in `config.json`) and must be started manually — unlike the hooks above, this step isn't auto-wired by the plugin. The script lives inside the plugin's install directory, not under `~/.claude/skills/`; substitute `<plugin-root>` with the plugin's real installed path before running (Bash does not expand `${CLAUDE_PLUGIN_ROOT}` on its own):
+The observer can run in the background analyzing observations:
 
 ```bash
 # Start background observer
-<plugin-root>/skills/continuous-learning-v2/agents/start-observer.sh
+~/.claude/skills/continuous-learning-v2/agents/start-observer.sh
 ```
 
 ## Commands

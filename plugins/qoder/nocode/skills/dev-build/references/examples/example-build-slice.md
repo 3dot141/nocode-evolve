@@ -68,7 +68,7 @@ $ npm run build
 $ git commit -m "feat(users): validate email format on create
 
 Reject malformed emails with 400 before persisting.
-Covers the 'invalid input' acceptance criterion from restate."
+Covers DES-004, the confirmed invalid-input behavior."
 ```
 
 ---

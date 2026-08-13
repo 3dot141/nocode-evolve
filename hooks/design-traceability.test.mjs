@@ -4,135 +4,85 @@ import test from "node:test";
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), "utf8");
 
-const sharedReference = "skills/references/design-traceability.md";
-const consumers = [
-  "skills/dev-design/SKILL.md",
-  "skills/dev-design/decision/SKILL.md",
-  "skills/dev-design/writing/SKILL.md",
-  "skills/dev-plan/SKILL.md",
-  "skills/dev-build/SKILL.md",
-  "skills/dev-build/references/dev-build-executing.md",
-  "skills/dev-build/references/dev-build-subagent.md",
-  "skills/dev-verify/SKILL.md",
-  "skills/devflow/SKILL.md",
-];
+test("shared traceability separates immutable DEC and DES namespaces from the process Log", async () => {
+  const protocol = await read("skills/references/design-traceability.md");
 
-test("traceability protocol has one shared schema consumed by every stage", async () => {
-  const protocol = await read(sharedReference);
-
-  for (const state of ["required", "verify-only", "deferred", "n/a"]) {
-    assert.match(protocol, new RegExp(`\\b${state.replace("-", "\\-")}\\b`));
-  }
-  for (const heading of [
-    "Implementation Item Registry",
-    "Design → Task Coverage Matrix",
-    "Design → Evidence Matrix",
-  ]) {
-    assert.match(protocol, new RegExp(heading));
-  }
-
-  for (const path of consumers) {
-    const content = await read(path);
-    assert.match(
-      content,
-      /\{NOCODE_SKILL_REF\}\/design-traceability\.md/,
-      `${path} must consume the shared traceability protocol`,
-    );
-  }
+  assert.match(protocol, /DEC-to-DES Traceability Protocol/);
+  assert.match(protocol, /DEC-###/);
+  assert.match(protocol, /DES-###/);
+  assert.match(protocol, /sourceDecisionIds/);
+  assert.match(protocol, /Round N.*Event N.*do not receive DEC IDs/s);
+  assert.match(protocol, /never deleted, reused, renumbered, or silently redefined/);
+  assert.match(protocol, /Every Decision marked `designDisposition: required` maps to at least one DES ID/);
+  assert.match(protocol, /Every DES ID cites at least one real sourceDecisionId/);
+  assert.doesNotMatch(protocol, /designRevision\s*:|designDigest\s*:|sourceAnchor\s*:/);
 });
 
-test("Design closes one approved document with a bidirectional registry", async () => {
-  const [
-    coordinator,
-    decision,
-    writing,
-    review,
-    ...templates
-  ] = await Promise.all([
-    read("skills/dev-design/SKILL.md"),
-    read("skills/dev-design/decision/SKILL.md"),
-    read("skills/dev-design/writing/SKILL.md"),
-    read("skills/dev-design/writing/references/design-doc-review.md"),
-    read("skills/dev-design/writing/references/template-feat.md"),
-    read("skills/dev-design/writing/references/template-bug.md"),
-    read("skills/dev-design/writing/references/template-refactor.md"),
-  ]);
-
-  assert.match(coordinator, /Implementation Item Registry/);
-  assert.match(coordinator, /frontmatter.*approved/i);
-  assert.match(coordinator, /单一.*docPath|单一设计文档/);
-  assert.match(decision, /Registry 输入/);
-  assert.match(writing, /Registry ↔ 来源章节|双向.*orphan/);
-  assert.match(writing, /frontmatter.*approved/i);
-  assert.match(review, /规范性.*补充文档|单一.*docPath/);
-  assert.match(review, /Registry.*来源章节|来源章节.*Registry/);
-  for (const template of templates) {
-    assert.match(template, /## 实施设计项清单/);
-  }
-});
-
-test("Plan rejects required design orphans and preserves all four states", async () => {
-  const [plan, taskTemplate, example] = await Promise.all([
+test("Plan Build and Verify consume the same DES scope", async () => {
+  const [plan, build, executing, subagent, verify] = await Promise.all([
     read("skills/dev-plan/SKILL.md"),
-    read("skills/dev-plan/references/task-template.md"),
-    read("skills/dev-plan/references/examples/example-plan-output.md"),
-  ]);
-
-  assert.match(plan, /Design.*status.*approved|frontmatter.*approved/i);
-  assert.match(plan, /从.*Registry.*反向遍历|Registry.*左表/);
-  assert.match(plan, /required.*orphan|orphan.*required/);
-  assert.match(plan, /verify-only/);
-  assert.match(plan, /deferred/);
-  assert.match(plan, /n\/a/);
-  assert.match(taskTemplate, /\*\*designCovers\*\*/);
-  assert.match(example, /Design → Task Coverage Matrix/);
-});
-
-test("Build reports designCovers and Verify records fresh per-ID evidence", async () => {
-  const [build, executing, subagent, verify] = await Promise.all([
     read("skills/dev-build/SKILL.md"),
     read("skills/dev-build/references/dev-build-executing.md"),
     read("skills/dev-build/references/dev-build-subagent.md"),
     read("skills/dev-verify/SKILL.md"),
   ]);
 
-  for (const content of [build, executing, subagent]) {
-    assert.match(content, /designCovers/);
-  }
-  assert.match(build, /required.*Design ID|Design ID.*required/);
-  assert.match(verify, /Design → Evidence Matrix/);
-  assert.match(verify, /required.*verify-only|verify-only.*required/);
-  assert.match(verify, /新鲜证据|fresh evidence/i);
-  assert.match(verify, /缺.*证据.*Build|回 Build/);
+  for (const [path, content] of [
+    ["Plan", plan],
+    ["Build", build],
+    ["executing", executing],
+    ["subagent", subagent],
+    ["Verify", verify],
+  ]) assert.match(content, /DES/, path);
+
+  assert.match(plan, /`designCovers` DES IDs/);
+  assert.match(plan, /Handoff\.designIds/);
+  assert.match(build, /completedDesignCovers/);
+  assert.match(build, /must equal that slice's `designCovers`/);
+  assert.match(verify, /DES evidence matrix/i);
+  assert.match(verify, /fresh evidence/i);
 });
 
-test("nine-log fixture exposes an omitted downstream mapping deterministically", () => {
-  const logEvents = [
-    "checkpoint.started",
-    "checkpoint.loaded",
-    "checkpoint.persisted",
-    "checkpoint.resumed",
-    "checkpoint.skipped",
-    "checkpoint.failed",
-    "distill.started",
-    "distill.completed",
-    "distill.failed",
-  ];
-  const registry = logEvents.map((event, index) => ({
-    id: `LOG-${index + 1}`,
-    event,
-    state: "required",
-  }));
-  const taskMappings = registry.map(({ id }) => id);
-  const findRequiredOrphans = (items, coveredIds) =>
-    items
-      .filter(({ state }) => state === "required")
-      .filter(({ id }) => !coveredIds.includes(id))
-      .map(({ id }) => id);
+test("Handoff is the routing authority and design changes return to the same Log", async () => {
+  const [protocol, devflow] = await Promise.all([
+    read("skills/references/design-traceability.md"),
+    read("skills/devflow/SKILL.md"),
+  ]);
 
-  assert.deepEqual(findRequiredOrphans(registry, taskMappings), []);
-  assert.deepEqual(
-    findRequiredOrphans(registry, taskMappings.filter((id) => id !== "LOG-6")),
-    ["LOG-6"],
-  );
+  for (const target of ["Debug", "Plan", "Build", "Verify", "Review", "Land", "dev-design"]) {
+    assert.match(devflow, new RegExp(`\\| ${target.replace("-", "\\-")} \\|`));
+  }
+  assert.match(protocol, /return the finding to dev-design/i);
+  assert.match(protocol, /evidence changes goal, scope, solution, contract, Preserve, acceptance, or DES meaning/i);
+  assert.match(devflow, /Event N — stage-transition/);
+  assert.match(devflow, /never receives a DEC ID or `designDisposition`/);
+});
+
+test("bidirectional coverage detects a missing required source deterministically", () => {
+  const decisions = ["DEC-001", "DEC-002", "DEC-003"];
+  const design = [
+    { id: "DES-001", sourceDecisionIds: ["DEC-001", "DEC-002"] },
+    { id: "DES-002", sourceDecisionIds: ["DEC-003"] },
+  ];
+  const covered = new Set(design.flatMap(({ sourceDecisionIds }) => sourceDecisionIds));
+  const missing = decisions.filter((id) => !covered.has(id));
+  assert.deepEqual(missing, []);
+
+  const incomplete = design.filter(({ id }) => id !== "DES-002");
+  const incompleteCovered = new Set(incomplete.flatMap(({ sourceDecisionIds }) => sourceDecisionIds));
+  assert.deepEqual(decisions.filter((id) => !incompleteCovered.has(id)), ["DEC-003"]);
+});
+
+test("engineering runtime sources do not revive legacy baseline machinery", async () => {
+  const sources = await Promise.all([
+    "skills/devflow/SKILL.md",
+    "skills/dev-design/SKILL.md",
+    "skills/dev-plan/SKILL.md",
+    "skills/dev-build/SKILL.md",
+    "skills/dev-verify/SKILL.md",
+  ].map(read));
+  const combined = sources.join("\n");
+
+  assert.doesNotMatch(combined, /designRevision\s*:|designDigest\s*:|sourceAnchor\s*:/);
+  assert.doesNotMatch(combined, /## (?:Scenario|Full|Standard|Fix|Mini)|\| (?:Full|Standard|Fix|Mini) \|/);
 });

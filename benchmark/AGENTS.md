@@ -2,8 +2,8 @@
 
 ## 这是什么
 
-`devflow-benchmark`：对 nocode 插件的 8 个核心工作流 skill
-（define / design / plan / build / verify / code-review / devflow / caveman）
+`devflow-benchmark`：对 nocode 插件的 7 个核心工作流 skill
+（dev-design / plan / build / verify / code-review / devflow / caveman）
 做**离线输出质量评测**——不是测规则路由触发率（那是 `eval/` 的职责，两者互不重叠）。
 
 方法论：Executor / Evaluator 隔离评分。Executor（被测 skill，实际由主 agent 派 Claude Code
@@ -29,7 +29,7 @@ node benchmark/scripts/evaluate.mjs <skill>
 node benchmark/scripts/split.mjs
 ```
 
-`<skill>` ∈ `define design plan build verify code-review devflow caveman`。
+`<skill>` ∈ `design plan build verify code-review devflow caveman`；其中目录名 `design` 对应运行时 `dev-design`。
 
 脚本本身**不调用模型**——真正的 Executor / Evaluator 是由调用方（主 agent）在跑 benchmark 时
 现场派生的 Claude Code subagent。`evaluate.mjs` 只负责 case 加载 / prompt 组装 /
@@ -39,7 +39,7 @@ node benchmark/scripts/split.mjs
 
 `cases/<skill>/<skill>-cases.json`（脚本实际加载的 base 文件）目前有两种格式：
 
-- **裸数组**（`define` / `design` / `devflow` / `verify` / `caveman`）—— `evaluate.mjs` 正常工作。
+- **裸数组**（`design` / `devflow` / `verify` / `caveman`）—— `evaluate.mjs` 正常工作。
 - **包装对象** `{skill, version, dimensions, cases:[...]}`（`build` / `code-review` / `plan`）——
   `evaluate.mjs` 的 `loadCases()` 直接 `JSON.parse` 后当数组用，对这 3 个 skill 跑
   `--list` 会抛 `TypeError: cases.forEach is not a function`（已用
@@ -62,17 +62,17 @@ node benchmark/scripts/split.mjs
 - 必填字段：`case_id`（`<skill>-NNN` 或 `<skill>-ext-NNN` / `<skill>-hard-NNN`）/ `category`
   （`happy_path` / `edge` / `negative` / `positive` / `adversarial` 等）/ `input` / `context`
   / `expected_signals` / `anti_signals` / `primary_dimensions`（引用该 skill 在设计文档里定义的
-  维度 ID，如 define 的 `D1`-`D5`、build 的 `B1`-`B5`、code-review 的 `CR1`-`CR5`）/ `difficulty`。
+  维度 ID，如 dev-design 的 `DD-*`、build 的 `B1`-`B5`、code-review 的 `CR1`-`CR5`）/ `difficulty`。
 - **防污染铁律（不能违反）**：`expected_signals` / `anti_signals` / `primary_dimensions`（rubric）
   只能出现在 Evaluator 看到的 case 子集里，绝不能泄漏进 Executor 收到的 prompt——
   `evaluate.mjs` 的 `buildExecutorPrompt()` 只挑 `input` + `context` 就是为此，写新 case 时
   不要在 `input`/`context` 里意外把评分线索透给 Executor（比如把锚点措辞原样写进 context）。
 - `cases/pipeline/pipeline-NNN.json` 结构不同：顶层 `stages[]` 数组，每个 stage 对应
-  Define→Design→Plan 中的一环，带 `handoff_to_next` 说明衔接点，考的是**跨阶段传递**
-  （restate 有没有被下一阶段引用、测试目标有没有被分配到 plan slice），不是单 skill 维度打分。
+  devflow→dev-design→Plan 中的一环，带 `handoff_to_next` 说明衔接点，考的是**跨阶段传递**
+  （精确 Log 是否保持、LOG 是否转成 DES、DES 是否被 plan task 消费），不是单 skill 维度打分。
 - devflow-benchmark 设计文档里列的是 9 个 skill（含 `handoff`），但 `handoff` skill 已在插件
   里删除（commit `1ee8678`，"compact 自定义指令已覆盖"），所以 `cases/` 下没有 `handoff/`
-  目录，`split.mjs` 的 `SKILLS` 常量也只列 8 个——这是有意为之，不是漏做，不要补回去。
+  目录，`split.mjs` 的 `SKILLS` 常量只列当前 7 个 benchmark 入口——这是有意为之，不是漏做，不要补回去。
 
 ## 哪些是生成物 / 固定 fixture，不要乱动
 

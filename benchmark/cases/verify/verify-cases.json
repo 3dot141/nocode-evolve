@@ -145,7 +145,7 @@
     },
     "expected_signals": [
       "构造可控失败的桩/mock 实跑两条路径（3次失败抛错、2次失败后成功）",
-      "对照 Define 验收标准逐条核对 ✅/❌",
+      "从当前 Handoff DES IDs 生成逐项 evidence matrix，并逐条核对 pass/fail/unverified",
       "每条验收附命令+输出证据",
       "结论严格映射到每条验收的通过与否"
     ],

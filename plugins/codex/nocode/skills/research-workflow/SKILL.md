@@ -109,7 +109,7 @@ description: "Generic research engine (structured search + verification) for oth
 
 每角度强制只搜 1 轮（`iterate` 传了也忽略）。推荐配合预设 `angles`（跳过 scope agent）；不预设时 scope 只分解出 2 个角度。
 
-**用于**：调用方明确知道搜什么，只是想并行铺开几个点（如 dev-design 探索——restate 已确认，搜索点直接从讨论里提炼）。
+**用于**：调用方明确知道搜什么，只是想并行铺开几个点（如 dev-design 探索——相关 LOG items 已确认，搜索点直接从讨论里提炼）。
 
 **风险**：不迭代——第一轮关键词不对就搜不到。代码库术语和预期可能对不上时（陌生子系统），那是 shallow 的场景。
 
@@ -201,14 +201,14 @@ Scope → Search+Extract（pipeline，无 barrier）→ Verify（3 票对抗）�
   type: 'code',
   depth: 'targeted',
   angles: [
-    { label: '已有同类实现', query: '<从 restate 提炼的具体查询>' },
+    { label: '已有同类实现', query: '<从 confirmed LOG items 提炼的具体查询>' },
     { label: '受影响调用链', query: '<关键 caller / contract 查询>' },
   ],
   // 每角度 1 轮，跳过 scope；优先当前平台的代码搜索，降级到 rg / 文件搜索
 }
 ```
 
-**代码探索**（dev-define 早期理解——不知道代码里叫什么，走 shallow 迭代逼近）：
+**代码探索**（dev-design 早期 grilling——不知道代码里叫什么，走 shallow 迭代逼近）：
 ```js
 {
   question: '<任务关键词> 在当前代码库的已有实现和可复用 pattern',

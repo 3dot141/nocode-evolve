@@ -16,8 +16,8 @@
       "reason": "自动沉淀 instinct，单独评估接线"
     },
     "strategic-compact": {
-      "action": "fork",
-      "reason": "双运行时改造版：保留可选手动 compact 指引，但不跨层指路插件 Hook 实现；上游更新需人工 diff 合并"
+      "action": "skip",
+      "reason": "未接线且不进入模型自动调用清单，移除独立 skill 以减少维护面"
     },
     "iterative-retrieval": {
       "action": "absorb",
@@ -152,8 +152,8 @@
   },
   "commands": {
     "eval": {
-      "action": "keep-as-command",
-      "reason": "eval-harness 的入口命令"
+      "action": "fork",
+      "reason": "本仓平台适配薄入口：保留必需 frontmatter 与 eval-harness 转发；上游原版缺少 frontmatter，更新时人工 diff 合并"
     },
     "_rest": {
       "action": "skip",

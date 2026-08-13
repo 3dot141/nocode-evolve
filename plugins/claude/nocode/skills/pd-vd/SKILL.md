@@ -25,7 +25,7 @@ Open Design 线直接使用 `create_project`、`start_run`、`get_run`、`get_ar
 | 覆盖度 | IA 全部页面/视图 100%，无例外（「关键页先出」是违规） |
 | 每页深度 | 静态渲染正常 + 每个交互点可操作（导航跳转 / 嵌入组件弹出滑出 / 按行为规格退出） |
 | 控件四态 | Step 3 组件级一次定义（tokens 四态规则 + 组件卡展示），页面继承，不逐控件逐页验证 |
-| **不包含**（→ devflow Build） | 逐控件四态页面级验证、边界态（empty/loading/error）实装切换、端到端链路完整验证、生产级组件代码 |
+| **不包含**（→ 工程流） | 逐控件四态页面级验证、边界态（empty/loading/error）实装切换、端到端链路完整验证、生产级组件代码 |
 
 进入 skill 后首次对齐预期时（Step 2a），把「不包含」清单念给用户——预期落差在开工前暴露，不在交付后。
 
@@ -36,9 +36,9 @@ Open Design 线直接使用 `create_project`、`start_run`、`get_run`、`get_ar
 | 视觉方向、tokens、控件四态样式 | 信息架构、页面流 → pd-ix |
 | 可交互原型（Open Design / HTML） | 交互拆解、状态覆盖枚举、行为规格 → pd-ix |
 | 设计系统（tokens + components + 样张，按交付线落点） | 技术架构、模块划分 → dev-design |
-| Playwright 验证 | 生产级组件代码 → devflow Build |
+| Playwright 验证 | 生产级组件代码 → devflow 以 feat 进入 dev-design，再按 Handoff 实施 |
 
-**非本 skill**：无 `.ix.md` → 先 pd-ix。要技术架构 → dev-design。要生产代码 → devflow Build。
+**非本 skill**：无 `.ix.md` → 先 pd-ix。要技术架构 → dev-design。要生产代码 → devflow 以 feat 建 Log，再遵循设计 Handoff。
 
 > IX↔VD 分工判据与共享术语（状态覆盖 / 行为规格 / 控件四态、三层命名 tokens/components/patterns）单源在 `{NOCODE_SKILL_REF}/ix-vd-contract.md`——`.ix.md` 定义的行为语义不得改动；原型需要 IX 未定义的行为 → 回流登记，不就地定。
 

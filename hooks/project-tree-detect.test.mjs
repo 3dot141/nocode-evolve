@@ -5,7 +5,7 @@ import { mkdtempSync, mkdirSync, rmSync, realpathSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { execFileSync } from 'node:child_process';
-import { detectGitRepo, findUpperProjectRoot, refName } from '../scripts/project-tree-detect.mjs';
+import { detectGitRepo, findUpperProjectRoot, refName } from '../skills/projecthub/scripts/project-tree-detect.mjs';
 
 function makeTmpDir() {
   // realpath 立刻展开，避免 macOS /tmp -> /private/tmp 之类的 symlink 导致
@@ -37,7 +37,7 @@ function checkRefFormat(name) {
 }
 
 function scriptPath() {
-  return join(import.meta.dirname, '..', 'scripts', 'project-tree-detect.mjs');
+  return join(import.meta.dirname, '..', 'skills', 'projecthub', 'scripts', 'project-tree-detect.mjs');
 }
 
 function runCli(args) {

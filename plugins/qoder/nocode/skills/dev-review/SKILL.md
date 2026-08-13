@@ -31,11 +31,12 @@ findings 统一 schema（C/W/S 分级，Q/SA 走 kind），来源标注「自审
 
 ## 非本 skill 请求
 
-"写代码" / "解释函数" / "需求合不合理" → 不是 review。没有 diff 就没有 evidence，无法 review。写代码 → Build，解释 → 直接答，需求判断 → Define。用户显式点名内置 code-review（`/code-review` 或带档位 xhigh/ultra）→ 让内置引擎接，不进本协议；除此之外的 review 意图（含 devflow 阶段链里的 review）默认走本 skill。
+"写代码" / "解释函数" / "需求合不合理" → 不是 review。没有 diff 就没有 evidence，无法 review。写代码 → Build，解释 → 直接答，需求判断 → dev-design。用户显式点名内置 code-review（`/code-review` 或带档位 xhigh/ultra）→ 让内置引擎接，不进本协议；除此之外的 review 意图（含 devflow Handoff 指向 Review）默认走本 skill。
 
 ## Enter Gate
 
 - [ ] Verify Gate 已过（验收标准逐条通过 + 证据齐全）
+- [ ] 精确 `design.log.md`、confirmed `design.md`、当前 DES scope 与 Verify evidence 已收到
 - [ ] Change sizing 已判断（~100 行好；~300 行可接受；~1000 行先建议 split）
 - [ ] 评审范围 = 本次变更涉及的代码（不评历史遗留）
 
@@ -60,8 +61,8 @@ findings 统一 schema（C/W/S 分级，Q/SA 走 kind），来源标注「自审
 
 ```
 Task 0: 准备评审上下文
-  Sub-steps: 确定 diff 范围 + 五轴维度 + Build 审查覆盖清单（增量/全量判定输入）
-  Gate: diff 范围 + 五轴维度 + 覆盖清单就绪
+  Sub-steps: 重读 design.md / DES context（只作上下文）+ 确定 diff 范围 + 五轴维度 + Build 审查覆盖清单
+  Gate: 精确设计路径、DES context、diff 范围、五轴维度与覆盖清单就绪
 
 Task 1: Five-Axis Review（主会话自查）
   Sub-steps: 主会话按 checklist 逐轴过 diff（five-axis-guide 检查点；敏感面命中 → 一句话建议升审）
@@ -84,7 +85,7 @@ Task 5: 用户 approve
   Gate: Critical 清零 + 用户拍板
 
 Task 6: 硬交接 — 调用下一步 skill
-  Sub-steps: 按 Exit Gate 硬交接报告 Review 完成（findings 统计 + Critical/Warning 处置）→ 建议进 Land → 等用户拍板后按上方平台语法调用 dev-land，传入完整上下文信封
+  Sub-steps: 按 Exit Gate 报告 Review 完成（findings 统计 + Critical/Warning 处置）→ 将精确 Log、design.md、DES context、Verify evidence 与 review verdict 交给 Land
   Gate: 用户拍板进入 Land（这一步不勾，Review 不算收尾）
   metadata: {handoff: true}（供防跳步 Hook B 识别交接 task）
 ```
@@ -162,7 +163,7 @@ Task 6: 硬交接 — 调用下一步 skill
 - [ ] 所有 Critical 已 fix
 - [ ] 用户对 Warning 逐条显式拍板
 - [ ] fix 改了代码 → 已回 Build → Verify → 再 Review（回流规则）
-- [ ] **硬交接**：Exit Gate 全部通过后，向用户报告 Review 完成（含 findings 统计 + Critical/Warning 处置结果），建议下一阶段：Land（`nocode:dev-land`）。列出 Land 阶段的 sub-steps + 关键决策（devflow Step 5 格式）。等用户拍板，不自行进入下一阶段
+- [ ] **硬交接**：Exit Gate 全部通过后，向用户报告 Review 完成（含 findings 统计 + Critical/Warning 处置结果），并把精确 Log、confirmed design.md、当前 DES scope、Verify evidence 和 review verdict 交给 Land（`nocode:dev-land`）
 
 ## Common Rationalizations
 

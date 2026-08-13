@@ -37,7 +37,7 @@ pd-vd → 高保真可交互原型             → 可交付 ✓
 | 关键用户流程、行为规格 | 可交互原型 → pd-vd |
 | ASCII 线框、状态覆盖枚举 | 控件四态样式（pd-vd 域）→ pd-vd |
 | 竞品交互分析、场景脚本 | 技术架构、模块划分 → dev-design |
-| | 生产级组件代码 → devflow Build |
+| | 生产级组件代码 → devflow 以 feat 建 Log 并进入 dev-design |
 
 **非本 skill**：无 PRD → 先 pd-prd。要视觉设计 → pd-vd。要技术架构 → dev-design。
 

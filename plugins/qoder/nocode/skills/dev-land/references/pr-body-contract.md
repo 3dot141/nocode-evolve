@@ -93,8 +93,8 @@
 仅当从 devflow 路由进入且属于生产改动时，在「重点评审」后追加：
 
 ```markdown
-## Requirements Addressed
-- <Define restate 中的需求/约束> → <本方案如何覆盖>
+## Design Obligations Addressed
+- <DES-ID：confirmed design obligation> → <本次改动如何覆盖>
 
 ## Verification Evidence
 - `<验证命令或检查>` → <本轮实际结果>

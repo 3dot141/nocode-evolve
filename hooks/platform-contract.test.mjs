@@ -48,9 +48,9 @@ test('generated platform manifests cannot drift from metadata after cutover', ()
 
 test('runtime maintenance commands use the shared metadata version source', () => {
   for (const relativePath of [
-    'commands/nocodehub.md',
-    'commands/plugin-distill.md',
-    'commands/plugin-dream.md',
+    'skills/nocodehub/SKILL.md',
+    'skills/nocodehub/references/write.md',
+    'skills/nocodehub/references/dream.md',
   ]) {
     const content = readFileSync(path.join(ROOT, relativePath), 'utf8');
     assert.doesNotMatch(content, /\.claude-plugin\/plugin\.json/);

@@ -15,9 +15,9 @@
 rg -l "NOCODE_SKILL_REF.*<文件名或子路径>" skills/ agents/ commands/ model/
 ```
 
-已知会读本目录的至少有：`dev-define`、`dev-design`、`dev-plan`、`dev-review`、`dev-verify`、`pd-prd`、`pd-vd`、`brainstorming`、`red-blue-deep`、`skill-writing` 等 skill，以及 `commands/plugin-dream.md`、`model/agent-about.md`。
+已知会读本目录的至少有：`dev-design`、`dev-plan`、`dev-build`、`dev-review`、`dev-verify`、`pd-prd`、`pd-vd`、`brainstorming`、`red-blue-deep`、`skill-writing`、`nocodehub` 等 skill，以及 `model/agent-about.md`。
 
-**`reviewing` 和"四件套"不再是本目录的一部分，改动它们不要来这里找**：`reviewing` 已迁成 `skills/reviewing/` 下的自包含 review 引擎（`skeleton.md` / `findings-contract.md` / `methods/*.md` 都在它自己的 `skills/reviewing/references/`），调用方一律 `平台原生 Skill 调用` 调用，不再 `Read` 它的内部文件，也就不再共享本目录。"四件套"（`define-review.md` / `design-review.md` / `prd-review.md` / `vis-review.md`）已分别下沉到各自消费方 skill 的私有 `references/`（`dev-define` / `dev-design` / `pd-prd` / `pd-vd`），本目录不再托管它们。
+**`reviewing` 和专项 review 材料不属于本目录**：`reviewing` 是自包含 review 引擎，调用方使用平台原生 Skill 调用，不直接读取其私有 references。`dev-design`、`pd-prd`、`pd-vd` 的专项材料同样归各自 Skill 私有目录。
 
 ## 是否 vendor 管理
 

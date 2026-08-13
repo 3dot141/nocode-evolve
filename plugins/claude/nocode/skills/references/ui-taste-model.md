@@ -2,7 +2,7 @@
 
 没有设计参考（无 pd-vd 产出、无截图、无 Figma）时，从这里选视觉知识来源。选完后 taste model 的使命就结束——它被消化成具体的视觉值（配色/排版/间距），写进设计文档或 `.vd.md`，下游不再需要回来找它。
 
-> pd-vd 场景不走本文——pd-vd Step 3a 有自己的取值决策树（含用户 Ask 环节）。本文服务无 pd-vd 产出时直接做 UI 决策的场景（如 devflow Design/Build）。
+> pd-vd 场景不走本文——pd-vd Step 3a 有自己的取值决策树（含用户 Ask 环节）。本文服务无 pd-vd 产出时直接做 UI 决策的场景（如 dev-design / Build）。
 
 ## 分层（这些 skill 不是同一维度的选项）
 

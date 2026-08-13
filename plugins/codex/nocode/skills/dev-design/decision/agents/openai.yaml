@@ -1,5 +1,0 @@
-interface:
-  display_name: "dev-design-decision"
-  short_description: "Private decision protocol used by dev-design to compare approaches and produce…"
-policy:
-  allow_implicit_invocation: false

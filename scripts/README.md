@@ -2,27 +2,26 @@
 
 nocode 插件的可执行脚本层。以 `.mjs`（ESM，`node --test` 原生测试）为主，另有 `context-bar.sh`
 （终端 statusline）和 `prototype-verify.mjs` 委托的 `_prototype-verify-impl.py`（Playwright 原型
-验证）。服务对象：SessionStart hook、PreToolUse 规则、`/plugin-dream` `/personal-dream`
-`/project-dream` `/personal-lint` 等命令的机械检测与安全 git 操作。
+验证）。服务对象：SessionStart hook、PreToolUse 规则、`/nocodehub dream` `/personalhub tidy`
+`/projecthub dream` `/personalhub check` 等入口的机械检测与安全 git 操作。
 
 ## 脚本清单
 
 | 脚本 | 用途 | 调用方 | 测试文件 |
 |---|---|---|---|
-| `compile.rule.js` | 单源生成器：glob `rules/rule-*.md` 的 frontmatter（`name`/`description`/`skip`）→ 编译扁平版 `model/agent-rule-catalog-N.md` | `hooks/inject-nocode.sh`（SessionStart `--check`）、`commands/plugin-distill.md`、`commands/plugin-dream.md` | `hooks/compile.rule.test.mjs` |
-| `compile.hooks.js` | 独立生成器：规则硬编码在脚本内 → 编译 `hooks/pretooluse-rules.json`，与 `compile.rule.js` 那条链完全独立 | `hooks/inject-nocode.sh`（SessionStart `--check`）、`commands/plugin-dream.md` | `hooks/compile.hooks.test.mjs` |
+| `compile.rule.js` | 单源生成器：glob `rules/rule-*.md` 的 frontmatter（`name`/`description`/`skip`）→ 编译扁平版 `model/agent-rule-catalog-N.md` | `hooks/inject-nocode.sh`（SessionStart `--check`）、`skills/nocodehub/references/write.md`、`skills/nocodehub/references/dream.md` | `hooks/compile.rule.test.mjs` |
+| `compile.hooks.js` | 独立生成器：规则硬编码在脚本内 → 编译 `hooks/pretooluse-rules.json`，与 `compile.rule.js` 那条链完全独立 | `hooks/inject-nocode.sh`（SessionStart `--check`）、`skills/nocodehub/references/dream.md` | `hooks/compile.hooks.test.mjs` |
 | `package.platform.mjs` | 合并共享源码、Markdown platform block 与 runtime overlay，确定性生成 Claude/Codex 发布树 | release gate | `hooks/compile.platform.test.mjs`、`hooks/platform-contract.test.mjs` |
-| `vendor-sync.mjs` | 按 `vendor-integration.json` 把 vendor 内容同步到 `skills/`/`agents/`/`commands/`/`references/`（copy/extract/absorb/skip 四种分发规则） | CLAUDE.md（commit 前）、`commands/nocodehub.md`、`commands/plugin-dream.md` | 无专属单测，`--check` 自检 |
+| `vendor-sync.mjs` | 按 `vendor-integration.json` 把 vendor 内容同步到 `skills/`/`agents/`/`commands/`/`references/`（copy/extract/absorb/skip 四种分发规则） | CLAUDE.md（commit 前）、`skills/nocodehub/references/status.md`、`skills/nocodehub/references/dream.md` | 无专属单测，`--check` 自检 |
 | `check-skills.mjs` | 静态检查 Skill 路由、reference、frontmatter、平台语法与 Codex metadata budget | release gate | `hooks/check-skills.test.mjs` |
 | `freshness-check.mjs` | 检查当前分支与 base（`nocode-base` config → upstream → `origin/HEAD` → `origin/main`）的 behind/ahead，供 `rule-git-freshness` gate | `hooks/pretooluse-rules.json`、`rules/rule-git-freshness.md`、`model/agent-about.md` | 无专属单测 |
-| `plugin-dream-baseline.mjs` | `/plugin-dream` 的增量 baseline 判断（git config 按分支隔离存储上次巡检点） | `commands/plugin-dream.md` | `hooks/plugin-dream-baseline.test.mjs` |
-| `dream-baseline.mjs` | 通用 git baseline diff 库，供 `/personal-dream` `/project-dream` 共用 | `commands/personal-dream.md`、`commands/project-dream.md` | `hooks/dream-baseline.test.mjs` |
-| `project-tree-detect.mjs` | `/project-dream` 目标目录树的 git 检测 + baseline ref 命名 | `commands/project-dream.md` | `hooks/project-tree-detect.test.mjs` |
+| `plugin-dream-baseline.mjs` | `/nocodehub dream` 的增量 baseline 判断（git config 按分支隔离存储上次巡检点） | `skills/nocodehub/references/dream.md` | `hooks/plugin-dream-baseline.test.mjs` |
+| `dream-baseline.mjs` | 通用 git baseline diff 库，供 `/personalhub tidy` 与 projecthub 私有运行时门面共用 | `skills/personalhub/references/tidy.md`、`skills/projecthub/scripts/dream-baseline.mjs` | `hooks/dream-baseline.test.mjs` |
 | `worktree-setup.mjs` | worktree 创建后补齐（env/IDE 配置/node_modules symlink）、销毁前清理 | `rules/rule-git-worktree.md`、`skills/agents-launcher/`、`skills/devflow/` | `worktree-setup.test.mjs`（同目录） |
 | `git-exec.mjs` | 共享安全 git 子进程调用（`execFileSync` 参数数组，防 shell 注入） | 供其他脚本 `import`，非直接调用 | `hooks/git-exec.test.mjs` |
-| `personal-lint.mjs` | 扫描所有装了插件的项目，检查 `.agents-personal/AGENTS.md` 变量名是否与插件当前定义匹配 | `commands/personal-lint.md`（也被 distill/personal-dream/personalhub 通过 `Skill(nocode:personal-lint)` 间接调用） | 无专属单测 |
+| `personal-lint.mjs` | 扫描所有装了插件的项目，检查 `.agents-personal/AGENTS.md` 变量名是否与插件当前定义匹配 | `skills/personalhub/references/check.md`（也被 distill 与 write/tidy/status actions 间接调用） | 无专属单测 |
 | `personal-migrate.mjs` | 旧外部 bare repo → `.agents-personal/` 内嵌 git 仓库的显式迁移 runner（幂等） | 仅手动 CLI；SessionStart 不读取或迁移旧历史 | `hooks/personal-migrate.test.mjs` |
-| `personal-snapshot.mjs` | SessionStart 自动给 `.agents-personal/` 打快照 commit | `hooks/hooks.json`（SessionStart）、`scripts/wiki-read.mjs`、`commands/personal-dream.md`、`commands/personalhub.md` | `hooks/personal-snapshot.test.mjs` |
+| `personal-snapshot.mjs` | SessionStart 自动给 `.agents-personal/` 打快照 commit | `hooks/hooks.json`（SessionStart）、`scripts/wiki-read.mjs`、`skills/personalhub/references/tidy.md`、`skills/personalhub/references/snap.md` | `hooks/personal-snapshot.test.mjs` |
 | `prototype-verify.mjs` | Playwright 原型验证（全页截图 + 交互脚本），委托 `_prototype-verify-impl.py` | `skills/pd-vd/`、`skills/dev-verify/` | 无自动化单测（需 `python3` + `playwright`） |
 | `_prototype-verify-impl.py` | `prototype-verify.mjs` 的 Python 实现细节（`playwright.sync_api`） | 仅被 `prototype-verify.mjs` 调用 | 无 |
 | `repo-lock.mjs` | `.agents-personal/` 嵌套仓库的并发写保护（原子锁文件 + PID/mtime 双重 staleness 判定） | 供 `dream-baseline`/`personal-migrate`/`personal-snapshot`/`wiki-read` `import` | `hooks/repo-lock.test.mjs` |
@@ -63,9 +62,9 @@ node scripts/freshness-check.mjs --max-behind=5 --ttl=7200
 node scripts/plugin-dream-baseline.mjs "$CLAUDE_PLUGIN_ROOT"
 node scripts/plugin-dream-baseline.mjs --set "$CLAUDE_PLUGIN_ROOT"
 
-# project-dream 目标目录的 git 检测
-node scripts/project-tree-detect.mjs detect <dir-path>
-node scripts/project-tree-detect.mjs find-root <dir-path>
+# projecthub dream 目标目录的 git 检测
+node skills/projecthub/scripts/project-tree-detect.mjs detect <dir-path>
+node skills/projecthub/scripts/project-tree-detect.mjs find-root <dir-path>
 
 # .agents-personal/ 变量健康检查
 node scripts/personal-lint.mjs --json

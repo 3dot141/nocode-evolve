@@ -7,6 +7,7 @@
 
 | 路径 | 主题 | 状态 |
 |---|---|---|
+| `3dot141/260803-01-devflow-redesign/design.md` | devflow 简化与 Define/Design 合并 | **implemented / verified / commit pending** |
 | `3dot141/260730-01-agents-launcher-declarative-topology/agents-launcher-declarative-topology-design.md` | agents-launcher 声明式服务拓扑 | **approved / Build complete / Verify pending** |
 | `3dot141/260723-03-native-platform-block-packaging/native-platform-block-packaging-design.md` | 原生平台块 + 静态打包 | **approved / implementation pending** |
 | `3dot141/260603-02-strategic-review-v3.4.0/strategic-review-v3.4.0.md` | v3.4.0 战略级架构改进 | **draft / 落地中** |

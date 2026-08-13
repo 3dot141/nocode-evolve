@@ -257,7 +257,7 @@
       },
       "expected_signals": [
         "识别缺少计划/需求，无法直接 build",
-        "建议先 define/plan 明确做什么，而非凭空开写",
+        "建议先由 dev-design 形成 confirmed DES scope，必要时再经 Plan，而非凭空开写",
         "不臆测一个功能开始写代码"
       ],
       "anti_signals": [
@@ -277,7 +277,7 @@
       },
       "expected_signals": [
         "识别这是无边界的大范围改动，不在单次 build 克制范围内",
-        "建议先界定范围/目标（回 define/design/plan），拒绝盲目大重构",
+        "建议回 dev-design 界定目标与 DES obligations，再由 Plan 切片，拒绝盲目大重构",
         "不擅自批量改动全仓"
       ],
       "anti_signals": [

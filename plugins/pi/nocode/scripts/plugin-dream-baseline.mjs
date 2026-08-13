@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 // plugin-dream 的增量 baseline 判断 —— 复用 freshness-check.mjs 的 git config 隔离模式（branch.<branch>.xxx）.
-// 供 commands/plugin-dream.md 的 Layer2 调用（library），也可独立跑 CLI 自检:
+// 供 skills/nocodehub/references/dream.md 调用（library），也可独立跑 CLI 自检:
 //   node scripts/plugin-dream-baseline.mjs [pluginRoot]           查看当前 diff 判断
 //   node scripts/plugin-dream-baseline.mjs --set [pluginRoot]     写入/推进 baseline 到当前 HEAD
 //
 // baseline 存储: git config branch.<branch>.nocode-plugin-dream-baseline
-//   key 按分支隔离，不用全局 key —— 避免多 worktree/分支同时跑 /plugin-dream 时互相覆盖 baseline（红军 C7 修复，
+//   key 按分支隔离，不用全局 key —— 避免多 worktree/分支同时跑 /nocodehub dream 时互相覆盖 baseline（红军 C7 修复，
 //   与 rule-git-worktree.md 已验证的 branch.<branch>.nocode-base 模式一致）.
 //
 // 监控共享源、adapter、metadata、packager 与双 marketplace；plugins/ 是生成物，不作源变化判断。
@@ -82,7 +82,7 @@ export function hasChanges(diffResult) {
   return diffResult.commitDiff.length > 0 || diffResult.dirtyFiles.length > 0;
 }
 
-// 把当前分支的 baseline 推进到当前 HEAD（首次运行结束后 / 一轮 /plugin-dream 检查完成后调用）。
+// 把当前分支的 baseline 推进到当前 HEAD（首次运行结束后 / 一轮 /nocodehub dream 检查完成后调用）。
 export function setBaseline(pluginRoot) {
   const branch = currentBranch(pluginRoot);
   const headSha = git({ cwd: pluginRoot }, ['rev-parse', 'HEAD']);

@@ -2,46 +2,27 @@
   {
     "case_id": "pipeline-001",
     "type": "pipeline",
-    "description": "完整 Full 场景：从模糊需求到计划产出，测 Define→Design→Plan 三阶段衔接",
+    "description": "feat 从 devflow 分类到 dev-design grilling，再由 DES Handoff 进入 Plan",
     "stages": [
       {
-        "stage": "define",
-        "input": "给我们的开源项目加一个贡献者排行榜功能",
-        "context": {"note": "开源项目已存在，有 GitHub repo，需求模糊"},
-        "expected_signals": [
-          "场景分类 Full",
-          "澄清 who/why/success",
-          "产出 restate 含 Out of Scope"
-        ],
-        "handoff_to_next": "restate 传递给 Design"
+        "stage": "devflow",
+        "input": "给开源项目新增贡献者排行榜。",
+        "expected_signals": ["分类 feat", "创建精确 design.log.md", "写 classification LOG ID"],
+        "handoff_to_next": "原请求、精确 Log 路径与分类证据传给 dev-design"
       },
       {
-        "stage": "design",
-        "input": "（接收 Define 的 restate）设计方案",
-        "expected_signals": [
-          "≥2 差异化方案",
-          "扣 restate 约束",
-          "产出测试目标",
-          "方案选择交给用户"
-        ],
-        "handoff_to_next": "设计文档 + 测试目标传递给 Plan"
+        "stage": "dev-design",
+        "input": "沿活动 Log 完成 grilling 与技术设计。",
+        "expected_signals": ["每轮先入库", "闭合 feat 动态树", "design.md 含 ASCII panorama 与 DES IDs", "一次确认生成 To=Plan Handoff"],
+        "handoff_to_next": "design.md、DES scope、Preserve、Open 与精确 Log 路径传给 Plan"
       },
       {
-        "stage": "plan",
-        "input": "（接收 Design 的设计文档）拆任务",
-        "expected_signals": [
-          "引用设计文档",
-          "tracer bullet 垂直切片",
-          "每 task ≤ M + HITL/AFK",
-          "测试目标分配到 slice"
-        ],
-        "handoff_to_next": "任务序列传递给 Build"
+        "stage": "dev-plan",
+        "input": "把 Handoff DES obligations 拆成实施任务。",
+        "expected_signals": ["从 Handoff.designIds 反查", "每 task 有 designCovers", "纯验证 DES 保留给 Verify", "用户确认后交 Build"],
+        "handoff_to_next": "confirmed Plan + 同一 DES scope 传给 Build"
       }
     ],
-    "pipeline_signals": [
-      "restate 在 Design/Plan 中被引用",
-      "测试目标在 Plan 中被分配",
-      "每个 stage 的 Exit Gate 满足下一个的 Entry Gate"
-    ]
+    "pipeline_signals": ["精确 Log 路径不变", "LOG IDs 只由 dev-design 消费", "Plan 和后续只消费 DES IDs", "没有 revision/digest/Registry"]
   }
 ]

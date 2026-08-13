@@ -159,7 +159,7 @@ remote_url=$(git -C "$MAIN_ROOT" remote get-url origin)
 > <为什么优先看这些高影响 / 复杂 / 高风险位置>
 1. 看 **<Affected 中的真实文件路径>**：<为什么看、看什么、怎样算有问题>
 
-<仅 devflow 生产改动追加 Requirements Addressed + Verification Evidence，结构见 pr-body-contract>
+<仅 devflow 生产改动追加 Design Obligations Addressed + Verification Evidence，结构见 pr-body-contract>
 
 --- Affected（仅展示，不进 body）---
 <Affected 目录树>
@@ -205,7 +205,7 @@ remote_url=$(git -C "$MAIN_ROOT" remote get-url origin)
 
 发布策略直接进入全景，默认「全量」，可在同一次全景回应中改为「灰度 / dark launch」；禁止全景前追问。
 
-PR body 按 `references/pr-body-contract.md` 的生产改动回链结构追加 Requirements Addressed（引用 Define 的 restate）+ Verification Evidence（引用 Verify 的本轮证据）；不得挤进「方案」或省略为一句结论。
+PR body 按 `references/pr-body-contract.md` 的生产改动回链结构追加 Design Obligations Addressed（引用 design.md 与 DES IDs）+ Verification Evidence（引用 Verify 的本轮证据）；不得挤进「方案」或省略为一句结论。
 
 ---
 
@@ -239,7 +239,7 @@ PR body 按 `references/pr-body-contract.md` 的生产改动回链结构追加 R
 
 ### 合并后流转
 
-合并后按上方平台语法调用 lark-project，传入 request/stage/restate/artifacts/constraints/decision，把任务流转到全景计划定好的目标状态。连接器不可用时明确报告缺失能力，不伪造完成。详见 `references/post-merge.md`。
+合并后按上方平台语法调用 lark-project，传入 request、stage、design path、DES scope、artifacts、constraints 和 decision，把任务流转到全景计划定好的目标状态。连接器不可用时明确报告缺失能力，不伪造完成。详见 `references/post-merge.md`。
 
 - 前置：有任务号 + FeishuProjectMcp 可用。不满足 → 跳过，报告原因
 - 典型映射：缺陷/任务类 `组员开发 → 创建者验收`
@@ -265,16 +265,6 @@ PR body 按 `references/pr-body-contract.md` 的生产改动回链结构追加 R
 - 先 remove worktree 再删 branch（反了 `branch -d` 会 fail）
 - `git worktree remove` 前必须 cd 到主仓根（在 worktree 内跑会静默失败）
 - 未提交改动 → remove 报错，不加 `--force`，用户先 stash
-
-## 场景差异
-
-| | Full / Standard / Fix | Mini |
-|---|---|---|
-| 意图推定 | 完整 | commit only |
-| 全景计划 | 完整 | 跳过 |
-| 执行 | 完整 | 只报告 commit 状态，不请求确认 |
-
-Mini 场景的 Land-lite：检查并报告 commit 已完成即可，不进完整 Step 1-3；若还需要执行 commit 或其它 mutation，升级到完整全景，不另设 Mini 确认。
 
 ## Common Rationalizations
 

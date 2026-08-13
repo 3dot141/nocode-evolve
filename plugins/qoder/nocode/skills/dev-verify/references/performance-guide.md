@@ -1,6 +1,6 @@
 # 性能度量指南
 
-适用 6d 步骤——Define 验收标准含性能要求时。无性能需求整步跳过。
+适用于当前 DES scope 含性能目标时。没有性能 DES obligation 则不加载本文件。
 
 ## Core Web Vitals 阈值
 
@@ -49,4 +49,4 @@
 
 ## Gate
 
-三项 CWV（或 Define 指定的性能指标）全部达标 + 无回归 → 6d 通过。任一项超阈值 → 回 Build 优化。
+三项 CWV（或 design.md 指定的性能指标）全部达标且无回归 → 相关 DES ID 通过。任一项超阈值 → 点名 DES ID 回 Build。

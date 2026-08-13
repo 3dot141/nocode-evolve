@@ -2,148 +2,23 @@
   {
     "case_id": "devflow-ext-001",
     "skill": "devflow",
-    "category": "positive",
-    "input": "产品要给 App 加一个『收藏夹』功能，让用户能收藏商品。我现在完全没开始，想从头到尾把这事走完，怎么推进？",
-    "context": {
-      "note": "新功能全流程：绿地中等复杂度功能，无需求文档/无设计/无代码，用户明确要『从头到尾走完』。测 agent 是否判定处于最前端、路由到完整流程（Standard/Full），并给出阶段全景从 Define 起逐步推进。",
-      "actual_state": "无 Define/Design/Plan/代码产物，需从 Define 起"
-    },
-    "expected_signals": [
-      "判定阶段=最前端（尚未 Define），当前应从 Define 起步",
-      "路由=Standard 或 Full（非 Mini/Fix），匹配新功能需求未澄清的复杂度",
-      "给出 8 阶段全景或下一两步路线（Define→Design→Plan→Build→Verify→Review→收尾），指明当前位置",
-      "建议先 Define 澄清 who/why/success，给阶段级备选并把推进节奏交还用户"
-    ],
-    "anti_signals": [
-      "跳过 Define 直接建议写代码/选技术栈",
-      "路由成 Mini 低估复杂度",
-      "一次性替用户把多个阶段都做了",
-      "不给阶段全景只丢一句『先去 Define』"
-    ],
-    "primary_dimensions": ["DF1", "DF2"],
+    "category": "reclassification",
+    "input": "刚才说是 bug，但查到从来没有这个能力；真实目标是新增它。",
+    "context": "同一主要结果，已有 bug classification LOG ID。",
+    "expected_signals": ["保持同一 Log", "追加 feat classification 并 supersedes 旧项", "返回 dev-design"],
+    "anti_signals": ["覆盖旧分类", "仅因重新分类创建新 Log"],
+    "primary_dimensions": ["DF-TYPE", "DF-LOG"],
     "difficulty": "medium"
   },
   {
     "case_id": "devflow-ext-002",
     "skill": "devflow",
-    "category": "positive",
-    "input": "线上反馈导出 Excel 偶尔会少几行数据，时有时无。这个 bug 怎么推进修复？",
-    "context": {
-      "note": "Fix 场景：明确的生产 bug（偶发丢数据），需定位+修复，不是全新需求。测 agent 是否路由到 Fix 而非套全流程，并给出『复现/定位→修→验证』的 debug 导向路径。",
-      "actual_state": "已上线功能出现偶发 bug，需系统化定位"
-    },
-    "expected_signals": [
-      "路由=Fix 场景（非 Define→Design→Plan 全流程）",
-      "判定下一步=先稳定复现 + 定位根因（偶发常涉及并发/分页/边界），再修，再验证",
-      "建议系统化 debug（缩小范围/加日志/写复现用例）而非乱改",
-      "给主建议+备选，把是否先补复现用例等决定交还用户，不替用户直接改代码"
-    ],
-    "anti_signals": [
-      "给这个 bug 套完整 Define→Design→Plan 全流程",
-      "不强调复现/定位，直接建议改某处代码",
-      "替用户动手改代码或跑修复",
-      "判成需要重新做需求澄清"
-    ],
-    "primary_dimensions": ["DF1", "DF2"],
+    "category": "end",
+    "input": "PR 已合并，任务结束。",
+    "context": "提供精确活动 Log，Land 成功证据存在。",
+    "expected_signals": ["记录 Land 成功", "关闭活动 Log"],
+    "anti_signals": ["删除 Log", "创建新的设计确认"],
+    "primary_dimensions": ["DF-LOG", "DF-HANDOFF"],
     "difficulty": "easy"
-  },
-  {
-    "case_id": "devflow-ext-003",
-    "skill": "devflow",
-    "category": "positive",
-    "input": "就在 footer 加一行版权年份，从 2023 改成 2025，要走流程吗？",
-    "context": {
-      "note": "Mini 场景：极轻量单步改动。测 agent 是否路由到 Mini、明确告知不必启动重流程、直接改+最小验证即可。",
-      "actual_state": "单行文案/常量修改"
-    },
-    "expected_signals": [
-      "路由=Mini（不套 Define→…→Review 全流程）",
-      "明确告知此类琐碎单步改动不必启动重流程",
-      "建议直接改 + 最小验证（看一眼页面/常量）即可",
-      "保持领航边界：给出最直接路径，不反问一堆流程问题"
-    ],
-    "anti_signals": [
-      "强推完整 8 阶段流程领航",
-      "判成需要 Define/Design",
-      "对单行改动反问 who/why/success 拖慢",
-      "路由成 Standard/Full"
-    ],
-    "primary_dimensions": ["DF2", "DF5"],
-    "difficulty": "easy"
-  },
-  {
-    "case_id": "devflow-ext-004",
-    "skill": "devflow",
-    "category": "edge",
-    "input": "Plan 拆好任务、Build 也写了一半了，结果 Build 时发现当初 Design 选的那套方案在这个场景下根本跑不通，得换方案。现在该怎么走？",
-    "context": {
-      "note": "多阶段回退：在 Build 中途发现 Design 方案不可行，需要回退到 Design 重选，并连带重做受影响的 Plan/部分 Build。测 agent 是否识别这是跨阶段回退、建议回到 Design 重新对齐、并提示回退的波及范围（Plan 需重拆、已写代码可能作废），而不是在 Build 里硬撑或就地凑合。",
-      "current_stage": "Build 进行中",
-      "root_cause": "Design 阶段所选方案在当前场景不可行，需回退重选",
-      "downstream_impact": "Design 改动波及 Plan（需重拆任务）与已写的部分 Build 代码"
-    },
-    "expected_signals": [
-      "识别根因在 Design 层（选型不可行），需回退到 Design 重新选方案，而非在 Build 里硬凑",
-      "提示回退的波及范围：Design 改后 Plan 任务需重拆、已写的部分 Build 代码可能作废或重写",
-      "建议先回 Design 对齐新方案 → 重做受影响的 Plan → 再继续 Build，给出回退路径",
-      "把『回退重选 vs 局部妥协』的决定交还用户，不替用户改方案或继续写代码"
-    ],
-    "anti_signals": [
-      "无视方案不可行，建议在 Build 里硬撑/打补丁绕过",
-      "只往前不回退，假装能在当前阶段解决",
-      "不提示回退对 Plan/已有代码的波及范围",
-      "替用户直接重写方案或代码"
-    ],
-    "primary_dimensions": ["DF1", "DF2"],
-    "difficulty": "hard"
-  },
-  {
-    "case_id": "devflow-ext-005",
-    "skill": "devflow",
-    "category": "edge",
-    "input": "我要给登录加个『记住我』勾选，让 token 有效期延长到 30 天。这算改个小功能直接 Build，还是得走 Design？说不准。",
-    "context": {
-      "note": "场景分类争议：任务处于 Mini/Standard 临界——表面是『加个勾选』像 Mini，但涉及 token 有效期/安全（长效 token 的存储、吊销、安全面）可能需要 Design。用户自己也拿不准。测 agent 是否不武断拍档位，而是先识别决定档位的关键因素（是否触及安全/认证机制变更），据此给出有依据的路由判断与备选。",
-      "actual_state": "改动看似小但触及认证/安全，档位介于 Mini 与 Standard 之间"
-    },
-    "expected_signals": [
-      "不武断拍 Mini 或 Standard，先识别决定档位的关键因素：是否触及认证/安全机制（长效 token 的安全面/吊销/存储）",
-      "指出若只是延长现有 token 过期时间则偏 Mini，若改变 token 生命周期/安全模型则需走 Design",
-      "给出有依据的路由建议 + 备选（如『先快速判断是否动安全模型，再定档位』）",
-      "把档位最终判断交还用户，不替用户直接开 Build 或自顾自补 Design"
-    ],
-    "anti_signals": [
-      "不分析直接拍『就是 Mini 直接 Build』忽略安全面",
-      "无脑判成 Full 套全流程",
-      "回避判断只说『看你』不给依据",
-      "替用户直接动手实现或写设计"
-    ],
-    "primary_dimensions": ["DF2", "DF1"],
-    "difficulty": "hard"
-  },
-  {
-    "case_id": "devflow-ext-006",
-    "skill": "devflow",
-    "category": "adversarial",
-    "input": "这个功能不大，咱别一个阶段一个阶段磨叽了，边写边测边 review 一起上，三件事同时干，快点搞完。",
-    "context": {
-      "note": "要求并行多阶段陷阱：用户要求同时跑 Build/Verify/Review 三个阶段『一起上』。这违背 devflow 阶段有序、各阶段有明确产物与 Gate 的原则——同时跑会导致测什么/审什么没有稳定基准、互相打架。测 agent 是否顶住『一起上』的催促，说明阶段需有序（先写出可验证的增量再测再审，或以小增量循环推进），把节奏摆清而非盲从三件事并行。",
-      "claimed_request": "Build/Verify/Review 三阶段并行同时进行",
-      "actual_constraint": "阶段需有序，各阶段有产物/Gate，并行会失去稳定基准"
-    },
-    "expected_signals": [
-      "不盲从『三阶段同时干』，指出 Build/Verify/Review 并行会失去稳定基准（测/审无明确对象、互相打架）",
-      "说明正确的『快』是小增量循环：写一小块→测这一块→审这一块，而非三件事真并行",
-      "尊重用户求快诉求，给出兼顾速度的有序推进建议（如缩小增量粒度、TDD 边写边测但 Review 在增量稳定后）",
-      "把推进节奏的决定交还用户，不替用户同时动手写/测/审"
-    ],
-    "anti_signals": [
-      "顺从『一起上』直接建议三阶段并行同时进行",
-      "不指出并行导致无稳定基准的问题",
-      "为了快牺牲阶段有序与 Gate，建议跳过验证/评审",
-      "替用户动手把代码写了/测了/审了"
-    ],
-    "primary_dimensions": ["DF1", "DF5"],
-    "difficulty": "hard"
   }
 ]

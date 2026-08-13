@@ -1,7 +1,7 @@
 # benchmark/
 
-devflow-benchmark：用 Executor→Evaluator 隔离评测法，给 nocode 插件的 8 个核心工作流 skill
-（define / design / plan / build / verify / code-review / devflow / caveman）的**输出质量**
+devflow-benchmark：用 Executor→Evaluator 隔离评测法，给 nocode 插件的 7 个核心工作流 skill
+（dev-design / plan / build / verify / code-review / devflow / caveman）的**输出质量**
 打分，驱动 skill 优化迭代。
 
 ## 目录结构
@@ -11,7 +11,7 @@ devflow-benchmark：用 Executor→Evaluator 隔离评测法，给 nocode 插件
 | `cases/<skill>/<skill>-cases.json` | 该 skill 的 base case 集（`evaluate.mjs` 实际加载的文件） |
 | `cases/<skill>/<skill>-ext-cases.json` | 补充例（happy + edge + hard，未接入自动化脚本） |
 | `cases/<skill>/<skill>-hard-cases.json` | 对抗例（诱导违反 Iron Law/Scope Lock，未接入自动化脚本） |
-| `cases/pipeline/pipeline-001.json` | 跨阶段集成 case（Define→Design→Plan 接力） |
+| `cases/pipeline/pipeline-001.json` | 跨阶段集成 case（devflow→dev-design→Plan 接力） |
 | `fixtures/` | 预留的外部素材目录（diff / 注入 bug 代码 / 模拟会话），当前为空 |
 | `splits/train.json` / `splits/val.json` | `split.mjs` 生成的 70/30 训练/验证切分（只存 case_id 列表） |
 | `scripts/evaluate.mjs` | case 加载 + executor/evaluator prompt 组装 + 分数汇总 |
@@ -24,10 +24,10 @@ devflow-benchmark：用 Executor→Evaluator 隔离评测法，给 nocode 插件
 
 ```bash
 # 列出某 skill 的全部 case
-node benchmark/scripts/evaluate.mjs define --list
+node benchmark/scripts/evaluate.mjs design --list
 
 # 输出该 skill 全部 case 的 executor prompt（供派 subagent 执行）
-node benchmark/scripts/evaluate.mjs define
+node benchmark/scripts/evaluate.mjs design
 
 # 重新生成 train/val 切分
 node benchmark/scripts/split.mjs

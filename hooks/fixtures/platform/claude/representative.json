@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
   "files": {
-    "skills/devflow/SKILL.md": "a53e3c8c0f6f77b69be03e17b06859a81fcccefba5d466f0ae5457b4bbcf6605",
-    "skills/dev-build/SKILL.md": "f206a019cbae9647ee759df90720beeed812bf97914139fcf0850ad26aa89a76",
-    "skills/dev-review/SKILL.md": "03639449f79072bb8217a9b5d59283abb516a928d3c2d459cfebe2b0ff31351f",
-    "rules/rule-codex-review.md": "59d629de90615d149d031ec52859a0edcdf4f1075d1f81ef0543e1a25a602b2c",
+    "skills/devflow/SKILL.md": "a54ecfba4b27e0e27acda7629b7c9d2e063a4bc2b154b83a5c0b8338d68fc96a",
+    "skills/dev-build/SKILL.md": "53079a363cf9fe5c8aabe5e077f7e435fe47a1d9e32524697946bd6a3eeb80b5",
+    "skills/dev-review/SKILL.md": "12835ee5cd2f74ff42e6f8c3bce4772a8b6fa4c9eab5775bee5599f4d680b5ea",
+    "rules/rule-codex-review.md": "445659c13104e49291f76d0c340276742266be7f2944519525c8e75aa1dbb6a1",
     "hooks/hooks.json": "4ee2c0dcb777353b50f1f767fc9f49c16970107808a1cd3e5f1edcdd21f19ec2",
     "hooks/pretooluse-guard.mjs": "a54f111745de4e98660c4043bd4b733884f9e7b02d22ada9071cc2fbd16838ad"
   }

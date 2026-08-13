@@ -6,7 +6,7 @@
 
 ## 目录自动发现，不需要额外注册
 
-Claude Code 自动发现本目录下每个含 `SKILL.md` 的子目录，**新增 skill 不需要额外注册**——包括 devflow/pdflow 及其阶段 skill（dev-define / dev-design / dev-plan / dev-build / dev-verify / dev-review / dev-land / dev-land / pd-research / pd-prd / pd-ix / pd-vd 等），Claude Code 原生的 skill description 已经承载路由信息，插件层不再维护一份独立的 workflow skill 白名单。
+Claude Code 自动发现本目录下每个含 `SKILL.md` 的子目录，**新增 skill 不需要额外注册**——包括 devflow/pdflow 及其阶段 skill（dev-design / dev-plan / dev-build / dev-verify / dev-review / dev-land / pd-research / pd-prd / pd-ix / pd-vd 等），Claude Code 原生的 skill description 已经承载路由信息，插件层不再维护一份独立的 workflow skill 白名单。
 
 ## 新增 / 修改 skill 的工序
 
@@ -16,9 +16,9 @@ Claude Code 自动发现本目录下每个含 `SKILL.md` 的子目录，**新增
 4. **workflow 类 skill**（Multi-step 顺序执行 + 排序/副作用敏感）SKILL.md 必须含：Step 0 workflow.plan.create（任务一次性建全）、每个 Step 的 Enter/Exit Gate、Global Exit Gate；Gate 必须客观可判（yes/no / 有无数字），不能是主观词。模板见 `skill-writing/writing-skills/workflow-skill-template.md`。
 5. skill 自评/自审步骤（review / verify / check / validate 自己刚产出的东西）要挂评审方法论：多维度结构化评审调 `平台原生 Skill 调用`——传评审对象 + 本 skill 自己的领域维度（内联或指向自己的 `references/xxx-review.md`）+ 可选方法，引擎内部处理分档/选方法/升档/降级/findings 归一，不要在新 skill 里重造一遍"维度清单→自评→交叉→分级→收口"流程，也不要直接 `Read` reviewing 的内部文件（它已是自包含 skill，见规则 7）；轻量单点自检可以只走自审（不进框架）。
 6. SKILL.md 超过 500 行时，把细节挪到 `<skill>/references/`（skill 私有参考目录，与共享的 `skills/references/` 是两回事，见下条）。若某段领域知识对 ≥2 个 skill 都有用，考虑放进共享的 `skills/references/`（走该目录自己的 AGENTS.md 流程）。
-7. **Skill 是自闭环单元，除 Reference 外只能读 Skill**：SKILL.md 正文与私有 `references/` 只能引用其它 Skill（点名 handoff 或 `平台原生 Skill 调用` 调用）或参考材料（自己的 `references/`、共享的 `skills/references/`）；不得直接指路 `rules/rule-*.md`、`model/agent-*.md`、`hooks/`、非自身 `scripts/` 等插件内部实现文件（仓库 `CLAUDE.md` 规则 6）。引自己的 `references/` 用相对路径（`references/xxx.md`），不要写成 `{CLAUDE_PLUGIN_ROOT}/skills/<skill-name>/references/xxx.md`；一份材料已归属某个具体 skill 的领域（如 `reviewing`）时，其它 skill 要用只能点名 `平台原生 Skill 调用` 调用，不直接指路它的 `references/`——只有没有单一归属 skill 的材料才留在共享 `skills/references/` 直接引用。`/plugin-dream` 的 Layer 2 skill 对象检测会扫这一项。
+7. **Skill 是自闭环单元，除 Reference 外只能读 Skill**：SKILL.md 正文与私有 `references/` 只能引用其它 Skill（点名 handoff 或 `平台原生 Skill 调用` 调用）或参考材料（自己的 `references/`、共享的 `skills/references/`）；不得直接指路 `rules/rule-*.md`、`model/agent-*.md`、`hooks/`、非自身 `scripts/` 等插件内部实现文件（仓库 `CLAUDE.md` 规则 6）。引自己的 `references/` 用相对路径（`references/xxx.md`），不要写成 `{CLAUDE_PLUGIN_ROOT}/skills/<skill-name>/references/xxx.md`；一份材料已归属某个具体 skill 的领域（如 `reviewing`）时，其它 skill 要用只能点名 `平台原生 Skill 调用` 调用，不直接指路它的 `references/`——只有没有单一归属 skill 的材料才留在共享 `skills/references/` 直接引用。`/nocodehub dream` 的 Layer 2 skill 对象检测会扫这一项。
 8. **SKILL.md 给 agent，README.md 给人**：归属说明、变更历史、设计理由这类人类可读内容放该 skill 的 README.md，不要塞进 SKILL.md 污染 agent context。
-9. 改完后：升级 `plugin/metadata.json` 的 `version`，运行 `node scripts/package.platform.mjs`（`skills/` 属于"被插件加载的文件"范围，CLAUDE.md 规则 2）——新增 skill/兼容性增强 → minor；纯 bug fix/文案修订 → patch；破坏性改名/语义反转 → major，与本次改动放同一个 commit。
+9. 改完后运行 `node scripts/package.platform.mjs`（`skills/` 属于被插件加载的文件）。**版本号只在用户明确要求发布或指定新版本时修改**；不要因源码变化自动升级。
 10. commit 前如果改动涉及 vendor 来源 skill，先看下一条。
 
 ## vendor 来源 skill 禁手改
@@ -27,7 +27,7 @@ Claude Code 自动发现本目录下每个含 `SKILL.md` 的子目录，**新增
 
 当前 `keep-as-skill` 的 vendor 来源 skill：
 - superpowers：`brainstorming`、`systematic-debugging`、`receiving-code-review`、`dispatching-parallel-agents`
-- everything-claude-code：`eval-harness`、`continuous-learning-v2`、`strategic-compact`
+- everything-claude-code：`eval-harness`、`continuous-learning-v2`
 
 当前 `fork` 的 vendor 来源 skill（本仓改造版，直接改 `skills/` 内容）：
 - superpowers：`using-git-worktrees`（创建改走 `git worktree add -b`，进入走 `平台原生 agent/plan/decision 工具`）
@@ -39,5 +39,5 @@ commit 前跑 `node scripts/vendor-sync.mjs --check` 确认一致（不一致 ex
 ## 与 commands/、agents/ 的关系
 
 - `commands/*.md` 是入口 Skill 的作者态单源。Claude/Codex adapter 都把它编译成 `skills/<name>/SKILL.md`，因此不要在源码 `skills/` 再维护同名副本。
-- **`*hub` 聚合入口是载体无关的角色**：多数 hub 是 command（`nocodehub` / `personalhub` / `projecthub`），但 skill 也可承载（`larkhub` = `skills/larkhub/SKILL.md`）。skill 形态的 hub 同样遵守「只转发不写业务逻辑」约束，由 `/plugin-dream` 跨 command/skill 的 hub 检测统一覆盖（惯例权威定义见 `commands/AGENTS.md`）。选 skill 形态的动机通常是要挂 `references/` 等目录特性；否则 command 单文件更轻。
+- **`*hub` 聚合入口是载体无关的角色**：`larkhub`、`personalhub`、`nocodehub`、`projecthub` 都是源码 Skill。后面三个只公开 hub 自身，子动作实现放在各自私有 `references/`，不得重新拆成模型可见 Skill。hub 必须遵守「主入口只路由，业务逻辑留在 reference 或被调用 Skill」的约束。
 - agent 调度写在所属 Skill 的成对 platform block 中：Claude 使用原生 Agent/Task 工具，Codex 使用 `spawn_agent`/`wait_agent` 等原生协作工具；不再维护独立 profile/router。

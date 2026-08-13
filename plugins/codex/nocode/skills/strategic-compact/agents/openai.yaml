@@ -1,5 +1,0 @@
-interface:
-  display_name: "strategic-compact"
-  short_description: "Use when explaining or configuring the optional manual-compaction suggestion ho…"
-policy:
-  allow_implicit_invocation: false

@@ -98,8 +98,6 @@ worktree 的新分支 base 应跟上远程，避免长在过时代码上、与�
 
 > 为什么用 `ahead` 而非"behind 很多"：纯落后时基于远程最新永远无损（你没有独有 commit 会被丢），不必拿模糊阈值打扰用户；真正需要拍板的只有"本地有独有 commit 时 base 选谁"这一种分歧。
 
-> **devflow 流程内（Env 阶段）**：本节静默逻辑升级为 **Gate Base 显式确认**——base 选择 + 基准状态一次呈现、用户拍板后才 `git worktree add`，确认值写 `nocode-base` config（见 devflow skill「Env sub-flow 2b. Gate Base」）。非流程零散建 worktree 维持本节静默默认。
-
 ### 示例
 
 | 项目根 | branch (git 里) | 最终 worktree 路径（目录名扁平化）|

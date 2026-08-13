@@ -18,12 +18,12 @@ description: "Use for product discovery, market/competitor research, or explorin
 ## 非本 skill 请求
 
 已有明确技术方案只需实现 / 单文件修改 / 纯事实查询 → 不进 Research。
-已有 PRD 只需写代码 → 直接进 devflow Define。
+已有 PRD 要进入工程实现 → 走 devflow，分类为 feat 后进入 dev-design。
 只想做技术方案对比（不涉及产品调研）→ 走 `nocode:dev-design`。
 
 ## Enter Gate
 
-- [ ] 用户有调研意图或 devflow 建议走产品流
+- [ ] 用户有产品调研意图，或 pdflow 当前 Handoff 指向 Research
 
 ## 协议
 

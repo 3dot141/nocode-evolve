@@ -3,25 +3,24 @@
 本目录是 nocode 插件的可执行脚本层：被 `hooks/`、`rules/`、`commands/`、`skills/` 通过
 `node "${CLAUDE_PLUGIN_ROOT}/scripts/xxx.mjs"`（CLI）或 `import()`（library）两种方式消费。
 改动前务必确认调用方不会因签名变化而破坏——很多脚本是多个 command/rule 共用的底层库，
-改坏一个函数签名可能同时炸掉 `/personal-dream`、`/project-dream`、`/plugin-dream` 三条线。
+改坏一个函数签名可能同时炸掉 `/personalhub tidy`、`/projecthub dream`、`/nocodehub dream` 三条线。
 
 ## 调用关系（改前必读）
 
 | 脚本 | 调用方 | 调用方式 |
 |---|---|---|
-| `compile.rule.js` | `hooks/inject-nocode.sh`（SessionStart `--check`）、`commands/plugin-distill.md`（新增/融合 rule 后重新生成）、`commands/plugin-dream.md`（Layer1 客观漂移） | CLI |
-| `compile.hooks.js` | `hooks/inject-nocode.sh`（SessionStart `--check`）、`commands/plugin-dream.md`（Layer1 客观漂移）；与 `compile.rule.js` 互不依赖，独立编译 `hooks/pretooluse-rules.json` | CLI |
-| `vendor-sync.mjs` | CLAUDE.md（commit 前工作流）、`commands/nocodehub.md`、`commands/plugin-dream.md`（Layer1 客观漂移） | CLI |
+| `compile.rule.js` | `hooks/inject-nocode.sh`（SessionStart `--check`）、`skills/nocodehub/references/write.md`（新增/融合 rule 后重新生成）、`skills/nocodehub/references/dream.md`（Layer1 客观漂移） | CLI |
+| `compile.hooks.js` | `hooks/inject-nocode.sh`（SessionStart `--check`）、`skills/nocodehub/references/dream.md`（Layer1 客观漂移）；与 `compile.rule.js` 互不依赖，独立编译 `hooks/pretooluse-rules.json` | CLI |
+| `vendor-sync.mjs` | CLAUDE.md（commit 前工作流）、`skills/nocodehub/references/status.md`、`skills/nocodehub/references/dream.md`（Layer1 客观漂移） | CLI |
 | `check-skills.mjs` | CLAUDE.md（commit 前 lint）；无自动调用方（独立护栏工具），`hooks/check-skills.test.mjs` 内 `checkAll` 现状守护随全量测试跑 | CLI + library（`checkAll`/`checkSkillText`/`extractRoutes` 等被单测 import） |
 | `freshness-check.mjs` | `hooks/pretooluse-rules.json`、`rules/rule-git-freshness.md`、`model/agent-about.md` + `agent-rule-catalog-1/2.md`、`rules/rule-git-worktree.md`（写入 git config 供其读取）、`skills/dev-land` | CLI |
-| `plugin-dream-baseline.mjs` | `commands/plugin-dream.md`（Layer0 判范围 + Layer2 `--set` 推进 baseline） | CLI；内部 import `git-exec.mjs` |
-| `dream-baseline.mjs` | `commands/personal-dream.md`、`commands/project-dream.md` | 动态 `import()`；内部依赖 `repo-lock.mjs` + `git-exec.mjs` |
-| `project-tree-detect.mjs` | `commands/project-dream.md` | CLI（`detect` / `find-root` / `ref-name` 三子命令） |
+| `plugin-dream-baseline.mjs` | `skills/nocodehub/references/dream.md`（Layer0 判范围 + Layer2 `--set` 推进 baseline） | CLI；内部 import `git-exec.mjs` |
+| `dream-baseline.mjs` | `skills/personalhub/references/tidy.md`、`skills/projecthub/scripts/dream-baseline.mjs` | 动态 `import()`；内部依赖 `repo-lock.mjs` + `git-exec.mjs` |
 | `worktree-setup.mjs` | `rules/rule-git-worktree.md`（setup/teardown）、`skills/agents-launcher/SKILL.md`、`skills/devflow/SKILL.md` | CLI |
 | `git-exec.mjs` | `plugin-dream-baseline.mjs` / `dream-baseline.mjs` / `personal-migrate.mjs` / `personal-snapshot.mjs`（内部 import，共享 git 子进程执行） | library only，不建议直接当 CLI 跑 |
-| `personal-lint.mjs` | `commands/personal-lint.md`；`commands/distill.md` / `commands/personal-distill.md` / `commands/personal-dream.md` / `commands/personalhub.md` 均通过 `Skill(nocode:personal-lint)` 间接触发 | CLI + Skill 包装 |
+| `personal-lint.mjs` | `skills/personalhub/references/check.md`；`commands/distill.md` 与 personalhub 的 write/tidy/status actions 间接触发 | CLI + Skill 包装 |
 | `personal-migrate.mjs` | 仅供用户显式迁移旧历史；`personal-snapshot.mjs` / SessionStart 不得自动调用 | library + CLI（手动） |
-| `personal-snapshot.mjs` | `hooks/hooks.json`（SessionStart 每次自动跑）、`scripts/wiki-read.mjs`（import `resolvePersonalDir`）、`commands/personal-dream.md`、`commands/personalhub.md` | hook 自动 + CLI + library |
+| `personal-snapshot.mjs` | `hooks/hooks.json`（SessionStart 每次自动跑）、`scripts/wiki-read.mjs`（import `resolvePersonalDir`）、`skills/personalhub/references/tidy.md`、`skills/personalhub/references/snap.md` | hook 自动 + CLI + library |
 | `prototype-verify.mjs` | `skills/pd-vd/SKILL.md` + `references/*`、`skills/dev-verify/SKILL.md` | CLI，委托 `_prototype-verify-impl.py`（需 python3 + playwright） |
 | `repo-lock.mjs` | `dream-baseline.mjs` / `personal-migrate.mjs` / `personal-snapshot.mjs` / `wiki-read.mjs`（内部 import） | library only |
 | `context-bar.sh` | 不在插件自动化链路内——`hooks/hooks.json` 没有 statusLine 挂载点；供用户手动配置到个人 `~/.claude/settings.json` 的 `statusLine.command` | 独立脚本 |
@@ -47,7 +46,6 @@
 | `repo-lock.mjs` | `hooks/repo-lock.test.mjs` | `node --test hooks/repo-lock.test.mjs` |
 | `dream-baseline.mjs` | `hooks/dream-baseline.test.mjs` | `node --test hooks/dream-baseline.test.mjs` |
 | `plugin-dream-baseline.mjs` | `hooks/plugin-dream-baseline.test.mjs` | `node --test hooks/plugin-dream-baseline.test.mjs` |
-| `project-tree-detect.mjs` | `hooks/project-tree-detect.test.mjs` | `node --test hooks/project-tree-detect.test.mjs` |
 | `personal-migrate.mjs` | `hooks/personal-migrate.test.mjs` | `node --test hooks/personal-migrate.test.mjs` |
 | `personal-snapshot.mjs` | `hooks/personal-snapshot.test.mjs` | `node --test hooks/personal-snapshot.test.mjs` |
 | `worktree-setup.mjs` | `scripts/worktree-setup.test.mjs` | `node --test scripts/worktree-setup.test.mjs` |

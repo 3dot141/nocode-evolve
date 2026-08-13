@@ -1,6 +1,6 @@
 ---
 name: pd-prd
-description: Use when the user wants to write a product requirements document. Use when the user says "写 PRD/产品需求/产品设计/产品 brief/写需求文档", or after research skill completes and the user wants to synthesize findings into a document. Also use when devflow Full-scene suggests running the product flow. Not for technical design docs (use nocode:dev-design) or code comments/README.
+description: Use when the user wants to write a product requirements document, or after research completes and findings need synthesis. Not for technical design docs (use nocode:dev-design), engineering routing, or code comments/README.
 ---
 
 > 本文写“结构化决策”时，必须提交当前步骤的完整问题与 2–3 个互斥选项。
@@ -11,7 +11,7 @@ description: Use when the user wants to write a product requirements document. U
 
 **Iron Law: 没有写下来的需求就不存在。口头共识在第三个人加入时蒸发。**
 
-独立于 devflow 的产品流第二阶段。把调研结论（或用户描述）收敛成结构化 PRD 文档。产出物喂给 devflow 的 Define 阶段。
+独立于 devflow 的产品流第二阶段。把调研结论（或用户描述）收敛成结构化 PRD 文档。产出物可作为 feat 的 dev-design 输入。
 
 > Leading word: **prd**。所有收敛到一份 `.prd.md` 文档，没有文档就没有 Product Design 的产出。
 
@@ -19,7 +19,7 @@ description: Use when the user wants to write a product requirements document. U
 
 纯调研不写文档 → 走 `nocode:pd-research`。
 技术设计文档 / RFC / ADR → 走 `nocode:dev-design`。
-已有 PRD 直接进开发 → 走 devflow Define。
+已有 PRD 直接进工程技术设计 → 走 devflow，分类为 feat 后进入 dev-design。
 改 README / commit message → 不进本 skill。
 
 ## Enter Gate

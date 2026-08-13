@@ -32,13 +32,14 @@ test('research workflow passes terminal evidence explicitly between native agent
 
 test('dev-build dispatches one native agent at a time and preserves review/fix gates', () => {
   const source = read('skills/dev-build/SKILL.md');
-  assert.match(source, /每次只派发当前一个 plan task/);
-  assert.match(source, /<plan-task-id>-spec-review/);
-  assert.match(source, /approved=false.*修复.*重新.*review/s);
-  assert.match(source, /前一个 task.*Gate.*下一 task/s);
-  assert.match(source, /spawn_agent/);
-  assert.match(source, /wait_agent/);
-  assert.doesNotMatch(source, /Capability\(|"profile"\s*:|fallbackPolicy/);
+  const protocol = read('skills/dev-build/references/dev-build-subagent.md');
+  assert.match(protocol, /Never dispatch multiple implementers/);
+  assert.match(protocol, /Reviewer and implementer must be separate contexts/);
+  assert.match(protocol, /Send actionable issues back to the same implementer/);
+  assert.match(protocol, /Finish required review before starting the next slice/);
+  assert.match(source, /subagent-lite/);
+  assert.match(source, /subagent-full/);
+  assert.doesNotMatch(`${source}\n${protocol}`, /Capability\(|"profile"\s*:|fallbackPolicy/);
 });
 
 test('parallel dispatch example embeds concrete failures and constraints in each cold-start objective', () => {
@@ -88,6 +89,7 @@ test('development documents use topic directories under docs/dev', () => {
   const about = read('model/agent-about.md');
 
   assert.match(about, /docs\/dev\/\{username\}\/\{yymmdd\}-\{serial\}-\{topic\}/);
+  assert.match(about, /\{dev_design_output\}` \| `\{DEV_BASE_DIR\}\/design\.md`/);
   assert.equal(existsSync(new URL('../docs/dev/INDEX.md', import.meta.url)), true);
   assert.equal(existsSync(new URL('../docs/plans', import.meta.url)), false);
   assert.equal(existsSync(new URL('../docs/superpowers', import.meta.url)), false);
@@ -113,6 +115,7 @@ test('product workflows use native plans, decisions, and direct skill handoffs',
     const source = read(file);
     assert.match(source, /<!-- nocode:platform claude -->/, file);
     assert.match(source, /<!-- nocode:platform codex -->/, file);
+    assert.match(source, /<!-- nocode:platform pi -->/, file);
     assert.match(source, /TaskCreate|AskUserQuestion/, file);
     assert.match(source, /update_plan|request_user_input/, file);
     assert.doesNotMatch(source, /Capability\(|"profile"\s*:|fallbackPolicy/, file);
@@ -123,10 +126,11 @@ test('product workflows use native plans, decisions, and direct skill handoffs',
   assert.match(read('skills/pd-vd/SKILL.md'), /get_artifact/);
 });
 
-test('design coordinator owns the native plan while private playbooks use direct conversational gates', () => {
+test('dev-design uses a thin trunk and direct conversational persistence', () => {
   for (const file of [
-    'skills/dev-design/decision/SKILL.md',
-    'skills/dev-design/writing/SKILL.md',
+    'skills/dev-design/SKILL.md',
+    'skills/dev-design/references/grilling.md',
+    'skills/dev-design/references/writing.md',
     'skills/brainstorming/SKILL.md',
     'skills/reviewing/SKILL.md',
     'skills/red-blue-deep/SKILL.md',
@@ -134,18 +138,12 @@ test('design coordinator owns the native plan while private playbooks use direct
     assert.doesNotMatch(read(file), /Capability\(|"profile"\s*:|fallbackPolicy/, file);
   }
   const coordinator = read('skills/dev-design/SKILL.md');
-  assert.match(coordinator, /TaskCreate/);
-  assert.match(coordinator, /TaskUpdate/);
-  assert.match(coordinator, /update_plan/);
-  for (const file of [
-    'skills/dev-design/decision/SKILL.md',
-    'skills/dev-design/writing/SKILL.md',
-  ]) {
-    const source = read(file);
-    assert.match(source, /普通会话暂停/);
-    assert.doesNotMatch(source, /TaskCreate|TaskUpdate|update_plan|StagePlan|StageCheckpoint|resumeState|dedupeKey/);
-  }
-  assert.match(read('skills/dev-design/writing/SKILL.md'), /Skill\(nocode:reviewing\)/);
+  assert.match(coordinator, /Persist a waiting Round with one question/);
+  assert.match(coordinator, /ConfirmedBy: Round N/);
+  assert.match(coordinator, /Confirmation is process authorization, not a Decision/);
+  assert.doesNotMatch(coordinator, /TaskCreate|TaskUpdate|update_plan|StagePlan|StageCheckpoint|resumeState|dedupeKey/);
+  assert.equal(existsSync(new URL('../skills/dev-design/decision/SKILL.md', import.meta.url)), false);
+  assert.equal(existsSync(new URL('../skills/dev-design/writing/SKILL.md', import.meta.url)), false);
   assert.match(read('skills/red-blue-deep/SKILL.md'), /Skill\(nocode:reviewing\)/);
   const reviewing = read('skills/reviewing/SKILL.md');
   for (const field of ['request:', 'context:', 'object:', 'dimensions:', 'method:', 'contextCapsule:', 'depth:']) {
@@ -168,10 +166,9 @@ test('brainstorming broadens options without forcing delivery artifacts', () => 
   }
 });
 
-test('engineering coordinators use native plan and direct Skill handoffs', () => {
+test('engineering stage skills use native plans while devflow and dev-design stay plan-free', () => {
   const expectedHandoffs = new Map([
-    ['skills/dev-define/SKILL.md', 'using-git-worktrees'],
-    ['skills/dev-design/SKILL.md', 'dev-plan'],
+    ['skills/dev-plan/SKILL.md', 'dev-build'],
     ['skills/dev-build/SKILL.md', 'dev-verify'],
     ['skills/dev-verify/SKILL.md', 'dev-review'],
   ]);
@@ -179,6 +176,7 @@ test('engineering coordinators use native plan and direct Skill handoffs', () =>
     const source = read(file);
     assert.match(source, /<!-- nocode:platform claude -->/, file);
     assert.match(source, /<!-- nocode:platform codex -->/, file);
+    assert.match(source, /<!-- nocode:platform pi -->/, file);
     assert.match(source, /TaskCreate/, file);
     assert.match(source, /TaskUpdate/, file);
     assert.match(source, /update_plan/, file);
@@ -189,19 +187,16 @@ test('engineering coordinators use native plan and direct Skill handoffs', () =>
       file,
     );
   }
-  for (const file of [
-    'skills/dev-define/SKILL.md',
-    'skills/dev-design/SKILL.md',
-    'skills/dev-verify/SKILL.md',
-  ]) {
+  for (const file of ['skills/dev-design/SKILL.md', 'skills/dev-verify/SKILL.md']) {
     assert.doesNotMatch(read(file), /Capability\(|"profile"\s*:|fallbackPolicy/, file);
   }
-  const define = read('skills/dev-define/SKILL.md');
-  assert.match(define, /Skill\(nocode:reviewing\)/);
-  assert.match(define, /7 个 define-review 维度.*context capsule.*independent/s);
+  assert.equal(existsSync(new URL('../skills/dev-define/SKILL.md', import.meta.url)), false);
+  for (const file of ['skills/devflow/SKILL.md', 'skills/dev-design/SKILL.md']) {
+    assert.doesNotMatch(read(file), /TaskCreate|TaskUpdate|update_plan/, file);
+  }
 });
 
-test('dev-plan uses native plan, decision, search, and Skill handoff instructions', () => {
+test('dev-plan uses native plan, explicit decisions, and direct Build handoff', () => {
   const source = read('skills/dev-plan/SKILL.md');
   assert.doesNotMatch(source, /Capability\(|"profile"\s*:|fallbackPolicy/);
   for (const platform of ['claude', 'codex']) {
@@ -213,8 +208,8 @@ test('dev-plan uses native plan, decision, search, and Skill handoff instruction
   assert.match(source, /update_plan/);
   assert.match(source, /request_user_input/);
   assert.match(source, /Skill\(nocode:dev-build\)/);
-  assert.match(source, /Skill\(nocode:red-blue-deep\)/);
-  assert.match(source, /当前会话.*(?:rg|代码搜索工具).*补搜/s);
+  assert.match(source, /Handoff\.designIds/);
+  assert.match(source, /designCovers/);
 });
 
 test('remaining workflow coordinators use native control and honest independence', () => {
@@ -225,10 +220,11 @@ test('remaining workflow coordinators use native control and honest independence
     const source = read(file);
     assert.match(source, /<!-- nocode:platform claude -->/, file);
     assert.match(source, /<!-- nocode:platform codex -->/, file);
+    assert.match(source, /<!-- nocode:platform pi -->/, file);
     assert.doesNotMatch(source, /Capability\(|"profile"\s*:|fallbackPolicy/, file);
   }
-  assert.match(read('skills/devflow/SKILL.md'), /TaskCreate/);
-  assert.match(read('skills/devflow/SKILL.md'), /update_plan/);
+  assert.doesNotMatch(read('skills/devflow/SKILL.md'), /TaskCreate|update_plan/);
+  assert.match(read('skills/devflow/SKILL.md'), /bug \| feat \| refactor/);
   assert.match(read('skills/skill-writing/SKILL.md'), /spawn_agent/);
   assert.match(read('skills/skill-writing/SKILL.md'), /wait_agent/);
   assert.match(read('skills/skill-writing/SKILL.md'), /未证明跨模型|不是跨模型/);
@@ -259,7 +255,7 @@ test('skill handoffs use a self-contained context envelope instead of an ambient
   for (const file of [
     'model/agent-about.md',
     'skills/dev-build/SKILL.md', 'skills/dev-review/SKILL.md', 'skills/reviewing/SKILL.md',
-    'skills/pdflow/SKILL.md', 'commands/distill.md', 'commands/nocodehub.md',
+    'skills/pdflow/SKILL.md', 'commands/distill.md', 'skills/nocodehub/SKILL.md',
   ]) {
     const source = read(file);
     assert.doesNotMatch(source, /"input":"<current command arguments and stage context>"/, file);
@@ -290,15 +286,15 @@ test('skill invocation payloads carry the business fields claimed by their calle
 
 test('distill caller and targets share one candidates payload contract', () => {
   const caller = read('commands/distill.md');
-  const personal = read('commands/personal-distill.md');
-  const plugin = read('commands/plugin-distill.md');
-  const project = read('commands/project-distill.md');
+  const personal = read('skills/personalhub/references/write.md');
+  const plugin = read('skills/nocodehub/references/write.md');
+  const project = read('skills/projecthub/references/write.md');
 
   assert.match(caller, /"target":"wiki","disposition":"<create\|merge\|supersede\|promote\|skip>"/);
   assert.match(caller, /"target":"rules","disposition":"<create\|merge\|skip>"/);
   assert.match(caller, /"target":"agents","disposition":"<create\|merge\|skip>"/);
-  assert.match(caller, /调用 `plugin-distill` Skill[^\n]+"disposition":"<merge\|create\|skip>"/);
-  assert.match(caller, /调用 `project-distill` Skill[^\n]+"target_file":"<agents\|readme\|both>"/);
+  assert.match(caller, /调用 `nocodehub` Skill[^\n]+"action":"write"[^\n]+"disposition":"<merge\|create\|skip>"/);
+  assert.match(caller, /调用 `projecthub` Skill[^\n]+"action":"write"[^\n]+"target_file":"<agents\|readme\|both>"/);
   for (const target of [personal, plugin, project]) {
     assert.match(target, /arguments\.payload\.candidates\[\]/);
   }
@@ -307,17 +303,55 @@ test('distill caller and targets share one candidates payload contract', () => {
   assert.match(project, /target_file\s+agents \| readme \| both/);
 });
 
+test('personal, plugin, and project maintenance expose only their hub skills', () => {
+  for (const removed of [
+    'commands/personalhub.md', 'commands/personal-distill.md', 'commands/personal-dream.md',
+    'commands/personal-init.md', 'commands/personal-lint.md', 'commands/personal-recall.md',
+    'commands/personal-snapshot.md', 'commands/nocodehub.md',
+    'commands/plugin-distill.md', 'commands/plugin-dream.md',
+    'commands/projecthub.md', 'commands/project-distill.md', 'commands/project-dream.md',
+    'commands/project-init.md', 'commands/project-lint.md', 'commands/project-recall.md',
+  ]) assert.equal(existsSync(new URL(`../${removed}`, import.meta.url)), false, removed);
+
+  const personalhub = read('skills/personalhub/SKILL.md');
+  for (const ref of ['init', 'write', 'search', 'check', 'tidy', 'snap', 'status']) {
+    assert.match(personalhub, new RegExp(`references/${ref}\\.md`));
+    assert.equal(existsSync(new URL(`../skills/personalhub/references/${ref}.md`, import.meta.url)), true);
+  }
+
+  const nocodehub = read('skills/nocodehub/SKILL.md');
+  for (const ref of ['write', 'dream', 'status']) {
+    assert.match(nocodehub, new RegExp(`references/${ref}\\.md`));
+    assert.equal(existsSync(new URL(`../skills/nocodehub/references/${ref}.md`, import.meta.url)), true);
+  }
+
+  const projecthub = read('skills/projecthub/SKILL.md');
+  for (const ref of ['init', 'write', 'search', 'check', 'dream', 'status']) {
+    assert.match(projecthub, new RegExp(`references/${ref}\\.md`));
+    assert.equal(existsSync(new URL(`../skills/projecthub/references/${ref}.md`, import.meta.url)), true);
+  }
+  const projectDream = read('skills/projecthub/references/dream.md');
+  assert.doesNotMatch(projectDream, /\$\{CLAUDE_PLUGIN_ROOT\}\/scripts\//);
+  for (const script of ['dream-baseline.mjs', 'project-tree-detect.mjs']) {
+    assert.equal(existsSync(new URL(`../skills/projecthub/scripts/${script}`, import.meta.url)), true);
+  }
+  assert.equal(existsSync(new URL('../scripts/project-tree-detect.mjs', import.meta.url)), false);
+});
+
 test('command and hub entrypoints use native decisions and direct named Skill handoffs', () => {
   for (const file of [
-    'commands/distill.md', 'commands/personalhub.md', 'commands/projecthub.md',
-    'commands/nocodehub.md', 'commands/plugin-dream.md', 'commands/personal-distill.md',
-    'commands/plugin-distill.md', 'commands/personal-dream.md', 'commands/project-dream.md',
-    'commands/sow.md', 'commands/eval.md', 'commands/personal-init.md',
-    'commands/personal-recall.md',
+    'commands/distill.md', 'skills/personalhub/SKILL.md', 'skills/projecthub/SKILL.md',
+    'skills/nocodehub/SKILL.md', 'skills/nocodehub/references/dream.md',
+    'skills/personalhub/references/write.md', 'skills/nocodehub/references/write.md',
+    'skills/personalhub/references/tidy.md', 'skills/projecthub/references/write.md',
+    'skills/projecthub/references/dream.md',
+    'commands/sow.md', 'commands/eval.md', 'skills/personalhub/references/init.md',
+    'skills/personalhub/references/search.md',
   ]) {
     const source = read(file);
     assert.match(source, /<!-- nocode:platform claude -->/, file);
     assert.match(source, /<!-- nocode:platform codex -->/, file);
+    assert.match(source, /<!-- nocode:platform pi -->/, file);
     assert.match(source, /AskUserQuestion/, file);
     assert.match(source, /request_user_input/, file);
     assert.doesNotMatch(source, /Capability\(|"profile"\s*:|fallbackPolicy/, file);
