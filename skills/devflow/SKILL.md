@@ -8,9 +8,11 @@ description: 工程任务流程领航（8 阶段 · 4 场景路由）。可被 m
 <!-- nocode:platform claude -->
 计划使用 `TaskCreate` / `TaskUpdate`，决策使用 `AskUserQuestion`；阶段 Skill 使用 `Skill(nocode:<stage-skill>)`。
 <!-- /nocode:platform -->
-
 <!-- nocode:platform codex -->
 计划使用 `update_plan`，决策使用 `request_user_input`；阶段 Skill 使用 `$<stage-skill>`。
+<!-- /nocode:platform -->
+<!-- nocode:platform pi -->
+计划使用文本里程碑列表（同时最多一个进行中），决策在回合末写出完整问题与 2–3 个互斥选项；阶段 Skill 使用 `/skill:<stage-skill>`。
 <!-- /nocode:platform -->
 
 > 驾驶舱。**model 命中复杂多步任务时主动调起**，用户也可 `/调` 进入。给建议不替执行。
@@ -67,9 +69,11 @@ Define 返回后，拿到确认的 restate + 场景分类，进 Step 2。
 <!-- nocode:platform claude -->
 使用 `TaskCreate` 创建每个阶段并保存 task id；使用 `TaskUpdate` 更新状态。
 <!-- /nocode:platform -->
-
 <!-- nocode:platform codex -->
 使用 `update_plan` 提交完整阶段列表，同时最多一个 `in_progress`。
+<!-- /nocode:platform -->
+<!-- nocode:platform pi -->
+使用文本里程碑列表创建并更新每个阶段，同时最多一个进行中。
 <!-- /nocode:platform -->
 
 Sub-steps 写进 description 是为了**进入阶段时一眼看到完整步骤序列**——防止跳步遗漏。链首的 `⓪ 调用 <stage-skill>` 是为了把“加载 skill”钉成每个阶段的第一个动作——**sub-steps 是地图，skill 才是详图**，照地图裸跑会丢掉 skill 内的模板 / Iron Law / 格式约束。

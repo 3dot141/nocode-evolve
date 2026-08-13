@@ -3,9 +3,11 @@
 <!-- nocode:platform claude -->
 结构化决策使用 `AskUserQuestion`；评估类提问调用 `Skill(nocode:red-blue-deep)`。
 <!-- /nocode:platform -->
-
 <!-- nocode:platform codex -->
 结构化决策使用 `request_user_input`；评估类提问调用 `$red-blue-deep`。
+<!-- /nocode:platform -->
+<!-- nocode:platform pi -->
+结构化决策在回合末写出完整问题与 2–3 个互斥选项，等待用户下一条消息；评估类提问调用 `/skill:red-blue-deep`。
 <!-- /nocode:platform -->
 
 # 行为准则

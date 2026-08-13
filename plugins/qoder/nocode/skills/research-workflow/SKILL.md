@@ -27,7 +27,6 @@ description: Generic research engine (structured search + verification) for othe
 
 使用原生 `Agent` 为每个独立角度派发一个 agent；先完成本轮全部派发并保存原生句柄，再等待每个 agent 的终态结果。
 
-
 主会话直接读取并校验每个原生 agent 的终态结果，再把必要内容显式嵌入下一轮任务的 objective。不得让下一阶段猜测前一阶段输出。平台无法提供独立 agent 时，由主会话按相同阶段顺序执行，并明确报告没有获得隔离性或并行性。
 
 ### 可执行编译协议
@@ -101,7 +100,6 @@ description: Generic research engine (structured search + verification) for othe
 **升降档有疑点不自作主张**：调用方拿不准该用哪档（要不要从 targeted 升 shallow / deep）时，让用户在 `targeted`（已知方向，单轮并行覆盖）、`shallow`（多角度迭代搜索，不做对抗验证）、`deep`（提取声明并做独立反证验证）之间拍板，不默认往重档跑。
 
 使用 `AskUserQuestion` 请求这个选择。
-
 
 ### inline —— 不调本 workflow（0~1 个 agent）
 

@@ -9,12 +9,10 @@ description: 评估/拍板类提问的红蓝军辩论框架。Use this skill whe
 
 调用 `Skill(nocode:red-blue-deep)`。
 
-
 传入当前 request、stage、restate、artifacts、constraints、计划文件路径和用户 decision（调用方声明的强制档位原样保留）。
 
 **必做**：
 
 调用 `Skill(nocode:reviewing)`。
-
 
 传入完整方案/选型/决策上下文、调用方决策维度、`red-blue-adversarial` 方法、facts/decisions/rejected alternatives/constraints/non-goals 组成的 Context Capsule，以及 `self / medium / heavy` 深度。默认自查档由主会话做第一性原理 + 红蓝自查，不派 subagent、不调 codex；升档仅用户显式要求或敏感面建议后点头。主产物是 `verdict.recommendation`（倾向 + 关键缓解 + 独立性标注），不被 C/W/S 列表压扁。

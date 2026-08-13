@@ -67,9 +67,11 @@ Open Design handoff 必须执行同一拓扑：
 <!-- nocode:platform claude -->
 Open Design handoff 使用 `Skill(nocode:open-design)`。
 <!-- /nocode:platform -->
-
 <!-- nocode:platform codex -->
 Open Design handoff 使用 `$open-design`。
+<!-- /nocode:platform -->
+<!-- nocode:platform pi -->
+Open Design handoff 使用 `/skill:open-design`。
 <!-- /nocode:platform -->
 
 Open Design 不可用或执行失败时，明确返回 render 未完成；Markdown 仍是最终交付。不得伪造 provider ID、URL 或本地 fallback。

@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-本仓库是 Claude Code / Codex / Qoder 三平台插件 `nocode` 的源码。在此仓库工作时遵守以下约束。
+本仓库是 Claude Code / Codex / Qoder / Pi 四平台插件 `nocode` 的源码。在此仓库工作时遵守以下约束。
 
 > 与 `AGENTS.md` 同义（软链接），供其他遵循 AGENTS.md 约定的工具读取。
 
@@ -24,7 +24,7 @@
   - **minor**：新增 hook / skill / 兼容性增强
   - **0.x breaking change**：路径改名、规则语义反转等破坏性变更升级 minor，不自动进入 `1.0.0`
   - **major**：仅在用户明确决定进入新的稳定主版本时升级
-- `plugins/claude/nocode/`、`plugins/codex/nocode/` 与 `plugins/qoder/nocode/` 是生成物，**禁止手改**；marketplace 直接从 git 读取它们，不需要 tarball/npm 打包。
+- `plugins/claude/nocode/`、`plugins/codex/nocode/`、`plugins/qoder/nocode/` 与 `plugins/pi/nocode/` 是生成物，**禁止手改**；Claude/Codex/Qoder marketplace 直接从 git 读取它们，不需要 tarball/npm 打包。Pi 开发期安装 `plugins/pi/nocode`。
 
 纯文档/元数据修订（README、本文件、AGENTS.md 等）同样不自动升级版本，仍遵守规则 1。
 

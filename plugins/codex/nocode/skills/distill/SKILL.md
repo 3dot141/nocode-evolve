@@ -4,7 +4,6 @@ description: "把当前会话沉淀分流到 wiki/rules/agents/docs 七个出口
 argument-hint: [optional-topic]
 ---
 
-
 本文所说“调用 `<skill>` Skill”使用 `$<skill>`；“结构化决策”使用 `request_user_input`。
 
 

@@ -1,7 +1,7 @@
 {
   "name": "nocode",
   "version": "0.10.2",
-  "description": "Harrison 的个人工程工作流与规则工具箱，支持 Claude Code、Codex 和 Qoder",
+  "description": "Harrison 的个人工程工作流与规则工具箱，支持 Claude Code、Codex、Qoder 和 Pi",
   "author": {
     "name": "Harrison",
     "url": "https://github.com/3dot141"
@@ -19,7 +19,7 @@
   "interface": {
     "displayName": "NoCode",
     "shortDescription": "Personal engineering workflows and rules",
-    "longDescription": "Harrison 的个人工程工作流与规则工具箱，支持 Claude Code、Codex 和 Qoder",
+    "longDescription": "Harrison 的个人工程工作流与规则工具箱，支持 Claude Code、Codex、Qoder 和 Pi",
     "developerName": "Harrison",
     "category": "Productivity",
     "capabilities": [

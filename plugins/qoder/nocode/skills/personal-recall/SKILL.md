@@ -7,7 +7,6 @@ argument-hint: <搜索关键词>
 本文所说“调用 `<skill>` Skill”使用 `Skill(nocode:<skill>)`；“结构化决策”使用 `AskUserQuestion`。
 
 
-
 # /personal-recall：.agents-personal/ 内容检索
 
 只搜 `.agents-personal/`（wiki + rules + AGENTS.md），不搜 vault。和 `/recall` 的关系：recall 搜两个源（personal + vault），personal-recall 只搜 personal。

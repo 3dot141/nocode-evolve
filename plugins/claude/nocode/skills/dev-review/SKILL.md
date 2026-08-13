@@ -7,7 +7,6 @@ description: Use for the default code/PR/diff review path, before merge, after V
 
 计划使用 `TaskCreate` / `TaskUpdate`；独立审查使用 `Skill(nocode:reviewing)`，Land handoff 使用 `Skill(nocode:dev-land)`。
 
-
 **Iron Law: Critical 不可 override。fix 改了代码必须回 Build → Verify → 再 Review。没有"这次特殊"。**
 
 默认**主会话五轴自查**，独立交叉仅用户显式要求才派，统一 **findings** 分级。对自己写的、另一个 agent 写的、人写的代码都适用。

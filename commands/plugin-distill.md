@@ -6,9 +6,11 @@ argument-hint: <描述> | (被 /distill 传结构化候选)
 <!-- nocode:platform claude -->
 本文所说“调用 `<skill>` Skill”使用 `Skill(nocode:<skill>)`；“结构化决策”使用 `AskUserQuestion`。
 <!-- /nocode:platform -->
-
 <!-- nocode:platform codex -->
 本文所说“调用 `<skill>` Skill”使用 `$<skill>`；“结构化决策”使用 `request_user_input`。
+<!-- /nocode:platform -->
+<!-- nocode:platform pi -->
+本文所说“调用 `<skill>` Skill”使用 `/skill:<skill>`；“结构化决策”在回合末写出完整问题与 2–3 个互斥选项，等待用户下一条消息。
 <!-- /nocode:platform -->
 
 

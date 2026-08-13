@@ -8,9 +8,11 @@ description: Use to turn a confirmed goal into implementation tasks or when devf
 <!-- nocode:platform claude -->
 使用 `AskUserQuestion` 提交完整问题和全部选项。
 <!-- /nocode:platform -->
-
 <!-- nocode:platform codex -->
 在 `request_user_input` 可用时提交完整问题和全部选项；若当前模式未提供该工具，则在回合末尾直接提出同一问题并等待回答。
+<!-- /nocode:platform -->
+<!-- nocode:platform pi -->
+在回合末写出完整问题与全部选项，等待用户下一条消息。
 <!-- /nocode:platform -->
 
 不得拆成多个不完整问题，也不得替用户选择。
@@ -103,9 +105,11 @@ Task 10: 硬交接 — 调用下一步 skill
 <!-- nocode:platform claude -->
 Build handoff 使用 `Skill(nocode:dev-build)`。
 <!-- /nocode:platform -->
-
 <!-- nocode:platform codex -->
 Build handoff 使用 `$dev-build`。
+<!-- /nocode:platform -->
+<!-- nocode:platform pi -->
+Build handoff 使用 `/skill:dev-build`。
 <!-- /nocode:platform -->
 
 调用时把上面**每一条** Task 建成稳定计划项：`id` 固定、`subject` 为标题、`description` 完整包含 Sub-steps + Gate、初始 `status=pending`，仅最后一项标注 handoff。不得传空计划：
@@ -113,9 +117,11 @@ Build handoff 使用 `$dev-build`。
 <!-- nocode:platform claude -->
 使用 `TaskCreate` 逐项创建全部计划项，并保存每项返回的 task id。状态变化时使用 `TaskUpdate` 更新对应 task id；最终 handoff 项的描述始终保留交接要求。
 <!-- /nocode:platform -->
-
 <!-- nocode:platform codex -->
 使用 `update_plan` 提交全部计划项；每次状态变化都再次提交完整列表，保持稳定顺序和文本，且同时最多一个 `in_progress`。
+<!-- /nocode:platform -->
+<!-- nocode:platform pi -->
+使用文本里程碑列表创建并更新全部计划项，同时最多一个进行中；最终 handoff 项的描述始终保留交接要求。
 <!-- /nocode:platform -->
 
 每完成一个标 done。
@@ -203,9 +209,11 @@ Round 1 骨架完成，在填充代码前对计划骨架做一遍自查。骨架
 <!-- nocode:platform claude -->
 对抗审视使用 `Skill(nocode:red-blue-deep)`。
 <!-- /nocode:platform -->
-
 <!-- nocode:platform codex -->
 对抗审视使用 `$red-blue-deep`。
+<!-- /nocode:platform -->
+<!-- nocode:platform pi -->
+对抗审视使用 `/skill:red-blue-deep`。
 <!-- /nocode:platform -->
 
 **结论落地**：自查中成立的质疑修正到骨架中（回 Step 3/4/5 对应调整）。

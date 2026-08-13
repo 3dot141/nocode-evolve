@@ -5,7 +5,6 @@ description: "\"当用户提供飞书/Lark/豆包文档或飞书项目 URL，或
 
 # larkhub：飞书工具集聚合入口
 
-
 路由目标分别使用 `$lark-read`、`$lark-project`、`$lark-doc`、`$lark-wiki`、`$lark-shared`。
 
 每次 handoff 传入原始 request、URL、stage、restate、artifacts、constraints 和用户 decision。目标 Skill 或连接器不可用时，明确报告缺失能力，不经过私有 fallback。

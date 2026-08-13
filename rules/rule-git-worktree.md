@@ -15,9 +15,11 @@ skip: false
 <!-- nocode:platform claude -->
 创建 worktree 使用 `git worktree add "<absolute-worktree-path>" -b "<BRANCH_NAME>" "<optional-base-ref>"`；创建成功后使用 `EnterWorktree` 进入同一绝对路径。
 <!-- /nocode:platform -->
-
 <!-- nocode:platform codex -->
 创建 worktree 使用 `git worktree add "<absolute-worktree-path>" -b "<BRANCH_NAME>" "<optional-base-ref>"`；后续每次文件与命令操作都绑定该绝对路径为 `workdir`，不模拟会话级目录切换。
+<!-- /nocode:platform -->
+<!-- nocode:platform pi -->
+创建 worktree 使用 `git worktree add "<absolute-worktree-path>" -b "<BRANCH_NAME>" "<optional-base-ref>"`；后续每次文件与命令操作都使用该绝对路径，不模拟会话级目录切换。
 <!-- /nocode:platform -->
 
 执行 `nocode:using-git-worktrees` skill 时，本文规则覆盖 skill 内默认值。

@@ -34,7 +34,7 @@ function validateRuntimeData(value, sourceName) {
 }
 
 export function platformDataRoot(platform, env = process.env) {
-  if (platform !== 'claude' && platform !== 'codex' && platform !== 'qoder') {
+  if (platform !== 'claude' && platform !== 'codex' && platform !== 'qoder' && platform !== 'pi') {
     throw new RuntimeEntryError('RUNTIME_PLATFORM_INVALID', `unsupported platform: ${platform}`);
   }
   if (platform === 'qoder' && typeof env.QODER_PLUGIN_DATA === 'string' && env.QODER_PLUGIN_DATA.trim()) {

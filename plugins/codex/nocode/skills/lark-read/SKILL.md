@@ -14,7 +14,6 @@ metadata:
 
 ## 前置
 
-
 开始前调用 `$lark-shared`，传入当前 request、stage、artifacts、constraints 和 decision，确认认证就绪。
 
 `lark-shared` 是外部 Skill，随 lark-cli 技能包安装，不在本插件内；不可用时跳过此步，认证报错时再提示用户安装 lark-cli 技能包。

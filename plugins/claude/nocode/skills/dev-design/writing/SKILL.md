@@ -213,7 +213,6 @@ Read `references/design-doc-review.md`，按其全部维度检查当前完整文
 
 独立 review handoff 使用 `Skill(nocode:reviewing)`。
 
-
 findings 使用 C / W / S / Q / SA 五档并带稳定短 ID、`sourceAnchor` 和证据。Open Question 分类：
 
 - blocking：影响实现安全、兼容、所有权或验收，必须解决；存在时 `approved: false`。

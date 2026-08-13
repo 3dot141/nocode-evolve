@@ -1,5 +1,6 @@
 export function detectPlatform(env = process.env) {
-  if (env.NOCODE_PLATFORM === 'claude' || env.NOCODE_PLATFORM === 'codex' || env.NOCODE_PLATFORM === 'qoder') {
+  if (env.NOCODE_PLATFORM === 'claude' || env.NOCODE_PLATFORM === 'codex'
+    || env.NOCODE_PLATFORM === 'qoder' || env.NOCODE_PLATFORM === 'pi') {
     return env.NOCODE_PLATFORM;
   }
   if (env.QODER_PLUGIN_ROOT) return 'qoder';

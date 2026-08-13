@@ -7,7 +7,6 @@ argument-hint: <sub-action> [args]
 本文所说“调用 `<skill>` Skill”使用 `Skill(nocode:<skill>)`；“结构化决策”使用 `AskUserQuestion`。
 
 
-
 # /personalhub：.agents-personal/ 管理入口
 
 统一入口，分发到 7 个子动作。每个子动作也可以直接用独立命令调用。

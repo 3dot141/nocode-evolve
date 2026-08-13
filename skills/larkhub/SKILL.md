@@ -8,9 +8,11 @@ description: "当用户提供飞书/Lark/豆包文档或飞书项目 URL，或�
 <!-- nocode:platform claude -->
 仓库内目标使用 `Skill(nocode:lark-read)`、`Skill(nocode:lark-project)`；其余目标调用已安装的 `lark-doc`、`lark-wiki`、`lark-shared` Skill。
 <!-- /nocode:platform -->
-
 <!-- nocode:platform codex -->
 路由目标分别使用 `$lark-read`、`$lark-project`、`$lark-doc`、`$lark-wiki`、`$lark-shared`。
+<!-- /nocode:platform -->
+<!-- nocode:platform pi -->
+仓库内目标使用 `/skill:lark-read`、`/skill:lark-project`；其余目标调用 `/skill:lark-doc`、`/skill:lark-wiki`、`/skill:lark-shared`。
 <!-- /nocode:platform -->
 
 每次 handoff 传入原始 request、URL、stage、restate、artifacts、constraints 和用户 decision。目标 Skill 或连接器不可用时，明确报告缺失能力，不经过私有 fallback。

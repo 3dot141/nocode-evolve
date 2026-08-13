@@ -3,7 +3,6 @@ name: dev-land
 description: "\"Use when implementation is complete and you need to land the work — merge locally, create a PR…"
 ---
 
-
 合并后项目流转使用 `$lark-project`。
 PR 定时监控用 `exec_command` 启动 `references/pr-check.mjs --watch`，保存 session id；后续用 `write_stdin` 续取输出继续处置。
 

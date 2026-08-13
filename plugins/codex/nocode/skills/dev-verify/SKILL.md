@@ -73,11 +73,9 @@ Task 7: 硬交接 — 调用下一步 skill
   metadata: {handoff: true}（供防跳步 Hook B 识别交接 task）
 ```
 
-
 Review handoff 使用 `$dev-review`。
 
 调用时把上面**每一条** Task 建成稳定计划项，不得传空计划：
-
 
 使用 `update_plan` 提交全部计划项；每次状态变化都提交完整列表，保持稳定顺序，且同时最多一个 `in_progress`。
 

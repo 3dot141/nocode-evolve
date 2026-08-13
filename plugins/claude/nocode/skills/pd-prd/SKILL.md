@@ -7,7 +7,6 @@ description: Use when the user wants to write a product requirements document. U
 
 计划使用 `TaskCreate` / `TaskUpdate`，决策使用 `AskUserQuestion`；handoff 使用 `Skill(nocode:pd-ix)`，评审使用 `Skill(nocode:reviewing)`。
 
-
 # prd — 收敛成产品需求文档
 
 **Iron Law: 没有写下来的需求就不存在。口头共识在第三个人加入时蒸发。**

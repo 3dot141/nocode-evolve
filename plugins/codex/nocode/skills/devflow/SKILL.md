@@ -5,7 +5,6 @@ description: "工程任务流程领航（8 阶段 · 4 场景路由）。可被 
 
 # nocode:devflow — 工程任务流程领航
 
-
 计划使用 `update_plan`，决策使用 `request_user_input`；阶段 Skill 使用 `$<stage-skill>`。
 
 > 驾驶舱。**model 命中复杂多步任务时主动调起**，用户也可 `/调` 进入。给建议不替执行。
@@ -58,7 +57,6 @@ Define 返回后，拿到确认的 restate + 场景分类，进 Step 2。
 3. **完成条件**：最后一个阶段 item 也只记录其完整 Sub-steps 与 Gate；没有额外的 handoff 状态。
 
 为当前场景一次创建全部稳定阶段项；description 保留完整子步骤和 Gate。后续每次状态变化都提交顺序稳定的完整计划状态，不得只表达单项 patch。
-
 
 使用 `update_plan` 提交完整阶段列表，同时最多一个 `in_progress`。
 

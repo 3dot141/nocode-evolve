@@ -2,7 +2,6 @@
 
 结构化决策使用 `AskUserQuestion`；评估类提问调用 `Skill(nocode:red-blue-deep)`。
 
-
 # 行为准则
 
 ## 输出语言

@@ -4,7 +4,6 @@ description: "递归扫描选定目录树，为每个有意义的子目录批量
 argument-hint: [dir-path]
 ---
 
-
 本文所说“调用 `<skill>` Skill”使用 `$<skill>`；“结构化决策”使用 `request_user_input`。
 
 

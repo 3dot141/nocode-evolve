@@ -69,9 +69,11 @@ decision ── mode: research ──→ research final-gate
 <!-- nocode:platform claude -->
 使用 `TaskCreate` 创建全部里程碑，状态变化时用 `TaskUpdate` 更新原 task。
 <!-- /nocode:platform -->
-
 <!-- nocode:platform codex -->
 使用 `update_plan` 一次提交全部里程碑；更新时保持稳定顺序且最多一个 `in_progress`。
+<!-- /nocode:platform -->
+<!-- nocode:platform pi -->
+使用文本里程碑列表创建并更新全部里程碑，同时最多一个进行中。
 <!-- /nocode:platform -->
 
 ### Step 1：执行 decision
@@ -171,9 +173,11 @@ renderBrief:
 <!-- nocode:platform claude -->
 Plan handoff 使用 `Skill(nocode:dev-plan)`。
 <!-- /nocode:platform -->
-
 <!-- nocode:platform codex -->
 Plan handoff 使用 `$dev-plan`。
+<!-- /nocode:platform -->
+<!-- nocode:platform pi -->
+Plan handoff 使用 `/skill:dev-plan`。
 <!-- /nocode:platform -->
 
 ## replan

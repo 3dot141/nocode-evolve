@@ -7,7 +7,6 @@ description: "Use after PRD for interaction design, information architecture, pa
 
 **Iron Law: PRD 说"做什么"，没说"怎么走"。交互结构不定，视觉只是贴皮。**
 
-
 计划使用 `update_plan`；handoff 使用 `$pd-vd`。
 
 独立于 devflow 的产品流交互设计阶段。产出 `.ix.md`，作为视觉设计（pd-vd）和开发的输入。

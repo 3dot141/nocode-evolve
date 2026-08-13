@@ -45,9 +45,11 @@ Task 3: 硬交接 — 调用下一步 skill
 <!-- nocode:platform claude -->
 Verify handoff 使用 `Skill(nocode:dev-verify)`。
 <!-- /nocode:platform -->
-
 <!-- nocode:platform codex -->
 Verify handoff 使用 `$dev-verify`。
+<!-- /nocode:platform -->
+<!-- nocode:platform pi -->
+Verify handoff 使用 `/skill:dev-verify`。
 <!-- /nocode:platform -->
 
 调用时把上面**每一条** Task 建成稳定计划项，不得传空计划：
@@ -55,9 +57,11 @@ Verify handoff 使用 `$dev-verify`。
 <!-- nocode:platform claude -->
 使用 `TaskCreate` 逐项创建三个编排里程碑并保存 task id；状态变化时使用 `TaskUpdate` 更新对应项。
 <!-- /nocode:platform -->
-
 <!-- nocode:platform codex -->
 使用 `update_plan` 提交三个编排里程碑；每次状态变化都提交完整列表，保持稳定顺序，且同时最多一个 `in_progress`。
+<!-- /nocode:platform -->
+<!-- nocode:platform pi -->
+使用文本里程碑列表创建三个编排里程碑，同时最多一个进行中。
 <!-- /nocode:platform -->
 
 每完成一个标 done。
@@ -71,9 +75,11 @@ Verify handoff 使用 `$dev-verify`。
 <!-- nocode:platform claude -->
    - 使用原生 `Agent` 派发当前 implementer，保存原生 agent 句柄，并用平台原生方式等待它进入终态。若需要追加上下文或修复要求，恢复同一 agent；若任务失控则取消它。平台无法提供独立 agent 时，由主会话执行并明确记录“未获得隔离执行”。
 <!-- /nocode:platform -->
-
 <!-- nocode:platform codex -->
    - 使用 `spawn_agent` 派发当前 implementer，保存返回的 agent id，并用 `wait_agent` 等待终态。需要追加上下文或修复时用 `followup_task`；任务失控时用 `interrupt_agent`。平台无法提供独立 agent 时，由主会话执行并明确记录“未获得隔离执行”。
+<!-- /nocode:platform -->
+<!-- nocode:platform pi -->
+   - 使用原生 `Agent` 派发当前 implementer，保存原生 agent 句柄，并用平台原生方式等待它进入终态。若需要追加上下文或修复要求，恢复同一 agent；若任务失控则取消它。平台无法提供独立 agent 时，由主会话执行并明确记录“未获得隔离执行”。
 <!-- /nocode:platform -->
 
    - 只以 agent 的终态结果和实际 diff 为实现证据，不把“已派发”当作完成。

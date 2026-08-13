@@ -28,7 +28,9 @@
     {
       "path": "skills/codex-nocode-reload",
       "platforms": [
-        "claude"
+        "claude",
+        "qoder",
+        "pi"
       ],
       "reason": "Codex-only: reinstalls nocode and restarts the managed Codex daemon"
     }

@@ -66,7 +66,6 @@ decision ── mode: research ──→ research final-gate
 4. final gate + handoff dev-plan
 ```
 
-
 使用 `update_plan` 一次提交全部里程碑；更新时保持稳定顺序且最多一个 `in_progress`。
 
 ### Step 1：执行 decision
@@ -162,7 +161,6 @@ renderBrief:
 `research` 模式报告：研究结论、候选方案、证据、未决问题和 Packet 路径；明确 writing 与 render 已跳过，由用户选择继续 Design、进入 Plan 或结束。
 
 在 `final-gate` 完整展示上述结果并结束当前回合等待用户答复。用户确认进入 Plan 后，传入当前 request、stage、restate、constraints、设计文档路径、`designRevision`、`designDigest` 和用户决定；不得在确认前自行进入下一阶段。
-
 
 Plan handoff 使用 `$dev-plan`。
 

@@ -21,6 +21,7 @@ import {
 import { parseArgs, run } from '../scripts/package.platform.mjs';
 import { claudeAdapter } from '../adapters/claude/adapter.mjs';
 import { codexAdapter } from '../adapters/codex/adapter.mjs';
+import { piAdapter } from '../adapters/pi/adapter.mjs';
 
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -170,7 +171,7 @@ test('buildExpectedTree rejects unknown source exclusion platforms', (t) => {
       metadata: fixtureMetadata(),
       adapter: fixtureAdapter('claude'),
     }),
-    /exclusion platforms must contain claude.*codex.*qoder/,
+    /exclusion platforms must contain claude.*codex.*qoder.*pi/,
   );
 });
 
@@ -254,7 +255,7 @@ test('writeExpectedTree refuses to clean a path outside repo plugins/<platform>'
   const expected = new Map([['safe.txt', Buffer.from('safe')]]);
   assert.throws(
     () => writeExpectedTree(expected, path.join(root, 'skills'), root),
-    /plugins\/\{claude,codex,qoder\}\/nocode/,
+    /plugins\/\{claude,codex,qoder,pi\}\/nocode/,
   );
 });
 
@@ -282,7 +283,7 @@ test('writeExpectedTree preserves the source executable bit without assuming uma
 });
 
 test('package CLI argument parser defaults to both platforms and rejects unknown input', () => {
-  assert.deepEqual(parseArgs([]), { check: false, platforms: ['claude', 'codex', 'qoder'] });
+  assert.deepEqual(parseArgs([]), { check: false, platforms: ['claude', 'codex', 'qoder', 'pi'] });
   assert.deepEqual(parseArgs(['--check', '--platform=codex']), {
     check: true,
     platforms: ['codex'],
@@ -449,10 +450,7 @@ test('Codex adapter builds native skills and direct runtime overlays', () => {
     /interface:\n  display_name: "agents-launcher"\n  short_description: "Use when explicitly starting, stopping, restarting, or checking the local fx-da.+"\npolicy:\n  allow_implicit_invocation: false/,
   );
   const launcherServer = tree.get('skills/agents-launcher/references/server.md').toString();
-  assert.match(
-    launcherServer,
-    /printf '%s' "\$\{HARBOR_PASSWORD:\?HARBOR_PASSWORD 未设置\}" \| docker login -u "\$\{HARBOR_USERNAME:-develop\}" --password-stdin harbor\.jsydevelop\.com/,
-  );
+  assert.match(launcherServer, /未提供密码时复用本机已有 Docker 登录态/);
   assert.doesNotMatch(launcherServer, /docker login[^\n]*\s-p(?:\s|=)/);
   for (const nested of ['decision', 'writing']) {
     assert.match(
@@ -506,4 +504,43 @@ test('repo Codex marketplace points at the name-matched generated plugin root', 
   );
   assert.match(claudeMarketplace.description, /Claude Code.*Codex|Codex.*Claude Code/);
   assert.equal(claudeMarketplace.plugins[0].source, './plugins/claude/nocode');
+});
+
+test('Pi adapter builds a package with prompts, skills, and an extension', () => {
+  const metadata = JSON.parse(readFileSync(path.join(REPO_ROOT, 'plugin/metadata.json'), 'utf8'));
+  const tree = buildExpectedTree({ root: REPO_ROOT, metadata, adapter: piAdapter });
+  for (const relative of [
+    'package.json',
+    'extensions/index.ts',
+    'prompts/task.md',
+    'prompts/sow.md',
+    'skills/devflow/SKILL.md',
+    'model/agent-about.md',
+    'runtime/plugin-data-entry.mjs',
+    'runtime/context-budget.json',
+    'hooks/pretooluse-rules.json',
+    'scripts/sow/script.py',
+  ]) {
+    assert.ok(tree.has(relative), `Pi artifact missing ${relative}`);
+  }
+  assert.equal(tree.has('hooks/hooks.json'), false, 'Pi must not publish hooks.json');
+  assert.equal(tree.has('skills/task/SKILL.md'), false, 'Pi entry commands are prompts, not skills');
+  assert.equal(tree.has('skills/codex-nocode-reload/SKILL.md'), false);
+  const manifest = JSON.parse(tree.get('package.json').toString());
+  assert.equal(manifest.name, metadata.name);
+  assert.equal(manifest.version, metadata.version);
+  assert.deepEqual(manifest.pi, {
+    extensions: ['./extensions/index.ts'],
+    skills: ['./skills'],
+    prompts: ['./prompts'],
+  });
+  const about = tree.get('model/agent-about.md').toString();
+  assert.match(about, /\/skill:red-blue-deep/);
+  assert.doesNotMatch(about, /AskUserQuestion|Skill\(nocode:|request_user_input/);
+  const devflow = tree.get('skills/devflow/SKILL.md').toString();
+  assert.match(devflow, /\/skill:<stage-skill>/);
+  assert.doesNotMatch(devflow, /Skill\(nocode:|AskUserQuestion|update_plan/);
+  const prompt = tree.get('prompts/task.md').toString();
+  assert.match(prompt, /\$ARGUMENTS/);
+  assert.doesNotMatch(prompt, /<!-- nocode:platform/);
 });

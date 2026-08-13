@@ -7,7 +7,6 @@ argument-hint: <sub-action> [args]
 本文所说“调用 `<skill>` Skill”使用 `Skill(nocode:<skill>)`；“结构化决策”使用 `AskUserQuestion`。
 
 
-
 # /projecthub：项目子目录文档管理入口
 
 统一入口，管理项目子目录的 AGENTS.md（agent 工作约束）和 README.md（人类可读文档）。每个子动作也可以直接用独立命令调用。

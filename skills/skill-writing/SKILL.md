@@ -8,9 +8,11 @@ description: Use when creating, restructuring, simplifying, testing, or optimizi
 <!-- nocode:platform claude -->
 需要隔离 baseline 时使用原生 `Agent`，保存句柄并等待终态；平台未明确报告不同模型时，标记“未证明跨模型”。
 <!-- /nocode:platform -->
-
 <!-- nocode:platform codex -->
 需要隔离 baseline 时使用 `spawn_agent`，保存 agent id 并用 `wait_agent` 等待终态；需要修正输入时用 `followup_task`，需要终止时用 `interrupt_agent`。平台未明确报告不同模型时，标记“未证明跨模型”。
+<!-- /nocode:platform -->
+<!-- nocode:platform pi -->
+需要隔离 baseline 时在主会话顺序执行，并明确报告本次不具备独立性；平台未明确报告不同模型时，标记“未证明跨模型”。
 <!-- /nocode:platform -->
 
 把模糊的 skill 诉求，先聊成清晰骨架，再逐块填成一个想清楚了的 skill；重型验证（baseline / eval / 打包）按需取用。

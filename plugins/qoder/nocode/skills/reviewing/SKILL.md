@@ -15,7 +15,6 @@ review 这件事在仓库里被重造了十几遍：每个 review 都重新发�
 
 调用方直接调用 `Skill(nocode:reviewing)`，并提供以下完整输入：
 
-
 ```text
 request: 用户当前请求原文
 context: stage / restate / artifacts / constraints / plan path / decision

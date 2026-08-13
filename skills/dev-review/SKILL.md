@@ -8,9 +8,11 @@ description: Use for the default code/PR/diff review path, before merge, after V
 <!-- nocode:platform claude -->
 计划使用 `TaskCreate` / `TaskUpdate`；独立审查使用 `Skill(nocode:reviewing)`，Land handoff 使用 `Skill(nocode:dev-land)`。
 <!-- /nocode:platform -->
-
 <!-- nocode:platform codex -->
 计划使用 `update_plan`；独立审查使用 `$reviewing`，Land handoff 使用 `$dev-land`。
+<!-- /nocode:platform -->
+<!-- nocode:platform pi -->
+计划使用文本里程碑列表（同时最多一个进行中）；独立审查使用 `/skill:reviewing`，Land handoff 使用 `/skill:dev-land`。
 <!-- /nocode:platform -->
 
 **Iron Law: Critical 不可 override。fix 改了代码必须回 Build → Verify → 再 Review。没有"这次特殊"。**

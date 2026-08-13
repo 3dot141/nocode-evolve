@@ -6,7 +6,6 @@ description: "Use when implementation is complete and you need to land the work 
 合并后项目流转使用 `Skill(nocode:lark-project)`。
 PR 定时监控用 Bash managed background 启动 `references/pr-check.mjs --watch`，保存 task id；完成通知后读取输出继续处置。
 
-
 # land — 3 步着陆，干净收场
 
 **Iron Law: 意图与参数统一进入全景；用户只确认一次完整全景。确认前不设独立 Gate，确认后不追加询问。遇到计划外风险或执行失败，停止并报告；需要继续时生成新的全景。**

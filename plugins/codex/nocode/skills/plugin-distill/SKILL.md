@@ -4,7 +4,6 @@ description: "rule / skill 双轨写入——新增/优化 plugin rule（三步�
 argument-hint: <描述> | (被 /distill 传结构化候选)
 ---
 
-
 本文所说“调用 `<skill>` Skill”使用 `$<skill>`；“结构化决策”使用 `request_user_input`。
 
 

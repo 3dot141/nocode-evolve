@@ -74,9 +74,11 @@ Prepare one self-contained objective per domain:
 <!-- nocode:platform claude -->
 Use native `Agent` once per objective. Launch all independent agents before waiting, save every native handle, then wait for each terminal result. Resume an agent when it needs bounded follow-up context; cancel it if the task must stop.
 <!-- /nocode:platform -->
-
 <!-- nocode:platform codex -->
 Call `spawn_agent` once per objective. Launch all independent agents before waiting, save every agent id, then use `wait_agent` to collect terminal results. Use `followup_task` for bounded corrections and `interrupt_agent` when a task must stop.
+<!-- /nocode:platform -->
+<!-- nocode:platform pi -->
+Execute the objectives sequentially in the main session and report that the work was not parallel or isolated.
 <!-- /nocode:platform -->
 
 If the platform cannot create independent agents, execute the objectives sequentially in the main session and report that the work was not parallel or isolated. A dispatch acknowledgement is never a completion result.

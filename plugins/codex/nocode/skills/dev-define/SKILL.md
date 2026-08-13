@@ -5,7 +5,6 @@ description: "Use when starting any non-trivial task, when requirements are uncl
 
 本文写“结构化决策”时，必须带齐当前步骤的完整问题与 2–3 个互斥选项：
 
-
 在 `request_user_input` 可用时提交完整问题和全部选项；若当前模式未提供该工具，则在回合末尾直接提出同一问题并等待回答。
 
 # define — 从模糊到明确
@@ -67,11 +66,9 @@ Task 8: 硬交接 — 调用下一步 skill
   metadata: {handoff: true}（供防跳步 Hook B 识别交接 task）
 ```
 
-
 Env handoff 使用 `$using-git-worktrees`。
 
 调用时把上面**每一条** Task 建成稳定计划项，不得传空计划：
-
 
 使用 `update_plan` 提交全部计划项；每次状态变化都提交完整列表，保持稳定顺序，且同时最多一个 `in_progress`。
 
@@ -234,7 +231,6 @@ Standard 场景网络探索由当前会话使用可用的搜索工具做 1–2 �
 用户确认前做 define-review：Read `references/define-review.md`（restate 7 维度）拿维度，**主会话就地逐维自查**——不调 reviewing 引擎、不派 subagent/Codex。发现的问题按 Critical / Warning / Suggestion 粗分，Critical 级必须修复再让用户确认。
 
 **升审只在两种情况**：① 用户显式要求（「审一下 / 深审 / 独立审」）→ 按下方平台指令调用 reviewing，传入完整 restate、7 个 define-review 维度、checklist 方法、context capsule 和 independent 深度；② restate 命中敏感面（权限 / 计费 / 数据迁移 / 对外接口 / 不可逆）→ 向用户**一句话建议**升审，用户点头才调，不自动派发。
-
 
 独立审查 handoff 使用 `$reviewing`。
 

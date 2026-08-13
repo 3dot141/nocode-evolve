@@ -35,9 +35,11 @@ skip: false
 <!-- nocode:platform claude -->
 使用原生 `Agent` 派发 reviewer，保存原生句柄并等待终态结果。若平台无法提供独立 agent，则由主会话自审，并明确标注“不具备独立性”。
 <!-- /nocode:platform -->
-
 <!-- nocode:platform codex -->
 使用 `spawn_agent` 派发 reviewer，保存 agent id，并用 `wait_agent` 等待终态结果。若平台无法提供独立 agent，则由主会话自审，并明确标注“不具备独立性”。
+<!-- /nocode:platform -->
+<!-- nocode:platform pi -->
+在主会话顺序审查，并明确标注“不具备独立性”。
 <!-- /nocode:platform -->
 
 不得把“已派发”当作审查结果。只有原生工具明确报告 reviewer 使用了不同模型或实现族时，才可声称“跨模型独立审查”；通常的原生 subagent 应表述为“同模型隔离审查”。

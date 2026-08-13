@@ -7,7 +7,6 @@ argument-hint: <描述> | (被 /distill 传结构化候选)
 本文所说“调用 `<skill>` Skill”使用 `Skill(nocode:<skill>)`；“结构化决策”使用 `AskUserQuestion`。
 
 
-
 > 本文写“结构化决策”时，必须使用当前平台原生决策工具，传入完整问题与 2–3 个互斥选项；示例只展示单项形状，真实调用需带齐本步骤列出的选项。
 
 # /plugin-distill：plugin rule / skill 写入

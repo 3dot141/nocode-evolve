@@ -10,9 +10,11 @@ description: Use after PRD for interaction design, information architecture, pag
 <!-- nocode:platform claude -->
 计划使用 `TaskCreate` / `TaskUpdate`；handoff 使用 `Skill(nocode:pd-vd)`。
 <!-- /nocode:platform -->
-
 <!-- nocode:platform codex -->
 计划使用 `update_plan`；handoff 使用 `$pd-vd`。
+<!-- /nocode:platform -->
+<!-- nocode:platform pi -->
+计划使用文本里程碑列表（同时最多一个进行中）；handoff 使用 `/skill:pd-vd`。
 <!-- /nocode:platform -->
 
 独立于 devflow 的产品流交互设计阶段。产出 `.ix.md`，作为视觉设计（pd-vd）和开发的输入。

@@ -11,7 +11,6 @@ Ensure work happens in an isolated workspace. Resolve the branch and absolute ta
 
 **Core principle:** Detect existing isolation first. The caller chooses the directory; the platform must use that exact absolute path.
 
-
 Inspect Git state with read-only commands. Create the worktree with `git worktree add "<absolute-worktree-path>" -b "<branch>" "<confirmed-base>"`; continue every subsequent file and command operation with that absolute path as `workdir`. Do not simulate a session-wide directory switch.
 
 **Announce at start:** "I'm using the using-git-worktrees skill to set up an isolated workspace."

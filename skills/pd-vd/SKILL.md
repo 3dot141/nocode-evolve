@@ -9,9 +9,11 @@ description: >-
 <!-- nocode:platform claude -->
 计划使用 `TaskCreate` / `TaskUpdate`，决策使用 `AskUserQuestion`；Skill handoff 使用 `Skill(nocode:pd-ix)`、`Skill(nocode:prototype-verify)`、`Skill(nocode:reviewing)`、`Skill(nocode:devflow)`。
 <!-- /nocode:platform -->
-
 <!-- nocode:platform codex -->
 计划使用 `update_plan`，决策使用 `request_user_input`；Skill handoff 使用 `$pd-ix`、`$prototype-verify`、`$reviewing`、`$devflow`。
+<!-- /nocode:platform -->
+<!-- nocode:platform pi -->
+计划使用文本里程碑列表（同时最多一个进行中），决策在回合末写出完整问题与 2–3 个互斥选项；Skill handoff 使用 `/skill:pd-ix`、`/skill:prototype-verify`、`/skill:reviewing`、`/skill:devflow`。
 <!-- /nocode:platform -->
 
 Open Design 线直接使用 `create_project`、`start_run`、`get_run`、`get_artifact`；保存原生 project id / run id / previewUrl，不构造统一中间回执。

@@ -7,7 +7,6 @@ description: Use for product discovery, market/competitor research, or exploring
 
 计划使用 `TaskCreate` / `TaskUpdate`，决策使用 `AskUserQuestion`；handoff 使用 `Skill(nocode:pd-prd)`。
 
-
 # research — 发散探索问题空间
 
 **Iron Law: 没看过世界就动手 = 赌。闭门造车的代价是调研的 10 倍。**

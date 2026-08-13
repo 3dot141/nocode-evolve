@@ -1,8 +1,8 @@
-const OPEN = /^<!-- nocode:platform (claude|codex|qoder) -->$/;
+const OPEN = /^<!-- nocode:platform (claude|codex|qoder|pi) -->$/;
 const CLOSE = '<!-- /nocode:platform -->';
 
 export function renderPlatformBlocks(source, { platform, file = '<markdown>' }) {
-  if (!['claude', 'codex', 'qoder'].includes(platform)) {
+  if (!['claude', 'codex', 'qoder', 'pi'].includes(platform)) {
     throw new Error(`${file}: unknown target platform: ${platform}`);
   }
 

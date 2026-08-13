@@ -42,11 +42,9 @@ Task 3: 硬交接 — 调用下一步 skill
   metadata: {handoff: true}（供防跳步 Hook B 识别交接 task）
 ```
 
-
 Verify handoff 使用 `$dev-verify`。
 
 调用时把上面**每一条** Task 建成稳定计划项，不得传空计划：
-
 
 使用 `update_plan` 提交三个编排里程碑；每次状态变化都提交完整列表，保持稳定顺序，且同时最多一个 `in_progress`。
 
@@ -57,7 +55,6 @@ Verify handoff 使用 `$dev-verify`。
 1. 读 Plan 文档 header 的 `Execution` 字段
 2. Full 场景重新读取 Design，校验 `designRevision` / `designDigest`；把这两个字段注入每个执行与 review objective。任何时点发现变化都停止并回 Plan。
 3. `Execution: subagent-lite` / `subagent-full`（旧值 `subagent` 按 `subagent-full` 处理）→ Read `references/dev-build-subagent.md`，先拓扑排序，再逐个 task 执行。**每次只派发当前一个 plan task**；不得一次把后续 task 全部派出。实现 objective 必须自足，至少包含完整 task 文本、实现纪律、允许修改的最小路径、验证命令和期望返回的证据。审查密度按档位分叉（lite：仅风险 task 派审查；full：per-task spec + checkpoint 批量 quality）。
-
 
    - 使用 `spawn_agent` 派发当前 implementer，保存返回的 agent id，并用 `wait_agent` 等待终态。需要追加上下文或修复时用 `followup_task`；任务失控时用 `interrupt_agent`。平台无法提供独立 agent 时，由主会话执行并明确记录“未获得隔离执行”。
 

@@ -8,9 +8,11 @@ description: 产品发现工作流领航（Research → PRD · 2 场景路由）
 <!-- nocode:platform claude -->
 结构化决策使用 `AskUserQuestion`；阶段 handoff 使用 `Skill(nocode:pd-research)`、`Skill(nocode:pd-prd)`、`Skill(nocode:pd-ix)`、`Skill(nocode:pd-vd)`。
 <!-- /nocode:platform -->
-
 <!-- nocode:platform codex -->
 结构化决策使用 `request_user_input`；阶段 handoff 使用 `$pd-research`、`$pd-prd`、`$pd-ix`、`$pd-vd`。
+<!-- /nocode:platform -->
+<!-- nocode:platform pi -->
+结构化决策在回合末写出完整问题与 2–3 个互斥选项，等待用户下一条消息；阶段 handoff 使用 `/skill:pd-research`、`/skill:pd-prd`、`/skill:pd-ix`、`/skill:pd-vd`。
 <!-- /nocode:platform -->
 
 # nocode:pdflow — 产品阶段工作流领航
@@ -101,9 +103,11 @@ Task 4: Handoff — 衔接开发流
 <!-- nocode:platform claude -->
 使用 `TaskCreate` 创建全部阶段项并保存 task id；使用 `TaskUpdate` 更新状态。
 <!-- /nocode:platform -->
-
 <!-- nocode:platform codex -->
 使用 `update_plan` 创建并更新完整计划快照，同时最多一个 `in_progress`。
+<!-- /nocode:platform -->
+<!-- nocode:platform pi -->
+使用文本里程碑列表创建并更新全部阶段项，同时最多一个进行中。
 <!-- /nocode:platform -->
 
 ### Step 3: 推进阶段

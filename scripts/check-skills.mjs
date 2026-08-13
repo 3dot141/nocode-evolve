@@ -181,17 +181,38 @@ const CODEX_FORBIDDEN = [
   ['plugins/claude', /plugins\/claude/g],
 ];
 
+const PI_FORBIDDEN = [
+  ['Skill(nocode:', /Skill\(nocode:/g],
+  ['AskUserQuestion', /\bAskUserQuestion\b/g],
+  ['TaskCreate', /\bTaskCreate\b/g],
+  ['TaskUpdate', /\bTaskUpdate\b/g],
+  ['EnterWorktree', /\bEnterWorktree\b/g],
+  ['update_plan', /\bupdate_plan\b/g],
+  ['request_user_input', /\brequest_user_input\b/g],
+  ['spawn_agent', /\bspawn_agent\b/g],
+];
+
 export function checkPlatformSyntax(raw, rel, platform) {
-  if (platform !== 'codex') return [];
-  const errors = [];
-  for (const [label, pattern] of CODEX_FORBIDDEN) {
-    if (pattern.test(raw)) errors.push(`${rel}: Codex 生成物残留 Claude 语法 ${label}`);
-    pattern.lastIndex = 0;
+  if (platform === 'codex') {
+    const errors = [];
+    for (const [label, pattern] of CODEX_FORBIDDEN) {
+      if (pattern.test(raw)) errors.push(`${rel}: Codex 生成物残留 Claude 语法 ${label}`);
+      pattern.lastIndex = 0;
+    }
+    return errors;
   }
-  return errors;
+  if (platform === 'pi') {
+    const errors = [];
+    for (const [label, pattern] of PI_FORBIDDEN) {
+      if (pattern.test(raw)) errors.push(`${rel}: Pi 生成物残留异平台语法 ${label}`);
+      pattern.lastIndex = 0;
+    }
+    return errors;
+  }
+  return [];
 }
 
-function listMarkdown(root) {
+function listMarkdown(root, directories = ['skills']) {
   const output = [];
   function visit(dir) {
     if (!fs.existsSync(dir)) return;
@@ -201,7 +222,7 @@ function listMarkdown(root) {
       else if (entry.isFile() && entry.name.endsWith('.md')) output.push(full);
     }
   }
-  visit(path.join(root, 'skills'));
+  for (const directory of directories) visit(path.join(root, directory));
   return output.sort();
 }
 
@@ -247,11 +268,14 @@ export function checkAll({
     if (!frontmatter?.description) errors.push(`${rel}: nested Skill 缺 description`);
   }
   errors.push(...checkCommands(root, targets));
-  if (platform === 'codex') {
-    for (const file of listMarkdown(root)) {
+  if (platform === 'codex' || platform === 'pi') {
+    const directories = platform === 'pi' ? ['skills', 'prompts'] : ['skills'];
+    for (const file of listMarkdown(root, directories)) {
       const rel = path.relative(root, file).replaceAll('\\', '/');
       errors.push(...checkPlatformSyntax(fs.readFileSync(file, 'utf8'), rel, platform));
     }
+  }
+  if (platform === 'codex') {
     const budget = metadataBudget(root);
     if (budget.total > metadataLimit) {
       const largest = budget.entries.slice(0, 5).map((entry) => `${entry.name}:${entry.chars}`).join(', ');
@@ -274,7 +298,7 @@ export function parseCheckArgs(args) {
       options.root = arg.slice('--root='.length);
     } else if (arg === '--platform') {
       const platform = args[++index];
-      if (!platform) throw new Error('--platform requires claude or codex');
+      if (!platform) throw new Error('--platform requires claude, codex, qoder, pi or source');
       options.platform = platform;
     } else if (arg.startsWith('--platform=')) {
       options.platform = arg.slice('--platform='.length);
@@ -282,7 +306,7 @@ export function parseCheckArgs(args) {
       throw new Error(`unknown argument: ${arg}`);
     }
   }
-  if (!['source', 'claude', 'codex'].includes(options.platform)) throw new Error(`unknown platform: ${options.platform}`);
+  if (!['source', 'claude', 'codex', 'qoder', 'pi'].includes(options.platform)) throw new Error(`unknown platform: ${options.platform}`);
   return options;
 }
 

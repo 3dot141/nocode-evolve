@@ -44,11 +44,9 @@ Task 3: 硬交接 — 调用下一步 skill
 
 Verify handoff 使用 `Skill(nocode:dev-verify)`。
 
-
 调用时把上面**每一条** Task 建成稳定计划项，不得传空计划：
 
 使用 `TaskCreate` 逐项创建三个编排里程碑并保存 task id；状态变化时使用 `TaskUpdate` 更新对应项。
-
 
 每完成一个标 done。
 
@@ -59,7 +57,6 @@ Verify handoff 使用 `Skill(nocode:dev-verify)`。
 3. `Execution: subagent-lite` / `subagent-full`（旧值 `subagent` 按 `subagent-full` 处理）→ Read `references/dev-build-subagent.md`，先拓扑排序，再逐个 task 执行。**每次只派发当前一个 plan task**；不得一次把后续 task 全部派出。实现 objective 必须自足，至少包含完整 task 文本、实现纪律、允许修改的最小路径、验证命令和期望返回的证据。审查密度按档位分叉（lite：仅风险 task 派审查；full：per-task spec + checkpoint 批量 quality）。
 
    - 使用原生 `Agent` 派发当前 implementer，保存原生 agent 句柄，并用平台原生方式等待它进入终态。若需要追加上下文或修复要求，恢复同一 agent；若任务失控则取消它。平台无法提供独立 agent 时，由主会话执行并明确记录“未获得隔离执行”。
-
 
    - 只以 agent 的终态结果和实际 diff 为实现证据，不把“已派发”当作完成。
    - 需要 spec review 时，另派一个只读 reviewer，任务 id 使用 `<plan-task-id>-spec-review`；objective 必须显式包含完整计划要求、implementer 的终态结果、实际改动文件和返回格式 `{approved,issues[]}`。reviewer 与 implementer 必须是不同的隔离上下文；只有平台明确报告不同模型时才能称为跨模型审查。

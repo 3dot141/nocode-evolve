@@ -4,7 +4,6 @@ description: "从 .agents-personal/ 检索已沉淀内容（wiki + rules + AGENT
 argument-hint: <搜索关键词>
 ---
 
-
 本文所说“调用 `<skill>` Skill”使用 `$<skill>`；“结构化决策”使用 `request_user_input`。
 
 

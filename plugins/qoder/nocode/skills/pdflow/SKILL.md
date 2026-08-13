@@ -7,7 +7,6 @@ description: 产品发现工作流领航（Research → PRD · 2 场景路由）
 
 结构化决策使用 `AskUserQuestion`；阶段 handoff 使用 `Skill(nocode:pd-research)`、`Skill(nocode:pd-prd)`、`Skill(nocode:pd-ix)`、`Skill(nocode:pd-vd)`。
 
-
 # nocode:pdflow — 产品阶段工作流领航
 
 > 产品流驾驶舱。独立于 devflow，专管"开发前"的产品调研和需求定义。
@@ -94,7 +93,6 @@ Task 4: Handoff — 衔接开发流
 调用时把所选场景的**每一条** Task 建成稳定计划项；不得提交空计划。每次进入或完成阶段都提交完整、顺序稳定的状态快照。
 
 使用 `TaskCreate` 创建全部阶段项并保存 task id；使用 `TaskUpdate` 更新状态。
-
 
 ### Step 3: 推进阶段
 

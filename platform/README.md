@@ -1,6 +1,6 @@
 # Platform overlays
 
-`platform/claude/`、`platform/codex/` 和 `platform/qoder/` contain files whose
+`platform/claude/`、`platform/codex/`、`platform/qoder/` 和 `platform/pi/` contain files whose
 non-Markdown format must differ between the plugin runtimes. The platform packager
 copies shared source and then adds the selected runtime directory.
 
@@ -22,3 +22,6 @@ Use the Codex-native tool.
 Qoder builds fall back to `claude` platform blocks — when `platform === 'qoder'`,
 `claude` block content is also emitted. Add explicit `<!-- nocode:platform qoder -->`
 blocks only where Qoder diverges from Claude.
+
+Pi does **not** fall back to Claude. Write an explicit `<!-- nocode:platform pi -->`
+block wherever a file already has Claude/Codex native-tool differences.

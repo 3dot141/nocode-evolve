@@ -5,7 +5,6 @@ description: "Use after pd-ix for visual direction, design systems, high-fidelit
 
 > 本文写“结构化决策”时，必须提交当前步骤的完整问题与 2–3 个互斥选项。
 
-
 计划使用 `update_plan`，决策使用 `request_user_input`；Skill handoff 使用 `$pd-ix`、`$prototype-verify`、`$reviewing`、`$devflow`。
 
 Open Design 线直接使用 `create_project`、`start_run`、`get_run`、`get_artifact`；保存原生 project id / run id / previewUrl，不构造统一中间回执。

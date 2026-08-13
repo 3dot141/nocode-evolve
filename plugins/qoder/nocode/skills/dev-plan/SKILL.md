@@ -7,7 +7,6 @@ description: Use to turn a confirmed goal into implementation tasks or when devf
 
 使用 `AskUserQuestion` 提交完整问题和全部选项。
 
-
 不得拆成多个不完整问题，也不得替用户选择。
 
 # plan — 把目标拆成任务序列
@@ -97,11 +96,9 @@ Task 10: 硬交接 — 调用下一步 skill
 
 Build handoff 使用 `Skill(nocode:dev-build)`。
 
-
 调用时把上面**每一条** Task 建成稳定计划项：`id` 固定、`subject` 为标题、`description` 完整包含 Sub-steps + Gate、初始 `status=pending`，仅最后一项标注 handoff。不得传空计划：
 
 使用 `TaskCreate` 逐项创建全部计划项，并保存每项返回的 task id。状态变化时使用 `TaskUpdate` 更新对应 task id；最终 handoff 项的描述始终保留交接要求。
-
 
 每完成一个标 done。
 
@@ -186,7 +183,6 @@ Round 1 骨架完成，在填充代码前对计划骨架做一遍自查。骨架
 自查纪律：放下"当时为什么这么排"的推理，只看骨架本身现在站不站得住；每条给一句判断 + 依据，不是走过场打勾。用户显式要求对抗审视（「红蓝军 / 深审」）才按下方平台指令调用 red-blue-deep，传入当前 request、stage、restate、artifacts、constraints、计划文件路径和用户 decision。
 
 对抗审视使用 `Skill(nocode:red-blue-deep)`。
-
 
 **结论落地**：自查中成立的质疑修正到骨架中（回 Step 3/4/5 对应调整）。
 

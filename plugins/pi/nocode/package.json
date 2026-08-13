@@ -1,0 +1,28 @@
+{
+  "name": "nocode",
+  "version": "0.10.2",
+  "description": "Harrison 的个人工程工作流与规则工具箱，支持 Claude Code、Codex、Qoder 和 Pi",
+  "author": "Harrison",
+  "homepage": "https://github.com/3dot141/nocode-evolve",
+  "repository": "https://github.com/3dot141/nocode-evolve",
+  "license": "MIT",
+  "keywords": [
+    "personal",
+    "rules",
+    "skills",
+    "workflow",
+    "pi-package"
+  ],
+  "type": "module",
+  "pi": {
+    "extensions": [
+      "./extensions/index.ts"
+    ],
+    "skills": [
+      "./skills"
+    ],
+    "prompts": [
+      "./prompts"
+    ]
+  }
+}

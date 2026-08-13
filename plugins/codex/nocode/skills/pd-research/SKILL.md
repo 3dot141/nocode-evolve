@@ -5,7 +5,6 @@ description: "Use for product discovery, market/competitor research, or explorin
 
 > 本文写“结构化决策”时，必须提交当前步骤的完整问题与 2–3 个互斥选项。
 
-
 计划使用 `update_plan`，决策使用 `request_user_input`；handoff 使用 `$pd-prd`。
 
 # research — 发散探索问题空间

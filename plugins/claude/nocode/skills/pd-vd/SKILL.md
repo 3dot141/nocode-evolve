@@ -8,7 +8,6 @@ description: >-
 
 计划使用 `TaskCreate` / `TaskUpdate`，决策使用 `AskUserQuestion`；Skill handoff 使用 `Skill(nocode:pd-ix)`、`Skill(nocode:prototype-verify)`、`Skill(nocode:reviewing)`、`Skill(nocode:devflow)`。
 
-
 Open Design 线直接使用 `create_project`、`start_run`、`get_run`、`get_artifact`；保存原生 project id / run id / previewUrl，不构造统一中间回执。
 
 # pd-vd — 视觉设计

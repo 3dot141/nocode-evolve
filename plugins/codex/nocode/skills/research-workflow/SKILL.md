@@ -25,7 +25,6 @@ description: "Generic research engine (structured search + verification) for oth
 - `search-angle-1-round-1`：围绕 `<question>` 的 `<angle-1>` 执行第 1 轮检索；按 `<type>` 工具链返回 SearchResult JSON：`angle/query/sources[{ref,title,excerpt,quality}]/summary/learnedTerms/gaps`；只读。
 - `search-angle-2-round-1`：围绕 `<question>` 的 `<angle-2>` 执行第 1 轮检索；返回同一 SearchResult JSON；只读。
 
-
 为每个独立角度调用 `spawn_agent`；先完成本轮全部派发并保存 agent id，再用 `wait_agent` 等待每个 agent 的终态结果。需要补充限定时用 `followup_task`，需要终止时用 `interrupt_agent`。
 
 主会话直接读取并校验每个原生 agent 的终态结果，再把必要内容显式嵌入下一轮任务的 objective。不得让下一阶段猜测前一阶段输出。平台无法提供独立 agent 时，由主会话按相同阶段顺序执行，并明确报告没有获得隔离性或并行性。
@@ -99,7 +98,6 @@ description: "Generic research engine (structured search + verification) for oth
 | `deep` | shallow + Extract → Verify（3 票对抗） | 20+ | 结论要经得住反驳、进正式报告 |
 
 **升降档有疑点不自作主张**：调用方拿不准该用哪档（要不要从 targeted 升 shallow / deep）时，让用户在 `targeted`（已知方向，单轮并行覆盖）、`shallow`（多角度迭代搜索，不做对抗验证）、`deep`（提取声明并做独立反证验证）之间拍板，不默认往重档跑。
-
 
 使用 `request_user_input` 请求这个选择。
 

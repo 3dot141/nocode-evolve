@@ -8,9 +8,11 @@ description: Use when starting any non-trivial task, when requirements are uncle
 <!-- nocode:platform claude -->
 使用 `AskUserQuestion` 提交完整问题和全部选项。
 <!-- /nocode:platform -->
-
 <!-- nocode:platform codex -->
 在 `request_user_input` 可用时提交完整问题和全部选项；若当前模式未提供该工具，则在回合末尾直接提出同一问题并等待回答。
+<!-- /nocode:platform -->
+<!-- nocode:platform pi -->
+在回合末写出完整问题与全部选项，等待用户下一条消息。
 <!-- /nocode:platform -->
 
 # define — 从模糊到明确
@@ -75,9 +77,11 @@ Task 8: 硬交接 — 调用下一步 skill
 <!-- nocode:platform claude -->
 Env handoff 使用 `Skill(nocode:using-git-worktrees)`。
 <!-- /nocode:platform -->
-
 <!-- nocode:platform codex -->
 Env handoff 使用 `$using-git-worktrees`。
+<!-- /nocode:platform -->
+<!-- nocode:platform pi -->
+Env handoff 使用 `/skill:using-git-worktrees`。
 <!-- /nocode:platform -->
 
 调用时把上面**每一条** Task 建成稳定计划项，不得传空计划：
@@ -85,9 +89,11 @@ Env handoff 使用 `$using-git-worktrees`。
 <!-- nocode:platform claude -->
 使用 `TaskCreate` 逐项创建全部计划项并保存 task id；状态变化时使用 `TaskUpdate` 更新对应项。
 <!-- /nocode:platform -->
-
 <!-- nocode:platform codex -->
 使用 `update_plan` 提交全部计划项；每次状态变化都提交完整列表，保持稳定顺序，且同时最多一个 `in_progress`。
+<!-- /nocode:platform -->
+<!-- nocode:platform pi -->
+使用文本里程碑列表创建并更新全部计划项，同时最多一个进行中。
 <!-- /nocode:platform -->
 
 每完成一个标 done。
@@ -253,9 +259,11 @@ Standard 场景网络探索由当前会话使用可用的搜索工具做 1–2 �
 <!-- nocode:platform claude -->
 独立审查 handoff 使用 `Skill(nocode:reviewing)`。
 <!-- /nocode:platform -->
-
 <!-- nocode:platform codex -->
 独立审查 handoff 使用 `$reviewing`。
+<!-- /nocode:platform -->
+<!-- nocode:platform pi -->
+独立审查 handoff 使用 `/skill:reviewing`。
 <!-- /nocode:platform -->
 
 ## Exit Gate

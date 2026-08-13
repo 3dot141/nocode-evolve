@@ -7,7 +7,6 @@ description: Use when creating, restructuring, simplifying, testing, or optimizi
 
 需要隔离 baseline 时使用原生 `Agent`，保存句柄并等待终态；平台未明确报告不同模型时，标记“未证明跨模型”。
 
-
 把模糊的 skill 诉求，先聊成清晰骨架，再逐块填成一个想清楚了的 skill；重型验证（baseline / eval / 打包）按需取用。
 
 **核心原则**：需求没聊清、骨架没浮现，不许动手写。一个解错问题的 skill，写得再漂亮也是负资产。

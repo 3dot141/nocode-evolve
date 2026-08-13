@@ -71,7 +71,6 @@ Prepare one self-contained objective per domain:
 - `batch-tests`: “Fix batch-completion-behavior.test.ts failures where the fast tool aborted instead of completed. Read the failing assertions and production path, modify only src/batch-completion, run this test file, and return root cause/files/tests/concerns.”
 - `approval-tests`: “Fix tool-approval-race-conditions.test.ts failures where pendingToolCount expects 3 results but gets 0. Read the failing assertions and production path, modify only src/tool-approval, run this test file, and return root cause/files/tests/concerns.”
 
-
 Call `spawn_agent` once per objective. Launch all independent agents before waiting, save every agent id, then use `wait_agent` to collect terminal results. Use `followup_task` for bounded corrections and `interrupt_agent` when a task must stop.
 
 If the platform cannot create independent agents, execute the objectives sequentially in the main session and report that the work was not parallel or isolated. A dispatch acknowledgement is never a completion result.

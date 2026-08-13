@@ -7,13 +7,11 @@ description: "评估/拍板类提问的红蓝军辩论框架。Use this skill wh
 
 评估/拍板类提问的红蓝军对抗框架。**本 skill 是独立入口**——用户直接问评估/拍板问题（「X 行不行 / 选 A 还是 B / 值得吗」）时直触；也可被任意 workflow skill 直接调用：
 
-
 调用 `$red-blue-deep`。
 
 传入当前 request、stage、restate、artifacts、constraints、计划文件路径和用户 decision（调用方声明的强制档位原样保留）。
 
 **必做**：
-
 
 调用 `$reviewing`。
 

@@ -5,7 +5,6 @@ description: "Use to turn a confirmed goal into implementation tasks or when dev
 
 本文写“结构化决策”时，必须带齐当前步骤的完整问题与 2–3 个互斥选项：
 
-
 在 `request_user_input` 可用时提交完整问题和全部选项；若当前模式未提供该工具，则在回合末尾直接提出同一问题并等待回答。
 
 不得拆成多个不完整问题，也不得替用户选择。
@@ -95,11 +94,9 @@ Task 10: 硬交接 — 调用下一步 skill
   metadata: {handoff: true}（供防跳步 Hook B 识别交接 task）
 ```
 
-
 Build handoff 使用 `$dev-build`。
 
 调用时把上面**每一条** Task 建成稳定计划项：`id` 固定、`subject` 为标题、`description` 完整包含 Sub-steps + Gate、初始 `status=pending`，仅最后一项标注 handoff。不得传空计划：
-
 
 使用 `update_plan` 提交全部计划项；每次状态变化都再次提交完整列表，保持稳定顺序和文本，且同时最多一个 `in_progress`。
 
@@ -184,7 +181,6 @@ Round 1 骨架完成，在填充代码前对计划骨架做一遍自查。骨架
 > 「这份计划的骨架合理吗？切片策略（垂直还是横切？每片独立可验证吗？）、依赖图（有没有隐式耦合遗漏？）、risk-first 排序（最不确定的真的排前面了吗？）、task 粒度（sizing 准吗？有 and 该拆的吗？）、restate 覆盖（有遗漏路径吗？）」
 
 自查纪律：放下"当时为什么这么排"的推理，只看骨架本身现在站不站得住；每条给一句判断 + 依据，不是走过场打勾。用户显式要求对抗审视（「红蓝军 / 深审」）才按下方平台指令调用 red-blue-deep，传入当前 request、stage、restate、artifacts、constraints、计划文件路径和用户 decision。
-
 
 对抗审视使用 `$red-blue-deep`。
 

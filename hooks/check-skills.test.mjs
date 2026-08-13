@@ -133,7 +133,9 @@ test('checkAll: 当前仓库无真断链/污染 (error=0)', () => {
 test('routeTargetSet: 同时含 skill 与 command 两类目标', () => {
   const t = routeTargetSet();
   assert.ok(t.has('reviewing'), '应含 skill reviewing');
-  assert.ok(t.has('plugin-distill'), '应含 command plugin-distill');
+  assert.ok(t.has('projecthub'), '应含聚合 skill projecthub');
+  assert.ok(t.has('personalhub'), '应含聚合 skill personalhub');
+  assert.ok(t.has('nocodehub'), '应含聚合 skill nocodehub');
 });
 
 test('listSkills / listCommandTargets: 均非空', () => {
@@ -150,12 +152,17 @@ test('Codex syntax checker rejects unresolved Claude tool vocabulary', () => {
   assert.equal(errors.length, 5);
   assert.deepEqual(checkPlatformSyntax('$dev-build update_plan', 'skills/foo/SKILL.md', 'codex'), []);
   assert.deepEqual(checkPlatformSyntax('Skill(nocode:dev-build)', 'skills/foo/SKILL.md', 'claude'), []);
+  assert.equal(
+    checkPlatformSyntax('Skill(nocode:dev-build) AskUserQuestion update_plan', 'skills/foo/SKILL.md', 'pi').length,
+    3,
+  );
+  assert.deepEqual(checkPlatformSyntax('Use `/skill:dev-build`', 'skills/foo/SKILL.md', 'pi'), []);
 });
 
 test('metadataBudget counts generated skill names and descriptions', () => {
   const codexRoot = path.join(ROOT, 'plugins', 'codex', 'nocode');
   const budget = metadataBudget(codexRoot);
-  assert.ok(budget.entries.length >= 50, `expected generated skills, got ${budget.entries.length}`);
+  assert.ok(budget.entries.length >= 40, `expected generated skills, got ${budget.entries.length}`);
   assert.ok(budget.total > 0);
   assert.ok(budget.total <= 8000, `Codex metadata budget ${budget.total} exceeds 8000`);
 });

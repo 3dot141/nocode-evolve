@@ -43,6 +43,59 @@ export function renderCommandSkill(name, raw, {
   ].join('\n');
 }
 
+function commandPromptFrontmatter(source) {
+  const preserved = source.lines.filter(
+    (line) => !/^(?:name|command|implementation):/.test(line),
+  );
+  return ['---', ...preserved, '---'].join('\n');
+}
+
+export function renderCommandPrompt(name, raw, {
+  file = `${name}.md`,
+  renderMarkdown = String,
+} = {}) {
+  const source = parseFrontmatter(raw, 'Command prompt', file);
+  const sourceBody = source.body.replaceAll(
+    `${'${CLAUDE_PLUGIN_ROOT}'}/commands/${name}-reference/`,
+    `${'${CLAUDE_PLUGIN_ROOT}'}/scripts/${name}/`,
+  );
+  return [
+    commandPromptFrontmatter(source),
+    '',
+    renderMarkdown(sourceBody).trimStart(),
+  ].join('\n');
+}
+
+function copyCommandReferenceFiles(root, name, output, { targetPrefix }) {
+  const privateRoot = path.join(root, 'commands', `${name}-reference`);
+  if (!existsSync(privateRoot)) return;
+  for (const entry of readdirSync(privateRoot, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name))) {
+    if (!entry.isFile()) continue;
+    const privateFile = entry.name;
+    if (/\.(?:test|spec)\./.test(privateFile)
+      || /^(?:test|spec)[_-]/.test(privateFile)
+      || /_(?:test|spec)\.[^.]+$/.test(privateFile)) continue;
+    output.set(`${targetPrefix}/${privateFile}`, readFileSync(path.join(privateRoot, privateFile)));
+  }
+}
+
+export function generateCommandPrompts(root, {
+  isExcluded = () => false,
+  renderMarkdown = String,
+} = {}) {
+  const commandRoot = path.join(root, 'commands');
+  const output = new Map();
+  for (const file of readdirSync(commandRoot).sort()) {
+    if (!file.endsWith('.md') || ['AGENTS.md', 'README.md'].includes(file)) continue;
+    if (isExcluded(`commands/${file}`)) continue;
+    const name = path.basename(file, '.md');
+    const raw = readFileSync(path.join(commandRoot, file), 'utf8');
+    output.set(`prompts/${name}.md`, renderCommandPrompt(name, raw, { file, renderMarkdown }));
+    copyCommandReferenceFiles(root, name, output, { targetPrefix: `scripts/${name}` });
+  }
+  return output;
+}
+
 export function generateCommandSkills(root, {
   isExcluded = () => false,
   renderMarkdown = String,
@@ -58,16 +111,7 @@ export function generateCommandSkills(root, {
     output.set(`skills/${name}/SKILL.md`, renderCommandSkill(name, raw, {
       file, renderMarkdown, argumentLabel,
     }));
-    const privateRoot = path.join(commandRoot, `${name}-reference`);
-    if (!existsSync(privateRoot)) continue;
-    for (const entry of readdirSync(privateRoot, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name))) {
-      if (!entry.isFile()) continue;
-      const privateFile = entry.name;
-      if (/\.(?:test|spec)\./.test(privateFile)
-        || /^(?:test|spec)[_-]/.test(privateFile)
-        || /_(?:test|spec)\.[^.]+$/.test(privateFile)) continue;
-      output.set(`skills/${name}/scripts/${privateFile}`, readFileSync(path.join(privateRoot, privateFile)));
-    }
+    copyCommandReferenceFiles(root, name, output, { targetPrefix: `skills/${name}/scripts` });
   }
   return output;
 }

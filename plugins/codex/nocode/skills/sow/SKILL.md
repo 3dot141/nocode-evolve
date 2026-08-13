@@ -4,7 +4,6 @@ description: "把当前会话围绕给定意图浓缩并归档到用户 vault, A
 argument-hint: <一句话意图：想抽取什么内容>
 ---
 
-
 本文所说“调用 `<skill>` Skill”使用 `$<skill>`；“结构化决策”使用 `request_user_input`。
 
 

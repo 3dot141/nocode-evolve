@@ -73,7 +73,6 @@ Prepare one self-contained objective per domain:
 
 Use native `Agent` once per objective. Launch all independent agents before waiting, save every native handle, then wait for each terminal result. Resume an agent when it needs bounded follow-up context; cancel it if the task must stop.
 
-
 If the platform cannot create independent agents, execute the objectives sequentially in the main session and report that the work was not parallel or isolated. A dispatch acknowledgement is never a completion result.
 
 ### 4. Review and Integrate

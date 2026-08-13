@@ -8,9 +8,11 @@ description: Use when the user wants to write a product requirements document. U
 <!-- nocode:platform claude -->
 计划使用 `TaskCreate` / `TaskUpdate`，决策使用 `AskUserQuestion`；handoff 使用 `Skill(nocode:pd-ix)`，评审使用 `Skill(nocode:reviewing)`。
 <!-- /nocode:platform -->
-
 <!-- nocode:platform codex -->
 计划使用 `update_plan`，决策使用 `request_user_input`；handoff 使用 `$pd-ix`，评审使用 `$reviewing`。
+<!-- /nocode:platform -->
+<!-- nocode:platform pi -->
+计划使用文本里程碑列表（同时最多一个进行中），决策在回合末写出完整问题与 2–3 个互斥选项；handoff 使用 `/skill:pd-ix`，评审使用 `/skill:reviewing`。
 <!-- /nocode:platform -->
 
 # prd — 收敛成产品需求文档

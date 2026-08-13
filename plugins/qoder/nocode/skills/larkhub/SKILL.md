@@ -7,7 +7,6 @@ description: "当用户提供飞书/Lark/豆包文档或飞书项目 URL，或�
 
 仓库内目标使用 `Skill(nocode:lark-read)`、`Skill(nocode:lark-project)`；其余目标调用已安装的 `lark-doc`、`lark-wiki`、`lark-shared` Skill。
 
-
 每次 handoff 传入原始 request、URL、stage、restate、artifacts、constraints 和用户 decision。目标 Skill 或连接器不可用时，明确报告缺失能力，不经过私有 fallback。
 
 统一入口，按 URL pattern 或意图关键词分发到对应的 Lark 子 skill。可由用户 `/larkhub` 显式调用，也可被 Claude 识别到飞书链接 / 意图时主动调起。

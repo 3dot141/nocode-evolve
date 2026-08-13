@@ -67,6 +67,7 @@ test('worktree consumers use platform-native create and enter contracts', () => 
     const source = read(file);
     assert.match(source, /<!-- nocode:platform claude -->/);
     assert.match(source, /<!-- nocode:platform codex -->/);
+    assert.match(source, /<!-- nocode:platform pi -->/);
     assert.match(source, /EnterWorktree/);
     assert.match(source, /git worktree add/);
     assert.match(source, /绝对路径|absolute path/);

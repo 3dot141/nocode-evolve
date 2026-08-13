@@ -1,6 +1,6 @@
 # NoCode
 
-Harrison 的 Claude Code / Codex / Qoder 三平台工程工作流插件。仓库只维护一份业务语义，通过平台 adapter 确定性生成三个可独立安装的插件。
+Harrison 的 Claude Code / Codex / Qoder / Pi 四平台工程工作流插件。仓库只维护一份业务语义，通过平台 adapter 确定性生成四个可独立安装的插件。
 
 ```text
 共享业务源码
@@ -8,21 +8,21 @@ skills / commands / rules / model / hooks
                          │
                  static packager
                          │
-        ┌────────────────┼────────────────┐
-        │                │                │
- Claude adapter    Codex adapter    Qoder adapter
-        │                │                │
-plugins/claude/   plugins/codex/   plugins/qoder/
-    nocode            nocode            nocode
+        ┌────────────────┼────────────────┬────────────────┐
+        │                │                │                │
+ Claude adapter    Codex adapter    Qoder adapter     Pi adapter
+        │                │                │                │
+plugins/claude/   plugins/codex/   plugins/qoder/   plugins/pi/
+    nocode            nocode            nocode         nocode
 ```
 
 核心原则：
 
 - `skills/`、`commands/`、`rules/`、`model/` 与平台无关的 Hook 判断是业务单源。
-- Markdown 中用成对 platform block 写 Claude/Codex 原生工具差异；Qoder 构建时 fallback 到 Claude 块内容；共享正文保留业务流程与 handoff payload。
-- `adapters/claude/`、`adapters/codex/`、`adapters/qoder/` 负责 manifest、命令 Skill 化、路径变量与 Hook codec。
-- `platform/claude/`、`platform/codex/`、`platform/qoder/` 只保存必须不同的非 Markdown runtime overlay。
-- `plugins/claude/nocode/`、`plugins/codex/nocode/`、`plugins/qoder/nocode/` 是只读生成物，禁止手改。
+- Markdown 中用 platform block 写 Claude/Codex/Pi 原生工具差异；Qoder 构建时 fallback 到 Claude 块内容；Pi 不 fallback，必须有自己的块。共享正文保留业务流程与 handoff payload。
+- `adapters/claude/`、`adapters/codex/`、`adapters/qoder/`、`adapters/pi/` 负责 manifest、命令 Skill/prompt 化、路径变量与 Hook codec。
+- `platform/claude/`、`platform/codex/`、`platform/qoder/`、`platform/pi/` 只保存必须不同的非 Markdown runtime overlay。
+- `plugins/claude/nocode/`、`plugins/codex/nocode/`、`plugins/qoder/nocode/`、`plugins/pi/nocode/` 是只读生成物，禁止手改。
 - `plugin/metadata.json` 是 name/version/author/license 单源。
 
 ## 平台行为
@@ -48,8 +48,9 @@ nocode-evolve/
 │   ├── claude/                          # Claude manifest/content renderer
 │   ├── codex/                           # Codex manifest/component/hook renderer
 │   ├── qoder/                           # Qoder manifest/content renderer
-│   └── shared/                          # 三平台入口 Skill renderer
-├── platform/{claude,codex,qoder}/runtime/  # 平台 runtime overlay
+│   ├── pi/                              # Pi package/content renderer
+│   └── shared/                          # 入口 Skill / prompt renderer
+├── platform/{claude,codex,qoder,pi}/runtime/  # 平台 runtime overlay
 ├── skills/ commands/                    # workflow 与入口业务源码
 ├── rules/ model/ references/            # 规则、会话上下文与参考材料源码
 ├── hooks/                               # hook 注册源、平台 codec、测试
@@ -57,7 +58,8 @@ nocode-evolve/
 ├── plugins/
 │   ├── claude/nocode/                   # Claude 发布物（生成，禁手改）
 │   ├── codex/nocode/                    # Codex 发布物（生成，禁手改）
-│   └── qoder/nocode/                    # Qoder 发布物（生成，禁手改）
+│   ├── qoder/nocode/                    # Qoder 发布物（生成，禁手改）
+│   └── pi/nocode/                       # Pi 发布物（生成，禁手改）
 ├── .claude-plugin/marketplace.json      # Claude marketplace 入口
 └── .agents/plugins/marketplace.json     # Codex marketplace 入口
 ```
@@ -123,6 +125,16 @@ qodercli plugins install nocode
 
 Qoder 的 Hook 协议与 Claude Code 一致（SessionStart additionalContext、PreToolUse permissionDecision），工具命名也相同（TaskCreate、AskUserQuestion、Skill、Agent 等），因此 Qoder 发布物复用 Claude 平台块内容。安装后运行 `/plugins reload` 或重启 CLI 生效。
 
+### Pi
+
+开发期直接安装本地生成物：
+
+```bash
+pi install ./plugins/pi/nocode
+```
+
+Pi 没有 Claude/Codex marketplace，也不读取 `hooks.json`。发布物是标准 pi package：`package.json` 声明 extension、skills 和 prompts。入口 command 编译为 `prompts/`，用户打 `/task` 即展开；工作流 skill 通过 `/skill:name` handoff。第一期计划、提问和并行 agent 降级为文本确认与主会话顺序执行。安装后新建 Session 或在已有 Session 里 `/reload`。
+
 ### Open Design
 
 Claude 与 Codex 统一通过 `open-design` Skill 的封装 CLI 按需使用 Open Design。插件不注册全局 Open Design MCP，也不会在普通 Session 启动时探测或连接 Open Design。
@@ -134,7 +146,7 @@ Open Design App 需要单独安装。Nocode 不自动安装 App、不修改 App 
 任何参与插件运行或生成的文件发生变化时：
 
 1. 按 SemVer 更新 `plugin/metadata.json`。
-2. 运行静态 packager 更新两个发布物。
+2. 运行静态 packager 更新四个发布物。
 3. 运行所有生成链检查与测试。
 
 ```bash
@@ -149,10 +161,11 @@ node scripts/package.platform.mjs --check
 node scripts/check-skills.mjs --root . --platform source
 node scripts/check-skills.mjs --root plugins/claude/nocode --platform claude
 node scripts/check-skills.mjs --root plugins/codex/nocode --platform codex
+node scripts/check-skills.mjs --root plugins/pi/nocode --platform pi
 node --test hooks/*.test.mjs scripts/*.test.mjs
 ```
 
-只检查或生成单个平台时可传 `--platform claude` 或 `--platform codex`。未知参数返回 exit 2；`--check` 发现 missing/changed/extra 文件返回 exit 1。
+只检查或生成单个平台时可传 `--platform claude`、`--platform codex`、`--platform qoder` 或 `--platform pi`。未知参数返回 exit 2；`--check` 发现 missing/changed/extra 文件返回 exit 1。
 
 ## 规则生成链
 
@@ -161,7 +174,7 @@ node --test hooks/*.test.mjs scripts/*.test.mjs
 - 触发路由：编辑 `rules/rule-<id>.md` 的 frontmatter，运行 `node scripts/compile.rule.js`，生成 `model/agent-rule-catalog-*.md`。
 - PreToolUse 硬规则：编辑 `scripts/compile.hooks.js` 中的规则数组，运行 `node scripts/compile.hooks.js`，生成 `hooks/pretooluse-rules.json`。
 
-静态 packager 消费上述业务源码和生成物，再产生两个安装目录。不要手工编辑任一层生成文件。
+静态 packager 消费上述业务源码和生成物，再产生四个安装目录。不要手工编辑任一层生成文件。
 
 ## 发布 smoke checklist
 
@@ -169,6 +182,7 @@ node --test hooks/*.test.mjs scripts/*.test.mjs
 
 - Claude：从 `.claude-plugin/marketplace.json` 隔离安装，确认入口 Skills、SessionStart 与 Open Design MCP。
 - Codex：从 `.agents/plugins/marketplace.json` 隔离安装，确认入口 Skills、SessionStart 与 Open Design MCP。
+- Pi：从 `./plugins/pi/nocode` 隔离安装，确认 `/task` prompt、SessionStart 注入、bash deny 与 `/skill:` handoff。
 - 两端验证 Open Design、原生 plan/decision/agent/worktree、handoff-state、Wiki usage、session/data isolation 与 Continuous Learning 缺席。
 - 两端确认 `runtime/plugin-data-entry.mjs` 将各自隔离数据根直接映射到 `NOCODE_PLUGIN_DATA`。
 

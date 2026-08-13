@@ -7,7 +7,6 @@ description: 工程任务流程领航（8 阶段 · 4 场景路由）。可被 m
 
 计划使用 `TaskCreate` / `TaskUpdate`，决策使用 `AskUserQuestion`；阶段 Skill 使用 `Skill(nocode:<stage-skill>)`。
 
-
 > 驾驶舱。**model 命中复杂多步任务时主动调起**，用户也可 `/调` 进入。给建议不替执行。
 >
 > 各阶段只通过上方平台原生 Skill 语法进入；不读取路由层或其它插件内部实现。
@@ -60,7 +59,6 @@ Define 返回后，拿到确认的 restate + 场景分类，进 Step 2。
 为当前场景一次创建全部稳定阶段项；description 保留完整子步骤和 Gate。后续每次状态变化都提交顺序稳定的完整计划状态，不得只表达单项 patch。
 
 使用 `TaskCreate` 创建每个阶段并保存 task id；使用 `TaskUpdate` 更新状态。
-
 
 Sub-steps 写进 description 是为了**进入阶段时一眼看到完整步骤序列**——防止跳步遗漏。链首的 `⓪ 调用 <stage-skill>` 是为了把“加载 skill”钉成每个阶段的第一个动作——**sub-steps 是地图，skill 才是详图**，照地图裸跑会丢掉 skill 内的模板 / Iron Law / 格式约束。
 

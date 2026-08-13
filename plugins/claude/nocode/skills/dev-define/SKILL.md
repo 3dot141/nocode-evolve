@@ -7,7 +7,6 @@ description: Use when starting any non-trivial task, when requirements are uncle
 
 使用 `AskUserQuestion` 提交完整问题和全部选项。
 
-
 # define — 从模糊到明确
 
 **Iron Law: 问题没定义清就动手 = 赌。建错东西的代价是澄清的 10 倍，而且由用户承担。**
@@ -69,11 +68,9 @@ Task 8: 硬交接 — 调用下一步 skill
 
 Env handoff 使用 `Skill(nocode:using-git-worktrees)`。
 
-
 调用时把上面**每一条** Task 建成稳定计划项，不得传空计划：
 
 使用 `TaskCreate` 逐项创建全部计划项并保存 task id；状态变化时使用 `TaskUpdate` 更新对应项。
-
 
 每完成一个标 done。
 
@@ -236,7 +233,6 @@ Standard 场景网络探索由当前会话使用可用的搜索工具做 1–2 �
 **升审只在两种情况**：① 用户显式要求（「审一下 / 深审 / 独立审」）→ 按下方平台指令调用 reviewing，传入完整 restate、7 个 define-review 维度、checklist 方法、context capsule 和 independent 深度；② restate 命中敏感面（权限 / 计费 / 数据迁移 / 对外接口 / 不可逆）→ 向用户**一句话建议**升审，用户点头才调，不自动派发。
 
 独立审查 handoff 使用 `Skill(nocode:reviewing)`。
-
 
 ## Exit Gate
 

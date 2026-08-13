@@ -7,7 +7,6 @@ argument-hint: "[wiki|rules|agents] [optional-content-description]"
 本文所说“调用 `<skill>` Skill”使用 `Skill(nocode:<skill>)`；“结构化决策”使用 `AskUserQuestion`。
 
 
-
 # /personal-distill：.agents-personal/ 写入
 
 统一管理 `.agents-personal/` 的所有写入操作——wiki 知识沉淀、rules 指令写入、AGENTS.md 变量/分节更新。

@@ -14,7 +14,6 @@ skip: false
 
 创建 worktree 使用 `git worktree add "<absolute-worktree-path>" -b "<BRANCH_NAME>" "<optional-base-ref>"`；创建成功后使用 `EnterWorktree` 进入同一绝对路径。
 
-
 执行 `nocode:using-git-worktrees` skill 时，本文规则覆盖 skill 内默认值。
 若与 skill 内文冲突，**以本规则为准**。
 

@@ -76,9 +76,11 @@ Task 7: 硬交接 — 调用下一步 skill
 <!-- nocode:platform claude -->
 Review handoff 使用 `Skill(nocode:dev-review)`。
 <!-- /nocode:platform -->
-
 <!-- nocode:platform codex -->
 Review handoff 使用 `$dev-review`。
+<!-- /nocode:platform -->
+<!-- nocode:platform pi -->
+Review handoff 使用 `/skill:dev-review`。
 <!-- /nocode:platform -->
 
 调用时把上面**每一条** Task 建成稳定计划项，不得传空计划：
@@ -86,9 +88,11 @@ Review handoff 使用 `$dev-review`。
 <!-- nocode:platform claude -->
 使用 `TaskCreate` 逐项创建全部计划项并保存 task id；状态变化时使用 `TaskUpdate` 更新对应项。
 <!-- /nocode:platform -->
-
 <!-- nocode:platform codex -->
 使用 `update_plan` 提交全部计划项；每次状态变化都提交完整列表，保持稳定顺序，且同时最多一个 `in_progress`。
+<!-- /nocode:platform -->
+<!-- nocode:platform pi -->
+使用文本里程碑列表创建并更新全部计划项，同时最多一个进行中。
 <!-- /nocode:platform -->
 
 每完成一个标 done。

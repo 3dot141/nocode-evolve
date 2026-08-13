@@ -4,7 +4,6 @@ description: "项目子目录 AGENTS.md + README.md 聚合入口（hub），分�
 argument-hint: <sub-action> [args]
 ---
 
-
 本文所说“调用 `<skill>` Skill”使用 `$<skill>`；“结构化决策”使用 `request_user_input`。
 
 

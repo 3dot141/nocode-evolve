@@ -14,9 +14,11 @@ Ensure work happens in an isolated workspace. Resolve the branch and absolute ta
 <!-- nocode:platform claude -->
 Inspect Git state with read-only commands. Create the worktree with `git worktree add "<absolute-worktree-path>" -b "<branch>" "<confirmed-base>"`, then use `EnterWorktree` with the returned absolute path.
 <!-- /nocode:platform -->
-
 <!-- nocode:platform codex -->
 Inspect Git state with read-only commands. Create the worktree with `git worktree add "<absolute-worktree-path>" -b "<branch>" "<confirmed-base>"`; continue every subsequent file and command operation with that absolute path as `workdir`. Do not simulate a session-wide directory switch.
+<!-- /nocode:platform -->
+<!-- nocode:platform pi -->
+Inspect Git state with read-only commands. Create the worktree with `git worktree add "<absolute-worktree-path>" -b "<branch>" "<confirmed-base>"`; continue every subsequent file and command operation with that absolute path. Do not simulate a session-wide directory switch.
 <!-- /nocode:platform -->
 
 **Announce at start:** "I'm using the using-git-worktrees skill to set up an isolated workspace."

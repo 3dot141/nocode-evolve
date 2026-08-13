@@ -16,9 +16,11 @@ review 这件事在仓库里被重造了十几遍：每个 review 都重新发�
 <!-- nocode:platform claude -->
 调用方直接调用 `Skill(nocode:reviewing)`，并提供以下完整输入：
 <!-- /nocode:platform -->
-
 <!-- nocode:platform codex -->
 调用方直接调用 `$reviewing`，并提供以下完整输入：
+<!-- /nocode:platform -->
+<!-- nocode:platform pi -->
+调用方直接调用 `/skill:reviewing`，并提供以下完整输入：
 <!-- /nocode:platform -->
 
 ```text

@@ -9,7 +9,6 @@ description: Use after PRD for interaction design, information architecture, pag
 
 计划使用 `TaskCreate` / `TaskUpdate`；handoff 使用 `Skill(nocode:pd-vd)`。
 
-
 独立于 devflow 的产品流交互设计阶段。产出 `.ix.md`，作为视觉设计（pd-vd）和开发的输入。
 
 ## 渐进式披露

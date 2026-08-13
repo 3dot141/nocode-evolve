@@ -5,7 +5,6 @@ description: "Use when the user wants to write a product requirements document."
 
 > 本文写“结构化决策”时，必须提交当前步骤的完整问题与 2–3 个互斥选项。
 
-
 计划使用 `update_plan`，决策使用 `request_user_input`；handoff 使用 `$pd-ix`，评审使用 `$reviewing`。
 
 # prd — 收敛成产品需求文档

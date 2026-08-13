@@ -12,6 +12,7 @@ import {
 import { buildExpectedTree } from '../scripts/lib/platform-packager.mjs';
 import { claudeAdapter } from '../adapters/claude/adapter.mjs';
 import { codexAdapter } from '../adapters/codex/adapter.mjs';
+import { piAdapter } from '../adapters/pi/adapter.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const METADATA = JSON.parse(readFileSync(path.join(ROOT, 'plugin/metadata.json'), 'utf8'));
@@ -84,7 +85,7 @@ test('runtime launcher uses argv without a shell and redacts native values from 
 });
 
 test('generated platform entrypoints map directly to isolated data roots', async (t) => {
-  for (const [platform, adapter] of Object.entries({ claude: claudeAdapter, codex: codexAdapter })) {
+  for (const [platform, adapter] of Object.entries({ claude: claudeAdapter, codex: codexAdapter, pi: piAdapter })) {
     const tree = buildExpectedTree({ root: ROOT, metadata: METADATA, adapter });
     const source = tree.get('runtime/plugin-data-entry.mjs').toString();
     assert.match(source, new RegExp(`platformDataRoot\\('${platform}'`));

@@ -7,10 +7,13 @@ description: "Use when implementation is complete and you need to land the work 
 合并后项目流转使用 `Skill(nocode:lark-project)`。
 PR 定时监控用 Bash managed background 启动 `references/pr-check.mjs --watch`，保存 task id；完成通知后读取输出继续处置。
 <!-- /nocode:platform -->
-
 <!-- nocode:platform codex -->
 合并后项目流转使用 `$lark-project`。
 PR 定时监控用 `exec_command` 启动 `references/pr-check.mjs --watch`，保存 session id；后续用 `write_stdin` 续取输出继续处置。
+<!-- /nocode:platform -->
+<!-- nocode:platform pi -->
+合并后项目流转使用 `/skill:lark-project`。
+PR 定时监控用 `bash` 启动 `references/pr-check.mjs --watch`，保存进程输出路径；完成后再读取输出继续处置。
 <!-- /nocode:platform -->
 
 # land — 3 步着陆，干净收场

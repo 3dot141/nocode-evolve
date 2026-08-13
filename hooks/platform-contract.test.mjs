@@ -38,6 +38,12 @@ test('generated platform manifests cannot drift from metadata after cutover', ()
     assert.deepEqual(manifest.author, metadata.author);
     assert.equal(manifest.license, metadata.license);
   }
+  const piManifest = readJson('plugins/pi/nocode/package.json');
+  assert.ok(piManifest, 'plugins/pi/nocode/package.json must exist');
+  assert.equal(piManifest.name, metadata.name);
+  assert.equal(piManifest.version, metadata.version);
+  assert.equal(piManifest.author, metadata.author.name);
+  assert.equal(piManifest.license, metadata.license);
 });
 
 test('runtime maintenance commands use the shared metadata version source', () => {
@@ -60,7 +66,6 @@ test('Claude-discovered frontmatter quotes values that contain YAML syntax', () 
     assert.match(content, /^---\n(?:.|\n)*?description: >-\n/m, relativePath);
   }
   for (const relativePath of [
-    'commands/personal-distill.md',
     'commands/eval.md',
   ]) {
     const content = readFileSync(path.join(ROOT, relativePath), 'utf8');

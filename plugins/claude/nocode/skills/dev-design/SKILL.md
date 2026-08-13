@@ -68,7 +68,6 @@ decision ── mode: research ──→ research final-gate
 
 使用 `TaskCreate` 创建全部里程碑，状态变化时用 `TaskUpdate` 更新原 task。
 
-
 ### Step 1：执行 decision
 
 Read `decision/SKILL.md`，在当前会话中按它的步骤执行，输入 request、restate、`restateOwner`、场景、约束和已知 artifacts。
@@ -164,7 +163,6 @@ renderBrief:
 在 `final-gate` 完整展示上述结果并结束当前回合等待用户答复。用户确认进入 Plan 后，传入当前 request、stage、restate、constraints、设计文档路径、`designRevision`、`designDigest` 和用户决定；不得在确认前自行进入下一阶段。
 
 Plan handoff 使用 `Skill(nocode:dev-plan)`。
-
 
 ## replan
 

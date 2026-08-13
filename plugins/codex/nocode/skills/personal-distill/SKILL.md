@@ -4,7 +4,6 @@ description: ".agents-personal/ 的统一写入层（wiki + rules + AGENTS.md）
 argument-hint: "[wiki|rules|agents] [optional-content-description]"
 ---
 
-
 本文所说“调用 `<skill>` Skill”使用 `$<skill>`；“结构化决策”使用 `request_user_input`。
 
 

@@ -4,7 +4,6 @@ description: ".agents-personal/ 的自主维护（stale 检测 / prune / merge /
 argument-hint: (无参数)
 ---
 
-
 本文所说“调用 `<skill>` Skill”使用 `$<skill>`；“结构化决策”使用 `request_user_input`。
 
 

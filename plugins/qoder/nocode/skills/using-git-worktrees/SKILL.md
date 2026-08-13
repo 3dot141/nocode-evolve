@@ -13,7 +13,6 @@ Ensure work happens in an isolated workspace. Resolve the branch and absolute ta
 
 Inspect Git state with read-only commands. Create the worktree with `git worktree add "<absolute-worktree-path>" -b "<branch>" "<confirmed-base>"`, then use `EnterWorktree` with the returned absolute path.
 
-
 **Announce at start:** "I'm using the using-git-worktrees skill to set up an isolated workspace."
 
 ## Step 0: Detect Existing Isolation

@@ -7,7 +7,6 @@ argument-hint: <sub-action> [args]
 本文所说“调用 `<skill>` Skill”使用 `Skill(nocode:<skill>)`；“结构化决策”使用 `AskUserQuestion`。
 
 
-
 # /nocodehub：插件自维护聚合入口
 
 统一入口，聚合插件自身（rules/skills/manifest/commands）的维护动作。每个子动作也可以直接用独立命令调用。

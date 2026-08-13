@@ -5,7 +5,6 @@ description: "产品发现工作流领航（Research → PRD · 2 场景路由�
 
 > 本文写“结构化决策”时，必须提交当前步骤的完整问题与 2–3 个互斥选项。
 
-
 结构化决策使用 `request_user_input`；阶段 handoff 使用 `$pd-research`、`$pd-prd`、`$pd-ix`、`$pd-vd`。
 
 # nocode:pdflow — 产品阶段工作流领航
@@ -92,7 +91,6 @@ Task 4: Handoff — 衔接开发流
 ```
 
 调用时把所选场景的**每一条** Task 建成稳定计划项；不得提交空计划。每次进入或完成阶段都提交完整、顺序稳定的状态快照。
-
 
 使用 `update_plan` 创建并更新完整计划快照，同时最多一个 `in_progress`。
 

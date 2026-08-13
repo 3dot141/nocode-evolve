@@ -1,0 +1,88 @@
+# refactor 模板
+
+> dev-design writing 阶段的场景模板。主 SKILL.md Step 1 按场景路由到本文件；覆盖 Step 2 结构骨架的产出标准 + Step 4 的 detail 子步（4a/4b）。重构 / 重组 / 迁移场景使用。
+
+从 A 状态到 B 状态。形状：现状 → 目标 → before/after → 迁移。
+
+> 产出骨架示例见 `references/example-refactor-skeleton.md`。结构变化的横切落层必须 Read `references/cross-cutting-design.md`。
+
+## 产出骨架示例
+
+```
+# Refactor: 资源同步从轮询改为事件驱动
+
+## 罗盘（Define Restate）
+  已确认 restate / 轻量 restate 原样承载（Define 落盘或 decision 补），writing 不改写
+
+## 现状分析
+  现状结构图 + DDD 问题诊断
+  问题：SyncService 轮询所有 Agent，耦合重、延迟高
+
+## 目标设计
+  Before                          After
+  ┌─────────────┐                ┌─────────────┐
+  │ SyncService │                │ SyncService │
+  │ poll(all)   │     →          │ onEvent()   │
+  │ 轮询全部     │                │ 事件驱动     │
+  └─────────────┘                └─────────────┘
+  变更理由 + 每个变更点说明
+
+## 迁移策略
+  Step 1: 加事件基础设施（可回滚）
+  Step 2: 双写（轮询 + 事件并行）
+  Step 3: 关闭轮询（一键回退到 Step 2）
+  每步文件影响 + 验证 + 回滚方案
+
+## 汇总
+```
+
+## 结构骨架（喂 Step 2 → Step 3 架构审核）
+
+refactor 的结构骨架 = **现状结构 + 目标结构（before/after）**：
+
+1. **现状分析**：
+   - **现有结构**（总图：当前的模块 / 域关系，先图后文）
+   - **问题在哪**（为什么要重构）
+   - **DDD 视角审视**：域划分合理吗？高内聚低耦合吗？哪里耦合过重 / 职责混乱
+2. **目标结构**：
+   - **目标结构**（总图：重构后的模块 / 域关系）
+   - **Before/After 对比**（两张图并排，标出每个变更点）
+   - **节点标状态**：现状 / 目标两张总图的节点都标 新建 / 改造 / 已有·复用（对齐 feat 总图约定——refactor 的 before/after 天然承载状态变化，标了状态变更点不言自明）
+   - **横切影响**：按 `references/cross-cutting-design.md` 渲染 Packet `crossCutting.items` 或明确 exemption，尤其核对结构变化前后的 provider / consumer 与 enforcement point
+
+产出标准：现状结构图 + 问题诊断（DDD 视角）+ 目标结构图 + Before/After 对比。→ 交 Step 2 确认、Step 3 架构审核（审目标架构是否解决现状问题、依赖方向是否改善）。
+
+## Step 4a: 变更点理由 + 细化
+
+**Enter Gate:**
+- [ ] 架构审核通过（目标结构定型）
+
+**Core Actions:**
+- 逐个变更点讲**为什么这么改**（对照现状问题，每个变更点解决哪条）
+- 涉及的类接口 / 数据契约变更（如有）
+
+**Exit Gate:**
+- [ ] 每个变更点有理由（对应现状某条问题）
+
+## Step 4b: 迁移策略
+
+**Enter Gate:**
+- [ ] 目标设计已定
+
+**Core Actions:**
+- **步骤拆解**：怎么从 A 到 B，每步可回滚
+- **兼容策略**：过渡期两套共存？还是一刀切？
+- 每步文件影响
+- 每步验证方案
+- 风险 + 回滚方案
+
+**Exit Gate:**
+- [ ] 迁移步骤（每步可回滚）
+- [ ] 兼容策略
+- [ ] 每步文件影响 + 验证 + 回滚方案
+
+## 实施设计项清单
+
+按 `{NOCODE_PLUGIN_ROOT}/skills/references/design-traceability.md` 汇总目标结构、迁移步骤、兼容、回滚和行为不变验证等规范性设计项。每项标四态并回链来源章节。
+
+（汇总 → 主 SKILL.md 通用 Step 5；重构尤其重回归测试——证明行为不变）

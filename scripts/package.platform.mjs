@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { claudeAdapter } from '../adapters/claude/adapter.mjs';
 import { codexAdapter } from '../adapters/codex/adapter.mjs';
 import { qoderAdapter } from '../adapters/qoder/adapter.mjs';
+import { piAdapter } from '../adapters/pi/adapter.mjs';
 import {
   buildExpectedTree,
   diffTree,
@@ -16,13 +17,13 @@ import {
 export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 export function parseArgs(args) {
-  const options = { check: false, platforms: ['claude', 'codex', 'qoder'] };
+  const options = { check: false, platforms: ['claude', 'codex', 'qoder', 'pi'] };
   for (let index = 0; index < args.length; index++) {
     const arg = args[index];
     if (arg === '--check') options.check = true;
     else if (arg === '--platform') {
       const platform = args[++index];
-      if (!platform) throw new Error('--platform requires claude, codex or qoder');
+      if (!platform) throw new Error('--platform requires claude, codex, qoder or pi');
       options.platforms = [platform];
     } else if (arg.startsWith('--platform=')) {
       options.platforms = [arg.slice('--platform='.length)];
@@ -31,7 +32,7 @@ export function parseArgs(args) {
     }
   }
   for (const platform of options.platforms) {
-    if (!['claude', 'codex', 'qoder'].includes(platform)) {
+    if (!['claude', 'codex', 'qoder', 'pi'].includes(platform)) {
       throw new Error(`unknown platform: ${platform}`);
     }
   }
@@ -40,7 +41,7 @@ export function parseArgs(args) {
 
 export function run(options, root = ROOT) {
   const metadata = validateMetadata(loadJson(path.join(root, 'plugin/metadata.json')));
-  const adapters = { claude: claudeAdapter, codex: codexAdapter, qoder: qoderAdapter };
+  const adapters = { claude: claudeAdapter, codex: codexAdapter, qoder: qoderAdapter, pi: piAdapter };
 
   const messages = [];
   let hasDrift = false;

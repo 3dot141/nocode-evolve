@@ -9,6 +9,9 @@ use Agent
 <!-- nocode:platform codex -->
 use spawn_agent
 <!-- /nocode:platform -->
+<!-- nocode:platform pi -->
+use /skill:dev-design
+<!-- /nocode:platform -->
 shared after
 `;
 
@@ -20,6 +23,10 @@ test('renders shared Markdown plus only the selected platform block', () => {
   assert.equal(
     renderPlatformBlocks(SOURCE, { platform: 'codex', file: 'skills/example/SKILL.md' }),
     'shared before\nuse spawn_agent\nshared after\n',
+  );
+  assert.equal(
+    renderPlatformBlocks(SOURCE, { platform: 'pi', file: 'skills/example/SKILL.md' }),
+    'shared before\nuse /skill:dev-design\nshared after\n',
   );
 });
 

@@ -75,11 +75,9 @@ Task 7: 硬交接 — 调用下一步 skill
 
 Review handoff 使用 `Skill(nocode:dev-review)`。
 
-
 调用时把上面**每一条** Task 建成稳定计划项，不得传空计划：
 
 使用 `TaskCreate` 逐项创建全部计划项并保存 task id；状态变化时使用 `TaskUpdate` 更新对应项。
-
 
 每完成一个标 done。
 

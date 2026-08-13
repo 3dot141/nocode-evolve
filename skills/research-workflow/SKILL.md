@@ -28,9 +28,11 @@ description: Generic research engine (structured search + verification) for othe
 <!-- nocode:platform claude -->
 使用原生 `Agent` 为每个独立角度派发一个 agent；先完成本轮全部派发并保存原生句柄，再等待每个 agent 的终态结果。
 <!-- /nocode:platform -->
-
 <!-- nocode:platform codex -->
 为每个独立角度调用 `spawn_agent`；先完成本轮全部派发并保存 agent id，再用 `wait_agent` 等待每个 agent 的终态结果。需要补充限定时用 `followup_task`，需要终止时用 `interrupt_agent`。
+<!-- /nocode:platform -->
+<!-- nocode:platform pi -->
+在主会话按角度顺序执行，并明确报告本次检索不具备并行或隔离。
 <!-- /nocode:platform -->
 
 主会话直接读取并校验每个原生 agent 的终态结果，再把必要内容显式嵌入下一轮任务的 objective。不得让下一阶段猜测前一阶段输出。平台无法提供独立 agent 时，由主会话按相同阶段顺序执行，并明确报告没有获得隔离性或并行性。
@@ -108,9 +110,11 @@ description: Generic research engine (structured search + verification) for othe
 <!-- nocode:platform claude -->
 使用 `AskUserQuestion` 请求这个选择。
 <!-- /nocode:platform -->
-
 <!-- nocode:platform codex -->
 使用 `request_user_input` 请求这个选择。
+<!-- /nocode:platform -->
+<!-- nocode:platform pi -->
+在回合末写出完整问题与 2–3 个互斥选项，请求这个选择。
 <!-- /nocode:platform -->
 
 ### inline —— 不调本 workflow（0~1 个 agent）
