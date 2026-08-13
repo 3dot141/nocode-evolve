@@ -123,4 +123,3 @@ export function main(argv) {
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   main(process.argv.slice(2));
 }
-
