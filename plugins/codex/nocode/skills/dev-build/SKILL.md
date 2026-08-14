@@ -13,6 +13,7 @@ Read `${PLUGIN_ROOT}/skills/references/design-traceability.md`, `${PLUGIN_ROOT}/
 
 - [ ] The exact `design.log.md` and confirmed `design.md` paths are known.
 - [ ] The current Handoff target is Build and every named DES ID resolves.
+- [ ] The active task Log contains a successful `Env -> Build` stage-transition for this workspace, including an explicitly authorized in-place Env when applicable. A later Verify or Review return may reuse that existing Env evidence in the same task workspace; it does not create Env again.
 - [ ] Either a confirmed Plan exists, or this is a Bug repair Handoff containing one independently verifiable slice with no ordered dependency, migration, coexistence, public-contract change, rollout, or multiple checkpoint.
 - [ ] No blocking Open item exists.
 

@@ -16,6 +16,7 @@ test("dev-design is one thin public Skill with the confirmed private reference t
   assert.doesNotMatch(trunk, /## (?:Scenario|Full|Standard|Fix|Mini)|designRevision\s*:|designDigest\s*:|Registry\s*:/);
 
   for (const path of [
+    "skills/references/grilling-loop.md",
     "skills/dev-design/references/grilling.md",
     "skills/dev-design/references/writing.md",
     "skills/dev-design/references/handoff.md",
@@ -33,71 +34,74 @@ test("dev-design is one thin public Skill with the confirmed private reference t
   assert.equal(exists("skills/dev-define/SKILL.md"), false);
 });
 
-test("grilling persists one complete round before advancing", async () => {
-  const [trunk, grilling] = await Promise.all([
+test("grilling persists one complete ROUND before advancing", async () => {
+  const [trunk, grilling, loop] = await Promise.all([
     read("skills/dev-design/SKILL.md"),
     read("skills/dev-design/references/grilling.md"),
+    read("skills/references/grilling-loop.md"),
   ]);
 
-  for (const section of [
-    "Header",
-    "Decisions",
-    "Decision Tree",
-    "Terms",
-    "Handoff",
-    "# Log",
-  ]) assert.match(grilling, new RegExp(section));
+  for (const section of ["Header", "Decisions", "# ROUND", "Handoff"]) {
+    assert.match(grilling, new RegExp(section));
+  }
+  assert.doesNotMatch(grilling, /# Decision Tree|# Terms/);
 
-  for (const part of [
-    "Background / Evidence",
-    "Question",
-    "Agent Recommendation \\+ Reason",
-    "User Answer",
-    "Decision Changes",
-    "Term Changes",
-    "Flow Impact",
-    "Next Node",
-  ]) assert.match(grilling, new RegExp(part));
+  for (const part of ["### 背景", "### 问题", "### 方案", "### 回答"]) {
+    assert.match(grilling, new RegExp(part));
+  }
 
-  assert.match(grilling, /persist Background, one Question, and a concrete Recommendation[\s\S]*waiting/);
-  assert.match(grilling, /fill every part[\s\S]*mark it `closed`[\s\S]*ask the next question/);
-  assert.match(trunk, /Persist a waiting Round with one question/);
-  assert.match(grilling, /At most one node is active/);
+  assert.match(grilling, /Persist 背景, 问题, and a concrete 方案[\s\S]*waiting/);
+  assert.match(grilling, /mark the ROUND `closed`[\s\S]*ask the next question/);
+  assert.match(trunk, /Persist a waiting ROUND with one question/);
+  assert.match(grilling, /At most one block is active/);
+  assert.match(loop, /one decision at a time/);
+  assert.match(loop, /Do not walk/);
+  assert.match(trunk, /do not write the lower half before the upper half is confirmed/i);
+  assert.match(trunk, /Feat 产品 does not read implementation/);
+  assert.match(loop, /Feat 产品:/);
+  assert.match(loop, /do not read implementation to learn what the system already does/);
+  assert.match(trunk, /persist a new waiting ROUND, ask that one question, and stop the turn/);
+  const plan = await read("skills/dev-plan/SKILL.md");
+  assert.doesNotMatch(plan, /grilling-loop/);
 });
 
-test("grilling separates formed Decisions from lossless per-round process", async () => {
+test("grilling separates formed Decisions from lossless per-ROUND process", async () => {
   const grilling = await read("skills/dev-design/references/grilling.md");
 
   assert.match(grilling, /## DEC-001/);
-  assert.match(grilling, /### Body/);
-  assert.match(grilling, /### 正文/);
+  assert.match(grilling, /- 描述:/);
+  assert.match(grilling, /- 内容:/);
+  assert.match(grilling, /- 过程:/);
+  assert.match(grilling, /- 引用:/);
   assert.match(grilling, /`DEC-###` is the current semantic result/);
-  assert.match(grilling, /`Round N` is the chronological decision process/);
-  assert.match(grilling, /Do not reduce `User Answer` to “用户已确认”/);
-  assert.match(grilling, /`sourceEntries` names the Round \/ Event entries[\s\S]*`evidence` binds each material claim/);
-  assert.match(grilling, /four asset cards[\s\S]*complete writing rule[\s\S]*every approved card/);
-  assert.match(grilling, /accepted, changed, superseded, or consumed independently[\s\S]*One Round may form several Decisions/);
-  assert.match(grilling, /same DEC ID[\s\S]*without changing its meaning/);
-  assert.match(grilling, /Missing decision content keeps the Round `waiting`/);
+  assert.match(grilling, /`ROUND-###` is the chronological decision process/);
+  assert.match(grilling, /Do not reduce `回答` to “用户已确认”/);
+  assert.match(grilling, /One ROUND may form several Decisions/);
+  assert.match(grilling, /Missing decision content keeps the ROUND `waiting`/);
   assert.match(grilling, /Event itself never receives `designDisposition` and never maps to a DES ID/);
 });
 
-test("bug feat and refactor have distinct dynamic decision trees with benchmarks", async () => {
-  const [bug, feat, refactor] = await Promise.all([
+test("bug feat and refactor have distinct coverage halves not question scripts", async () => {
+  const [bug, feat, refactor, trunk] = await Promise.all([
     read("skills/dev-design/references/bug/questions.md"),
     read("skills/dev-design/references/feat/questions.md"),
     read("skills/dev-design/references/refactor/questions.md"),
+    read("skills/dev-design/SKILL.md"),
   ]);
 
-  assert.match(bug, /Problem pass[\s\S]*Repair pass/);
-  assert.match(bug, /Handoff to Debug/);
-  assert.match(feat, /F0[\s\S]*F14/);
-  assert.match(refactor, /R0[\s\S]*R13/);
-  assert.match(bug, /Benchmark and precedent/i);
-  assert.match(feat, /Competitor and comparable solutions/i);
-  assert.match(refactor, /Comparable architecture and migration precedents/i);
-  assert.match(refactor, /code smell|inelegance|awkward|ugly/i);
+  assert.match(bug, /## 问题[\s\S]*## 修复/);
+  assert.match(bug, /Handoff target is Debug|Debug has investigation/);
+  assert.match(feat, /## 产品[\s\S]*## 开发/);
+  assert.match(refactor, /## Before[\s\S]*## After/);
+  assert.match(bug, /precedent|内部数据|internal-data|unavailable/i);
+  assert.match(feat, /Competitor insight/i);
   assert.match(refactor, /stopping condition/i);
+  assert.match(refactor, /elegance|不优雅|taste/i);
+  for (const content of [bug, feat, refactor]) {
+    assert.match(content, /does not generate the next question/i);
+  }
+  assert.match(trunk, /never as the next-question script/);
+  assert.doesNotMatch(trunk, /Select the earliest unclosed node whose dependencies are closed/);
 });
 
 test("design writing uses DEC to DES coverage and normative ASCII diagrams", async () => {
@@ -108,11 +112,11 @@ test("design writing uses DEC to DES coverage and normative ASCII diagrams", asy
     read("skills/dev-design/references/refactor/document.md"),
   ]);
 
-  assert.match(writing, /Decisions are the current semantic source[\s\S]*Log is the chronological source/);
+  assert.match(writing, /Decisions are the current semantic source[\s\S]*ROUND entries are the chronological source/);
   assert.match(writing, /design\.md.*normative downstream baseline/);
   assert.match(writing, /DES-001/);
   assert.match(writing, /sourceDecisionIds/);
-  assert.match(writing, /Every Decision.*designDisposition: required[\s\S]*DES ID/);
+  assert.match(writing, /Every Decision the coverage table marks `required`[\s\S]*DES ID/);
   assert.match(writing, /normative diagram source is ASCII/);
   for (const content of [bug, feat, refactor]) {
     assert.match(content, /Opening panorama/);
@@ -120,7 +124,7 @@ test("design writing uses DEC to DES coverage and normative ASCII diagrams", asy
   }
 });
 
-test("every design type includes verified interface implementation and impacted files", async () => {
+test("every design type includes flowchart interface pseudocode and problems", async () => {
   const [writing, feat, bug, refactor] = await Promise.all([
     read("skills/dev-design/references/writing.md"),
     read("skills/dev-design/references/feat/document.md"),
@@ -132,19 +136,19 @@ test("every design type includes verified interface implementation and impacted 
   assert.match(writing, /external API \/ command \/ event[\s\S]*internal entry point/);
   assert.match(writing, /Do not invent a path, symbol, signature, or schema[\s\S]*investigation DES/);
   assert.match(writing, /repository-relative tree[\s\S]*NEW \/ MODIFY \/ DELETE \/ PRESERVE[\s\S]*numbered change points/);
-  assert.match(writing, /realization views[\s\S]*Joint DES set[\s\S]*Integrated proof/);
-  assert.match(writing, /presentation and reasoning boundary, not a third identity namespace/);
-  assert.match(writing, /DES collaboration[\s\S]*Requires from sibling DES[\s\S]*Provides to sibling DES/);
+  assert.match(writing, /流程图, 接口, 伪代码, and 问题/);
+  assert.match(writing, /not a third identity namespace/);
   assert.match(writing, /consolidated impacted-files index[\s\S]*exposes collisions/);
   assert.match(writing, /Current signature:[\s\S]*Target signature:[\s\S]*Implementation flow:/);
   assert.match(writing, /Defined at:[\s\S]*Input:[\s\S]*Output:[\s\S]*Errors:[\s\S]*Guards:/);
   assert.match(writing, /Unresolved implementation surface[\s\S]*Search \/ proof stop condition/);
   assert.match(writing, /existing-file\.ext[\s\S]*new-file\.ext[\s\S]*obsolete-file\.ext[\s\S]*invariant-file\.ext/);
   for (const content of [feat, bug, refactor]) {
-    assert.match(content, /realization views/i);
-    assert.match(content, /verified interfaces/);
-    assert.match(content, /impacted files/i);
-    assert.match(content, /Consolidated impacted-files index/);
+    assert.match(content, /流程图/);
+    assert.match(content, /接口/);
+    assert.match(content, /伪代码/);
+    assert.match(content, /问题/);
+    assert.match(content, /impacted-files index/i);
     assert.match(content, /DES IDs/);
   }
 });
@@ -156,11 +160,13 @@ test("confirmation and rendering add no second design baseline", async () => {
   ]);
 
   assert.match(handoff, /One explicit user confirmation/);
-  assert.match(handoff, /ConfirmedBy: Round N/);
+  assert.match(handoff, /ConfirmedBy: ROUND-N/);
   assert.doesNotMatch(handoff, /^kind: design-confirmation$/m);
   for (const field of ["From:", "To:", "ConfirmedBy:", "Reason:", "Read:", "Preserve:", "Open:"]) {
     assert.match(handoff, new RegExp(field));
   }
+  assert.match(handoff, /Bug repair baseline -> Env/);
+  assert.doesNotMatch(handoff, /Bug repair baseline -> Build/);
   assert.match(render, /only when the user explicitly requests rendering/i);
   assert.match(render, /\$open-design|Skill\(nocode:open-design\)/);
   assert.match(render, /design\.html/);

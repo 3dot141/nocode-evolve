@@ -4,8 +4,8 @@
     "skill": "dev-design",
     "category": "resume",
     "input": "继续昨天的设计讨论。",
-    "context": {"log": "exact path", "currentNode": "F8", "one_active_node": true},
-    "expected_signals": ["重读 Decisions 与最新 Round/Event", "从唯一 active node 继续", "不重问已确认问题"],
+    "context": {"log": "exact path", "phase": "开发", "current": "功能 1", "one_active_block": true},
+    "expected_signals": ["重读 Decisions 与最新 ROUND/Event", "从 Header.current 继续", "不重问已确认问题"],
     "anti_signals": ["依赖会话记忆", "重新生成目录", "从固定问卷第一题开始"],
     "primary_dimensions": ["DD-LOG", "DD-GRILL"],
     "difficulty": "medium"
@@ -16,7 +16,7 @@
     "category": "terms",
     "input": "这里的 workspace 指用户工作区，不是代码仓库目录。",
     "context": {"round": "waiting", "term_conflict": true},
-    "expected_signals": ["先完成当前 Round", "更新 Terms 的定义、边界和来源", "用 supersession 保留旧义", "记录 flow impact"],
+    "expected_signals": ["先完成当前 ROUND", "把术语写进相关 DEC 内容或 ROUND 背景", "过程里保留旧义被取代", "不另开 Terms 专章"],
     "anti_signals": ["只在回复中口头记住", "静默覆盖旧术语"],
     "primary_dimensions": ["DD-LOG", "DD-TERMS"],
     "difficulty": "hard"
@@ -25,10 +25,10 @@
     "case_id": "design-ext-003",
     "skill": "dev-design",
     "category": "decision-log-separation",
-    "input": "这轮确认了四张完整资产卡和资产卡写法，请把 Round 关掉。",
+    "input": "这轮确认了四张完整资产卡和资产卡写法，请把 ROUND 关掉。",
     "context": {"round": "waiting", "answer_contains": "four structured asset cards plus a general writing rule"},
-    "expected_signals": ["DEC statement 只做索引摘要", "共享写法规则与可独立演进的资产卡按决策粒度拆 DEC", "DEC 正文保留完整批准内容", "Round User Answer 保留本轮完整决策过程", "核对 Decision Changes 后再关闭 Round"],
-    "anti_signals": ["把 Decision 和过程都写成 LOG Item", "Round 只写用户已确认", "只记录抽象写法而丢失资产卡", "复制对话废话或 DSL 源码"],
+    "expected_signals": ["DEC 描述只做索引", "共享写法规则与可独立演进的资产卡按决策粒度拆 DEC", "DEC 内容保留完整批准结论", "ROUND 回答保留本轮完整决策过程", "填完回答再关闭 ROUND"],
+    "anti_signals": ["把 Decision 和过程都写成 Event", "ROUND 只写用户已确认", "只记录抽象写法而丢失资产卡", "复制对话废话或 DSL 源码"],
     "primary_dimensions": ["DD-LOG", "DD-FIDELITY"],
     "difficulty": "hard"
   }

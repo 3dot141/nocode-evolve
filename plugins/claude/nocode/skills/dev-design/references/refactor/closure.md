@@ -1,16 +1,23 @@
 # Refactor closure
 
-- [ ] R0 proves the primary outcome is structural and behavior-preserving.
-- [ ] R1 names a concrete structural / elegance problem, desired quality, and stopping condition.
-- [ ] R2 and R3 fully bound the affected Before system.
-- [ ] Every R4 invariant has an objective R11 proof method.
-- [ ] R5 provenance and applicability are explicit.
-- [ ] R6 target qualities can be judged without relying on taste alone.
-- [ ] R7 compares real structural alternatives or proves only one is feasible.
-- [ ] R8 resolves each target quality without introducing an unexplained component.
-- [ ] R9 maps every old element to preserve, migrate, adapt, or delete.
-- [ ] R10 gives detection and recovery for every intermediate risk.
-- [ ] R12 prevents deletion before caller / data / traffic evidence is ready.
+Reopen the responsible Before or After block. Do not refer to R-numbers as the next question.
+
+## Before Gate
+
+- [ ] The primary outcome is structural and behavior-preserving.
+- [ ] Motivation names a concrete structural problem, desired quality, and stopping condition.
+- [ ] Before scope, owners, and structure are fully bound.
+- [ ] Every preserve obligation has an objective proof method.
+
+## After Gate
+
+- [ ] Target qualities can be judged without relying on taste alone.
+- [ ] Real structural alternatives exist, or only one is proven feasible.
+- [ ] After architecture and migration flow exist.
+- [ ] Every structural block has 流程图, 接口, 伪代码, and 问题.
+- [ ] Every old element maps to preserve, migrate, adapt, or delete.
+- [ ] Intermediate risk has detection and recovery.
+- [ ] Deletion waits for caller / data / traffic evidence.
 
 Bidirectional checks:
 
@@ -21,4 +28,4 @@ old element -> destination
 risk -> detection -> recovery
 ```
 
-Any orphan reopens its R node. A file move, rename, extraction, or new abstraction is not automatically an independent design obligation.
+A file move, rename, extraction, or new abstraction is not automatically an independent design obligation.

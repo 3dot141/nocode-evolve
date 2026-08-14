@@ -1,6 +1,6 @@
 # Grilling and Log protocol
 
-Read this reference when creating, resuming, or advancing `design.log.md`.
+Read this reference when creating, resuming, or advancing `design.log.md`. Read `{QODER_PLUGIN_ROOT}/skills/references/grilling-loop.md` for how to choose and ask the next question.
 
 ## Task path
 
@@ -19,16 +19,19 @@ Once created, never rename the directory for reclassification, resume, or design
 
 ## Single writer
 
-The active dev-design coordinator is the only writer of design Decisions. Repository research, competitor research, Debug, other Skills, and agents return evidence; dev-design records that evidence in the process Log and converts only formed decision points into Decisions. devflow may write the classification Decision and its classification Round / Event, plus later process Events, but it cannot write any other design Decision. Re-read the file immediately before every write.
+The active dev-design coordinator is the only writer of design Decisions. Repository research, competitor research, Debug, other Skills, and agents return evidence; dev-design records that evidence in ROUND 背景 and converts only formed decision points into Decisions. devflow may write the classification Decision and its classification ROUND / Event, plus later process Events, but it cannot write any other design Decision. Re-read the file immediately before every write.
 
-## Six fixed sections
+Old logs that still use six sections and eight-part Rounds are valid history. Do not migrate them. New logs follow this file.
+
+## Fixed sections
 
 ```markdown
 # Header
 - task:
 - status: active | landed | cancelled | terminated
 - type: bug | feat | refactor
-- currentNode:
+- phase: 产品 | 开发 | 问题 | 修复 | Before | After
+- current: 功能 1.1
 - createdAt:
 - artifacts:
   - log: ./design.log.md
@@ -36,66 +39,39 @@ The active dev-design coordinator is the only writer of design Decisions. Reposi
   - render: ./design.html # only when it exists
 
 # Decisions
+
 ## DEC-001
-- kind:
-- status: proposed | confirmed | rejected | superseded
-- statement:
-- sourceEntries: [Round N | Event N]
-- evidence:
-- designDisposition: required | n/a
-- relations:
+- 描述:
+- 内容:
+- 过程:
+- 引用: [ROUND-001]
 
-### 正文
-<!-- Use `### Body` when the Log is written in English. Omit only when the metadata is lossless by itself. -->
+# ROUND
 
-# Decision Tree
-| node | status | sourceDecisionIds | dependsOn | note |
-
-# Terms
+## ROUND-001 — waiting | closed
+### 背景
+### 问题
+### 方案
+### 回答
 
 # Handoff
-
-# Log
 ```
 
-An assigned DEC ID is never removed or given a new meaning. Semantic change creates a new ID and connects `supersedes / supersededBy`. `designDisposition: n/a` requires a reason. Split tasks use `splitFrom / splitTo`.
+An assigned DEC ID is never removed or given a new meaning. Semantic change creates a new ID and records the succession in `过程`. `引用` lists the ROUND IDs that formed or changed the Decision.
 
-Decision-tree statuses are `open / active / blocked / confirmed / n/a / superseded`. At most one node is active, and Header.currentNode must match it. Only confirmed, evidence-backed n/a, and superseded are closed. Add dynamic branches only after their trigger exists.
+Header.`phase` and Header.`current` name the active half and the active block. At most one block is active.
 
-## Decision / Log separation
+## DEC / ROUND separation
 
-Decisions and Log entries have different jobs:
+- `DEC-###` is the current semantic result. `描述` is a one-line index. `内容` is the standalone conclusion `design.md` may cite. `过程` records proposed / revised / confirmed and any succession. Details stay in ROUND.
+- `ROUND-###` is the chronological decision process. Do not reduce `回答` to “用户已确认” when it contains material content.
+- One ROUND may form several Decisions. One Decision may cite several ROUNDs. Split results into related DEC IDs whenever they can be accepted, changed, or superseded independently.
 
-- `DEC-###` is the current semantic result: one formed, independently judgeable decision point. Its `statement` is a compact index. Add `### 正文` (`### Body` in English) when the decision contains a structured artifact, specification, matrix, contract, or multiple concrete facts that the statement cannot carry losslessly.
-- `Round N` is the chronological decision process: evidence available at that time, the exact question, recommendation and reasons, the user's full decision-bearing answer, and the resulting Decision changes. Do not reduce `User Answer` to “用户已确认” when it contains material content.
-- Decision `sourceEntries` names the Round / Event entries that formed or changed it. Decision `evidence` binds each material claim to its authoritative source. Neither field replaces the Decision body or the Round content.
-
-For dense content, preserve named objects, sections, mappings, boundaries, exceptions, negative rules, relationships, and verification basis. If a Round confirms four asset cards plus how such cards should be written, the Round retains the full decision-bearing answer. Put the complete writing rule in its Decision body whenever the statement cannot carry it losslessly, and preserve every approved card in the body of its resulting Decision.
-
-Verify source-backed details against the authoritative definition required by the decision. Preserve the resulting facts and distinctions; do not paste conversational filler or dump DSL / source code when the confirmed result is an edited specification.
-
-Split results into related DEC IDs whenever they can be accepted, changed, superseded, or consumed independently, even when their current status, `designDisposition`, and relations happen to match. One Round may form several Decisions; a shared policy and independently evolving asset cards are separate decision points. When resuming a Decision whose body omitted already-confirmed content, restore the body under the same DEC ID only when this fills the omission without changing its meaning, and record the repair in the current Round's `Decision Changes`. A semantic change creates a new DEC ID and supersedes the old one.
-
-## Eight-part Round
-
-```markdown
-## Round N — <node> — waiting | closed
-
-### Background / Evidence
-### Question
-### Agent Recommendation + Reason
-### User Answer
-### Decision Changes
-### Term Changes
-### Flow Impact
-### Next Node
-```
-
-Write `无` rather than deleting an empty part. Before asking, persist Background, one Question, and a concrete Recommendation with reasons as `waiting`. After the answer, preserve all decision-bearing content in `User Answer`, fill every part, synchronize Decisions and the other current views, and compare each changed Decision with the answer. Missing decision content keeps the Round `waiting`; only then mark it `closed` and ask the next question.
+Write `无` rather than deleting an empty ROUND part. Persist 背景, 问题, and a concrete 方案 as `waiting` before asking. After the answer, fill 回答, update every affected Decision, and only then mark the ROUND `closed` and ask the next question. Missing decision content keeps the ROUND `waiting`.
 
 ## Process Events
 
-Non-decision workflow history uses a compact Log event rather than a DEC ID:
+Non-decision workflow history may use a compact event instead of a DEC ID:
 
 ```markdown
 ## Event N — stage-transition | returned-evidence | task-end
@@ -104,34 +80,23 @@ Non-decision workflow history uses a compact Log event rather than a DEC ID:
 - decisionImpact: none | [DEC-...]
 ```
 
-An Event records movement or returned evidence. If it changes a design meaning, dev-design opens a Round and creates or supersedes a Decision; the Event itself never receives `designDisposition` and never maps to a DES ID.
+An Event records movement or returned evidence. If it changes a design meaning, dev-design opens a ROUND and creates or supersedes a Decision. The Event itself never receives `designDisposition` and never maps to a DES ID.
 
 ## Selecting the next question
 
-1. Re-read the current tree.
-2. Close facts the environment already proves and bind evidence.
-3. Find the earliest open node whose dependencies are closed.
-4. If several branches are ready, choose the one that can invalidate the most downstream work.
-5. Ask one decision only. Include the recommended answer first and explain the trade-off.
+Follow `{QODER_PLUGIN_ROOT}/skills/references/grilling-loop.md`. Type `questions.md` files are coverage checks after a half is empty. They do not generate the next question.
 
-Do not use a fixed questionnaire. The node domains and dependencies are stable; the path is dynamic.
+## Evidence
 
-## Evidence binding
-
-Every source says which Decision or Round claim it supports.
+Bind every material claim in ROUND 背景:
 
 - Repository: scanBase commit, path, symbol / config key / heading, read-time line, supported claim.
 - Command: command, workdir / environment, execution time, relevant output, exit code, supported claim.
 - Internal document: path, heading, commit or known update time, supported claim.
-- User decision: Round number and resulting DEC ID.
+- User decision: ROUND ID and resulting DEC ID.
 - Online source: URL, page publish / update time when available, access time, supported claim.
 - Internal knowledge: label `internal data source`, its data time or `runtime did not provide`, online-verification status, supported candidate.
-- Screenshot / log / attachment: artifact path or stable ID, capture time, environment / scenario, supported claim.
 
-Default competitor handling is an internal-knowledge candidate, not automatic web search. Browse only when the user explicitly asks. Never invent a source time; when unavailable, say so. Internal candidates without a source time are not current competitor facts.
+Default competitor handling is an internal-knowledge candidate. Browse only when the user explicitly asks. Never invent a source time.
 
-## Terms
-
-Record new domain terms and ambiguous words when they appear. Each current definition carries status, definition, included / excluded boundary, aliases or forbidden wording, source, impact, and supersession link. Existing authoritative project language may be `confirmed by source`; conflicting or new business meaning requires user confirmation.
-
-Do not maintain ADR by default. Create one only when the user explicitly asks or the repository has an explicit mandatory ADR rule; derived ADRs cite the source DEC IDs.
+Terms belong in the relevant DEC `内容` or ROUND `背景`. Do not keep a Terms chapter. Do not maintain ADR by default.

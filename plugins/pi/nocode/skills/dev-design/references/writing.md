@@ -1,10 +1,10 @@
 # Writing and DEC-to-DES protocol
 
-Read this reference only after the current type closure passes.
+Read this reference when writing or appending `design.md`. Type `document.md` owns chapter titles.
 
 ## Source fidelity
 
-Within `design.log.md`, Decisions are the current semantic source and the Log is the chronological source for how they formed. `design.md` is the normative downstream baseline derived from confirmed DEC IDs. Writing consumes each Decision's statement and body together; it may organize and explain confirmed content but cannot create a decision. A missing decision reopens its tree node.
+Within `design.log.md`, Decisions are the current semantic source and ROUND entries are the chronological source for how they formed. `design.md` is the normative downstream baseline derived from confirmed DEC IDs. Writing consumes each Decision’s `描述` and `内容` together; it may organize and explain confirmed content but cannot create a decision. A missing decision reopens its block.
 
 Use fixed frontmatter:
 
@@ -19,7 +19,7 @@ artifacts:
 ---
 ```
 
-The opening section is the type-specific one-screen panorama. It is not a separate `panorama.md`.
+Write the upper half after that half is confirmed. The lower half must not appear before that confirmation. Append each lower-half block only after its ROUND is closed.
 
 ## DES IDs
 
@@ -40,167 +40,107 @@ DES IDs are task-local, monotonically assigned, never renumbered, reused, or sil
 
 ## Bidirectional coverage
 
-At the end of `design.md`, add one light coverage table:
+At the end of `design.md`, add one light coverage view:
 
 | Decision ID | Design disposition | DES IDs / n/a reason |
 |---|---|---|
 
 Checks:
 
-1. Every Decision with `designDisposition: required` has at least one DES ID.
+1. Every Decision the coverage table marks `required` has at least one DES ID.
 2. Every design n/a has a reason.
 3. Every DES ID has at least one real sourceDecisionId.
 4. One-to-many and many-to-one mappings are allowed.
 
-This table is a view, not a Registry, version, or state machine.
+Disposition lives in this table, not on the DEC record. This table is a view, not a Registry, version, or state machine.
 
 ## Diagram-first writing
 
 The normative diagram source is ASCII in `design.md`:
 
-- flow and branching -> flow diagram;
-- boundaries, responsibilities, dependencies, data ownership -> architecture diagram;
-- participant order, return, timeout, retry, concurrency -> sequence diagram;
-- state, data flow, or entity relationships -> only when those relationships carry the design.
+- product / problem / Before overview -> one-screen panorama;
+- function or repair control flow -> 流程图 in that block;
+- boundaries, responsibilities, dependencies, data ownership -> architecture;
+- participant order, return, timeout, retry, concurrency -> sequence when needed.
 
-Start with a one-screen overview, then add scenario sub-diagrams. Annotate relevant DES IDs. Cover applicable failures and recovery, not only happy paths. If a flow / structure DES ID is not visualizable, state why. Split large diagrams instead of shrinking text.
+Annotate relevant DES IDs. Cover applicable failures and recovery. If a flow / structure DES ID is not visualizable, state why. Split large diagrams instead of shrinking text.
 
-## Content depth
+## Per-block implementation surface
 
-Always explain the global relationship before local detail. Do not render all interfaces and all files as two detached inventories. Organize the main body into **realization views**: each view is one user-visible feature, repair outcome, or structural outcome and groups every DES ID that must work together to realize it.
+Every design baseline must identify the implementation surface at repository-verifiable depth. Each lower-half block (function, repair outcome, or structural outcome) is a presentation boundary, not a third identity namespace. Do not create `FEAT-###`.
 
-A realization view is a presentation and reasoning boundary, not a third identity namespace:
+The block must contain 流程图, 接口, 伪代码, and 问题. 接口 carries the verified contracts and the impacted files for that block.
 
-- title it with the human-readable outcome; do not create `FEAT-###`, another registry, or mutable membership state;
-- name its source Decision IDs and complete joint DES set;
-- explain the integrated behavior that only exists when those DES IDs work together;
-- annotate the end-to-end flow, interfaces, file change points, and integrated proof with the relevant DES IDs;
-- keep each DES independently traceable and verifiable even when several DES IDs share one interface, symbol, file, transaction, or proof scenario;
-- when several views share enabling work, add one clearly named shared-enabler view and show which outcome views depend on it.
-
-Open with a compact relationship index:
-
-| Realization outcome | Source Decisions | Joint DES set | Entry / interface | Impacted files | Integrated proof |
-|---|---|---|---|---|---|
-| `<human-readable outcome>` | `DEC-...` | `DES-..., DES-...` | `<verified entry>` | `<paths or count + links>` | `<scenario / test objective>` |
-
-Every design baseline must identify the implementation surface at repository-verifiable depth. Expand every relationship-index row as one realization view:
-
-### Interface implementation
+### 接口
 
 - Define the external API / command / event and the internal entry point that realizes each material contract.
 - Name real repository symbols and include the load-bearing method signature, input / output shape, error semantics, authorization, idempotency, transaction, timeout, or compatibility behavior that implementation must preserve.
 - Do not invent a path, symbol, signature, or schema. If repository evidence cannot resolve it yet, create an investigation DES with the bounded search area and the fact it must determine.
 
-### Impacted files
+```markdown
+#### External API / command / event — `<contract name>` `[DES-001]`
 
-- Include a repository-relative tree of files to add, modify, delete, or explicitly preserve. Annotate each file with `NEW / MODIFY / DELETE / PRESERVE`, relevant DES IDs, and numbered change points.
-- For every listed file, state the responsibility or contract that changes; do not list speculative files. If the exact file cannot yet be proven, name the narrowest verified directory / symbol boundary and create an investigation DES.
-- This section defines design impact, not implementation order. Plan owns task sequencing and slices.
+- Kind and identity:
+- Defined at:
+- Input:
+- Output:
+- Errors:
+- Guards:
 
-Use this concrete baseline and adapt labels to the user's language. Repeat it for each outcome view:
+#### Internal entry point — `<verified symbol>` `[DES-001]`
 
-~~~markdown
-## Realization view — `<human-readable feature / repair / structural outcome>`
-
-- Source Decisions: `DEC-###`
-- Joint DES set: `DES-###`, `DES-###`, `DES-###`
-- Joint outcome: `<observable behavior that requires the DES set to work together>`
-- Depends on / enables: `<other realization view title, or none>`
-
-### End-to-end interaction
-
-```text
-<actor / caller>
-  -> <entry interface>                    [DES-001]
-  -> <validation / policy>                [DES-002]
-  -> <state change + emitted side effect> [DES-001, DES-003]
-  -> <observable result / recovery>       [DES-003]
-```
-
-### DES collaboration
-
-| DES | Responsibility in this outcome | Requires from sibling DES | Provides to sibling DES | Independent proof |
-|---|---|---|---|---|
-| `DES-001` | `<entry / orchestration>` | `<rule from DES-002>` | `<validated command for DES-003>` | `<contract test>` |
-| `DES-002` | `<policy / invariant>` | `<input from DES-001>` | `<decision / normalized value>` | `<unit or property test>` |
-| `DES-003` | `<state / side effect / recovery>` | `<accepted command>` | `<observable result>` | `<integration test>` |
-
-### Interface implementation
-
-#### External API / command / event — `<contract name>` `[DES-001, DES-002]`
-
-- Kind and identity: `<HTTP METHOD + path | command | event topic + name>`
-- Defined at: `<repository-relative file and verified symbol>`
-- Input: `<request / command / event fields and validation>`
-- Output: `<response / result / emitted event>`
-- Errors: `<stable error codes, mapping, and retryability>`
-- Guards: `<authorization, idempotency, transaction, timeout, compatibility>`
-
-#### Internal entry point — `<verified symbol>` `[DES-001, DES-003]`
-
-- File: `<repository-relative path>`
-- Current signature: `<exact signature, or n/a for NEW>`
+- File:
+- Current signature:
 - Target signature:
-
-```text
-<exact target signature grounded in repository conventions>
+- Implementation flow:
+- Behavior change:
+- Failure and recovery:
+- Evidence:
 ```
-
-- Implementation flow: `<caller -> entry point -> collaborators -> persistence / side effect>`
-- Behavior change: `<what changes and what must remain invariant>`
-- Failure and recovery: `<error propagation, retry, rollback, compensation, observability>`
-- Evidence: `<file:symbol, test, schema, or other authoritative repository source>`
 
 #### Unresolved implementation surface `[DES-### investigation]`
 
-- Verified boundary: `<narrowest known directory / symbol / caller>`
-- Must determine: `<path, symbol, signature, schema, or owner>`
-- Search / proof stop condition: `<bounded evidence that closes this DES>`
+- Verified boundary:
+- Must determine:
+- Search / proof stop condition:
 
-### Impacted files in this realization view
+### Impacted files
+
+Include a repository-relative tree of files to add, modify, delete, or explicitly preserve. Annotate each file with `NEW / MODIFY / DELETE / PRESERVE`, relevant DES IDs, and numbered change points.
 
 ```text
 <repository root>/
-├── path/to/existing-file.ext  (MODIFY)   [DES-001, DES-002]  ① [DES-001] <change point>  ② [DES-001, DES-002] <joint change point>
-├── path/to/new-file.ext       (NEW)      [DES-003]           ① [DES-003] <responsibility / contract>
-├── path/to/obsolete-file.ext  (DELETE)   [DES-###]  ① <removal gate / replacement>
-└── path/to/invariant-file.ext (PRESERVE) [DES-###]  ① <behavior that must not change>
+├── path/to/existing-file.ext  (MODIFY)   [DES-001]
+├── path/to/new-file.ext       (NEW)      [DES-002]
+├── path/to/obsolete-file.ext  (DELETE)   [DES-003]
+└── path/to/invariant-file.ext (PRESERVE) [DES-004]
 ```
 
-1. `path/to/existing-file.ext` — `<current responsibility>`; change `<contract / behavior>`; preserve `<invariant>`.
-2. `path/to/new-file.ext` — owns `<new responsibility>` and is called by `<verified caller>`.
-3. `path/to/obsolete-file.ext` — delete only after `<migration / compatibility / usage gate>`.
-4. `path/to/invariant-file.ext` — no code change expected; its `<test / contract>` proves preservation.
+This section defines design impact, not implementation order. Plan owns task sequencing.
 
-Unresolved file placement is not a guessed path. Record the narrowest verified boundary here and link it to an investigation DES.
+After all blocks, include one consolidated impacted-files index. A file shared by several blocks appears once with every relevant block title, DES ID, and numbered change point. This index exposes collisions.
 
-### Integrated proof
+### 伪代码 and 问题
 
-- Joint scenario: `<one end-to-end scenario that exercises the complete DES set>`
-- Expected observation: `<user-visible result, state, emitted event, and failure behavior>`
-- Independent DES proofs: `<links to the DES collaboration rows>`
-~~~
+伪代码 is the load-bearing control flow of the block. 问题 lists accepted non-blocking opens, remaining user decisions, and ungrillable look-and-feel. A blocking problem prevents marking the block closed.
 
-After all views, include one consolidated impacted-files index. A file shared by several views appears once with every relevant view title, DES ID, and numbered change point. This index exposes collisions; the realization views explain behavior.
-
-Expand additional schemas, class diagrams, tactical DDD, deployment, or observability detail when a DEC ID, system shape, or risk makes it load-bearing.
+## Conditional depth
 
 - Architecture and DDD are optional lenses, not mandatory phases.
-- Multi-domain or multi-data-owner collaboration is mandatory when present: trigger, direction, contract, ownership, consistency, authorization, failure / retry / compensation, observability, verification.
-- Security, privacy, reliability, performance, accessibility, compliance, and observability are separate conditional cross-cutting concerns.
+- Multi-domain or multi-data-owner collaboration is mandatory when present.
+- Security, privacy, reliability, performance, accessibility, compliance, and observability expand only when triggered.
 - Plan owns implementation order. Design owns why, boundaries, contracts, flows, implementation surface, migration, and proof objectives.
 
 ## Minimum self-check
 
-Before requesting confirmation, mechanically check:
+Before requesting full confirmation, mechanically check:
 
-- [ ] current type decision tree is closed;
+- [ ] current type upper and lower coverage items are closed;
 - [ ] required DEC IDs have DES coverage or explicit n/a;
 - [ ] every DES ID has sourceDecisionIds;
-- [ ] every implementation / preservation / verification DES appears in at least one realization view;
-- [ ] every realization view shows why its joint DES set must work together, not only a list of IDs;
-- [ ] interface implementation names verified symbols / signatures or an explicit investigation DES;
+- [ ] every implementation / preservation / verification DES appears in at least one lower-half block;
+- [ ] every lower-half block has 流程图, 接口, 伪代码, and 问题;
+- [ ] 接口 names verified symbols / signatures or an explicit investigation DES;
 - [ ] impacted files are evidence-backed and annotated with change type plus DES IDs;
 - [ ] key ASCII diagrams and prose have no relationship conflict.
 

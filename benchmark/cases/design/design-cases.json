@@ -5,7 +5,7 @@
     "category": "feat-grilling",
     "input": "给团队做一个 PR 自动 review 机器人。",
     "context": {"type": "feat", "log": "new"},
-    "expected_signals": ["创建六段 design.log.md", "先写 waiting Round", "只问一个最早未闭合决策", "给推荐答案与理由", "不先出方案全景"],
+    "expected_signals": ["创建 Header/DEC/ROUND/Handoff 的 design.log.md", "先写 waiting ROUND", "只问一个最早未闭合决策", "给推荐方案与理由", "不先写开发章"],
     "anti_signals": ["直接给多个架构方案", "一次追问 who/why/scope/acceptance", "先生成 design.md"],
     "primary_dimensions": ["DD-LOG", "DD-GRILL", "DD-ORDER"],
     "difficulty": "easy"
@@ -27,8 +27,8 @@
     "category": "bug-repair",
     "input": "Debug 已证明重复记账来自 callback 重放绕过幂等键。",
     "context": {"type": "bug", "phase": "repair", "log": "exact path", "debug_evidence": "provided"},
-    "expected_signals": ["回同一 Log 记录证据", "比较真实修复机制", "画 fault-before/repair-after", "形成 repair DES IDs", "按单 slice 条件选 Build 或 Plan"],
-    "anti_signals": ["新建第二份 design", "修改调查 DES 原义", "一律直达 Build"],
+    "expected_signals": ["回同一 Log 记录证据", "比较真实修复机制", "画 fault-before/repair-after", "形成 repair DES IDs", "按单 slice 条件选 Env 或 Plan"],
+    "anti_signals": ["新建第二份 design", "修改调查 DES 原义", "绕过 Env 直达 Build"],
     "primary_dimensions": ["DD-BUG", "DD-DES", "DD-HANDOFF"],
     "difficulty": "hard"
   },
@@ -71,8 +71,8 @@
     "category": "document",
     "input": "所有问题都确认了，生成设计文档。",
     "context": {"type": "feat", "tree": "closed", "required_decision_ids": ["DEC-001", "DEC-002"]},
-    "expected_signals": ["生成同目录 design.md", "开头是一屏 ASCII panorama", "独立义务使用 DES IDs", "按功能实现视图聚合同一结果的多个 DES", "展示 DES 协作、共用接口与共同文件改动点", "接口实现落到仓库可验证符号/签名", "影响文件标 NEW/MODIFY/DELETE/PRESERVE 与 DES", "DEC/DES 双向 coverage", "检查图与正文一致"],
-    "anti_signals": ["另建 panorama.md", "生成 revision/digest/Registry", "为功能视图新造第三套 ID", "把接口和文件拆成与功能无关的孤立清单", "猜测接口或文件路径", "把实施顺序当设计主体"],
+    "expected_signals": ["生成同目录 design.md", "开头是一屏 ASCII panorama", "独立义务使用 DES IDs", "按功能写流程图、接口、伪代码、问题", "接口实现落到仓库可验证符号/签名", "影响文件标 NEW/MODIFY/DELETE/PRESERVE 与 DES", "DEC/DES 双向 coverage", "检查图与正文一致"],
+    "anti_signals": ["另建 panorama.md", "生成 revision/digest/Registry", "为功能节新造第三套 ID", "产品段未确认就写开发章", "猜测接口或文件路径", "把实施顺序当设计主体"],
     "primary_dimensions": ["DD-DOC", "DD-DES", "DD-DIAGRAM"],
     "difficulty": "hard"
   },

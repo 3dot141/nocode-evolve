@@ -13,6 +13,7 @@
 | `migration-guide.md` | 迁移与废弃纪律：代码是负债，拆比造更少组织擅长 | dev-design、dev-review |
 | `observability-guide.md` | 可观测性指南：先定义"working"再埋点，埋点与功能同批写 | dev-build、dev-design |
 | `design-traceability.md` | 工程任务的 LOG → DES 追踪与下游 stage-local coverage 契约 | dev-design、dev-plan、dev-build、dev-verify |
+| `grilling-loop.md` | Design 面试原则：任务树、一次一问、事实自查、最佳设计 | dev-design |
 | `path-conventions.md` | 产品路径与工程 DEC / DES ID、过程 Log 体系约定 | 大多数产出文档类 skill |
 | `performance-guide.md` | 性能指南：先测量再优化，只优化被测量证实的瓶颈 | dev-review、dev-build |
 | `security-guide.md` | 安全指南：外部输入默认敌对、secret 神圣、授权检查强制 | dev-review、dev-build |

@@ -19,8 +19,8 @@
       {
         "stage": "dev-plan",
         "input": "把 Handoff DES obligations 拆成实施任务。",
-        "expected_signals": ["从 Handoff.designIds 反查", "每 task 有 designCovers", "纯验证 DES 保留给 Verify", "用户确认后交 Build"],
-        "handoff_to_next": "confirmed Plan + 同一 DES scope 传给 Build"
+        "expected_signals": ["从 Handoff.designIds 反查", "每 task 有 designCovers", "纯验证 DES 保留给 Verify", "用户确认后交 Env"],
+        "handoff_to_next": "confirmed Plan + 同一 DES scope 先传给 Env，再由 Env 交 Build"
       }
     ],
     "pipeline_signals": ["精确 Log 路径不变", "LOG IDs 只由 dev-design 消费", "Plan 和后续只消费 DES IDs", "没有 revision/digest/Registry"]

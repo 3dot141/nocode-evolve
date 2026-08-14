@@ -1,8 +1,29 @@
 # Refactor design document
 
-## Opening panorama
+Write the upper half after Before confirmation. Append After blocks only after those ROUNDs close.
 
-One screen shows the motivation, scope, Before architecture, After architecture, preserved behavior, migration path, cleanup Gate, material risks, active DES IDs, and Plan Handoff.
+## Before
+
+### Opening panorama
+
+One ASCII screen shows the motivation, scope, Before structure, preserved behavior, and material risks. No After flowchart here.
+
+```text
+Before
+<boundaries / dependencies / owners>
+preserve DES IDs (named, not yet After)
+```
+
+### Required upper sections
+
+1. Source, motivation, scope, non-scope, and affected owners
+2. Before: responsibilities, dependencies, calls, ownership, failure, test seams
+3. Preserve obligations / invariants and their baselines
+4. Target quality and stopping condition (judgeable, not taste)
+
+## After
+
+### Opening panorama
 
 ```text
 Before                              After
@@ -11,28 +32,25 @@ Before                              After
            +---- preserve DES IDs ------+
 ```
 
-Use separate detailed diagrams when the overview cannot show dependency direction, ownership, or migration safely.
+### Architecture and migration flow
 
-## Required structure
+Selected After structure, Before-to-After mapping, coexistence, rollback, and cleanup Gate.
 
-1. Source, motivation, scope, non-scope, and affected owners
-2. Before: responsibilities, dependencies, calls, ownership, failure propagation, test seams
-3. Preserve obligations / invariants and their baselines
-4. Comparable architectures and real alternatives
-5. Target quality and selected After structure
-6. Before / After comparison with every structural change explained
-7. Structural realization views: one view per structural outcome, grouping its joint DES set with Before / After interaction, DES collaboration, verified interfaces, per-view impacted files, and integrated preservation proof
-8. Consolidated impacted-files index: each repository-relative `NEW / MODIFY / DELETE / PRESERVE` file appears once with every structural view, DES ID, and numbered change point that touches it
-9. Multi-domain collaboration if boundaries or owners change
-10. Before-to-After migration, coexistence, compatibility, rollout, rollback, and data recovery
-11. Cleanup, deprecation, and deletion Gate
-12. Verification objectives
-13. DEC / DES coverage
+### Per-block sections
 
-Architecture and DDD are optional lenses. Use DDD when language, ownership, aggregates, or consistency boundaries actually change. Do not require it for a single-domain internal rearrangement.
+Each structural outcome has:
+
+1. 流程图 — Before-to-After interaction
+2. 接口 — verified public and internal seams
+3. 伪代码 — the structural change
+4. 问题 — remaining migration or deletion risks
+
+Then: consolidated impacted-files index (`NEW / MODIFY / DELETE / PRESERVE`) and verification objectives.
+
+Architecture and DDD are optional lenses. Use DDD when language, ownership, aggregates, or consistency boundaries actually change.
 
 ## DES granularity
 
-Assign DES IDs to each independent invariant, boundary / responsibility change, dependency reversal, ownership migration, compatibility step, cleanup Gate, and verification obligation. Mere moves, renames, extraction, or formatting receive an ID only when they carry one of those results.
+Assign DES IDs to each independent invariant, boundary change, dependency reversal, ownership migration, compatibility step, cleanup Gate, and verification obligation. Mere moves or renames receive an ID only when they carry one of those results.
 
-Finish with the shared coverage table from `references/writing.md`.
+Finish with the shared DEC / DES coverage table from `references/writing.md`.

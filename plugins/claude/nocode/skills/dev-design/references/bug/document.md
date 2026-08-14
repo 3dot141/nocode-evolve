@@ -2,46 +2,49 @@
 
 Use one `design.md` for both passes. Problem and repair DES IDs remain stable in the same sequence.
 
-## Opening panorama
+## 问题
 
-Show, in one screen:
+### Opening panorama
+
+Show, in one ASCII screen:
 
 - authoritative expectation and observable fault;
 - actual versus expected flow with fault location / unknown interval;
 - impact boundary and containment;
-- active investigation or repair DES IDs;
-- current Handoff target.
+- active investigation DES IDs;
+- current Handoff target Debug.
 
-Use ASCII. After Debug, extend the panorama with fault mechanism and before / after repair path; do not delete the problem view.
-
-## Problem baseline
+### Problem baseline
 
 1. Source, goal, scope, and authoritative expectation
 2. Expected / actual and reproduction contract
-3. Actual / expected flow diagram, including failure and recovery
-4. Impact, risk, benchmark / precedent, and evidence conflicts
+3. Actual / expected flow, including failure and recovery
+4. Impact, risk, precedent, and evidence conflicts
 5. Repair acceptance and unaffected invariants
-6. Known interface / file surface and unresolved implementation locations
-7. Debug investigation contract, including investigation DES IDs for unresolved symbols or files
-8. Investigation / preserve / verification DES IDs
+6. Known interface / file surface and unresolved locations
+7. Debug investigation contract and investigation DES IDs
 
-Do not guess root cause or solution in this section.
+Do not guess root cause or write repair 伪代码 in this half.
 
-## Repair baseline
+## 修复
 
-Append after Debug returns:
+Append only after Debug returns and the 问题 half stays in the same file.
 
-1. Root-cause claim and evidence chain
-2. Real alternatives and selected repair
-3. Fault-before / repair-after flow and architecture diagrams
-4. Caller, data, state, contract, cross-domain, and error-semantics impact
-5. Repair realization views: group the joint DES set for each repair outcome with fault-before / repair-after interaction, DES collaboration, verified interfaces, per-view impacted files, and integrated regression proof
-6. Consolidated impacted-files index: each repository-relative `NEW / MODIFY / DELETE / PRESERVE` file appears once with every repair view, DES ID, and numbered change point that touches it
-7. Compatibility, migration, observation, rollback, and cleanup
-8. Regression / verification objectives
-9. New repair / preserve / migration / verification DES IDs
-10. Build / Plan route and reason
+### Opening panorama
 
-Architecture or DDD detail is conditional. Multi-domain collaboration is mandatory when the repair crosses domain or data-owner boundaries. Security, reliability, performance, privacy, and observability expand only when triggered.
+Extend the problem panorama with the fault mechanism and before / after repair path. Do not delete the problem view.
+
+### Per-repair sections
+
+Each independently judgeable repair outcome has:
+
+1. 流程图 — fault-before / repair-after
+2. 接口 — verified contracts and callers
+3. 伪代码 — the selected repair mechanism
+4. 问题 — remaining risks and user decisions
+
+Then: consolidated impacted-files index (`NEW / MODIFY / DELETE / PRESERVE`), compatibility / rollback, regression objectives, and Env versus Plan with the single-slice rule.
+
+Architecture or DDD detail is conditional. Multi-domain collaboration is mandatory when the repair crosses domain or data-owner boundaries.
 
 Finish with the shared DEC / DES coverage table from `references/writing.md`.

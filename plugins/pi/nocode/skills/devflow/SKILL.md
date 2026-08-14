@@ -9,7 +9,7 @@ devflow has one job: preserve one task identity while routing it through the Ski
 
 ## Invariants
 
-- Every task has one exact `design.log.md` path. Pass it unchanged at every handoff.
+- Every task has one exact repository-relative `design.log.md` identity. Pass its active absolute path unchanged within a workspace; when Env changes checkout, the destination copy at the same repository-relative path becomes the exact path for every later handoff.
 - Classify only `bug | feat | refactor`; never restore Full / Standard / Fix / Mini.
 - One primary independently acceptable outcome gets one type. Split only independently acceptable outcomes that can hand off separately.
 - `dev-design` owns design Decisions. devflow may write only the classification Decision and append classification / stage process entries to the Log; it cannot interpret or rewrite any other Decision.
@@ -19,7 +19,7 @@ devflow has one job: preserve one task identity while routing it through the Ski
 
 Enter Gate: an engineering request or an exact existing Log path is available.
 
-1. If the caller provides an exact `design.log.md`, read it and keep that path.
+1. If the caller provides an exact `design.log.md`, read it and keep that path. When it already has a current Handoff and no new evidence changes classification or design meaning, resume at Step 4 instead of re-entering dev-design.
 2. Otherwise create `docs/dev/{username}/{yymmdd}-{serial}-{topic}/design.log.md` using the path rules carried by `dev-design`.
 3. If an existing task could match but no exact path can be proven, ask for the path instead of fuzzy-resuming another Log.
 
@@ -41,7 +41,7 @@ Does current behavior violate an authoritative expectation that predated this re
 
 If several requested results can be accepted and handed off independently, split them into separate task Logs and record the links. A refactor needed to deliver one feature remains part of the feat; a structural repair needed for one bug remains part of the bug.
 
-Record the classification process first: use a `Round N` when user input resolved ambiguity, otherwise an `Event N — classification` with evidence and rejected alternatives. Then write `DEC-### kind: classification`, pointing `sourceEntries` to that Log entry and carrying any split relation. Reclassification creates a new Decision with `supersedes`; it never edits the old meaning. Keep the same Log while the primary outcome is unchanged.
+Record the classification process first: use a `ROUND-N` when user input resolved ambiguity, otherwise an `Event N — classification` with evidence and rejected alternatives. Then write `DEC-###` with 描述 / 内容 / 过程 / 引用 pointing at that Log entry. Reclassification creates a new Decision and records succession in `过程`; it never edits the old meaning. Keep the same Log while the primary outcome is unchanged.
 
 Exit Gate: the active Log has one current classification.
 
@@ -72,6 +72,7 @@ Events are append-only history. The current Handoff, not supersession between Ev
 |---|---|
 | Debug | `nocode:systematic-debugging` |
 | Plan | `nocode:dev-plan` |
+| Env | `nocode:using-git-worktrees` |
 | Build | `nocode:dev-build` |
 | Verify | `nocode:dev-verify` |
 | Review | `nocode:dev-review` |
@@ -79,6 +80,16 @@ Events are append-only history. The current Handoff, not supersession between Ev
 | dev-design | `nocode:dev-design` |
 
 Use the platform-native Skill invocation for the named target. Do not unfold its internal steps in devflow.
+
+### Env boundary before Build
+
+When the current Handoff target is Env, pass `taskArtifacts` containing the source project root, the repository-relative directory that contains the exact Log, and the exact Log path to `nocode:using-git-worktrees`. That Skill owns workspace detection, creation or authorized in-place use, entry, project setup, baseline verification, and task-directory transfer; devflow does not duplicate those steps.
+
+Use `/skill:using-git-worktrees`. After its successful result, use `/skill:dev-build` with the complete Handoff context.
+
+On success, re-read the destination exact Log returned by the workspace Skill. In that destination copy, change only the navigation Handoff from Env to Build, preserving the Plan path when present, `design.md`, DES scope, Preserve, Open, and confirmation evidence. Append the stage-transition Event with the active workspace path and task-artifact result, then invoke Build.
+
+If Env or task-artifact transfer fails, keep the Handoff target at Env, report the concrete evidence, and do not invoke Build. An explicitly authorized in-place workspace is a successful Env result; because its task directory is already active, it needs no copy.
 
 Exit Gate: the target Skill received the exact Log path and DES scope.
 

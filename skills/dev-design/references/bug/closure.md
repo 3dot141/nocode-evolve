@@ -1,26 +1,29 @@
 # Bug closure
 
-## Problem baseline Gate
+Reopen the responsible problem or repair block. Do not refer to B-numbers as the next question.
 
-- [ ] B0 proves an authoritative pre-request expectation.
-- [ ] B1 expected and actual share the same preconditions and have an observable difference.
-- [ ] B2 has either repeatable failure evidence or a bounded non-reproduction contract with an observation plan.
-- [ ] B3 maps actual and expected flow to a divergence point or bounded interval.
-- [ ] B4 covers applicable impact and containment.
-- [ ] B5 records benchmark / precedent provenance or an explicit unavailable internal-data time.
-- [ ] B6 binds evidence and leaves no silent contradiction.
-- [ ] B7 maps every affected path to acceptance / regression evidence.
-- [ ] B8 gives Debug independent investigation, preserve, and completion obligations as DES IDs.
+## 问题 Gate
+
+- [ ] An authoritative pre-request expectation exists.
+- [ ] Expected and actual share the same preconditions and have an observable difference.
+- [ ] Reproduction evidence or a bounded non-reproduction contract with an observation plan exists.
+- [ ] Actual and expected flow name a divergence point or bounded interval.
+- [ ] Applicable impact and containment are covered.
+- [ ] Precedent provenance is explicit or marked unavailable with an internal-data time.
+- [ ] Evidence contradictions are not silent.
+- [ ] Every affected path has acceptance / regression evidence.
+- [ ] Debug has independent investigation, preserve, and completion DES IDs.
 
 Do not include root cause or repair in the problem baseline unless evidence already proves it. Handoff target is Debug.
 
-## Repair baseline Gate
+## 修复 Gate
 
-- [ ] B9 explains every material symptom and reproduction condition with returned evidence.
-- [ ] B10 compares real repair mechanisms or proves why only one is feasible.
-- [ ] B11 propagates repair effects through every affected caller, flow, contract, data owner, state, and failure path.
-- [ ] B12 maps every repair / preserve obligation to regression, observation, compatibility, rollback, or cleanup proof.
-- [ ] B13 has objective evidence for Build versus Plan.
+- [ ] The root-cause claim explains every material symptom and reproduction condition.
+- [ ] Real repair mechanisms are compared, or only one is proven feasible.
+- [ ] Every repair block has 流程图, 接口, 伪代码, and 问题.
+- [ ] Repair effects propagate through callers, flows, contracts, data, state, and failure paths.
+- [ ] Every repair / preserve obligation has regression, observation, compatibility, rollback, or cleanup proof.
+- [ ] Env versus Plan has objective evidence.
 
 Bidirectional checks:
 
@@ -29,4 +32,4 @@ Bidirectional checks:
 - every invariant has a verification method;
 - every migration / rollback risk has detection and recovery.
 
-Any failure reopens its B node. Do not patch the gap in the document writer.
+Do not patch the gap in the document writer.

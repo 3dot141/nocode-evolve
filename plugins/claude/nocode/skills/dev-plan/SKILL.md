@@ -23,7 +23,7 @@ Create these stable milestones; do not mirror every implementation task in the p
 1. Load design and repository evidence.
 2. Build dependencies and implementation slices.
 3. Write and validate the Plan document.
-4. Confirm and hand off Build.
+4. Confirm and hand off Env before Build.
 
 Use `TaskCreate` for all milestones and `TaskUpdate` for status changes. Use `AskUserQuestion` only for a real plan decision that evidence cannot resolve.
 
@@ -83,7 +83,7 @@ Write the repository's configured Plan path. Include:
 
 **Design Log**: <exact path>
 **Design Doc**: <design.md path>
-**Design Confirmation**: <Handoff.ConfirmedBy Round N>
+**Design Confirmation**: <Handoff.ConfirmedBy ROUND-N>
 **Execution**: executing | subagent-lite | subagent-full
 
 ## Dependency graph
@@ -101,11 +101,11 @@ Exit Gate: the Plan document maps every Handoff DES ID exactly and contains an a
 
 Self-check the task graph, slice boundaries, risk-first order, exact file evidence, testability, and DES coverage. This is a focused compliance check, not a second design review.
 
-Show the complete Plan, first slice, execution mode, and DES coverage to the user. On confirmation, hand off the exact Log path, `design.md`, Plan path, DES scope, Preserve, and Open to Build.
+Show the complete Plan, first slice, execution mode, and DES coverage to the user. On confirmation, update the same-Log navigation Handoff target to Env and pass the exact Log path, `design.md`, Plan path, DES scope, Preserve, and Open back to devflow. Env owns the workspace boundary; Plan must not invoke Build directly.
 
-Use `Skill(nocode:dev-build)` after explicit confirmation.
+Use `Skill(nocode:devflow)` after explicit confirmation.
 
-Exit Gate: user confirmed the Plan and Build received the complete context.
+Exit Gate: user confirmed the Plan, the current Handoff target is Env, and devflow received the complete context.
 
 ## Global Exit Gate
 
@@ -114,7 +114,7 @@ Exit Gate: user confirmed the Plan and Build received the complete context.
 - [ ] Every task has designCovers and a fresh verification action.
 - [ ] Every implementation / preserve Handoff DES ID is mapped; pure verification IDs are retained.
 - [ ] User confirmed the Plan and execution mode.
-- [ ] Build Handoff contains exact artifact paths and DES IDs.
+- [ ] Env Handoff contains exact artifact paths and DES IDs for the later Build.
 
 ## Red flags
 

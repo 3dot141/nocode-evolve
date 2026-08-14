@@ -46,7 +46,7 @@ Rules:
 ```markdown
 **Design Log**: <exact design.log.md>
 **Design Doc**: <design.md>
-**Design Confirmation**: <Handoff.ConfirmedBy Round N>
+**Design Confirmation**: <Handoff.ConfirmedBy ROUND-N>
 **Execution**: executing | subagent-lite | subagent-full
 ```
 

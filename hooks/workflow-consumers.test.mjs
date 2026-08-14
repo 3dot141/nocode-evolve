@@ -76,6 +76,44 @@ test('worktree consumers use platform-native create and enter contracts', () => 
   }
 });
 
+test('Env gates first Build and carries the complete task directory safely', () => {
+  const protocol = read('skills/references/design-traceability.md');
+  const devflow = read('skills/devflow/SKILL.md');
+  const plan = read('skills/dev-plan/SKILL.md');
+  const build = read('skills/dev-build/SKILL.md');
+  const designHandoff = read('skills/dev-design/references/handoff.md');
+  const worktrees = read('skills/using-git-worktrees/SKILL.md');
+
+  assert.match(protocol, /To: .*\bEnv\b/);
+  assert.match(devflow, /\| Env \| `nocode:using-git-worktrees` \|/);
+  assert.match(devflow, /Skill\(nocode:using-git-worktrees\)[\s\S]*Skill\(nocode:dev-build\)/);
+  assert.match(devflow, /\$using-git-worktrees[\s\S]*\$dev-build/);
+  assert.match(devflow, /\/skill:using-git-worktrees[\s\S]*\/skill:dev-build/);
+  assert.match(devflow, /Handoff[\s\S]*Env[\s\S]*Build/);
+  assert.match(devflow, /Env.*fail[\s\S]*do not invoke Build/is);
+
+  assert.match(plan, /Handoff target is Env/);
+  assert.match(plan, /Skill\(nocode:devflow\)/);
+  assert.match(plan, /\$devflow/);
+  assert.match(plan, /\/skill:devflow/);
+  assert.doesNotMatch(plan, /Skill\(nocode:dev-build\)/);
+  assert.match(designHandoff, /Bug repair baseline -> Env/);
+  assert.match(build, /Env -> Build/);
+
+  assert.match(worktrees, /taskArtifacts:/);
+  assert.match(worktrees, /sourceProjectRoot:/);
+  assert.match(worktrees, /sourceTaskDirectory:/);
+  assert.match(worktrees, /exactLog:/);
+  assert.match(worktrees, /same repository-relative path/i);
+  assert.match(worktrees, /copy the whole task directory/i);
+  assert.match(worktrees, /destination does not exist[\s\S]*copy/i);
+  assert.match(worktrees, /byte-for-byte identical[\s\S]*reuse/i);
+  assert.match(worktrees, /diverge[\s\S]*stop/i);
+  assert.match(worktrees, /destination exact Log[\s\S]*authoritative/i);
+  assert.match(worktrees, /in-place continuation[\s\S]*taskArtifacts[\s\S]*Step 2c[\s\S]*Step 3/i);
+  assert.match(worktrees, /sandbox fallback[\s\S]*Env[\s\S]*explicit confirmation[\s\S]*Step 2c/i);
+});
+
 test('using-git-worktrees uses the flat sibling path and rejects legacy containers', () => {
   const source = read('skills/using-git-worktrees/SKILL.md');
   assert.match(source, /<project-parent>\/<project-name>-<branch-flat>/);
@@ -138,8 +176,8 @@ test('dev-design uses a thin trunk and direct conversational persistence', () =>
     assert.doesNotMatch(read(file), /Capability\(|"profile"\s*:|fallbackPolicy/, file);
   }
   const coordinator = read('skills/dev-design/SKILL.md');
-  assert.match(coordinator, /Persist a waiting Round with one question/);
-  assert.match(coordinator, /ConfirmedBy: Round N/);
+  assert.match(coordinator, /Persist a waiting ROUND with one question/);
+  assert.match(coordinator, /ConfirmedBy: ROUND-N/);
   assert.match(coordinator, /Confirmation is process authorization, not a Decision/);
   assert.doesNotMatch(coordinator, /TaskCreate|TaskUpdate|update_plan|StagePlan|StageCheckpoint|resumeState|dedupeKey/);
   assert.equal(existsSync(new URL('../skills/dev-design/decision/SKILL.md', import.meta.url)), false);
@@ -168,7 +206,7 @@ test('brainstorming broadens options without forcing delivery artifacts', () => 
 
 test('engineering stage skills use native plans while devflow and dev-design stay plan-free', () => {
   const expectedHandoffs = new Map([
-    ['skills/dev-plan/SKILL.md', 'dev-build'],
+    ['skills/dev-plan/SKILL.md', 'devflow'],
     ['skills/dev-build/SKILL.md', 'dev-verify'],
     ['skills/dev-verify/SKILL.md', 'dev-review'],
   ]);
@@ -196,7 +234,7 @@ test('engineering stage skills use native plans while devflow and dev-design sta
   }
 });
 
-test('dev-plan uses native plan, explicit decisions, and direct Build handoff', () => {
+test('dev-plan uses native plan, explicit decisions, and Env handoff through devflow', () => {
   const source = read('skills/dev-plan/SKILL.md');
   assert.doesNotMatch(source, /Capability\(|"profile"\s*:|fallbackPolicy/);
   for (const platform of ['claude', 'codex']) {
@@ -207,7 +245,8 @@ test('dev-plan uses native plan, explicit decisions, and direct Build handoff', 
   assert.match(source, /AskUserQuestion/);
   assert.match(source, /update_plan/);
   assert.match(source, /request_user_input/);
-  assert.match(source, /Skill\(nocode:dev-build\)/);
+  assert.match(source, /Skill\(nocode:devflow\)/);
+  assert.doesNotMatch(source, /Skill\(nocode:dev-build\)/);
   assert.match(source, /Handoff\.designIds/);
   assert.match(source, /designCovers/);
 });

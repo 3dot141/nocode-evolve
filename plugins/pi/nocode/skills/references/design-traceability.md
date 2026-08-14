@@ -8,7 +8,7 @@ Shared reference for engineering Skills that consume a confirmed `design.md`. It
 
 `DEC-###` lives in the Decisions section of `design.log.md` and states one formed decision point: classification, goal, scope, behavior, constraint, structure, contract, acceptance, or another independently judgeable design meaning.
 
-DEC IDs are task-local, never deleted, reused, renumbered, or silently redefined. Semantic change creates a new ID and `supersedes` the old one. Evidence, rejected alternatives, recommendations, user answers, stage movement, and returned findings remain in `Round N` or `Event N` entries in the same file's Log; they do not receive DEC IDs unless they form a design decision.
+DEC IDs are task-local, never deleted, reused, renumbered, or silently redefined. Semantic change creates a new ID and records succession in DEC `过程`. Evidence, rejected alternatives, recommendations, user answers, stage movement, and returned findings remain in `ROUND-N` or `Event N` entries in the same file's Log; they do not receive DEC IDs unless they form a design decision.
 
 ### DES IDs
 
@@ -32,7 +32,7 @@ DES IDs follow the same immutability rule. Background, rationale, alternatives, 
 | Decision ID | Design disposition | DES IDs / n/a reason |
 |---|---|---|
 
-- Every Decision marked `designDisposition: required` maps to at least one DES ID.
+- Every Decision the coverage table marks `required` maps to at least one DES ID.
 - Explicit design n/a includes a reason.
 - Every DES ID cites at least one real sourceDecisionId.
 - One-to-many and many-to-one mappings are valid.
@@ -45,8 +45,8 @@ The current same-Log Handoff is the routing authority:
 
 ```yaml
 From: dev-design
-To: Plan | Build | Debug | Verify | Review | Land
-ConfirmedBy: Round N
+To: Plan | Env | Build | Debug | Verify | Review | Land
+ConfirmedBy: ROUND-N
 Read:
   design: ./design.md
   designIds: [DES-...]
@@ -73,6 +73,10 @@ Every task lists the DES IDs it carries:
 ```
 
 Plan starts from Handoff.designIds and maps each ID to one or more tasks, or to Verify when it is purely evidentiary. Unknown IDs or an unmapped implementation / preserve obligation block confirmation.
+
+### Env
+
+Env is the navigation boundary immediately before the first Build entry. It receives the exact task artifact paths and DES scope, delegates workspace preparation to `nocode:using-git-worktrees`, and preserves the repository-relative task directory in the active workspace. Only a successful isolated or explicitly authorized in-place result may update the same-Log Handoff from Env to Build. Env failure leaves the Handoff at Env and must not invoke Build.
 
 ### Build
 

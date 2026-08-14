@@ -7,6 +7,8 @@
 
 | 路径 | 主题 | 状态 |
 |---|---|---|
+| `3dot141/260814-01-design-grilling/design.md` | Design grilling：产品收口后再按块写开发 | **confirmed / implemented** |
+| `3dot141/260813-01-devflow-env-before-build/design.md` | devflow Build 前 Env 与任务文档迁移 | **confirmed / Build + Verify complete / Review active** |
 | `3dot141/260803-01-devflow-redesign/design.md` | devflow 简化与 Define/Design 合并 | **implemented / verified / commit pending** |
 | `3dot141/260730-01-agents-launcher-declarative-topology/agents-launcher-declarative-topology-design.md` | agents-launcher 声明式服务拓扑 | **approved / Build complete / Verify pending** |
 | `3dot141/260723-03-native-platform-block-packaging/native-platform-block-packaging-design.md` | 原生平台块 + 静态打包 | **approved / implementation pending** |
@@ -33,6 +35,7 @@
 
 | 路径 | 配对设计 | 状态 |
 |---|---|---|
+| `3dot141/260813-01-devflow-env-before-build/devflow-env-before-build-plan.md` | 同目录 design | **confirmed / Build + Verify complete / Review active** |
 | `3dot141/260730-01-agents-launcher-declarative-topology/agents-launcher-declarative-topology-plan.md` | 同目录 design | **confirmed / Build complete / Verify pending** |
 | `3dot141/260720-01-claude-codex-dual-runtime/claude-codex-dual-runtime-plan.md` | 同目录 design | **superseded** |
 | `3dot141/260602-01-skillify-route/skillify-route-plan.md` | 同目录 design | **superseded** |

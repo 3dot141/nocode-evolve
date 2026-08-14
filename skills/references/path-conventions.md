@@ -21,7 +21,7 @@ These IDs describe product-source paths. dev-design consumes confirmed path mean
 | Design decision | `DEC-###` | `design.log.md` Decisions | the current formed design meaning |
 | Design obligation | `DES-###` | `design.md` | what must be investigated, implemented, preserved, migrated, observed, or verified |
 
-IDs are task-local and immutable. Semantic change creates a new ID with a supersession relation. `Round N` / `Event N` entries in the same file's Log preserve how Decisions formed but are not an engineering ID namespace. The full cross-stage contract is `{NOCODE_SKILL_REF}/design-traceability.md`.
+IDs are task-local and immutable. Semantic change creates a new ID with a supersession relation. `ROUND-N` / `Event N` entries in the same file's Log preserve how Decisions formed but are not an engineering ID namespace. The full cross-stage contract is `{NOCODE_SKILL_REF}/design-traceability.md`.
 
 ## Product path format
 

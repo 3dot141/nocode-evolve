@@ -11,9 +11,9 @@ test("shared traceability separates immutable DEC and DES namespaces from the pr
   assert.match(protocol, /DEC-###/);
   assert.match(protocol, /DES-###/);
   assert.match(protocol, /sourceDecisionIds/);
-  assert.match(protocol, /Round N.*Event N.*do not receive DEC IDs/s);
+  assert.match(protocol, /ROUND-N.*Event N.*do not receive DEC IDs/s);
   assert.match(protocol, /never deleted, reused, renumbered, or silently redefined/);
-  assert.match(protocol, /Every Decision marked `designDisposition: required` maps to at least one DES ID/);
+  assert.match(protocol, /Every Decision the coverage table marks `required` maps to at least one DES ID/);
   assert.match(protocol, /Every DES ID cites at least one real sourceDecisionId/);
   assert.doesNotMatch(protocol, /designRevision\s*:|designDigest\s*:|sourceAnchor\s*:/);
 });
@@ -49,9 +49,10 @@ test("Handoff is the routing authority and design changes return to the same Log
     read("skills/devflow/SKILL.md"),
   ]);
 
-  for (const target of ["Debug", "Plan", "Build", "Verify", "Review", "Land", "dev-design"]) {
+  for (const target of ["Debug", "Plan", "Env", "Build", "Verify", "Review", "Land", "dev-design"]) {
     assert.match(devflow, new RegExp(`\\| ${target.replace("-", "\\-")} \\|`));
   }
+  assert.match(protocol, /To: .*\bEnv\b/);
   assert.match(protocol, /return the finding to dev-design/i);
   assert.match(protocol, /evidence changes goal, scope, solution, contract, Preserve, acceptance, or DES meaning/i);
   assert.match(devflow, /Event N — stage-transition/);

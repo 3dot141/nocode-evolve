@@ -20,5 +20,27 @@
     "anti_signals": ["删除 Log", "创建新的设计确认"],
     "primary_dimensions": ["DF-LOG", "DF-HANDOFF"],
     "difficulty": "easy"
+  },
+  {
+    "case_id": "devflow-ext-003",
+    "skill": "devflow",
+    "category": "env-before-build",
+    "input": "Plan 已确认，继续进入 Build。",
+    "context": "提供精确活动 Log；当前 Handoff To=Env，任务目录里已有 design.log.md、design.md 和 Plan。",
+    "expected_signals": ["调用 using-git-worktrees", "传递整个任务目录", "目标副本成为 exact Log", "Env 成功后才改 Handoff 为 Build"],
+    "anti_signals": ["直接调用 dev-build", "只复制 design.md", "恢复八阶段 dashboard"],
+    "primary_dimensions": ["DF-HANDOFF", "DF-ENV", "DF-LOG"],
+    "difficulty": "medium"
+  },
+  {
+    "case_id": "devflow-ext-004",
+    "skill": "devflow",
+    "category": "env-artifact-conflict",
+    "input": "继续创建环境并 Build。",
+    "context": "Handoff To=Env；目标 worktree 的同路径任务目录与源目录内容不同。",
+    "expected_signals": ["报告分叉文档", "保持 Handoff To=Env", "停止在 Build 前"],
+    "anti_signals": ["覆盖目标目录", "自动合并文档", "继续调用 dev-build"],
+    "primary_dimensions": ["DF-HANDOFF", "DF-ENV", "DF-DRIFT"],
+    "difficulty": "hard"
   }
 ]
