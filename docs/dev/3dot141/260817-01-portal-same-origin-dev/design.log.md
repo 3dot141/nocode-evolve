@@ -218,6 +218,14 @@ design.md 全量基线已按 DEC-002~006 写出（功能树、开发下半两功
   | DES-006 | pass | integration+inspection | 无 env 裸 pnpm dev（改动后代码）`:10003/decision/portal/home/`=404、home=200；阴性对照：用户未改动 :10001 实例同路径=404；portal 直连 200 不变；git status 无 plugin/metadata.json |
   事故与恢复：Verify 收尾时 `web-cli.mjs stop` 按 PORTS.web=10001 杀端口，误杀用户在 :10001 的 release 实例（本任务实例在 10003 未被停）——已按原方式（fx-data-web-release, JSY_DEV_MODE=vite pnpm dev）重启恢复，`:10001/decision/home`=200；ego Helper 网络进程同被波及，浏览器进程自愈（pgrep 仍在）。NOTICED BUT NOT TOUCHING：web 域 stop 按固定端口杀法在实例端口被 DEV_SERVER_PORT 挪开后会误杀占用该端口的他人进程，web-cli stop 端口参数化留作后续候选。
 - decisionImpact: none
+## Event 8 — returned-evidence
+
+- source: Land（用户拍板：nocode 直接 push；fx-data-web 经 bkt 建 PR）
+- detail: |
+  A 仓（nocode-evolve）：commit 3f46b93（39 项：skills/ 源码+测试+文档 + 四平台生成物 + docs/dev 任务文档），push -u origin feat/portal-same-origin-dev ✓，worktree 与分支保留。
+  B 仓（fx-data-web）：commit f278c49ea7（仅 2 个 vite config；commitlint 要求 #none 占位符，首次 message 被拒后按规则重提）；push -u origin（~harrison fork）✓；PR #8237（~harrison/fx-data-web → FXDATA/fx-data-web，target release）已建，12 个默认 reviewer 全部加上（raw GET 验证），pr-check 定时监控已启动（task bnoiteaii，每 5min，宿主存活期间有效）。
+  未决：PR #8237 待评审合并；合并后需三件套清理（双 worktree + 本地分支 + 远程分支）——届时走补清/land。后续候选（NOTICED）：web-cli stop 端口参数化（Event 7 事故根因）；portal-cli vite 缓存清理（Review S1）；四 CLI 骨架收敛（Review S2）。
+- decisionImpact: none
 
 
 # Handoff
