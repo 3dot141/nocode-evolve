@@ -53,7 +53,8 @@ skills/
 | `agents-launcher` | 本仓 fx-data-agents 三服务（web/agents/server）本地 dev 启停编排 |
 | `bkt` | Bitbucket CLI（仓库 / PR / 分支 / issue / webhook / pipeline） |
 | `open-design` | Open Design 原生创建、生成、读取与预览流程 |
-| `lark-project` | 飞书项目管理（工作项读取含附件 / 状态流转 / 搜索 / 创建更新） |
+| `lark-project` | 飞书项目管理路由壳（透传 meegle，维护既有调用契约） |
+| `meegle` | 飞书项目（Meego/Meegle）官方 CLI 操作指南（工作项 / 流转 / MQL / 视图 / 待办 / 排期） |
 | `lark-read` | 完整读取飞书文档（文字 + 嵌入图片） |
 | `signoz-cli` | 查询 SigNoz 的 trace / log / metric，跑 PromQL/ClickHouse SQL |
 
