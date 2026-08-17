@@ -43,6 +43,7 @@ Old logs that still use six sections and eight-part Rounds are valid history. Do
 ## DEC-001
 - 描述:
 - 内容:
+- 后果:
 - 过程:
 - 引用: [ROUND-001]
 
@@ -63,7 +64,7 @@ Header.`phase` and Header.`current` name the active half and the active block. A
 
 ## DEC / ROUND separation
 
-- `DEC-###` is the current semantic result. `描述` is a one-line index. `内容` is the standalone conclusion `design.md` may cite. `过程` records proposed / revised / confirmed and any succession. Details stay in ROUND.
+- `DEC-###` is the current semantic result. `描述` is a one-line index. `内容` is the standalone conclusion `design.md` may cite. `后果` records the accepted cost or follow-up obligation the choice creates; write `无` when there is none. `过程` records proposed / revised / confirmed and any succession. Details stay in ROUND.
 - `ROUND-###` is the chronological decision process. Do not reduce `回答` to “用户已确认” when it contains material content.
 - One ROUND may form several Decisions. One Decision may cite several ROUNDs. Split results into related DEC IDs whenever they can be accepted, changed, or superseded independently.
 

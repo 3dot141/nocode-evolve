@@ -2,11 +2,11 @@
 
 Shared interview principles for `dev-design`. Plan does not call this file.
 
-Interview until the current phase has a shared understanding. Map the work as a **task tree**: every decision branches into the decisions that hang off it. The tree grows from this request and already-confirmed DEC IDs. Do not walk `feat` / `bug` / `refactor` question numbers to choose the next question.
+Interview until the current phase has a shared understanding. Map the work as a **task tree** whose nodes come in three kinds: **decisions** (a choice other choices hang off), **terms** (a noun the user's wording introduces that will land in a DEC — closed only when its meaning, test, and boundary are explicit), and **assumptions** (a claim the plan silently depends on). The tree grows from this request, the user's own wording, and already-confirmed DEC IDs. Do not walk `feat` / `bug` / `refactor` question numbers to choose the next question.
 
 ## One question
 
-Work the tree one decision at a time. The next question is the earliest unclosed node whose prerequisites are closed. If several are ready, pick the one that can invalidate the most downstream work.
+Work the tree one node at a time. The next question is the earliest unclosed node whose prerequisites are closed. If several are ready, pick the one that can invalidate the most downstream work. A term node stays open while the word has two live readings — ask it as "When you say <word>, do you mean A or B?" with your recommended reading attached; the user's wording is the densest source of ambiguity, so treat every new noun from the user as a node, never as defined vocabulary.
 
 Each question includes a committable recommended answer and the reason. Do not ask the user to “confirm” a blank. Do not ask two decisions in one turn.
 
@@ -34,6 +34,8 @@ Before asking, persist a waiting ROUND with 背景, 问题, and 方案; leave �
 
 Do not write the lower half until the user confirms the upper-half outline. Feat 产品 does not read implementation to invent the function tree.
 
+Absorb before advancing. An answer or a mid-interview user message first crosses off the branches it kills, adds the branches it opens, and is checked against confirmed DEC IDs. A conflict reopens the affected DEC through succession instead of being recorded and bypassed. Do not advance on an unintegrated answer.
+
 ## Done
 
-The phase is done when its tree is empty and the type coverage check for that half passes. A gap reopens the responsible block. The session is not finished until the user confirms the completed `design.md`.
+The phase is done when its tree is empty, the last three questions opened no new node and surfaced no new weakness, and the type coverage check for that half passes. A tree that empties while questions still find new branches was closed over the question generator, not over the work. Before declaring done, ask once — "What did we assume that we did not write down?" — and turn each answer into a node. A gap reopens the responsible block. The session is not finished until the user confirms the completed `design.md`.

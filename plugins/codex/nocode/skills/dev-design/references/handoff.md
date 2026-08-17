@@ -34,7 +34,7 @@ Preserve: [DES-...]
 Open: []
 ```
 
-`Open` contains only explicitly accepted non-blocking items. A blocking item prevents Handoff. Handoff is navigation, not a place to add design facts.
+`Open` contains only explicitly accepted non-blocking items, each with an owner and the point where it resolves; an open item nobody owns is dead weight, not an accepted unknown. A blocking item prevents Handoff. Handoff is navigation, not a place to add design facts.
 
 Routes:
 
