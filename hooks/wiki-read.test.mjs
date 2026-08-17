@@ -5,7 +5,7 @@ import {
 } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 import {
   DEFAULT_PREAMBLE, parseStatusMd, readWikiPage, writeStatusAtomic,
 } from '../scripts/wiki-read.mjs';
@@ -36,6 +36,43 @@ test('page read returns content and increments status exactly once', () => {
     assert.deepEqual(parseStatusMd(readFileSync(f.status, 'utf8')).rows, [
       { key: 'pages/architecture', count: 1, lastReferenced: '260721' },
     ]);
+  } finally { rmSync(f.root, { recursive: true, force: true }); }
+});
+
+test('wiki-root relative paths from index links resolve without the personal prefix', () => {
+  const f = fixture();
+  try {
+    const result = readWikiPage({ projectRoot: f.root, path: 'pages/architecture.md', sessionId: 'session-rel' }, { now: () => '260721' });
+    assert.match(result.content, /Architecture/);
+    assert.equal(result.usageRecorded, true);
+    assert.deepEqual(parseStatusMd(readFileSync(f.status, 'utf8')).rows, [
+      { key: 'pages/architecture', count: 1, lastReferenced: '260721' },
+    ]);
+  } finally { rmSync(f.root, { recursive: true, force: true }); }
+});
+
+test('unavailable page error reports the attempted absolute paths', () => {
+  const f = fixture();
+  try {
+    assert.throws(
+      () => readWikiPage({ projectRoot: f.root, path: 'pages/missing.md', sessionId: 's' }),
+      (error) => error.code === 'WIKI_PAGE_UNAVAILABLE' && /tried: /.test(error.message),
+    );
+    assert.equal(existsSync(f.status), false);
+  } finally { rmSync(f.root, { recursive: true, force: true }); }
+});
+
+test('cli stderr includes message alongside the error code', () => {
+  const f = fixture();
+  try {
+    const outcome = spawnSync(process.execPath, [
+      path.join(ROOT, 'scripts/wiki-read.mjs'),
+      '--project-root', f.root, '--path', 'pages/missing.md', '--session-id', 's',
+    ], { encoding: 'utf8' });
+    assert.equal(outcome.status, 2);
+    const payload = JSON.parse(outcome.stderr);
+    assert.equal(payload.code, 'WIKI_PAGE_UNAVAILABLE');
+    assert.match(payload.message, /wiki page does not exist/);
   } finally { rmSync(f.root, { recursive: true, force: true }); }
 });
 

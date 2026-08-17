@@ -92,15 +92,27 @@ export function resolveWikiPage(projectRoot, requestedPath) {
   }
   const personalDir = resolvePersonalDir(projectRoot);
   if (!personalDir) throw new WikiReadError('WIKI_NOT_CONFIGURED', '.agents-personal is unavailable');
-  let pagePath;
-  try { pagePath = realpathSync(path.resolve(projectRoot, requestedPath)); } catch {
-    throw new WikiReadError('WIKI_PAGE_UNAVAILABLE', 'wiki page does not exist');
-  }
   const wikiRoot = path.join(personalDir, 'wiki');
+  // 依次尝试两种基准：projectRoot（完整相对路径）与 wikiRoot（index 链接的 pages/…、draft/… 形态）
+  const candidates = [...new Set([
+    path.resolve(projectRoot, requestedPath),
+    path.resolve(wikiRoot, requestedPath),
+  ])];
+  let pagePath;
+  for (const candidate of candidates) {
+    try { pagePath = realpathSync(candidate); } catch { continue; }
+    break;
+  }
+  if (!pagePath) {
+    throw new WikiReadError(
+      'WIKI_PAGE_UNAVAILABLE',
+      `wiki page does not exist: ${requestedPath} (tried: ${candidates.join('; ')})`,
+    );
+  }
   const relative = path.relative(wikiRoot, pagePath).replaceAll('\\', '/');
   if (relative.startsWith('../') || path.isAbsolute(relative)
     || !/^(?:pages|draft)\/.+\.md$/.test(relative)) {
-    throw new WikiReadError('WIKI_PATH_OUTSIDE', 'path must be a markdown page under wiki/pages or wiki/draft');
+    throw new WikiReadError('WIKI_PATH_OUTSIDE', `path must be a markdown page under wiki/pages or wiki/draft, got: ${relative}`);
   }
   return { personalDir, pagePath, key: relative.slice(0, -3) };
 }
@@ -168,7 +180,7 @@ export function main(args = process.argv.slice(2), io = process) {
     io.stdout.write(`${JSON.stringify(result)}\n`);
     return 0;
   } catch (error) {
-    io.stderr.write(`${JSON.stringify({ code: error.code || 'WIKI_READ_FAILED' })}\n`);
+    io.stderr.write(`${JSON.stringify({ code: error.code || 'WIKI_READ_FAILED', message: error.message })}\n`);
     return 2;
   }
 }
