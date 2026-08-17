@@ -39,12 +39,16 @@ Extend the problem panorama with the fault mechanism and before / after repair p
 Each independently judgeable repair outcome has:
 
 1. 流程图 — fault-before / repair-after
-2. 接口 — verified contracts and callers
+2. 接口 — verified contracts and callers; see `references/writing.md`
 3. 伪代码 — the selected repair mechanism
 4. 问题 — remaining risks and user decisions
 
 Then: consolidated impacted-files index (`NEW / MODIFY / DELETE / PRESERVE`), compatibility / rollback, regression objectives, and Env versus Plan with the single-slice rule.
 
 Architecture or DDD detail is conditional. Multi-domain collaboration is mandatory when the repair crosses domain or data-owner boundaries.
+
+## DES granularity
+
+Assign DES IDs to each independent investigation, preserve invariant, completion condition, repair outcome, regression, observation, and compatibility / rollback obligation. A patch step, log line, or config tweak receives an ID only when it carries one of those judgeable results.
 
 Finish with the shared DEC / DES coverage table from `references/writing.md`.

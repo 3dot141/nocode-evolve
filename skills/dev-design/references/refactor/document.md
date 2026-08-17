@@ -41,7 +41,7 @@ Selected After structure, Before-to-After mapping, coexistence, rollback, and cl
 Each structural outcome has:
 
 1. 流程图 — Before-to-After interaction
-2. 接口 — verified public and internal seams
+2. 接口 — verified public and internal seams; see `references/writing.md`
 3. 伪代码 — the structural change
 4. 问题 — remaining migration or deletion risks
 
