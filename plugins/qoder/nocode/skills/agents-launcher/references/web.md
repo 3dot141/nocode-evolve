@@ -10,6 +10,8 @@
 packages/jsy-web/src/entry/config.ts
 ```
 
+未显式设置时从 `FX_AGENTS_DIR` 同目录按同变体后缀推导（`fx-data-agents-release` → `fx-data-web-release`），须过上述标志文件校验；混搭变体时显式设置。
+
 ## `.env.local` 准备
 
 web 依赖：

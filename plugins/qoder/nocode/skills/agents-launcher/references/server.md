@@ -4,7 +4,7 @@
 
 ## 仓与固定脚本
 
-FX_SERVER_DIR 必须指向包含 gradlew 的主仓或 worktree。server 域有代码改动时使用同分支 worktree；没有 server 改动时可复用 base worktree。
+FX_SERVER_DIR 必须指向包含 gradlew 的主仓或 worktree。server 域有代码改动时使用同分支 worktree；没有 server 改动时可复用 base worktree。未显式设置时从 `FX_AGENTS_DIR` 同目录按同变体后缀推导（`fx-data-agents-release` → `fx-data-server-release`）；混搭变体时显式设置。
 
 Docker 启动脚本随 agents-launcher 发布：
 

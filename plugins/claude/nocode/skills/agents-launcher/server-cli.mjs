@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 // server (fx-data-server Spring Boot) 独立 dev CLI。取代 scripts/dev-start.sh 的 app 相关子命令
 // （ui/sync/fresh/remote/all/restart 不迁移，见设计文档 Out of Scope）。
-// 用法: FX_SERVER_DIR=<repo> node server-cli.mjs <verb> [--yes] [--kill-old]
+// 用法: [FX_SERVER_DIR=<repo> 或由 FX_AGENTS_DIR 推导] node server-cli.mjs <verb> [--yes] [--kill-old]
 //   verb: prepare（infra/start/stop/status 由 T3/T4/T4b 渐进挂载）
-import { pathToFileURL } from 'node:url';
+import { pathToFileURL, fileURLToPath } from 'node:url';
 import { existsSync, readdirSync } from 'node:fs';
-import { join } from 'node:path';
+import { join, dirname } from 'node:path';
 import { execFileSync } from 'node:child_process';
-import { validateRepos } from './lib/paths.mjs';
+import { resolveRepos, validateRepos } from './lib/paths.mjs';
 import { detectGraalvm, resolveJdk21ForBuild } from './lib/server/graalvm.mjs';
 import { startInfra } from './lib/server/infra.mjs';
 import { startApp } from './lib/server/boot.mjs';
@@ -125,9 +125,9 @@ SUPPORTED_VERBS.push('stop', 'status');   // T4b 挂载
 
 async function main() {
   const [verb, ...flags] = process.argv.slice(2);
-  const serverDir = process.env.FX_SERVER_DIR;
-  if (!serverDir) throw new Error('FX_SERVER_DIR 未设置');
-  validateRepos({ SERVER_DIR: serverDir }, { need: ['SERVER_DIR'] });
+  const repos = resolveRepos({ toolDir: dirname(fileURLToPath(import.meta.url)) });
+  validateRepos(repos, { need: ['SERVER_DIR'] });
+  const serverDir = repos.SERVER_DIR;
 
   switch (verb) {
     case 'prepare':

@@ -66,13 +66,15 @@ Docker 基础设施 → agents → Spring → web
 ${CLAUDE_PLUGIN_ROOT}/skills/agents-launcher/dev-orchestrator.mjs
 ```
 
-launcher 位于插件目录，不能从自身位置推断 fx 仓。每次启动必须显式提供：
+launcher 位于插件目录，不能从自身位置推断 fx 仓。`FX_AGENTS_DIR` 必须显式提供：
 
 | 环境变量 | 目标 |
 |---|---|
-| `FX_AGENTS_DIR` | fx-data-agents 主仓或目标 worktree |
+| `FX_AGENTS_DIR` | fx-data-agents 主仓或目标 worktree（必设，推导锚点） |
 | `FX_WEB_DIR` | fx-data-web 主仓或目标 worktree |
 | `FX_SERVER_DIR` | fx-data-server 主仓或目标 worktree，仅 server 域需要 |
+
+`FX_WEB_DIR` / `FX_SERVER_DIR` 未设置时，从 `FX_AGENTS_DIR` 同目录按同变体后缀推导：`fx-data-agents-release` → `fx-data-web-release` / `fx-data-server-release`（变体优先、裸名回退），候选须过各域标志文件校验才算数；推不出时报「未设置」，需显式指定。编排启动时推导项以 `[auto]` 标注并要求确认，混搭变体（如 agents-release + web-persist）时必须显式设置。
 
 `${CLAUDE_PLUGIN_ROOT}` 是文档占位符。构造命令时替换成当前插件根的真实绝对路径，不把占位符原样交给 shell。
 
