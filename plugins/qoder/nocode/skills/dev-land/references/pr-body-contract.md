@@ -88,20 +88,6 @@
 
 确实没有特别风险时保留该板块，写「无特别风险，常规改动」，不要硬编。
 
-### devflow 生产改动回链
-
-仅当从 devflow 路由进入且属于生产改动时，在「重点评审」后追加：
-
-```markdown
-## Design Obligations Addressed
-- <DES-ID：confirmed design obligation> → <本次改动如何覆盖>
-
-## Verification Evidence
-- `<验证命令或检查>` → <本轮实际结果>
-```
-
-这两个板块不挤进「方案」，也不受简单改动 300 字建议限制。没有本轮证据就明确写未验证，不把计划或推断伪装成证据。
-
 核对 push range（检查描述是否遗漏实质变更，二选一）:
 
 - push 前确认: `git log origin/<branch>..HEAD --oneline`
