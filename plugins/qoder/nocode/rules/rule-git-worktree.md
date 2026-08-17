@@ -236,30 +236,54 @@ skill `SKILL.md` 中下列默认行为**全部失效**，按本文执行：
 - 不要切过去后又 cd 回主仓做事——后续动作链 (cp env / link personal / setup / baseline) 应一气在 worktree 内做完
 - Codex 后续调用不得遗漏绝对 `workdir`
 
-## Worktree 创建后：调 worktree-setup.mjs 补齐 gitignored 运行物
+## Worktree 创建后：先确认补齐计划，再执行 worktree-setup.mjs
 
 `git worktree add` 出来的是**干净** checkout——只复制 tracked 内容，主仓本地 gitignored 的运行物**不会**带过来。
 
-**人机分工 (v3.32+)**：
-- **脚本确定性自动**：IDE (`.vscode` / `.idea`) cp / 从零 `install` (按 lock 文件探测包管理器) / symlink `.agents-personal` / `git status` clean 校验
-- **agent 判断 + 显式 cp**：env / config / 项目本地 local 配置 — 脚本列**全部 gitignored 文件作 candidates** (safety filter 只跳目录/>5MB/明显 deps)，agent 用项目上下文自己判断哪些 cp，显式跑 `cp`
+**人机分工**：
+- **脚本确定性动作**：IDE (`.vscode` / `.idea`) cp / 从零 `install` (按 lock 文件探测包管理器) / symlink `.agents-personal` / `git status` clean 校验；但必须在用户确认补齐计划后才执行
+- **agent 判断 + 用户确认 + 显式 cp**：env / config / 项目本地 local 配置 — 脚本列**全部 gitignored 文件作 candidates** (safety filter 只跳目录/>5MB/明显 deps)，agent 用项目上下文分类，用户确认后只 cp 已确认项
 
 > **不再从主仓 cp `node_modules`**。跨分支时主仓 node_modules 版本与 worktree 分支的 lock 文件不匹配，且 build tool 预构建缓存（`.vite/deps` 等）不会被 install 刷新，导致难排查的运行时错误。pnpm/yarn 有全局 store，从零 install 主要是建硬链接，速度可接受。
 
-进入 worktree 的 capability 返回成功回执后调一次脚本即可（变量沿用本文「路径推导」段，支持 `--key=value` 或 `--key value`）：
+### Gate Env：先 dry-run，展示四类计划
+
+进入 worktree 的 capability 返回成功回执后，先调用 `--dry-run` 探查；此时只读，不复制、不建 symlink、不安装依赖：
+
+```bash
+node "${QODER_PLUGIN_ROOT}/scripts/worktree-setup.mjs" setup \
+    --project-root "$project_root" --worktree-path "$worktree_path" --dry-run
+```
+
+agent 必须结合 `plannedCommands[]`、`envCandidates[]`、lock 文件、源/目标是否存在和项目配置加载入口，把**具体路径**逐项整理成以下四类后展示给用户：
+
+| 分类 | 典型内容 | 要展示的信息 |
+|---|---|---|
+| **确认后会执行** | 主仓存在且 worktree 缺失的 IDE 配置；主仓 `.agents-personal/` 到 worktree 的 symlink；按 lock 文件从零 install | 路径、动作类型 (`copy` / `symlink` / `install`)、为什么需要 |
+| **不确定，等用户选择** | `envCandidates[]` 中可能是运行所需、也可能敏感或与本任务无关的 `.env*` / `*.local.*` / `conf/config.yaml` / secret | 路径、用途/敏感性/相关性判断、建议 `copy` 或 `skip`；不得替用户决定 |
+| **不会复制** | cache / log / build 残留 / runtime data / 临时文件 / 大文件；`node_modules` | 路径或类别、`skip`、跳过原因；`node_modules` 改为从 lock 文件 install |
+| **已有有效目标，跳过** | worktree 中已存在的 IDE 配置、正确指向主仓的 `.agents-personal` symlink、无需重复的其他目标 | 路径、`skip`、现状依据 |
+
+没有条目的分类也要写“无”，避免“未展示”被误解成“尚未探查”。`envCandidates[]` 只是**人工配置候选全集**，不是“应该全部复制”的清单，也不是 setup 失败；候选未被选中不叫“未补全”。
+
+展示计划后**暂停并等待用户明确确认**。在确认前禁止运行非 dry-run setup、禁止 cp 候选、禁止 install；不确定项必须由用户逐项或按明确范围选择，不能把一句泛化“确认”解释成复制所有候选。
+
+用户确认后，先执行脚本的确定性动作（变量沿用本文「路径推导」段，支持 `--key=value` 或 `--key value`）：
 
 ```bash
 node "${QODER_PLUGIN_ROOT}/scripts/worktree-setup.mjs" setup \
     --project-root "$project_root" --worktree-path "$worktree_path"
-# 可选: --pkg-manager npm|pnpm|yarn (不传按 lock sniff) / --skip-install / --dry-run (只输出计划不执行)
+# 可选: --pkg-manager npm|pnpm|yarn (不传按 lock sniff) / --skip-install
 ```
 
-脚本输出 JSON 报告；agent 检查 **`envCandidates[]` + `needsAttention[]`**——前者要 agent 判断 cp 哪些，后者非空才介入：
+再只对用户确认复制的候选显式运行 `cp`，保持相对路径并先创建所需父目录。执行完汇报“实际执行 / 跳过 / 失败及原因”，不得用原计划冒充执行结果。
+
+脚本输出 JSON 报告；agent 检查 **`envCandidates[]` + `needsAttention[]`**——前者用于生成上面的候选分类，后者非空才介入：
 
 - `envCandidates[]` (v3.6.3+)：**agent 主导** — 列出 .gitignore 提到 + 实际存在 + 非目录 + ≤5MB 的全部文件。agent 用项目上下文判：
-  - **应 cp**：`.env*` / `*.local.*` / `conf/config.yaml` / `secrets.json` 等 local 配置 / 凭证 → 显式 `cp <projectRoot>/<rel> <worktreePath>/<rel>`
+  - **建议 cp**：`.env*` / `*.local.*` / `conf/config.yaml` / `secrets.json` 等 local 配置 / 凭证 → 说明依据并等用户确认；确认后显式 `cp <projectRoot>/<rel> <worktreePath>/<rel>`
   - **不该 cp**：build/cache 残留 / 运行时 data / 临时文件 → skip
-  - 拿不准时优先 cp (cp 多一点 ≪ 漏 cp 关键导致 worktree 跑不起来)
+  - **拿不准**：归入“不确定，等用户选择”，不复制
 - `copied` / `symlinked`：实际 cp 的 IDE 与 symlink 的 `.agents-personal`
 - `install.status`：`ran`(从零 install 跑了) / `skipped`(`--skip-install` 或无 lock 文件) / `failed`(install 报错)
 - `gitStatusClean`：false 时 offenders 也进 `needsAttention`（cp 物意外进 tracking）
@@ -273,7 +297,7 @@ node "${QODER_PLUGIN_ROOT}/scripts/worktree-setup.mjs" setup \
 
 - **触发**：worktree 内跑命令报 `env var missing` / config 加载失败；或准备跑 dev/test/build/benchmark 前。
 - **脚本职责 (v3.6.3+)**：扫 `.gitignore` 列**所有 gitignored 文件**到 `envCandidates[]` (safety filter：跳目录/>5MB/明显 deps 如 node_modules/.idea/.vscode/.DS_Store)。**不自动 cp**，不再 hardcoded keyword 启发式 — 避免漏 cp 项目特异命名 (如 `conf/config.yaml` / 自定义 secret store)。
-- **agent 职责**：看 `envCandidates[]`，用项目上下文 (config 加载入口的 `parseYaml(readFileSync(...))` / framework 惯例 / 文件名语义) 判定哪些是 local 配置需 cp，显式跑 `cp`。拿不准时优先 cp (worktree 多 1-2MB 文件 ≪ 跑不起来调试)。
+- **agent 职责**：看 `envCandidates[]`，用项目上下文 (config 加载入口的 `parseYaml(readFileSync(...))` / framework 惯例 / 文件名语义) 判定哪些可能是 local 配置，按 Gate Env 四类计划展示；用户确认后只对选中的候选显式跑 `cp`。拿不准就归入“不确定”，不自行复制。
 - **schema 不兼容**：worktree 代码与主仓 env schema 对不上时，改 worktree 副本即可，**不动主仓**（除非用户授权）——worktree 是隔离工作区。
 
 #### env cp 的不要
