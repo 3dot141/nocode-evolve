@@ -19,3 +19,4 @@
 | `security-guide.md` | 安全指南：外部输入默认敌对、secret 神圣、授权检查强制 | dev-review、dev-build |
 | `testing-guide.md` | 测试指南：先写失败测试再实现，测试是证据不是"看起来对" | dev-build、dev-review |
 | `ui-taste-model.md` | 无设计参考（无 pd-vd 产出/截图/Figma）时的视觉知识分层选型（决策框架/风格包互斥/场景/dataviz） | dev-design / dev-build（pd-vd 走自己的 Step 3a 决策树） |
+| `visual-forms.md` | 技术解释的视觉形式词汇表：伪代码/调用树/组件树/文件树/时序图/diff 形态树图/单文件 HTML 的内容→形式映射 + 最小视图纪律 | dev-design、日常技术沟通（agent-about 交付产物） |
