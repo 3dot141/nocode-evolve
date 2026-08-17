@@ -1,6 +1,5 @@
 ---
 name: agents-launcher
-disable-model-invocation: true
 description: >-
   Use when explicitly starting, stopping, restarting, or checking the local fx-data-agents
   web/agents/server development stack from a main checkout or worktree. Not for production
