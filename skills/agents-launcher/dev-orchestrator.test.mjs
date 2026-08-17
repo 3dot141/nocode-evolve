@@ -47,8 +47,8 @@ test('--dry-run 输出 topology plan 且不写 web env', () => {
 
   assert.equal(result.status, 0, result.stderr);
   assert.match(result.stdout, /\[topology\.loaded\].*"schemaVersion":1/);
-  assert.match(result.stdout, /"startOrder":\["agents","web"\]/);
-  assert.match(result.stdout, /"stopOrder":\["web","agents"\]/);
+  assert.match(result.stdout, /"startOrder":\["agents","web","portal"\]/);
+  assert.match(result.stdout, /"stopOrder":\["portal","web","agents"\]/);
   assert.match(result.stdout, /"propagationEdges":\[\{"upstream":"agents","downstream":"web"\}\]/);
   assert.equal(existsSync(join(webDir, 'packages/jsy-web/server/.env.local')), false);
 });

@@ -9,18 +9,18 @@ import {
 } from './topology.mjs';
 
 const configPath = fileURLToPath(new URL('../agents-launcher.yml', import.meta.url));
-const identityAdapterNames = ['agents', 'server', 'web'];
+const identityAdapterNames = ['agents', 'server', 'web', 'portal'];
 const { config } = loadLauncherConfig({
   path: configPath,
-  adapterNames: ['docker', 'agents', 'server', 'web'],
+  adapterNames: ['docker', 'agents', 'server', 'web', 'portal'],
   identityAdapterNames,
 });
 
 test('正式 YAML 保持三个 workspace 的服务集合与顺序', () => {
   const expected = {
-    ui: ['agents', 'web'],
-    agents: ['docker', 'agents', 'web'],
-    full: ['docker', 'agents', 'server', 'web'],
+    ui: ['agents', 'web', 'portal'],
+    agents: ['docker', 'agents', 'web', 'portal'],
+    full: ['docker', 'agents', 'server', 'web', 'portal'],
   };
   for (const [workspace, startOrder] of Object.entries(expected)) {
     const plan = buildServicePlan(config, { workspace, disabled: [] });
@@ -32,8 +32,8 @@ test('正式 YAML 保持三个 workspace 的服务集合与顺序', () => {
 
 test('optional dependency 缺席不扩张 launcher 所有权', () => {
   const plan = buildServicePlan(config, { workspace: 'ui', disabled: ['agents'] });
-  assert.deepEqual(plan.selected, ['web']);
-  assert.deepEqual(plan.startOrder, ['web']);
+  assert.deepEqual(plan.selected, ['web', 'portal']);
+  assert.deepEqual(plan.startOrder, ['web', 'portal']);
   assert.deepEqual(plan.omittedOptionalDependencies, [
     { service: 'web', dependency: 'agents' },
     { service: 'web', dependency: 'server' },

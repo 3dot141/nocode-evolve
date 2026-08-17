@@ -115,7 +115,18 @@ export function start({ webDir, spawn = spawnPrefixed, clean = cleanViteCache, l
   if (vc.action === 'removed') log(`[web] 已清 Vite 预构建缓存: ${vc.path}`);
   // BROWSER=none: vite server.open 遵循该约定跳过自动开浏览器——launcher 是后台编排场景，
   // 弹浏览器是干扰（web 仓 vite.home.config.ts 配了 open，交互式裸跑 pnpm dev 不受本行影响）
-  return spawn('web', 'pnpm', ['dev'], { cwd: webDir, env: { ...process.env, JSY_DEV_MODE: 'vite', BROWSER: 'none' } });
+  // PORTAL_DEV_TARGET: jsy-web 条件反代 `${serverPrefix}/portal` 的取值来源（web 仓
+  // vite.home.config.ts createServerProxy，无此 env 则不注册该条目）——portal 服务由
+  // portal-cli 起于 PORTS.portal，这里把同一单源端口注入 web 的启动 env。
+  return spawn('web', 'pnpm', ['dev'], {
+    cwd: webDir,
+    env: {
+      ...process.env,
+      JSY_DEV_MODE: 'vite',
+      BROWSER: 'none',
+      PORTAL_DEV_TARGET: `http://127.0.0.1:${PORTS.portal}`,
+    },
+  });
 }
 
 export async function status({ ports = PORTS, probes = { tcpOpen, pidOnPort } } = {}) {

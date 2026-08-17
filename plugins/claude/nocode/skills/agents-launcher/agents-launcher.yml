@@ -6,9 +6,9 @@ supervision:
   failure_threshold: 2
 
 workspaces:
-  ui: [agents, web]
-  agents: [docker, agents, web]
-  full: [docker, agents, server, web]
+  ui: [agents, web, portal]
+  agents: [docker, agents, web, portal]
+  full: [docker, agents, server, web, portal]
 
 services:
   docker:
@@ -42,3 +42,9 @@ services:
       server:
         condition: service_healthy
         required: false
+
+  # portal 无 depends_on：经 :10001 反代访问时 API 走 jsy-web 的 proxy 链路，
+  # 自身可独立起停；:10002 直连入口的后端指向由 portal-cli 注入的 USER_CLIENT 决定。
+  portal:
+    adapter: portal
+    lifecycle: service

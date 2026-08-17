@@ -161,6 +161,20 @@ test('start: spawn vite 前先清 Vite 缓存（所有启动路径共享，防 C
   assert.equal(r, fakeChild);
 });
 
+test('start: env 注入 PORTAL_DEV_TARGET 指向 portal 端口（jsy-web 条件反代的取值来源）', () => {
+  const fakeChild = {};
+  let seenEnv;
+  start({
+    webDir: '/repo',
+    clean: () => ({ action: 'none', path: '/x' }),
+    spawn: (_label, _cmd, _args, options) => { seenEnv = options.env; return fakeChild; },
+    log: () => {},
+  });
+  assert.equal(seenEnv.PORTAL_DEV_TARGET, 'http://127.0.0.1:10002');
+  assert.equal(seenEnv.JSY_DEV_MODE, 'vite');
+  assert.equal(seenEnv.BROWSER, 'none');
+});
+
 test('killCommands 只清 web 端口，不碰 agents/server', () => {
   const cmds = killCommands({ ports: { web: 10001 } });
   const flat = cmds.map((c) => c.join(' '));

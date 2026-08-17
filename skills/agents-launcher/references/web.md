@@ -69,6 +69,14 @@ node <插件根>/skills/agents-launcher/web-cli.mjs align <目标-sha>
 - launcher 启动前会清理该 web worktree 的 Vite 预构建缓存。
 - 访问入口：`http://localhost:10001/decision/home`。
 
+## portal（jsy-portal-react，运营后台）
+
+- portal 是同仓 `packages/jsy-portal-react` 下的独立 vite 应用，由 portal-cli 起在 `:10002`，三个 workspace（ui/agents/full）默认携带。
+- web 启动 env 注入 `PORTAL_DEV_TARGET=http://127.0.0.1:10002`；jsy-web 的 vite 配置在该 env 存在时把 `/decision/portal/**` 反代到 portal——入口 `http://localhost:10001/decision/portal/home/`（同源，登录态与 API 代理复用 web 链路）。
+- portal 直连入口 `http://localhost:10002/decision/portal/home/` 同样可用；HMR 两种入口均直连 `:10002`。
+- portal 启动 env：`VITE_DEV_SERVER_PORT=10002`、`USER_CLIENT=localDebugger`、`BROWSER=none`（portal-cli 注入，无需手改 `.env.local`）。
+- 状态与停止同 web：orchestrator `--status` 查询，portal-cli 域内杀法处理 `:10002`。
+
 ## 状态与停止
 
 状态统一由 orchestrator `--status` 查询。停止由 `web-cli.mjs` 的域内杀法处理，不手写端口 kill。

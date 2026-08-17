@@ -20,6 +20,11 @@ function fixture({ runCode = 0 } = {}) {
       killCommands: () => [['sh', ['-c', 'kill-web']]],
       status: async () => ({ up: true, pid: '100011' }),
     },
+    portal: {
+      start: (options) => { calls.push(['portal.start', options]); return child; },
+      killCommands: () => [['sh', ['-c', 'kill-portal']]],
+      status: async () => ({ name: 'portal', port: 10002, up: true, pid: '100021' }),
+    },
     server: {
       infra: async (options) => { calls.push(['docker.start', options]); },
       start: async (options) => { calls.push(['server.start', options]); return child; },
@@ -36,7 +41,7 @@ function fixture({ runCode = 0 } = {}) {
   };
   const adapters = createServiceAdapters({
     repos: { AGENTS_DIR: '/agents', WEB_DIR: '/web', SERVER_DIR: '/server' },
-    ports: { agents: 8070, server: 8081, web: 10001 },
+    ports: { agents: 8070, server: 8081, web: 10001, portal: 10002 },
     options: {},
     services,
     io,
@@ -45,7 +50,7 @@ function fixture({ runCode = 0 } = {}) {
 }
 
 test('adapter allowlist 与 identity capability 固定且冻结', () => {
-  assert.deepEqual(ADAPTER_NAMES, ['docker', 'agents', 'server', 'web']);
+  assert.deepEqual(ADAPTER_NAMES, ['docker', 'agents', 'server', 'web', 'portal']);
   assert.equal(ADAPTER_CAPABILITIES.docker.supportsIdentity, false);
   assert.equal(ADAPTER_CAPABILITIES.agents.supportsIdentity, true);
   assert.equal(Object.isFrozen(ADAPTER_CAPABILITIES), true);
@@ -55,6 +60,20 @@ test('web start 委托 webCli.start 并返回 handle', async () => {
   const { adapters, calls, child } = fixture();
   assert.deepEqual(await adapters.web.start({}), { handles: [child] });
   assert.deepEqual(calls[0], ['web.start', { webDir: '/web' }]);
+});
+
+test('portal start 委托 portalCli.start 并返回 handle', async () => {
+  const { adapters, calls, child } = fixture();
+  assert.deepEqual(await adapters.portal.start({}), { handles: [child] });
+  assert.deepEqual(calls[0], ['portal.start', { webDir: '/web' }]);
+});
+
+test('portal status 被规范化为 healthy + listener identity', async () => {
+  const { adapters } = fixture();
+  assert.deepEqual(await adapters.portal.status({}), {
+    healthy: true,
+    identity: '100021',
+  });
 });
 
 test('agents/web status 被规范化为 healthy + listener identity', async () => {

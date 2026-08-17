@@ -1,4 +1,5 @@
 import * as agentsCli from '../agents-cli.mjs';
+import * as portalCli from '../portal-cli.mjs';
 import * as serverCli from '../server-cli.mjs';
 import * as webCli from '../web-cli.mjs';
 import { httpOk, pidOnPort, tcpOpen } from './probe.mjs';
@@ -10,6 +11,7 @@ export const ADAPTER_CAPABILITIES = Object.freeze({
   agents: Object.freeze({ lifecycle: 'service', supportsIdentity: true }),
   server: Object.freeze({ lifecycle: 'service', supportsIdentity: true }),
   web: Object.freeze({ lifecycle: 'service', supportsIdentity: true }),
+  portal: Object.freeze({ lifecycle: 'service', supportsIdentity: true }),
 });
 
 export const ADAPTER_NAMES = Object.freeze(Object.keys(ADAPTER_CAPABILITIES));
@@ -35,7 +37,7 @@ export function createServiceAdapters({
   repos,
   ports = PORTS,
   options = {},
-  services = { agents: agentsCli, server: serverCli, web: webCli },
+  services = { agents: agentsCli, server: serverCli, web: webCli, portal: portalCli },
   io = {},
 } = {}) {
   const run = io.runToEnd ?? runToEnd;
@@ -114,6 +116,24 @@ export function createServiceAdapters({
       },
       async status() {
         return normalizeStatus(await services.web.status({
+          ports,
+          probes: {
+            tcpOpen: probes.tcpOpen,
+            pidOnPort: probes.pidOnPort,
+          },
+        }));
+      },
+    },
+    portal: {
+      ...ADAPTER_CAPABILITIES.portal,
+      async start() {
+        return handles(services.portal.start({ webDir: repos.WEB_DIR }));
+      },
+      async stop() {
+        await runCommands('portal-stop', services.portal.killCommands({ ports }), run);
+      },
+      async status() {
+        return normalizeStatus(await services.portal.status({
           ports,
           probes: {
             tcpOpen: probes.tcpOpen,
