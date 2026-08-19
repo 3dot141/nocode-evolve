@@ -64,7 +64,7 @@ The normative diagram source is ASCII in `design.md`:
 - boundaries, responsibilities, dependencies, data ownership -> architecture;
 - participant order, return, timeout, retry, concurrency -> sequence when needed.
 
-For forms beyond these four — runtime call trees, UI component trees with state and module boundaries, and diff-shaped views — read `${PLUGIN_ROOT}/skills/references/visual-forms.md`. Two standing rules from it apply here:
+For forms beyond these four — runtime call trees, UI component trees with state and module boundaries, and diff-shaped views — use the `show-me` skill (`Skill(nocode:show-me)`). Two standing rules from it apply here:
 
 - When the point of a comparison or a Before -> After block is **what changes**, draw one diff-shaped tree or pseudocode block instead of two separate diagrams plus prose.
 - Pick the smallest view that carries the current point and place it next to the prose it supports; a panorama belongs only in the overview.
@@ -141,7 +141,7 @@ These trees define design impact, not implementation order. Plan owns task seque
 - Panoramas and flows are ASCII inside `design.md`.
 - File lists are ASCII trees with change-type tags and short `#` comments — never bare path lists.
 - 接口 and 伪代码 use fenced code blocks with a language tag (`ts` / `tsx` / `text`) and real structured formatting — actual signatures, control flow, aligned comments — never untagged prose pseudocode.
-- Pick the smallest view that carries the point; see `${PLUGIN_ROOT}/skills/references/visual-forms.md`.
+- Pick the smallest view that carries the point; see the `show-me` skill (`Skill(nocode:show-me)`).
 
 ## Closing overview
 

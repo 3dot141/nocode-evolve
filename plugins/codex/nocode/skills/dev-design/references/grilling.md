@@ -1,6 +1,6 @@
 # Grilling and Log protocol
 
-Read this reference when creating, resuming, or advancing `design.log.md`. Read `${PLUGIN_ROOT}/skills/references/grilling-loop.md` for how to choose and ask the next question.
+Read this reference when creating, resuming, or advancing `design.log.md`. The interview method (design tree, frontier rounds, fact-finding, done condition) is not restated here — invoke `Skill(nocode:grilling)` and follow it. This file owns only the Log persistence protocol.
 
 ## Task path
 
@@ -88,7 +88,7 @@ An Event records movement or returned evidence. If it changes a design meaning, 
 
 ## Selecting the next question
 
-Follow `${PLUGIN_ROOT}/skills/references/grilling-loop.md`. Type `questions.md` files are coverage checks after a half is empty. They do not generate the next question.
+Invoke `Skill(nocode:grilling)` for the interview method (design tree, frontier, fact-finding, done condition). Type `questions.md` files are coverage checks after a half is empty. They do not generate the next question.
 
 ## Evidence
 

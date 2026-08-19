@@ -32,7 +32,7 @@ Exit Gate: one exact Log and one current type are available.
 
 ## Step 2 — Grill the current phase
 
-Read `${PLUGIN_ROOT}/skills/references/grilling-loop.md` and `references/grilling.md`. Use the type file only as a coverage check, never as the next-question script:
+Use the interview method of the `grilling` skill — invoke `Skill(nocode:grilling)` — and read `references/grilling.md` for the Log protocol and dev-design interview discipline. Use the type file only as a coverage check, never as the next-question script:
 
 - bug: `references/bug/questions.md`
 - feat: `references/feat/questions.md`

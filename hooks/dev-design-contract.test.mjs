@@ -16,7 +16,9 @@ test("dev-design is one thin public Skill with the confirmed private reference t
   assert.doesNotMatch(trunk, /## (?:Scenario|Full|Standard|Fix|Mini)|designRevision\s*:|designDigest\s*:|Registry\s*:/);
 
   for (const path of [
-    "skills/references/grilling-loop.md",
+    "skills/grill-me/SKILL.md",
+    "skills/grilling/SKILL.md",
+    "skills/show-me/SKILL.md",
     "skills/dev-design/references/grilling.md",
     "skills/dev-design/references/writing.md",
     "skills/dev-design/references/handoff.md",
@@ -29,16 +31,18 @@ test("dev-design is one thin public Skill with the confirmed private reference t
   ]) {
     assert.equal(exists(path), true, path);
   }
+  assert.equal(exists("skills/references/grilling-loop.md"), false);
   assert.equal(exists("skills/dev-design/decision/SKILL.md"), false);
   assert.equal(exists("skills/dev-design/writing/SKILL.md"), false);
   assert.equal(exists("skills/dev-define/SKILL.md"), false);
 });
 
 test("grilling persists one complete ROUND before advancing", async () => {
-  const [trunk, grilling, loop] = await Promise.all([
+  const [trunk, grilling, upstream, writing] = await Promise.all([
     read("skills/dev-design/SKILL.md"),
     read("skills/dev-design/references/grilling.md"),
-    read("skills/references/grilling-loop.md"),
+    read("skills/grilling/SKILL.md"),
+    read("skills/dev-design/references/writing.md"),
   ]);
 
   for (const section of ["Header", "Decisions", "# ROUND", "Handoff"]) {
@@ -54,13 +58,19 @@ test("grilling persists one complete ROUND before advancing", async () => {
   assert.match(grilling, /mark the ROUND `closed`[\s\S]*ask the next question/);
   assert.match(trunk, /Persist a waiting ROUND with one question/);
   assert.match(grilling, /At most one block is active/);
-  assert.match(loop, /One question/);
-  assert.match(loop, /Do not walk/);
   assert.match(trunk, /do not write the lower half before the upper half is confirmed/i);
   assert.match(trunk, /Feat 产品 does not read implementation/);
-  assert.match(loop, /Feat 产品:/);
-  assert.match(loop, /do not read implementation to learn what the system already does/);
   assert.match(trunk, /persist a new waiting ROUND, ask that one question, and stop the turn/);
+
+  // interview method is delegated to the upstream skill, not a local copy
+  assert.match(trunk, /Skill\(nocode:grilling\)/);
+  assert.match(grilling, /Skill\(nocode:grilling\)/);
+  assert.match(upstream, /frontier/);
+  assert.match(upstream, /Finding _facts_ is your job, never the user's/);
+  // visual vocabulary is delegated to the upstream show-me skill
+  assert.match(writing, /Skill\(nocode:show-me\)/);
+  assert.doesNotMatch(writing, /visual-forms/);
+
   const plan = await read("skills/dev-plan/SKILL.md");
   assert.doesNotMatch(plan, /grilling-loop/);
 });
@@ -124,7 +134,7 @@ test("design writing uses DEC to DES coverage and normative ASCII diagrams", asy
   }
 });
 
-test("every design type includes flowchart interface pseudocode and problems", async () => {
+test("every design type uses function groups, block trio, and closing overview", async () => {
   const [writing, feat, bug, refactor] = await Promise.all([
     read("skills/dev-design/references/writing.md"),
     read("skills/dev-design/references/feat/document.md"),
@@ -135,22 +145,30 @@ test("every design type includes flowchart interface pseudocode and problems", a
   assert.match(writing, /Every design baseline must identify the implementation surface at repository-verifiable depth/);
   assert.match(writing, /external API \/ command \/ event[\s\S]*internal entry point/);
   assert.match(writing, /Do not invent a path, symbol, signature, or schema[\s\S]*investigation DES/);
-  assert.match(writing, /repository-relative tree[\s\S]*NEW \/ MODIFY \/ DELETE \/ PRESERVE[\s\S]*numbered change points/);
-  assert.match(writing, /流程图, 接口, 伪代码, and 问题/);
+  assert.match(writing, /block must contain 接口, 伪代码, and 影响文件/);
   assert.match(writing, /not a third identity namespace/);
-  assert.match(writing, /consolidated impacted-files index[\s\S]*exposes collisions/);
+  assert.match(writing, /block tree, group consolidation, repository-wide closing tree/);
+  assert.match(writing, /repository-relative ASCII tree[\s\S]*NEW \/ MODIFY \/ DELETE \/ PRESERVE[\s\S]*numbered change points/);
+  assert.match(writing, /collisions surface here/);
+  assert.match(writing, /## Closing overview[\s\S]*`# 总览`[\s\S]*`## 架构`[\s\S]*`## 文件`/);
+  assert.match(writing, /language tag \(`ts` \/ `tsx` \/ `text`\)/);
   assert.match(writing, /Current signature:[\s\S]*Target signature:[\s\S]*Implementation flow:/);
   assert.match(writing, /Defined at:[\s\S]*Input:[\s\S]*Output:[\s\S]*Errors:[\s\S]*Guards:/);
   assert.match(writing, /Unresolved implementation surface[\s\S]*Search \/ proof stop condition/);
   assert.match(writing, /existing-file\.ext[\s\S]*new-file\.ext[\s\S]*obsolete-file\.ext[\s\S]*invariant-file\.ext/);
   for (const content of [feat, bug, refactor]) {
-    assert.match(content, /流程图/);
+    assert.match(content, /背景/);
+    assert.match(content, /目标/);
     assert.match(content, /接口/);
     assert.match(content, /伪代码/);
     assert.match(content, /问题/);
-    assert.match(content, /impacted-files index/i);
+    assert.match(content, /影响文件汇总/);
+    assert.match(content, /Closing overview/);
     assert.match(content, /DES IDs/);
   }
+  assert.match(feat, /Function groups/);
+  assert.match(bug, /Per-mechanism groups/);
+  assert.match(refactor, /Per-group sections/);
 });
 
 test("confirmation and rendering add no second design baseline", async () => {
