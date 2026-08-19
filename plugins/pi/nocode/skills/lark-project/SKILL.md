@@ -7,7 +7,12 @@ description: "飞书项目管理（Meego）。当用户给 project.feishu.cn 链
 
 飞书项目（Meego/Meegle）操作已整体迁移到 `meegle` skill（官方 meegle CLI）。本 skill 只保留入口路由，维护既有调用契约（dev-land 合并后流转、larkhub 路由表）。
 
-命中本 skill 的请求：**把 arguments 原样透传调用 meegle skill**（平台原生 Skill 调用；Claude Code 为 `Skill(nocode:meegle)`）。
+命中本 skill 的请求：**把 arguments 原样透传调用 meegle skill**（平台原生 Skill 调用）：
+
+
+
+Use `/meegle`.
+
 
 - 工作项读取/创建/更新、节点与状态流转、MQL 查询、视图、待办、排期 → 全部走 meegle
 - meegle CLI 未安装 / 未授权 → 按 meegle skill 的 auth-guard 流程执行（安装：`npx -y @lark-project/meegle@latest install`）

@@ -12,7 +12,7 @@ import path from 'node:path';
 import { loadContextBudget, splitStaticContext } from './context-budget.mjs';
 import { renderPlatformBlocks } from './platform-blocks.mjs';
 
-const PLATFORMS = new Set(['claude', 'codex', 'qoder', 'pi']);
+const PLATFORMS = new Set(['claude', 'codex', 'qoder', 'pi', 'deepseek']);
 const SEMVER = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/;
 
 export function loadJson(file) {
@@ -35,7 +35,7 @@ export function loadPluginExclusions(root) {
     if (entry.platforms != null) {
       if (!Array.isArray(entry.platforms) || entry.platforms.length === 0
         || entry.platforms.some((platform) => !PLATFORMS.has(platform))) {
-        throw new Error(`exclusion platforms must contain claude, codex, qoder and/or pi for ${relative}`);
+        throw new Error(`exclusion platforms must contain claude, codex, qoder, pi and/or deepseek for ${relative}`);
       }
       platforms = [...new Set(entry.platforms)];
     }
@@ -207,7 +207,7 @@ export function buildExpectedTree({ root, metadata, adapter }) {
     const sourceRoot = path.join(root, source);
     for (const relative of listFiles(sourceRoot)) {
       const sourcePath = `${source}/${relative}`;
-      const targetPath = `${target}/${relative}`;
+      const targetPath = target === '.' ? relative : `${target}/${relative}`;
       if (sourceIsExcluded(sourcePath, exclusions, adapter.platform) || !isPublishable(sourcePath)) continue;
       let content = readFileSync(path.join(root, sourcePath));
       if (sourcePath === 'hooks/hooks.json' && exclusions.hookCommands.length) {
@@ -284,8 +284,8 @@ function assertSafeOutputRoot(outputRoot, repoRoot) {
   const resolvedRepo = path.resolve(repoRoot);
   const resolvedOutput = path.resolve(outputRoot);
   const relative = path.relative(resolvedRepo, resolvedOutput).replaceAll('\\', '/');
-  if (!/^plugins\/(claude|codex|qoder|pi)\/nocode$/.test(relative)) {
-    throw new Error('refusing to clean outside <repo>/plugins/{claude,codex,qoder,pi}/nocode');
+  if (!/^plugins\/(claude|codex|qoder|pi|deepseek)\/nocode$/.test(relative)) {
+    throw new Error('refusing to clean outside <repo>/plugins/{claude,codex,qoder,pi,deepseek}/nocode');
   }
   return resolvedOutput;
 }

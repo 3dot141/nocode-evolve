@@ -1,7 +1,7 @@
 {
   "name": "nocode",
   "version": "0.11.0",
-  "description": "Harrison 的个人工程工作流与规则工具箱，支持 Claude Code、Codex、Qoder 和 Pi",
+  "description": "Harrison 的个人工程工作流与规则工具箱，支持 Claude Code、Codex、Qoder、Pi 和 DeepSeek Harness",
   "author": "Harrison",
   "homepage": "https://github.com/3dot141/nocode-evolve",
   "repository": "https://github.com/3dot141/nocode-evolve",

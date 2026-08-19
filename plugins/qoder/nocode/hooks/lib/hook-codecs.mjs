@@ -1,9 +1,9 @@
 export function detectPlatform(env = process.env) {
-  if (env.NOCODE_PLATFORM === 'claude' || env.NOCODE_PLATFORM === 'codex'
-    || env.NOCODE_PLATFORM === 'qoder' || env.NOCODE_PLATFORM === 'pi') {
+  if (['claude', 'codex', 'qoder', 'pi', 'deepseek'].includes(env.NOCODE_PLATFORM)) {
     return env.NOCODE_PLATFORM;
   }
   if (env.QODER_PLUGIN_ROOT) return 'qoder';
+  if (env.DSH_NOCODE_PLATFORM === 'deepseek') return 'deepseek';
   return env.PLUGIN_ROOT ? 'codex' : 'claude';
 }
 

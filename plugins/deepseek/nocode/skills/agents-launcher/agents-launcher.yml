@@ -1,0 +1,44 @@
+schema_version: 1
+
+supervision:
+  interval_ms: 1000
+  stable_successes: 2
+  failure_threshold: 2
+
+workspaces:
+  ui: [agents, web]
+  agents: [docker, agents, web]
+  full: [docker, agents, server, web]
+
+services:
+  docker:
+    adapter: docker
+    lifecycle: oneshot
+
+  agents:
+    adapter: agents
+    lifecycle: service
+    depends_on:
+      docker:
+        condition: service_completed_successfully
+        required: false
+
+  server:
+    adapter: server
+    lifecycle: service
+    depends_on:
+      agents:
+        condition: service_healthy
+        required: false
+
+  web:
+    adapter: web
+    lifecycle: service
+    depends_on:
+      agents:
+        condition: service_healthy
+        required: false
+        propagate_restart: true
+      server:
+        condition: service_healthy
+        required: false

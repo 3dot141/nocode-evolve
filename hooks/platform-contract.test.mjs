@@ -44,6 +44,14 @@ test('generated platform manifests cannot drift from metadata after cutover', ()
   assert.equal(piManifest.version, metadata.version);
   assert.equal(piManifest.author, metadata.author.name);
   assert.equal(piManifest.license, metadata.license);
+
+  const deepseekManifest = readJson('plugins/deepseek/nocode/package.json');
+  assert.ok(deepseekManifest, 'plugins/deepseek/nocode/package.json must exist');
+  assert.equal(deepseekManifest.name, metadata.name);
+  assert.equal(deepseekManifest.version, metadata.version);
+  assert.equal(deepseekManifest.author, metadata.author.name);
+  assert.equal(deepseekManifest.license, metadata.license);
+  assert.deepEqual(deepseekManifest.dsh, { bundle: { patch: './cordis.patch.yml' } });
 });
 
 test('runtime maintenance commands use the shared metadata version source', () => {

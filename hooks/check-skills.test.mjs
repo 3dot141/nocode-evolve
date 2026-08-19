@@ -157,6 +157,11 @@ test('Codex syntax checker rejects unresolved Claude tool vocabulary', () => {
     3,
   );
   assert.deepEqual(checkPlatformSyntax('Use `/skill:dev-build`', 'skills/foo/SKILL.md', 'pi'), []);
+  assert.equal(
+    checkPlatformSyntax('Skill(nocode:dev-build) /skill:dev-build AskUserQuestion', 'skills/foo/SKILL.md', 'deepseek').length,
+    3,
+  );
+  assert.deepEqual(checkPlatformSyntax('Use `skill` with name "dev-build"', 'skills/foo/SKILL.md', 'deepseek'), []);
 });
 
 test('metadataBudget counts generated skill names and descriptions', () => {
@@ -170,6 +175,12 @@ test('metadataBudget counts generated skill names and descriptions', () => {
 test('checkAll enforces generated Codex syntax by default', () => {
   const codexRoot = path.join(ROOT, 'plugins', 'codex', 'nocode');
   const { errors } = checkAll({ root: codexRoot, platform: 'codex' });
+  assert.deepEqual(errors, [], errors.join('\n'));
+});
+
+test('checkAll enforces generated DeepSeek syntax', () => {
+  const deepseekRoot = path.join(ROOT, 'plugins', 'deepseek', 'nocode');
+  const { errors } = checkAll({ root: deepseekRoot, platform: 'deepseek' });
   assert.deepEqual(errors, [], errors.join('\n'));
 });
 

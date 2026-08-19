@@ -21,7 +21,7 @@
 # scripts/compile.hooks.js, 与本链无关.
 set -euo pipefail
 
-PLUGIN_ROOT="${PLUGIN_ROOT:-${QODER_PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}}}"
+PLUGIN_ROOT="${PLUGIN_ROOT:-${DEEPSEEK_PLUGIN_ROOT:-${QODER_PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}}}}"
 export PLUGIN_ROOT
 NOCODE_PLATFORM="${NOCODE_PLATFORM:-pi}"
 export NOCODE_PLATFORM
@@ -177,7 +177,7 @@ else
   header="<!-- source: ${file} (project override) -->"
 fi
 _REF="${NOCODE_SKILL_REF:-${PLUGIN_ROOT}/skills/references}"
-content="${header}"$'\n'"$(sed "s|\${CLAUDE_PLUGIN_ROOT}|${PLUGIN_ROOT}|g; s|\${QODER_PLUGIN_ROOT}|${PLUGIN_ROOT}|g; s|\${NOCODE_SKILL_REF}|${_REF}|g" "$file")"
+content="${header}"$'\n'"$(sed "s|\${CLAUDE_PLUGIN_ROOT}|${PLUGIN_ROOT}|g; s|\${QODER_PLUGIN_ROOT}|${PLUGIN_ROOT}|g; s|\${DEEPSEEK_PLUGIN_ROOT}|${PLUGIN_ROOT}|g; s|\${NOCODE_SKILL_REF}|${_REF}|g" "$file")"
 
 budget="${NOCODE_CONTEXT_BUDGET_FILE:-${NOCODE_PLUGIN_ROOT}/runtime/context-budget.json}"
 if [ "$SEG" = "project" ]; then

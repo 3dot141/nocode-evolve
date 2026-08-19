@@ -54,7 +54,7 @@ test("grilling persists one complete ROUND before advancing", async () => {
   assert.match(grilling, /mark the ROUND `closed`[\s\S]*ask the next question/);
   assert.match(trunk, /Persist a waiting ROUND with one question/);
   assert.match(grilling, /At most one block is active/);
-  assert.match(loop, /one decision at a time/);
+  assert.match(loop, /One question/);
   assert.match(loop, /Do not walk/);
   assert.match(trunk, /do not write the lower half before the upper half is confirmed/i);
   assert.match(trunk, /Feat 产品 does not read implementation/);

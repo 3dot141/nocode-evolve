@@ -1,0 +1,47 @@
+{
+  "name": "nocode",
+  "version": "0.11.0",
+  "description": "Harrison 的个人工程工作流与规则工具箱，支持 Claude Code、Codex、Qoder、Pi 和 DeepSeek Harness",
+  "author": "Harrison",
+  "homepage": "https://github.com/3dot141/nocode-evolve",
+  "repository": "https://github.com/3dot141/nocode-evolve",
+  "license": "MIT",
+  "keywords": [
+    "personal",
+    "rules",
+    "skills",
+    "workflow",
+    "dsh-plugin",
+    "deepseek-harness"
+  ],
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "exports": {
+    ".": "./lib/index.js",
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib/",
+    "skills/",
+    "model/",
+    "references/",
+    "rules/",
+    "scripts/",
+    "hooks/pretooluse-rules.json",
+    "cordis.patch.yml"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "^4.0.1",
+    "@deepseek-ai/dsh-skill": "^0.1.0-rc.7",
+    "@deepseek-ai/dsh-shell-env": "^0.1.0-rc.7",
+    "@deepseek-ai/dsh-system-prompt": "^0.1.0-rc.7",
+    "@deepseek-ai/dsh-tools": "^0.1.0-rc.7"
+  }
+}

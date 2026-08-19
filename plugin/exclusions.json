@@ -30,7 +30,8 @@
       "platforms": [
         "claude",
         "qoder",
-        "pi"
+        "pi",
+        "deepseek"
       ],
       "reason": "Codex-only: reinstalls nocode and restarts the managed Codex daemon"
     }

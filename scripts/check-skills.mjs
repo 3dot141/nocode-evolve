@@ -192,6 +192,13 @@ const PI_FORBIDDEN = [
   ['spawn_agent', /\bspawn_agent\b/g],
 ];
 
+const DEEPSEEK_FORBIDDEN = [
+  ...PI_FORBIDDEN,
+  ['/skill:', /\/skill:/g],
+  ['${CLAUDE_PLUGIN_ROOT}', /\$\{CLAUDE_PLUGIN_ROOT\}/g],
+  ['${NOCODE_PLUGIN_ROOT}', /\$\{NOCODE_PLUGIN_ROOT\}/g],
+];
+
 export function checkPlatformSyntax(raw, rel, platform) {
   if (platform === 'codex') {
     const errors = [];
@@ -205,6 +212,14 @@ export function checkPlatformSyntax(raw, rel, platform) {
     const errors = [];
     for (const [label, pattern] of PI_FORBIDDEN) {
       if (pattern.test(raw)) errors.push(`${rel}: Pi 生成物残留异平台语法 ${label}`);
+      pattern.lastIndex = 0;
+    }
+    return errors;
+  }
+  if (platform === 'deepseek') {
+    const errors = [];
+    for (const [label, pattern] of DEEPSEEK_FORBIDDEN) {
+      if (pattern.test(raw)) errors.push(`${rel}: DeepSeek 生成物残留异平台语法 ${label}`);
       pattern.lastIndex = 0;
     }
     return errors;
@@ -268,7 +283,7 @@ export function checkAll({
     if (!frontmatter?.description) errors.push(`${rel}: nested Skill 缺 description`);
   }
   errors.push(...checkCommands(root, targets));
-  if (platform === 'codex' || platform === 'pi') {
+  if (platform === 'codex' || platform === 'pi' || platform === 'deepseek') {
     const directories = platform === 'pi' ? ['skills', 'prompts'] : ['skills'];
     for (const file of listMarkdown(root, directories)) {
       const rel = path.relative(root, file).replaceAll('\\', '/');
@@ -298,7 +313,7 @@ export function parseCheckArgs(args) {
       options.root = arg.slice('--root='.length);
     } else if (arg === '--platform') {
       const platform = args[++index];
-      if (!platform) throw new Error('--platform requires claude, codex, qoder, pi or source');
+      if (!platform) throw new Error('--platform requires claude, codex, qoder, pi, deepseek or source');
       options.platform = platform;
     } else if (arg.startsWith('--platform=')) {
       options.platform = arg.slice('--platform='.length);
@@ -306,7 +321,7 @@ export function parseCheckArgs(args) {
       throw new Error(`unknown argument: ${arg}`);
     }
   }
-  if (!['source', 'claude', 'codex', 'qoder', 'pi'].includes(options.platform)) throw new Error(`unknown platform: ${options.platform}`);
+  if (!['source', 'claude', 'codex', 'qoder', 'pi', 'deepseek'].includes(options.platform)) throw new Error(`unknown platform: ${options.platform}`);
   return options;
 }
 

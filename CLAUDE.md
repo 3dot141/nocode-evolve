@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-本仓库是 Claude Code / Codex / Qoder / Pi 四平台插件 `nocode` 的源码。在此仓库工作时遵守以下约束。
+本仓库是 Claude Code / Codex / Qoder / Pi / DeepSeek Harness 五平台插件 `nocode` 的源码。在此仓库工作时遵守以下约束。
 
 > 与 `AGENTS.md` 同义（软链接），供其他遵循 AGENTS.md 约定的工具读取。
 
@@ -18,13 +18,13 @@
 修改插件业务源码、平台适配器或运行时文件时，**不要自动升级版本号**。只有用户明确要求发布或指定新版本时，才编辑版本单源 `plugin/metadata.json` 的 `version`：
 
 - 范围：`hooks/`、`model/`、`rules/`、`skills/`、`agents/`、`commands/`、`core/`、`adapters/`、`scripts/` 中参与插件运行或生成的文件，以及 `.mcp.json` 等平台运行时配置。
-- 无论版本号是否变化，只要上述源码发生改动，都要运行 `node scripts/package.platform.mjs` 生成两个平台发布物，并把源码与生成物包含在同一个 commit 里。
+- 无论版本号是否变化，只要上述源码发生改动，都要运行 `node scripts/package.platform.mjs` 生成五个平台发布物，并把源码与生成物包含在同一个 commit 里。
 - 用户要求升级版本时按 SemVer 执行。当前处于 `0.x` 阶段，在用户明确决定发布稳定版 `1.0.0` 前，major 固定为 `0`；非破坏性更新不得自动升级 major：
   - **patch**：bug fix / 文案修订
   - **minor**：新增 hook / skill / 兼容性增强
   - **0.x breaking change**：路径改名、规则语义反转等破坏性变更升级 minor，不自动进入 `1.0.0`
   - **major**：仅在用户明确决定进入新的稳定主版本时升级
-- `plugins/claude/nocode/`、`plugins/codex/nocode/`、`plugins/qoder/nocode/` 与 `plugins/pi/nocode/` 是生成物，**禁止手改**；Claude/Codex/Qoder marketplace 直接从 git 读取它们，不需要 tarball/npm 打包。Pi 开发期安装 `plugins/pi/nocode`。
+- `plugins/claude/nocode/`、`plugins/codex/nocode/`、`plugins/qoder/nocode/`、`plugins/pi/nocode/` 与 `plugins/deepseek/nocode/` 是生成物，**禁止手改**；Claude/Codex/Qoder marketplace 直接从 git 读取它们，不需要 tarball/npm 打包。Pi 开发期安装 `plugins/pi/nocode`；DeepSeek 开发期通过 `dsh plugin --profile <name> add ./plugins/deepseek/nocode` 安装。
 
 纯文档/元数据修订（README、本文件、AGENTS.md 等）同样不自动升级版本，仍遵守规则 1。
 
@@ -34,7 +34,7 @@
 
 - **触发路由**（catalog 里的一行）：改对应 `rules/rule-<id>.md` 顶部 frontmatter（`name` / `description` / `skip`，新增规则则新建文件）→ 跑 `node scripts/compile.rule.js` 重新生成 `model/agent-rule-catalog-*.md`
 - **PreToolUse 硬拦截**（Bash 命令级拦截，与上面那条完全独立）：改 `scripts/compile.hooks.js` 内硬编码的规则数组 → 跑 `node scripts/compile.hooks.js` 重新生成 `hooks/pretooluse-rules.json`
-- 一致性由 SessionStart 的 `node scripts/compile.rule.js --check` + `node scripts/compile.hooks.js --check` 兜底报警（漂移只 warn 不阻断 session）；修改后还要运行 `node scripts/package.platform.mjs` 同步双平台发布物
+- 一致性由 SessionStart 的 `node scripts/compile.rule.js --check` + `node scripts/compile.hooks.js --check` 兜底报警（漂移只 warn 不阻断 session）；修改后还要运行 `node scripts/package.platform.mjs` 同步五个平台发布物
 - 测试：`node --test 'hooks/*.test.mjs'`
 
 ### 4. vendor 同步（commit 前）

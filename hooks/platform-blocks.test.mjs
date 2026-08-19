@@ -28,6 +28,10 @@ test('renders shared Markdown plus only the selected platform block', () => {
     renderPlatformBlocks(SOURCE, { platform: 'pi', file: 'skills/example/SKILL.md' }),
     'shared before\nuse /skill:dev-design\nshared after\n',
   );
+  assert.equal(
+    renderPlatformBlocks(SOURCE, { platform: 'deepseek', file: 'skills/example/SKILL.md' }),
+    'shared before\nuse /skill:dev-design\nshared after\n',
+  );
 });
 
 test('rejects an unknown target platform', () => {

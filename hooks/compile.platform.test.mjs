@@ -21,6 +21,7 @@ import {
 import { parseArgs, run } from '../scripts/package.platform.mjs';
 import { claudeAdapter } from '../adapters/claude/adapter.mjs';
 import { codexAdapter } from '../adapters/codex/adapter.mjs';
+import { deepseekAdapter } from '../adapters/deepseek/adapter.mjs';
 import { piAdapter } from '../adapters/pi/adapter.mjs';
 
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -255,7 +256,7 @@ test('writeExpectedTree refuses to clean a path outside repo plugins/<platform>'
   const expected = new Map([['safe.txt', Buffer.from('safe')]]);
   assert.throws(
     () => writeExpectedTree(expected, path.join(root, 'skills'), root),
-    /plugins\/\{claude,codex,qoder,pi\}\/nocode/,
+    /plugins\/\{claude,codex,qoder,pi,deepseek\}\/nocode/,
   );
 });
 
@@ -283,7 +284,7 @@ test('writeExpectedTree preserves the source executable bit without assuming uma
 });
 
 test('package CLI argument parser defaults to both platforms and rejects unknown input', () => {
-  assert.deepEqual(parseArgs([]), { check: false, platforms: ['claude', 'codex', 'qoder', 'pi'] });
+  assert.deepEqual(parseArgs([]), { check: false, platforms: ['claude', 'codex', 'qoder', 'pi', 'deepseek'] });
   assert.deepEqual(parseArgs(['--check', '--platform=codex']), {
     check: true,
     platforms: ['codex'],
@@ -400,7 +401,6 @@ test('Codex adapter builds native skills and direct runtime overlays', () => {
     'rules/rule-git-worktree.md',
     'scripts/compile.rule.js',
     'skills/references/testing-guide.md',
-    'skills/agents-launcher/agents/openai.yaml',
     'skills/codex-nocode-reload/SKILL.md',
     'skills/codex-nocode-reload/scripts/codex-nocode-reload.mjs',
     'skills/devflow/SKILL.md',
@@ -443,9 +443,10 @@ test('Codex adapter builds native skills and direct runtime overlays', () => {
   );
   const launcher = tree.get('skills/agents-launcher/SKILL.md').toString();
   assert.doesNotMatch(launcher, /disable-model-invocation/);
-  assert.match(
-    tree.get('skills/agents-launcher/agents/openai.yaml').toString(),
-    /interface:\n  display_name: "agents-launcher"\n  short_description: "Use when explicitly starting, stopping, restarting, or checking the local fx-da.+"\npolicy:\n  allow_implicit_invocation: false/,
+  assert.equal(
+    tree.has('skills/agents-launcher/agents/openai.yaml'),
+    false,
+    'agents-launcher allows model invocation and must not publish an openai.yaml policy',
   );
   const launcherServer = tree.get('skills/agents-launcher/references/server.md').toString();
   assert.match(launcherServer, /未提供密码时复用本机已有 Docker 登录态/);
@@ -546,4 +547,42 @@ test('Pi adapter builds a package with prompts, skills, and an extension', () =>
   const prompt = tree.get('prompts/task.md').toString();
   assert.match(prompt, /\$ARGUMENTS/);
   assert.doesNotMatch(prompt, /<!-- nocode:platform/);
+});
+
+test('DeepSeek adapter builds a dsh bundle with skills, context, and bash rules', () => {
+  const metadata = JSON.parse(readFileSync(path.join(REPO_ROOT, 'plugin/metadata.json'), 'utf8'));
+  const tree = buildExpectedTree({ root: REPO_ROOT, metadata, adapter: deepseekAdapter });
+  for (const relative of [
+    'package.json',
+    'cordis.patch.yml',
+    'lib/index.js',
+    'lib/index.d.ts',
+    'skills/task/SKILL.md',
+    'skills/devflow/SKILL.md',
+    'model/agent-about.md',
+    'hooks/pretooluse-rules.json',
+    'runtime/context-budget.json',
+    'runtime/plugin-data-entry.mjs',
+    'scripts/session-state.mjs',
+  ]) {
+    assert.ok(tree.has(relative), `DeepSeek artifact missing ${relative}`);
+  }
+  assert.equal(tree.has('hooks/hooks.json'), false, 'DeepSeek must not publish hooks.json');
+  assert.equal(tree.has('skills/codex-nocode-reload/SKILL.md'), false);
+  const manifest = JSON.parse(tree.get('package.json').toString());
+  assert.equal(manifest.name, metadata.name);
+  assert.equal(manifest.version, metadata.version);
+  assert.equal(manifest.type, 'module');
+  assert.equal(manifest.main, 'lib/index.js');
+  assert.deepEqual(manifest.dsh, { bundle: { patch: './cordis.patch.yml' } });
+  const patch = tree.get('cordis.patch.yml').toString();
+  assert.match(patch, /- insert:\n    - id: nocode\n      name: 'nocode'/);
+  const plugin = tree.get('lib/index.js').toString();
+  assert.match(plugin, /ctx\.skills\.registerProvider/);
+  assert.match(plugin, /tools\/pre-execute/);
+  assert.match(plugin, /DSH_NOCODE_ROOT/);
+  const devflow = tree.get('skills/devflow/SKILL.md').toString();
+  assert.match(devflow, /\/dev-design/);
+  assert.doesNotMatch(devflow, /Skill\(nocode:|AskUserQuestion|update_plan|\/skill:/);
+  assert.doesNotMatch(devflow, /<!-- nocode:platform/);
 });

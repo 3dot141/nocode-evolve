@@ -40,11 +40,14 @@ test('Codex delegates oversized dynamic context to its native spill mechanism', 
 test('platform budgets record the Claude release policy and Codex documented limit', () => {
   const claude = loadContextBudget('platform/claude/runtime/context-budget.json');
   const codex = loadContextBudget('platform/codex/runtime/context-budget.json');
+  const deepseek = loadContextBudget('platform/deepseek/runtime/context-budget.json');
   assert.equal(claude.safeBytes, 8000);
   assert.equal(claude.policy, 'nocode release injection budget');
   assert.equal(codex.safeBytes, 2000);
   assert.equal(codex.documentedApproximateTokenLimit, 2500);
   assert.equal(codex.dynamicOverflow, 'passthrough');
+  assert.equal(deepseek.safeBytes, 8000);
+  assert.equal(deepseek.policy, 'nocode release injection budget for DeepSeek Harness');
 });
 
 test('generated SessionStart hooks load their colocated platform budget', () => {

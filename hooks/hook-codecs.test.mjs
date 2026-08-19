@@ -35,6 +35,8 @@ test('detectPlatform prefers explicit override, then Codex PLUGIN_ROOT', () => {
   assert.equal(detectPlatform({ NOCODE_PLATFORM: 'claude', PLUGIN_ROOT: '/codex' }), 'claude');
   assert.equal(detectPlatform({ NOCODE_PLATFORM: 'codex' }), 'codex');
   assert.equal(detectPlatform({ NOCODE_PLATFORM: 'pi' }), 'pi');
+  assert.equal(detectPlatform({ NOCODE_PLATFORM: 'deepseek' }), 'deepseek');
+  assert.equal(detectPlatform({ DSH_NOCODE_PLATFORM: 'deepseek' }), 'deepseek');
   assert.equal(detectPlatform({ PLUGIN_ROOT: '/plugin' }), 'codex');
   assert.equal(detectPlatform({ CLAUDE_PLUGIN_ROOT: '/plugin' }), 'claude');
 });

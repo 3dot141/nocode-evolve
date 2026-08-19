@@ -1,0 +1,6 @@
+# nocode DeepSeek Harness bundle patch.
+# One plugin row owns skills, system context, shell env, bash hard rules, and
+# session-state bootstrap. The row imports the package main from the profile.
+- insert:
+    - id: nocode
+      name: 'nocode'
