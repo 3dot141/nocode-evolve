@@ -1,6 +1,6 @@
 # Header
 - task: dev-design 文档协议优化——功能组结构 + 背景/目标 + Closing overview + 格式规范
-- status: active
+- status: landed
 - type: feat
 - phase: 开发
 - current: 实施

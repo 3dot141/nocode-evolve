@@ -14,13 +14,17 @@ devflow has one job: preserve one task identity while routing it through the Ski
 - One primary independently acceptable outcome gets one type. Split only independently acceptable outcomes that can hand off separately.
 - `dev-design` owns design Decisions. devflow may write only the classification Decision and append classification / stage process entries to the Log; it cannot interpret or rewrite any other Decision.
 - The current Log Handoff chooses the next Skill. devflow never guesses around it.
+- A Log whose Header `status` is terminal (`landed | cancelled | terminated`) is closed forever: it is never resumed and never receives new design content. New input after a completed round starts a new Log (a full new devflow round) linked back through `predecessor`; only a process pointer Event may be appended to the closed Log.
 
 ## Step 1 — Resolve the active Log
 
 Enter Gate: an engineering request or an exact existing Log path is available.
 
-1. If the caller provides an exact `design.log.md`, read it and keep that path. When it already has a current Handoff and no new evidence changes classification or design meaning, resume at Step 4 instead of re-entering dev-design.
-2. Otherwise create `docs/dev/{username}/{yymmdd}-{serial}-{topic}/design.log.md` using the path rules carried by `dev-design`.
+1. If the caller provides an exact `design.log.md`, read it and keep that path. Check Header `status` first:
+   - `active` with a current Handoff and no new evidence changing classification or design meaning -> resume at Step 4 instead of re-entering dev-design.
+   - terminal (`landed | cancelled | terminated`) -> the previous round is complete. Do not resume: create a new Log per step 2 for the new input and run a full new devflow round. Record the old Log's repository-relative path in the new Log Header `predecessor`, and append `Event N — successor` (detail: new Log path, `decisionImpact: none`) to the old Log.
+   - `active` but the new input is a genuinely new outcome and the previous round is effectively finished (e.g., built but not landed) -> close the old Log first (task-end Event plus Header `status`), then create the new Log as above.
+2. Otherwise create `docs/dev/{username}/{yymmdd}-{serial}-{topic}/design.log.md` using the path rules carried by `dev-design`, with Header `predecessor: 无`.
 3. If an existing task could match but no exact path can be proven, ask for the path instead of fuzzy-resuming another Log.
 
 Exit Gate: one exact Log path is known.
@@ -99,7 +103,7 @@ Exit Gate: the target Skill received the exact Log path and DES scope.
 - Local implementation choices that preserve the design remain in the current Skill.
 - Bug problem design returns from Debug to the same Log for repair design.
 - Verify or Review failures that do not change design return to Build; design conflicts return to dev-design.
-- Land success, explicit cancellation, or explicit termination closes the active Log. New outcomes create new Logs.
+- Land success, explicit cancellation, or explicit termination closes the active Log. A closed Log is never reopened: new input after closure starts a new Log linked back through `predecessor` (see Step 1); genuinely new outcomes likewise create new Logs.
 - After a target returns, append its result and evidence location as `Event N — returned-evidence` before choosing the next route. Set `decisionImpact` to `none` until dev-design forms or supersedes a Decision from it; no other Skill writes that Decision.
 
 ## Exit Gate

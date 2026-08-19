@@ -32,6 +32,7 @@ Old logs that still use six sections and eight-part Rounds are valid history. Do
 - type: bug | feat | refactor
 - phase: 产品 | 开发 | 问题 | 修复 | Before | After
 - current: 功能 1.1
+- predecessor: <repository-relative path of the Log this round continues, or 无>
 - createdAt:
 - artifacts:
   - log: ./design.log.md
@@ -62,6 +63,8 @@ An assigned DEC ID is never removed or given a new meaning. Semantic change crea
 
 Header.`phase` and Header.`current` name the active half and the active block. At most one block is active.
 
+Header.`predecessor` links to the Log of a completed previous round when devflow opened this Log for new input after closure; otherwise it is `无`. A terminal-status Log is never reopened — its Header, Decisions, and ROUNDs receive no new design content; only the `successor` pointer Event may be appended.
+
 ## DEC / ROUND separation
 
 - `DEC-###` is the current semantic result. `描述` is a one-line index. `内容` is the standalone conclusion `design.md` may cite. `后果` records the accepted cost or follow-up obligation the choice creates; write `无` when there is none. `过程` records proposed / revised / confirmed and any succession. Details stay in ROUND.
@@ -75,7 +78,7 @@ Write `无` rather than deleting an empty ROUND part. Persist 背景, 问题, an
 Non-decision workflow history may use a compact event instead of a DEC ID:
 
 ```markdown
-## Event N — stage-transition | returned-evidence | task-end
+## Event N — stage-transition | returned-evidence | task-end | successor
 - source:
 - detail:
 - decisionImpact: none | [DEC-...]

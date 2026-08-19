@@ -24,7 +24,7 @@ One task keeps the same paths through reclassification, Debug return, implementa
 
 Enter Gate: request plus either an exact Log path or enough information to create one.
 
-1. Resolve the task directory and initialize or re-read `design.log.md` using `references/grilling.md`.
+1. Resolve the task directory and initialize or re-read `design.log.md` using `references/grilling.md`. A Log with terminal Header `status` (`landed | cancelled | terminated`) is never reopened — return it to devflow, which starts a new Log for the new input.
 2. Confirm its current `DEC-###` classification is `bug | feat | refactor`. If classification evidence changes, append a superseding Decision and preserve the process in a ROUND; do not overwrite history.
 3. Re-read the Header, Decisions, latest ROUND, and Handoff before writing.
 

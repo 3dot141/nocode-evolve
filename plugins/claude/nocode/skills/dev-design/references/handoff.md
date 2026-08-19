@@ -43,4 +43,4 @@ Routes:
 - Feat -> Plan.
 - Refactor -> Plan.
 
-Pass the exact Log path with the Handoff. Handoff does not close the Log. Design-changing evidence returns to the same dev-design Log; Land, cancellation, or termination closes it.
+Pass the exact Log path with the Handoff. Handoff does not close the Log. Design-changing evidence returns to the same dev-design Log; Land, cancellation, or termination closes it. A closed Log is never reopened: new input after closure starts a new Log through devflow (linked back via Header `predecessor`), it is not appended here.
