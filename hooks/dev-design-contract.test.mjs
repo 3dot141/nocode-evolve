@@ -86,6 +86,9 @@ test("grilling separates formed Decisions from lossless per-ROUND process", asyn
   assert.match(grilling, /`DEC-###` is the current semantic result/);
   assert.match(grilling, /`ROUND-###` is the chronological decision process/);
   assert.match(grilling, /Do not reduce `回答` to “用户已确认”/);
+  assert.match(grilling, /lossless/);
+  assert.match(grilling, /open thread/);
+  assert.match(grilling, /DECs derive from ROUNDs/);
   assert.match(grilling, /One ROUND may form several Decisions/);
   assert.match(grilling, /Missing decision content keeps the ROUND `waiting`/);
   assert.match(grilling, /Event itself never receives `designDisposition` and never maps to a DES ID/);
