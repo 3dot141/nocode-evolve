@@ -18,6 +18,23 @@
 
 # ROUND
 
+## ROUND-002 — closed
+### 背景
+DEC-001 收录了 grill-me（包装层）+ grilling（原语）两个 skill，引用指向 grilling。用户指出应合并：「把 grilling 替换到 grill-me 中，后面只用 grill-me」。
+### 问题
+两个 skill 的合并形态？
+### 方案
+grilling 全文并入 grill-me（frontmatter 用 grilling 的 description），删除 skills/grilling/；引用全改 Skill(nocode:grill-me)。必要偏差：去掉上游 grill-me 的 disable-model-invocation: true（dev-design 需要模型侧调用）。引用处按平台块写五平台语法（codex 生成物不允许 Skill() 语法，测试拦截）。
+### 回答
+用户拍板合并。形成 DEC-002。
+
+## DEC-002
+- 描述: grilling 并入 grill-me，只留 grill-me
+- 内容: grilling SKILL.md 全文并入 grill-me（保留 grill-me 名字 + grilling 的 description）；删除 skills/grilling/ 目录；dev-design 两处 + 测试断言改指 nocode:grill-me；去掉上游 disable-model-invocation 以允许模型侧调用；跨平台引用走 nocode:platform 块（claude/codex/pi 三块，qoder/deepseek 继承）。
+- 后果: grill-me 不再是逐字上游（去 disable flag + 并内容），后续上游同步需人工对照。
+- 过程: ROUND-002 用户拍板。
+- 引用: [ROUND-002]
+
 ## ROUND-001 — closed
 ### 背景
 知乎对 grill-me 的批评（过度追问）触发盘点：本仓 grill-me/show-me 以蒸馏方式吸收（4502d06/c77e30d），产生 grilling-loop.md/visual-forms.md 两个改写副本。用户拍板改用完整上游 skill 直接引用。grill-me=mattpocock/skills（包装层→grilling 原语）；show-me=humanlayer/skills/plugins/show-me。

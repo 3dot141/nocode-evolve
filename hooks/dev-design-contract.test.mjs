@@ -17,7 +17,6 @@ test("dev-design is one thin public Skill with the confirmed private reference t
 
   for (const path of [
     "skills/grill-me/SKILL.md",
-    "skills/grilling/SKILL.md",
     "skills/show-me/SKILL.md",
     "skills/dev-design/references/grilling.md",
     "skills/dev-design/references/writing.md",
@@ -31,6 +30,7 @@ test("dev-design is one thin public Skill with the confirmed private reference t
   ]) {
     assert.equal(exists(path), true, path);
   }
+  assert.equal(exists("skills/grilling/SKILL.md"), false);
   assert.equal(exists("skills/references/grilling-loop.md"), false);
   assert.equal(exists("skills/dev-design/decision/SKILL.md"), false);
   assert.equal(exists("skills/dev-design/writing/SKILL.md"), false);
@@ -41,7 +41,7 @@ test("grilling persists one complete ROUND before advancing", async () => {
   const [trunk, grilling, upstream, writing] = await Promise.all([
     read("skills/dev-design/SKILL.md"),
     read("skills/dev-design/references/grilling.md"),
-    read("skills/grilling/SKILL.md"),
+    read("skills/grill-me/SKILL.md"),
     read("skills/dev-design/references/writing.md"),
   ]);
 
@@ -63,8 +63,8 @@ test("grilling persists one complete ROUND before advancing", async () => {
   assert.match(trunk, /persist a new waiting ROUND, ask that one question, and stop the turn/);
 
   // interview method is delegated to the upstream skill, not a local copy
-  assert.match(trunk, /Skill\(nocode:grilling\)/);
-  assert.match(grilling, /Skill\(nocode:grilling\)/);
+  assert.match(trunk, /Skill\(nocode:grill-me\)/);
+  assert.match(grilling, /Skill\(nocode:grill-me\)/);
   assert.match(upstream, /frontier/);
   assert.match(upstream, /Finding _facts_ is your job, never the user's/);
   // visual vocabulary is delegated to the upstream show-me skill

@@ -1,6 +1,10 @@
 # Grilling and Log protocol
 
-Read this reference when creating, resuming, or advancing `design.log.md`. The interview method (design tree, frontier rounds, fact-finding, done condition) is not restated here — invoke `Skill(nocode:grilling)` and follow it. This file owns only the Log persistence protocol.
+Read this reference when creating, resuming, or advancing `design.log.md`. The interview method (design tree, frontier rounds, fact-finding, done condition) is not restated here — invoke the `grill-me` skill and follow it:
+
+Use `$grill-me`.
+
+This file owns only the Log persistence protocol.
 
 ## Task path
 
@@ -88,7 +92,7 @@ An Event records movement or returned evidence. If it changes a design meaning, 
 
 ## Selecting the next question
 
-Invoke `Skill(nocode:grilling)` for the interview method (design tree, frontier, fact-finding, done condition). Type `questions.md` files are coverage checks after a half is empty. They do not generate the next question.
+Invoke the `grill-me` skill for the interview method (design tree, frontier, fact-finding, done condition) — same invocation as at the top of this file. Type `questions.md` files are coverage checks after a half is empty. They do not generate the next question.
 
 ## Evidence
 
