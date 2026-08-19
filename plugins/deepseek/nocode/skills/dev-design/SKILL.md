@@ -58,7 +58,7 @@ Never ask the user for a fact the environment can prove. Never use a confidence 
 
 When the upper tree is empty, write the upper half of `design.md` from confirmed DEC IDs, persist a confirmation ROUND, write a DEC whose `描述` is that the upper half is confirmed (no DES), and stop. Do not start the lower half until that ROUND is closed. A bug 问题 confirmation hands off to Debug.
 
-When a lower-half block is closed, append that block to `design.md` (flowchart, 接口, 伪代码, 问题) before the next question.
+When a lower-half block is closed, append that block to `design.md` (接口, 伪代码, 影响文件) inside its function group before the next question.
 
 Exit Gate: every applicable coverage item for the current half is confirmed, evidence-backed n/a, or superseded.
 

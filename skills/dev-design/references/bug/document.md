@@ -34,18 +34,20 @@ Append only after Debug returns and the 问题 half stays in the same file.
 
 Extend the problem panorama with the fault mechanism and before / after repair path. Do not delete the problem view.
 
-### Per-repair sections
+### Per-mechanism groups
 
-Each independently judgeable repair outcome has:
+Group repairs by fault mechanism: one mechanism = one group carrying every repair it needs. Each group has:
 
-1. 流程图 — fault-before / repair-after
-2. 接口 — verified contracts and callers; see `references/writing.md`
-3. 伪代码 — the selected repair mechanism
-4. 问题 — remaining risks and user decisions
+1. 背景 — the fault mechanism, linking the Debug evidence that proves it
+2. 目标 — repair acceptance (judgeable)
+3. 机制流程 — fault-before / repair-after (ASCII)
+4. blocks — one `N.x` per independently judgeable repair outcome, each with 接口 / 伪代码 / 影响文件; see `references/writing.md`. A block carries its own 流程图 when its repair has control flow the group view cannot show
+5. 问题 — remaining risks and user decisions
+6. 影响文件汇总 — one tree consolidating this group’s blocks
 
-Then: consolidated impacted-files index (`NEW / MODIFY / DELETE / PRESERVE`), compatibility / rollback, regression objectives, and Env versus Plan with the single-slice rule.
+Then: compatibility / rollback, regression objectives, and Env versus Plan with the single-slice rule.
 
-Architecture or DDD detail is conditional. Multi-domain collaboration is mandatory when the repair crosses domain or data-owner boundaries.
+Architecture or DDD detail is conditional. Multi-domain collaboration is mandatory when the repair crosses domain or data-owner boundaries. End the half with the Closing overview (`总览 / 架构 / 文件`) as defined in `references/writing.md`.
 
 ## DES granularity
 

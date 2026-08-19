@@ -1,6 +1,6 @@
 # Feat design document
 
-Write the upper half after 产品 confirmation. Append each 开发 function only after that function’s ROUND is closed.
+Write the upper half after 产品 confirmation. Append each 开发 function group skeleton when the group opens, then each block as its ROUND closes.
 
 ## 产品
 
@@ -18,24 +18,27 @@ Write this chapter only after the 产品 confirmation ROUND is closed.
 
 ### Opening panorama
 
-One ASCII screen shows architecture, the system flow, active DES IDs, and the Plan Handoff.
+One ASCII screen shows the function chains, the dependency direction between chains, active DES IDs, and the Plan Handoff. A chain runs end to end — frontend, backend, and data of one capability stay in one chain; an external collaboration prerequisite (another system, service, or repo that must change first) is a chain of its own.
 
-### Architecture and flow
+### Function groups
 
-Boundaries, responsibilities, dependency direction, and the main system path. Failures and recovery belong on the flow.
+Organize by function chain, never by tier or repo side: one chain = one group carrying all its parts together. Splitting one chain into backend and frontend sections hides the end-to-end flow the reader needs.
 
-### Per-function sections
+Each group carries the full skeleton regardless of size — a single-group task keeps every part:
 
-Each product function becomes one development section with all four parts:
+1. 背景 — why this chain exists (2–3 lines, problem motivation)
+2. 目标 — the judgeable outcome (2–3 lines)
+3. 全景 — one ASCII view of this chain’s structure
+4. 流程 — this chain’s end-to-end control flow (ASCII), with failure and recovery
+5. blocks — one `N.x` per sub-function, each with 接口 / 伪代码 / 影响文件; see `references/writing.md`
+6. 问题 — this group’s non-blocking opens, user decisions, and collaboration points
+7. 影响文件汇总 — one tree consolidating this group’s blocks
 
-1. 流程图 — implementation / control flow
-2. 接口 — verified external and internal contracts; see `references/writing.md`
-3. 伪代码 — the load-bearing control flow
-4. 问题 — open items, user decisions, ungrillable look-and-feel
+A block carries its own 流程图 only when it has control flow the group flow cannot show. Do not invent a path, symbol, signature, or schema. Missing facts become an investigation DES.
 
-Do not invent a path, symbol, signature, or schema. Missing facts become an investigation DES.
+### Closing overview
 
-After all functions, include one consolidated impacted-files index: each repository-relative `NEW / MODIFY / DELETE / PRESERVE` file appears once with every function, DES ID, and numbered change point.
+End the half with `总览 / 架构 / 文件` as defined in `references/writing.md`.
 
 ## Conditional lenses
 

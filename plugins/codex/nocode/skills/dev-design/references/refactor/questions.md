@@ -21,7 +21,7 @@ Read the Before implementation first. Recommend the best structure, not the smal
 - [ ] Target quality can be judged without taste alone.
 - [ ] Real After alternatives, or proof that only one structure is feasible.
 - [ ] After architecture and migration flow exist.
-- [ ] Every structural block has flowchart, 接口, 伪代码, and 问题.
+- [ ] After blocks group into change groups (背景, 目标, 迁移流程, 问题, 影响文件汇总) with blocks carrying 接口, 伪代码, and 影响文件.
 - [ ] Every old element maps to preserve, migrate, adapt, or delete.
 - [ ] Coexistence, rollback, cleanup Gate, and characterization proof are closed.
 

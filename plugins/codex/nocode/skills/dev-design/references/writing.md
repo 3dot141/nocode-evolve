@@ -59,7 +59,8 @@ Disposition lives in this table, not on the DEC record. This table is a view, no
 The normative diagram source is ASCII in `design.md`:
 
 - product / problem / Before overview -> one-screen panorama;
-- function or repair control flow -> 流程图 in that block;
+- chain / mechanism / migration structure -> the group’s 全景;
+- chain / mechanism / migration control flow -> the group’s 流程图; a block keeps its own flow only with independent control flow;
 - boundaries, responsibilities, dependencies, data ownership -> architecture;
 - participant order, return, timeout, retry, concurrency -> sequence when needed.
 
@@ -72,9 +73,9 @@ Annotate relevant DES IDs. Cover applicable failures and recovery. If a flow / s
 
 ## Per-block implementation surface
 
-Every design baseline must identify the implementation surface at repository-verifiable depth. Each lower-half block (function, repair outcome, or structural outcome) is a presentation boundary, not a third identity namespace. Do not create `FEAT-###`.
+Every design baseline must identify the implementation surface at repository-verifiable depth. Each lower-half block (sub-function, repair outcome, or structural outcome) is a presentation boundary, not a third identity namespace. Do not create `FEAT-###`.
 
-The block must contain 流程图, 接口, 伪代码, and 问题. 接口 carries the verified contracts and the impacted files for that block.
+The block must contain 接口, 伪代码, and 影响文件. 流程图 and 问题 live one level up in the function group; a block carries its own 流程图 only when it has control flow the group flow cannot show. A block with no contract change states so explicitly under 接口 — its 伪代码 still spells out the concrete change; wording-only or prompt-only is not a reason to blur it.
 
 ### 接口
 
@@ -111,23 +112,44 @@ The block must contain 流程图, 接口, 伪代码, and 问题. 接口 carries 
 
 ### Impacted files
 
-Include a repository-relative tree of files to add, modify, delete, or explicitly preserve. Annotate each file with `NEW / MODIFY / DELETE / PRESERVE`, relevant DES IDs, and numbered change points.
+Impacted files form three levels — block tree, group consolidation, repository-wide closing tree:
+
+1. each block ends with its own tree;
+2. each function group consolidates its blocks into one 影响文件汇总 tree;
+3. the Closing overview `文件` section carries one repository-wide tree (below).
+
+Each level is a repository-relative ASCII tree annotated with `NEW / MODIFY / DELETE / PRESERVE`, relevant DES IDs, numbered change points, and short `#` comments.
 
 ```text
 <repository root>/
-├── path/to/existing-file.ext  (MODIFY)   [DES-001]
+├── path/to/existing-file.ext  (MODIFY)   [DES-001]  # change point
 ├── path/to/new-file.ext       (NEW)      [DES-002]
 ├── path/to/obsolete-file.ext  (DELETE)   [DES-003]
 └── path/to/invariant-file.ext (PRESERVE) [DES-004]
 ```
 
-This section defines design impact, not implementation order. Plan owns task sequencing.
+In the repository-wide tree a file shared by several groups appears once with every group, DES ID, and numbered change point, plus the list of new directories — collisions surface here.
 
-After all blocks, include one consolidated impacted-files index. A file shared by several blocks appears once with every relevant block title, DES ID, and numbered change point. This index exposes collisions.
+These trees define design impact, not implementation order. Plan owns task sequencing.
 
 ### 伪代码 and 问题
 
-伪代码 is the load-bearing control flow of the block. 问题 lists accepted non-blocking opens, remaining user decisions, and ungrillable look-and-feel. A blocking problem prevents marking the block closed.
+伪代码 is the load-bearing control flow of the block — concrete enough to check against the code, even when the change is wording or prompt text. 问题 lives at the group level: accepted non-blocking opens, remaining user decisions, and ungrillable look-and-feel. A blocking problem prevents marking the group closed.
+
+## Formatting rules
+
+- Panoramas and flows are ASCII inside `design.md`.
+- File lists are ASCII trees with change-type tags and short `#` comments — never bare path lists.
+- 接口 and 伪代码 use fenced code blocks with a language tag (`ts` / `tsx` / `text`) and real structured formatting — actual signatures, control flow, aligned comments — never untagged prose pseudocode.
+- Pick the smallest view that carries the point; see `${PLUGIN_ROOT}/skills/references/visual-forms.md`.
+
+## Closing overview
+
+Every lower half ends with three sections:
+
+- `# 总览` — heading only.
+- `## 架构` — one system-level ASCII panorama crossing every function group: boundaries and dependency direction no single chain view shows.
+- `## 文件` — the repository-wide impacted-files tree with the new-directories list.
 
 ## Conditional depth
 
@@ -144,9 +166,13 @@ Before requesting full confirmation, mechanically check:
 - [ ] required DEC IDs have DES coverage or explicit n/a;
 - [ ] every DES ID has sourceDecisionIds;
 - [ ] every implementation / preservation / verification DES appears in at least one lower-half block;
-- [ ] every lower-half block has 流程图, 接口, 伪代码, and 问题;
+- [ ] every function group has 背景, 目标, 全景, 流程, 问题, and a consolidated impacted-files tree;
+- [ ] every lower-half block has 接口, 伪代码, and 影响文件 (own 流程图 only with independent control flow);
+- [ ] blocks without contract change state so explicitly, and their 伪代码 stays concrete;
 - [ ] 接口 names verified symbols / signatures or an explicit investigation DES;
-- [ ] impacted files are evidence-backed and annotated with change type plus DES IDs;
+- [ ] 接口 and 伪代码 blocks carry a language tag and structured formatting;
+- [ ] impacted files are evidence-backed, annotated with change type plus DES IDs, and appear at block, group, and repository-wide levels;
+- [ ] the Closing overview has 架构 (system ASCII panorama) and 文件 (repository-wide tree with new directories);
 - [ ] key ASCII diagrams and prose have no relationship conflict.
 
 Any failure returns to grilling. Do not mask a gap with user approval, a review score, a verdict, revision, digest, Packet, or receipt.

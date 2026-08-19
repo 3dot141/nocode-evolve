@@ -15,7 +15,7 @@ Run the 开发 Gate only after the 产品 confirmation ROUND is closed and devel
 
 - [ ] The real outcome maps to the function tree.
 - [ ] Every function in the tree has a development section, or an explicit n/a reason.
-- [ ] Every development section has 流程图, 接口, 伪代码, and 问题.
+- [ ] Every function group has 背景, 目标, 全景, 流程, 问题, and a consolidated impacted-files tree; every block has 接口, 伪代码, and 影响文件.
 - [ ] Every applicable competitor insight has provenance and a named impact on the tree or a function.
 - [ ] Every domain / data-owner crossing has direction, contract, owner, consistency, authorization, retry / compensation, observation, and verification.
 - [ ] Every triggered quality or sensitive risk has an enforceable design and proof objective.

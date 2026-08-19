@@ -36,18 +36,20 @@ Before                              After
 
 Selected After structure, Before-to-After mapping, coexistence, rollback, and cleanup Gate.
 
-### Per-block sections
+### Per-group sections
 
-Each structural outcome has:
+Group structural outcomes by change group: one coherent structural move = one group. Each group has:
 
-1. 流程图 — Before-to-After interaction
-2. 接口 — verified public and internal seams; see `references/writing.md`
-3. 伪代码 — the structural change
-4. 问题 — remaining migration or deletion risks
+1. 背景 — motivation; reference the Before half, do not restate it
+2. 目标 — target structure and stopping condition (reference the Before target quality)
+3. 迁移流程 — Before-to-After interaction (ASCII)
+4. blocks — one `N.x` per structural outcome, each with 接口 / 伪代码 / 影响文件; see `references/writing.md`. A block carries its own 流程图 when its migration has control flow the group view cannot show
+5. 问题 — remaining migration or deletion risks
+6. 影响文件汇总 — one tree consolidating this group’s blocks
 
-Then: consolidated impacted-files index (`NEW / MODIFY / DELETE / PRESERVE`) and verification objectives.
+Then: consolidated verification objectives.
 
-Architecture and DDD are optional lenses. Use DDD when language, ownership, aggregates, or consistency boundaries actually change.
+Architecture and DDD are optional lenses. Use DDD when language, ownership, aggregates, or consistency boundaries actually change. End the half with the Closing overview (`总览 / 架构 / 文件`) as defined in `references/writing.md`.
 
 ## DES granularity
 

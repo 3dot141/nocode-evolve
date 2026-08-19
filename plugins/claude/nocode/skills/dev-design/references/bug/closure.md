@@ -20,7 +20,7 @@ Do not include root cause or repair in the problem baseline unless evidence alre
 
 - [ ] The root-cause claim explains every material symptom and reproduction condition.
 - [ ] Real repair mechanisms are compared, or only one is proven feasible.
-- [ ] Every repair block has 流程图, 接口, 伪代码, and 问题.
+- [ ] Every mechanism group has 背景, 目标, 机制流程, 问题, and a consolidated impacted-files tree; every repair block has 接口, 伪代码, and 影响文件.
 - [ ] Repair effects propagate through callers, flows, contracts, data, state, and failure paths.
 - [ ] Every repair / preserve obligation has regression, observation, compatibility, rollback, or cleanup proof.
 - [ ] Env versus Plan has objective evidence.

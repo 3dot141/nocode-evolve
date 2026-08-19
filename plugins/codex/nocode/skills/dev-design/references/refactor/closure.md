@@ -14,7 +14,7 @@ Reopen the responsible Before or After block. Do not refer to R-numbers as the n
 - [ ] Target qualities can be judged without relying on taste alone.
 - [ ] Real structural alternatives exist, or only one is proven feasible.
 - [ ] After architecture and migration flow exist.
-- [ ] Every structural block has 流程图, 接口, 伪代码, and 问题.
+- [ ] Every change group has 背景, 目标, 迁移流程, 问题, and a consolidated impacted-files tree; every structural block has 接口, 伪代码, and 影响文件.
 - [ ] Every old element maps to preserve, migrate, adapt, or delete.
 - [ ] Intermediate risk has detection and recovery.
 - [ ] Deletion waits for caller / data / traffic evidence.

@@ -15,8 +15,8 @@ Use this file after a half’s task tree is empty. It does not generate the next
 
 Investigate the current implementation of the active function before designing it.
 
-- [ ] Development panorama, architecture, and system flow exist.
-- [ ] Every product function has a development section with flowchart, 接口, 伪代码, and 问题.
+- [ ] Development panorama with function chains and chain dependencies exists.
+- [ ] Every product function has a function group (背景, 目标, 全景, 流程, 问题, 影响文件汇总) whose blocks carry 接口, 伪代码, and 影响文件.
 - [ ] Interfaces name verified symbols or an investigation DES.
 - [ ] Failure, recovery, and applicable sensitive risks have an enforceable design.
 - [ ] Release, migration, compatibility, rollback, and cleanup are closed when they apply.

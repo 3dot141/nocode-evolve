@@ -21,7 +21,7 @@ Read returned Debug evidence first.
 
 - [ ] Root-cause claim explains the symptom, reproduction, and material evidence.
 - [ ] Real repair alternatives, or proof that only one mechanism is feasible.
-- [ ] Each repair block has flowchart, 接口, 伪代码, and 问题.
+- [ ] Repairs group by mechanism (背景, 目标, 机制流程, 问题, 影响文件汇总) with blocks carrying 接口, 伪代码, and 影响文件.
 - [ ] Callers, data, contracts, and failure paths are propagated.
 - [ ] Regression, observation, compatibility, rollback, and cleanup are closed.
 - [ ] Env versus Plan is chosen with the single-slice rule.
