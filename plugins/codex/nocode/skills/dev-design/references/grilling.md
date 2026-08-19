@@ -58,7 +58,7 @@ Old logs that still use six sections and eight-part Rounds are valid history. Do
 ### 背景
 ### 问题
 ### 方案
-### 回答
+### 过程
 
 # Handoff
 ```
@@ -72,11 +72,12 @@ Header.`predecessor` links to the Log of a completed previous round when devflow
 ## DEC / ROUND separation
 
 - `DEC-###` is the current semantic result. `描述` is a one-line index. `内容` is the standalone conclusion `design.md` may cite. `后果` records the accepted cost or follow-up obligation the choice creates; write `无` when there is none. `过程` records proposed / revised / confirmed and any succession. Details stay in ROUND.
-- `ROUND-###` is the chronological decision process. Do not reduce `回答` to “用户已确认” when it contains material content.
-- A `回答` must be lossless. Every distinct point in the user's reply — a decision, a qualification, a doubt, a naming objection, an explicitly open thread (“还要聊 / 没聊完”) — needs a landing place: absorbed into a DEC, quoted in the 回答, or opened as a new waiting ROUND. An open thread never disappears just because its ROUND closes. DECs derive from ROUNDs, so a point the ROUND drops never reaches any DEC — an omission is a loss.
+- `ROUND-###` is the chronological decision process. Its `过程` section is the lossless record of the exchange: the user's reply at close-to-original fidelity, what the reply absorbed (branches killed / opened, DEC IDs formed or superseded), and every open thread named explicitly. Do not reduce `过程` to “用户已确认” when it contains material content.
+- A `过程` must be lossless. Every distinct point in the user's reply — a decision, a qualification, a doubt, a naming objection, an explicitly open thread (“还要聊 / 没聊完”) — needs a landing place: absorbed into a DEC, quoted in the 过程, or opened as a new waiting ROUND. An open thread never disappears just because its ROUND closes. DECs derive from ROUNDs, so a point the ROUND drops never reaches any DEC — an omission is a loss.
+- DEC.`过程` (proposed / revised / confirmed, succession) is the decision's cross-round lifecycle — a different scope from ROUND.`过程` (the within-round exchange). Do not conflate them.
 - One ROUND may form several Decisions. One Decision may cite several ROUNDs. Split results into related DEC IDs whenever they can be accepted, changed, or superseded independently.
 
-Write `无` rather than deleting an empty ROUND part. Persist 背景, 问题, and a concrete 方案 as `waiting` before asking. After the answer, fill 回答, update every affected Decision, and only then mark the ROUND `closed` and ask the next question. Missing decision content keeps the ROUND `waiting`.
+Write `无` rather than deleting an empty ROUND part. Persist 背景, 问题, and a concrete 方案 as `waiting` before asking. After the reply, fill 过程, update every affected Decision, and only then mark the ROUND `closed` and ask the next question. Missing decision content keeps the ROUND `waiting`.
 
 ## Process Events
 

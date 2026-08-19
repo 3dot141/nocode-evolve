@@ -50,7 +50,7 @@ test("grilling persists one complete ROUND before advancing", async () => {
   }
   assert.doesNotMatch(grilling, /# Decision Tree|# Terms/);
 
-  for (const part of ["### 背景", "### 问题", "### 方案", "### 回答"]) {
+  for (const part of ["### 背景", "### 问题", "### 方案", "### 过程"]) {
     assert.match(grilling, new RegExp(part));
   }
 
@@ -85,7 +85,8 @@ test("grilling separates formed Decisions from lossless per-ROUND process", asyn
   assert.match(grilling, /- 引用:/);
   assert.match(grilling, /`DEC-###` is the current semantic result/);
   assert.match(grilling, /`ROUND-###` is the chronological decision process/);
-  assert.match(grilling, /Do not reduce `回答` to “用户已确认”/);
+  assert.match(grilling, /Do not reduce `过程` to “用户已确认”/);
+  assert.match(grilling, /DEC\.`过程`.*cross-round lifecycle/);
   assert.match(grilling, /lossless/);
   assert.match(grilling, /open thread/);
   assert.match(grilling, /DECs derive from ROUNDs/);

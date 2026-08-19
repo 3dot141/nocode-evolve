@@ -12,7 +12,7 @@ Upper-half confirmation is a ROUND that unlocks the lower half. It is not a Hand
 
 ## Persist confirmation
 
-Complete the confirmation ROUND with the user's full 回答. Confirmation authorizes the baseline but does not create a Decision or DES source. Then record that ROUND in the Handoff:
+Complete the confirmation ROUND with the user's full 过程. Confirmation authorizes the baseline but does not create a Decision or DES source. Then record that ROUND in the Handoff:
 
 ```yaml
 ConfirmedBy: ROUND-N

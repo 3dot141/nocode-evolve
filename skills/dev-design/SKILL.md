@@ -60,9 +60,9 @@ For each turn:
 
 1. Investigate only the facts this phase allows. Feat 产品 does not read implementation to learn what the system already does. Bug 问题 and refactor Before may read only to record current structure, actual, or repro. Lower half reads the active block first.
 2. Select the earliest unclosed task-tree node whose dependencies are closed.
-3. Persist a waiting ROUND with one question, a recommended 方案, and empty 回答.
+3. Persist a waiting ROUND with one question, a recommended 方案, and empty 过程.
 4. Ask that one question and stop the turn.
-5. On reply, write the full decision-bearing 回答, update DEC `描述` / `内容` / `过程` / `引用`, and close the ROUND. For the next decision, persist a new waiting ROUND, ask that one question, and stop the turn.
+5. On reply, write the full lossless 过程, update DEC `描述` / `内容` / `过程` / `引用`, and close the ROUND. For the next decision, persist a new waiting ROUND, ask that one question, and stop the turn.
 
 Never ask the user for a fact the environment can prove. Never use a confidence percentage as a substitute for closing a required branch. Never recommend a design because it is smaller or faster.
 
