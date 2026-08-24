@@ -56,6 +56,7 @@ skills/
 | `lark-project` | 飞书项目管理路由壳（透传 meegle，维护既有调用契约） |
 | `meegle` | 飞书项目（Meego/Meegle）官方 CLI 操作指南（工作项 / 流转 / MQL / 视图 / 待办 / 排期） |
 | `lark-read` | 完整读取飞书文档（文字 + 嵌入图片） |
+| `figma-read` | 读 Figma 设计稿节点：提取设计值 / 渲染节点截图 / 解析变量（REST API） |
 | `signoz-cli` | 查询 SigNoz 的 trace / log / metric，跑 PromQL/ClickHouse SQL |
 
 ### 方法论类（跨阶段通用能力）
