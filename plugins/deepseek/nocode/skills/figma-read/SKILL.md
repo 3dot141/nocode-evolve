@@ -15,6 +15,8 @@ Figma URL ─→ file_key + node_id
                 ├─ Step 5  variables    ─→ 变量名 ↔ 值（Enterprise 限定，可选）
                 │
                 └─ Step 6  设计值 × 当前代码实现 ─→ 差异表
+
+无 $FIGMA_TOKEN 时：Step 2a ego-browser 网页端（截图 + 面板部分值，备选）
 ```
 
 ## Step 1: 解析 URL
@@ -30,12 +32,22 @@ https://www.figma.com/design/{file_key}/{title}?node-id={node_id}&...
 
 ## Step 2: 确认 Token
 
-Figma Personal Access Token 是必须的。获取优先级：
+Figma Personal Access Token 是首选。获取优先级：
 
 1. **环境变量 `$FIGMA_TOKEN`**（常配置在 `~/.zshenv`，先试直接引用）
-2. 都没有 → 问用户要，并告知生成方式：Figma 网页端 → 头像 → Settings → Personal access tokens → Generate new token（`figd_xxxx` 格式，生成后只显示一次）
+2. 拿不到但浏览器已登录 Figma → 走 **Step 2a** ego-browser 网页端通道（零配置快路径，值不完备），同时告知用户可生成 token 换全量精确值
+3. 都不行 → 问用户要，并告知生成方式：Figma 网页端 → 头像 → Settings → Personal access tokens → Generate new token（`figd_xxxx` 格式，生成后只显示一次）
 
 curl 调用时直接引用环境变量：`-H "X-Figma-Token: $FIGMA_TOKEN"`。
+
+## Step 2a: 无 Token 备选——ego-browser 网页端通道
+
+无 `$FIGMA_TOKEN` 且浏览器已登录 Figma 时，可用 ego-browser 复用登录态打开设计稿：截图做视觉参考 + 读右栏属性面板 DOM 文本取部分设计值。**完整流程、脚本与能力边界见 `references/ego-browser-channel.md`**。
+
+要点纪律：
+
+- 面板文本是**渲染快照的部分值**（折叠/虚拟化/格式化/版本漂移四层损耗）——够快查，不作对齐基准；拿到 token 后仍以 Step 3 REST 为准
+- 截图只做视觉参考，不推精确数值
 
 ## Step 3: 取节点 JSON，提取设计值
 
