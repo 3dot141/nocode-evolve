@@ -20,6 +20,8 @@ WHERE conditionExpression                    -- 查询条件（可选）
 - **不支持 `SELECT *`，必须显式指定字段**
 - 所有字段名和表名必须使用反引号包裹，如 `` `工作项ID` ``、`` `空间名`.`需求` ``，**带 target 修饰符时必须包裹整个字段**：`` `name<target:all>` ``
 - SELECT/FROM/WHERE/ORDER BY 中既可使用 key 也可使用名称。**优先使用 key**，从 `list_workitem_field_config` 返回值中获取：系统字段 key 为单词（如 `priority`、`status`），自定义字段 key 为 `field_x23bd` 格式，工作项类型 key 如 `story`、`issue`。名称是用户自定义的 UGC 内容（语言不定），仅作为找不到 key 时的兜底
+- **FROM 的项目名用中文项目名 + 反引号**（`` `一体化产研团队`.story ``）；中文项目名不带反引号报 `unrecognized character`。**不要用 simple_name**（如 `b2rl2h`）——可能撞同名歧义空间报 `no permission`（实测）。项目名与 `project search` 返回的 name 对齐
+- 系统字段 key 按类型有别：story 类用 `work_item_id` / `work_item_status`（`id` / `status` 会报 `attr label not found` 并在报错里提示正确名），字段拿不准时先看报错的 did-you-mean
 - 字符串用单引号：`'value'`
 - 数组用 JSON 格式：`'["a","b"]'`
 - 枚举值优先用 label（如 `'通过'`），不要用 id

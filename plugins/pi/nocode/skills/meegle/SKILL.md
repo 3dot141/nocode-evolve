@@ -142,6 +142,7 @@ description: >-
 
 ### workflow transition-state
 仅用于状态流工作项，流转工作项状态。先用 `workflow list-state-transitions` 获取可流转状态及 transition_id。
+> 🚨 **执行状态流转必须走 [references/sop-transition-state.md](references/sop-transition-state.md) 的完整 SOP**（fail-fast 流转 → 必填字段补填 → 重试），本节只是参数表。流转常被 confirm_form 必填字段拦截（如「缺陷来源于需求」），**CLI 不支持在 transition-state 上传字段值**——按 SOP 先 `workitem update` 预填再裸流转，不要试 `--params` 传 `fields`/`confirm_form`（均为 unknown_params，实测无效）。
 
 | 参数 | 类型 | 必填 | 说明 |
 |------|------|------|------|
@@ -410,7 +411,7 @@ description: >-
 | 条件查询 / 个人待办 | `workitem query`（MQL） / `mywork todo` |
 | 团队排期 | `workhour list-schedule`（≤20 人、≤3 月） |
 | 创建 / 修改工作项 | `workitem create` / `workitem update`（字段 fields，角色 role_operate） |
-| 节点流转 / 状态流转 | `workflow transition`（confirm/rollback） / `workflow transition-state`（先 `workflow list-state-transitions`） |
+| 节点流转 / 状态流转 | `workflow transition`（confirm/rollback） / `workflow transition-state`（走 [sop-transition-state.md](references/sop-transition-state.md) SOP） |
 | 视图数据 | `view get` |
 
 

@@ -27,6 +27,7 @@ meegle workflow list-state-transitions --work-item-id 工作项ID --work-item-ty
 ```
 
 - **匹配目标状态**：精确 / 模糊 / 语义匹配用户意图（如"关闭" → "已关闭"，"解决" → "已解决"）拿到对应的 `transition_id`。
+- 返回里每个 transition 带 `confirm_form[]`（流转确认表单的 field_key + name）——流转被必填字段拦截时，用它把报错里的 field_key 映射到字段名，不必再查 meta-fields 定位。
 - 🚨 **未明确目标状态且有多个候选时**：**必须展示所有可选项让用户选择**，不得替用户默认选择。
 
 ### STEP 3 — Fail-fast 直接尝试流转
@@ -100,6 +101,7 @@ meegle workitem meta-fields --page-num 1 --project-key 空间key --work-item-typ
 | `schedule` | **stringified**，如 `"[1722182400000,1722355199999]"` |
 | `precise_date` | **stringified**，如 `"{\"start_time\":...,\"end_time\":...}"` |
 | `workitem_related_select` | 关联工作项 ID 字符串 |
+| `workitem_related_multi_select` | **stringified 数字数组**，如 `"[7071224906]"`（实测缺陷流转「缺陷来源于需求」必填即此格式；关联值本身是业务判断，须用户提供或自行查实，不得 mock） |
 | `file` / `multi-file` | 先 `meegle attachment +upload --resource-type 15 --project-key <K> --work-item-id <id> --field-key <field_key> <local-path>` 拿 `file_token`，再 **stringify** 数组 `"[{\"name\":\"a.pdf\",\"type\":\"application/pdf\",\"size\":\"12345\",\"fileToken\":\"<token>\"}]"`（`fileToken` 驼峰、`size` 字符串） |
 
 > **用户提供的是工作项名称而非 ID** 时，按主文档 [SKILL.md](../SKILL.md)「关联工作项名称 → ID 转换」完整流程（获取目标约束 → `workitem query` 搜索 → 消歧 → 按类型写入）处理。
