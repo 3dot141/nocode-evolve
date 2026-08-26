@@ -1,9 +1,6 @@
 ---
 name: lark-read
 description: "完整读取飞书文档（含图片）。当需要读取飞书文档的文字内容和嵌入图片时使用，处理 media scope 配置、图片下载（API 优先 + curl 直链兜底）、嵌入资源识别和路由。不负责文档编辑（走 lark-doc）、知识空间管理（走 lark-wiki）。"
-metadata:
-  requires:
-    bins: ["lark-cli"]
 ---
 
 # lark-read：完整读取飞书文档（含图片）
@@ -15,7 +12,7 @@ metadata:
 ## 前置
 
 <!-- nocode:platform claude -->
-开始前调用已安装的 `lark-shared` Skill，传入当前 request、stage、artifacts、constraints 和 decision，确认认证就绪。
+开始前调用 `Skill(nocode:lark-shared)`，传入当前 request、stage、artifacts、constraints 和 decision，确认认证就绪。
 <!-- /nocode:platform -->
 <!-- nocode:platform codex -->
 开始前调用 `$lark-shared`，传入当前 request、stage、artifacts、constraints 和 decision，确认认证就绪。
@@ -24,7 +21,7 @@ metadata:
 开始前调用 `/skill:lark-shared`，传入当前 request、stage、artifacts、constraints 和 decision，确认认证就绪。
 <!-- /nocode:platform -->
 
-`lark-shared` 是外部 Skill，随 lark-cli 技能包安装，不在本插件内；不可用时跳过此步，认证报错时再提示用户安装 lark-cli 技能包。
+`lark-shared` 由本插件提供；如果 `lark-cli` 不可用或认证失败，按该 Skill 的流程处理，不绕过认证检查。
 
 ## 流程
 

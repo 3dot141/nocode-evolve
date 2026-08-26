@@ -1,18 +1,18 @@
 ---
 name: larkhub
-description: "当用户提供飞书/Lark/豆包文档或飞书项目 URL，或请求文档、知识库、项目与认证能力分流时使用。不是具体业务实现；非飞书内容不触发。"
+description: "当用户提供飞书/Lark/豆包文档或飞书项目 URL，或请求文档、Markdown、画板、知识库、项目与认证能力分流时使用。不是具体业务实现；非飞书内容不触发。"
 ---
 
 # larkhub：飞书工具集聚合入口
 
 <!-- nocode:platform claude -->
-仓库内目标使用 `Skill(nocode:lark-read)`、`Skill(nocode:lark-project)`；其余目标调用已安装的 `lark-doc`、`lark-wiki`、`lark-shared` Skill。
+仓库内目标使用 `Skill(nocode:lark-read)`、`Skill(nocode:lark-project)`、`Skill(nocode:lark-doc)`、`Skill(nocode:lark-wiki)`、`Skill(nocode:lark-shared)`、`Skill(nocode:lark-markdown)`、`Skill(nocode:lark-whiteboard)`。
 <!-- /nocode:platform -->
 <!-- nocode:platform codex -->
-路由目标分别使用 `$lark-read`、`$lark-project`、`$lark-doc`、`$lark-wiki`、`$lark-shared`。
+仓库内目标分别使用 `$lark-read`、`$lark-project`、`$lark-doc`、`$lark-wiki`、`$lark-shared`、`$lark-markdown`、`$lark-whiteboard`。
 <!-- /nocode:platform -->
 <!-- nocode:platform pi -->
-仓库内目标使用 `/skill:lark-read`、`/skill:lark-project`；其余目标调用 `/skill:lark-doc`、`/skill:lark-wiki`、`/skill:lark-shared`。
+仓库内目标使用 `/skill:lark-read`、`/skill:lark-project`、`/skill:lark-doc`、`/skill:lark-wiki`、`/skill:lark-shared`、`/skill:lark-markdown`、`/skill:lark-whiteboard`。
 <!-- /nocode:platform -->
 
 每次 handoff 传入原始 request、URL、stage、restate、artifacts、constraints 和用户 decision。目标 Skill 或连接器不可用时，明确报告缺失能力，不经过私有 fallback。
@@ -40,6 +40,8 @@ description: "当用户提供飞书/Lark/豆包文档或飞书项目 URL，或�
 | `project` | 飞书项目管理（MCP） | lark-project |
 | `doc` | 文档读写 API | lark-doc |
 | `wiki` | 知识空间管理 | lark-wiki |
+| `markdown` | Markdown 文件读写与比较 | lark-markdown |
+| `whiteboard` | 画板查询、导出与编辑 | lark-whiteboard |
 | `task` | 飞书任务管理 | **待接入/暂不可用**——当前没有可转发目标；命中时如实告知用户该能力暂缺 |
 | `auth` | 认证/scope 配置 | lark-shared |
 
@@ -76,6 +78,8 @@ description: "当用户提供飞书/Lark/豆包文档或飞书项目 URL，或�
   project    飞书项目管理（MCP）
   doc        文档读写 API
   wiki       知识空间管理
+  markdown   Markdown 文件读写与比较
+  whiteboard 画板查询、导出与编辑
   task       飞书任务管理（待接入/暂不可用）
   auth       认证/scope 配置
 

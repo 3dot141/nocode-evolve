@@ -22,7 +22,7 @@ skills/
 | `personalhub` | `.agents-personal/` 唯一入口；init/write/search/check/tidy/snap/status 只作为私有 references 加载 |
 | `nocodehub` | nocode 插件自维护唯一入口；write/dream/status 只作为私有 references 加载 |
 | `projecthub` | 项目子目录 AGENTS.md + README.md 唯一入口；init/write/search/check/dream/status 只作为私有 references 加载 |
-| `larkhub` | 飞书文档、知识库、项目与认证能力的聚合分流入口 |
+| `larkhub` | 飞书文档、Markdown、画板、知识库、项目与认证能力的聚合分流入口 |
 
 ### 工程阶段（dev-*，devflow 编排）
 
@@ -53,7 +53,12 @@ skills/
 | `agents-launcher` | 本仓 fx-data-agents 三服务（web/agents/server）本地 dev 启停编排 |
 | `bkt` | Bitbucket CLI（仓库 / PR / 分支 / issue / webhook / pipeline） |
 | `open-design` | Open Design 原生创建、生成、读取与预览流程 |
+| `lark-doc` | 飞书云文档正文、媒体、封面与思维笔记操作（官方 lark-cli Skill） |
+| `lark-markdown` | 飞书 Drive 原生 Markdown 文件读写与比较（官方 lark-cli Skill） |
 | `lark-project` | 飞书项目管理路由壳（透传 meegle，维护既有调用契约） |
+| `lark-shared` | lark-cli 配置、认证、身份与权限处理（官方 lark-cli Skill） |
+| `lark-whiteboard` | 飞书画板查询、导出、创建与编辑（官方 lark-cli Skill） |
+| `lark-wiki` | 飞书知识空间、成员与 Wiki 节点管理（官方 lark-cli Skill） |
 | `meegle` | 飞书项目（Meego/Meegle）官方 CLI 操作指南（工作项 / 流转 / MQL / 视图 / 待办 / 排期） |
 | `lark-read` | 完整读取飞书文档（文字 + 嵌入图片） |
 | `figma-read` | 读 Figma 设计稿节点：提取设计值 / 渲染节点截图 / 解析变量（REST API） |

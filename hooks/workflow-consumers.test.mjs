@@ -267,8 +267,11 @@ test('remaining workflow coordinators use native control and honest independence
   assert.match(read('skills/skill-writing/SKILL.md'), /spawn_agent/);
   assert.match(read('skills/skill-writing/SKILL.md'), /wait_agent/);
   assert.match(read('skills/skill-writing/SKILL.md'), /未证明跨模型|不是跨模型/);
-  assert.match(read('skills/larkhub/SKILL.md'), /已安装的 `lark-doc`/);
-  assert.match(read('skills/larkhub/SKILL.md'), /\$lark-doc/);
+  const larkhub = read('skills/larkhub/SKILL.md');
+  for (const target of ['lark-doc', 'lark-wiki', 'lark-shared', 'lark-markdown', 'lark-whiteboard']) {
+    assert.match(larkhub, new RegExp(`Skill\\(nocode:${target}\\)`));
+  }
+  assert.match(larkhub, /\$lark-doc/);
 });
 
 test('dev-land has one panorama gate and never adds a runtime confirmation', () => {
@@ -396,7 +399,8 @@ test('command and hub entrypoints use native decisions and direct named Skill ha
     assert.doesNotMatch(source, /Capability\(|"profile"\s*:|fallbackPolicy/, file);
   }
   const larkRead = read('skills/lark-read/SKILL.md');
-  assert.match(larkRead, /已安装的 `lark-shared` Skill/);
+  assert.match(larkRead, /Skill\(nocode:lark-shared\)/);
+  assert.match(larkRead, /`lark-shared` 由本插件提供/);
   assert.match(larkRead, /\$lark-shared/);
   assert.doesNotMatch(larkRead, /Capability\(|fallbackPolicy/);
 });
