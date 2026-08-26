@@ -61,7 +61,7 @@ skills/
 | `lark-wiki` | 飞书知识空间、成员与 Wiki 节点管理（官方 lark-cli Skill） |
 | `meegle` | 飞书项目（Meego/Meegle）官方 CLI 操作指南（工作项 / 流转 / MQL / 视图 / 待办 / 排期） |
 | `lark-read` | 完整读取飞书文档（文字 + 嵌入图片） |
-| `figma-read` | 读 Figma 设计稿节点：提取设计值 / 渲染节点截图 / 解析变量（REST API） |
+| `figma-read` | 读 Figma 设计稿节点：Framelink 快照复用 + REST 精确取值 / 截图 / 变量 |
 | `signoz-cli` | 查询 SigNoz 的 trace / log / metric，跑 PromQL/ClickHouse SQL |
 
 ### 方法论类（跨阶段通用能力）

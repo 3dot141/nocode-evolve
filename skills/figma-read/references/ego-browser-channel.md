@@ -1,14 +1,15 @@
 # ego-browser 网页端通道（无 Token 备选）
 
-`$FIGMA_TOKEN` 拿不到、但用户浏览器已登录 Figma 时的备选取数通道：ego-browser 的 task space **继承用户登录态**，打开设计稿链接后截图 + 读右栏属性面板 DOM 文本。
+`$FIGMA_TOKEN` 与 `$FIGMA_API_KEY` 都拿不到、但用户浏览器已登录 Figma 时的备选取数通道：ego-browser 的 task space **继承用户登录态**，打开设计稿链接后截图 + 读右栏属性面板 DOM 文本。
 
 ## 分流定位
 
 | 通道 | 前置 | 值完备性 | 用途 |
 |---|---|---|---|
-| REST API（主路，Step 3-5） | `$FIGMA_TOKEN` | 无损全量 | 对齐基准 |
+| Framelink 快照 | `$FIGMA_TOKEN` / `$FIGMA_API_KEY` + Node.js | 精简后的模型友好上下文 | 跨轮复用、定位节点与结构 |
+| REST API（精确值主路） | `$FIGMA_TOKEN` / `$FIGMA_API_KEY` | 原生节点响应 | 对齐基准、截图、变量 |
 | ego-browser（本通道） | 浏览器登录态 | 渲染快照的部分值 | 快查、视觉确认、引导登录 |
-| figma MCP | 桌面 App 常开 + 付费 | 加工品 | 不依赖（见 SKILL.md「不要」清单） |
+| 官方 Figma MCP | 远程 OAuth 或桌面服务 | 加工后的设计上下文 | 环境已有时可辅助，本 Skill 不依赖 |
 
 ## 流程
 
@@ -61,7 +62,7 @@ EOF
 
 真正结构性不可解的是**格式化**与**版本漂移**——这是本通道不作对齐基准的根因。
 
-**结论**：本通道产出标注「网页面板快照」，够快查与视觉确认；**逐项对齐基准必须走 Step 3 REST 原始 JSON**，拿到 token 后重跑主路。
+**结论**：本通道产出标注「网页面板快照」，够快查与视觉确认；拿到 Token 后先补 Framelink 快照，逐项对齐仍以 REST 原生响应为准。
 
 ## 纪律
 
