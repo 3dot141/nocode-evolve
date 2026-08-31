@@ -136,7 +136,7 @@ remote_url=$(git -C "$MAIN_ROOT" remote get-url origin)
   3. 发布策略      <全量（默认） / 灰度 / dark launch>    ← 生产改动才展示
   4. 合并方式      approve 后自动合并（默认）; pr-check 每 5min（定时进程存活期间）
   5. 合并后清理    worktree + branch + 远程: 删除（默认）
-  6. 合并后流转    #<task>: <当前> → <目标>
+  6. 合并后流转    #<task>: <当前> → <目标>; 评论修复摘要; 工时 <N 分钟 / 跳过（默认）>
 
 --- body ---
 ## 背景
@@ -164,7 +164,7 @@ remote_url=$(git -C "$MAIN_ROOT" remote get-url origin)
   2. merge         <branch> → <base>（<N> 个 commit）
   3. 清理          worktree + 本地 branch
   4. 远程分支      <remote>/<branch>: 保留（默认）；改「删」则删（<独有 commit 文案>）
-  5. 合并后流转    #<task>: <当前> → <目标>
+  5. 合并后流转    #<task>: <当前> → <目标>; 评论修复摘要; 工时 <N 分钟 / 跳过（默认）>
 回「OK」全自动到底；或直接说改哪项。
 ```
 
@@ -225,9 +225,15 @@ remote_url=$(git -C "$MAIN_ROOT" remote get-url origin)
 
 ### 合并后流转
 
-合并后按上方平台语法调用 lark-project，传入 request、stage、design path、DES scope、artifacts、constraints 和 decision，把任务流转到全景计划定好的目标状态。连接器不可用时明确报告缺失能力，不伪造完成。详见 `references/post-merge.md`。
+合并后按上方平台语法调用 lark-project，传入 request、stage、design path、DES scope、artifacts、constraints 和 decision，把任务流转到全景计划定好的目标状态。流转带三动作，详见 `references/post-merge.md`：
 
-- 前置：有任务号 + FeishuProjectMcp 可用。不满足 → 跳过，报告原因
+1. **状态流转** — 到全景定好的目标状态
+2. **评论修复** — 一句话修复摘要（材料收集阶段信息生成）随流转传入，由 lark-project 落成工作项评论
+3. **工时登记** — 全景确认时用户给了分钟数才随流转传入；未给 = 不传（改动量不能证明实际工时，不自动估算）
+
+lark-project 不可用时明确报告缺失能力，不伪造完成。
+
+- 前置：有任务号 + lark-project 可用。不满足 → 跳过，报告原因
 - 典型映射：缺陷/任务类 `组员开发 → 创建者验收`
 
 ---
