@@ -14,8 +14,9 @@
 | `observability-guide.md` | 可观测性指南：先定义"working"再埋点，埋点与功能同批写 | dev-build、dev-design |
 | `design-traceability.md` | 工程任务的 LOG → DES 追踪与下游 stage-local coverage 契约 | dev-design、dev-plan、dev-build、dev-verify |
 | `path-conventions.md` | 产品路径与工程 DEC / DES ID、过程 Log 体系约定 | 大多数产出文档类 skill |
+| `readme-writing.md` | 子目录 README.md 书写方案：总分结构、分层流水线图首选形式（有数据流才用）、逐节下钻、完整性纪律与反模式 | projecthub write/dream、dev-land 文档同步 |
 | `performance-guide.md` | 性能指南：先测量再优化，只优化被测量证实的瓶颈 | dev-review、dev-build |
 | `security-guide.md` | 安全指南：外部输入默认敌对、secret 神圣、授权检查强制 | dev-review、dev-build |
 | `testing-guide.md` | 测试指南：先写失败测试再实现，测试是证据不是"看起来对" | dev-build、dev-review |
 | `ui-taste-model.md` | 无设计参考（无 pd-vd 产出/截图/Figma）时的视觉知识分层选型（决策框架/风格包互斥/场景/dataviz） | dev-design / dev-build（pd-vd 走自己的 Step 3a 决策树） |
-| `visual-forms.md` | 技术解释的视觉形式词汇表：伪代码/调用树/组件树/文件树/时序图/diff 形态树图/单文件 HTML 的内容→形式映射 + 最小视图纪律 | 仅 model/agent-about.md（skill 一律改用 `show-me` skill 原版） |
+| `visual-forms.md` | 技术解释的视觉形式词汇表：伪代码/调用树/组件树/文件树/时序图/diff 形态树图/分层流水线图/单文件 HTML 的内容→形式映射 + 最小视图纪律 | model/agent-about.md、`readme-writing.md`（分层图图式单源） |

@@ -15,6 +15,7 @@ toolchain 检测（`github.com`→gh / `bitbucket.`→bkt）与 base 解析见 S
 5. **target 解析**：`base_branch` 已由 SKILL.md Step 2e 单源解析；映射 `target_remote` + `target_branch`（fork 场景 `origin/<branch>`→`upstream/<base>`；单仓 `origin/<base>`）。项目本地 override 仅读 `.agents-personal/rules/personal-repo-pr.md`，不存在即无约定
 6. **default reviewer** → 见 `pr-flow-gh`「default reviewer」/ `pr-flow-bkt`「default reviewer」（gh 走 branch protection/CODEOWNERS，bkt 走 default-reviewers API）。**名单全量采用（只排除 PR 作者），agent 不得自行精简或挑选**——「挑最相关的人减少打扰」「合并只需一个 approve」都不是精简理由：default 名单是团队配置的应加集合，取舍权在用户；仅当用户在全景回应中显式指定名单/点名增删时才偏离（实测教训：agent 曾自行把 10 人名单精简为 2 人，被用户事后纠正）
 7. **任务号 + 目标状态**：SKILL.md Step 2e 已提取推定（有任务号时已 Read `post-merge.md` 拿映射），直接引用结果
+8. **README 影响面**：按 SKILL.md Step 2e「README 影响面」冒泡规则算「更新 + 新建」两清单，供全景第 1 项「文档同步」展示
 8. **远程坐标**（合并后清理用，此刻捕获进监控上下文——删 branch 后 `branch.<name>.remote/merge` 配置即消失）：`remote=$(git config branch.<current>.remote)`（空则 origin）+ `remote_branch=$(git config branch.<current>.merge | sed 's|^refs/heads/||')`（空则同名）
 
 ## Step 2: 全景计划展示 + 确认
@@ -23,14 +24,15 @@ toolchain 检测（`github.com`→gh / `bitbucket.`→bkt）与 base 解析见 S
 
 ```
 [全景计划] <branch> → PR → <target_remote>/<target_branch>（来源: <解析来源>），确认后全自动:
-  1. commit 整理   <建议内容 or 无建议>（默认: 跳过，原样进 PR）
-  2. push + 建 PR  push: <普通（默认） / force-with-lease（仅已知 non-ff）>
+  1. 文档同步      README 更新: <dir>(补充|修正|重写), ...; 新建: <dirs>（默认: 执行）   ← README 影响面非空才展示
+  2. commit 整理   <建议内容 or 无建议>（默认: 跳过，原样进 PR；文档改动一并进整理）
+  3. push + 建 PR  push: <普通（默认） / force-with-lease（仅已知 non-ff）>
                    title「<title>」
                    body 与 Affected 见下；reviewer: <名单 or 空>
-  3. 发布策略      <全量（默认） / 灰度 / dark launch>    ← 生产改动才展示
-  4. 合并方式      approve 后自动合并（默认）；pr-check 每 5min 查一次（定时进程存活期间）
-  5. 合并后清理    worktree <path> + 本地 branch <branch>；远程 <remote>/<remote_branch>: 删除（默认）
-  6. 合并后流转    #<task>: <当前状态> → <目标状态>    ← 无任务号则写「无流转」
+  4. 发布策略      <全量（默认） / 灰度 / dark launch>    ← 生产改动才展示
+  5. 合并方式      approve 后自动合并（默认）；pr-check 每 5min 查一次（定时进程存活期间）
+  6. 合并后清理    worktree <path> + 本地 branch <branch>；远程 <remote>/<remote_branch>: 删除（默认）
+  7. 合并后流转    #<task>: <当前状态> → <目标状态>    ← 无任务号则写「无流转」
 
 --- body ---
 <body 全文>
@@ -49,7 +51,9 @@ toolchain 检测（`github.com`→gh / `bitbucket.`→bkt）与 base 解析见 S
 - **远程分支处置**：PR 路径**默认合并后删除**（source 分支专为 PR 而生，平台 PR 页面永久保留分支记录）；可改「保留」。护栏：source 分支名是 main/master/release/develop 等长期分支 → 强制保留，不给删除选项
 - 主仓直接跑（非 worktree）→ 第 5 行去掉 worktree 与本地 branch（当前分支删不了），只处置远程；流转仍有效
 
-## Step 3: push（只执行全景已授权方式）
+## Step 3: 文档同步 + push（只执行全景已授权方式）
+
+**文档同步先行**：全景列了文档同步项时，先按 SKILL.md「文档同步（仅 PR / Merge）」节执行——README 更新/新建完成后改动留在工作树，随 commit 整理统一进 commit；影响面为空或全景改「跳过」→ 输出一行「文档同步: 无」继续。然后 push：
 
 ```bash
 git push -u origin HEAD

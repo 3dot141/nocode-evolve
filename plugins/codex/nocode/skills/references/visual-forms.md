@@ -21,6 +21,7 @@ Distilled from [humanlayer/skills `show-me`](https://github.com/humanlayer/skill
 | File responsibility / broad refactor | Shallow annotated file tree |
 | Participant order, return, timeout, retry, concurrency | Sequence diagram |
 | **What changes** is the point | Diff-shaped tree / pseudocode |
+| Whole-system panorama: layers/stages a payload flows through (entry → pipeline → reconcile → storage) | Layered pipeline diagram |
 | Dense concept, layout, or state comparison too dense for the above | Single-file HTML |
 
 Pseudocode block:
@@ -84,6 +85,25 @@ Diff-shaped forms — when the discussion point is the change itself, diff the t
 +    ├── client.ts
 +    └── stream.ts
 ```
+
+Layered pipeline diagram — a whole-system panorama where a payload flows through distinct layers. One double-lined box per layer, stacked vertically with `│ ▼` marking the flow between boxes. Box anatomy: header = number + layer name + one-line mechanism summary in parentheses; body = tree entries (`├─` `└─`) with short annotations; bottom = **invariant line** — an equation/constraint that must always hold in that layer, which is the essence of this form (mark it when one exists). Optional: a `┄┄` separated trailing section for cross-cutting concerns (e.g. observability) that span every layer:
+
+```text
+╔════════════════════════════════════╗
+║ ① 入口 · 命令流（参数→执行计划）    ║
+╠════════════════════════════════════╣
+║   ├─ create   首发，锚点=第一支     ║
+║   └─ update   增量，锚点=现存∪新增  ║
+║   不变式：建模图 == 资产卡集合      ║
+╚════════════════════════════════════╝
+                │
+                ▼
+╔════════════════════════════════════╗
+║ ② 产线 · 分批生成（checkpoint 恢复）║
+╚════════════════════════════════════╝
+```
+
+Use for README top-level panoramas of directories with a real dataflow/pipeline/state machine; a directory without one should use a boundary diagram instead, not a fake stacked-box pipeline (README writing rules: `${PLUGIN_ROOT}/skills/references/readme-writing.md`).
 
 Single-file HTML — for a visual UI, layout, state comparison, or a concept too dense for text forms: write one focused HTML file (diagram, infographic, or short slide deck), use real labels and data, then open it for the user. Boundaries:
 

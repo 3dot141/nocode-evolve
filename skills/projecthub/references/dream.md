@@ -210,11 +210,14 @@ DREAM_EOF
                 └─ 一次性展示清单 → 用户确认 → 批量写入
 ```
 
-并行 subagent prompt 模板（subagent 是全新上下文，模板第 0 步必须先让它完整读取 write.md——内容规范与视觉形式只有那一份单源，不给会按各自默认风格漂移）：
+并行 subagent prompt 模板（subagent 是全新上下文，模板第 0 步必须先让它完整读取两份规范文件——AGENTS.md 内容规范在 write.md、README 书写方案在共享 readme-writing.md，单源不给会按各自默认风格漂移）：
 ```
 分析目录 {project_root}/{dir_path}，生成 AGENTS.md 和 README.md 内容。
 
-0. 完整读取 {project_root}/skills/projecthub/references/write.md —— AGENTS.md/README.md 的内容规范、README 总分结构（全景 → 功能 → 功能点）与视觉形式纪律以它为唯一单源
+0. 完整读取 {plugin_root}/skills/projecthub/references/write.md 与 {plugin_root}/skills/references/readme-writing.md
+   （{plugin_root} = 插件根，主 agent 组装本 prompt 时解析为绝对路径）
+   —— AGENTS.md 内容规范与执行流程以 write.md 为单源；
+   README 书写方案（总分结构、分层流水线图、逐节下钻）以 readme-writing.md 为单源
 1. ls -la 列出目录内容
 2. 读关键文件（入口 / 配置 / 已有文档）
 3. 理解职责和约束，归纳功能清单（README 写作逐项对照）

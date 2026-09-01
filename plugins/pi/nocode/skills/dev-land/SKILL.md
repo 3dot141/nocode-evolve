@@ -102,6 +102,7 @@ remote_url=$(git -C "$MAIN_ROOT" remote get-url origin)
 
 - **任务号 + 目标状态**（PR / Merge）：`git log <base>..HEAD --format=%B | grep -oE '#[fgm]-[a-z0-9]+' | sort -u`；有任务号 → Read `references/post-merge.md` 拿典型流转映射 + 查当前状态 → 推定目标状态
 - **远程坐标必须此刻捕获**——删 branch 后 `branch.<name>.remote/merge` 配置即消失（见 `references/remote-branch-cleanup.md`）
+- **README 影响面**（仅 PR / Merge）：`git diff --name-only <base>..HEAD` 叠加 `git status --porcelain` 得改动文件全集（排除 node_modules/dist/build 等生成物目录）；每个文件从所在目录沿 dirname 链**向上冒泡**到最近的含 README.md 的目录（走到仓库根即止，**根 README.md 不算**——那是仓库定位文档，不归本流程管）；去重得「更新」清单。改动落在无 README.md 的目录且该目录含源码/配置文件（.js / .ts / .py / .go / .rs / .md / .mjs / package.json / Makefile 等）→ 进「新建」清单。两清单皆空 → 全景不列文档同步项
 
 ### 展示：全景一屏
 
@@ -130,13 +131,14 @@ remote_url=$(git -C "$MAIN_ROOT" remote get-url origin)
 ```
 [全景计划] <branch> → PR → <target>，确认后全自动:
   ⚠ <风险项：Review 未过 / tests fail / behind N commits>   ← 有才展示
-  1. commit 整理   <建议内容>（默认: 跳过）
-  2. push + 建 PR  push: <普通（默认） / force-with-lease（仅已知 non-ff）>;
+  1. 文档同步      README 更新: <dir>(补充|修正|重写), ...; 新建: <dirs>（默认: 执行）   ← README 影响面非空才展示
+  2. commit 整理   <建议内容>（默认: 跳过；文档改动一并进整理）
+  3. push + 建 PR  push: <普通（默认） / force-with-lease（仅已知 non-ff）>;
                    title「<title>」; reviewer: <名单 or 空>
-  3. 发布策略      <全量（默认） / 灰度 / dark launch>    ← 生产改动才展示
-  4. 合并方式      approve 后自动合并（默认）; pr-check 每 5min（定时进程存活期间）
-  5. 合并后清理    worktree + branch + 远程: 删除（默认）
-  6. 合并后流转    #<task>: <当前> → <目标>; 评论修复摘要; 工时 <N 分钟 / 跳过（默认）>
+  4. 发布策略      <全量（默认） / 灰度 / dark launch>    ← 生产改动才展示
+  5. 合并方式      approve 后自动合并（默认）; pr-check 每 5min（定时进程存活期间）
+  6. 合并后清理    worktree + branch + 远程: 删除（默认）
+  7. 合并后流转    #<task>: <当前> → <目标>; 评论修复摘要; 工时 <N 分钟 / 跳过（默认）>
 
 --- body ---
 ## 背景
@@ -160,11 +162,12 @@ remote_url=$(git -C "$MAIN_ROOT" remote get-url origin)
 ```
 [全景计划] <branch> → 本地 merge 回 <base>，确认后全自动:
   ⚠ <风险项>
-  1. commit 整理   <建议>（默认: 跳过）
-  2. merge         <branch> → <base>（<N> 个 commit）
-  3. 清理          worktree + 本地 branch
-  4. 远程分支      <remote>/<branch>: 保留（默认）；改「删」则删（<独有 commit 文案>）
-  5. 合并后流转    #<task>: <当前> → <目标>; 评论修复摘要; 工时 <N 分钟 / 跳过（默认）>
+  1. 文档同步      README 更新: <dir>(补充|修正|重写), ...; 新建: <dirs>（默认: 执行）   ← README 影响面非空才展示
+  2. commit 整理   <建议>（默认: 跳过；文档改动一并进整理）
+  3. merge         <branch> → <base>（<N> 个 commit）
+  4. 清理          worktree + 本地 branch
+  5. 远程分支      <remote>/<branch>: 保留（默认）；改「删」则删（<独有 commit 文案>）
+  6. 合并后流转    #<task>: <当前> → <目标>; 评论修复摘要; 工时 <N 分钟 / 跳过（默认）>
 回「OK」全自动到底；或直接说改哪项。
 ```
 
@@ -199,10 +202,19 @@ remote_url=$(git -C "$MAIN_ROOT" remote get-url origin)
 
 | disposition | 自动段 |
 |---|---|
-| **PR** | 按全景选定的普通 push 或 `force-with-lease` → 建 PR → 加 reviewer → 启动 pr-check 定时监控 → 就绪后合并 → 三件套清理 → 任务流转 |
-| **Merge** | merge → 三件套清理 → 任务流转 |
+| **PR** | **文档同步 →** 按全景选定的普通 push 或 `force-with-lease` → 建 PR → 加 reviewer → 启动 pr-check 定时监控 → 就绪后合并 → 三件套清理 → 任务流转 |
+| **Merge** | **文档同步 →** merge → 三件套清理 → 任务流转 |
 | **Discard** | 清 worktree → `branch -D` → (全景选删) 删远程；字面 `discard` 就是本全景的唯一确认 |
 | **Keep** | 一行报告现状 |
+
+### 文档同步（仅 PR / Merge）
+
+全景确认后的第一个动作，先于 commit 整理；README 影响面为空或用户改「跳过」→ 输出一行「文档同步: 无」继续，不阻塞：
+
+- 完整读取 `{NOCODE_PLUGIN_ROOT}/skills/references/readme-writing.md`，按其书写方案对影响面清单内每个目录更新 / 新建 README.md——**只管 README.md，不动 AGENTS.md**
+- 清单 ≤3 个目录 → 顺序执行；>3 → 并行 subagent + scratchpad 汇总后统一写入（subagent 是全新上下文，prompt 第 0 步必须先让它完整读取同一份 readme-writing.md，主 agent 组装时解析 `{NOCODE_PLUGIN_ROOT}/skills/references` 为绝对路径）
+- 全景已授权，不再逐目录确认；写入结果（目录 + 更新方向 + 行数变化）并入执行报告
+- README 改动留在工作树，随全景下一项 commit 整理统一进 commit
 
 执行失败或出现全景未覆盖的新风险 → 停在当前步报告，不静默跳过、不回滚已成功步、**不临时追问是否继续**。用户要求继续时，重新收集现状并生成一份新的全景。
 
@@ -270,10 +282,12 @@ lark-project 不可用时明确报告缺失能力，不伪造完成。
 | "不在 worktree 里，全景/PR契约/reviewer/定时监控不适用" | **非 worktree 只影响清理项，其余全部照走** |
 | "用户说了提PR，直接 push + 建 PR 就行" | 「提PR」是 Step 1 意图推定的输入，不是跳过全景的授权 |
 | "这个改动简单，跳过某 Step" | 进了 skill 就走完。"简单"不是跳 Step 的授权 |
+| "README 回头再补" | 文档同步是全景第 1 项，随 PR diff 一起被 review；回头补 = 补文档债 |
 
 ## Red Flags
 
 - 还没出全景就执行了 push / PR / merge
+- README 影响面非空，全景却没列文档同步项
 - 跳过 body 生成直接 `gh pr create` / `bkt pr create`
 - PR 创建后立刻 merge 不等 review
 - 清理 worktree 但没 ExitWorktree——先退出再清理
@@ -287,6 +301,7 @@ lark-project 不可用时明确报告缺失能力，不伪造完成。
 - 不要自动 force push — 必须已在完整全景中明确列出并获确认
 - 不要在 approve 前 merge — 判据 = 平台可合并 + ≥1 approve
 - 不要假设 toolchain — 私域 git host 在全景中标待指定
+- 不要在文档同步时碰 AGENTS.md — 只管 README.md；要更新 AGENTS.md 用户自己走 `/projecthub write <dir> agents`
 - 不要在 worktree 内跑 `git worktree remove` — 先 cd 到 `$MAIN_ROOT`
 - 不要删 branch 前没 remove worktree
 - PR 轮询只走 `pr-check.mjs --watch` + `periodic-runner.mjs` 定时单源；不要再造平台专属 cron 分支
