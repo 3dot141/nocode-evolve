@@ -5,7 +5,7 @@ import net from 'node:net';
 import os from 'node:os';
 import path from 'node:path';
 
-import { getDefaultConfigPath, readEnvFile, updateEnvValue } from './work-log-lib.mjs';
+import { getDefaultConfigPath, readConfigValues, updateEnvValue } from './work-log-lib.mjs';
 import { createWorklogKeyCapture, findChromeExecutable } from './refresh-worklog-key-lib.mjs';
 
 const parseArgs = (argv) => {
@@ -13,7 +13,7 @@ const parseArgs = (argv) => {
     for (let index = 0; index < argv.length; index += 1) {
         const token = argv[index];
         if (token === '--login') options.login = true;
-        else if (token === '--config') throw new Error('配置文件固定为 ~/.codex/work-log.env，不支持 --config');
+        else if (token === '--config') throw new Error('配置文件固定为 ~/.config/nocode/work-log.env，不支持 --config');
         else if (token === '--timeout') {
             const value = argv[index + 1];
             if (!value) throw new Error(`${token} 缺少值`);
@@ -124,14 +124,14 @@ const captureKey = async (cdp, boardUrl, apiUrl, timeoutMs) => {
 const run = async () => {
     const options = parseArgs(process.argv.slice(2));
     const configPath = getDefaultConfigPath();
-    const values = readEnvFile(configPath);
+    const values = readConfigValues(configPath);
     const boardUrl = values.FEISHU_WORKLOG_BOARD_URL;
     const apiUrl = values.FEISHU_WORKLOG_API;
     if (!boardUrl || !apiUrl) throw new Error('配置缺少 FEISHU_WORKLOG_BOARD_URL 或 FEISHU_WORKLOG_API');
     if (new URL(boardUrl).protocol !== 'https:' || new URL(apiUrl).protocol !== 'https:') throw new Error('飞书地址必须使用 HTTPS');
 
     const chrome = findChromeExecutable({ ...process.env, CHROME_PATH: values.CHROME_PATH });
-    const profile = values.CHROME_PROFILE_DIR || path.join(os.homedir(), '.codex', 'work-log-chrome');
+    const profile = values.CHROME_PROFILE_DIR || path.join(os.homedir(), '.config', 'nocode', 'work-log-chrome');
     const port = await getAvailablePort();
     const args = [
         `--remote-debugging-port=${port}`,

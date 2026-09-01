@@ -347,9 +347,35 @@ export const submitWorklog = async (entry, config, options = {}) => {
     return { executed: true, status: response.status, body };
 };
 
-export const getDefaultConfigPath = () => path.join(os.homedir(), '.codex', 'work-log.env');
+export const getDefaultConfigPath = () => path.join(os.homedir(), '.config', 'nocode', 'work-log.env');
 
 export const readEnvFile = (filePath = getDefaultConfigPath()) => parseEnv(fs.readFileSync(filePath, 'utf8'));
+
+/** 已知配置键全集：环境变量合并按此清单进行——文件没有的键（如动态注入的身份）也能从环境变量生效。 */
+const CONFIG_KEYS = [
+    'BITBUCKET_BASE_URL',
+    'BITBUCKET_TOKEN',
+    'FEISHU_WORKLOG_API',
+    'FEISHU_WORKLOG_BOARD_URL',
+    'FEISHU_WORKLOG_KEY',
+    'FEISHU_SPACE_ID',
+    'FEISHU_USER_ID',
+    'FEISHU_G_WORK_OBJECT_ID',
+    'CHROME_PATH',
+    'CHROME_PROFILE_DIR',
+];
+
+/** 配置解析：shell 环境变量优先于 env 文件——凭据可直接 export 在 ~/.zshenv 等处，
+ *  动态注入项（身份等）文件里不存在也生效；文件不存在时按空对象处理。 */
+export const readConfigValues = (filePath = getDefaultConfigPath()) => {
+    const fileValues = fs.existsSync(filePath) ? readEnvFile(filePath) : {};
+    const merged = { ...fileValues };
+    for (const key of CONFIG_KEYS) {
+        const fromEnv = process.env[key];
+        if (typeof fromEnv === 'string' && fromEnv !== '') merged[key] = fromEnv;
+    }
+    return merged;
+};
 
 export const updateEnvValue = (filePath, key, value) => {
     const source = fs.readFileSync(filePath, 'utf8');

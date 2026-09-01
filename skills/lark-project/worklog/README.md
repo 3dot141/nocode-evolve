@@ -18,11 +18,11 @@
 
 ### 1. 配置
 
-默认读取 `~/.codex/work-log.env`。配置不存在或缺项时，读取 [config.md](./config.md)，只帮助创建本地配置，不把凭据写入仓库。
+配置 shell 环境变量优先（`~/.zshenv` 直接 export 即可），env 文件兜底。缺项时读 [config.md](./config.md)，只帮助创建本地配置，不把凭据写入仓库。
 
 ### 2. 获取 PR 与详情
 
-```powershell
+```bash
 node worklog/work-log.mjs fetch --range today
 node worklog/work-log.mjs details --project FX --repo agents --pr 123
 ```
@@ -42,7 +42,7 @@ PR 没有任务编号时，展示 PR 并让用户补充映射，不猜测任务�
 ]
 ```
 
-```powershell
+```bash
 node worklog/work-log.mjs allocate --input <json-path> --date 2026-08-28 --minutes 540
 ```
 
@@ -65,29 +65,38 @@ node worklog/work-log.mjs allocate --input <json-path> --date 2026-08-28 --minut
 
 即使用户在流程开头说“直接提交”或经理要求尽快完成，也要在实际写入前展示最终批次并获得明确确认。
 
-### 5. 预览、刷新 key、提交
+### 5. 动态注入身份、预览、提交
+
+submit 前由调用方用 meegle 现查两个身份并注入环境变量（不落配置）：
+
+```bash
+FEISHU_SPACE_ID=$(meegle workitem get <任务ID> --fields '["_all"]' --format json | 提取 owned_project.key)
+FEISHU_USER_ID=$(meegle user me --format json | 提取 user_key)
+```
+
+### 6. 预览、提交
 
 不带 `--execute` 的 `submit` 只生成预览，不访问飞书：
 
-```powershell
+```bash
 node worklog/work-log.mjs submit --task-code f-6772916146 --minutes 195 --started-at 2026-08-28T01:00:00.000Z --description "修复联动问题"
 ```
 
 用户确认后，每次提交批次前刷新 key：
 
-```powershell
+```bash
 node worklog/refresh-worklog-key.mjs
 ```
 
 无头刷新失败时，说明登录可能过期。先告知用户将打开专用 Chrome，再运行：
 
-```powershell
+```bash
 node worklog/refresh-worklog-key.mjs --login
 ```
 
 按确认顺序逐条提交：
 
-```powershell
+```bash
 node worklog/work-log.mjs submit --task-code f-6772916146 --minutes 195 --started-at 2026-08-28T01:00:00.000Z --description "修复联动问题" --execute
 ```
 

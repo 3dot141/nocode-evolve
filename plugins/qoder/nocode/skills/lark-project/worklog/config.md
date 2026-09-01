@@ -1,23 +1,30 @@
 # 配置
 
-默认配置文件为 `~/.codex/work-log.env`；Windows 对应 `%USERPROFILE%\.codex\work-log.env`。可从技能模板复制：
+配置解析顺序：**shell 环境变量优先**（可在 `~/.zshenv` 等处直接 `export`，无需文件）→ env 文件兜底（默认 `~/.config/nocode/work-log.env`）。可从模板复制：
 
-```powershell
-Copy-Item .agents/skills/feishu-work-log/assets/work-log.env.example "$env:USERPROFILE\.codex\work-log.env"
+```bash
+mkdir -p ~/.config/nocode && cp <插件>/skills/lark-project/worklog/work-log.env.example ~/.config/nocode/work-log.env
 ```
 
-## 必填项
+## 必填项（唯一）
 
 | 变量 | 含义 |
 |---|---|
-| `BITBUCKET_BASE_URL` | Bitbucket Server HTTPS 根地址 |
-| `BITBUCKET_TOKEN` | 具备仓库读取权限的个人令牌 |
-| `FEISHU_WORKLOG_API` | 飞书工时 POST API 的 HTTPS 地址 |
-| `FEISHU_WORKLOG_BOARD_URL` | 已登录后可打开的飞书工时看板地址 |
-| `FEISHU_WORKLOG_KEY` | 每日变化的 `x-worklog-key`；刷新脚本会更新此值 |
-| `FEISHU_SPACE_ID` | 飞书项目空间 ID |
-| `FEISHU_USER_ID` | 工时归属用户 ID |
-| `FEISHU_G_WORK_OBJECT_ID` | `g-` 任务对应的自定义工作对象 ID |
+| `FEISHU_WORKLOG_KEY` | 工时 API 的 `x-worklog-key`（用户从工时看板请求头抄取一次，静态维护在 `.zshenv`） |
+
+## 动态注入项（不配置，submit 前由调用方经 meegle 现查注入）
+
+| 环境变量 | 获取方式 |
+|---|---|
+| `FEISHU_SPACE_ID` | `meegle workitem get <任务ID> --fields '["_all"]'` → `owned_project.key`（或 `project search`） |
+| `FEISHU_USER_ID` | `meegle user me` → `user_key` |
+
+## 可选保留项
+
+| 变量 | 含义 |
+|---|---|
+| `FEISHU_WORKLOG_API` | 飞书工时 POST API 地址（以本团队真实值为准，如 `https://feishu-worklog.sre.jdydevelop.com/api/worklogs`） |
+| `FEISHU_WORKLOG_BOARD_URL` | 仅 key 刷新脚本使用（key 抄取兜底） |
 
 ## 可选项
 
@@ -32,8 +39,8 @@ Bitbucket token 只需要读取权限。配置文件不得提交到 Git，不要
 
 首次刷新 key 时运行：
 
-```powershell
-node .agents/skills/feishu-work-log/scripts/refresh-worklog-key.mjs --login
+```bash
+node worklog/refresh-worklog-key.mjs --login
 ```
 
 脚本使用独立 Chrome profile，监听随机本地 DevTools 端口，只接受来自配置中工时 API 源站与路径的认证请求，写入 key 后关闭浏览器调试会话。后续可去掉 `--login` 无头刷新。

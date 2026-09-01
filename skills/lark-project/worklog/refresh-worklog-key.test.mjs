@@ -84,5 +84,5 @@ test('refresh command rejects overriding the canonical credential path', () => {
     const result = spawnSync(process.execPath, [cliPath, '--config', 'repo-local.env'], { encoding: 'utf8' });
 
     assert.equal(result.status, 1);
-    assert.match(result.stderr, /配置文件固定为 ~\/\.codex\/work-log\.env/);
+    assert.match(result.stderr, /配置文件固定为 ~\/\.config\/nocode\/work-log\.env/);
 });

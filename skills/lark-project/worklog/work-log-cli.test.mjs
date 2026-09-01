@@ -87,9 +87,9 @@ test('allocate command requires an explicit total duration', () => {
 
 test('submit command defaults to a secret-free dry run', () => {
     const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'feishu-work-log-'));
-    const configDirectory = path.join(directory, '.codex');
+    const configDirectory = path.join(directory, '.config', 'nocode');
     const configPath = path.join(configDirectory, 'work-log.env');
-    fs.mkdirSync(configDirectory);
+    fs.mkdirSync(configDirectory, { recursive: true });
     fs.writeFileSync(
         configPath,
         [
@@ -128,5 +128,5 @@ test('rejects overriding the canonical credential path', () => {
     const result = runCli(['fetch', '--config', 'repo-local.env']);
 
     assert.equal(result.status, 1);
-    assert.match(result.stderr, /配置文件固定为 ~\/\.codex\/work-log\.env/);
+    assert.match(result.stderr, /配置文件固定为 ~\/\.config\/nocode\/work-log\.env/);
 });
