@@ -3,9 +3,9 @@ name: lark-project
 description: "\"飞书项目管理（Meego）。当用户给 project.feishu.cn 链接、提到 Meego 工作项、或需要读取/创建/更新/流转飞书项目工作项时使用。通过 meegle skill（…"
 ---
 
-# lark-project：飞书项目管理（路由壳）
+# lark-project：飞书项目管理（业务指引层）
 
-飞书项目（Meego/Meegle）操作已整体迁移到 `meegle` skill（官方 meegle CLI）。本 skill 只保留入口路由，维护既有调用契约（dev-land 合并后流转、larkhub 路由表）。
+飞书项目（Meego/Meegle）操作已整体迁移到 `meegle` skill（官方 meegle CLI）。本 skill 是包装 meegle 的**业务指引层**：meegle 承载 CLI 能力与参数事实（通用工具层），本 skill 叠加适配本业务的调用契约与读取纪律（dev-land 合并后流转、完整读取、larkhub 路由表）——业务适配写这里，不改动 meegle 自身。
 
 命中本 skill 的请求：**把 arguments 透传调用 meegle skill**（平台原生 Skill 调用）：
 
@@ -24,8 +24,10 @@ Use `$meegle`.
 > 5. **流转成功后附评论**：arguments 含修复摘要（dev-land 合并后流转传入）时，状态流转成功后调 meegle `comment add`（剥前缀纯数字 ID）把摘要落成工作项评论；评论失败不回滚流转，如实报告「已流转，评论失败」。
 > 6. **工时登记不在 meegle 能力内**（`workhour` 域仅查询，CLI 无提交命令）：arguments 含工时登记意图（任务号 + 用户在 dev-land 全景确认过的分钟数 + 描述）时，探测当前项目环境的工时登记 skill（如 `feishu-work-log`）并 handoff，由该 skill 按其自身写入纪律执行；环境无此能力 → 跳过并明确报告缺失，不伪造已登记。禁止把工时提交伪装成 meegle 操作。
 
+> **读取透传契约（完整读取工作项）**：arguments 含读取/了解工作项意图（读问题、看缺陷/需求、排查上下文）时，透传须带上完整读取约束——**不只读默认字段**：`workitem get --fields ["_all"]`（附件在 `multi_attachment` 字段，默认字段集不含）与 `comment list` 并行，附件/评论里的文件按需 `attachment +download` 下载（组合路径见 meegle SKILL.md 的 workitem get 节）。业务上复现步骤常在评论、截图日志常在附件，漏读即误判。
+
 - 工作项读取/创建/更新、节点与状态流转、MQL 查询、视图、待办、排期 → 全部走 meegle
 - meegle CLI 未安装 / 未授权 → 按 meegle skill 的 auth-guard 流程执行（安装：`npx -y @lark-project/meegle@latest install`）
 - 飞书云文档 → lark-read / lark-doc；飞书任务 → lark-task
 
-不要在本 skill 内展开任何操作细节——单一事实源在 meegle。
+命令与参数细节不在本 skill 展开——CLI 事实单一源在 meegle；本 skill 只写业务侧调用契约与读取纪律。
