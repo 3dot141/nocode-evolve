@@ -1,15 +1,21 @@
 #!/usr/bin/env node
 // 检查当前分支与 base 分支 (upstream / origin/HEAD) 的 freshness, 输出 JSON + exit code.
-// 用法: node "${CLAUDE_PLUGIN_ROOT}/scripts/freshness-check.mjs" [--max-behind=5] [--ttl=7200] [--gate-ttl=1800] [--session=<id>]
+// 用法: node "${CLAUDE_PLUGIN_ROOT}/scripts/freshness-check.mjs" [--max-behind=5] [--ttl=7200] [--session=<id>]
 //   --max-behind: behind 阈值 >= 此值 gate (默认 5)
-//   --ttl:       fetch cache TTL 秒数 (默认 7200 = 2h)
-//   --gate-ttl:  gate 节流窗口秒数 (默认 1800 = 30min); 窗口内同会话重复命中 gate 条件 → 降级放行
-//   --session:   会话 ID (缺省读 NOCODE_SESSION_ID env; 都没有 → worktree 级节流)
-// 输出 stdout JSON: { branch, base, behind, ahead, age_seconds, cache_hit, cold_start, gate, gate_suppressed, message }
+//   --ttl:       缓存 TTL 秒数 (默认 7200 = 2h), 同时管两件事:
+//                a) fetch 缓存 —— 距上次 fetch 超窗才重新 fetch (省网络);
+//                b) 会话跳过 —— 同会话检查过一次 (无论 ok / gate), 窗口内后续调用直接跳过不执行.
+//   --session:   会话 ID (缺省读 NOCODE_SESSION_ID env). 会话 = 一次完整的上下文生命周期
+//                (同一 claude 实例的全部轮次, 含 compact 压缩延续; /clear、新窗口、重启 = 新会话).
+//                会话级跳过只在 session 匹配时生效, 跨会话不共享 (各自完整检查一次).
+// 输出 stdout JSON: { branch, base, behind, ahead, age_seconds, cache_hit, cold_start, gate, session_skipped, message }
 // exit 0 = ok / exit 2 = gate (agent 应停手 + 三选). 离线 / fetch 失败: WARN + ok (不阻塞), 但冷启动除外 (见下).
 // cache 文件: git rev-parse --git-path nocode-freshness.json (worktree 独立, .git/ 内不会被 commit).
 //
-// 冷启动拦截: 当前 branch+base 在 cache 里【从来没有过记录】(机器首次 / 该分支首次 / 升级后旧格式作废) →
+// behind / ahead 每次**实时**本地 rev-list 计算, 不落缓存 —— fetch 缓存只表示"远端 ref 何时同步过",
+// 分支被 pull/push 追平后 behind 立即归零, 不会把陈旧落后量冻结到 TTL 过期 (旧版病灶).
+//
+// 冷启动拦截: 当前 branch+base 在 cache 里【从来没有过记录】(机器首次 / 该分支首次 / 旧格式作废) →
 //   coldStart=true, 无条件 gate 一次 (不论 fetch 成功与否、behind 多少), 让用户首次显式确认基线.
 //   fetch 成功后写入该 branch+base 的 entry, 下次同组合即转常规 (只 behind >= MAX_BEHIND 才 gate).
 //   离线冷启动 (无 entry + fetch 失败) 不写 entry, 仍反复拦, 直到联网成功建立基线.
@@ -22,12 +28,11 @@
 //      → eg. "origin/main"
 //   4) 兜底 "origin/main"
 //
-// cache 结构 (v2): { entries: { "<branch>\0<base>": { last_fetch_ms, behind, ahead, last_gate_ms?, gate_session? } } }
-//   旧 v1 格式 (顶层 branch/base) 读到即作废 → 视为无记录, 触发一次冷启动后写入新格式.
-//   last_gate_ms / gate_session: 最近一次实际 gate 的时刻与会话. gate 节流用——
-//   窗口 (--gate-ttl) 内再次命中 gate 条件时, 若调用方无 session 或 session 与记录一致 →
-//   降级为 ok (gate_suppressed=true), 避免同一会话被反复拦截. 宁多放行不少拦: 无 session 时
-//   任何新鲜 gate 记录都算数 (worktree 级节流). 离线冷启动无 entry 可写, 不参与节流 (仍每次拦).
+// cache 结构 (v3): { v: 3, entries: { "<branch>\0<base>": { last_fetch_ms, last_check_ms, last_check_session } } }
+//   v2 及更旧 (含 behind/ahead 冻结字段) 读到即作废 → 视为无记录, 触发一次冷启动后写入新格式.
+//   last_fetch_ms:          上次成功 fetch 时刻 (fetch 缓存窗).
+//   last_check_ms/_session: 上次完整检查的时刻与会话 (会话跳过窗; gate 也算检查过 —— 用户即将三选,
+//                           同会话后续不再打扰; 跨会话不共享, 新会话各自完整检查).
 //
 // 设计: rules/rule-git-freshness.md, docs/dev/3dot141/260603-02-strategic-review-v3.4.0/strategic-review-v3.4.0.md (Batch 1 follow-up)
 import { execSync } from 'node:child_process';
@@ -35,7 +40,6 @@ import fs from 'node:fs';
 
 const MAX_BEHIND = parseInt(argFlag('--max-behind') || '5', 10);
 const TTL_SECONDS = parseInt(argFlag('--ttl') || '7200', 10);
-const GATE_TTL_SECONDS = parseInt(argFlag('--gate-ttl') || '1800', 10);
 const SESSION_ID = argFlag('--session') || process.env.NOCODE_SESSION_ID || '';
 
 function argFlag(name) {
@@ -70,13 +74,13 @@ function cacheKey(branch, base) {
   return `${branch}\0${base}`;
 }
 
-// 返回 { entries: {...} }. 旧 v1 格式 (无 entries) 或损坏 → 空 entries (触发冷启动).
+// 返回 { v: 3, entries: {...} }. 非 v3 (旧 v2 含冻结 behind / v1 顶层字段) 或损坏 → 空 entries (触发冷启动).
 function readCache(cp) {
   try {
     const raw = JSON.parse(fs.readFileSync(cp, 'utf8'));
-    if (raw && raw.entries && typeof raw.entries === 'object') return raw;
+    if (raw && raw.v === 3 && raw.entries && typeof raw.entries === 'object') return raw;
   } catch { /* ignore */ }
-  return { entries: {} };
+  return { v: 3, entries: {} };
 }
 
 function writeCache(cp, store) {
@@ -92,24 +96,32 @@ const key = cacheKey(branch, base);
 const entry = store.entries[key] || null;
 const everChecked = !!entry; // 该 branch+base 是否曾建立过基线 (含过期); false = 冷启动
 
-let cacheHit = false;
-let ageSeconds = TTL_SECONDS + 1;
-let behind = 0;
-let ahead = 0;
-
-if (entry) {
-  ageSeconds = Math.max(0, Math.floor((now - entry.last_fetch_ms) / 1000));
-  if (ageSeconds < TTL_SECONDS) {
-    cacheHit = true;
-    behind = entry.behind;
-    ahead = entry.ahead;
-  }
+// ── 会话跳过: 同会话窗口内检查过一次 (ok / gate 均算) → 本次不再执行 ──
+// 无 SESSION_ID 时无法识别"同会话", 跳过不生效 (每次完整执行; behind 实时化后成本低).
+if (
+  entry && SESSION_ID &&
+  entry.last_check_session === SESSION_ID &&
+  (now - entry.last_check_ms) < TTL_SECONDS * 1000
+) {
+  const age = Math.max(0, Math.floor((now - entry.last_check_ms) / 1000));
+  console.log(JSON.stringify({
+    branch, base, behind: 0, ahead: 0, age_seconds: age, cache_hit: true, cold_start: false,
+    gate: 'ok', session_skipped: true,
+    message: `freshness ok (session skip: 本会话 ${TTL_SECONDS}s 窗口内已检查过, 距上次 ${age}s, 跳过执行)`,
+  }, null, 2));
+  process.exit(0);
 }
 
+// ── fetch 缓存: 距上次 fetch 超窗才重新同步远端 ref ──
+let cacheHit = false;
+let ageSeconds = entry ? Math.max(0, Math.floor((now - entry.last_fetch_ms) / 1000)) : TTL_SECONDS + 1;
 let fetchWarn = '';
-if (!cacheHit) {
+let fetched = true;
+
+if (entry && ageSeconds < TTL_SECONDS) {
+  cacheHit = true;
+} else {
   const remoteBranch = base.startsWith('origin/') ? base.slice(7) : base;
-  let fetched = true;
   try {
     git(`fetch origin ${remoteBranch} --quiet`);
   } catch (e) {
@@ -117,37 +129,29 @@ if (!cacheHit) {
     fetchWarn = `fetch 失败 (${(e.message || '').split('\n')[0].slice(0, 120)}); freshness 视为 unknown`;
     process.stderr.write(`[freshness-check] WARN: ${fetchWarn}\n`);
   }
-
   if (fetched) {
-    behind = parseInt(git(`rev-list --count HEAD..${base}`, true) || '0', 10);
-    ahead = parseInt(git(`rev-list --count ${base}..HEAD`, true) || '0', 10);
     ageSeconds = 0;
-    store.entries[key] = { ...entry, last_fetch_ms: now, behind, ahead };
-    writeCache(cp, store);
+    store.entries[key] = { ...(entry || {}), last_fetch_ms: now };
   } else if (entry) {
-    // 离线: 用旧 entry (即使过期), 不阻塞
-    behind = entry.behind;
-    ahead = entry.ahead;
-    ageSeconds = Math.max(0, Math.floor((now - entry.last_fetch_ms) / 1000));
+    ageSeconds = Math.max(0, Math.floor((now - entry.last_fetch_ms) / 1000)); // 离线: 沿用旧 fetch 时刻
   }
-  // 否则 (无 entry + fetch 失败): behind=0, ahead=0; coldStart 仍会 gate (见下)
 }
 
+// ── behind / ahead 实时本地计算 (毫秒级, 不吃网络); 分支追平后立即归零, 无冻结值 ──
+const behind = parseInt(git(`rev-list --count HEAD..${base}`, true) || '0', 10);
+const ahead = parseInt(git(`rev-list --count ${base}..HEAD`, true) || '0', 10);
+
 const coldStart = !everChecked;
-const wantGate = coldStart || behind >= MAX_BEHIND;
+const gate = coldStart || behind >= MAX_BEHIND ? 'gate' : 'ok';
 
-// gate 节流: 窗口内已 gate 过 (且调用方无 session 或 session 匹配) → 降级放行.
-// 离线冷启动无 entry (lastGateMs=null) → 不参与节流, 维持「联网建立基线前每次拦」.
-const gateEntry = store.entries[key] || null;
-const lastGateMs = gateEntry?.last_gate_ms ?? null;
-const gateFresh = lastGateMs != null && (now - lastGateMs) < GATE_TTL_SECONDS * 1000;
-const gateSameScope = !SESSION_ID || !gateEntry?.gate_session || gateEntry.gate_session === SESSION_ID;
-const gateSuppressed = wantGate && gateFresh && gateSameScope;
-const gate = wantGate && !gateSuppressed ? 'gate' : 'ok';
-
-if (gate === 'gate' && gateEntry) {
-  gateEntry.last_gate_ms = now;
-  gateEntry.gate_session = SESSION_ID;
+// 写回本次检查记录 (gate 也写: 用户即将三选, 同会话后续跳过).
+// 离线冷启动 (fetch 失败 + 无 entry) 不写 → 维持「联网建立基线前每次拦」.
+if (entry || fetched) {
+  store.entries[key] = {
+    ...(store.entries[key] || {}),
+    last_check_ms: now,
+    last_check_session: SESSION_ID,
+  };
   writeCache(cp, store);
 }
 
@@ -162,9 +166,7 @@ if (coldStart) {
 }
 const message = gate === 'gate'
   ? `${reason}. ${choices}`
-  : gateSuppressed
-    ? `freshness ok (gate 抑制: ${GATE_TTL_SECONDS}s 窗口内已 gate 过, 本次放行; 原触发: ${reason})`
-    : `freshness ok (behind=${behind}, ahead=${ahead}, age=${ageSeconds}s, cache=${cacheHit ? 'hit' : 'miss'}${fetchWarn ? `, ${fetchWarn}` : ''})`;
+  : `freshness ok (behind=${behind}, ahead=${ahead}, fetch_age=${ageSeconds}s, cache=${cacheHit ? 'hit' : 'miss'}${fetchWarn ? `, ${fetchWarn}` : ''})`;
 
-console.log(JSON.stringify({ branch, base, behind, ahead, age_seconds: ageSeconds, cache_hit: cacheHit, cold_start: coldStart, gate, gate_suppressed: gateSuppressed, message }, null, 2));
+console.log(JSON.stringify({ branch, base, behind, ahead, age_seconds: ageSeconds, cache_hit: cacheHit, cold_start: coldStart, gate, session_skipped: false, message }, null, 2));
 process.exit(gate === 'gate' ? 2 : 0);

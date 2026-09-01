@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// freshness-check.mjs 的 gate 节流 (--gate-ttl / --session) 行为测试.
+// freshness-check.mjs 的会话跳过 (--ttl / --session) 与 behind 实时计算行为测试.
 // 真实 git fixture: bare origin + work clone (behind=6), 不 mock.
 import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
@@ -31,6 +31,7 @@ function run(session, extra = []) {
 
 function cacheEntry() {
   const store = JSON.parse(fs.readFileSync(path.join(work, '.git', 'nocode-freshness.json'), 'utf8'));
+  assert.equal(store.v, 3, 'cache 结构应为 v3');
   const keys = Object.keys(store.entries || {});
   assert.equal(keys.length, 1, 'cache 应只有 branch+base 一条 entry');
   return store.entries[keys[0]];
@@ -66,47 +67,54 @@ after(() => {
   fs.rmSync(root, { recursive: true, force: true });
 });
 
-// 顺序敏感: 以下测试共享同一 work repo 的 cache, 按声明顺序断言节流状态流转.
+// 顺序敏感: 以下测试共享同一 work repo 的 cache, 按声明顺序断言会话跳过 / 跨会话状态流转.
 
-test('cold start + behind>=5: 首次 gate (exit 2), 写入 last_gate_ms / gate_session', () => {
+test('cold start + behind>=5: 首次 gate (exit 2), 写入 last_check_* (无 behind 字段)', () => {
   const r = run('sess-a');
   assert.equal(r.status, 2);
   assert.equal(r.json.gate, 'gate');
   assert.equal(r.json.cold_start, true);
-  assert.equal(r.json.gate_suppressed, false);
+  assert.equal(r.json.session_skipped, false);
   assert.equal(r.json.behind, 6);
   const entry = cacheEntry();
-  assert.equal(typeof entry.last_gate_ms, 'number');
-  assert.equal(entry.gate_session, 'sess-a');
+  assert.equal(typeof entry.last_fetch_ms, 'number');
+  assert.equal(typeof entry.last_check_ms, 'number');
+  assert.equal(entry.last_check_session, 'sess-a');
+  assert.equal('behind' in entry, false, 'v3 entry 不落 behind (不冻结落后量)');
 });
 
-test('同会话 30min 窗口内再跑: 节流降级放行 (gate_suppressed=true)', () => {
+test('同会话窗口内再跑: 直接跳过执行 (session_skipped=true), cache 不变', () => {
+  const before = cacheEntry();
   const r = run('sess-a');
   assert.equal(r.status, 0);
   assert.equal(r.json.gate, 'ok');
-  assert.equal(r.json.gate_suppressed, true);
-  assert.equal(r.json.cold_start, false);
-  assert.equal(r.json.behind, 6); // cache hit, behind 来自 entry
-  assert.match(r.json.message, /gate 抑制/);
+  assert.equal(r.json.session_skipped, true);
+  assert.match(r.json.message, /session skip/);
+  const after = cacheEntry();
+  assert.equal(after.last_check_ms, before.last_check_ms, '跳过路径不重写 cache');
 });
 
-test('不同会话在窗口内: 仍 gate (节流按会话记分)', () => {
+test('跨会话不共享: 新会话仍完整检查并 gate (实时 behind, 非缓存值)', () => {
   const r = run('sess-b');
   assert.equal(r.status, 2);
   assert.equal(r.json.gate, 'gate');
-  assert.equal(r.json.gate_suppressed, false);
-  assert.equal(cacheEntry().gate_session, 'sess-b');
+  assert.equal(r.json.session_skipped, false);
+  assert.equal(r.json.behind, 6, 'behind 为实时 rev-list 结果');
+  assert.equal(cacheEntry().last_check_session, 'sess-b');
 });
 
-test('无 session 调用: 窗口内任何新鲜 gate 记录都放行 (worktree 级兜底)', () => {
+test('无 session 调用: 无法识别会话 → 不跳过, 完整执行仍 gate', () => {
   const r = run('');
-  assert.equal(r.status, 0);
-  assert.equal(r.json.gate_suppressed, true);
-});
-
-test('--gate-ttl=0 关闭节流: 同会话也照常 gate', () => {
-  const r = run('sess-a', ['--gate-ttl=0']);
   assert.equal(r.status, 2);
   assert.equal(r.json.gate, 'gate');
-  assert.equal(r.json.gate_suppressed, false);
+  assert.equal(r.json.session_skipped, false);
+});
+
+test('分支追平后: behind 实时归零, 跨会话直接 ok (不残留旧落后量)', () => {
+  git(work, ['pull', '--ff-only', 'origin', 'main']);
+  const r = run('sess-c'); // 新会话, fetch 缓存命中不重新 fetch, behind 仍实时算
+  assert.equal(r.status, 0);
+  assert.equal(r.json.gate, 'ok');
+  assert.equal(r.json.behind, 0, '本地 ref 已追平, rev-list 实时归零');
+  assert.equal(r.json.session_skipped, false, '跨会话不跳过, 是完整检查后 ok');
 });
