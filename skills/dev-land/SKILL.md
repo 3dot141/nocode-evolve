@@ -111,6 +111,7 @@ remote_url=$(git -C "$MAIN_ROOT" remote get-url origin)
 | **Keep** | （无） | 直接一行报告现状，结束 |
 
 - **任务号 + 目标状态**（PR / Merge）：`git log <base>..HEAD --format=%B | grep -oE '#[fgm]-[a-z0-9]+' | sort -u`；有任务号 → Read `references/post-merge.md` 拿典型流转映射 + 查当前状态 → 推定目标状态
+- **工时估算**（PR / Merge，有任务号时）：取本次 land 关联任务在会话中的任务段起止（任务日志 / 会话记录），估成分钟数展示进全景第 7 项——用户「OK」即确认估算，显式值覆盖
 - **远程坐标必须此刻捕获**——删 branch 后 `branch.<name>.remote/merge` 配置即消失（见 `references/remote-branch-cleanup.md`）
 - **README 影响面**（仅 PR / Merge）：`git diff --name-only <base>..HEAD` 叠加 `git status --porcelain` 得改动文件全集（排除 node_modules/dist/build 等生成物目录）；每个文件从所在目录沿 dirname 链**向上冒泡**到最近的含 README.md 的目录（走到仓库根即止，**根 README.md 不算**——那是仓库定位文档，不归本流程管）；去重得「更新」清单。改动落在无 README.md 的目录且该目录含源码/配置文件（.js / .ts / .py / .go / .rs / .md / .mjs / package.json / Makefile 等）→ 进「新建」清单。两清单皆空 → 全景不列文档同步项
 
@@ -148,7 +149,7 @@ remote_url=$(git -C "$MAIN_ROOT" remote get-url origin)
   4. 发布策略      <全量（默认） / 灰度 / dark launch>    ← 生产改动才展示
   5. 合并方式      approve 后自动合并（默认）; pr-check 每 5min（定时进程存活期间）
   6. 合并后清理    worktree + branch + 远程: 删除（默认）
-  7. 合并后流转    #<task>: <当前> → <目标>; 评论修复摘要; 工时 <N 分钟 / 跳过（默认）>
+  7. 合并后流转    #<task>: <当前> → <目标>; 评论修复摘要; 工时 <按会话任务段估算 N 分钟（默认，OK 即确认）/ 用户指定值>
 
 --- body ---
 ## 背景
@@ -177,7 +178,7 @@ remote_url=$(git -C "$MAIN_ROOT" remote get-url origin)
   3. merge         <branch> → <base>（<N> 个 commit）
   4. 清理          worktree + 本地 branch
   5. 远程分支      <remote>/<branch>: 保留（默认）；改「删」则删（<独有 commit 文案>）
-  6. 合并后流转    #<task>: <当前> → <目标>; 评论修复摘要; 工时 <N 分钟 / 跳过（默认）>
+  6. 合并后流转    #<task>: <当前> → <目标>; 评论修复摘要; 工时 <按会话任务段估算 N 分钟（默认，OK 即确认）/ 用户指定值>
 回「OK」全自动到底；或直接说改哪项。
 ```
 
@@ -216,6 +217,15 @@ remote_url=$(git -C "$MAIN_ROOT" remote get-url origin)
 | **Merge** | **文档同步 →** merge → 三件套清理 → 任务流转 |
 | **Discard** | 清 worktree → `branch -D` → (全景选删) 删远程；字面 `discard` 就是本全景的唯一确认 |
 | **Keep** | 一行报告现状 |
+
+### 分支准备（当前停在 base/长期分支且有未提交改动时，先于文档同步）
+
+不在当前 worktree 裸 `checkout -b`——那会把长期分支（release/master）的 worktree 切到 feature 分支，长期分支现场被占用；feature 分支要有自己的 worktree：
+
+1. `git worktree add <MAIN_ROOT 同级>/<仓库名>-<分支 slug> -b <branch> <base>`（同级平级路径，对齐既有 worktree 布局）
+2. 迁移未提交改动：原 worktree `git stash push -u -m "land-<branch>"` → 记下 stash SHA（stash 栈跨 worktree 共享，禁裸 pop）→ 新 worktree `git stash apply <sha>`；确认迁移完整后回原 worktree `git stash drop <sha>`
+3. 后续文档同步 / commit / push / PR 全部在新 worktree 内执行；原 worktree 留在原分支不动
+4. 合并后按三件套清理正常 remove 新 worktree；原 worktree 永不进入清理范围
 
 ### 文档同步（仅 PR / Merge）
 
@@ -290,6 +300,7 @@ lark-project 不可用时明确报告缺失能力，不伪造完成。
 | "任务号懒得填" | 流转闭环是 Land 的一部分 |
 | "force push 一下就好" | 先把 `force-with-lease` 风险写进新的完整全景；不做执行期追加确认 |
 | "不在 worktree 里，全景/PR契约/reviewer/定时监控不适用" | **非 worktree 只影响清理项，其余全部照走** |
+| "我已经在 worktree 里，直接 checkout -b 就行" | 在 base/长期分支的 worktree 里裸开分支会把该 worktree 切走——一分支一 worktree；建新 worktree 迁移改动（见「分支准备」） |
 | "用户说了提PR，直接 push + 建 PR 就行" | 「提PR」是 Step 1 意图推定的输入，不是跳过全景的授权 |
 | "这个改动简单，跳过某 Step" | 进了 skill 就走完。"简单"不是跳 Step 的授权 |
 | "README 回头再补" | 文档同步是全景第 1 项，随 PR diff 一起被 review；回头补 = 补文档债 |

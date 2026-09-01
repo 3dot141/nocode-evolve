@@ -33,7 +33,7 @@ Use the `skill` tool with `name: "meegle"`.
 > 3. 关联类必填字段（`workitem_related_multi_select`）值为 stringified 数字数组（如 `"[7071224906]"`）；**关联对象是业务判断**：须用户提供或从该工作项上下文查实（如同分支提交所挂需求），不得 mock。「缺陷来源于 X」类来源字段例外——按团队惯例选**标题与当前工作项相同**的候选，**搜索顺序：先比对本单自身（自引用惯例）→ 按 MQL 搜字段对应类型（缺陷来源先搜缺陷）→ 无命中再搜其余类型 → 全无才问用户**（实测教训：只搜需求类型会漏检自引用、多走一轮人工；详见 meegle `sop-transition-state.md` 4.4）。
 > 4. MQL 查需求关联时：FROM 项目名用中文名+反引号（simple_name 撞歧义空间报 no permission），story 类字段 key 是 `work_item_id` / `work_item_status`（非 `id`/`status`）。
 > 5. **流转成功后附评论**：arguments 含修复摘要（dev-land 合并后流转传入）时，状态流转成功后调 meegle `comment add`（剥前缀纯数字 ID）把摘要落成工作项评论；评论失败不回滚流转，如实报告「已流转，评论失败」。
-> 6. **工时登记不在 meegle 能力内**（`workhour` 域仅查询，CLI 无提交命令）：arguments 含工时登记意图（任务号 + 用户在 dev-land 全景确认过的分钟数 + 描述）时，探测当前项目环境的工时登记 skill（如 `feishu-work-log`）并 handoff，由该 skill 按其自身写入纪律执行；环境无此能力 → 跳过并明确报告缺失，不伪造已登记。禁止把工时提交伪装成 meegle 操作。
+> 6. **工时登记不在 meegle 能力内**（`workhour` 域仅查询，CLI 无提交命令）：arguments 含工时登记意图（任务号 + 经 dev-land 全景确认的分钟数——默认为全景展示的会话任务段估算值经用户「OK」，或用户显式指定值——+ 描述）时，探测当前项目环境的工时登记 skill（如 `feishu-work-log`）并 handoff，由该 skill 按其自身写入纪律执行；环境无此能力 → 跳过并明确报告缺失，不伪造已登记。禁止把工时提交伪装成 meegle 操作。
 
 > **读取透传契约（完整读取工作项）**：arguments 含读取/了解工作项意图（读问题、看缺陷/需求、排查上下文）时，透传须带上完整读取约束——**不只读默认字段**，三路同步：
 > 1. `workitem get --fields ["_all"]`（附件在 `multi_attachment` 字段，默认字段集不含）与 `comment list` **并行**——两者都只需 project-key + work-item-id，互不依赖
