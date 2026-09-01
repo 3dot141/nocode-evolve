@@ -1,6 +1,6 @@
 {
   "name": "nocode",
-  "version": "0.15.0",
+  "version": "0.15.1",
   "description": "Harrison 的个人工程工作流与规则工具箱，支持 Claude Code、Codex、Qoder、Pi 和 DeepSeek Harness",
   "author": {
     "name": "Harrison",
