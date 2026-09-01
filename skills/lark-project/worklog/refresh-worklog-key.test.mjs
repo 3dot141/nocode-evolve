@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import test from 'node:test';
+import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const lib = await import('./refresh-worklog-key-lib.mjs');
@@ -64,7 +65,10 @@ test('captures a key when extra headers arrive before the request URL', () => {
 });
 
 test('selects the first existing Chrome executable and honors CHROME_PATH', () => {
-    const existing = new Set(['C:\\custom\\chrome.exe', 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe']);
+    // 期望路径用 path.join 构造，与实现内部候选的拼接方式一致——Windows 风格段在
+    // 非 Windows 平台也能逐字符匹配（path.join 在 mac 用 / 连接，两边同样如此）。
+    const programfilesChrome = path.join('C:\\Program Files', 'Google', 'Chrome', 'Application', 'chrome.exe');
+    const existing = new Set(['C:\\custom\\chrome.exe', programfilesChrome]);
     const exists = (candidate) => existing.has(candidate);
 
     assert.equal(
@@ -76,7 +80,7 @@ test('selects the first existing Chrome executable and honors CHROME_PATH', () =
     );
     assert.equal(
         lib.findChromeExecutable({ PROGRAMFILES: 'C:\\Program Files' }, exists),
-        'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+        programfilesChrome,
     );
 });
 
