@@ -44,6 +44,8 @@ description: "飞书项目（Meego/Meegle）操作工具。支持查询和管理
 ### workitem get
 按 ID/名称查询工作项概况。不传 fields 时返回固定基础字段加上一组默认带出的系统字段——实测包含 `group_type` 拉群方式、`description`、`current_status_operator`、`watchers`（即便 value 为 null 也会出现）；其余字段需要通过 `workitem meta-fields` 拿到 key 后再传入 fields。
 
+> **附件字段 `multi_attachment` 不在默认字段集里**——列附件必须传 `--fields ["_all"]`（或显式传 `["multi_attachment"]`）。实测教训：只看默认字段集会误判「CLI 没有列附件能力」。附件字段值回传 file_url，用 `attachment +download` 端到端下载（参数表见 [references/attachment.md](references/attachment.md)）。
+
 | 参数 | 类型 | 必填 | 说明 |
 |------|------|------|------|
 | --work-item-id | string | 是 | 工作项 ID 或名称 |
@@ -62,6 +64,10 @@ description: "飞书项目（Meego/Meegle）操作工具。支持查询和管理
 > - `disabled` → `{value: "disabled", label: "不拉群"}`（无 group_id）
 >
 > 写协议（`field_value` 里的 JSON）：`{"type": "auto" | "bind" | "disabled", "group_id": "oc_xxx"}`
+
+> **完整读取工作项（读缺陷/需求等要吃透上下文时）**：字段、评论、附件三路同步，只看 description/默认字段会漏信息（复现步骤在评论、截图日志在附件是常态）：
+> 1. `workitem get --fields ["_all"]` 与 `comment list`（参数表见 [references/misc.md](references/misc.md)）**并行**——两者都只需 project-key + work-item-id，互不依赖
+> 2. 附件按需下载：从 `multi_attachment` 字段值或评论里的附件引用取 file_url，`attachment +download <file-url>` 落盘（依赖第 1 步返回，串行在后）
 
 ### workitem batch-get
 批量查询工作项（Meegle CLI 客户端 fan-out：并发调用 `workitem get`）。单次 ≤ 200 个 ID，3 并发，返回 `{results, errors, summary}`；ID 量大时用 `--format ndjson` 流式输出。
@@ -408,6 +414,7 @@ description: "飞书项目（Meego/Meegle）操作工具。支持查询和管理
 | 人名 → userkey | `user search`（批量 ≤20） |
 | 当前用户 | `user me`；MQL 内可直接 `current_login_user()` |
 | 条件查询 / 个人待办 | `workitem query`（MQL） / `mywork todo` |
+| 完整读取工作项（字段+评论+附件） | `workitem get --fields ["_all"]` ∥ `comment list`，附件 `attachment +download`（组合路径见 workitem get 节） |
 | 团队排期 | `workhour list-schedule`（≤20 人、≤3 月） |
 | 创建 / 修改工作项 | `workitem create` / `workitem update`（字段 fields，角色 role_operate） |
 | 节点流转 / 状态流转 | `workflow transition`（confirm/rollback） / `workflow transition-state`（走 [sop-transition-state.md](references/sop-transition-state.md) SOP） |
