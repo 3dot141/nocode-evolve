@@ -82,19 +82,7 @@ FEISHU_USER_ID=$(meegle user me --format json | 提取 user_key)
 node worklog/work-log.mjs submit --task-code f-6772916146 --minutes 195 --started-at 2026-08-28T01:00:00.000Z --description "修复联动问题"
 ```
 
-用户确认后，每次提交批次前刷新 key：
-
-```bash
-node worklog/refresh-worklog-key.mjs
-```
-
-无头刷新失败时，说明登录可能过期。先告知用户将打开专用 Chrome，再运行：
-
-```bash
-node worklog/refresh-worklog-key.mjs --login
-```
-
-按确认顺序逐条提交：
+用户确认后按顺序逐条提交：
 
 ```bash
 node worklog/work-log.mjs submit --task-code f-6772916146 --minutes 195 --started-at 2026-08-28T01:00:00.000Z --description "修复联动问题" --execute
@@ -110,14 +98,13 @@ node worklog/work-log.mjs submit --task-code f-6772916146 --minutes 195 --starte
 | 查询 PR 详情 | `work-log.mjs details --project <key> --repo <slug> --pr <id>` |
 | 分配工时 | `work-log.mjs allocate --input <json> --date <YYYY-MM-DD> --minutes <n>` |
 | 预览提交 | `work-log.mjs submit ...` |
-| 刷新认证 key | `refresh-worklog-key.mjs` |
 | 实际提交 | `work-log.mjs submit ... --execute` |
 
 ## 常见错误
 
 | 现象 | 处理 |
 |---|---|
-| `401` 或没有权限 | 刷新 key；无头模式失败后由用户登录专用 Chrome |
+| `401` 或没有权限 | key 失效——从工时看板请求头重新抄取 `x-worklog-key` 并更新 `.zshenv` |
 | 开始时间是未来时间 | 重新运行 `allocate`，不要手改 `Z` 时间 |
 | 任务编号不合法 | 使用完整 `f-`、`g-`、`m-` 前缀编号 |
 | 缺少 `FEISHU_G_WORK_OBJECT_ID` | 按配置指南补充自定义对象 ID |

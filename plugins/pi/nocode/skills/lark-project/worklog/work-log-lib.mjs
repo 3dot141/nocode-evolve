@@ -356,13 +356,10 @@ const CONFIG_KEYS = [
     'BITBUCKET_BASE_URL',
     'BITBUCKET_TOKEN',
     'FEISHU_WORKLOG_API',
-    'FEISHU_WORKLOG_BOARD_URL',
     'FEISHU_WORKLOG_KEY',
     'FEISHU_SPACE_ID',
     'FEISHU_USER_ID',
     'FEISHU_G_WORK_OBJECT_ID',
-    'CHROME_PATH',
-    'CHROME_PROFILE_DIR',
 ];
 
 /** 配置解析：shell 环境变量优先于 env 文件——凭据可直接 export 在 ~/.zshenv 等处，
