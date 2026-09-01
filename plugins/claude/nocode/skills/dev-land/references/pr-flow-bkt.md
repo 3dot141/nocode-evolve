@@ -84,7 +84,9 @@ source 是 personal repo（`~$source_project`），团队对其无 read 权限�
 
 ### Workflow B: 取名单 → batch → 单个 fallback
 
-**取 cross-fork 默认 reviewer 名单**（`--with-default-reviewers` 在 B 失效，见坑表）。两个 endpoint 按时机选：
+**取 cross-fork 默认 reviewer 名单**（`--with-default-reviewers` 在 B 失效，见坑表）。
+
+> **探查只发生在本阶段（push + 建 PR 之后），用 `/reviewers` 精确解析（按 sourceRef→targetRef 匹配条件规则）。全景阶段不探查**——push 前 source ref 不存在，`/reviewers` 404；唯一替代 `/conditions` 返回全部条件规则的**并集**（不按 ref 匹配），与实际名单有偏差（实测 PR #2065：并集 13 vs 精确 11，误多加 2 人），不作为任何阶段 add 依据。全景 reviewer 行写「default reviewers（add 阶段解析）」。
 
 **(a) 建 PR 后（source 已 push）** → `/reviewers` resolved，`.name` 已 canonical。repo id 从 PR 现取：
 ```bash
@@ -94,14 +96,7 @@ bkt api "/rest/default-reviewers/1.0/projects/${target_project}/repos/${repo_slu
   --json --jq '.[].name'
 ```
 
-**(b) 全景计划材料收集阶段（push 前，PR 未建）** → `/reviewers` 会 404（source ref 不存在）。改用 `/conditions`（不依赖 source ref），repo id 从 repo endpoint 取：
-```bash
-src_repo_id=$(bkt api "/rest/api/1.0/projects/${source_project}/repos/${repo_slug}" --json --jq '.id')
-tgt_repo_id=$(bkt api "/rest/api/1.0/projects/${target_project}/repos/${repo_slug}" --json --jq '.id')
-bkt api "/rest/default-reviewers/1.0/projects/${target_project}/repos/${repo_slug}/conditions" \
-  --json --jq '.[].reviewers[].name'
-```
-两条都**排除 PR 作者**（`author.user.name` / 预览阶段即当前 bkt 登录用户）。
+排除 PR 作者（`author.user.name` / 预览阶段即当前 bkt 登录用户）后再 batch add。
 
 **batch add**（multi `--reviewer` 单次；idempotent）：
 ```bash
@@ -162,7 +157,7 @@ bkt api "/rest/api/1.0/projects/<KEY>/repos/<slug>/pull-requests/<id>/merge?vers
 - **不要 create 时塞 `reviewers` 数组** — 单 user 错让整个 PR 建不出来
 - **不要 pipe `bkt api` 输出给 jq** — output 含真实换行（非 escaped），pipe jq parse error。抓 id 用 `grep -oE '"id":[0-9]+' | head -1`
 - **不要假设 PR slug 跟 git remote URL 一致** — DC 改名后 remote URL 可能仍旧 slug（redirect 兜底），bkt 必须用新 slug。验证 `bkt api '/rest/api/1.0/projects/<user>/repos' --param 'limit=200' --json --jq '.values[].slug'`
-- **`/reviewers` resolved endpoint push 前会 404** — 依赖 source ref 已在 origin；cross-fork push 前无此 ref。预览用 `/conditions`，push 后用 `/reviewers`
+- **`/reviewers` resolved endpoint push 前会 404** — 依赖 source ref 已在 origin；探查因此只放在 add 阶段（push + 建 PR 之后），全景阶段不探查（`/conditions` 并集有偏差，不作 add 依据）
 - **不要对 fork PR（Workflow B）用 `bkt pr edit --with-default-reviewers`** — 报 `400 source repository with id '0' does not exist`。B 的 reviewer 必须 `--reviewer` 显式加
 - **不要用 `bkt pr view` 验证跨仓（Workflow B）PR** — author/reviewers 显示 None/空。走 raw GET `bkt api '.../pull-requests/<id>' --json` 看 `reviewers[].user.name`/`.state`
 - **不要裸 POST `/merge`** — DC 的 XSRF 防护会 403 `XSRF check failed`；必须 `-H "X-Atlassian-Token: no-check"`（实测 PR #1522，重试同样 403，不是偶发）

@@ -145,7 +145,7 @@ remote_url=$(git -C "$MAIN_ROOT" remote get-url origin)
   1. 文档同步      README 更新: <dir>(补充|修正|重写), ...; 新建: <dirs>（默认: 执行）   ← README 影响面非空才展示
   2. commit 整理   <建议内容>（默认: 跳过；文档改动一并进整理）
   3. push + 建 PR  push: <普通（默认） / force-with-lease（仅已知 non-ff）>;
-                   title「<title>」; reviewer: <名单 or 空>
+                   title「<title>」; reviewer: <名单 or default reviewers（add 阶段解析）>
   4. 发布策略      <全量（默认） / 灰度 / dark launch>    ← 生产改动才展示
   5. 合并方式      approve 后自动合并（默认）; pr-check 每 5min（定时进程存活期间）
   6. 合并后清理    worktree + branch + 远程: 删除（默认）
