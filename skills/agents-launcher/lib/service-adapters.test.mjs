@@ -51,10 +51,27 @@ test('adapter allowlist 与 identity capability 固定且冻结', () => {
   assert.equal(Object.isFrozen(ADAPTER_CAPABILITIES), true);
 });
 
-test('web start 委托 webCli.start 并返回 handle', async () => {
+test('web start 委托 webCli.start（带 ports 供归属预检）并返回 handle；复用实例返回 null 时 handles 为空', async () => {
   const { adapters, calls, child } = fixture();
   assert.deepEqual(await adapters.web.start({}), { handles: [child] });
-  assert.deepEqual(calls[0], ['web.start', { webDir: '/web' }]);
+  assert.deepEqual(calls[0], ['web.start', { webDir: '/web', ports: { agents: 8070, server: 8081, web: 10001 } }]);
+
+  // 复用路径：webCli.start 返回 null（端口已被本 webDir 实例持有）→ 无 handle，stop 走端口杀法不依赖 handle
+  const reuseAdapters = createServiceAdapters({
+    repos: { AGENTS_DIR: '/agents', WEB_DIR: '/web', SERVER_DIR: '/server' },
+    ports: { agents: 8070, server: 8081, web: 10001 },
+    services: {
+      agents: { start: () => ({}), killCommands: () => [], status: async () => ({ up: true, pid: '1' }) },
+      server: { infra: async () => {}, start: async () => ({}), killCommands: () => [] },
+      web: {
+        start: () => null,
+        killCommands: () => [['sh', ['-c', 'kill-web']]],
+        status: async () => ({ up: true, pid: '100011' }),
+      },
+    },
+    io: { runToEnd: async () => 0, httpOk: async () => true, pidOnPort: () => '1' },
+  });
+  assert.deepEqual(await reuseAdapters.web.start({}), { handles: [] });
 });
 
 test('agents/web status 被规范化为 healthy + listener identity', async () => {

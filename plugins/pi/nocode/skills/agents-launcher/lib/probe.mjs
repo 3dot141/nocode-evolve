@@ -33,3 +33,15 @@ export function pidOnPort(port, { exec = execFileSync } = {}) {
     return '';
   }
 }
+
+// 某进程的工作目录（归属判定的依据），取不到返回 ''。macOS 无 /proc，统一走 lsof -Fn 输出解析
+// （`n` 行为路径；`-a -d cwd` 限定只查 cwd 描述符，避免拉全量 fd 又慢又难解析）。
+export function processCwd(pid, { exec = execFileSync } = {}) {
+  if (!pid) return '';
+  try {
+    const out = exec('sh', ['-c', `lsof -a -p ${pid} -d cwd -Fn 2>/dev/null | grep '^n' | head -1`], { encoding: 'utf8' });
+    return out.replace(/^n/, '').trim() || '';
+  } catch {
+    return '';
+  }
+}

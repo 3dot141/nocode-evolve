@@ -153,12 +153,67 @@ test('start: spawn vite 前先清 Vite 缓存（所有启动路径共享，防 C
   const fakeChild = {};
   const r = start({
     webDir: '/repo',
+    check: () => ({ state: 'free' }),
     clean: ({ webDir }) => { order.push(`clean:${webDir}`); return { action: 'removed', path: '/repo/packages/jsy-web/node_modules/.vite' }; },
     spawn: (_label, cmd, args) => { order.push(`spawn:${cmd} ${args.join(' ')}`); return fakeChild; },
     log: () => {},
   });
   assert.deepEqual(order, ['clean:/repo', 'spawn:pnpm dev']);
   assert.equal(r, fakeChild);
+});
+
+test('start: 端口已被本 webDir 实例持有 → 复用返回 null，不 clean 不 spawn（260901 外部 vite 代答教训）', () => {
+  const order = [];
+  const r = start({
+    webDir: '/repo',
+    check: () => ({ state: 'reuse', pid: '4242', cwd: '/repo/packages/jsy-web' }),
+    clean: () => { order.push('clean'); return { action: 'none' }; },
+    spawn: () => { order.push('spawn'); return {}; },
+    log: () => {},
+  });
+  assert.deepEqual(order, []);
+  assert.equal(r, null);
+});
+
+test('start: 端口被外部进程占用 → throw 带 pid 与处置指引，不 spawn', () => {
+  assert.throws(
+    () => start({
+      webDir: '/repo',
+      check: () => ({ state: 'conflict', pid: '9999', cwd: '/other/project' }),
+      clean: () => ({ action: 'none' }),
+      spawn: () => { throw new Error('不该 spawn'); },
+      log: () => {},
+    }),
+    /pid=9999.*web-cli\.mjs stop/s,
+  );
+});
+
+test('checkPortOwnership: free / reuse（cwd 落在 webDir 内）/ conflict 三态', async () => {
+  const { checkPortOwnership } = await import('./web-cli.mjs');
+  const mk = (pid, cwd) => ({ pidOnPortFn: () => pid, processCwdFn: () => cwd });
+  assert.deepEqual(
+    checkPortOwnership({ port: 10001, webDir: '/repo', ...mk('', '') }),
+    { state: 'free' },
+  );
+  assert.deepEqual(
+    checkPortOwnership({ port: 10001, webDir: '/repo', ...mk('42', '/repo/packages/jsy-web') }),
+    { state: 'reuse', pid: '42', cwd: '/repo/packages/jsy-web' },
+  );
+  assert.deepEqual(
+    checkPortOwnership({ port: 10001, webDir: '/repo', ...mk('42', '/elsewhere') }),
+    { state: 'conflict', pid: '42', cwd: '/elsewhere' },
+  );
+});
+
+test('status: 判据为 httpOk——无 HTTP 响应的端口占用不误报 UP', async () => {
+  const { status } = await import('./web-cli.mjs');
+  const probes = {
+    httpOk: async (url) => { assert.match(url, /http:\/\/127\.0\.0\.1:10001\//); return false; },
+    pidOnPort: () => { throw new Error('DOWN 时不该查 pid'); },
+  };
+  const s = await status({ ports: { web: 10001 }, probes });
+  assert.equal(s.up, false);
+  assert.equal(s.pid, '-');
 });
 
 test('killCommands 只清 web 端口，不碰 agents/server', () => {

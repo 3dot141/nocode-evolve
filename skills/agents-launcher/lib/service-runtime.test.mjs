@@ -95,6 +95,26 @@ test('readiness 超时阻止后续 service 启动', async () => {
   ]);
 });
 
+test('spawn 提前退出 → 健康等待立即失败，不被外部实例代答（260901 web 撞端口教训）', async () => {
+  const trace = [];
+  const adapters = fakeAdapters(trace);
+  adapters.web.start = async () => {
+    trace.push('start:web');
+    // 模拟 spawn 即败：handle 已带 exitCode（如 vite 撞端口 exit 1）
+    return { handles: [{ exitCode: 1 }] };
+  };
+  const runtime = new ServiceRuntime({
+    plan: fullPlan,
+    adapters,
+    waitHealthyFn: async (_label, check) => {
+      await check();
+    },
+  });
+  await assert.rejects(() => runtime.startSelected(), /web.*提前退出/);
+  // 提前退出的判定发生在健康轮询 checkFn 内——web 从未进入一轮 status 探测
+  assert.equal(trace.includes('status:web'), false);
+});
+
 test('同一个 child handle 只 SIGTERM 一次', async () => {
   const trace = [];
   const killed = [];

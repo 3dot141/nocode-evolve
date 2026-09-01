@@ -107,7 +107,8 @@ export function createServiceAdapters({
     web: {
       ...ADAPTER_CAPABILITIES.web,
       async start() {
-        return handles(services.web.start({ webDir: repos.WEB_DIR }));
+        // start 可能复用已有实例返回 null——无 handle 即可（stop 走 killCommands 端口杀法，不依赖 handle）
+        return handles(services.web.start({ webDir: repos.WEB_DIR, ports }));
       },
       async stop() {
         await runCommands('web-stop', services.web.killCommands({ ports }), run);
@@ -116,7 +117,7 @@ export function createServiceAdapters({
         return normalizeStatus(await services.web.status({
           ports,
           probes: {
-            tcpOpen: probes.tcpOpen,
+            httpOk: probes.httpOk,
             pidOnPort: probes.pidOnPort,
           },
         }));

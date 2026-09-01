@@ -67,6 +67,8 @@ node <插件根>/skills/agents-launcher/web-cli.mjs align <目标-sha>
 
 - web Vite 监听 `:10001`。
 - launcher 启动前会清理该 web worktree 的 Vite 预构建缓存。
+- **端口归属预检（260901 起）**：spawn 前探测 10001 监听者——无 → 正常起；监听进程 cwd 落在本 `FX_WEB_DIR` 内 → **复用该实例**（打 `复用已运行实例 pid=X`，不重起）；cwd 在别处 → 启动失败并报 pid + 处置指引（先 `web-cli stop` 清端口）。防「外部 vite 先占端口 → 本轮 spawn 必败 → 健康检查被旧实例代答 → 误报就绪」。
+- 健康判据为 **httpOk**（真 HTTP 响应）而非仅端口可连；spawn 的进程提前退出时健康等待立即失败，不空等超时。
 - 访问入口：`http://localhost:10001/decision/home`。
 
 ## 状态与停止

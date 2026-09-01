@@ -78,9 +78,22 @@ export class ServiceRuntime {
   async waitOne(serviceId) {
     const adapter = this.adapters[serviceId];
     if (adapter.lifecycle === 'oneshot') return;
+    const handles = this.handlesByService.get(serviceId) ?? new Set();
+    // spawn 提前退出（exitCode 已回收，含 0——service 型进程不该退出）时立即失败，不再空等健康超时，
+    // 也不给"外部实例代答端口健康"留窗口（260901 实证：web spawn 撞端口 exit 1，
+    // 健康轮询却被先占端口的外部 vite 代答通过，launcher 误报就绪）
+    // exitCode: null=运行中，number=已退出；测试/仿真的裸 handle 可能没有该字段（undefined）——
+    // 只认 number，避免把无字段 handle 误判为已退出
+    const exited = () => [...handles].find((h) => typeof h?.exitCode === 'number') ?? null;
     await this.waitHealthyFn(
       serviceId,
-      async () => (await adapter.status(this.context(serviceId))).healthy,
+      async () => {
+        const dead = exited();
+        if (dead) {
+          throw new Error(`[${serviceId}] 启动进程提前退出（exitCode=${dead.exitCode ?? 'killed'}），不再等待健康`);
+        }
+        return (await adapter.status(this.context(serviceId))).healthy;
+      },
       this.readiness,
     );
   }
