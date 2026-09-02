@@ -1,6 +1,6 @@
-# 分支准备（base/长期分支上的未提交改动 → feature worktree，Step 3 执行细则）
+# worktree 准备（改动停在 base/长期分支 → 建 feature worktree 迁移，Step 3 fallback 细则）
 
-land 时发现当前停在 base/长期分支（main / release / master）且工作树有未提交改动——改动要装进 feature 分支才能走 PR / Merge。本文件是 SKILL.md Step 3「分支准备」的执行细则：建平级 worktree、迁移改动、回写 base 配置。
+**默认路径：改动直接提交**——已在 feature worktree / feature 分支上 → 就地 commit（Step 2c 工作目录统一 commit），不建任何 worktree。本文件只覆盖 fallback：land 时发现当前停在 base/长期分支（main / release / master）且工作树有未提交改动——就地提交会把 feature 改动 commit 到长期分支，才需要建 worktree 把改动装进 feature 分支。
 
 ## 为什么不在当前 worktree 裸 `checkout -b`
 

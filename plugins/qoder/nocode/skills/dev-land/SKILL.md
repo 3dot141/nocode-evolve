@@ -76,7 +76,7 @@ remote_url=$(git -C "$MAIN_ROOT" remote get-url origin)
 
 - **Review 状态**（仅 devflow 路由入口）：Review task 是否标完成 + 无未解决 Critical
 - **工作目录**：`git status`——可归因于 Build/Verify/Review 的改动 → 统一 commit；来源不明 → 标为风险项
-- **分支新鲜度**：behind base 差距；停在 base/长期分支（分支准备场景）→ 改测 base 相对远程落后（检测见 `references/branch-prep.md` 材料收集段），>0 标风险项
+- **分支新鲜度**：behind base 差距；停在 base/长期分支（worktree 准备场景）→ 改测 base 相对远程落后（检测见 `references/worktree-prep.md` 材料收集段），>0 标风险项
 - **push 可快进性**（PR）：fetch 后比较远程 source tip 是否为 HEAD 祖先；已知会 non-ff → 把 `force-with-lease` 作为全景中的显式动作与风险，不留到执行期追问
 
 #### 2d. Verify Tests（仅 PR / Merge）
@@ -208,9 +208,9 @@ remote_url=$(git -C "$MAIN_ROOT" remote get-url origin)
 | **Discard** | 清 worktree → `branch -D` → (全景选删) 删远程；字面 `discard` 就是本全景的唯一确认 |
 | **Keep** | 一行报告现状 |
 
-### 分支准备（当前停在 base/长期分支且有未提交改动时，先于文档同步）
+### worktree 准备（仅改动停在 base/长期分支且无 feature worktree 时，先于文档同步）
 
-不在当前 worktree 裸 `checkout -b`——那会把长期分支（release/master）的 worktree 切到 feature 分支，长期分支现场被占用；一分支一 worktree。完整流程（平级路径推导 / base 新鲜度检测 / stash 迁移 / 短命边界）Read `references/branch-prep.md`。
+默认改动直接提交（已在 feature worktree / feature 分支上就地 commit），不建任何 worktree。只有改动停在 base/长期分支（main / release / master）且未提交——就地提交会污染长期分支——才建平级 worktree 迁移：不在当前 worktree 裸 `checkout -b`，一分支一 worktree。fallback 完整流程（平级路径推导 / base 新鲜度检测 / stash 迁移 / 短命边界）Read `references/worktree-prep.md`。
 
 ### 文档同步（仅 PR / Merge）
 
@@ -287,7 +287,7 @@ lark-project 不可用时明确报告缺失能力，不伪造完成。
 | "任务号懒得填" | 流转闭环是 Land 的一部分 |
 | "force push 一下就好" | 先把 `force-with-lease` 风险写进新的完整全景；不做执行期追加确认 |
 | "不在 worktree 里，全景/PR契约/reviewer/定时监控不适用" | **非 worktree 只影响清理项，其余全部照走** |
-| "我已经在 worktree 里，直接 checkout -b 就行" | 在 base/长期分支的 worktree 里裸开分支会把该 worktree 切走——一分支一 worktree；建新 worktree 迁移改动（见「分支准备」） |
+| "我已经在 worktree 里，直接 checkout -b 就行" | 在 base/长期分支的 worktree 里裸开分支会把该 worktree 切走——一分支一 worktree；建新 worktree 迁移改动（见「worktree 准备」） |
 | "用户说了提PR，直接 push + 建 PR 就行" | 「提PR」是 Step 1 意图推定的输入，不是跳过全景的授权 |
 | "这个改动简单，跳过某 Step" | 进了 skill 就走完。"简单"不是跳 Step 的授权 |
 | "README 回头再补" | 文档同步是全景第 1 项，随 PR diff 一起被 review；回头补 = 补文档债 |
