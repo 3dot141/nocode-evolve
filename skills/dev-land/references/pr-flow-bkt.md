@@ -129,7 +129,7 @@ node "<REF>/pr-check.mjs" --toolchain bkt --pr <pr-id> \
   --target-project "<PROJECT_KEY>" --repo-slug "<repo_slug>"
 ```
 
-持续监控时在同一命令增加 `--watch --interval-seconds 300`。输出 `PR_CHECK state=<S> mergeable=<M> approved=<A>`；命中可处置状态时再输出 `PR_WATCH reason=<READY|MERGED|CLOSED> runs=<N>`（归一化见 `pr-check.mjs` `normalizeBkt`：DECLINED→CLOSED；mergeable=`/merge` 的 `.canMerge`；approved=`.reviewers[].approved` 任一 true）。
+持续监控时在同一命令增加 `--watch --interval-seconds 120`。输出 `PR_CHECK state=<S> mergeable=<M> approved=<A>`；命中可处置状态时再输出 `PR_WATCH reason=<READY|MERGED|CLOSED> runs=<N>`（归一化见 `pr-check.mjs` `normalizeBkt`：DECLINED→CLOSED；mergeable=`/merge` 的 `.canMerge`；approved=`.reviewers[].approved` 任一 true）。
 
 ## 合并 PR（prflow Step 6 自动合并分支）
 

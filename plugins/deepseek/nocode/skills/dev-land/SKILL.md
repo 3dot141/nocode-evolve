@@ -137,7 +137,7 @@ remote_url=$(git -C "$MAIN_ROOT" remote get-url origin)
   3. push + 建 PR  push: <普通（默认） / force-with-lease（仅已知 non-ff）>;
                    title「<title>」; reviewer: <名单 or default reviewers（add 阶段解析）>
   4. 发布策略      <全量（默认） / 灰度 / dark launch>    ← 生产改动才展示
-  5. 合并方式      approve 后自动合并（默认）; pr-check 每 5min（定时进程存活期间）
+  5. 合并方式      approve 后自动合并（默认）; pr-check 每 2min（定时进程存活期间）
   6. 合并后清理    worktree + branch + 远程: 删除（默认）
   7. 合并后流转    #<task>: <当前> → <目标>; 评论修复摘要; 工时 <按会话任务段估算 N 分钟（默认，OK 即确认）/ 用户指定值>
 
@@ -237,7 +237,7 @@ remote_url=$(git -C "$MAIN_ROOT" remote get-url origin)
 
 ### PR 路径定时监控
 
-统一运行 `node <REF>/pr-check.mjs --watch --interval-seconds 300 ...`，不依赖平台专属 cron。`<REF>` 是本 skill 的 `references/` 目录；`pr-check` 引用 `periodic-runner.mjs` 的定时能力，查到 READY / MERGED / CLOSED 后退出；agent 根据最终状态执行合并、清理和任务流转。详见 `references/prflow.md` Step 6。
+统一运行 `node <REF>/pr-check.mjs --watch --interval-seconds 120 ...`，不依赖平台专属 cron。`<REF>` 是本 skill 的 `references/` 目录；`pr-check` 引用 `periodic-runner.mjs` 的定时能力，查到 READY / MERGED / CLOSED 后退出；agent 根据最终状态执行合并、清理和任务流转。详见 `references/prflow.md` Step 6。
 
 生命周期边界如实告知：定时进程只在当前执行宿主和长进程句柄存活期间有效；句柄丢失或宿主退出后，由 Step 2b 补清检测兜底。禁止用 `nohup` / 系统 cron 把无人监管的合并动作留在后台。
 

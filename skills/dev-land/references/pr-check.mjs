@@ -7,7 +7,7 @@
 // 用法:
 //   node pr-check.mjs --toolchain gh  --pr 123
 //   node pr-check.mjs --toolchain bkt --pr 45 --target-project <KEY> --repo-slug <slug>
-//   node pr-check.mjs --watch --interval-seconds 300 --toolchain gh --pr 123
+//   node pr-check.mjs --watch --interval-seconds 120 --toolchain gh --pr 123
 //
 // 每次成功查询输出:
 //   PR_CHECK state=OPEN|MERGED|CLOSED mergeable=true|false approved=true|false
@@ -91,7 +91,7 @@ export function queryStatus(cfg, run = defaultRun) {
 
 export async function watchStatus(cfg, options = {}) {
   const {
-    intervalMs = 300_000,
+    intervalMs = 120_000,
     maxRuns = Infinity,
     maxErrors = 3,
     run = defaultRun,
@@ -162,7 +162,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     if (!a.watch) {
       console.log(statusLine(queryStatus(cfg)));
     } else {
-      const intervalSeconds = parsePositiveInteger(a['interval-seconds'], '--interval-seconds', 300);
+      const intervalSeconds = parsePositiveInteger(a['interval-seconds'], '--interval-seconds', 120);
       const maxRuns = parsePositiveInteger(a['max-runs'], '--max-runs', Infinity);
       const maxErrors = parsePositiveInteger(a['max-errors'], '--max-errors', 3);
       const result = await watchStatus(cfg, {

@@ -30,7 +30,7 @@ toolchain 检测（`github.com`→gh / `bitbucket.`→bkt）与 base 解析见 S
                    title「<title>」
                    body 与 Affected 见下；reviewer: <名单 or default reviewers（add 阶段解析）>
   4. 发布策略      <全量（默认） / 灰度 / dark launch>    ← 生产改动才展示
-  5. 合并方式      approve 后自动合并（默认）；pr-check 每 5min 查一次（定时进程存活期间）
+  5. 合并方式      approve 后自动合并（默认）；pr-check 每 2min 查一次（定时进程存活期间）
   6. 合并后清理    worktree <path> + 本地 branch <branch>；远程 <remote>/<remote_branch>: 删除（默认）
   7. 合并后流转    #<task>: <当前状态> → <目标状态>    ← 无任务号则写「无流转」
 
@@ -91,7 +91,7 @@ git_dir=$(git rev-parse --git-dir); common_dir=$(git rev-parse --git-common-dir)
 统一用 `pr-check.mjs --watch` 定时轮询。定时实现单源是同目录 `periodic-runner.mjs`；gh / bkt 只提供查询参数，不各写一套 sleep/cron。按 SKILL.md 顶部的平台区块启动 managed long process 并保存句柄：
 
 ```bash
-node <REF>/pr-check.mjs --watch --interval-seconds 300 \
+node <REF>/pr-check.mjs --watch --interval-seconds 120 \
   <toolchain 参数，见 pr-flow-gh/bkt「pr-check 调用」>
 ```
 
@@ -118,7 +118,7 @@ MERGED 收尾按序：
 
 非 worktree 时去掉第 1、2 步（当前分支删不了自己），只做远程处置与任务流转。
 
-启动后报告「PR 已创建 <url>，已启动 pr-check 定时监控（每 5min，执行进程存活期间有效）：approve 后自动合并 → 清 worktree → 流转」。
+启动后报告「PR 已创建 <url>，已启动 pr-check 定时监控（每 2min，执行进程存活期间有效）：approve 后自动合并 → 清 worktree → 流转」。
 
 > **生命周期边界（如实告知用户）**：定时进程依赖当前执行宿主和 managed process 句柄；宿主退出或句柄丢失后不会继续。不要改成 `nohup` / 系统 cron 自动合并——无人监管时无法处置 merge veto、权限变化和流转失败。跨会话由 SKILL.md Step 2b 补清检测兜底。
 
