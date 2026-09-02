@@ -86,7 +86,7 @@ remote_url=$(git -C "$MAIN_ROOT" remote get-url origin)
 
 - **Review 状态**（仅 devflow 路由入口）：Review task 是否标完成 + 无未解决 Critical
 - **工作目录**：`git status`——可归因于 Build/Verify/Review 的改动 → 统一 commit；来源不明 → 标为风险项
-- **分支新鲜度**：behind base 差距
+- **分支新鲜度**：behind base 差距；停在 base/长期分支（分支准备场景）→ 改测 base 相对远程落后（检测见 `references/branch-prep.md` 材料收集段），>0 标风险项
 - **push 可快进性**（PR）：fetch 后比较远程 source tip 是否为 HEAD 祖先；已知会 non-ff → 把 `force-with-lease` 作为全景中的显式动作与风险，不留到执行期追问
 
 #### 2d. Verify Tests（仅 PR / Merge）
@@ -220,12 +220,7 @@ remote_url=$(git -C "$MAIN_ROOT" remote get-url origin)
 
 ### 分支准备（当前停在 base/长期分支且有未提交改动时，先于文档同步）
 
-不在当前 worktree 裸 `checkout -b`——那会把长期分支（release/master）的 worktree 切到 feature 分支，长期分支现场被占用；feature 分支要有自己的 worktree：
-
-1. `git worktree add <MAIN_ROOT 同级>/<仓库名>-<分支 slug> -b <branch> <base>`（同级平级路径，对齐既有 worktree 布局）
-2. 迁移未提交改动：原 worktree `git stash push -u -m "land-<branch>"` → 记下 stash SHA（stash 栈跨 worktree 共享，禁裸 pop）→ 新 worktree `git stash apply <sha>`；确认迁移完整后回原 worktree `git stash drop <sha>`
-3. 后续文档同步 / commit / push / PR 全部在新 worktree 内执行；原 worktree 留在原分支不动
-4. 合并后按三件套清理正常 remove 新 worktree；原 worktree 永不进入清理范围
+不在当前 worktree 裸 `checkout -b`——那会把长期分支（release/master）的 worktree 切到 feature 分支，长期分支现场被占用；一分支一 worktree。完整流程（平级路径推导 / base 新鲜度检测 / stash 迁移 / 短命边界）Read `references/branch-prep.md`。
 
 ### 文档同步（仅 PR / Merge）
 
@@ -246,6 +241,7 @@ remote_url=$(git -C "$MAIN_ROOT" remote get-url origin)
 - PR 路径 MERGED 后用 `-D`（squash/rebase 下 `-d` 误报 not merged）；Merge 路径用 `-d`
 - 长期分支（main / master / release / develop）→ 永不删
 - 未提交改动 → remove 报错，不加 `--force`
+- worktree 根有 `.agents-personal` symlink → 先 `rm <path>/.agents-personal`（只删链接自身，主仓目标不动）再 remove——untracked symlink 同样触发 remove 拒绝，报错与有未提交改动相同，别误判
 - 识别 4 种 worktree 路径模式：`.worktrees/` / `worktrees/` / `~/.config/superpowers/worktrees/` / 插件平级路径
 - 非 worktree → 跳过 worktree remove 和本地 branch delete，只处置远程
 
@@ -289,6 +285,7 @@ lark-project 不可用时明确报告缺失能力，不伪造完成。
 - 先 remove worktree 再删 branch（反了 `branch -d` 会 fail）
 - `git worktree remove` 前必须 cd 到主仓根（在 worktree 内跑会静默失败）
 - 未提交改动 → remove 报错，不加 `--force`，用户先 stash
+- `.agents-personal` symlink 先拆再 remove——untracked symlink 会让 remove 拒绝；`rm` 只删链接自身，不删主仓目标
 
 ## Common Rationalizations
 
