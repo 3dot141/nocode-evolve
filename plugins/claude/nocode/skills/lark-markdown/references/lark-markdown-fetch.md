@@ -1,6 +1,6 @@
 # markdown +fetch
 
-> **前置条件：** 先调用 `lark-shared` Skill，完成认证、全局参数和安全规则检查。
+> **前置条件：** 先阅读 [`../lark-shared/SKILL.md`](../../lark-shared/SKILL.md) 了解认证、全局参数和安全规则。
 
 读取 Drive 中原生 Markdown 文件的内容；也支持把内容保存到本地。
 
@@ -76,4 +76,4 @@ lark-cli markdown +fetch \
 ## 参考
 
 - [lark-markdown](../SKILL.md) — Markdown 域总览
-- `lark-shared` Skill — 认证和全局参数
+- [lark-shared](../../lark-shared/SKILL.md) — 认证和全局参数

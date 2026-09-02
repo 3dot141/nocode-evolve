@@ -53,12 +53,12 @@ let currentWidth = 0 + totalHeightLoss + totalGapLoss;
 const children = data.map((layer, index) => {
   // 2. 根据公式计算当前层的底宽 (对应节点的 topWidth 属性)
   const currentBottomWidth = currentWidth - (LAYER_HEIGHT * ANGLE_K);
-
+  
   const node = {
     type: currentBottomWidth <= 0 ? "triangle" : "trapezoid",
     width: currentWidth,
     // 注意：漏斗中 topWidth 表示的是下方的窄边！如果 <=0 就用 triangle
-    topWidth: Math.max(0, currentBottomWidth),
+    topWidth: Math.max(0, currentBottomWidth), 
     height: LAYER_HEIGHT,
     vFlip: false, // 必须为 false
     text: layer.text,
@@ -72,7 +72,7 @@ const children = data.map((layer, index) => {
 
   // 3. 关键：计算下一层的顶宽。必须减去 gap 的向内收缩量！
   currentWidth = currentBottomWidth - (GAP * ANGLE_K);
-
+  
   return node;
 });
 

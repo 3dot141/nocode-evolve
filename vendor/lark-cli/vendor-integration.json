@@ -1,0 +1,16 @@
+{
+  "$comment": "lark-cli vendor 分发规则。scripts/vendor-sync.mjs 读此文件同步到 skills/。",
+  "upstream": {
+    "repo": "https://github.com/larksuite/cli",
+    "commit": "59dcdf5",
+    "vendoredAt": "2026-09-02",
+    "scope": "skills/ 在用子集：lark-doc / lark-markdown / lark-shared / lark-whiteboard / lark-wiki"
+  },
+  "skills": {
+    "lark-doc": { "action": "fork", "reason": "本地版与官方分叉；sync 只校验存在，上游更新人工合并" },
+    "lark-markdown": { "action": "fork", "reason": "同上" },
+    "lark-shared": { "action": "fork", "reason": "同上" },
+    "lark-whiteboard": { "action": "fork", "reason": "同上" },
+    "lark-wiki": { "action": "fork", "reason": "同上" }
+  }
+}

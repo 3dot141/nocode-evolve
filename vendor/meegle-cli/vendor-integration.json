@@ -1,0 +1,15 @@
+{
+  "$comment": "meegle-cli vendor 分发规则。scripts/vendor-sync.mjs 读此文件同步到 skills/。",
+  "upstream": {
+    "repo": "https://github.com/larksuite/meegle-cli",
+    "commit": "6d298ab",
+    "vendoredAt": "2026-09-02",
+    "scope": "skills/meegle/ 子树"
+  },
+  "skills": {
+    "meegle": {
+      "action": "fork",
+      "reason": "本地含大量实测增强（流转必填坑 / 静默失败教训），sync 永不覆盖；上游更新人工 diff 合并"
+    }
+  }
+}

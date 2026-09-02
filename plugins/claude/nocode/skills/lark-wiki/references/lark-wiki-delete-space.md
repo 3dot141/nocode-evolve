@@ -1,6 +1,6 @@
 # wiki +delete-space
 
-> **前置条件：** 先调用 `lark-shared` Skill，完成认证、全局参数和安全规则检查。
+> **前置条件：** 先阅读 [`../lark-shared/SKILL.md`](../../lark-shared/SKILL.md) 了解认证、全局参数和安全规则。
 
 删除一个飞书知识空间（知识库）。OpenAPI 对应 `DELETE /open-apis/wiki/v2/spaces/:space_id`。
 
@@ -117,13 +117,16 @@ dry-run 会展示两步调用链：
 
 ### 2. 只有知识库 URL（`.../wiki/<token>`）
 
+先确定后续 `wiki +delete-space` 使用的身份：默认使用 `user`；用户明确要求应用 / bot 视角时使用 `bot`。下面展示默认 user 身份；下游使用 bot 时将两步都改为 `--as bot`。节点解析和删除必须使用相同身份。
+
 ```bash
-lark-cli wiki spaces get_node \
-  --params '{"token":"<wiki_token>"}' \
+lark-cli wiki +node-get \
+  --node-token '<wiki_url>' \
+  --as user \
   --format json
 ```
 
-读取 `data.node.space_id`。
+读取 `data.space_id`。
 
 ### 3. 只有知识库名称
 
@@ -201,5 +204,5 @@ lark-cli wiki +delete-space --space-id <RESOLVED_SPACE_ID> --yes
 ## 参考
 
 - [lark-wiki](../SKILL.md) -- 知识库全部命令
-- `lark-shared` Skill -- 认证和全局参数
-- `lark-drive` Skill 的 `drive +task_result` -- 异步任务的续跑查询命令
+- [lark-shared](../../lark-shared/SKILL.md) -- 认证和全局参数
+- [drive +task_result](../../lark-drive/references/lark-drive-task-result.md) -- 异步任务的续跑查询命令

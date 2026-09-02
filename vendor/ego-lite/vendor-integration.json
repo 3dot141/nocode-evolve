@@ -1,0 +1,17 @@
+{
+  "$comment": "ego-lite vendor 分发规则。scripts/vendor-sync.mjs 读此文件同步到 skills/ references/。",
+  "upstream": {
+    "repo": "https://github.com/citrolabs/ego-lite",
+    "version": "skill 1.2.6",
+    "commit": "5ca3c36cba2240b8df2e22ba32127747029039d5",
+    "vendoredAt": "2026-09-02",
+    "scope": "skills/ego-browser/ 子树"
+  },
+  "skills": {
+    "ego-browser": {
+      "action": "fork",
+      "reason": "SKILL.md 含本仓增强（cdp sessionId / OOPIF attach / js 按 target 执行，上游文档缺失）；sync 只校验存在、永不覆盖，上游更新人工 diff 合并",
+      "local_extras": ["learnings/github/", "references/profile-import.md"]
+    }
+  }
+}

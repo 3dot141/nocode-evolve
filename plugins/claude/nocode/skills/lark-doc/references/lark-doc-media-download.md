@@ -1,7 +1,7 @@
 
 # docs +media-download（下载文档素材/画板缩略图）
 
-> **前置条件：** 先调用 `lark-shared` Skill，完成认证、全局参数和安全规则检查。
+> **前置条件：** 先阅读 [`../lark-shared/SKILL.md`](../../lark-shared/SKILL.md) 了解认证、全局参数和安全规则。
 
 下载文档中的图片/文件素材（`file_token`），或下载画板缩略图（`whiteboard_id`）。当 `--output` 不带扩展名时，会根据响应的 `Content-Type` 自动补全扩展名。
 
@@ -41,10 +41,11 @@ lark-cli docs +media-download --type whiteboard --token "wbcnxxxxxxxx" --output 
 
 ## 排障
 
-- 如果报错返回的信息包含 `HTTP 403`，且目标是图片/文件素材，可以改成调用 [`docs +media-preview`](lark-doc-media-preview.md) 看是否能先预览内容
+- 如果返回 `permission_denied`，或最终下载返回 `HTTP 403`，按错误 `hint` 改用 [`docs +media-preview`](lark-doc-media-preview.md) 预览内容。
+- 如果返回限流错误，停止立即重试，稍后按指数退避重试。
 
 ## 参考
 
 - [lark-doc-fetch](lark-doc-fetch.md) — 获取文档内容（用于提取 token）
 - [lark-doc-media-preview](lark-doc-media-preview.md) — 预览素材
-- `lark-shared` Skill — 认证和全局参数
+- [lark-shared](../../lark-shared/SKILL.md) — 认证和全局参数
