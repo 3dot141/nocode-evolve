@@ -187,6 +187,7 @@ remote_url=$(git -C "$MAIN_ROOT" remote get-url origin)
 ```
 [全景计划·Discard] 将删除以下内容，不可恢复:
   - worktree: <path>
+  - 未提交任务文档: <task-directory>（design.log.md / design.md 等，随 worktree 一并删除，如有）
   - 本地 branch: <branch>（<N> 个未合并 commit）
   - 远程分支 <remote>/<branch>: 保留（默认）
 确认删除请回复字面 `discard`；yes / OK 均视为取消。

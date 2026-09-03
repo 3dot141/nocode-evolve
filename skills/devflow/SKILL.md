@@ -9,7 +9,7 @@ devflow has one job: preserve one task identity while routing it through the Ski
 
 ## Invariants
 
-- Every task has one exact repository-relative `design.log.md` identity. Pass its active absolute path unchanged within a workspace; when Env changes checkout, the destination copy at the same repository-relative path becomes the exact path for every later handoff.
+- Every task has one exact repository-relative `design.log.md` identity. Pass its active absolute path unchanged within a workspace; when Env changes checkout, the transfer moves the task directory to the same repository-relative path in the destination and leaves no duplicate in the source — that destination becomes the exact path for every later handoff.
 - Classify only `bug | feat | refactor`; never restore Full / Standard / Fix / Mini.
 - One primary independently acceptable outcome gets one type. Split only independently acceptable outcomes that can hand off separately.
 - `dev-design` owns design Decisions. devflow may write only the classification Decision and append classification / stage process entries to the Log; it cannot interpret or rewrite any other Decision.
@@ -107,9 +107,9 @@ Use `$using-git-worktrees`. After its successful result, use `$dev-build` with t
 Use `/skill:using-git-worktrees`. After its successful result, use `/skill:dev-build` with the complete Handoff context.
 <!-- /nocode:platform -->
 
-On success, re-read the destination exact Log returned by the workspace Skill. In that destination copy, change only the navigation Handoff from Env to Build, preserving the Plan path when present, `design.md`, DES scope, Preserve, Open, and confirmation evidence. Append the stage-transition Event with the active workspace path and task-artifact result, then invoke Build.
+On success, re-read the destination exact Log returned by the workspace Skill. In that destination Log, change only the navigation Handoff from Env to Build, preserving the Plan path when present, `design.md`, DES scope, Preserve, Open, and confirmation evidence. Append the stage-transition Event with the active workspace path and task-artifact result, then invoke Build.
 
-If Env or task-artifact transfer fails, keep the Handoff target at Env, report the concrete evidence, and do not invoke Build. An explicitly authorized in-place workspace is a successful Env result; because its task directory is already active, it needs no copy.
+If Env or task-artifact transfer fails, keep the Handoff target at Env, report the concrete evidence, and do not invoke Build. An explicitly authorized in-place workspace is a successful Env result; because its task directory is already active, it needs no transfer.
 
 Exit Gate: the target Skill received the exact Log path and DES scope.
 

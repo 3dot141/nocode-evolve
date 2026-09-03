@@ -131,21 +131,21 @@ There is no implicit path fallback. If native entry or explicit workdir binding 
 
 ### 2c. Carry task artifacts when Env supplied them
 
-If the caller supplied `taskArtifacts`, validate before copying:
+If the caller supplied `taskArtifacts`, validate before transferring:
 
 - `sourceProjectRoot` is the inspected source repository root;
 - `sourceTaskDirectory` resolves inside that root and contains `exactLog`;
 - the destination is the same repository-relative path under the active worktree root.
 
-If the source and active checkout are the same, reuse the already-active directory without copying. Otherwise apply exactly one outcome:
+If the source and active checkout are the same, reuse the already-active directory without transferring. Otherwise classify the source first: `git -C <sourceProjectRoot> ls-files -- <sourceTaskDirectory>` empty means the directory is fully untracked; any output means tracked files are present. Then apply exactly one outcome:
 
-- the destination does not exist -> create its parent and copy the whole task directory;
-- both directory trees are byte-for-byte identical -> reuse the destination without writing;
+- fully untracked, destination absent -> create its parent and `mv` the whole task directory so `design.log.md`, `design.md`, the Plan, optional render, and other same-task artifacts move together — the source copy disappears, leaving exactly one copy in the active workspace;
+- fully untracked, byte-for-byte identical trees (`diff -qr`) -> reuse the destination and delete the source directory: the destination is the surviving copy;
+- tracked files present, trees identical -> reuse the destination and leave the source untouched: both copies are git working copies of the same tracked content, and git — not the transfer — owns them;
+- tracked files present, destination absent (rare: the worktree base predates those commits) -> stop and report instead of moving: moving tracked files would leave spurious deletion entries in the source checkout;
 - the trees diverge in file set, type, or content -> stop, report the differing paths, and do not overwrite, merge, or continue to Build.
 
-Use a recursive comparison such as `diff -qr` for the identical/divergent decision. For an absent destination, copy the directory itself rather than a fixed list of filenames so `design.log.md`, `design.md`, the Plan, optional render, and other same-task artifacts stay together.
-
-After a copy or identical reuse, verify the destination exact Log exists. Return that destination exact Log as authoritative for every later handoff; never update or delete the source copy as part of Env.
+After the transfer, verify the destination exact Log exists and no untracked copy of the task directory remains in the source checkout. Return that destination exact Log as authoritative for every later handoff. Never move or delete tracked task files as part of Env — that corrupts the source checkout with deletion entries a later commit would silently include.
 
 ## Step 3: Project Setup
 
@@ -196,7 +196,7 @@ Ready to implement <feature-name>
 | In a submodule | Treat as normal repo (Step 0 guard) |
 | Creating from a confirmed base | `git worktree add "<absolute-path>" -b "<branch>" "<base>"` |
 | Source-only root `mise.toml` / `.envrc` | Copy only when the target worktree lacks that file; never overwrite |
-| Env supplied `taskArtifacts` | Copy/reuse the whole task directory at the same repository-relative path; stop on divergence |
+| Env supplied `taskArtifacts` | Move (untracked) or reuse the task directory at the same repository-relative path, leaving one copy; never move tracked files; stop on divergence |
 | Entering the worktree | Claude: native session entry; Codex: bind absolute `workdir` |
 | Worktree location | `<project-parent>/<project-name>-<branch-flat>/` |
 | Derived path exists | Classify registered reuse, stale directory, or real conflict before acting |
