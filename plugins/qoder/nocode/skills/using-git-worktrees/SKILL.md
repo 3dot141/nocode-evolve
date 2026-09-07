@@ -9,7 +9,7 @@ description: Use when feature work or an implementation plan needs an isolated G
 
 Ensure work happens in an isolated workspace. Resolve the branch and base in the business flow, then create the worktree by running this skill's `scripts/create-worktree.sh` and entering the path it returns.
 
-**Core principle:** Detect existing isolation first. The caller confirms the branch and base; creation is Orca-first (base ref persisted in Orca metadata, worktree Orca-managed from birth) with a silent fallback to plain `git worktree add` when the Orca CLI or its runtime is unavailable. The platform must enter the exact absolute path the script reports.
+**Core principle:** Detect existing isolation first. The caller confirms the branch and base; creation goes through the skill's `scripts/create-worktree.sh` (plain `git worktree add` at a flat sibling path). The platform must enter the exact absolute path the script reports.
 
 Env callers may also provide this optional artifact envelope:
 
@@ -64,36 +64,25 @@ Honor any existing declared preference without asking. If the user declines cons
 scripts/create-worktree.sh --branch "<BRANCH_NAME>" --base "<confirmed-base>"
 ```
 
-(Resolve `scripts/create-worktree.sh` against this skill's base directory. Pass `--main-root <path>` only when the main checkout root differs from what `git worktree list` reports first.)
+(Resolve `scripts/create-worktree.sh` against this skill's base directory.)
 
-The script owns the whole creation sequence. Its decision tree, so you know what the output means:
+The script owns the whole creation sequence, so you know what the output means:
 
 ```text
-probe orca cli ("$CLAUDE_PLUGIN_ROOT/bin/orca" → PATH "orca"; usable =
-`repo list --json` exits 0 with ok:true — proves CLI + running runtime)
+resolve repo root (PROJECT_ROOT = caller's checkout)
      │
-     ├─ usable ──→ register repo if needed (`repo add`), then
-     │             `worktree create --no-parent --base-branch <base>
-     │             --setup skip --json`; restore the exact branch name
-     │             (orca flattens "/" to "-"; script renames back)
-     │             → {"mode":"orca",...}
-     │
-     └─ unusable (cli missing / app-path error / runtime not running
-                  / creation failed)
-                  ──→ plain `git worktree add` at the flat sibling path
-                       `<project-parent>/<project-name>-<branch-flat>/`
-                       → {"mode":"git-fallback",...}
+     └─→ derive flat sibling path
+          `<project-parent>/<project-name>-<branch-flat>/`
+          → conflict checks (existing path / existing branch → exit != 0)
+          → `git worktree add <path> -b <branch> <base>`
+          → {"path":"...","branch":"...","base":"..."}
 ```
 
-Why these flags are non-negotiable (the script enforces them; do not reimplement):
-
-- `--no-parent` — this skill creates independent task worktrees; without it Orca infers parent lineage from the caller context and records a wrong relationship.
-- `--base-branch` — always the confirmed base, explicit; never trust a repo default to resolve to the team's actual PR target line.
-- `--setup skip` — Step 3 of this skill owns project setup; repo-defined Orca hooks must not run the same installs twice.
+Always pass an explicit `--base`: never trust a repo default to resolve to the team's actual PR target line.
 
 **Consume the output:**
 
-- Exit 0 → parse the single JSON line: `mode` (report it verbatim later), `path` (the worktree root to enter), `branch`, `base`. On `mode":"git-fallback"`, the `note` explains why — carry that into the final report; never block mid-flow to ask about the fallback.
+- Exit 0 → parse the single JSON line: `path` (the worktree root to enter), `branch`, `base`.
 - Exit != 0 → the stderr reason is a conflict or failure needing a decision (existing path, existing branch, base not resolvable, sandbox denial). Report it and follow the user's answer; do not silently retry or auto-remove anything. On a sandbox/permission denial specifically: for an Env caller, wait for explicit confirmation to continue in the current workspace, then follow the in-place continuation rule through Step 2c — never auto-fall-back in place; for a standalone caller without `taskArtifacts`, run setup and baseline tests in place as before.
 
 A dirty base worktree contributes its committed branch tip only; never imply that uncommitted changes were copied.
@@ -182,12 +171,9 @@ npm test / cargo test / pytest / go test ./...
 
 ```
 Worktree ready at <path>
-Creation mode: orca-managed (base ref persisted) | git fallback — <note from script>
 Tests passing (<N> tests, 0 failures)
 Ready to implement <feature-name>
 ```
-
-A git-fallback worktree is invisible to Orca's managed list and its diff comparison will not know the intended base until the repo-level default or manual base selection covers it — say so when reporting that mode.
 
 ## Quick Reference
 
@@ -197,12 +183,12 @@ A git-fallback worktree is invisible to Orca's managed list and its diff compari
 | Other linked worktree | Confirm reuse, then skip creation (Step 0) |
 | In a submodule | Treat as normal repo (Step 0 guard) |
 | Creating | `scripts/create-worktree.sh --branch <name> --base <ref>` (Step 1) |
-| Script exits 0 | Parse JSON line: mode / path / branch; enter `path` |
+| Script exits 0 | Parse JSON line: path / branch; enter `path` |
 | Script exits != 0 | Report stderr reason, ask the user; never auto-remove or retry |
 | Source-only root `mise.toml` / `.envrc` | Copy only when the target worktree lacks that file; never overwrite |
 | Env supplied `taskArtifacts` | Move (untracked) or reuse the task directory at the same repository-relative path, leaving one copy; never move tracked files; stop on divergence |
 | Entering the worktree | Claude: native session entry; Codex: bind absolute `workdir` |
-| Worktree location | orca mode: Orca-managed (`~/orca/workspaces/<repo>/<name>`); fallback: `<project-parent>/<project-name>-<branch-flat>/` |
+| Worktree location | `<project-parent>/<project-name>-<branch-flat>/` (flat sibling of the caller's checkout) |
 | Tests fail during baseline | Report failures + ask |
 | No package.json/Cargo.toml | Skip dependency install |
 
@@ -210,18 +196,8 @@ A git-fallback worktree is invisible to Orca's managed list and its diff compari
 
 ### Hand-rolling the creation commands
 
-- **Problem:** re-typing the orca probe/create sequence or the fallback path derivation inline invites transcription drift (missed `--no-parent`, skipped branch rename, wrong path template)
+- **Problem:** re-typing the creation sequence or the path derivation inline invites transcription drift (wrong path template, missed conflict checks)
 - **Fix:** creation goes through `scripts/create-worktree.sh` — always; the script is the single source of the sequence
-
-### Asking the user when the script fell back
-
-- **Problem:** turning a silent fallback into a blocking question defeats its purpose
-- **Fix:** consume the `git-fallback` JSON, continue the flow, disclose the mode (and the script's `note`) in the final report
-
-### Assuming `--name` preserves branch spelling
-
-- **Problem:** Orca flattens `/` to `-` when deriving the branch from `--name`, so `feat/agent-task` silently becomes `feat-agent-task`
-- **Fix:** the script renames back automatically; if you ever bypass it (you should not), verify and `branch -m` before entering
 
 ### Leaving the path implicit
 
@@ -246,7 +222,7 @@ A git-fallback worktree is invisible to Orca's managed list and its diff compari
 ## Red Flags
 
 **Never:**
-- Hand-roll the orca probe/create sequence or the fallback `git worktree add` instead of running `scripts/create-worktree.sh`
+- Hand-roll the `git worktree add` / path derivation instead of running `scripts/create-worktree.sh`
 - Retry creation or remove an existing path/branch automatically after a script failure — report and ask
 - Create from a linked worktree unless its branch is exactly `release`, `feature`, `main`, `master`, or `persist` and the user confirmed it as the base
 - Continue from an existing linked worktree without explicit user confirmation
@@ -262,4 +238,3 @@ A git-fallback worktree is invisible to Orca's managed list and its diff compari
 - Enter with Claude's native worktree entry; on Codex bind every later command to the absolute `workdir`
 - Auto-detect and run project setup
 - Verify clean test baseline
-- Disclose the creation mode (orca-managed vs git fallback, with the script's note) in the final report
