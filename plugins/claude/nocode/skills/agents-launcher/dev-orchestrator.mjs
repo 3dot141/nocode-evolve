@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+import { execFile as execFileCallback } from 'node:child_process';
+import { promisify } from 'node:util';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { dirname, join } from 'node:path';
 import { existsSync } from 'node:fs';
@@ -59,6 +61,8 @@ async function askConfirmation(question) {
   }
 }
 
+const execFile = promisify(execFileCallback);
+
 async function printStatus({ log, probes, ports }) {
   const rows = [
     ['web', ports.web, await probes.tcpOpen(ports.web)],
@@ -70,6 +74,38 @@ async function printStatus({ log, probes, ports }) {
   for (const [name, port, healthy] of rows) {
     const pid = healthy ? probes.pidOnPort(port) || '-' : '-';
     log(`[status] ${name.padEnd(6)} :${String(port).padEnd(5)} ${healthy ? 'UP  ' : 'DOWN'} pid=${pid}`);
+  }
+  await printDockerStatus(log, process.env.FX_SERVER_DIR);
+}
+
+// server 域 Docker 层容器也属于 full 链路：按主 compose 项目列出全部成员（polars 引擎与
+// sidecar 均在项目内），与编排器进程探针互补；Docker 不可用或无 compose 文件时静默跳过。
+async function printDockerStatus(log, serverDir) {
+  if (!serverDir) return;
+  const composeFile = join(serverDir, process.env.COMPOSE_FILE || 'docker-compose.yml');
+  if (!existsSync(composeFile)) return;
+  let stdout = '';
+  try {
+    ({ stdout } = await execFile(
+      'docker',
+      ['compose', '-f', composeFile, 'ps', '--all', '--format', 'json'],
+      { cwd: serverDir },
+    ));
+  } catch {
+    return;
+  }
+  const containers = stdout.trim() === ''
+    ? []
+    : stdout.trim().split('\n').map((line) => JSON.parse(line));
+  for (const container of containers) {
+    const published = [...new Set((container.Publishers ?? [])
+      .map((entry) => entry.PublishedPort)
+      .filter(Boolean))]
+      .join(',');
+    log(`[docker] ${String(container.Name).padEnd(24)} ${String(container.State).padEnd(9)} ${published}`);
+  }
+  if (containers.length === 0) {
+    log('[docker] 无 compose 项目容器（docker 不可用或项目未启动）');
   }
 }
 
