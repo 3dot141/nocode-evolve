@@ -8,6 +8,7 @@
 | 文件相对地址 | 描述 |
 |---|---|
 | rules/rule-codex-review.md | 独立 review 路由规则。仅在 reviewing 引擎或上游流程明确要求独立审查时触发， 使用当前平台的原生 agent 请求隔离 reviewer，并如实记录实际独立性。 默认自审、普通代码检查、未获用户授权的升审不触发。 |
+| rules/rule-commit-task-key.md | 生成或编写含飞书任务号标注（#<前缀>-<ID> 形态，如 #g-7073131785）的 commit message、 PR 标题或任务关联文本时触发——任务号必须先用 meego 按纯数字 ID 查工作项真实 Key （meegle workitem get 返回项的编号），用查到的完整 Key 作标注，禁止按仓库历史 commit 的 f-/g-/m- 前缀分布推测。不触发: 用户已提供带前缀完整 Key、 纯数字 #ID 无前缀要求的仓库、与飞书任务无关的 commit（#none 类）。 |
 | rules/rule-cross-repo-lookup.md | 从当前仓库进入另一个物理 git repo 只读检查代码 (Read / rg / git log / 对照实现) 前触发——同一逻辑仓库磁盘上常有主仓 + 多份平级 worktree 拷贝, 先 git worktree list 枚举唯一候选集, 与当前分支同名的 worktree 优先, 进入后 branch --show-current 验证再读, 不沿用记忆/上下文残留路径。 不触发: 在当前仓库内部检索、要去改那个仓库的文件 (走 rule-git-worktree 关联仓库节)、本会话已按本流程验证过且分支未切换的路径复用。 |
 | rules/rule-database-logical-relations.md | 设计或修改数据库表结构、DDL、migration、ORM model/entity，且涉及表间关系时触发—— 默认不创建物理外键约束 (FOREIGN KEY)，通过关联字段和应用层逻辑维护关系；仅当用户明确要求时 才创建物理外键。不触发: 只读查询数据、查看既有 schema、或不涉及表间关系的单表改动。 |
 | rules/rule-git-freshness.md | 设计性动作 (设计文档/PRD/RFC/ADR/方案对比/技术选型/重构方案/架构设计) 前, 或代码搜索 (semble-search / grep -r / rg / find / Explore) 前, 或 ≥3 文件 Read 探源做方案分析前触发——跑 scripts/freshness-check.mjs 确认 当前分支未过时于 base, 落后 ≥5 commit 或首次冷启动则停手三选; 同会话 2h 内已检查过自动跳过 (会话级, 跨会话不共享)。不触发: 开 worktree 那一刻 (由 git-worktree 覆盖)、已知精确路径读单文件、单行 literal grep/文件名 find、用户显式跳过、同会话检查窗口内。 |

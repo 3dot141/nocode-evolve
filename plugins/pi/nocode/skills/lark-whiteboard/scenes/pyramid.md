@@ -47,7 +47,7 @@ let currentTopWidth = 0; // 顶层如果是尖角，初始为 0
 const children = data.map((layer, index) => {
   // 2. 根据公式计算当前层的底宽
   const currentBottomWidth = currentTopWidth + (LAYER_HEIGHT * ANGLE_K);
-
+  
   const node = {
     type: currentTopWidth === 0 ? "triangle" : "trapezoid",
     width: currentBottomWidth,
@@ -64,7 +64,7 @@ const children = data.map((layer, index) => {
 
   // 3. 关键：计算下一层的顶宽。必须把 gap 的延伸也算进去！
   currentTopWidth = currentBottomWidth + (GAP * ANGLE_K);
-
+  
   return node;
 });
 

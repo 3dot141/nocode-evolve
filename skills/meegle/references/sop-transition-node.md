@@ -127,6 +127,10 @@ meegle workflow update-node --work-item-id 工作项ID --node-schedule '{{node_s
 🚨 遇到硬拦截时输出：
 > "节点流转失败。当前节点【节点名称】设置了必须填写【字段名称】（类型：xxx）才能流转。由于该字段类型不支持自动化补充，请您在飞书项目页面手动填写后，再通知我继续流转。"
 
+**4.3.1 节点表单字段（form_item_type=field）写不进 update-node 时改走 workitem update**：
+流转必填的自定义表单字段（radio/select 等，`form_item_type: "field"`）——`workflow update-node --fields` 对这类字段会**静默不落库**（返回 success 但 `get-node` 回读 value 恒 null，option_id / label / stringified 对象三种形态均如此；2026-09-07 b2rl2h 空间 radio 字段 field_90f734 实测）。此时不要继续换形态试探、也不要过早判硬拦截——按 4.4「节点字段 vs 工作项字段」的口径改用 **`workitem update --fields`** 写（radio 传 option_id 字符串），写入后 `get-node` 回读 value 确认落值再流转（实测同字段一次写入成功）。`meta-node-fields` 只返回系统节点字段拿不到这类字段的 option_id——用 MQL 查同类型工作项该字段存量值推合法值：`SELECT <field_key> FROM \`空间名\`.\`类型名\` WHERE <field_key> is not null LIMIT 30`，取 `key_label_value` 的 key+label。
+另注意：**「处理后评估」类 radio 常是流转路由字段**——取值决定流转去向（如「转测试处理」→ 下一节点直接是测试验收，「无需测试」→ 跳过测试段），选定值即选定流转路径，先与用户确认值再流转。
+
 **4.4 可补充字段的值转换**
 
 **人员字段处理规则（极重要）：**

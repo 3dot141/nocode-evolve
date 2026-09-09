@@ -110,7 +110,7 @@ remote_url=$(git -C "$MAIN_ROOT" remote get-url origin)
 | **Discard** | `references/remote-branch-cleanup.md` | 将删清单、远程坐标 + 独有 commit |
 | **Keep** | （无） | 直接一行报告现状，结束 |
 
-- **任务号 + 目标状态**（PR / Merge）：`git log <base>..HEAD --format=%B | grep -oE '#[fgm]-[a-z0-9]+' | sort -u`；有任务号 → Read `references/post-merge.md` 拿典型流转映射 + 查当前状态 → 推定目标状态
+- **任务号 + 目标状态**（PR / Merge）：`git log <base>..HEAD --format=%B | grep -oE '#[fgm]-[a-z0-9]+' | sort -u`；手头只有纯数字工作项 ID（commit 尚未编写）时，先按 rule-commit-task-key 用 meego 查真实 Key 再进 commit/全景，禁止前缀推测；有任务号 → Read `references/post-merge.md` 拿典型流转映射 + 查当前状态 → 推定目标状态
 - **工时估算**（PR / Merge，有任务号时）：取本次 land 关联任务在会话中的任务段起止（任务日志 / 会话记录），估成分钟数展示进全景第 7 项——用户「OK」即确认估算，显式值覆盖
 - **远程坐标必须此刻捕获**——删 branch 后 `branch.<name>.remote/merge` 配置即消失（见 `references/remote-branch-cleanup.md`）
 - **README 影响面**（仅 PR / Merge）：`git diff --name-only <base>..HEAD` 叠加 `git status --porcelain` 得改动文件全集（排除 node_modules/dist/build 等生成物目录）；每个文件从所在目录沿 dirname 链**向上冒泡**到最近的含 README.md 的目录（走到仓库根即止，**根 README.md 不算**——那是仓库定位文档，不归本流程管）；去重得「更新」清单。改动落在无 README.md 的目录且该目录含源码/配置文件（.js / .ts / .py / .go / .rs / .md / .mjs / package.json / Makefile 等）→ 进「新建」清单。两清单皆空 → 全景不列文档同步项
