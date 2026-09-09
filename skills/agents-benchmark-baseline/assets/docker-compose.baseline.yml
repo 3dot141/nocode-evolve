@@ -1,0 +1,241 @@
+# 对照组（baseline）独立容器组 —— 与主开发环境（docker-compose.yml）完全隔离。
+#
+# 用途：本地跑 scene benchmark 时的 baseline 参照环境（persist 分支代码）。
+# 启动：docker compose -f docker-compose.baseline.yml up -d
+# 停止：docker compose -f docker-compose.baseline.yml down
+# 清库重来：./start-baseline.sh --reset（数据卷落在 $BASELINE_STATE_DIR，不在本目录）
+#
+# 端口规划（左=宿主机，右=容器；主环境占用 5432/6379/27017/5672/9000/9200/8070/8081）：
+#   postgres 5433 · redis 6381 · mongo 27018 · rabbitmq 5673/15673 · minio 9002/9003
+#   es 9201 · polars 18000/18090/17081 · fx-data-server 8082(→8081)/9092(→9090)
+#   fx-data-agents 8071(→8070)
+#
+# 凭证与主环境一致（postgres/jiushuyun、minio/jiushuyun、rabbitmq test/test），便于 fixture 脚本复用。
+# 数据目录独立在 $BASELINE_STATE_DIR，与主环境 embed/ 互不影响。
+# 默认 /tmp/agents-benchmark-baseline 仅为手动跑 compose 兜底；用 start-baseline.sh 启动会设成 ~/.cache/agents-benchmark-baseline。
+
+services:
+  baseline-postgres:
+    image: postgres:17
+    container_name: baseline-postgres
+    restart: unless-stopped
+    pull_policy: missing
+    environment:
+      POSTGRES_DB: jiushuyun
+      POSTGRES_PASSWORD: jiushuyun
+    volumes:
+      - ${BASELINE_STATE_DIR:-/tmp/agents-benchmark-baseline}/postgres17:/var/lib/postgresql/data
+      - ./docker-init/init:/docker-entrypoint-initdb.d/
+    ports:
+      - "${BASELINE_PG_PORT:-5433}:5432"
+
+  baseline-redis:
+    image: redis:7.0.15
+    container_name: baseline-redis
+    restart: unless-stopped
+    pull_policy: missing
+    command: redis-server --requirepass jiushuyun
+    volumes:
+      - ${BASELINE_STATE_DIR:-/tmp/agents-benchmark-baseline}/redis:/data
+    ports:
+      - "${BASELINE_REDIS_PORT:-6381}:6379"
+
+  baseline-mongodb:
+    image: mongo:6.0.6
+    container_name: baseline-mongodb
+    restart: unless-stopped
+    pull_policy: missing
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: jiushuyun
+      MONGO_INITDB_DATABASE: jiushuyun
+    volumes:
+      - ${BASELINE_STATE_DIR:-/tmp/agents-benchmark-baseline}/mongo:/data/db
+    ports:
+      - "${BASELINE_MONGO_PORT:-27018}:27017"
+
+  baseline-rabbitmq:
+    image: rabbitmq:3.11.16-management
+    container_name: baseline-rabbitmq
+    restart: unless-stopped
+    pull_policy: missing
+    hostname: rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: test
+      RABBITMQ_DEFAULT_PASS: test
+      RABBITMQ_DEFAULT_VHOST: local
+      RABBITMQ_NODENAME: rabbit@rabbitmq
+    volumes:
+      - ${BASELINE_STATE_DIR:-/tmp/agents-benchmark-baseline}/rabbitmq:/var/lib/rabbitmq
+      - ./docker-init/rabbitmq-init.sh:/rabbitmq-init.sh
+    ports:
+      - "${BASELINE_RABBIT_PORT:-5673}:5672"
+      - "${BASELINE_RABBIT_UI_PORT:-15673}:15672"
+    entrypoint: [ "sh", "/rabbitmq-init.sh" ]
+
+  baseline-minio:
+    image: minio/minio:RELEASE.2025-02-07T23-21-09Z
+    container_name: baseline-minio
+    restart: unless-stopped
+    pull_policy: missing
+    environment:
+      MINIO_ROOT_USER: jiushuyun
+      MINIO_ROOT_PASSWORD: jiushuyun
+      MINIO_DOMAIN: localhost
+    ports:
+      - "${BASELINE_MINIO_PORT:-9002}:9000"
+      - "${BASELINE_MINIO_UI_PORT:-9003}:9001"
+    volumes:
+      - ${BASELINE_STATE_DIR:-/tmp/agents-benchmark-baseline}/minio/data:/data
+      - ./docker-init/minio-init.sh:/minio-init.sh
+    # docker-init/minio-init.sh 内硬编码主机名 minio（mc alias / 健康检查），
+    # 对照组容器名是 baseline-minio，故补一个 minio 别名让 init 脚本能自举建桶。
+    networks:
+      default:
+        aliases:
+          - minio
+    entrypoint: [ "sh", "/minio-init.sh" ]
+
+  baseline-elasticsearch:
+    image: elasticsearch:8.15.5
+    container_name: baseline-elasticsearch
+    restart: unless-stopped
+    pull_policy: missing
+    environment:
+      - discovery.type=single-node
+      - ELASTIC_PASSWORD=jiushuyun
+      - xpack.security.http.ssl.enabled=false
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+    volumes:
+      - ${BASELINE_STATE_DIR:-/tmp/agents-benchmark-baseline}/es:/usr/share/elasticsearch/data
+      - ./docker-init/elasticsearch-init.sh:/elasticsearch-init.sh
+    ports:
+      - "${BASELINE_ES_PORT:-9201}:9200"
+    mem_limit: 1000m
+    entrypoint: [ "sh", "/elasticsearch-init.sh" ]
+
+  # polars 计算节点（fx-data-server 启动即需连 gRPC localhost:8000，否则 Application run failed）。
+  # 端口全部换到 18xxx 段避开主环境；容器内仍监听 8000。
+  baseline-polars:
+    image: registry.cn-hangzhou.aliyuncs.com/polars-local/polars-dev-arm:latest
+    container_name: baseline-polars
+    restart: unless-stopped
+    pull_policy: missing
+    platform: linux/arm64
+    command: [ "/bin/bash", "-lc", "/mnt/lib/fdb.bash; sleep infinity" ]
+    environment:
+      FDB_PORT: "4500"
+      FDB_CLUSTER_FILE: "/etc/foundationdb/fdb.cluster"
+      AWS_REGION: "us-east-1"
+      # fdb.bash 原用 -Dhost=localhost 注册节点，导致 fx-data-server 在别的容器里
+      # 回连 localhost:1270x 失败。改成容器名，同网络可解析。
+      POLARS_HOST: baseline-polars
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ${BASELINE_STATE_DIR:-/tmp/agents-benchmark-baseline}/docker_polars:/mnt/polars
+      - ./docker-init/fdb.bash:/mnt/lib/fdb.bash
+      - ./docker-init/resource_group.json:/mnt/lib/resource_group.json
+    ports:
+      - "${BASELINE_POLARS_PORT:-18000}:8000"
+      - "${BASELINE_POLARS_META_PORT:-18090}:8090"
+      - "${BASELINE_POLARS_RPC_PORT:-17081}:17080"
+
+  # 主服务（persist 分支镜像）。hbm2ddl.auto=update → 空库启动自建表，无需预导入 schema。
+  baseline-fx-data-server:
+    image: harbor.jsydevelop.com/develop/prod-jsy-server:latest
+    container_name: baseline-fx-data-server
+    restart: unless-stopped
+    platform: linux/amd64
+    environment:
+      APP_ENV: dev
+      POD_IP: baseline-fx-data-server
+      DB_URL: jdbc:postgresql://baseline-postgres:5432/jiushuyun?reWriteBatchedInserts=true
+      DB_USERNAME: postgres
+      DB_PASSWORD: jiushuyun
+      REDIS_HOST: baseline-redis
+      REDIS_PORT: "6379"
+      REDIS_PASSWORD: jiushuyun
+      RABBIT_HOST: baseline-rabbitmq
+      RABBIT_PORT: "5672"
+      ORDER_RABBIT_HOST: baseline-rabbitmq
+      ORDER_RABBIT_PORT: "5672"
+      ES_HOST: baseline-elasticsearch
+      ES_PORT: "9200"
+      ES_PASSWORD: jiushuyun
+      S3_ENDPOINT: http://baseline-minio:9000
+      S3_INTERNAL_ENDPOINT: http://baseline-minio:9000
+      # application.yml 里 pathStyleAccessEnabled 默认 false（virtual-host 寻址）。
+      # 主环境靠 macOS 把 *.localhost 解析到 127.0.0.1 侥幸可用；容器内 baseline-minio
+      # 会被 OrbStack wildcard DNS 抢答成不可达地址，故此处强制 path-style。
+      S3_PATHSTYLEACCESSENABLED: "true"
+      # expired 段同理（application.yml 里也是 pathStyleAccessEnabled: false + localhost 默认）
+      EXPIRED_S3_ENDPOINT: http://baseline-minio:9000
+      EXPIRED_S3_INTERNAL_ENDPOINT: http://baseline-minio:9000
+      # 注意前缀是 expired（不是 expired.s3）：yml 里 pathStyleAccessEnabled 是硬编码键，
+      # 只能靠 relaxed binding 覆盖，环境变量名必须映射成 expired.pathstyleaccessenabled。
+      EXPIRED_PATHSTYLEACCESSENABLED: "true"
+      CDN_ENDPOINT: http://baseline-minio:9000
+      CDN_INTERNAL_ENDPOINT: http://baseline-minio:9000
+      CACHE_MONGO_URI: baseline-mongodb:27017/jiushuyun?authSource=admin
+      DATASOURCE_MONGO_URI: baseline-mongodb:27017/jiushuyun?authSource=admin
+      # polars 计算节点（application.yml 里 polars.master.config-str 硬编码 localhost:8000，
+      # 无占位符，只能靠 relaxed binding 覆盖）
+      POLARS_MASTER_CONFIGSTR: baseline-polars:8000
+      # 新 RabbitMQ 是空 broker，队列由服务启动时声明；listener 抢在声明前启动会因缺队列
+      # 抛 Fatal exception（missing-queues-fatal 默认 true）导致启动中断。降级为非致命。
+      SPRING_RABBITMQ_LISTENER_SIMPLE_MISSING_QUEUES_FATAL: "false"
+    volumes:
+      # 关闭 local-ws（容器镜像无 hihidata-ws-server classpath，开启即启动失败）
+      - ./config/fx-data-server.application-dev.yml:/config/application-dev.yml
+    ports:
+      - "${BASELINE_SERVER_PORT:-8082}:8081"
+      - "${BASELINE_SERVER_GRPC_PORT:-9092}:9090"
+    depends_on:
+      - baseline-postgres
+      - baseline-redis
+      - baseline-rabbitmq
+      - baseline-elasticsearch
+      - baseline-minio
+      - baseline-mongodb
+      - baseline-polars
+
+  # 被测 agent（本地构建的 persist 分支镜像 + 观测面补丁）。
+  baseline-fx-data-agents:
+    image: ${BASELINE_AGENTS_IMAGE:-fx-data-agents-baseline:persist}
+    container_name: baseline-fx-data-agents
+    restart: unless-stopped
+    environment:
+      FX_CONFIG_PATH: /app/conf/config.yaml
+    volumes:
+      - ./config/fx-data-agents.config.baseline.yaml:/app/conf/config.yaml
+    ports:
+      - "${BASELINE_AGENTS_PORT:-8071}:8070"
+    depends_on:
+      - baseline-postgres
+      - baseline-minio
+
+  # 前端入口（persist 分支产物）。不参与 benchmark，仅供人工浏览对照组。
+  baseline-jsy-webui:
+    image: harbor.jsydevelop.com/develop/prod-jsy-webui:latest
+    container_name: baseline-jsy-webui
+    restart: unless-stopped
+    pull_policy: missing
+    platform: linux/amd64
+    environment:
+      JSY_SERVER_URL: http://baseline-fx-data-server:8081
+      AI_ASSISTANT_SERVER_URL: http://baseline-fx-data-agents:8070
+      COMPLEX_REPORT_SERVER_URL: http://host.docker.internal:8089
+      FVA_SERVER_URL: http://host.docker.internal:3080
+      IAM_SERVER_URL: http://host.docker.internal:81
+      CONTAINER_ENV: dev
+    ports:
+      - "${BASELINE_WEBUI_PORT:-81}:80"
+    depends_on:
+      - baseline-fx-data-server
+      - baseline-fx-data-agents
+
+networks:
+  default:
+    name: baseline-net
+    driver: bridge

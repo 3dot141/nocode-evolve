@@ -1,0 +1,78 @@
+# 对照组（baseline）容器内配置 —— 由 docker-compose.baseline.yml 挂载到 /app/conf/config.yaml
+#
+# 与主开发环境的差异：
+#   · 全部下游指向 baseline-* 容器（独立 PG / MinIO / fx-data-server）
+#   · server.sessionTraceExport: true —— benchmark 轨迹采集开关（观测面补丁）
+#
+# 凭证与主环境一致（jiushuyun / postgres:jiushuyun），便于 fixture 脚本复用。
+# 注意：本文件含 AI 网关凭证，勿提交。
+
+server:
+  port: 8070
+  # benchmark 轨迹导出口（GET /ai/assistant/session/:id/trace-events）
+  sessionTraceExport: true
+
+storage:
+  postgres:
+    host: baseline-postgres
+    port: 5432
+    database: jiushuyun
+    username: postgres
+    password: jiushuyun
+    ssl: false
+    maxPoolSize: 10
+  blob:
+    kind: s3
+    s3:
+      endpoint: http://baseline-minio:9000
+      internalEndpoint: http://baseline-minio:9000
+      bucket: jiushuyun
+      region: us-east-1
+      accessKeyId: jiushuyun
+      secretAccessKey: jiushuyun
+      workRoot: WEB-INF
+      forcePathStyle: true
+
+service:
+  fxServer:
+    # 对照组容器组内的 fx-data-server（harbor prod-jsy-server:latest）
+    host: 'http://baseline-fx-data-server'
+
+track:
+  enabled: false
+  host: ''
+  port: 3001
+  functionPath: /back_log/v1
+  project: fx-data-agents-baseline
+
+agent:
+  maxTurns: 40000000
+
+ai:
+  providers:
+    - provider: deepseek
+      apiKey: sk-WPpN6Zy1idS3UKUwpPUHV3DzBUqW86N6KG7tb8rZmkz0ptxv
+      baseURL: 'https://it-ai.fineres.com/v1'
+    - provider: glm
+      apiKey: sk-WPpN6Zy1idS3UKUwpPUHV3DzBUqW86N6KG7tb8rZmkz0ptxv
+      baseURL: 'https://it-ai.fineres.com/v1'
+    - provider: qwen-dashscope
+      apiKey: sk-WPpN6Zy1idS3UKUwpPUHV3DzBUqW86N6KG7tb8rZmkz0ptxv
+      baseURL: 'https://it-ai.fineres.com/v1'
+  models:
+    - provider: qwen-dashscope
+      model: qwen3.8-max
+      type: language
+      settings:
+        maxInputTokens: 1000000
+        providerOptions:
+          enable_thinking: false
+
+memory: {}
+
+system:
+  log:
+    openTelemetry:
+      enable: false
+      endpoint: 'http://localhost:4318'
+      serviceName: fx-data-agents-baseline
