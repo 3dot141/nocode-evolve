@@ -25,7 +25,7 @@ Compose 中的 fx-data-agents 不由 Docker 层启动，由 agents 域单独管�
 
 ## Docker 后置检查
 
-固定脚本执行后，server 域等待 PostgreSQL :5432、MinIO :9000、Elasticsearch :9200（yellow/green），随后补 RabbitMQ queue、数据库权限和 ES 本地磁盘阈值设置。健康失败时保留 Docker 现场，不继续启动 Spring。
+固定脚本执行后，server 域等待 PostgreSQL :5432、MinIO :9000、Elasticsearch :9200（yellow/green），随后补 RabbitMQ queue、数据库权限和 ES 本地磁盘阈值设置。固定脚本已内置 sync-polars-localhost sidecar 的连带重建与 12708 LISTEN 校验（recreate sync 后旧 sidecar 会挂在已删容器的幽灵 netns 上静默失效），并统一将 sync 容器内存放宽到 6g（amd64 镜像在 arm64 宿主 QEMU 模拟开销大，默认 1.5g 多表并发导入会 OOM）；手动重启 sync 时同样必须连带重启它。sync 若因 OOM 被 docker daemon 自动重启（不走 compose 依赖序），sidecar 会再次掉队——`docker restart sync-polars-localhost` 即可恢复。健康失败时保留 Docker 现场，不继续启动 Spring。
 
 ## Spring 准备
 

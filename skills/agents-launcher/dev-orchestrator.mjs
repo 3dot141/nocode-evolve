@@ -11,6 +11,7 @@ import { resolveRepos, validateRepos } from './lib/paths.mjs';
 import { PORTS } from './lib/ports.mjs';
 import { httpOk, pidOnPort, tcpOpen } from './lib/probe.mjs';
 import { spawnPrefixed } from './lib/proc.mjs';
+import { pinToolchainPath } from './lib/toolchain.mjs';
 import {
   ADAPTER_CAPABILITIES,
   ADAPTER_NAMES,
@@ -113,7 +114,6 @@ async function runPreflight({
   args,
   plan,
   repos,
-  env,
   deps,
 }) {
   const selected = new Set(plan.selected);
@@ -208,6 +208,7 @@ export async function runLauncher({
     httpOk,
     pidOnPort,
     spawnPrefixed,
+    pinToolchain: pinToolchainPath,
     confirm: askConfirmation,
     installSignals: installSignalHandlers,
     log: console.log,
@@ -284,11 +285,13 @@ export async function runLauncher({
   deps.log(`[debug] AGENTS=${repos.AGENTS_DIR} [${repos.sources.AGENTS_DIR}]`);
   deps.log(`[debug] WEB=${repos.WEB_DIR} [${repos.sources.WEB_DIR}]`);
   deps.log(`[debug] SERVER=${repos.SERVER_DIR} [${repos.sources.SERVER_DIR}]`);
+  // spawn 任何 pnpm/node 子进程前，把仓声明的 node/pnpm 真身 bin 前置到 PATH：
+  // mise shims 会注入全局 default node，服务链会跑错版本（详见 lib/toolchain.mjs）。
+  deps.pinToolchain({ agentsDir: repos.AGENTS_DIR, env, log: deps.log });
   const preflight = await runPreflight({
     args,
     plan,
     repos,
-    env,
     deps,
   });
   if (preflight.cancelled) {

@@ -39,6 +39,8 @@ web 域启用时，launcher 会检查 agents CSS 产物；缺失时自动运行 
 - 本地启动使用 `tsx watch`，修改 TS 文件通常不需要重启。
 - agents 依赖 PostgreSQL `:5432` 和 MinIO `:9000`。
 
+launcher 启动时会读取 AGENTS_DIR 仓的 `mise.toml` / `.mise.toml` / `.tool-versions`，把声明的 node 与 pnpm 真身 bin 目录前置到子进程 PATH：mise 机器上 pnpm 落 shims 垫片时，垫片注入的是全局 default node 而非项目版本，服务链会跑错 node。未声明工具链或非 mise 环境时保持调用方 PATH 现场。服务链 node 版本以该声明为准，健康后可用 `ps` 查进程二进制路径复核。
+
 只起 agents 且依赖未就绪时，先加载 `server.md`，由 server 域准备 Docker；不要让 agents 静默等待到健康超时。
 
 ## worktree 与主仓 agents
