@@ -2,10 +2,8 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { claudeAdapter } from '../adapters/claude/adapter.mjs';
+import { codebuddyAdapter } from '../adapters/codebuddy/adapter.mjs';
 import { codexAdapter } from '../adapters/codex/adapter.mjs';
-import { deepseekAdapter } from '../adapters/deepseek/adapter.mjs';
-import { qoderAdapter } from '../adapters/qoder/adapter.mjs';
-import { piAdapter } from '../adapters/pi/adapter.mjs';
 import {
   buildExpectedTree,
   diffTree,
@@ -15,16 +13,22 @@ import {
   writeExpectedTree,
 } from './lib/platform-packager.mjs';
 
+// 活跃打包平台。CodeBuddy 独立发布（.codebuddy-plugin/plugin.json + ${CODEBUDDY_PLUGIN_ROOT}），
+// 不走 Claude 发布物复用。
+// Qoder、Pi 与 DeepSeek 已从打包入口停用：适配器源码仍保留在 adapters/ 与 platform/ 下，
+// 但不再生成 plugins/qoder|pi|deepseek，也不再参与默认 --check 与发布 smoke。
+export const ACTIVE_PLATFORMS = ['claude', 'codex', 'codebuddy'];
+
 export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 export function parseArgs(args) {
-  const options = { check: false, platforms: ['claude', 'codex', 'qoder', 'pi', 'deepseek'] };
+  const options = { check: false, platforms: [...ACTIVE_PLATFORMS] };
   for (let index = 0; index < args.length; index++) {
     const arg = args[index];
     if (arg === '--check') options.check = true;
     else if (arg === '--platform') {
       const platform = args[++index];
-      if (!platform) throw new Error('--platform requires claude, codex, qoder, pi or deepseek');
+      if (!platform) throw new Error(`--platform requires ${ACTIVE_PLATFORMS.join(', ')}`);
       options.platforms = [platform];
     } else if (arg.startsWith('--platform=')) {
       options.platforms = [arg.slice('--platform='.length)];
@@ -33,7 +37,7 @@ export function parseArgs(args) {
     }
   }
   for (const platform of options.platforms) {
-    if (!['claude', 'codex', 'qoder', 'pi', 'deepseek'].includes(platform)) {
+    if (!ACTIVE_PLATFORMS.includes(platform)) {
       throw new Error(`unknown platform: ${platform}`);
     }
   }
@@ -45,9 +49,7 @@ export function run(options, root = ROOT) {
   const adapters = {
     claude: claudeAdapter,
     codex: codexAdapter,
-    qoder: qoderAdapter,
-    pi: piAdapter,
-    deepseek: deepseekAdapter,
+    codebuddy: codebuddyAdapter,
   };
 
   const messages = [];

@@ -21,6 +21,7 @@ import {
 import { parseArgs, run } from '../scripts/package.platform.mjs';
 import { claudeAdapter } from '../adapters/claude/adapter.mjs';
 import { codexAdapter } from '../adapters/codex/adapter.mjs';
+import { codebuddyAdapter } from '../adapters/codebuddy/adapter.mjs';
 import { deepseekAdapter } from '../adapters/deepseek/adapter.mjs';
 import { piAdapter } from '../adapters/pi/adapter.mjs';
 
@@ -256,7 +257,7 @@ test('writeExpectedTree refuses to clean a path outside repo plugins/<platform>'
   const expected = new Map([['safe.txt', Buffer.from('safe')]]);
   assert.throws(
     () => writeExpectedTree(expected, path.join(root, 'skills'), root),
-    /plugins\/\{claude,codex,qoder,pi,deepseek\}\/nocode/,
+    /plugins\/\{claude,codex,codebuddy,qoder,pi,deepseek\}\/nocode/,
   );
 });
 
@@ -283,8 +284,8 @@ test('writeExpectedTree preserves the source executable bit without assuming uma
   assert.equal(modeOf('skills/hello/SKILL.md') & 0o111, 0);
 });
 
-test('package CLI argument parser defaults to both platforms and rejects unknown input', () => {
-  assert.deepEqual(parseArgs([]), { check: false, platforms: ['claude', 'codex', 'qoder', 'pi', 'deepseek'] });
+test('package CLI argument parser defaults to the active platforms and rejects unknown input', () => {
+  assert.deepEqual(parseArgs([]), { check: false, platforms: ['claude', 'codex', 'codebuddy'] });
   assert.deepEqual(parseArgs(['--check', '--platform=codex']), {
     check: true,
     platforms: ['codex'],
@@ -508,6 +509,63 @@ test('repo Codex marketplace points at the name-matched generated plugin root', 
   );
   assert.match(claudeMarketplace.description, /Claude Code.*Codex|Codex.*Claude Code/);
   assert.equal(claudeMarketplace.plugins[0].source, './plugins/claude/nocode');
+});
+
+test('repo CodeBuddy marketplace points at the dedicated codebuddy artifact', () => {
+  const marketplace = JSON.parse(
+    readFileSync(path.join(REPO_ROOT, '.codebuddy-plugin/marketplace.json'), 'utf8'),
+  );
+  assert.equal(marketplace.name, 'nocode-market');
+  assert.equal(marketplace.plugins.length, 1);
+  assert.equal(marketplace.plugins[0].name, 'nocode');
+  assert.equal(marketplace.plugins[0].source, './plugins/codebuddy/nocode');
+});
+
+test('CodeBuddy adapter builds a native manifest, skills, and CODEBUDDY_* variables', () => {
+  const metadata = JSON.parse(readFileSync(path.join(REPO_ROOT, 'plugin/metadata.json'), 'utf8'));
+  const tree = buildExpectedTree({ root: REPO_ROOT, metadata, adapter: codebuddyAdapter });
+
+  const manifest = JSON.parse(tree.get('.codebuddy-plugin/plugin.json').toString());
+  assert.equal(manifest.name, metadata.name);
+  assert.equal(manifest.version, metadata.version);
+  assert.equal(manifest.license, metadata.license);
+  assert.equal(tree.has('.claude-plugin/plugin.json'), false);
+
+  // CodeBuddy 与 Claude 共享工具语义，因此 fallback 到 claude 平台块内容，
+  // 而不是 Codex 的 `$skill` 改写。
+  const devflow = tree.get('skills/devflow/SKILL.md').toString();
+  assert.match(devflow, /Skill\(nocode:dev-design\)/);
+  assert.doesNotMatch(devflow, /\$dev-design/);
+
+  // CodeBuddy 发布物统一使用 CODEBUDDY_* 前缀，不能残留 Claude 前缀。
+  for (const relative of [
+    'skills/task/SKILL.md',
+    'skills/dev-build/SKILL.md',
+    'skills/nocodehub/SKILL.md',
+  ]) {
+    const source = tree.get(relative).toString();
+    assert.doesNotMatch(source, /\$\{CLAUDE_PLUGIN_ROOT\}/, relative);
+    assert.doesNotMatch(source, /\{CLAUDE_PLUGIN_ROOT\}/, relative);
+    assert.doesNotMatch(source, /CLAUDE_PROJECT_DIR/, relative);
+  }
+  assert.match(tree.get('skills/dev-build/SKILL.md').toString(), /\{CODEBUDDY_PLUGIN_ROOT\}\/skills\/references/);
+
+  const inject = tree.get('hooks/inject-nocode.sh').toString();
+  assert.match(inject, /NOCODE_PLATFORM="\$\{NOCODE_PLATFORM:-codebuddy\}"/);
+  assert.match(inject, /\$\{CODEBUDDY_PLUGIN_ROOT\}\/runtime\/context-budget\.json/);
+
+  const hooks = JSON.parse(tree.get('hooks/hooks.json').toString());
+  assert.deepEqual(Object.keys(hooks.hooks), ['SessionStart', 'PreToolUse', 'PostToolUse']);
+  const commands = hooks.hooks.SessionStart[0].hooks.map((hook) => hook.command);
+  assert.ok(commands.some((command) => /runtime\/plugin-data-entry\.mjs/.test(command)
+    && /session-open\.mjs/.test(command)));
+  assert.ok(commands.some((command) => /inject-nocode\.sh" model-about(?: \d+)?$/.test(command)));
+  assert.doesNotMatch(JSON.stringify(hooks), /\$\{CLAUDE_PLUGIN_ROOT\}/);
+  assert.doesNotMatch(JSON.stringify(hooks), /\$\{PLUGIN_ROOT\}/);
+
+  const entry = tree.get('runtime/plugin-data-entry.mjs').toString();
+  assert.match(entry, /platformDataRoot\('codebuddy'/);
+  assert.match(entry, /'codebuddy data directory'/);
 });
 
 test('Pi adapter builds a package with prompts, skills, and an extension', () => {

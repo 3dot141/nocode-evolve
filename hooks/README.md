@@ -2,7 +2,7 @@
 
 ## 职责
 
-本目录同时承载 Hook 的业务判断、平台 codec、Claude 注册源与测试。`scripts/package.platform.mjs` 从这里打包 Claude Code / Codex / Qoder 各自可加载的 `hooks/hooks.json` 和运行脚本；DeepSeek 发布物不读 `hooks.json`，由 `platform/deepseek/plugin/lib/index.js` 直接消费 `pretooluse-rules.json` 并通过 `tools/pre-execute` 硬拦截 Bash。
+本目录同时承载 Hook 的业务判断、平台 codec、Claude 注册源与测试。`scripts/package.platform.mjs` 从这里打包 Claude Code / Codex / CodeBuddy 各自可加载的 `hooks/hooks.json` 和运行脚本。Qoder / Pi / DeepSeek 已停止发布，其 codec 分支保留在 `hooks/lib/hook-codecs.mjs` 中但不再生成发布物；DeepSeek 发布物原有的 `hooks.json` 免发布路径与 `platform/deepseek/plugin/lib/index.js` 一并转入停用保留。
 
 边界如下：
 
@@ -44,12 +44,18 @@ Codex：
 - PreToolUse 与 Claude 使用相同的标准输出：block 规则返回 `permissionDecision: deny`，inject 规则返回 `additionalContext`。
 - 与 Claude 使用相同的有效 hook 链和发布过滤；adapter 把所有插件内命令改写为带引号的 `${PLUGIN_ROOT}` 绝对路径。
 
-DeepSeek Harness：
+CodeBuddy：
+
+- Hook 协议与 Claude 完全一致（SessionStart `additionalContext`、PreToolUse `permissionDecision`），只是在发布物里统一把根变量写成 `${CODEBUDDY_PLUGIN_ROOT}`、平台标记写成 `codebuddy`。
+- `detectPlatform` 先看 `NOCODE_PLATFORM`，再看 `CODEBUDDY_PLUGIN_ROOT`，因此 CodeBuddy 的 PreToolUse 子进程即使没有 `NOCODE_PLATFORM` 也会被识别为 `codebuddy` 而不是回退成 `claude`。
+- 环境文件用 `CODEBUDDY_ENV_FILE`；`hooks/inject-nocode.sh` 同时兼容 `CLAUDE_ENV_FILE`。
+
+DeepSeek Harness（已停用，以下为保留源码的行为描述）：
 
 - 不发布 `hooks.json`；`platform/deepseek/plugin/lib/index.js` 通过 `ctx.systemPrompt` 注入 model/project 上下文，通过 `ctx.shellEnv` 暴露 `DSH_NOCODE_*` 变量。
 - Bash block 规则由 `tools/pre-execute` waterfall 转换为 `{ kind: 'deny', reason }`；inject 提醒规则当前不附加上下文。
 
-平台默认由运行时环境识别：`NOCODE_PLATFORM` 可显式指定；否则存在 `PLUGIN_ROOT` 时视为 Codex，回退为 Claude。生成的 Codex Hook 命令使用 `${PLUGIN_ROOT}`，Claude 使用 `${CLAUDE_PLUGIN_ROOT}`。业务状态脚本只读取 `NOCODE_PLUGIN_DATA`；映射只发生在 `runtime/plugin-data-entry.mjs`。
+平台默认由运行时环境识别：`NOCODE_PLATFORM` 可显式指定；否则依次看 `CODEBUDDY_PLUGIN_ROOT`（→ CodeBuddy）、`QODER_PLUGIN_ROOT`（→ Qoder）、存在 `PLUGIN_ROOT` 时视为 Codex，回退为 Claude。生成的 Codex Hook 命令使用 `${PLUGIN_ROOT}`，Claude 使用 `${CLAUDE_PLUGIN_ROOT}`，CodeBuddy 使用 `${CODEBUDDY_PLUGIN_ROOT}`。业务状态脚本只读取 `NOCODE_PLUGIN_DATA`；映射只发生在 `runtime/plugin-data-entry.mjs`。
 
 SessionStart 会从 hook 输入的 `cwd` / `workspace` 定位当前项目，并把开始、成功/失败、退出码及 stderr 追加到 `.nocode/logs/session-start.log`。日志初始化是 best-effort，不会因为目录不可写而制造新的 hook 错误；完整 hook payload 不会落盘。
 

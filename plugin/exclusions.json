@@ -29,6 +29,7 @@
       "path": "skills/codex-nocode-reload",
       "platforms": [
         "claude",
+        "codebuddy",
         "qoder",
         "pi",
         "deepseek"

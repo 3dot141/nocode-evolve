@@ -1,8 +1,8 @@
-const OPEN = /^<!-- nocode:platform (claude|codex|qoder|pi|deepseek) -->$/;
+const OPEN = /^<!-- nocode:platform (claude|codex|codebuddy|qoder|pi|deepseek) -->$/;
 const CLOSE = '<!-- /nocode:platform -->';
 
 export function renderPlatformBlocks(source, { platform, file = '<markdown>' }) {
-  if (!['claude', 'codex', 'qoder', 'pi', 'deepseek'].includes(platform)) {
+  if (!['claude', 'codex', 'codebuddy', 'qoder', 'pi', 'deepseek'].includes(platform)) {
     throw new Error(`${file}: unknown target platform: ${platform}`);
   }
 
@@ -25,6 +25,7 @@ export function renderPlatformBlocks(source, { platform, file = '<markdown>' }) 
     }
     if (!active || active.platform === platform
       || (platform === 'qoder' && active.platform === 'claude')
+      || (platform === 'codebuddy' && active.platform === 'claude')
       || (platform === 'deepseek' && active.platform === 'pi')) output.push(line);
   }
 

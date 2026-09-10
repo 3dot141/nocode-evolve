@@ -30,6 +30,7 @@ test('generated platform manifests cannot drift from metadata after cutover', ()
   for (const manifestPath of [
     'plugins/claude/nocode/.claude-plugin/plugin.json',
     'plugins/codex/nocode/.codex-plugin/plugin.json',
+    'plugins/codebuddy/nocode/.codebuddy-plugin/plugin.json',
   ]) {
     const manifest = readJson(manifestPath);
     assert.ok(manifest, `${manifestPath} must exist`);
@@ -38,20 +39,6 @@ test('generated platform manifests cannot drift from metadata after cutover', ()
     assert.deepEqual(manifest.author, metadata.author);
     assert.equal(manifest.license, metadata.license);
   }
-  const piManifest = readJson('plugins/pi/nocode/package.json');
-  assert.ok(piManifest, 'plugins/pi/nocode/package.json must exist');
-  assert.equal(piManifest.name, metadata.name);
-  assert.equal(piManifest.version, metadata.version);
-  assert.equal(piManifest.author, metadata.author.name);
-  assert.equal(piManifest.license, metadata.license);
-
-  const deepseekManifest = readJson('plugins/deepseek/nocode/package.json');
-  assert.ok(deepseekManifest, 'plugins/deepseek/nocode/package.json must exist');
-  assert.equal(deepseekManifest.name, metadata.name);
-  assert.equal(deepseekManifest.version, metadata.version);
-  assert.equal(deepseekManifest.author, metadata.author.name);
-  assert.equal(deepseekManifest.license, metadata.license);
-  assert.deepEqual(deepseekManifest.dsh, { bundle: { patch: './cordis.patch.yml' } });
 });
 
 test('runtime maintenance commands use the shared metadata version source', () => {

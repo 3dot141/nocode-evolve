@@ -61,7 +61,7 @@ scripts/compile.hooks.js 内硬编码的规则数组 (独立链，不读 rules/ 
 
 `inject-nocode.sh` 在第一个 segment（`model-about`）里顺带做三件事，只执行一次、不在后续 segment 重复：
 
-1. **导出环境变量**：把 `CLAUDE_PLUGIN_ROOT` / `NOCODE_SKILL_REF` 写入 `CLAUDE_ENV_FILE`，供后续 Bash tool 调用使用（hook 进程内能拿到 `CLAUDE_PLUGIN_ROOT`，但 Bash tool 默认拿不到，得靠这一步搭桥）。
+1. **导出环境变量**：把 `CLAUDE_PLUGIN_ROOT` / `CODEBUDDY_PLUGIN_ROOT` / `NOCODE_SKILL_REF` 写入环境文件，供后续 Bash tool 调用使用（hook 进程内能拿到插件根变量，但 Bash tool 默认拿不到，得靠这一步搭桥）。环境文件变量名按平台取：Claude Code 是 `CLAUDE_ENV_FILE`，CodeBuddy 是 `CODEBUDDY_ENV_FILE`，脚本 `CODEBUDDY_ENV_FILE:-CLAUDE_ENV_FILE` 择一。
 2. **漂移检查**：跑 `node scripts/compile.rule.js --check` + `node scripts/compile.hooks.js --check`，源与生成物不一致 → warn（不阻断）。
 3. **孤儿检查**：`model/*.md` 里任何文件如果没在 `seg_file()` 注册对应 segment → warn（文件存在但注入不到 session）；`rules/rule-*.md` 如果没被任何 `agent-rule-catalog-*.md` 引用 → warn（agent 命中不到，规则形同虚设）；另外还会检查 `references/skill-integration-map.md` 的 `last_verified` 是否超 90 天（上游漂移提醒）。
 

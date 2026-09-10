@@ -199,7 +199,23 @@ const DEEPSEEK_FORBIDDEN = [
   ['${NOCODE_PLUGIN_ROOT}', /\$\{NOCODE_PLUGIN_ROOT\}/g],
 ];
 
+// CodeBuddy 与 Claude 工具语义一致，唯一硬要求是发布物统一走 CODEBUDDY_* 变量，
+// 不能残留 Claude 前缀，否则在 CodeBuddy 运行时无法解析。
+const CODEBUDDY_FORBIDDEN = [
+  ['${CLAUDE_PLUGIN_ROOT}', /\$\{CLAUDE_PLUGIN_ROOT\}/g],
+  ['{CLAUDE_PLUGIN_ROOT}', /\{CLAUDE_PLUGIN_ROOT\}/g],
+  ['CLAUDE_PROJECT_DIR', /\bCLAUDE_PROJECT_DIR\b/g],
+];
+
 export function checkPlatformSyntax(raw, rel, platform) {
+  if (platform === 'codebuddy') {
+    const errors = [];
+    for (const [label, pattern] of CODEBUDDY_FORBIDDEN) {
+      if (pattern.test(raw)) errors.push(`${rel}: CodeBuddy 生成物残留 Claude 语法 ${label}`);
+      pattern.lastIndex = 0;
+    }
+    return errors;
+  }
   if (platform === 'codex') {
     const errors = [];
     for (const [label, pattern] of CODEX_FORBIDDEN) {
@@ -283,7 +299,7 @@ export function checkAll({
     if (!frontmatter?.description) errors.push(`${rel}: nested Skill 缺 description`);
   }
   errors.push(...checkCommands(root, targets));
-  if (platform === 'codex' || platform === 'pi' || platform === 'deepseek') {
+  if (platform === 'codex' || platform === 'codebuddy' || platform === 'pi' || platform === 'deepseek') {
     const directories = platform === 'pi' ? ['skills', 'prompts'] : ['skills'];
     for (const file of listMarkdown(root, directories)) {
       const rel = path.relative(root, file).replaceAll('\\', '/');
@@ -313,7 +329,7 @@ export function parseCheckArgs(args) {
       options.root = arg.slice('--root='.length);
     } else if (arg === '--platform') {
       const platform = args[++index];
-      if (!platform) throw new Error('--platform requires claude, codex, qoder, pi, deepseek or source');
+      if (!platform) throw new Error('--platform requires claude, codex, codebuddy, qoder, pi, deepseek or source');
       options.platform = platform;
     } else if (arg.startsWith('--platform=')) {
       options.platform = arg.slice('--platform='.length);
@@ -321,7 +337,7 @@ export function parseCheckArgs(args) {
       throw new Error(`unknown argument: ${arg}`);
     }
   }
-  if (!['source', 'claude', 'codex', 'qoder', 'pi', 'deepseek'].includes(options.platform)) throw new Error(`unknown platform: ${options.platform}`);
+  if (!['source', 'claude', 'codex', 'codebuddy', 'qoder', 'pi', 'deepseek'].includes(options.platform)) throw new Error(`unknown platform: ${options.platform}`);
   return options;
 }
 

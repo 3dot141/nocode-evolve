@@ -21,7 +21,7 @@
 # scripts/compile.hooks.js, 与本链无关.
 set -euo pipefail
 
-PLUGIN_ROOT="${PLUGIN_ROOT:-${DEEPSEEK_PLUGIN_ROOT:-${QODER_PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}}}}"
+PLUGIN_ROOT="${PLUGIN_ROOT:-${CODEBUDDY_PLUGIN_ROOT:-${DEEPSEEK_PLUGIN_ROOT:-${QODER_PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}}}}}"
 export PLUGIN_ROOT
 NOCODE_PLATFORM="${NOCODE_PLATFORM:-claude}"
 export NOCODE_PLATFORM
@@ -101,13 +101,16 @@ file="$(seg_file "$SEG")" || {
   exit 1
 }
 
-# 导出 CLAUDE_PLUGIN_ROOT 到 Bash 环境 (只在第一个 segment 写一次):
-# CLAUDE_PLUGIN_ROOT 在 hook 进程内有, 但 Bash tool 拿不到.
-# 写入 CLAUDE_ENV_FILE 后, 后续所有 Bash 调用都能用 ${CLAUDE_PLUGIN_ROOT}.
-if [ "$SEG" = "model-about" ] && [ -n "${CLAUDE_ENV_FILE:-}" ]; then
-  echo "CLAUDE_PLUGIN_ROOT=${PLUGIN_ROOT}" >> "$CLAUDE_ENV_FILE"
+# 导出 PLUGIN_ROOT 到 Bash 环境 (只在第一个 segment 写一次):
+# 插件根变量在 hook 进程内有, 但 Bash tool 拿不到.
+# 写入环境文件后, 后续所有 Bash 调用都能用 ${CLAUDE_PLUGIN_ROOT} / ${CODEBUDDY_PLUGIN_ROOT}.
+# Claude Code 提供 CLAUDE_ENV_FILE, CodeBuddy 提供 CODEBUDDY_ENV_FILE; 两者都写, 谁在就写谁.
+ENV_FILE="${CODEBUDDY_ENV_FILE:-${CLAUDE_ENV_FILE:-}}"
+if [ "$SEG" = "model-about" ] && [ -n "$ENV_FILE" ]; then
+  echo "CLAUDE_PLUGIN_ROOT=${PLUGIN_ROOT}" >> "$ENV_FILE"
+  echo "CODEBUDDY_PLUGIN_ROOT=${PLUGIN_ROOT}" >> "$ENV_FILE"
   _REF="${NOCODE_SKILL_REF:-${PLUGIN_ROOT}/skills/references}"
-  echo "NOCODE_SKILL_REF=${_REF}" >> "$CLAUDE_ENV_FILE"
+  echo "NOCODE_SKILL_REF=${_REF}" >> "$ENV_FILE"
 fi
 
 # Sanity check 只在第一个 model segment 跑一次 (避免每 command 重复):
@@ -177,7 +180,7 @@ else
   header="<!-- source: ${file} (project override) -->"
 fi
 _REF="${NOCODE_SKILL_REF:-${PLUGIN_ROOT}/skills/references}"
-content="${header}"$'\n'"$(sed "s|\${CLAUDE_PLUGIN_ROOT}|${PLUGIN_ROOT}|g; s|\${QODER_PLUGIN_ROOT}|${PLUGIN_ROOT}|g; s|\${DEEPSEEK_PLUGIN_ROOT}|${PLUGIN_ROOT}|g; s|\${NOCODE_SKILL_REF}|${_REF}|g" "$file")"
+content="${header}"$'\n'"$(sed "s|\${CLAUDE_PLUGIN_ROOT}|${PLUGIN_ROOT}|g; s|\${CODEBUDDY_PLUGIN_ROOT}|${PLUGIN_ROOT}|g; s|\${QODER_PLUGIN_ROOT}|${PLUGIN_ROOT}|g; s|\${DEEPSEEK_PLUGIN_ROOT}|${PLUGIN_ROOT}|g; s|\${NOCODE_SKILL_REF}|${_REF}|g" "$file")"
 
 budget="${NOCODE_CONTEXT_BUDGET_FILE:-${PLUGIN_ROOT}/runtime/context-budget.json}"
 if [ "$SEG" = "project" ]; then

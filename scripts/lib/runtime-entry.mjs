@@ -4,7 +4,8 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 
 const PLATFORM_DATA_NAMES = [
-  'CLAUDE_PLUGIN_DATA', 'CODEX_PLUGIN_DATA', 'QODER_PLUGIN_DATA', 'DEEPSEEK_PLUGIN_DATA', 'PLUGIN_DATA', 'NOCODE_PLUGIN_DATA', 'NOCODE_ROUTE_KEY',
+  'CLAUDE_PLUGIN_DATA', 'CODEX_PLUGIN_DATA', 'CODEBUDDY_PLUGIN_DATA', 'QODER_PLUGIN_DATA',
+  'DEEPSEEK_PLUGIN_DATA', 'PLUGIN_DATA', 'NOCODE_PLUGIN_DATA', 'NOCODE_ROUTE_KEY',
 ];
 
 export class RuntimeEntryError extends Error {
@@ -34,8 +35,11 @@ function validateRuntimeData(value, sourceName) {
 }
 
 export function platformDataRoot(platform, env = process.env) {
-  if (!['claude', 'codex', 'qoder', 'pi', 'deepseek'].includes(platform)) {
+  if (!['claude', 'codex', 'codebuddy', 'qoder', 'pi', 'deepseek'].includes(platform)) {
     throw new RuntimeEntryError('RUNTIME_PLATFORM_INVALID', `unsupported platform: ${platform}`);
+  }
+  if (platform === 'codebuddy' && typeof env.CODEBUDDY_PLUGIN_DATA === 'string' && env.CODEBUDDY_PLUGIN_DATA.trim()) {
+    return validateRuntimeData(env.CODEBUDDY_PLUGIN_DATA, 'codebuddy data directory');
   }
   if (platform === 'qoder' && typeof env.QODER_PLUGIN_DATA === 'string' && env.QODER_PLUGIN_DATA.trim()) {
     return validateRuntimeData(env.QODER_PLUGIN_DATA, 'qoder data directory');

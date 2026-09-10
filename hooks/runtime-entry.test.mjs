@@ -12,6 +12,7 @@ import {
 import { buildExpectedTree } from '../scripts/lib/platform-packager.mjs';
 import { claudeAdapter } from '../adapters/claude/adapter.mjs';
 import { codexAdapter } from '../adapters/codex/adapter.mjs';
+import { codebuddyAdapter } from '../adapters/codebuddy/adapter.mjs';
 import { piAdapter } from '../adapters/pi/adapter.mjs';
 import { deepseekAdapter } from '../adapters/deepseek/adapter.mjs';
 
@@ -45,7 +46,7 @@ test('shared runtime mapper accepts explicit paths and strips platform data name
     targetName: 'NOCODE_PLUGIN_DATA',
     baseEnv: {
       KEEP: 'yes', CLAUDE_PLUGIN_DATA: '/wrong', CODEX_PLUGIN_DATA: '/wrong',
-      PLUGIN_DATA: '/wrong', NOCODE_PLUGIN_DATA: '/wrong',
+      CODEBUDDY_PLUGIN_DATA: '/wrong', PLUGIN_DATA: '/wrong', NOCODE_PLUGIN_DATA: '/wrong',
     },
   });
   assert.deepEqual(env, { KEEP: 'yes', NOCODE_PLUGIN_DATA: dir });
@@ -86,7 +87,7 @@ test('runtime launcher uses argv without a shell and redacts native values from 
 });
 
 test('generated platform entrypoints map directly to isolated data roots', async (t) => {
-  for (const [platform, adapter] of Object.entries({ claude: claudeAdapter, codex: codexAdapter, pi: piAdapter, deepseek: deepseekAdapter })) {
+  for (const [platform, adapter] of Object.entries({ claude: claudeAdapter, codex: codexAdapter, codebuddy: codebuddyAdapter, pi: piAdapter, deepseek: deepseekAdapter })) {
     const tree = buildExpectedTree({ root: ROOT, metadata: METADATA, adapter });
     const source = tree.get('runtime/plugin-data-entry.mjs').toString();
     assert.match(source, new RegExp(`platformDataRoot\\('${platform}'`));
@@ -106,7 +107,7 @@ test('generated platform entrypoints map directly to isolated data roots', async
 });
 
 test('generated hooks use direct runtime paths without global MCP registration', () => {
-  for (const [platform, adapter] of Object.entries({ claude: claudeAdapter, codex: codexAdapter })) {
+  for (const [platform, adapter] of Object.entries({ claude: claudeAdapter, codex: codexAdapter, codebuddy: codebuddyAdapter })) {
     const tree = buildExpectedTree({ root: ROOT, metadata: METADATA, adapter });
     const hooks = tree.get('hooks/hooks.json').toString();
     assert.match(hooks, /runtime\/plugin-data-entry\.mjs/);

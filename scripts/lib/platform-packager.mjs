@@ -12,7 +12,9 @@ import path from 'node:path';
 import { loadContextBudget, splitStaticContext } from './context-budget.mjs';
 import { renderPlatformBlocks } from './platform-blocks.mjs';
 
-const PLATFORMS = new Set(['claude', 'codex', 'qoder', 'pi', 'deepseek']);
+// 已知平台全集：qoder、pi 与 deepseek 已从打包入口停用（见 scripts/package.platform.mjs
+// 的 ACTIVE_PLATFORMS），但适配器与内部校验能力保留，便于日后恢复。
+const PLATFORMS = new Set(['claude', 'codex', 'codebuddy', 'qoder', 'pi', 'deepseek']);
 const SEMVER = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/;
 
 export function loadJson(file) {
@@ -35,7 +37,7 @@ export function loadPluginExclusions(root) {
     if (entry.platforms != null) {
       if (!Array.isArray(entry.platforms) || entry.platforms.length === 0
         || entry.platforms.some((platform) => !PLATFORMS.has(platform))) {
-        throw new Error(`exclusion platforms must contain claude, codex, qoder, pi and/or deepseek for ${relative}`);
+        throw new Error(`exclusion platforms must contain claude, codex, codebuddy, qoder, pi and/or deepseek for ${relative}`);
       }
       platforms = [...new Set(entry.platforms)];
     }
@@ -284,8 +286,8 @@ function assertSafeOutputRoot(outputRoot, repoRoot) {
   const resolvedRepo = path.resolve(repoRoot);
   const resolvedOutput = path.resolve(outputRoot);
   const relative = path.relative(resolvedRepo, resolvedOutput).replaceAll('\\', '/');
-  if (!/^plugins\/(claude|codex|qoder|pi|deepseek)\/nocode$/.test(relative)) {
-    throw new Error('refusing to clean outside <repo>/plugins/{claude,codex,qoder,pi,deepseek}/nocode');
+  if (!/^plugins\/(claude|codex|codebuddy|qoder|pi|deepseek)\/nocode$/.test(relative)) {
+    throw new Error('refusing to clean outside <repo>/plugins/{claude,codex,codebuddy,qoder,pi,deepseek}/nocode');
   }
   return resolvedOutput;
 }

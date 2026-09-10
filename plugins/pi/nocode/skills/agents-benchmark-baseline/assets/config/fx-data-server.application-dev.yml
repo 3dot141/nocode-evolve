@@ -1,9 +1,0 @@
-# 对照组 fx-data-server 覆盖配置 —— 由 docker-compose.baseline.yml 挂载到 /config/
-# entrypoint.sh 带 -Dspring.config.additional-location=optional:file:/config/，profile=dev 时加载本文件。
-#
-# local-ws.enabled=true 时主服务会尝试拉起 hihidata-ws-server 子进程（S3AutoConfig 之外的 runWs 工厂），
-# 但运行时镜像里没有该模块的 classpath，启动直接失败：
-#   can't find class pathhihidata-ws-server
-# 对照组不需要 websocket 服务，关闭即可。
-local-ws:
-  enabled: false

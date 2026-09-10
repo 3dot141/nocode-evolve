@@ -6,18 +6,32 @@
 mkdir -p ~/.config/nocode && cp <插件>/skills/lark-project/worklog/work-log.env.example ~/.config/nocode/work-log.env
 ```
 
-## key 失效自动抓取 SOP（2026-09-07 实测；README.md 不随发布物分发，运行时读本文件）
+## key 失效自动抓取 SOP（2026-09-07 首测，2026-09-09 复测补 fallback；README.md 不随发布物分发，运行时读本文件）
 
-**端点分工**：抓钥匙经 `/open_api/**`（页面上唯一稳定重发的请求），**提交工时继续走 `/api/worklogs` 老端点**——work-log.mjs 的时段分配/北京时间换算/校验都建在它上面，且已验证与新钥匙兼容。只有老端点出现 404/410（真废弃，非 401 过期）才需要逆向插件提交请求迁移到 open_api，不要预先迁移。
+**端点分工**：抓钥匙经 `/open_api/**`（重载后稳定重发），**提交工时继续走 `/api/worklogs` 老端点**——work-log.mjs 的时段分配/北京时间换算/校验都建在它上面，且已验证与新钥匙兼容。只有老端点出现 404/410（真废弃，非 401 过期）才需要逆向插件提交请求迁移到 open_api，不要预先迁移。key（36 位，长期有效）同网关两端口通用，已实测完全一致——任一处抓到即用。
 
-key（36 位，长期有效，同网关 `/api/worklogs` 与 `/open_api/**` 通用）过期后用 ego-browser 自动抓取，无需用户抄取：
+key 过期后用 ego-browser 自动抓取，无需用户抄取。**方案 A（网络层）为主，方案 B（应用层）为 fallback**，任一成功即止：
+
+**前置（两方案共用）**：
 
 1. **打开工时看板**：`useOrCreateTaskSpace` → `openOrReuseTab('https://project.feishu.cn/')`（登录态继承）→ 左栏「功能」→「工时管理」。页面 URL 形如 `project.feishu.cn/{space}/meegoPlg/MII_..._board_...`。
 2. **工时插件是跨域 iframe（OOPIF）**：宿主 `projectplg.feishupkg.com`，主 frame 的 `Network.enable` **抓不到**其请求——必须 `Target.getTargets` 找 `feishupkg` iframe → `Target.attachToTarget`（flatten:true）→ 对该 session `Network.enable`。
-3. **触发请求**：主文档改 `iframe.src` 追加无意义 query（如 `&regrab=1`）触发插件重载，初始请求 `/open_api/{spaceId}/teams/all` 会带 key 重发（比点 UI 可靠）。
-4. **认证头是 `X-WORKLOG-KEY` 全大写**——按小写/混合大小写匹配会「看着抓到了其实没认出」。
-5. **写入不回显**：key 值直接写入 `~/.zshenv`（`export FEISHU_WORKLOG_KEY=...`）与 `~/.config/nocode/work-log.env` 双处，终端只报长度与前 4 位。
-6. 重跑 `submit --execute` 验证 200；完成后 `completeTaskSpace(keep:false)` 收尾。
+
+**方案 A · 网络层抓重载请求（主路径）**：
+
+3. 主文档改 `iframe.src` 追加无意义 query（如 `&regrab=1`）触发插件重载；**重载后 ≤0.5s 内立即重新 `getTargets`+`attach`+`Network.enable`**（导航使旧 session 失效），再轮询事件收 `/open_api/{spaceId}/teams/all` 的请求头。
+   ⚠ **时序是成败关键**：先等 1~3 秒再 attach，`teams/all` 在监听就位前已发完——表现为「只有静态资源、无 open_api」。这是 attach 晚了的竞态，**不是**「重载破坏 postMessage 握手」（2026-09-09 曾误判，复测推翻：时序正确时该请求稳定发出且插件正常渲染）。此时直接转方案 B，不要反复重载。
+
+**方案 B · 应用层 patch + UI 触发（fallback）**——A 轮询约 15s 无 open_api 请求、或页面已渲染出工时数据（初始请求早发完）时用：
+
+4. attach iframe session 后 `Runtime.evaluate` 注入 patch：重写 `window.fetch` **与** `XMLHttpRequest.prototype.open/setRequestHeader/send`（漏 XHR 则插件走 XHR 时抓不到），把每个请求的 `{url, headers}` 推进 `window.__caps` 数组。
+5. 点 UI 触发真实请求——实测点「切换到周视图」按钮有效（触发 `POST /api/worklogs/query`，头带 key）；从 `window.__caps` 读出 `X-WORKLOG-KEY`。
+
+**收尾（两方案共用）**：
+
+6. **认证头是 `X-WORKLOG-KEY` 全大写**——按小写/混合大小写匹配会「看着抓到了其实没认出」。
+7. **写入不回显**：key 值直接写入 `~/.zshenv`（`export FEISHU_WORKLOG_KEY=...`）与 `~/.config/nocode/work-log.env` 双处，终端只报长度与前 4 位。
+8. 重跑 `submit --execute` 验证 200；完成后 `completeTaskSpace(keep:false)` 收尾。
 
 ## 必填项（唯一）
 

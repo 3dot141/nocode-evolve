@@ -12,7 +12,9 @@
 // 每次成功查询输出:
 //   PR_CHECK state=OPEN|MERGED|CLOSED mergeable=true|false approved=true|false
 // watch 命中可处置状态后再输出:
-//   PR_WATCH reason=READY|MERGED|CLOSED runs=<N>
+//   PR_WATCH reason=READY|MERGED|CLOSED|NEW_COMMENTS runs=<N>
+//   NEW_COMMENTS: watch 期间评论指纹相比首轮基线增长（P1/P2 评审评论需要人处置，
+//   不能等 READY/MERGED 才被发现——实测 PR 挂着两条评审意见 40 分钟无人感知）
 // 单轮查询失败 → stderr + exit 1；watch 连续失败达到 --max-errors（默认 3）→ exit 1。
 //
 // 设计: 纯判定(normalizeGh/normalizeBkt/statusLine)与副作用(queryStatus)分离——纯函数单测。
@@ -22,7 +24,8 @@ import { runPeriodically } from './periodic-runner.mjs';
 
 // ═══ 纯判定逻辑（可测，无副作用）═══
 
-// gh pr view <n> --json state,mergeStateStatus,mergeable,reviewDecision → 统一三元组
+// gh pr view <n> --json state,mergeStateStatus,mergeable,reviewDecision,comments,reviews
+// → 统一三元组 + 评论指纹（comments+reviews 合计；只用于 watch 基线对比，不是精确评论数）
 export function normalizeGh(j) {
   return {
     state: j.state, // OPEN | MERGED | CLOSED
@@ -30,16 +33,18 @@ export function normalizeGh(j) {
     // reviewDecision: APPROVED / CHANGES_REQUESTED / REVIEW_REQUIRED / ''(无 review)
     // 只认 APPROVED——防"仓库没配 required review 时 PR 一建就被自动合掉"
     approved: j.reviewDecision === 'APPROVED',
+    commentCount: (j.comments?.length ?? 0) + (j.reviews?.length ?? 0),
   };
 }
 
-// bkt api .../pull-requests/<id> (.state/.reviewers) + /merge (.canMerge)
-export function normalizeBkt(pr, merge) {
+// bkt api .../pull-requests/<id> (.state/.reviewers) + /merge (.canMerge) + /activities
+export function normalizeBkt(pr, merge, commentCount = 0) {
   const stateMap = { OPEN: 'OPEN', MERGED: 'MERGED', DECLINED: 'CLOSED' };
   return {
     state: stateMap[pr.state] ?? 'OPEN',
     mergeable: merge?.canMerge === true,
     approved: Array.isArray(pr.reviewers) && pr.reviewers.some((r) => r.approved === true),
+    commentCount,
   };
 }
 
@@ -75,18 +80,24 @@ const defaultRun = (argv) => execFileSync(argv[0], argv.slice(1), { encoding: 'u
 
 export function queryStatus(cfg, run = defaultRun) {
   if (cfg.toolchain === 'gh') {
-    const out = run(['gh', 'pr', 'view', String(cfg.pr), '--json', 'state,mergeStateStatus,mergeable,reviewDecision']);
+    const out = run(['gh', 'pr', 'view', String(cfg.pr), '--json', 'state,mergeStateStatus,mergeable,reviewDecision,comments,reviews']);
     return normalizeGh(JSON.parse(out));
   }
   // bkt: cross-fork 别用 `bkt pr view`(author/reviewers 解析不可靠)，走 raw GET
   const base = `/rest/api/1.0/projects/${cfg.targetProject}/repos/${cfg.repoSlug}/pull-requests/${cfg.pr}`;
   const pr = JSON.parse(run(['bkt', 'api', base, '--json']));
+  // 评论指纹：activities 里 COMMENTED/REPLIED 条数。查询失败不影响状态判定（指纹记 0）。
+  let commentCount = 0;
+  try {
+    const activities = JSON.parse(run(['bkt', 'api', `${base}/activities?limit=100`, '--json']));
+    commentCount = (activities?.values ?? []).filter((v) => v.action === 'COMMENTED' || v.action === 'REPLIED').length;
+  } catch { /* activities 查不到 → 指纹记 0，下轮再比 */ }
   // state 已终态(MERGED/DECLINED)无需查 /merge — 省一次请求 + 避免 merged 后 /merge 报错噪音
-  if (pr.state === 'MERGED' || pr.state === 'DECLINED') return normalizeBkt(pr, null);
+  if (pr.state === 'MERGED' || pr.state === 'DECLINED') return normalizeBkt(pr, null, commentCount);
   let merge = null;
   try { merge = JSON.parse(run(['bkt', 'api', `${base}/merge`, '--json'])); }
   catch { /* /merge 查不到 → 当不可合，下轮再查 */ }
-  return normalizeBkt(pr, merge);
+  return normalizeBkt(pr, merge, commentCount);
 }
 
 export async function watchStatus(cfg, options = {}) {
@@ -105,6 +116,8 @@ export async function watchStatus(cfg, options = {}) {
   }
 
   let consecutiveErrors = 0;
+  // 评论基线从首轮快照起（PR 建立时 autotest/机器人首评已存在，从 0 起会立即误触发）
+  let commentBaseline = null;
   const periodicOptions = {
     intervalMs,
     maxRuns,
@@ -113,7 +126,9 @@ export async function watchStatus(cfg, options = {}) {
       try {
         const status = queryStatus(cfg, run);
         consecutiveErrors = 0;
-        return { status };
+        const newComments = commentBaseline !== null && status.commentCount > commentBaseline;
+        if (commentBaseline === null) commentBaseline = status.commentCount;
+        return { status, newComments };
       } catch (error) {
         consecutiveErrors += 1;
         onError(error, { consecutiveErrors });
@@ -124,12 +139,15 @@ export async function watchStatus(cfg, options = {}) {
     onResult: ({ status }) => {
       if (status) onStatus(status);
     },
-    shouldStop: ({ status }) => status !== null && stopReason(status) !== null,
+    shouldStop: ({ status, newComments }) =>
+      status !== null && (stopReason(status) !== null || newComments === true),
   };
 
   const result = await runPeriodically(periodicOptions);
   const status = result.value?.status ?? null;
-  return { ...result, status, stopReason: status ? stopReason(status) : null };
+  const newComments = result.value?.newComments === true;
+  const reason = newComments ? 'NEW_COMMENTS' : (status ? stopReason(status) : null);
+  return { ...result, status, stopReason: reason };
 }
 
 const parsePositiveInteger = (value, name, fallback) => {

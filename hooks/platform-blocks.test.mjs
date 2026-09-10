@@ -34,6 +34,16 @@ test('renders shared Markdown plus only the selected platform block', () => {
   );
 });
 
+test('codebuddy and qoder fall back to the claude block content', () => {
+  for (const platform of ['codebuddy', 'qoder']) {
+    assert.equal(
+      renderPlatformBlocks(SOURCE, { platform, file: 'skills/example/SKILL.md' }),
+      'shared before\nuse Agent\nshared after\n',
+      platform,
+    );
+  }
+});
+
 test('rejects an unknown target platform', () => {
   assert.throws(
     () => renderPlatformBlocks('shared\n', { platform: 'cursor', file: 'example.md' }),

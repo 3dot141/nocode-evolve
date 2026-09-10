@@ -164,6 +164,20 @@ test('Codex syntax checker rejects unresolved Claude tool vocabulary', () => {
   assert.deepEqual(checkPlatformSyntax('Use `skill` with name "dev-build"', 'skills/foo/SKILL.md', 'deepseek'), []);
 });
 
+test('CodeBuddy syntax checker rejects residual Claude variables', () => {
+  const errors = checkPlatformSyntax(
+    'node "${CLAUDE_PLUGIN_ROOT}/scripts/x.mjs" --root "$CLAUDE_PROJECT_DIR" {CLAUDE_PLUGIN_ROOT}',
+    'skills/foo/SKILL.md',
+    'codebuddy',
+  );
+  assert.equal(errors.length, 3);
+  assert.deepEqual(
+    checkPlatformSyntax('node "${CODEBUDDY_PLUGIN_ROOT}/scripts/x.mjs" --root "$CODEBUDDY_PROJECT_DIR"', 'skills/foo/SKILL.md', 'codebuddy'),
+    [],
+  );
+  assert.deepEqual(checkPlatformSyntax('Skill(nocode:dev-build) AskUserQuestion TaskCreate', 'skills/foo/SKILL.md', 'codebuddy'), []);
+});
+
 test('metadataBudget counts generated skill names and descriptions', () => {
   const codexRoot = path.join(ROOT, 'plugins', 'codex', 'nocode');
   const budget = metadataBudget(codexRoot);
@@ -178,10 +192,11 @@ test('checkAll enforces generated Codex syntax by default', () => {
   assert.deepEqual(errors, [], errors.join('\n'));
 });
 
-test('checkAll enforces generated DeepSeek syntax', () => {
-  const deepseekRoot = path.join(ROOT, 'plugins', 'deepseek', 'nocode');
-  const { errors } = checkAll({ root: deepseekRoot, platform: 'deepseek' });
-  assert.deepEqual(errors, [], errors.join('\n'));
+test('checkAll reports no CodeBuddy variable residue in the generated artifact', () => {
+  const codebuddyRoot = path.join(ROOT, 'plugins', 'codebuddy', 'nocode');
+  const { errors } = checkAll({ root: codebuddyRoot, platform: 'codebuddy' });
+  const residue = errors.filter((error) => /CodeBuddy 生成物残留 Claude 语法/.test(error));
+  assert.deepEqual(residue, [], residue.join('\n'));
 });
 
 test('check-skills CLI parser accepts explicit root/platform', () => {

@@ -11,8 +11,8 @@ const LEGACY_ALLOWLIST = new Set();
 const FORBIDDEN_NATIVE = {
   claude: /\b(?:spawn_agent|wait_agent|followup_task|interrupt_agent|request_user_input|update_plan)\b/,
   codex: /\b(?:AskUserQuestion|TaskCreate|TaskUpdate|EnterWorktree)\b/,
-  pi: /\b(?:AskUserQuestion|TaskCreate|TaskUpdate|EnterWorktree|update_plan|request_user_input|spawn_agent)\b|Skill\(nocode:/,
-  deepseek: /\b(?:AskUserQuestion|TaskCreate|TaskUpdate|EnterWorktree|update_plan|request_user_input|spawn_agent)\b|Skill\(nocode:|\/skill:/,
+  // CodeBuddy 与 Claude 工具命名一致，但发布物不能残留 Claude 变量前缀。
+  codebuddy: /\b(?:spawn_agent|wait_agent|followup_task|interrupt_agent|request_user_input|update_plan)\b|\$\{CLAUDE_PLUGIN_ROOT\}|\bCLAUDE_PROJECT_DIR\b/,
 };
 const OBSOLETE = /\bCapability\(|"profile"\s*:|fallbackPolicy/;
 const PLATFORM_MARKER = /<!-- \/?nocode:platform\b/;
@@ -32,7 +32,7 @@ function markdownFiles(root) {
 }
 
 test('generated Markdown contains no platform block markers or opposite-platform tools', () => {
-  for (const platform of ['claude', 'codex', 'pi', 'deepseek']) {
+  for (const platform of ['claude', 'codex', 'codebuddy']) {
     const pluginRoot = path.join(ROOT, 'plugins', platform, 'nocode');
     for (const relative of markdownFiles(pluginRoot)) {
       const source = readFileSync(path.join(pluginRoot, relative), 'utf8');
@@ -43,7 +43,7 @@ test('generated Markdown contains no platform block markers or opposite-platform
 });
 
 test('legacy runtime syntax exists only in the shrinking migration allowlist', () => {
-  for (const platform of ['claude', 'codex', 'pi', 'deepseek']) {
+  for (const platform of ['claude', 'codex', 'codebuddy']) {
     const pluginRoot = path.join(ROOT, 'plugins', platform, 'nocode');
     const actual = new Set();
     for (const relative of markdownFiles(pluginRoot)) {

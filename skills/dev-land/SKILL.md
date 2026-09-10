@@ -248,7 +248,7 @@ remote_url=$(git -C "$MAIN_ROOT" remote get-url origin)
 
 ### PR 路径定时监控
 
-统一运行 `node <REF>/pr-check.mjs --watch --interval-seconds 120 ...`，不依赖平台专属 cron。`<REF>` 是本 skill 的 `references/` 目录；`pr-check` 引用 `periodic-runner.mjs` 的定时能力，查到 READY / MERGED / CLOSED 后退出；agent 根据最终状态执行合并、清理和任务流转。详见 `references/prflow.md` Step 6。
+统一运行 `node <REF>/pr-check.mjs --watch --interval-seconds 120 ...`，不依赖平台专属 cron。`<REF>` 是本 skill 的 `references/` 目录；`pr-check` 引用 `periodic-runner.mjs` 的定时能力，查到 READY / MERGED / CLOSED / NEW_COMMENTS 后退出；agent 根据最终状态执行合并、清理和任务流转。`NEW_COMMENTS`（watch 期间出现新评审评论）走 prflow.md Step 6「PR 监控期的评论处置」：读评论 → 核实并探查处置方案 → 结构化决策等用户确认 → 执行后重启监控；评论事件不得触发自动修改或自动合并。详见 `references/prflow.md` Step 6。
 
 生命周期边界如实告知：定时进程只在当前执行宿主和长进程句柄存活期间有效；句柄丢失或宿主退出后，由 Step 2b 补清检测兜底。禁止用 `nohup` / 系统 cron 把无人监管的合并动作留在后台。
 
