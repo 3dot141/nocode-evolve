@@ -131,6 +131,17 @@ node "<REF>/pr-check.mjs" --toolchain bkt --pr <pr-id> \
 
 持续监控时在同一命令增加 `--watch --interval-seconds 120`。输出 `PR_CHECK state=<S> mergeable=<M> approved=<A>`；命中可处置状态时再输出 `PR_WATCH reason=<READY|MERGED|CLOSED> runs=<N>`（归一化见 `pr-check.mjs` `normalizeBkt`：DECLINED→CLOSED；mergeable=`/merge` 的 `.canMerge`；approved=`.reviewers[].approved` 任一 true）。
 
+## pr-nudge 催办（prflow Step 6 可选——本机存在才提示）
+
+用户本机 `~/Run/Scripts/pr-nudge` 存在时，PR 创建成功后向用户提示启动后台催办——间隔 30m→1h→2h→4h→8h→16h→24h 封顶，企微群 @all；approve / 非 OPEN / 查询连败 3 次自动退出。用户点头才启动；脚本不存在或用户拒绝则跳过，不阻塞 land 流程：
+
+```bash
+nohup zsh -c 'source ~/.zshenv && pr-nudge <PROJECT_KEY> <repo_slug> <pr-id>' >/tmp/pr-nudge.log 2>&1 &
+```
+
+- key 与 bkt 的 PATH 都来自 `~/.zshenv`（`PR_NUDGE_KEY`），必须 source 后再调
+- 该脚本是用户本机个人工具（不在本插件仓），其他机器没有属正常，缺了不报错不追问
+
 ## 合并 PR（prflow Step 6 自动合并分支）
 
 ```bash
