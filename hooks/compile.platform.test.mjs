@@ -332,7 +332,6 @@ test('Claude adapter builds native skills and direct runtime overlays', () => {
     'rules/rule-codex-review.md',
     'scripts/compile.rule.js',
     'skills/devflow/SKILL.md',
-    'skills/task/SKILL.md',
     'runtime/context-budget.json',
     'runtime/plugin-data-entry.mjs',
   ];
@@ -373,10 +372,15 @@ test('Claude adapter builds native skills and direct runtime overlays', () => {
   const claudeDevflow = tree.get('skills/devflow/SKILL.md').toString();
   assert.match(claudeDevflow, /Skill\(nocode:dev-design\)/);
   assert.doesNotMatch(claudeDevflow, /TaskCreate|TaskUpdate|update_plan|request_user_input/);
-  const claudeTask = tree.get('skills/task/SKILL.md').toString();
-  assert.match(claudeTask, /^---\nname: task\ndescription:/);
-  assert.doesNotMatch(claudeTask, /x-nocode:/);
-  assert.match(claudeTask, /\$ARGUMENTS/);
+  assert.equal(
+    tree.has('skills/task/SKILL.md'),
+    false,
+    'task entry is temporarily suspended via plugin/exclusions.json',
+  );
+  const claudeDistill = tree.get('skills/distill/SKILL.md').toString();
+  assert.match(claudeDistill, /^---\nname: distill\ndescription:/);
+  assert.doesNotMatch(claudeDistill, /x-nocode:/);
+  assert.match(claudeDistill, /\$ARGUMENTS/);
   assert.equal([...tree.keys()].some((relative) => relative.includes('using-nocode')), false);
   const claudeHooks = JSON.parse(tree.get('hooks/hooks.json').toString());
   assert.deepEqual(Object.keys(claudeHooks.hooks), ['SessionStart', 'PreToolUse', 'PostToolUse']);
@@ -405,7 +409,6 @@ test('Codex adapter builds native skills and direct runtime overlays', () => {
     'skills/codex-nocode-reload/SKILL.md',
     'skills/codex-nocode-reload/scripts/codex-nocode-reload.mjs',
     'skills/devflow/SKILL.md',
-    'skills/task/SKILL.md',
     'runtime/context-budget.json',
     'runtime/plugin-data-entry.mjs',
   ];
@@ -467,11 +470,16 @@ test('Codex adapter builds native skills and direct runtime overlays', () => {
     'skills/dev-design/references/feat/document.md',
     'skills/dev-design/references/refactor/closure.md',
   ]) assert.equal(tree.has(relative), true, relative);
-  const commandTask = tree.get('skills/task/SKILL.md').toString();
-  assert.match(commandTask, /^---\nname: task\ndescription:/);
-  assert.doesNotMatch(commandTask, /x-nocode:/);
-  assert.doesNotMatch(commandTask, /\$ARGUMENTS/);
-  assert.match(commandTask, /用户本次调用参数/);
+  assert.equal(
+    tree.has('skills/task/SKILL.md'),
+    false,
+    'task entry is temporarily suspended via plugin/exclusions.json',
+  );
+  const commandDistill = tree.get('skills/distill/SKILL.md').toString();
+  assert.match(commandDistill, /^---\nname: distill\ndescription:/);
+  assert.doesNotMatch(commandDistill, /x-nocode:/);
+  assert.doesNotMatch(commandDistill, /\$ARGUMENTS/);
+  assert.match(commandDistill, /用户本次调用参数/);
   assert.equal([...tree.keys()].some((relative) => relative.includes('using-nocode')), false);
   assert.equal(tree.has('skills/agent-profiles/SKILL.md'), false);
   const codexHooks = JSON.parse(tree.get('hooks/hooks.json').toString());
@@ -539,7 +547,6 @@ test('CodeBuddy adapter builds a native manifest, skills, and CODEBUDDY_* variab
 
   // CodeBuddy 发布物统一使用 CODEBUDDY_* 前缀，不能残留 Claude 前缀。
   for (const relative of [
-    'skills/task/SKILL.md',
     'skills/dev-build/SKILL.md',
     'skills/nocodehub/SKILL.md',
   ]) {
@@ -574,7 +581,6 @@ test('Pi adapter builds a package with prompts, skills, and an extension', () =>
   for (const relative of [
     'package.json',
     'extensions/index.ts',
-    'prompts/task.md',
     'prompts/sow.md',
     'skills/devflow/SKILL.md',
     'model/agent-about.md',
@@ -602,7 +608,7 @@ test('Pi adapter builds a package with prompts, skills, and an extension', () =>
   const devflow = tree.get('skills/devflow/SKILL.md').toString();
   assert.match(devflow, /\/skill:dev-design/);
   assert.doesNotMatch(devflow, /Skill\(nocode:|AskUserQuestion|update_plan/);
-  const prompt = tree.get('prompts/task.md').toString();
+  const prompt = tree.get('prompts/sow.md').toString();
   assert.match(prompt, /\$ARGUMENTS/);
   assert.doesNotMatch(prompt, /<!-- nocode:platform/);
 });
@@ -615,7 +621,6 @@ test('DeepSeek adapter builds a dsh bundle with skills, context, and bash rules'
     'cordis.patch.yml',
     'lib/index.js',
     'lib/index.d.ts',
-    'skills/task/SKILL.md',
     'skills/devflow/SKILL.md',
     'model/agent-about.md',
     'hooks/pretooluse-rules.json',

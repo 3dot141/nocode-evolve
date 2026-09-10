@@ -17,7 +17,7 @@
 |---|---|
 | `/distill` | 把当前会话沉淀分流到 wiki / rules / agents / docs 七个出口（项目 wiki、跨项目 advisor、项目 rules、项目配置、子目录文档、插件 rules、skip） |
 | `/sow` | 把当前会话围绕给定意图浓缩并归档到用户 vault，AI 判层（Inbox / Inputs / Outputs）+ 用户自然语言确认 |
-| `/task` | MyJarvis 任务管理子系统单一入口，AI 解析自然语言意图分发到 8 个 sub-action（add / update / done / cancel / wrap-day / carry-over / breakdown / start-week） |
+| `/task` | 已停用：源码保留，暂不发布到 Claude/Codex/CodeBuddy 生成产物 |
 | `/recall` | 从 `.agents-personal/wiki/` 和用户 vault 中检索已沉淀内容，按置信度排序返回精简清单 |
 | `/evolve` | 已停用：源码保留，但不发布到 Claude/Codex 生成产物 |
 | `/instinct-export` | 已停用：源码保留，但不发布到 Claude/Codex 生成产物 |
