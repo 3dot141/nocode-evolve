@@ -20,22 +20,21 @@ test('SessionStart opens session-scoped state before other lifecycle hooks', () 
   }
 });
 
-test('SessionStart accepts Codex-style aliases and rejects incomplete identity', () => {
+test('SessionStart accepts Codex-style aliases and falls back to the process cwd', () => {
   let alias;
   openFromHook({ sessionId: 'session-b', workspace: '/tmp/workspace-b' }, { open: (input) => { alias = input; return input; } });
   assert.deepEqual(alias, { sessionId: 'session-b', workspace: '/tmp/workspace-b' });
+  let fallback;
+  openFromHook({ session_id: 'session-c' }, { open: (input) => { fallback = input; return input; } });
+  assert.deepEqual(fallback, { sessionId: 'session-c', workspace: process.cwd() });
   assert.throws(
     () => openFromHook({ cwd: '/tmp/workspace' }),
     /STATE_SESSION_REQUIRED/,
   );
-  assert.throws(
-    () => openFromHook({ session_id: 'session' }),
-    /STATE_WORKSPACE_REQUIRED/,
-  );
 });
 
-test('generated Claude and Codex hook chains open fresh state without a Stop guard', (t) => {
-  for (const platform of ['claude', 'codex']) {
+test('generated Claude, Codex and CodeBuddy hook chains open fresh state without a Stop guard', (t) => {
+  for (const platform of ['claude', 'codex', 'codebuddy']) {
     const pluginRoot = join(REPO_ROOT, 'plugins', platform, 'nocode');
     const dataParent = mkdtempSync(join(tmpdir(), `nocode-${platform}-lifecycle-`));
     const dataRoot = join(dataParent, '.nocode', platform, 'data');
@@ -46,14 +45,20 @@ test('generated Claude and Codex hook chains open fresh state without a Stop gua
       NOCODE_PLATFORM: platform,
       ...(platform === 'claude'
         ? { CLAUDE_PLUGIN_ROOT: pluginRoot, CLAUDE_PLUGIN_DATA: dataRoot }
-        : { PLUGIN_ROOT: pluginRoot, PLUGIN_DATA: dataRoot }),
+        : platform === 'codebuddy'
+          ? { CODEBUDDY_PLUGIN_ROOT: pluginRoot, CODEBUDDY_PLUGIN_DATA: dataRoot }
+          : { PLUGIN_ROOT: pluginRoot, PLUGIN_DATA: dataRoot }),
     };
     const prefix = [process.execPath, join(pluginRoot, 'runtime/plugin-data-entry.mjs'), '--'];
     const sessionId = `${platform}-fresh-session`;
+    // CodeBuddy 的 SessionStart payload 不含 cwd，靠 hook 进程 cwd 兜底。
+    const input = JSON.stringify(platform === 'codebuddy'
+      ? { session_id: sessionId, hook_event_name: 'SessionStart', source: 'startup' }
+      : { session_id: sessionId, cwd: REPO_ROOT });
     const start = spawnSync(prefix[0], [
       ...prefix.slice(1), process.execPath, join(pluginRoot, 'hooks/session-open.mjs'),
     ], {
-      env, input: JSON.stringify({ session_id: sessionId, cwd: REPO_ROOT }), encoding: 'utf8',
+      env, input, encoding: 'utf8',
     });
     assert.equal(start.status, 0, start.stderr);
     assert.equal(JSON.parse(start.stdout).hookSpecificOutput?.hookEventName
@@ -63,7 +68,7 @@ test('generated Claude and Codex hook chains open fresh state without a Stop gua
     assert.equal(JSON.parse(readFileSync(sessionFile, 'utf8')).status, 'open');
 
     const bootstrap = spawnSync('bash', [join(pluginRoot, 'hooks/inject-nocode.sh'), 'model-about'], {
-      env, input: JSON.stringify({ session_id: sessionId, cwd: REPO_ROOT }), encoding: 'utf8',
+      env, input, encoding: 'utf8',
     });
     assert.equal(bootstrap.status, 0, bootstrap.stderr);
     assert.ok(JSON.parse(bootstrap.stdout).hookSpecificOutput?.additionalContext

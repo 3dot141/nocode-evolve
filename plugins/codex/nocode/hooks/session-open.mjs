@@ -5,15 +5,13 @@ import { detectPlatform, encodeSessionContext } from './lib/hook-codecs.mjs';
 
 export function openFromHook(payload, { open = openSession } = {}) {
   const sessionId = payload?.session_id || payload?.sessionId;
-  const workspace = payload?.cwd || payload?.workspace;
+  // CodeBuddy 的 SessionStart payload 不带 cwd/workspace (只有 session_id / session /
+  // transcript_path / source)，缺字段时退回进程 cwd —— 与 inject-nocode.sh、
+  // pretooluse-guard.mjs 的兜底顺序一致，避免 platform 少给一个字段就整体阻塞。
+  const workspace = payload?.cwd || payload?.workspace || process.cwd();
   if (typeof sessionId !== 'string' || !sessionId) {
     throw Object.assign(new Error('STATE_SESSION_REQUIRED: SessionStart requires a session id'), {
       code: 'STATE_SESSION_REQUIRED',
-    });
-  }
-  if (typeof workspace !== 'string' || !workspace) {
-    throw Object.assign(new Error('STATE_WORKSPACE_REQUIRED: SessionStart requires a workspace'), {
-      code: 'STATE_WORKSPACE_REQUIRED',
     });
   }
   return open({ sessionId, workspace });
