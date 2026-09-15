@@ -1,7 +1,3 @@
-import fs from 'node:fs';
-import os from 'node:os';
-import path from 'node:path';
-
 const SHANGHAI_OFFSET_HOURS = 8;
 const SLOT_MINUTES = 15;
 const WORK_SEGMENTS = [
@@ -208,22 +204,6 @@ export const buildWorklogPayload = (entry, config, now = new Date()) => {
     };
 };
 
-export const parseEnv = (text) => {
-    const values = {};
-    for (const rawLine of text.split(/\r?\n/u)) {
-        const line = rawLine.trim();
-        if (line === '' || line.startsWith('#')) continue;
-        const match = /^([A-Za-z_][A-Za-z0-9_]*)=(.*)$/u.exec(line);
-        if (!match) throw new Error(`无法解析配置行：${rawLine}`);
-        let value = match[2].trim();
-        if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
-            value = value.slice(1, -1);
-        }
-        values[match[1]] = value;
-    }
-    return values;
-};
-
 export const getShanghaiDateRange = (filter, now = new Date()) => {
     const today = formatDate(getShanghaiParts(now));
     const startDate = filter === 'today' ? today : filter === 'yesterday' ? addCalendarDays(today, -1) : filter === 'week' ? addCalendarDays(today, -6) : null;
@@ -347,11 +327,8 @@ export const submitWorklog = async (entry, config, options = {}) => {
     return { executed: true, status: response.status, body };
 };
 
-export const getDefaultConfigPath = () => path.join(os.homedir(), '.config', 'nocode', 'work-log.env');
-
-export const readEnvFile = (filePath = getDefaultConfigPath()) => parseEnv(fs.readFileSync(filePath, 'utf8'));
-
-/** 已知配置键全集：环境变量合并按此清单进行——文件没有的键（如动态注入的身份）也能从环境变量生效。 */
+/** 已知配置键全集：配置只读 shell 环境变量——凭据在 `~/.zshenv` 等处 export，
+ *  身份等动态注入项由调用方现查后注入进程环境变量。 */
 const CONFIG_KEYS = [
     'BITBUCKET_BASE_URL',
     'BITBUCKET_TOKEN',
@@ -362,24 +339,11 @@ const CONFIG_KEYS = [
     'FEISHU_G_WORK_OBJECT_ID',
 ];
 
-/** 配置解析：shell 环境变量优先于 env 文件——凭据可直接 export 在 ~/.zshenv 等处，
- *  动态注入项（身份等）文件里不存在也生效；文件不存在时按空对象处理。 */
-export const readConfigValues = (filePath = getDefaultConfigPath()) => {
-    const fileValues = fs.existsSync(filePath) ? readEnvFile(filePath) : {};
-    const merged = { ...fileValues };
+export const readConfigValues = () => {
+    const values = {};
     for (const key of CONFIG_KEYS) {
         const fromEnv = process.env[key];
-        if (typeof fromEnv === 'string' && fromEnv !== '') merged[key] = fromEnv;
+        if (typeof fromEnv === 'string' && fromEnv !== '') values[key] = fromEnv;
     }
-    return merged;
-};
-
-export const updateEnvValue = (filePath, key, value) => {
-    const source = fs.readFileSync(filePath, 'utf8');
-    const lines = source.split(/\r?\n/u);
-    const nextLine = `${key}=${value}`;
-    const index = lines.findIndex((line) => line.startsWith(`${key}=`));
-    if (index >= 0) lines[index] = nextLine;
-    else lines.push(nextLine);
-    fs.writeFileSync(filePath, lines.join('\n'), 'utf8');
+    return values;
 };

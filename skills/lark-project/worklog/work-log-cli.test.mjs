@@ -86,22 +86,6 @@ test('allocate command requires an explicit total duration', () => {
 });
 
 test('submit command defaults to a secret-free dry run', () => {
-    const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'feishu-work-log-'));
-    const configDirectory = path.join(directory, '.config', 'nocode');
-    const configPath = path.join(configDirectory, 'work-log.env');
-    fs.mkdirSync(configDirectory, { recursive: true });
-    fs.writeFileSync(
-        configPath,
-        [
-            'FEISHU_WORKLOG_API=https://worklog.example.com/api/worklogs',
-            'FEISHU_WORKLOG_KEY=daily-secret',
-            'FEISHU_SPACE_ID=space-id',
-            'FEISHU_USER_ID=user-id',
-            'FEISHU_G_WORK_OBJECT_ID=custom-object',
-        ].join('\n'),
-        'utf8',
-    );
-
     const result = runCli(
         [
             'submit',
@@ -116,7 +100,14 @@ test('submit command defaults to a secret-free dry run', () => {
             '--now',
             '2026-08-28T12:15:00.000Z',
         ],
-        { ...process.env, HOME: directory, USERPROFILE: directory },
+        {
+            ...process.env,
+            FEISHU_WORKLOG_API: 'https://worklog.example.com/api/worklogs',
+            FEISHU_WORKLOG_KEY: 'daily-secret',
+            FEISHU_SPACE_ID: 'space-id',
+            FEISHU_USER_ID: 'user-id',
+            FEISHU_G_WORK_OBJECT_ID: 'custom-object',
+        },
     );
 
     assert.equal(result.status, 0, result.stderr);
@@ -124,9 +115,9 @@ test('submit command defaults to a secret-free dry run', () => {
     assert.doesNotMatch(result.stdout, /daily-secret/);
 });
 
-test('rejects overriding the canonical credential path', () => {
+test('rejects overriding credentials via --config', () => {
     const result = runCli(['fetch', '--config', 'repo-local.env']);
 
     assert.equal(result.status, 1);
-    assert.match(result.stderr, /配置文件固定为 ~\/\.config\/nocode\/work-log\.env/);
+    assert.match(result.stderr, /不支持 --config/);
 });

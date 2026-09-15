@@ -18,7 +18,7 @@
 
 ### 1. 配置
 
-配置 shell 环境变量优先（`~/.zshenv` 直接 export 即可），env 文件兜底。缺项时读 [config.md](./config.md)，只帮助创建本地配置，不把凭据写入仓库。
+配置只读 shell 环境变量（`~/.zshenv` 直接 export 即可），没有配置文件。缺项时读 [config.md](./config.md)，只帮助创建本地配置，不把凭据写入仓库。
 
 ### 2. 获取 PR 与详情
 
@@ -118,5 +118,5 @@ key（36 位，长期有效，同网关 `/api/worklogs` 与 `/open_api/**` 通�
 2. **工时插件是跨域 iframe（OOPIF）**：宿主 `projectplg.feishupkg.com`，主 frame 的 `Network.enable` **抓不到**它的请求——必须 `Target.getTargets` 找 `feishupkg` 的 iframe → `Target.attachToTarget`（flatten:true）→ 对该 session `Network.enable`。按 session 的命令要走 legacy 全局 `cdp(method, params, sessionId)`（v2 的 `page.cdp()` / `task.cdp()` 没有 session 参数），事件用 `await drainEvents()` 读回。
 3. **触发请求**：比点 UI 可靠的方法是在主文档改 `iframe.src` 追加无意义 query（如 `&regrab=1`）触发插件重载，初始请求（`/open_api/{spaceId}/teams/all`）会带 key 重发。
 4. **认证头是 `X-WORKLOG-KEY` 全大写**——按小写/混合大小写匹配会「看着抓到了其实没认出」（本次最大踩坑）。
-5. **写入不回显**：key 值直接写入 `~/.zshenv`（`export FEISHU_WORKLOG_KEY=...`）与 `~/.config/nocode/work-log.env` 双处（shell 优先、文件兜底），终端只报长度与前 4 位。
+5. **写入不回显**：key 值直接写入 `~/.zshenv`（`export FEISHU_WORKLOG_KEY=...`），终端只报长度与前 4 位。
 6. 重跑 `submit --execute` 验证 200；完成后 `completeTaskSpace(keep:false)` 收尾。

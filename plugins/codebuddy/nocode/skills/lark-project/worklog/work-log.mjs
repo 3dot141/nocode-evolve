@@ -5,7 +5,6 @@ import fs from 'node:fs';
 import {
     allocateWorklog,
     fetchMergedPullRequests,
-    getDefaultConfigPath,
     getPullRequestDetails,
     readConfigValues,
     submitWorklog,
@@ -36,7 +35,7 @@ const requireFlag = (flags, name) => {
 };
 
 const readConfig = () => {
-    const values = readConfigValues(getDefaultConfigPath());
+    const values = readConfigValues();
     return {
         bitbucketBaseUrl: values.BITBUCKET_BASE_URL,
         bitbucketToken: values.BITBUCKET_TOKEN,
@@ -59,7 +58,7 @@ const printJson = (value) => process.stdout.write(`${JSON.stringify(value, null,
 
 const run = async () => {
     const { command, flags } = parseArgs(process.argv.slice(2));
-    if (Object.hasOwn(flags, 'config')) throw new Error('配置文件固定为 ~/.config/nocode/work-log.env，不支持 --config');
+    if (Object.hasOwn(flags, 'config')) throw new Error('配置只读环境变量（~/.zshenv 等处 export），不支持 --config');
     if (command === 'fetch') {
         const result = await fetchMergedPullRequests(flags.range ?? 'today', readConfig(), { now: parseNow(flags) });
         printJson(result);

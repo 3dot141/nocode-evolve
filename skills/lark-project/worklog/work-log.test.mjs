@@ -5,7 +5,6 @@ import {
     allocateWorklog,
     buildWorklogPayload,
     getShanghaiDateRange,
-    parseEnv,
 } from './work-log-lib.mjs';
 
 test('allocates a full Shanghai workday in 15-minute units and excludes lunch', () => {
@@ -240,23 +239,6 @@ test('rejects unsupported task prefixes and future start times', () => {
             ),
         /未来时间/,
     );
-});
-
-test('parses quoted dotenv values without evaluating shell syntax', () => {
-    const values = parseEnv(`
-# comment
-BITBUCKET_BASE_URL=https://code.example.com
-BITBUCKET_TOKEN="token=a b"
-FEISHU_SPACE_ID='space-1'
-EMPTY=
-`);
-
-    assert.deepEqual(values, {
-        BITBUCKET_BASE_URL: 'https://code.example.com',
-        BITBUCKET_TOKEN: 'token=a b',
-        FEISHU_SPACE_ID: 'space-1',
-        EMPTY: '',
-    });
 });
 
 test('uses Asia/Shanghai calendar boundaries for Bitbucket filters', () => {
