@@ -9,7 +9,7 @@ nocode 依赖的上游开源项目原版源码快照，用于版本追踪、diff
 | `superpowers/` | [github.com/obra/superpowers](https://github.com/obra/superpowers)（MIT） | Claude Code 技能生态的另一套体系，部分 skill 直接打包使用，部分抽取内容或吸收进插件自有文件 |
 | `everything-claude-code/` | [github.com/arabicapp/everything-claude-code](https://github.com/arabicapp/everything-claude-code)（MIT） | 侧重 subagent + eval 体系，部分内容吸收进插件的 skills / agents |
 | `codex/` | [github.com/openai/codex-plugin-cc](https://github.com/openai/codex-plugin-cc)（Apache-2.0），pin commit `807e03a` | 本机 Codex 调用引擎（纯 Node ESM，零运行时依赖），供 `rules/rule-codex-review.md` 直接 Bash 调用做 review / 红军 / 委派，不依赖外部插件安装 |
-| `ego-lite/` | [github.com/citrolabs/ego-lite](https://github.com/citrolabs/ego-lite)（MIT），快照 commit `5ca3c36c` | ego lite 浏览器的 `ego-browser` skill（fork：SKILL.md 含本仓增强的 cdp sessionId / OOPIF 文档）；浏览器本体独立安装，仓库仅 vendor skill 子树 |
+| `ego-lite/` | [github.com/citrolabs/ego-lite](https://github.com/citrolabs/ego-lite)（MIT），快照 commit `d01be93` | ego lite 浏览器的 `ego-browser` skill（fork：SKILL.md 记录 OOPIF session 路径走 legacy 全局 `cdp`/`js`，v2 的 `page.cdp`/`task.cdp` 无此参数）；浏览器本体独立安装，仓库仅 vendor skill 子树 |
 | `lark-cli/` | [github.com/larksuite/cli](https://github.com/larksuite/cli)，快照 commit `59dcdf5` | 飞书官方 Lark CLI 的 agent skills；本仓在用 5 个（lark-doc/markdown/shared/whiteboard/wiki，全部 fork 已分叉）；官方共 26 个，其余未引入 |
 | `meegle-cli/` | [github.com/larksuite/meegle-cli](https://github.com/larksuite/meegle-cli)（MIT），快照 commit `6d298ab` | 飞书项目官方 meegle CLI 的 `meegle` skill（fork：本地含流转实测增强）；CLI 本体走 npm 安装 |
 

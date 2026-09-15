@@ -15,32 +15,31 @@
 
 ```bash
 ego-browser nodejs <<'EOF'
-const task = await useOrCreateTaskSpace('figma design read')
+const task = await taskSpace('figma design read')
+const page = task.page('p1')
 
 // 1. 打开链接——URL 带 node-id 时 Figma 自动选中该节点，右栏直接显示其属性
-await openOrReuseTab(
+await page.goto(
   'https://www.figma.com/design/{file_key}?node-id={node_id}',
-  { wait: true, timeout: 30 }
+  { waitUntil: 'networkidle', timeout: 30_000 }
 )
-await waitForNetworkIdle()
 
 // 2. 截图：视觉参考（画布是 canvas，这是唯一可靠的画布观察方式）
-await captureScreenshot()
+console.log(await page.screenshot({ path: '/tmp/figma-panel.png' }))
 
 // 3. 右栏属性面板是 DOM——提取文本里的设计值
 //    保守策略：不绑深层选择器，取全文后按面板文案模式匹配
-const text = await js(String.raw`(() => document.body.innerText)()`)
-cliLog(text)
+console.log(await page.evaluate(() => document.body.innerText))
 
 // 4. 长属性列表可能虚拟化：滚动面板区逐段收集，滚过即回收
 // 5. 收尾：任务完成关闭空间
-await completeTaskSpace(task.id, { keep: false })
+await task.finish({ keep: [] })
 EOF
 ```
 
 关键机制：
 
-- **登录态**：task space 继承用户登录态。未登录时 `handOffTaskSpace(task.id)` 引导用户在空间内登录，用户确认后 `takeOverTaskSpace(task.id)` 继续
+- **登录态**：task space 继承用户登录态。未登录时 `task.handOff()` 把空间交还用户并结束本轮；用户确认后 `takeOverTaskSpace(<spaceId>)` 接管继续
 - **节点定位**：靠 URL `node-id` 参数自动选中，**不做 canvas 内坐标点击**（画布无 DOM 可命中）
 - **取值范围**：只有右栏属性面板的 DOM 文本（X/Y/W/H、fill 色值、字号、圆角等）；Dev Mode/Code 面板付费才可见，本通道不依赖
 
@@ -57,7 +56,7 @@ EOF
 
 另有两个**可缓解**的工程问题：
 
-- **交互前置**（属性行 hover/click 才展开进 DOM）：视觉工作流循环「截图定位折叠行（如 `Linear gradient +2`）→ `click([x,y])` 展开 → 再提取」；能解但轮次多，快查场景不划算，要全量走 REST
+- **交互前置**（属性行 hover/click 才展开进 DOM）：视觉工作流循环「截图定位折叠行（如 `Linear gradient +2`）→ `page.mouse.click(x, y, { label })` 展开 → 再提取」；能解但轮次多，快查场景不划算，要全量走 REST
 - **异步加载**（页面 idle ≠ 面板渲染完）：轮询「内容稳定」判定——面板特征文本出现且**连续两次采样 `innerText` 不变**再提取；失败模式是多等一轮而非拿错值
 
 真正结构性不可解的是**格式化**与**版本漂移**——这是本通道不作对齐基准的根因。
@@ -68,5 +67,5 @@ EOF
 
 - 截图只做视觉参考，不推精确数值
 - 文本提取用面板文案模式匹配，不绑深层 DOM 选择器（改版即断）
-- 结束必收尾 `completeTaskSpace(..., { keep: false })`，不留悬挂空间
+- 结束必收尾 `task.finish({ keep: [] })`，不留悬挂空间
 - 用户接管（"user is controlling"）是硬停：不要重试，问用户

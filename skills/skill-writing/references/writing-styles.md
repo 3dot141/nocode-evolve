@@ -48,7 +48,7 @@ Workflow skill 的 SKILL.md 必须包含：**Step 0 workflow.plan.create**（所
 
 - SKILL.md ≤500 行；溢出下沉 references/
 - 只治 baseline 观察到的失败——不做推测性添加
-- **SKILL.md 给 agent，README.md 给人**——署名、changelog、设计缘由、方法论背景进 README.md
+- **SKILL.md 给 agent，README.md 给人**——署名、changelog、设计缘由、架构与模块关系、迭代与纠错来源一律进 README.md；完整判据见 SKILL.md 的「写作硬约束」
 - **兜底路径用 ASCII 决策树**，不用并列 bullet。并列 bullet 让 agent 挑轻松的路走；决策树逼它先走首选路径、拿到具体失败才降级：
 
 ```
@@ -87,5 +87,6 @@ Workflow skill 的 SKILL.md 必须包含：**Step 0 workflow.plan.create**（所
 - 有没有漏洞、缺失边界、可被曲解的指令？
 - 残留占位符/TODO、内部矛盾、语义含糊、范围漂移、许诺没兑现、完整性
 - 自闭环边界：有没有直指 `rules/*.md`、`model/agent-*.md`、`hooks/`、他 skill 非 reference 文件？自己的 references/ 是不是相对路径？
+- **SKILL.md / references 里有没有混进给人看的内容？**逐条过那把尺：删了它，agent 执行会走偏吗？答不出 → 挪 README.md。常见漏网：纠错历史、方案选型理由、模块解耦说明、可单独调用的说明、架构关系表
 
 问题当场修；修不了的显式记录。自审是底线不是天花板——发现真正的关键缺陷、或对象明显高风险时，升级 `平台原生 Skill 调用` 独立评审。

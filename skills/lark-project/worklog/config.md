@@ -16,6 +16,7 @@ key 过期后用 ego-browser 自动抓取，无需用户抄取。**方案 A（�
 
 1. **打开工时看板**：`useOrCreateTaskSpace` → `openOrReuseTab('https://project.feishu.cn/')`（登录态继承）→ 左栏「功能」→「工时管理」。页面 URL 形如 `project.feishu.cn/{space}/meegoPlg/MII_..._board_...`。
 2. **工时插件是跨域 iframe（OOPIF）**：宿主 `projectplg.feishupkg.com`，主 frame 的 `Network.enable` **抓不到**其请求——必须 `Target.getTargets` 找 `feishupkg` iframe → `Target.attachToTarget`（flatten:true）→ 对该 session `Network.enable`。
+   ⚠ 这些按 session 的命令要走 **legacy 全局** `cdp(method, params, sessionId)`（方案 B 注入 patch 同理，用 `js(expr, targetId)`），事件用 `await drainEvents()` 读回（带 sessionId 标记）：v2 的 `page.cdp()` / `task.cdp()` 只接受 `{ timeout }`、没有 session 参数，照 v2 文档写会直接报 unknown option。完整写法见 ego-browser skill 的 OOPIF 段。
 
 **方案 A · 网络层抓重载请求（主路径）**：
 

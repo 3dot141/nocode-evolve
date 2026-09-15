@@ -73,7 +73,11 @@ description: Use when creating, restructuring, simplifying, testing, or optimizi
 写作硬约束（始终生效）：
 
 - description 只写触发条件，不概括工作流（概括会让 agent 跳过正文照 description 干活——实测教训）
-- SKILL.md 只放 agent 执行所需；给人看的（署名 / changelog / 设计缘由）进 README.md
+- **README.md 与 SKILL.md 严格分工**——判据：**读它的人是谁**。
+  - `SKILL.md` / `references/`：agent 执行要用的——步骤、输入契约、Gate、兜底路径、反合理化表，以及**动作必需的 why**（解释某个动作为什么必须这么做，如「必须整体读——局部读会漏跨板块对应」）。
+  - `README.md`：给人看的——解决什么问题、模块划分与架构关系、**设计决策的 why**（为什么这么拆）、迭代与纠错来源、changelog、署名、边界与不适用范围。
+  - 分辨两类 why：解释**动作**为什么必须这么做 → SKILL.md；解释 **skill** 为什么这么设计 → README.md。
+  - 典型误放（实测教训）：把讨论出来的纠错历史、方案选型理由、模块解耦说明、可单独调用的说明写进 SKILL.md。agent 执行时用不上，只挤占预算。
 - 自己的 references/ 用相对路径；他 skill 领域的内容用 `Skill()` handoff，不直指其内部文件
 
 收尾：description 触发优化（`references/description.md`）→ 需要分发则打包（`references/packaging.md`）。

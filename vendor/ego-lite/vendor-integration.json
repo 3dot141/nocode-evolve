@@ -2,16 +2,16 @@
   "$comment": "ego-lite vendor 分发规则。scripts/vendor-sync.mjs 读此文件同步到 skills/ references/。",
   "upstream": {
     "repo": "https://github.com/citrolabs/ego-lite",
-    "version": "skill 1.2.6",
-    "commit": "5ca3c36cba2240b8df2e22ba32127747029039d5",
-    "vendoredAt": "2026-09-02",
+    "version": "skill 2.0.0",
+    "commit": "d01be93325c7ea59d41c2ca9f4c59b58b4be4046",
+    "vendoredAt": "2026-09-15",
     "scope": "skills/ego-browser/ 子树"
   },
   "skills": {
     "ego-browser": {
       "action": "fork",
-      "reason": "SKILL.md 含本仓增强（cdp sessionId / OOPIF attach / js 按 target 执行，上游文档缺失）；sync 只校验存在、永不覆盖，上游更新人工 diff 合并",
-      "local_extras": ["learnings/github/", "references/profile-import.md"]
+      "reason": "SKILL.md 含本仓增强（OOPIF session 路径：v2 的 page.cdp/task.cdp 无 session 参数，需走 legacy 全局 cdp(method, params, sessionId) / js(expr, targetId) / drainEvents，官方 help 隐藏）；sync 只校验存在、永不覆盖，上游更新人工 diff 合并",
+      "local_extras": ["references/profile-import.md"]
     }
   }
 }
