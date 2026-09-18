@@ -171,6 +171,7 @@ launcher 等待各域健康并打印：
 5. 自动执行的准备动作。
 6. 混搭主仓产生的待还原文件。
 7. `tsx watch` 已开启，普通 TS 修改无需重启。
+8. 服务子进程日志位置：`/tmp/fx-launcher/<label>.log`（label = agents / web / css），launcher stdout 同步回显。查服务日志既可直接读该文件，也可在 launcher 输出里看。
 
 ## 停止
 
@@ -182,6 +183,8 @@ node <插件根>/skills/agents-launcher/dev-orchestrator.mjs \
 ```
 
 Docker 默认不停；只有用户明确说“停 Docker”才执行 server 域文档中的停止动作。
+
+服务子进程的 stdout/stderr 落文件而非管道，launcher 意外死亡（被 SIGKILL）时服务不再连带陪葬——遇到 launcher 消失但服务还在跑的情况属预期，用 `--status` 核实后按需 `--stop` 收尾即可。
 
 ## 总体禁手
 
