@@ -24,7 +24,7 @@ test('Claude representative runtime files match the approved snapshot', () => {
 test('source hooks restore every prior lifecycle registration', () => {
   const hooks = JSON.parse(readFileSync(path.join(ROOT, 'hooks/hooks.json'), 'utf8'));
   assert.deepEqual(Object.keys(hooks.hooks), ['SessionStart', 'PreToolUse', 'PostToolUse']);
-  assert.equal(hooks.hooks.SessionStart[0].hooks.length, 11);
+  assert.equal(hooks.hooks.SessionStart[0].hooks.length, 10); // 260918 移除 personal-snapshot 条目（11→10）
   assert.equal(hooks.hooks.PreToolUse.length, 2);
   assert.equal(hooks.hooks.PostToolUse.length, 1);
   assert.match(JSON.stringify(hooks), /continuous-learning-v2\/hooks\/observe\.sh/);
@@ -39,6 +39,7 @@ test('Claude generated hooks retain the active lifecycle registrations', () => {
   assert.ok(commands.some((command) => /inject-nocode\.sh" model-about(?: \d+)?$/.test(command)));
   assert.ok(commands.some((command) => /inject-nocode\.sh" model-rule-catalog-5(?: \d+)?$/.test(command)));
   assert.ok(commands.some((command) => /inject-nocode\.sh" project$/.test(command)));
-  assert.ok(commands.some((command) => /personal-snapshot\.mjs/.test(command)));
+  // 260918 移除 SessionStart 自动快照，改由 /distill 收尾触发；守卫"不得回加"
+  assert.ok(commands.every((command) => !/personal-snapshot\.mjs/.test(command)));
   assert.doesNotMatch(JSON.stringify(hooks), /model-nocode/);
 });

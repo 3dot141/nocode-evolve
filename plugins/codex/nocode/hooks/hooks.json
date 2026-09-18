@@ -87,10 +87,6 @@
           {
             "type": "command",
             "command": "bash \"${PLUGIN_ROOT}/hooks/inject-nocode.sh\" project"
-          },
-          {
-            "type": "command",
-            "command": "node \"${PLUGIN_ROOT}/scripts/personal-snapshot.mjs\""
           }
         ]
       }

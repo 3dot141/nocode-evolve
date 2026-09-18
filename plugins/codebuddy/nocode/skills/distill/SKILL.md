@@ -298,6 +298,20 @@ no → 整次 distill 终止；yes → 进入分发。
 
 ---
 
+### 6. 收尾快照
+
+Step 5 总报告输出后，若本次有任一出口实际写入（wiki / rules / agents / docs / plugin；全 skip 不跑），自动固化版本快照：
+
+```bash
+node "${CODEBUDDY_PLUGIN_ROOT}/scripts/personal-snapshot.mjs" --json
+```
+
+- 脚本内部 `realpath` 解析 symlink（worktree 共享场景落在主仓），幂等建仓（`ensureNestedRepo`）+ 有变化才 commit
+- 把返回 `status`（`committed` / `no_changes` / `skipped_locked` / `error`）作为最后一行并入总报告；非 `committed` 时提示"手动 `/personalhub snap` 兜底"，不阻塞收尾
+- 260918 起 SessionStart hook 不再自动快照，本步是唯一自动触发点；其余写入路径（personalhub write / recall 回写 / 手动编辑）的固化靠手动 `/personalhub snap`
+
+---
+
 ## 写完后
 
 不要主动 push 或 commit——按 CLAUDE.md 工作流，commit 由主交互流程在你完成所有沉淀后单独执行。

@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-// .agents-personal/ 版本快照 — SessionStart 时自动 commit 到内嵌 git 仓库 (.agents-personal/.git).
+// .agents-personal/ 版本快照 — 由 /distill 收尾与 /personalhub snap、tidy 调用, commit 到内嵌 git 仓库 (.agents-personal/.git).
+// 260918 用户裁决: SessionStart hook 不再自动触发; 其余写入路径需手动 /personalhub snap 兜底.
 // 用法: node personal-snapshot.mjs [--dry-run] [--json]
 // Exit 0 always — errors warn to stderr, never block session.
 //

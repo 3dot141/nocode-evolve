@@ -53,7 +53,7 @@ scripts/compile.hooks.js 内硬编码的规则数组 (独立链，不读 rules/ 
 | 8 | `model-rule-catalog-5` | `model/agent-rule-catalog-5.md`（不存在，静默跳过） |
 | 9 | `project` | `<project>/.agents-personal/AGENTS.md`（存在才注入；这是被打开项目的本地文件，不属于本目录，`$CLAUDE_PROJECT_DIR` 决定项目根，取不到则回退 `$PWD`） |
 
-之后 `hooks.json` 还会额外跑一条 `node scripts/personal-snapshot.mjs`，那是独立脚本、不经过 `inject-nocode.sh`，不属于本目录的注入链，此处不展开。
+`hooks.json` 曾额外跑一条 `node scripts/personal-snapshot.mjs`，260918 起该 SessionStart 条目已移除（快照改由 `/distill` 收尾触发）；它本就是独立脚本、不经过 `inject-nocode.sh`，不属于本目录的注入链，此处不展开。
 
 > 平台原生调用约定位于 `agent-about.md` 底部，不存在独立的 `agent-nocode.md` / `model-nocode` segment。当前是 9 次 `inject-nocode.sh` 调用（8 个 `model-*` segment + 1 个 `project` segment）；静态 packager 会按各平台 context budget 把过长的 segment 展开成多个带 chunk 编号的物理 command。
 

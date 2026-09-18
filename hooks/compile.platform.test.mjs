@@ -389,7 +389,8 @@ test('Claude adapter builds native skills and direct runtime overlays', () => {
     && /session-open\.mjs/.test(command)));
   assert.ok(claudeCommands.some((command) => /inject-nocode\.sh" model-about(?: \d+)?$/.test(command)));
   assert.ok(claudeCommands.some((command) => /inject-nocode\.sh" project$/.test(command)));
-  assert.ok(claudeCommands.some((command) => /personal-snapshot\.mjs/.test(command)));
+  // 260918 移除 SessionStart 自动快照，改由 /distill 收尾触发；守卫"不得回加"
+  assert.ok(claudeCommands.every((command) => !/personal-snapshot\.mjs/.test(command)));
   assert.doesNotMatch(JSON.stringify(claudeHooks), /model-nocode/);
   const claudeInjector = tree.get('hooks/inject-nocode.sh').toString();
   assert.match(claudeInjector, /runtime\/context-budget\.json/);
@@ -490,7 +491,8 @@ test('Codex adapter builds native skills and direct runtime overlays', () => {
   assert.ok(codexCommands.some((command) => command === 'bash "${PLUGIN_ROOT}/hooks/inject-nocode.sh" model-about 1'
     || command === 'bash "${PLUGIN_ROOT}/hooks/inject-nocode.sh" model-about'));
   assert.ok(codexCommands.some((command) => command === 'bash "${PLUGIN_ROOT}/hooks/inject-nocode.sh" project'));
-  assert.ok(codexCommands.some((command) => /personal-snapshot\.mjs/.test(command)));
+  // 260918 移除 SessionStart 自动快照，改由 /distill 收尾触发；守卫"不得回加"
+  assert.ok(codexCommands.every((command) => !/personal-snapshot\.mjs/.test(command)));
   assert.doesNotMatch(JSON.stringify(codexHooks), /model-nocode/);
   const codexInjector = tree.get('hooks/inject-nocode.sh').toString();
   assert.match(codexInjector, /runtime\/context-budget\.json/);

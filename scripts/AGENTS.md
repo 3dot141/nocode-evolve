@@ -19,8 +19,8 @@
 | `worktree-setup.mjs` | `rules/rule-git-worktree.md`（setup/teardown）、`skills/agents-launcher/SKILL.md`、`skills/devflow/SKILL.md` | CLI |
 | `git-exec.mjs` | `plugin-dream-baseline.mjs` / `dream-baseline.mjs` / `personal-migrate.mjs` / `personal-snapshot.mjs`（内部 import，共享 git 子进程执行） | library only，不建议直接当 CLI 跑 |
 | `personal-lint.mjs` | `skills/personalhub/references/check.md`；`commands/distill.md` 与 personalhub 的 write/tidy/status actions 间接触发 | CLI + Skill 包装 |
-| `personal-migrate.mjs` | 仅供用户显式迁移旧历史；`personal-snapshot.mjs` / SessionStart 不得自动调用 | library + CLI（手动） |
-| `personal-snapshot.mjs` | `hooks/hooks.json`（SessionStart 每次自动跑）、`scripts/wiki-read.mjs`（import `resolvePersonalDir`）、`skills/personalhub/references/tidy.md`、`skills/personalhub/references/snap.md` | hook 自动 + CLI + library |
+| `personal-migrate.mjs` | 仅供用户显式迁移旧历史；`personal-snapshot.mjs` 不得自动调用 | library + CLI（手动） |
+| `personal-snapshot.mjs` | `commands/distill.md`（/distill 收尾自动跑）、`scripts/wiki-read.mjs`（import `resolvePersonalDir`）、`skills/personalhub/references/tidy.md`、`skills/personalhub/references/snap.md` | CLI + library |
 | `prototype-verify.mjs` | `skills/pd-vd/SKILL.md` + `references/*`、`skills/dev-verify/SKILL.md` | CLI，委托 `_prototype-verify-impl.py`（需 python3 + playwright） |
 | `repo-lock.mjs` | `dream-baseline.mjs` / `personal-migrate.mjs` / `personal-snapshot.mjs` / `wiki-read.mjs`（内部 import） | library only |
 | `context-bar.sh` | 不在插件自动化链路内——`hooks/hooks.json` 没有 statusLine 挂载点；供用户手动配置到个人 `~/.claude/settings.json` 的 `statusLine.command` | 独立脚本 |
@@ -28,8 +28,8 @@
 
 被两个以上调用方共用的脚本（`git-exec.mjs` / `repo-lock.mjs` / `dream-baseline.mjs` / `personal-snapshot.mjs`）
 是高风险改动点——改导出函数签名前用 `grep -rn "scripts/<name>.mjs"` 摸清全部调用方（含 `hooks/*.test.mjs`
-和各 `commands/*.md` 里的动态 `import()`），缺一个都可能导致其他 hook/command 运行时失败。SessionStart hook
-（`personal-snapshot.mjs`）失败是静默的，不会立刻在对话里暴露，改完务必手动验证。
+和各 `commands/*.md` 里的动态 `import()`），缺一个都可能导致其他 hook/command 运行时失败。`/distill`
+收尾快照（`personal-snapshot.mjs`）失败是静默的（exit 0 + stderr warn），不会立刻在对话里暴露，改完务必手动验证。
 
 ## 改动前后必做
 
@@ -63,7 +63,7 @@ node --test hooks/*.test.mjs scripts/*.test.mjs
 
 `scripts/` 本身不在 CLAUDE.md 规则 2 显式列出的目录清单里（`hooks/`、`model/`、`rules/`、
 `skills/`、`agents/`、`commands/`、`.claude-plugin/`、`.mcp.json`），但这里的脚本是那些目录的
-**运行时依赖**：`personal-snapshot.mjs` 直接被 SessionStart hook 调用，其余脚本被 `rules/`、
+**运行时依赖**：`personal-snapshot.mjs` 被 `commands/distill.md` 收尾调用，其余脚本被 `rules/`、
 `commands/`、`skills/` 里的指令文本以命令行 / `import()` 形式内嵌引用。改了脚本的实际行为，
 效果等同于改了引用它的插件文件——同样要按 CLAUDE.md 规则 2 升级 `plugin/metadata.json`，并运行 `node scripts/package.platform.mjs`
 的 `version`（patch/minor/major 判断标准不变），并把版本变更放进同一个 commit。
