@@ -4,7 +4,7 @@ description: "Use when implementation is complete and you need to land the work 
 ---
 
 合并后项目流转使用 `Skill(nocode:lark-project)`。
-PR 定时监控用 Bash managed background 启动 `references/pr-check.mjs --watch`，保存 task id；完成通知后读取输出继续处置。
+PR 定时监控用 Bash managed background 启动 `references/pr-check.mjs --watch`，保存 task id；进程只在 READY / MERGED / CLOSED / 失败时结束，评论增长以 `PR_COMMENTS` 行出现，读到即按 prflow Step 6 处置，不停监控。
 
 # land — 3 步着陆，干净收场
 
@@ -238,7 +238,9 @@ remote_url=$(git -C "$MAIN_ROOT" remote get-url origin)
 
 ### PR 路径定时监控
 
-统一运行 `node <REF>/pr-check.mjs --watch --interval-seconds 120 ...`，不依赖平台专属 cron。`<REF>` 是本 skill 的 `references/` 目录；`pr-check` 引用 `periodic-runner.mjs` 的定时能力，查到 READY / MERGED / CLOSED / NEW_COMMENTS 后退出；agent 根据最终状态执行合并、清理和任务流转。`NEW_COMMENTS`（watch 期间出现新评审评论）走 prflow.md Step 6「PR 监控期的评论处置」：读评论 → 核实并探查处置方案 → 结构化决策等用户确认 → 执行后重启监控；评论事件不得触发自动修改或自动合并。详见 `references/prflow.md` Step 6。
+统一运行 `node <REF>/pr-check.mjs --watch --interval-seconds 120 ...`，不依赖平台专属 cron。`<REF>` 是本 skill 的 `references/` 目录；`pr-check` 引用 `periodic-runner.mjs` 的定时能力，只在 READY / MERGED / CLOSED / 连续失败时退出；agent 根据最终状态执行合并、清理和任务流转。
+
+评论增长**不是停止条件**：watch 打印 `PR_COMMENTS total=<n> delta=<k>` 事件行后继续轮询，按 prflow.md Step 6「PR 监控期的评论处置」并行处置（读评论 → 逐条核实 → 处置方案 → 结构化决策等用户确认 → 执行），进程不重启；宿主没有增量唤醒能力时用 `--max-runs` 设检查点，到期退出即唤醒、处置后重启监控。退出行 `PR_WATCH ... growth=<k>` 是合并闸门：`k>0` 时先确认评论已处置再合并。评论事件不得触发自动修改或自动合并。详见 `references/prflow.md` Step 6。
 
 生命周期边界如实告知：定时进程只在当前执行宿主和长进程句柄存活期间有效；句柄丢失或宿主退出后，由 Step 2b 补清检测兜底。禁止用 `nohup` / 系统 cron 把无人监管的合并动作留在后台。
 
@@ -285,6 +287,7 @@ lark-project 不可用时明确报告缺失能力，不伪造完成。
 | "Review 差不多了，先 push 再改" | 全景会标 Review 状态，用户自己决定 |
 | "先合了再跑 CI" | CI 是 PR 流程的一部分 |
 | "worktree 保着占空间，顺手删了" | 全景让用户选 |
+| "评论来了先停监控，等用户回话再重启" | 评论事件不是停止条件：停掉进程 = PR 进入无人监控空窗（用户实测反馈）。`PR_COMMENTS` 只发事件行，处置与轮询并行；合并闸门看退出行 `growth` |
 | "任务号懒得填" | 流转闭环是 Land 的一部分 |
 | "force push 一下就好" | 先把 `force-with-lease` 风险写进新的完整全景；不做执行期追加确认 |
 | "不在 worktree 里，全景/PR契约/reviewer/定时监控不适用" | **非 worktree 只影响清理项，其余全部照走** |

@@ -30,6 +30,8 @@
 
 评论与工时的落地方式由 lark-project 透传契约负责（评论走 meegle `comment add`，工时走 lark-project 内置 worklog 脚本），本 skill 只传参，不直接操作。
 
+工时脚本报缺环境变量（如 `FEISHU_SPACE_ID 不能为空`）不等于登记失败：按 worklog `config.md` 的「动态获取为主」策略现查注入——身份值走 meegle（`owned_project.key` / `user me`）、key 按 SOP 用 ego-browser 现抓即用即弃。静态配置缺失不是跳过工时登记的理由（260918 实测教训：agent 曾在本机报「工时未完成，待补配置」，实际全部值可现查 / 现抓）。
+
 - 典型流转映射（材料收集阶段推定用）：缺陷/任务类 `组员开发 → 创建者验收`
 - **前置条件**：有任务号 + lark-project 可用。不满足 → 跳过，报告原因，不报错
 

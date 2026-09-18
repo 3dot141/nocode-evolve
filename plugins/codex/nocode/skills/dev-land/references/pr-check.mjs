@@ -9,12 +9,15 @@
 //   node pr-check.mjs --toolchain bkt --pr 45 --target-project <KEY> --repo-slug <slug>
 //   node pr-check.mjs --watch --interval-seconds 120 --toolchain gh --pr 123
 //
-// 每次成功查询输出:
+// 状态变化时输出（首轮总是输出；相同状态不重复打印——增量唤醒的宿主会因为每轮都打而持续被叫醒）:
 //   PR_CHECK state=OPEN|MERGED|CLOSED mergeable=true|false approved=true|false
-// watch 命中可处置状态后再输出:
-//   PR_WATCH reason=READY|MERGED|CLOSED|NEW_COMMENTS runs=<N>
-//   NEW_COMMENTS: watch 期间评论指纹相比首轮基线增长（P1/P2 评审评论需要人处置，
-//   不能等 READY/MERGED 才被发现——实测 PR 挂着两条评审意见 40 分钟无人感知）
+// watch 期间评论指纹增长时输出（不停止监控，交调用方即时处置）:
+//   PR_COMMENTS total=<n> delta=<k>
+// watch 命中可处置状态后再输出并退出:
+//   PR_WATCH reason=READY|MERGED|CLOSED runs=<N> comments=<n> growth=<k>
+//   growth>0 表示本轮监控期内出现过评论事件——合并前必须先处置（prflow Step 6 合并闸门）。
+//   评论增长不再是停止条件：watch 只在 READY / MERGED / CLOSED / 连续失败时结束
+//   （P1/P2 评审评论需要人处置，不能等 READY/MERGED 才被发现——实测 PR 挂着两条评审意见 40 分钟无人感知）。
 // 单轮查询失败 → stderr + exit 1；watch 连续失败达到 --max-errors（默认 3）→ exit 1。
 //
 // 设计: 纯判定(normalizeGh/normalizeBkt/statusLine)与副作用(queryStatus)分离——纯函数单测。
@@ -52,6 +55,18 @@ export function normalizeBkt(pr, merge, commentCount = 0) {
 export function statusLine(s) {
   return `PR_CHECK state=${s.state} mergeable=${s.mergeable} approved=${s.approved}`;
 }
+
+// 状态去重门：首轮放行，之后只在三元组变化时放行（返回 null = 不打印）。
+// 增量唤醒的宿主每行输出都会叫醒 agent，逐轮重复同一状态纯属噪音。
+export const createStatusGate = () => {
+  let last = null;
+  return (status) => {
+    const line = statusLine(status);
+    if (line === last) return null;
+    last = line;
+    return line;
+  };
+};
 
 export function stopReason(s) {
   if (s.state === 'MERGED') return 'MERGED';
@@ -108,6 +123,7 @@ export async function watchStatus(cfg, options = {}) {
     run = defaultRun,
     sleep,
     onStatus = () => {},
+    onComments = () => {},
     onError = () => {},
   } = options;
 
@@ -118,6 +134,8 @@ export async function watchStatus(cfg, options = {}) {
   let consecutiveErrors = 0;
   // 评论基线从首轮快照起（PR 建立时 autotest/机器人首评已存在，从 0 起会立即误触发）
   let commentBaseline = null;
+  let commentTotal = null;
+  let commentEvents = 0;
   const periodicOptions = {
     intervalMs,
     maxRuns,
@@ -126,9 +144,14 @@ export async function watchStatus(cfg, options = {}) {
       try {
         const status = queryStatus(cfg, run);
         consecutiveErrors = 0;
-        const newComments = commentBaseline !== null && status.commentCount > commentBaseline;
-        if (commentBaseline === null) commentBaseline = status.commentCount;
-        return { status, newComments };
+        commentTotal = status.commentCount;
+        const delta = commentBaseline === null ? 0 : status.commentCount - commentBaseline;
+        if (commentBaseline === null || delta > 0) commentBaseline = status.commentCount;
+        if (delta > 0) {
+          commentEvents += 1;
+          onComments({ total: status.commentCount, delta });
+        }
+        return { status };
       } catch (error) {
         consecutiveErrors += 1;
         onError(error, { consecutiveErrors });
@@ -139,15 +162,19 @@ export async function watchStatus(cfg, options = {}) {
     onResult: ({ status }) => {
       if (status) onStatus(status);
     },
-    shouldStop: ({ status, newComments }) =>
-      status !== null && (stopReason(status) !== null || newComments === true),
+    // 评论增长只发事件、不停止监控：处置与轮询并行，退出行 growth 供合并闸门判定
+    shouldStop: ({ status }) => status !== null && stopReason(status) !== null,
   };
 
   const result = await runPeriodically(periodicOptions);
   const status = result.value?.status ?? null;
-  const newComments = result.value?.newComments === true;
-  const reason = newComments ? 'NEW_COMMENTS' : (status ? stopReason(status) : null);
-  return { ...result, status, stopReason: reason };
+  return {
+    ...result,
+    status,
+    stopReason: status ? stopReason(status) : null,
+    commentTotal,
+    commentEvents,
+  };
 }
 
 const parsePositiveInteger = (value, name, fallback) => {
@@ -183,20 +210,31 @@ if (import.meta.url === `file://${process.argv[1]}`) {
       const intervalSeconds = parsePositiveInteger(a['interval-seconds'], '--interval-seconds', 120);
       const maxRuns = parsePositiveInteger(a['max-runs'], '--max-runs', Infinity);
       const maxErrors = parsePositiveInteger(a['max-errors'], '--max-errors', 3);
+      const gate = createStatusGate();
       const result = await watchStatus(cfg, {
         intervalMs: intervalSeconds * 1000,
         maxRuns,
         maxErrors,
-        onStatus: (status) => console.log(statusLine(status)),
+        onStatus: (status) => {
+          const line = gate(status);
+          if (line) console.log(line);
+        },
+        onComments: ({ total, delta }) => console.log(`PR_COMMENTS total=${total} delta=${delta}`),
         onError: (error, meta) => {
           console.error(`[pr-check] query failed (${meta.consecutiveErrors}/${maxErrors}): ${error.message}`);
         },
       });
       if (result.reason === 'max-runs') {
-        console.error(`[pr-check] watch stopped after ${result.runs} runs without actionable state`);
+        console.error(
+          `[pr-check] watch stopped after ${result.runs} runs without actionable state`
+          + ` (comments=${result.commentTotal ?? 0} growth=${result.commentEvents})`,
+        );
         process.exitCode = 3;
       } else {
-        console.log(`PR_WATCH reason=${result.stopReason} runs=${result.runs}`);
+        console.log(
+          `PR_WATCH reason=${result.stopReason} runs=${result.runs}`
+          + ` comments=${result.commentTotal ?? 0} growth=${result.commentEvents}`,
+        );
       }
     }
   } catch (e) {

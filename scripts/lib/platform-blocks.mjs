@@ -6,9 +6,18 @@ export function renderPlatformBlocks(source, { platform, file = '<markdown>' }) 
     throw new Error(`${file}: unknown target platform: ${platform}`);
   }
 
+  const sourceLines = String(source).split('\n');
+  // 兜底的前置条件：本文件没有该平台的专属块。否则专属块与兜底块会同时渲染
+  // （实测 codebuddy 拿到 claude 块的旧指令 + 自己的新指令，两行互相矛盾）
+  const dedicatedPlatforms = new Set();
+  for (const line of sourceLines) {
+    const dedicated = OPEN.exec(line);
+    if (dedicated) dedicatedPlatforms.add(dedicated[1]);
+  }
+
   const output = [];
   let active = null;
-  for (const [index, line] of String(source).split('\n').entries()) {
+  for (const [index, line] of sourceLines.entries()) {
     const match = OPEN.exec(line);
     if (match) {
       if (active) throw new Error(`${file}:${index + 1}: nested platform block`);
@@ -23,10 +32,11 @@ export function renderPlatformBlocks(source, { platform, file = '<markdown>' }) 
     if (/^<!-- \/?nocode:platform\b/.test(line)) {
       throw new Error(`${file}:${index + 1}: invalid platform block`);
     }
+    const inheritsFallback = (platform === 'qoder' && active?.platform === 'claude')
+      || (platform === 'codebuddy' && active?.platform === 'claude')
+      || (platform === 'deepseek' && active?.platform === 'pi');
     if (!active || active.platform === platform
-      || (platform === 'qoder' && active.platform === 'claude')
-      || (platform === 'codebuddy' && active.platform === 'claude')
-      || (platform === 'deepseek' && active.platform === 'pi')) output.push(line);
+      || (inheritsFallback && !dedicatedPlatforms.has(platform))) output.push(line);
   }
 
   if (active) {

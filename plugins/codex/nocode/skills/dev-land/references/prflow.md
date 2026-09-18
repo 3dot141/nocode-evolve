@@ -95,16 +95,17 @@ node <REF>/pr-check.mjs --watch --interval-seconds 120 \
   <toolchain 参数，见 pr-flow-gh/bkt「pr-check 调用」>
 ```
 
-脚本每次成功查询输出 `PR_CHECK ...`；命中停止条件后输出 `PR_WATCH reason=<READY|MERGED|CLOSED|NEW_COMMENTS> runs=<N>` 并退出。连续查询失败 3 次会失败退出，避免静默挂死。
+脚本在状态变化时输出 `PR_CHECK ...`（首轮总是输出，相同状态不重复打印，避免增量唤醒宿主被心跳刷醒）；评论指纹增长时输出 `PR_COMMENTS total=<n> delta=<k>` 事件行，**不停止监控**；命中可处置状态后输出 `PR_WATCH reason=<READY|MERGED|CLOSED> runs=<N> comments=<n> growth=<k>` 并退出。连续查询失败 3 次会失败退出，避免静默挂死。
 
 长进程完成后按最终 reason 处置：
 
-- `READY` + 全景为自动合并 → 执行 pr-flow-gh/bkt 的合并命令；成功后立即单轮查询确认 MERGED，再走收尾
+- `READY` + 全景为自动合并 → **先过评论闸门（`growth>0` 时确认评论已处置）**，再执行 pr-flow-gh/bkt 的合并命令；成功后立即单轮查询确认 MERGED，再走收尾
 - `READY` + 全景为只盯不合 → 通知一次“已可合并”，保留 worktree / branch / 远程，停止监控
 - `MERGED` → 直接走收尾
 - `CLOSED` → 通知 PR 被关未合，worktree / branch / 远程全保留
-- `NEW_COMMENTS` → 走「PR 监控期的评论处置」（本节下方），处置完成后重启 pr-check watch 回到正常监控
 - 脚本失败 / 句柄丢失 → 报告原因，所有内容保留；下次进入 dev-land 由 SKILL.md Step 2b 补清
+
+评论处置与监控**并行**，不再是退出原因（见本节下方「PR 监控期的评论处置」）。
 
 MERGED 收尾按序：
 
@@ -121,17 +122,22 @@ MERGED 收尾按序：
 
 启动后报告「PR 已创建 <url>，已启动 pr-check 定时监控（每 2min，执行进程存活期间有效）：approve 后自动合并 → 清 worktree → 流转」。
 
-### PR 监控期的评论处置（NEW_COMMENTS）
+### PR 监控期的评论处置（`PR_COMMENTS` 事件）
 
-> 为什么评论是停止条件：实测 PR 挂着 autotest 两条 P1/P2 评审评论 40 分钟 agent 无感知，靠用户提醒才处置。评审评论需要人判断，若 agent 只等 READY，approve 一到就会带着未处置评论自动合并——所以 watch 首轮记录评论指纹基线，指纹增长即退出并交给下面协议。
+> 为什么要即时处置：实测 PR 挂着 autotest 两条 P1/P2 评审评论 40 分钟 agent 无感知，靠用户提醒才处置。评审评论需要人判断，若 agent 只等 READY，approve 一到就会带着未处置评论自动合并。
+> 为什么**不停止监控**：watch 首轮记录评论指纹基线，之后指纹增长只打印 `PR_COMMENTS total=<n> delta=<k>` 事件行并继续轮询——处置是并行支线，停掉进程会让 PR 进入无人监控的空窗（用户实测反馈）。
 
-收到 `NEW_COMMENTS` 后：
+收到 `PR_COMMENTS`（增量输出唤醒，或从已写出的输出里读到）后：
 
 1. **读全量评论**，不只看通知摘要——gh 用 `gh pr view <n> --comments`；bkt 走 activities（命令见 pr-flow-gh / pr-flow-bkt）
 2. **逐条对照代码核实真实性**——评审意见可能误判（看错行 / 漏上下文），不盲改
 3. **形成处置方案**：每条评论 → 修（附改动点）/ 不修（附证据反驳）/ 待问（信息不足）
-4. **结构化决策把方案给用户确认**。红线：评论事件不得触发自动修改或自动合并；approve 已到但评论未处置完时，先处置评论再谈合并
-5. 确认后执行方案 → 完成后重启 `pr-check --watch`（基线自动从重启首轮重新快照，处置期间与评审者的往来回复计入新基线属预期）回到正常监控
+4. **结构化决策把方案给用户确认**。红线：评论事件不得触发自动修改或自动合并
+5. 确认后执行方案 → **监控不重启、不中断**；若方案含代码改动，push 后继续沿用同一监控进程（指纹基线随新评论自然推进）
+
+**合并闸门**：退出行 `PR_WATCH ... growth=<k>`。`k>0` 说明本轮监控期内出现过评论事件——`READY` 到达时先回读 activities 确认这些评论都已处置（无新增未处置项）再合并；处置未完成不合并，也不因此停掉监控。
+
+**宿主没有增量唤醒能力时**：给 watch 加 `--max-runs`（如 `--interval-seconds 120 --max-runs 15` ≈ 30 分钟）做检查点——到期进程正常退出即唤醒 agent，读输出 → 处置评论 → 重启监控。检查点周期按 PR 活跃度调，别设成一次性短跑。
 
 > **生命周期边界（如实告知用户）**：定时进程依赖当前执行宿主和 managed process 句柄；宿主退出或句柄丢失后不会继续。不要改成 `nohup` / 系统 cron 自动合并——无人监管时无法处置 merge veto、权限变化和流转失败。跨会话由 SKILL.md Step 2b 补清检测兜底。
 

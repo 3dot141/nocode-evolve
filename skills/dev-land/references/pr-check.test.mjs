@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   normalizeGh, normalizeBkt, statusLine, stopReason, parseArgs, queryStatus, watchStatus,
+  createStatusGate,
 } from './pr-check.mjs';
 
 // ═══ normalizeGh — gh pr view --json state,mergeStateStatus,mergeable,reviewDecision ═══
@@ -67,6 +68,18 @@ test('statusLine — MERGED 形态', () => {
   );
 });
 
+// ═══ createStatusGate — 增量唤醒宿主的输出去重 ═══
+test('createStatusGate — 首轮放行、相同状态静默、变化再放行', () => {
+  const gate = createStatusGate();
+  const open = { state: 'OPEN', mergeable: false, approved: false };
+
+  assert.equal(gate(open), 'PR_CHECK state=OPEN mergeable=false approved=false');
+  assert.equal(gate({ ...open }), null);
+  assert.equal(gate({ ...open, approved: true }), 'PR_CHECK state=OPEN mergeable=false approved=true');
+  assert.equal(gate({ ...open, approved: true }), null);
+  assert.equal(gate({ state: 'MERGED', mergeable: false, approved: true }), 'PR_CHECK state=MERGED mergeable=false approved=true');
+});
+
 // ═══ stopReason — watch 停止条件 ═══
 test('stopReason — OPEN 且可合并、已批准才 READY', () => {
   assert.equal(stopReason({ state: 'OPEN', mergeable: true, approved: true }), 'READY');
@@ -116,25 +129,34 @@ test('queryStatus — bkt /merge 查询失败 → mergeable false, 不抛错', (
 });
 
 // ═══ watchStatus（注入 timer/run，不真等待）═══
+
+// bkt run 桩：同一轮内 /activities 与 /merge 读当前轮，PR 查询推进到下一轮
+const bktRoundsRun = (rounds) => {
+  let current = rounds[0];
+  return (argv) => {
+    const arg = argv.join(' ');
+    if (arg.includes('/activities')) {
+      return JSON.stringify({ values: Array.from({ length: current.comments }, () => ({ action: 'COMMENTED' })) });
+    }
+    if (arg.includes('/merge')) return JSON.stringify({ canMerge: current.canMerge });
+    current = rounds.shift();
+    return JSON.stringify(current.pr);
+  };
+};
+
 test('watchStatus — 定时查询直到 READY', async () => {
-  const statuses = [
-    { state: 'OPEN', reviewers: [{ approved: false }] },
-    { state: 'OPEN', reviewers: [{ approved: true }] },
+  const rounds = [
+    { pr: { state: 'OPEN', reviewers: [{ approved: false }] }, comments: 0, canMerge: true },
+    { pr: { state: 'OPEN', reviewers: [{ approved: true }] }, comments: 0, canMerge: true },
   ];
   const sleeps = [];
   const lines = [];
-  const run = (argv) => {
-    if (argv.some((x) => String(x).endsWith('/merge'))) {
-      return JSON.stringify({ canMerge: true });
-    }
-    return JSON.stringify(statuses.shift());
-  };
 
   const result = await watchStatus(
     { toolchain: 'bkt', pr: 5, targetProject: 'P', repoSlug: 'r' },
     {
       intervalMs: 5000,
-      run,
+      run: bktRoundsRun(rounds),
       sleep: async (ms) => sleeps.push(ms),
       onStatus: (status) => lines.push(statusLine(status)),
     },
@@ -144,6 +166,54 @@ test('watchStatus — 定时查询直到 READY', async () => {
   assert.equal(result.runs, 2);
   assert.deepEqual(sleeps, [5000]);
   assert.equal(lines.length, 2);
+});
+
+test('watchStatus — 评论增长只发事件、不停止监控（继续跑到 READY）', async () => {
+  const rounds = [
+    { pr: { state: 'OPEN', reviewers: [{ approved: false }] }, comments: 2, canMerge: false },
+    { pr: { state: 'OPEN', reviewers: [{ approved: false }] }, comments: 3, canMerge: false },
+    { pr: { state: 'OPEN', reviewers: [{ approved: true }] }, comments: 4, canMerge: true },
+  ];
+  const events = [];
+
+  const result = await watchStatus(
+    { toolchain: 'bkt', pr: 9, targetProject: 'P', repoSlug: 'r' },
+    {
+      intervalMs: 0,
+      run: bktRoundsRun(rounds),
+      sleep: async () => {},
+      onComments: (event) => events.push(event),
+    },
+  );
+
+  assert.equal(result.stopReason, 'READY');
+  assert.equal(result.runs, 3);
+  assert.deepEqual(events, [{ total: 3, delta: 1 }, { total: 4, delta: 1 }]);
+  assert.equal(result.commentTotal, 4);
+  assert.equal(result.commentEvents, 2);
+});
+
+test('watchStatus — 评论无增长不发事件，首轮基线不误报', async () => {
+  const rounds = [
+    { pr: { state: 'OPEN', reviewers: [{ approved: false }] }, comments: 2, canMerge: false },
+    { pr: { state: 'MERGED' }, comments: 2, canMerge: false },
+  ];
+  const events = [];
+
+  const result = await watchStatus(
+    { toolchain: 'bkt', pr: 9, targetProject: 'P', repoSlug: 'r' },
+    {
+      intervalMs: 0,
+      run: bktRoundsRun(rounds),
+      sleep: async () => {},
+      onComments: (event) => events.push(event),
+    },
+  );
+
+  assert.equal(result.stopReason, 'MERGED');
+  assert.deepEqual(events, []);
+  assert.equal(result.commentEvents, 0);
+  assert.equal(result.commentTotal, 2);
 });
 
 test('watchStatus — 查询失败后重试，成功时清零错误计数', async () => {
