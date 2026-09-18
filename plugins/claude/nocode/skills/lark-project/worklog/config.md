@@ -1,6 +1,6 @@
 # 配置
 
-**策略（260918 用户裁决）：动态获取为主，静态 shell 环境变量为 fallback。** 身份值（`FEISHU_SPACE_ID` / `FEISHU_USER_ID`）按下方「动态注入项」现查注入进程环境，**不写任何静态配置文件**；`FEISHU_WORKLOG_KEY` 每日失效，按下方 SOP 用 ego-browser 现抓即用即弃。静态 export（`~/.zshenv`）仅适合愿意每日重抓维护的机器，不再是默认假设。submit 报「FEISHU_xxx 不能为空」时，**第一响应是按下表现查注入，不是报告配置缺失**。
+**策略（260918 用户裁决）：动态获取为主，静态 shell 环境变量为 fallback。** 身份值（`FEISHU_SPACE_ID` / `FEISHU_USER_ID`）按下方「动态注入项」现查注入进程环境，**不写任何静态配置文件**；`FEISHU_WORKLOG_KEY` 每日失效，按下方 SOP 用 ego-browser 现抓即用即弃。静态 export（`~/.zshenv`）仅适合愿意每日重抓维护的机器，不再是默认假设。submit 报「FEISHU_xxx 不能为空」时，**第一响应是按下表现查注入，不是报告配置缺失**；真提交 401 时先确认脚本读到的 key 不是历史静态残留——dry-run 只验有值不验有效，过期的静态 `FEISHU_WORKLOG_KEY` 会误放行 dry-run、拖到真提交才 401，徒增诊断弯路（260918 实测），发现残留应清理。
 
 ## key 失效自动抓取 SOP（2026-09-07 首测，2026-09-09 复测补 fallback，2026-09-15 空间管理迁 v2 API，2026-09-18 实测隔日失效 + 抓提合一；README.md 不随发布物分发，运行时读本文件）
 
@@ -11,7 +11,7 @@ key 过期后用 ego-browser 自动抓取，无需用户抄取。**方案 A（�
 **前置（两方案共用）**：
 
 1. **打开工时看板**：`taskSpace('feishu worklog')` → `task.page('p1')` → `page.goto('https://project.feishu.cn/')`（登录态继承）→ 左栏「功能」→「工时管理」。页面 URL 形如 `project.feishu.cn/{space}/meegoPlg/MII_..._board_...`。
-2. **工时插件是跨域 iframe（OOPIF）**：宿主 `projectplg.feishupkg.com`，主 frame 的 `Network.enable` **抓不到**其请求——必须 `Target.getTargets` 找 `feishupkg` iframe → `Target.attachToTarget`（flatten:true）→ 对该 session `Network.enable`。
+2. **工时插件是跨域 iframe（OOPIF）**：宿主 `projectplg.feishupkg.com`，主 frame 的 `Network.enable` **抓不到**其请求——必须 `Target.getTargets` 找 `feishupkg` iframe → `Target.attachToTarget`（flatten:true）→ 对该 session `Network.enable`。⚠ 看板反复打开后 feishupkg target 会有**多个**（260918 实测 5 个），第一个未必是活跃的工时插件 iframe——**全量 attach + enable**（循环对每个 target 执行两步），只挑一个会静默抓不到任何请求，方案 A/B 同此（260918 实测：单挑失败 3 轮，全量 attach 后立即可用）。
    ⚠ 这些按 session 的命令要走 **legacy 全局** `cdp(method, params, sessionId)`（方案 B 注入 patch 同理，用 `js(expr, targetId)`），事件用 `await drainEvents()` 读回（带 sessionId 标记）：v2 的 `page.cdp()` / `task.cdp()` 只接受 `{ timeout }`、没有 session 参数，照 v2 文档写会直接报 unknown option。完整写法见 ego-browser skill 的 OOPIF 段。
 
 **方案 A · 网络层抓重载请求（主路径）**：

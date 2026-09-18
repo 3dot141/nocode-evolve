@@ -25,7 +25,7 @@
 - 版本号由用户决定；除非用户明确要求发布或指定新版本，否则不得修改 `plugin/metadata.json`。
 - 任何运行时源码改动后都要重新生成平台发布物，并把源码与生成物放进同一个 commit。
 - **完成后立即自动 commit（260918 用户裁决，防改动在等待期被覆盖）**：精确 `git add` 本次变更的源与生成物路径，**不夹带仓内其它未提交改动**；message 按 `<type>(<scope>): <subject>` 惯例；diff stat 在 commit 后向用户展示。不得自动 push。
-- **只在源层写**：rule 源在 `${NOCODE_EVOLVE_REPO}/rules/`、skill 源在 `${NOCODE_EVOLVE_REPO}/skills/`；`plugins/*/nocode/` 下同名内容是 `package.platform.mjs` 的生成物——改生成物会在下次生成时被源静默覆盖（260918 实测三次丢失后才定位）。
+- **只在源层写**：rule 源在 `${NOCODE_EVOLVE_REPO}/rules/`、skill 源在 `${NOCODE_EVOLVE_REPO}/skills/`——两者都是**仓根直下目录**（本机字面路径 `/Users/yes365/AI/nocode-evolve/skills/…`）；`plugins/<platform>/nocode/` 下同名内容是 `package.platform.mjs` 的生成物——改生成物会在下次生成时被源静默覆盖（260918 实测三次丢失后才定位）。**防呆**：Edit/Write 前检查目标路径，含 `/plugins/` 段即停止，换算成 `/skills/` 或 `/rules/` 下的对应路径再动手；占位符 `${NOCODE_EVOLVE_REPO}` 指仓根而非技能运行时目录（260918 二次实测：把运行时 base directory 当源根改错层，编译后改动被冲掉）。
 
 ## 执行
 
