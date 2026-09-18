@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Docker 服务按变更频率拆成两层：有状态基础设施长期复用，分支镜像按启动时更新。
+# Docker 服务按变更频率拆成三层：有状态基础设施长期复用，polars 引擎与分支镜像按启动时更新。
 readonly SHARED_SERVICES=(postgresql redis mongodb rabbitmq minio elasticsearch)
 readonly BRANCH_SERVICES=(jsy-webui sync image-exporter)
 readonly BRANCH_PREFIXES=(dev test prod)
@@ -40,6 +40,23 @@ compose=(docker compose -f "$compose_file")
 
 # 只启动公用层；pull_policy=missing 加上显式 service 列表，切分支不会触碰这些容器。
 "${compose[@]}" up -d "${SHARED_SERVICES[@]}"
+
+# polars 层：镜像定义在单独的 docker-compose-polars-{arm,x86}.yml（口径对齐 fx-data-server 的
+# dockerstart-polars.sh）。必须与主文件合并 up，polars-local 才算同一 compose 项目成员；只跑单
+# 文件时 compose 会把它当 orphan 只警告不管理，镜像永远不更新——会出现「新 sync + 旧 polars」
+# 组合，表更新全挂（2026-09-18 实证）。x86 文件取 ${POLARS_VERSION}，arm 文件里钉死具体镜像。
+case "$(uname -m)" in
+  arm64 | aarch64) polars_suffix=arm ;;
+  amd64 | x86_64) polars_suffix=x86 ;;
+  *) polars_suffix='' ;;
+esac
+polars_file="docker-compose-polars-${polars_suffix}.yml"
+if [[ -n "$polars_suffix" && -f "$polars_file" ]]; then
+  POLARS_VERSION="harbor.jsydevelop.com/develop/${profile}-polars:latest" \
+    docker compose -f "$compose_file" -f "$polars_file" up -d --pull always polars-local
+else
+  echo "[warn] ${polars_file} 不存在或宿主架构未知，跳过 polars-local；polars 引擎版本可能落后于 sync" >&2
+fi
 
 # 分支层镜像始终检查远端 latest，切换 prod/test/dev 时先移除旧前缀容器，避免端口冲突。
 remove_branch_containers
