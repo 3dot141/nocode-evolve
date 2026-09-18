@@ -24,7 +24,8 @@
 
 - 版本号由用户决定；除非用户明确要求发布或指定新版本，否则不得修改 `plugin/metadata.json`。
 - 任何运行时源码改动后都要重新生成平台发布物，并把源码与生成物放进同一个 commit。
-- 完成后复核 diff 并询问是否 commit；不得自动 push。
+- **完成后立即自动 commit（260918 用户裁决，防改动在等待期被覆盖）**：精确 `git add` 本次变更的源与生成物路径，**不夹带仓内其它未提交改动**；message 按 `<type>(<scope>): <subject>` 惯例；diff stat 在 commit 后向用户展示。不得自动 push。
+- **只在源层写**：rule 源在 `${NOCODE_EVOLVE_REPO}/rules/`、skill 源在 `${NOCODE_EVOLVE_REPO}/skills/`；`plugins/*/nocode/` 下同名内容是 `package.platform.mjs` 的生成物——改生成物会在下次生成时被源静默覆盖（260918 实测三次丢失后才定位）。
 
 ## 执行
 
@@ -50,7 +51,7 @@
    - 顶层 rule，本次融合扩了触发范围 → 改该文件自身 frontmatter 的 `description`（把新边界写进同一句话）；改后跑 `node scripts/compile.rule.js`
    - `rule-references/` 子文件 → 不动（门面 rule 已路由，子文件没有独立 frontmatter）
 3. 运行 `node scripts/package.platform.mjs` 同步平台发布物；只有用户明确指定发布版本时才修改 `plugin/metadata.json`
-4. 报告：`融进 <目标路径>，frontmatter [未动 / 已更新 description 并 compile.rule.js 重新生成 catalog]，版本 [未改 / 按用户指定更新]`
+4. 报告：`融进 <目标路径>，frontmatter [未动 / 已更新 description 并 compile.rule.js 重新生成 catalog]，版本 [未改 / 按用户指定更新]，已自动 commit <hash>（push 需询问）`
 
 ### 三步联动（disposition=新建，或独立调用判定为新建 rule）
 
@@ -68,14 +69,14 @@
 2. **跑生成器**：`node scripts/compile.rule.js`，再跑 `node scripts/compile.rule.js --check` 验零漂移。
 3. **生成发布物**：运行 `node scripts/package.platform.mjs`。默认保留 `plugin/metadata.json` 不变；只有用户明确要求发布或指定版本时，才按其决定修改版本号后重新生成
 
-三步契约：必须按顺序；任一步失败后续不执行；三步内不回滚已成功步（文件保留比删了更易恢复）；commit/push 不进本逻辑。
+三步契约：必须按顺序；任一步失败后续不执行；三步内不回滚已成功步（文件保留比删了更易恢复）；三步完成后按「仓库约束」自动 commit（push 仍不进本逻辑）。
 
 报告：
 ```
 已写入 plugin rule: rule-<slug>.md（含 frontmatter）
 compile: node scripts/compile.rule.js 重新生成 catalog
 版本: 未改（或按用户明确指定更新为 <new>）
-请到 nocode 仓 review + commit，push 需询问。
+已自动 commit: <hash>（源 + 生成物同 commit）；push 需询问。
 ```
 
 ### skill 委托
@@ -84,7 +85,7 @@ compile: node scripts/compile.rule.js 重新生成 catalog
 2. 调用 `skill-writing` Skill，传入 `arguments={"request":"<verbatim-current-request-or-command-arguments>","context":{"stage":"<caller-and-current-stage>","restate":"<confirmed-restate-or-omit>","artifacts":["<relevant-path-or-receipt>"],"constraints":["<confirmed-constraint>"],"planRef":"<current-planRef-or-omit>","decision":"<confirmed-decision-or-omit>"}}`。skill-writing 走到 Phase 7（描述优化）收敛即可，Phase 8 Package（打包 `.skill` 分发）对本仓无意义（marketplace 直接读 git），明确不需要
 3. **Gate**：只有 skill 文件确有改动（对比委托前后的 `git status`/`git diff` 有实际变更）才继续；委托中止 / 用户放弃 / 无改动 → 报告"skill 未改动"
 4. 有改动 → 运行 `node scripts/package.platform.mjs`；默认不改版本号，用户明确指定发布版本时才更新 `plugin/metadata.json` 并重新生成
-5. 报告：`skill 已更新: <skillPath>，版本: [未改 / 按用户指定更新]，请 review + commit，push 需询问`
+5. 报告：`skill 已更新: <skillPath>，版本: [未改 / 按用户指定更新]，已自动 commit: <hash>；push 需询问`
 
 ## 孤儿 rule 划界
 
