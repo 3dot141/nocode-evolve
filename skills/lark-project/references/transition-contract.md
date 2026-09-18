@@ -24,4 +24,4 @@
 ## 收尾动作
 
 - **流转成功后附评论**：arguments 含修复摘要（dev-land 合并后流转传入）时，流转成功后调 meegle `comment add`（剥前缀纯数字 ID）把摘要落成工作项评论；评论失败不回滚流转，如实报告「已流转，评论失败」。
-- **工时登记**：arguments 含工时意图（任务号 + 分钟数 + 描述）时按 [worklog/README.md](../worklog/README.md) 执行，不走 meegle（其 `workhour` 域仅查询）。
+- **工时登记**：arguments 含工时意图（任务号 + 分钟数 + 描述）时按 [worklog/config.md](../worklog/config.md) 执行（动态获取为主：身份值按「动态注入项」现查注入，key 按 SOP 现抓），不走 meegle（其 `workhour` 域仅查询）。
