@@ -51,6 +51,7 @@ test('killCommands 含 tsx watch 父进程 kill + 端口清理，不碰 web/serv
   const flat = cmds.map((c) => c.join(' '));
   assert.ok(flat.some((s) => s.includes('telemetry/preload.ts')));
   assert.ok(flat.some((s) => s.includes('tcp:8070')));
+  assert.ok(flat.some((s) => s.includes('-sTCP:LISTEN')), '端口清理只杀监听者（否则会把自己的探测连接一起 kill）');
   assert.ok(!flat.some((s) => s.includes('tcp:10001')), '不该碰 web 端口');
 });
 

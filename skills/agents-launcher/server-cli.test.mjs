@@ -23,7 +23,7 @@ test('killCommands 返回 gradlew --stop + 容器清理 + 端口清理三段', (
   assert.equal(cmds.length, 3);
   assert.deepEqual(cmds[0], ['sh', ['-c', 'cd /tmp/srv && ./gradlew --stop || true']]);
   assert.deepEqual(cmds[1], ['sh', ['-c', 'docker rm -f dev-backend 2>/dev/null || true']]);
-  assert.deepEqual(cmds[2], ['sh', ['-c', 'lsof -ti tcp:8081 | xargs kill -9 2>/dev/null || true']]);
+  assert.deepEqual(cmds[2], ['sh', ['-c', 'lsof -ti tcp:8081 -sTCP:LISTEN | xargs kill -9 2>/dev/null || true']]);
 });
 
 test('prepare: 模块目录不存在时抛清晰错误，不静默跳过', async () => {

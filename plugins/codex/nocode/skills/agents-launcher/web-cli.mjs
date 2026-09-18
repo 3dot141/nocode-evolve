@@ -47,7 +47,9 @@ export function cleanViteCache({ webDir, fs: _fs = { existsSync, rmSync } } = {}
 
 export function killCommands({ ports = PORTS } = {}) {
   const sh = (s) => ['sh', ['-c', s]];
-  return [sh(`lsof -ti tcp:${ports.web} | xargs kill -9 2>/dev/null || true`)];
+  // 只杀监听者：launcher 自己的健康探测会留下 keep-alive 连接，lsof -ti 把客户端也算进来，
+  // 不带 -sTCP:LISTEN 时 xargs kill -9 会把 launcher 自己杀掉（级联中途猝死、web 留 DOWN）
+  return [sh(`lsof -ti tcp:${ports.web} -sTCP:LISTEN | xargs kill -9 2>/dev/null || true`)];
 }
 
 // start 前的端口归属预检（260901 实证：外部 vite 先占 10001 时，spawn 必败但健康检查被旧实例

@@ -23,7 +23,9 @@ export function killCommands({ ports = PORTS } = {}) {
   const sh = (s) => ['sh', ['-c', s]];
   return [
     ['pkill', ['-f', 'telemetry/preload.ts']],          // tsx watch 父进程，只杀子 node 会被父 watch 重启
-    sh(`lsof -ti tcp:${ports.agents} | xargs kill -9 2>/dev/null || true`),
+    // 只杀监听者：launcher 自己的健康探测会留下 keep-alive 连接，lsof -ti 把客户端也算进来，
+    // 不带 -sTCP:LISTEN 时 xargs kill -9 会把 launcher 自己杀掉（级联中途猝死、服务留 DOWN）
+    sh(`lsof -ti tcp:${ports.agents} -sTCP:LISTEN | xargs kill -9 2>/dev/null || true`),
   ];
 }
 

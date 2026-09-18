@@ -112,7 +112,9 @@ export function killCommands({ ports, serverDir }) {
     ['sh', ['-c', `cd ${serverDir} && ./gradlew --stop || true`]],
     // 容器模式启动的 server（.dev-start.pid='container'）gradlew/端口 kill 都够不着——幂等清理（红蓝裁决 C）
     ['sh', ['-c', `docker rm -f dev-backend 2>/dev/null || true`]],
-    ['sh', ['-c', `lsof -ti tcp:${ports.server} | xargs kill -9 2>/dev/null || true`]],
+    // 只杀监听者：launcher 自己的健康探测会留下 keep-alive 连接，lsof -ti 把客户端也算进来，
+    // 不带 -sTCP:LISTEN 时 xargs kill -9 会把 launcher 自己杀掉（级联中途猝死、服务留 DOWN）
+    ['sh', ['-c', `lsof -ti tcp:${ports.server} -sTCP:LISTEN | xargs kill -9 2>/dev/null || true`]],
   ];
 }
 

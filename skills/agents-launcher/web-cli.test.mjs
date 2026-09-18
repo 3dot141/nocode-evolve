@@ -220,5 +220,6 @@ test('killCommands 只清 web 端口，不碰 agents/server', () => {
   const cmds = killCommands({ ports: { web: 10001 } });
   const flat = cmds.map((c) => c.join(' '));
   assert.ok(flat.some((s) => s.includes('tcp:10001')));
+  assert.ok(flat.some((s) => s.includes('-sTCP:LISTEN')), '端口清理只杀监听者（否则会把自己的探测连接一起 kill）');
   assert.ok(!flat.some((s) => s.includes('telemetry')), '不该碰 agents');
 });
