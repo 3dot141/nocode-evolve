@@ -48,11 +48,15 @@ export function prepare({ agentsDir, fromDir, fs = { existsSync, mkdirSync, copy
   );
 }
 
+// CSS 产物（packages/{desktop,ui}/dist/*.css）不在 tsx watch / vite 的监听范围内，过期不会自愈：
+// 源码先改、产物没重建时 UI 会一直用旧工具类（Tailwind 4 扫源码生成），表现为样式错乱。
+// 全程构建 <1s，且比 mtime 比对稳——漏扫一个源目录就退化成静默过期，所以每次启动无条件重建。
 export async function ensureCss({ agentsDir, run = runToEnd } = {}) {
-  const cssOk = existsSync(join(agentsDir, 'packages/desktop/dist/style.css'))
-    && existsSync(join(agentsDir, 'packages/ui/dist/agent-ui.css'));
-  if (cssOk) return { action: 'skipped' };
-  await run('build:css', 'pnpm', ['build:css'], { cwd: agentsDir });
+  const code = await run('build:css', 'pnpm', ['build:css'], { cwd: agentsDir });
+  if (code) {
+    console.warn(`[agents] build:css 退出码 ${code}，CSS 产物可能仍是旧的`);
+    return { action: 'failed', code };
+  }
   return { action: 'built' };
 }
 

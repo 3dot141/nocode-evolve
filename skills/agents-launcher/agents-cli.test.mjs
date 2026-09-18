@@ -54,26 +54,28 @@ test('killCommands 含 tsx watch 父进程 kill + 端口清理，不碰 web/serv
   assert.ok(!flat.some((s) => s.includes('tcp:10001')), '不该碰 web 端口');
 });
 
-test('ensureCss: CSS 产物已存在则跳过 build:css', async () => {
-  let called = false;
+test('ensureCss: 产物已存在也照常重建（防静默过期）', async () => {
+  let calledWith = null;
   const dir = makeAgentsDir();
   mkdirSync(join(dir, 'packages/desktop/dist'), { recursive: true });
   mkdirSync(join(dir, 'packages/ui/dist'), { recursive: true });
   writeFileSync(join(dir, 'packages/desktop/dist/style.css'), '');
   writeFileSync(join(dir, 'packages/ui/dist/agent-ui.css'), '');
   try {
-    const r = await ensureCss({ agentsDir: dir, run: async () => { called = true; } });
-    assert.equal(r.action, 'skipped');
-    assert.equal(called, false);
+    const r = await ensureCss({
+      agentsDir: dir,
+      run: async (label, cmd, args) => { calledWith = [label, cmd, args]; return 0; },
+    });
+    assert.equal(r.action, 'built');
+    assert.deepEqual(calledWith, ['build:css', 'pnpm', ['build:css']]);
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
-test('ensureCss: CSS 产物缺失则跑 build:css', async () => {
-  let calledWith = null;
+test('ensureCss: build:css 非零退出 → action=failed，不抛错', async () => {
   const dir = makeAgentsDir();
   try {
-    const r = await ensureCss({ agentsDir: dir, run: async (label, cmd, args) => { calledWith = [label, cmd, args]; } });
-    assert.equal(r.action, 'built');
-    assert.deepEqual(calledWith, ['build:css', 'pnpm', ['build:css']]);
+    const r = await ensureCss({ agentsDir: dir, run: async () => 1 });
+    assert.equal(r.action, 'failed');
+    assert.equal(r.code, 1);
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });

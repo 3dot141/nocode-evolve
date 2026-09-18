@@ -30,7 +30,7 @@ node <插件根>/skills/agents-launcher/agents-cli.mjs prepare
 
 这是 gitignored 的 worktree 局部文件，已存在则不覆盖，可自动执行。主仓缺失时不自动复制和填写敏感配置，报告缺失并让用户处理。
 
-web 域启用时，launcher 会检查 agents CSS 产物；缺失时自动运行 `pnpm build:css`。
+web 域启用时，launcher 每次启动都会跑 `pnpm build:css` 重建 agents CSS 产物——产物存在也重建：Tailwind 扫源码生成，产物过期不会自愈（表现为 UI 样式错乱），而重建全程 <1s。退出码非 0 时打 warning，不阻断启动。
 
 ## 启动边界
 
