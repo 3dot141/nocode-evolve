@@ -20,7 +20,7 @@ launcher 根据 FX_SERVER_DIR 执行 git branch --show-current 选择脚本，�
 - polars 层：polars-local。镜像定义在 server 仓单独的 `docker-compose-polars-{arm,x86}.yml`，按宿主架构选文件后与主 compose 合并 `up -d --pull always`。合并启动同时解决两件事：pull 让引擎与 sync 同批更新；共用项目身份让 polars-local 不再是 orphan。x86 文件取 `POLARS_VERSION`（按 profile 传 `harbor.jsydevelop.com/develop/<profile>-polars:latest`），arm 文件里钉死具体镜像。引擎与 sync 必须同批：只更新 sync 会出现「新 sync + 旧 polars」，表现为表更新失败（`Table not found` + 失败上报路径 `PolarsErrorCodeException: NullPointerException`，2026-09-18 实证）。参照 server 仓 `dockerstart-polars.sh`，但不搬它的 `stop/rm jsy-webui`（与分支层管理冲突）与 `docker image prune -f`（破坏性）。
 - 分支层：jsy-webui、sync、image-exporter。每次启动只 pull 这三类镜像，并按当前 profile 重建；切换 profile 时清理旧前缀容器。
 
-polars 文件缺失或宿主架构未知时打 warning 跳过该层，不阻断其余启动。
+polars 层是 best-effort：拉取/启动失败只打 warning 不中断（镜像仓库抖动不该拖垮全栈，2026-09-18 实证），文件缺失或宿主架构未知同样跳过。两种 warning 都意味着引擎可能落后于 sync 或未运行，表更新会失败，需人工用 server 仓 `dockerstart-polars.sh` 处理。
 
 Compose 中的 fx-data-agents 不由 Docker 层启动，由 agents 域单独管理，避免抢占 :8070。
 

@@ -52,8 +52,12 @@ case "$(uname -m)" in
 esac
 polars_file="docker-compose-polars-${polars_suffix}.yml"
 if [[ -n "$polars_suffix" && -f "$polars_file" ]]; then
+  # 失败只告警不中断：镜像仓库抖动不该拖垮全栈（2026-09-18 实证：aliyuncs 鉴权端一抖，
+  # set -e 把 web/Spring/agents 全停在 DOWN）。但要大声告警——polars 落后于 sync 会直接
+  # 表现为表更新失败，操作者需要知道改用 server 仓 dockerstart-polars.sh 处理。
   POLARS_VERSION="harbor.jsydevelop.com/develop/${profile}-polars:latest" \
-    docker compose -f "$compose_file" -f "$polars_file" up -d --pull always polars-local
+    docker compose -f "$compose_file" -f "$polars_file" up -d --pull always polars-local \
+    || echo "[warn] polars-local 拉取或启动失败（详见上方 docker 输出）：引擎可能落后于 sync 或未运行，表更新可能失败" >&2
 else
   echo "[warn] ${polars_file} 不存在或宿主架构未知，跳过 polars-local；polars 引擎版本可能落后于 sync" >&2
 fi
