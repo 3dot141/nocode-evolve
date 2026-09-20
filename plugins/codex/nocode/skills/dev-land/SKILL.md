@@ -4,7 +4,7 @@ description: "\"Use when implementation is complete and you need to land the wor
 ---
 
 合并后项目流转使用 `$lark-project`。
-PR 定时监控用 `exec_command` 启动 `references/pr-check.mjs --watch`，保存 session id；用 `write_stdin` 续取增量输出，评论事件按 prflow Step 6 处置，不停监控。
+PR 定时监控用 `exec_command` 启动 `references/pr-check.mjs --watch`，保存 session id；用 `write_stdin` 续取增量输出，评论事件按 prflow Step 6 核实后出方案、经用户确认再执行修复，不停监控。
 
 # land — 3 步着陆，干净收场
 

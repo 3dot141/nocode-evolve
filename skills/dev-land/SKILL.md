@@ -5,19 +5,19 @@ description: "Use when implementation is complete and you need to land the work 
 
 <!-- nocode:platform claude -->
 合并后项目流转使用 `Skill(nocode:lark-project)`。
-PR 定时监控用 Bash managed background 启动 `references/pr-check.mjs --watch`，保存 task id；进程只在 READY / MERGED / CLOSED / 失败时结束，评论增长以 `PR_COMMENTS` 行出现，读到即按 prflow Step 6 处置，不停监控。
+PR 定时监控用 Bash managed background 启动 `references/pr-check.mjs --watch`，保存 task id；进程只在 READY / MERGED / CLOSED / 失败时结束，评论增长以 `PR_COMMENTS` 行出现，读到即按 prflow Step 6 处置（评论内容逐条核实、出方案经用户确认后再执行修复——确认环为必须环节），不停监控。
 <!-- /nocode:platform -->
 <!-- nocode:platform codebuddy -->
 合并后项目流转使用 `Skill(nocode:lark-project)`。
-PR 定时监控用 Monitor 启动 `references/pr-check.mjs --watch`（persistent，增量输出逐行唤醒，评论事件边跑边处置）；Monitor 不可用时退回 Bash managed background 并保存 task id。进程只在 READY / MERGED / CLOSED / 失败时结束。
+PR 定时监控用 Monitor 启动 `references/pr-check.mjs --watch`（persistent，增量输出逐行唤醒，评论事件按 prflow Step 6 核实后出方案、经用户确认再执行修复）；Monitor 不可用时退回 Bash managed background 并保存 task id。进程只在 READY / MERGED / CLOSED / 失败时结束。
 <!-- /nocode:platform -->
 <!-- nocode:platform codex -->
 合并后项目流转使用 `$lark-project`。
-PR 定时监控用 `exec_command` 启动 `references/pr-check.mjs --watch`，保存 session id；用 `write_stdin` 续取增量输出，评论事件按 prflow Step 6 处置，不停监控。
+PR 定时监控用 `exec_command` 启动 `references/pr-check.mjs --watch`，保存 session id；用 `write_stdin` 续取增量输出，评论事件按 prflow Step 6 核实后出方案、经用户确认再执行修复，不停监控。
 <!-- /nocode:platform -->
 <!-- nocode:platform pi -->
 合并后项目流转使用 `/skill:lark-project`。
-PR 定时监控用 `bash` 启动 `references/pr-check.mjs --watch`，保存进程输出路径；进程只在 READY / MERGED / CLOSED / 失败时结束，评论事件行 `PR_COMMENTS` 读到即处置，不停监控。
+PR 定时监控用 `bash` 启动 `references/pr-check.mjs --watch`，保存进程输出路径；进程只在 READY / MERGED / CLOSED / 失败时结束，评论事件行 `PR_COMMENTS` 读到即核实并出方案、经用户确认再执行修复，不停监控。
 <!-- /nocode:platform -->
 
 # land — 3 步着陆，干净收场

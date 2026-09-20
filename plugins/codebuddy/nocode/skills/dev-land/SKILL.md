@@ -4,7 +4,7 @@ description: "Use when implementation is complete and you need to land the work 
 ---
 
 合并后项目流转使用 `Skill(nocode:lark-project)`。
-PR 定时监控用 Monitor 启动 `references/pr-check.mjs --watch`（persistent，增量输出逐行唤醒，评论事件边跑边处置）；Monitor 不可用时退回 Bash managed background 并保存 task id。进程只在 READY / MERGED / CLOSED / 失败时结束。
+PR 定时监控用 Monitor 启动 `references/pr-check.mjs --watch`（persistent，增量输出逐行唤醒，评论事件按 prflow Step 6 核实后出方案、经用户确认再执行修复）；Monitor 不可用时退回 Bash managed background 并保存 task id。进程只在 READY / MERGED / CLOSED / 失败时结束。
 
 # land — 3 步着陆，干净收场
 

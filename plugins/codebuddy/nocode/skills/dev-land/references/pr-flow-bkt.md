@@ -172,6 +172,8 @@ bkt api "/rest/api/1.0/projects/<KEY>/repos/<slug>/pull-requests/<id>/merge?vers
 - **不要对 fork PR（Workflow B）用 `bkt pr edit --with-default-reviewers`** — 报 `400 source repository with id '0' does not exist`。B 的 reviewer 必须 `--reviewer` 显式加
 - **不要用 `bkt pr view` 验证跨仓（Workflow B）PR** — author/reviewers 显示 None/空。走 raw GET `bkt api '.../pull-requests/<id>' --json` 看 `reviewers[].user.name`/`.state`
 - **不要裸 POST `/merge`** — DC 的 XSRF 防护会 403 `XSRF check failed`；必须 `-H "X-Atlassian-Token: no-check"`（实测 PR #1522，重试同样 403，不是偶发）
+- **PR 开出后 base 侧新进提交会迟到出现冲突** — 含跨 fork 前一个 PR 的 merge 把上游整线带进 base：特征是建 PR 时冲突试探 0、数小时后平台标 conflicted。解法：`git fetch upstream <base>` 后在 feature 分支 `git merge upstream/<base>`（保历史免 force push），相邻插入型冲突（双方各自加条目）合并保留双份（实测 PR #2440：cleanup 任务清单两项都留）
+- **merge 解冲突后平台 mergeResult 有缓存延迟** — push 后 REST 的 properties.mergeResult 短期仍空/旧值；以 fromRef HEAD == 本地解冲突 commit 为准，READY 信号等下一轮询
 
 ## 项目本地特异内容不在本文件
 
