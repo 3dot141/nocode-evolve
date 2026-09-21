@@ -89,6 +89,21 @@ function writeCache(cp, store) {
 
 const branch = git('rev-parse --abbrev-ref HEAD', true) || 'HEAD';
 const base = pickBase(branch);
+
+// ── 本地仓豁免: 无 remote 或零提交 (unborn HEAD) → 无远端基线可言, 直接 ok ──
+// 冷启动基线依赖 "fetch 远端成功" (离线冷启动不写 entry, 见下); 无 remote 的仓
+// fetch 必败 → 永远冷启动反复拦 (死锁). 零提交仓没有任何可 "过时" 的工作, 同样不适用.
+const hasRemote = git('remote', true).split('\n').filter(Boolean).length > 0;
+const hasCommits = git('rev-parse --verify -q HEAD', true) !== '';
+if (!hasRemote || !hasCommits) {
+  console.log(JSON.stringify({
+    branch, base, behind: 0, ahead: 0, age_seconds: 0, cache_hit: false,
+    cold_start: false, gate: 'ok', session_skipped: false,
+    message: `freshness 不适用 (${!hasCommits ? '零提交 unborn HEAD' : '无 remote'} 的本地仓, 直接放行)`,
+  }, null, 2));
+  process.exit(0);
+}
+
 const cp = cachePath();
 const now = Date.now();
 const store = readCache(cp);
@@ -121,12 +136,18 @@ let fetched = true;
 if (entry && ageSeconds < TTL_SECONDS) {
   cacheHit = true;
 } else {
-  const remoteBranch = base.startsWith('origin/') ? base.slice(7) : base;
+  // base 形如 <remote>/<branch> 且前缀是真实 remote → fetch 对应 remote (upstream/release → fetch upstream release);
+  // 旧逻辑只剥 origin/ 前缀, 会把 upstream/release 整串当 origin 的分支名 → 双 remote fork (track upstream) 下必败, 冷启动反复拦.
+  const remotes = git('remote', true).split('\n').filter(Boolean);
+  const m = base.match(/^([\w.-]+)\/(.+)$/);
+  const remote = m && remotes.includes(m[1]) ? m[1] : 'origin';
+  const remoteBranch = m && remotes.includes(m[1]) ? m[2] : (base.startsWith('origin/') ? base.slice(7) : base);
   try {
-    git(`fetch origin ${remoteBranch} --quiet`);
+    git(`fetch ${remote} ${remoteBranch} --quiet`);
   } catch (e) {
     fetched = false;
-    fetchWarn = `fetch 失败 (${(e.message || '').split('\n')[0].slice(0, 120)}); freshness 视为 unknown`;
+    const detail = (e.stderr ? e.stderr.toString().trim().split('\n').filter(Boolean).pop() : '') || (e.message || '').split('\n')[0];
+    fetchWarn = `fetch 失败 (git fetch ${remote} ${remoteBranch}: ${detail.slice(0, 120)}); freshness 视为 unknown`;
     process.stderr.write(`[freshness-check] WARN: ${fetchWarn}\n`);
   }
   if (fetched) {

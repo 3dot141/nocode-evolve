@@ -18,9 +18,9 @@ function git(cwd, args) {
   return execFileSync('git', args, { cwd, encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] }).trim();
 }
 
-function run(session, extra = []) {
+function run(session, extra = [], cwd = work) {
   const r = spawnSync(process.execPath, [SCRIPT, ...extra], {
-    cwd: work,
+    cwd,
     encoding: 'utf8',
     // 显式覆盖, 防止外层会话的 NOCODE_SESSION_ID 泄漏进测试
     env: { ...process.env, NOCODE_SESSION_ID: session || '' },
@@ -117,4 +117,50 @@ test('分支追平后: behind 实时归零, 跨会话直接 ok (不残留旧落�
   assert.equal(r.json.gate, 'ok');
   assert.equal(r.json.behind, 0, '本地 ref 已追平, rev-list 实时归零');
   assert.equal(r.json.session_skipped, false, '跨会话不跳过, 是完整检查后 ok');
+});
+
+test('双 remote fork: base=upstream/<branch> → fetch 对应 remote, 基线可建立', () => {
+  // 复现线上 bug: 分支 track upstream/main (非 origin), 旧逻辑拼 "git fetch origin upstream/main"
+  // → origin 上无此 ref 必败 → 冷启动不写 entry → 同会话反复拦. 修复后应 fetch upstream 成功并落基线.
+  git(work, ['remote', 'add', 'upstream', path.join(root, 'origin.git')]);
+  git(work, ['fetch', 'upstream', 'main']);
+  git(work, ['config', 'branch.main.remote', 'upstream']);
+  git(work, ['config', 'branch.main.merge', 'refs/heads/main']);
+  const r = run('sess-d');
+  assert.equal(r.json.base, 'upstream/main');
+  assert.equal(r.json.cold_start, true, '新 branch+base 组合首次为冷启动');
+  assert.equal(r.json.message.includes('fetch 失败'), false, 'fetch 走 upstream 成功, 不再拼 origin upstream/main');
+  const r2 = run('sess-d');
+  assert.equal(r2.json.session_skipped, true, 'fetch 成功已写基线, 同会话跳过 (不再反复拦)');
+});
+
+test('本地仓豁免: 有提交但无 remote → 直接 ok 放行 (不冷启动死锁)', () => {
+  // 复现线上 bug: 无 remote 的本地仓 (如本地草稿仓) fetch 必败 → 冷启动不写 entry
+  // → 每次触发都拦. 修复后应直接 ok. 独立 fixture, 不污染共享 work 的 cache 断言.
+  const local = path.join(root, 'local-noremote');
+  git(root, ['init', '-b', 'main', local]);
+  git(local, ['config', 'user.email', 't@example.com']);
+  git(local, ['config', 'user.name', 't']);
+  git(local, ['config', 'commit.gpgsign', 'false']);
+  git(local, ['commit', '--allow-empty', '-m', 'solo']);
+  const r = run('sess-e', [], local);
+  assert.equal(r.status, 0, 'exit 0');
+  assert.equal(r.json.gate, 'ok', '无 remote 直接放行');
+  assert.equal(r.json.cold_start, false, '不走冷启动');
+  assert.match(r.json.message, /无 remote/, 'message 说明豁免原因');
+  assert.equal(
+    fs.existsSync(path.join(local, '.git', 'nocode-freshness.json')), false,
+    '豁免路径不落 cache',
+  );
+});
+
+test('本地仓豁免: 零提交 (unborn HEAD) → 直接 ok 放行', () => {
+  // 刚 init 的仓 (即使配了 remote) 没有任何可 "过时" 的工作, 同样不适用.
+  const empty = path.join(root, 'local-empty');
+  git(root, ['init', '-b', 'main', empty]);
+  git(empty, ['remote', 'add', 'origin', path.join(root, 'origin.git')]);
+  const r = run('sess-f', [], empty);
+  assert.equal(r.status, 0, 'exit 0');
+  assert.equal(r.json.gate, 'ok', '零提交直接放行');
+  assert.match(r.json.message, /零提交/, 'message 说明豁免原因');
 });

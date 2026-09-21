@@ -38,6 +38,7 @@ skip: false
 **不触发** (明确豁免):
 
 - 开 / 将开 worktree 那刻 (`rule-git-worktree` fetch 已覆盖)
+- **无 remote / 零提交 (unborn HEAD) 的本地仓** — 无远端基线可言, 脚本直接 `ok` 放行 (不 gate / 不 fetch / 不落 cache)
 - 已知精确路径 Read 单文件
 - 单行 literal Bash grep / 文件名 Glob find
 - 用户显式说"直接搜 / 不要 fetch / 跳过 freshness"
@@ -64,14 +65,15 @@ node "${PLUGIN_ROOT}/scripts/freshness-check.mjs" --max-behind=5 --ttl=7200 --se
    - `git rev-parse --abbrev-ref --symbolic-full-name HEAD@{u}` (当前分支 upstream, eg. `origin/release/x` 或 `origin/main`)
    - 无 upstream / detached → `git rev-parse --abbrev-ref origin/HEAD` (远端 default branch, 通常 `origin/main`)
    - 兜底 `origin/main`
-2. **cache** (`git rev-parse --git-path nocode-freshness.json` — 每 worktree 独立, `.git/` 下不被 commit; 结构 v3: `{ v: 3, entries: { "<branch>+<base>": { last_fetch_ms, last_check_ms, last_check_session } } }`; v2 及更旧 (含冻结 behind/ahead 字段) 读到即作废 → 触发一次冷启动重建):
+2. **本地仓豁免** (base 推断后立即判定): `git remote` 为空或 HEAD unborn (零提交) → 直接 `ok` 放行——无 remote 的仓 fetch 必败, 若走冷启动会死锁成 "每次拦"
+3. **cache** (`git rev-parse --git-path nocode-freshness.json` — 每 worktree 独立, `.git/` 下不被 commit; 结构 v3: `{ v: 3, entries: { "<branch>+<base>": { last_fetch_ms, last_check_ms, last_check_session } } }`; v2 及更旧 (含冻结 behind/ahead 字段) 读到即作废 → 触发一次冷启动重建):
    - **fetch 命中**: 该 `branch+base` 有 entry + `(now - last_fetch_ms) < TTL (默认 2h)` → 不重新 fetch
    - **会话跳过**: entry 的 `last_check_session` 与本次 session 一致 + `(now - last_check_ms) < TTL` → 直接 ok 跳过执行 (不 fetch、不 rev-list)
-3. **behind / ahead 实时计算**: 每次执行都本地 `rev-list --count HEAD..base` / `base..HEAD` (毫秒级)——fetch 缓存只表示"远端 ref 何时同步过", 不冻结落后量; 分支被 pull/push 追平后 behind 立即归零
-4. **cache miss (fetch 层)** → `git fetch origin <base 去 origin/ 前缀>` (静默) → 写回 `last_fetch_ms`
-5. **离线** (fetch 失败) → stderr WARN + 沿用旧 entry 的 fetch 时刻, behind 仍实时算, `gate=ok` 不阻塞 (冷启动除外)
-6. **冷启动** (该 `branch+base` 在 cache 里从无 entry — 机器/分支首次, 或升级后旧格式作废) → `coldStart=true`, **无条件 gate 一次** (不论 fetch 成败 / behind 多少); fetch 成功写 entry 后, 下次同组合转常规
-7. **检查记录写回**: 每次完整检查 (ok / gate 均算) 写 `last_check_ms` / `last_check_session`——gate 也算检查过 (用户即将三选, 同会话后续不再打扰)。离线冷启动无 entry 可写, 不写 (仍每次拦, 直到联网建立基线)
+4. **behind / ahead 实时计算**: 每次执行都本地 `rev-list --count HEAD..base` / `base..HEAD` (毫秒级)——fetch 缓存只表示"远端 ref 何时同步过", 不冻结落后量; 分支被 pull/push 追平后 behind 立即归零
+5. **cache miss (fetch 层)** → `git fetch <base 前缀对应的 remote> <分支名>` (base 形如 `<remote>/<branch>` 且 remote 真实存在; 否则兜底 origin 剥 `origin/` 前缀; 静默) → 写回 `last_fetch_ms`
+6. **离线** (fetch 失败) → stderr WARN + 沿用旧 entry 的 fetch 时刻, behind 仍实时算, `gate=ok` 不阻塞 (冷启动除外)
+7. **冷启动** (该 `branch+base` 在 cache 里从无 entry — 机器/分支首次, 或升级后旧格式作废) → `coldStart=true`, **无条件 gate 一次** (不论 fetch 成败 / behind 多少); fetch 成功写 entry 后, 下次同组合转常规
+8. **检查记录写回**: 每次完整检查 (ok / gate 均算) 写 `last_check_ms` / `last_check_session`——gate 也算检查过 (用户即将三选, 同会话后续不再打扰)。离线冷启动无 entry 可写, 不写 (仍每次拦, 直到联网建立基线)
 
 ## Gate 行为 (脚本输出 `gate: "gate"` 时)
 
