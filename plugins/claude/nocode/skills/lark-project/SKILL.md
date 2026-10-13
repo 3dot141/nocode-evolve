@@ -21,7 +21,8 @@ Use `Skill(nocode:meegle)`.
 | 流转（流转状态 / 关闭 bug / 验收 / 状态更新） | [references/transition-contract.md](./references/transition-contract.md)（三步法定型 → 模板流转页路由 → 状态流约束 → 评论/工时收尾） |
 | 读取/了解工作项（读问题、看缺陷/需求、排查上下文） | [references/read-contract.md](./references/read-contract.md)（`_all` 字段 + 评论并行 + 附件下载） |
 | 工时登记（任务号 + 分钟数 + 描述） | [worklog/README.md](./worklog/README.md)（不走 meegle） |
-| 创建/更新/查询等常规操作 | 无附加契约，直接透传 |
+| 创建工作项（创建 bug / 缺陷 / 需求 / 任务） | [references/create-contract.md](./references/create-contract.md)（空间归属 → 必填字段实测值 → fx-data 版本查找 → 附件预上传 → 边界） |
+| 更新/查询等常规操作 | 无附加契约，直接透传 |
 
 ## 常驻约束（全意图适用，不需加载）
 
