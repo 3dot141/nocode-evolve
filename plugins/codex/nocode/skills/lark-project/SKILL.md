@@ -1,6 +1,6 @@
 ---
 name: lark-project
-description: "\"飞书项目管理（Meego）。当用户给 project.feishu.cn 链接、提到 Meego 工作项、或需要读取/创建/更新/流转飞书项目工作项时使用。通过 meegle skill（…"
+description: "\"飞书项目管理（Meego）。当用户给 project.feishu.cn 链接、提到 Meego 工作项、或需要读取/创建/更新/流转飞书项目工作项、登记工时时使用。通过 meegle s…"
 ---
 
 # lark-project：飞书项目管理（业务指引层）
@@ -20,7 +20,7 @@ Use `$meegle`.
 |---|---|
 | 流转（流转状态 / 关闭 bug / 验收 / 状态更新） | [references/transition-contract.md](./references/transition-contract.md)（三步法定型 → 模板流转页路由 → 状态流约束 → 评论/工时收尾） |
 | 读取/了解工作项（读问题、看缺陷/需求、排查上下文、视图 URL 取数） | [references/read-contract.md](./references/read-contract.md)（`_all` 字段 + 评论并行 + 附件下载 + 视图取数走 MQL 复刻） |
-| 工时登记（任务号 + 分钟数 + 描述） | [worklog/README.md](./worklog/README.md)（不走 meegle） |
+| 工时登记（任务号 + 分钟数 + 描述） | [worklog/config.md](./worklog/config.md)（调用契约：分钟数来源与解析 → 登记纪律 → 缺 env 动态获取 + key 抓取 SOP；不走 meegle。完整 PR 工作流的 worklog/README.md 不随发布物分发） |
 | 创建工作项（创建 bug / 缺陷 / 需求 / 任务） | [references/create-contract.md](./references/create-contract.md)（空间归属 → 必填字段实测值 → fx-data 版本查找 → 附件预上传 → 边界） |
 | 更新/查询等常规操作 | 无附加契约，直接透传 |
 
