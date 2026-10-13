@@ -17,7 +17,7 @@
 
 | 阶段（节点） | 流转动作 | 必填/注意 |
 |---|---|---|
-| 组员开发（node_key=state_1） | 填「研发处理后评估」→ `workflow transition --action confirm --node-id state_1` | 必填 radio `field_90f734`，**路由字段**（值决定去向）；写入走 `workitem update`（`update-node` 静默不落库，见 meegle sop-transition-node 4.3.1），写入后 `get-node` 回读确认再流转 |
+| 组员开发（node_key=state_1） | 填「研发处理后评估」→ `workflow transition --action confirm --node-id state_1` | 必填 radio `field_90f734`，**路由字段**（值决定去向）；写入走 `workitem update`（`update-node` 对表单字段静默不落库，口径见官方 meegle skill 的 `sop-transition-node.md`），写入后 `get-node` 回读确认再流转 |
 | 创建者验收 / 数据组员验收 / 测试组员验收 | 由对应角色在其节点 confirm（负责人视角操作，一般不由研发 agent 代流转） | 按节点实际必填项处理 |
 | 完成 | 终态 | — |
 

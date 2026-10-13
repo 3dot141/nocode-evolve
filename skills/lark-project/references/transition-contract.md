@@ -18,7 +18,7 @@
 
 1. 状态流转走 meegle 的 `references/sop-transition-state.md` 完整 SOP（fail-fast 流转 → 必填补填 → 重试），**不是裸调 `workflow transition-state` 就完事**。
 2. 流转常被 confirm_form 必填字段拦截（如缺陷的「缺陷来源于需求」）；meegle CLI **不支持在 transition-state 上传字段值**（`--params` 传 `fields`/`confirm_form` 均为 unknown_params，实测无效）——正确解法是先 `workitem update` 预填必填字段，再裸 `transition-state`。
-3. 关联类必填字段（`workitem_related_multi_select`）值为 stringified 数字数组（如 `"[7071224906]"`）；**关联对象是业务判断**：须用户提供或从该工作项上下文查实（如同分支提交所挂需求），不得 mock。「缺陷来源于 X」类来源字段例外——服务端必填是**四选一**（需求/产研任务/缺陷/子任务，填一个即过校验）。按工作性质定优先序：**bug 修复优先「缺陷来源于缺陷」**（自引用：本单 ID 写入即过）；**feat 优先「缺陷来源于需求」**（MQL 搜同名需求，见下条 MQL 坑）。首选字段匹配不到（注意：**类型不匹配的写入会静默失败**——update 返回空成功但回读 null，如给「来源于需求」填缺陷 ID 被拒收）→ 依序继续试其余三个来源字段 → 四个全落不了值才问用户。**每次写入后必须回读确认生效再流转**（实测教训 PR #2065：「来源于缺陷」自引用过校验、「来源于需求」拒收缺陷 ID 且静默丢弃）。详见 meegle `sop-transition-state.md` 4.4。
+3. 关联类必填字段（`workitem_related_multi_select`）值为 stringified 数字数组（如 `"[7071224906]"`）；**关联对象是业务判断**：须用户提供或从该工作项上下文查实（如同分支提交所挂需求），不得 mock。「缺陷来源于 X」类来源字段例外——服务端必填是**四选一**（需求/产研任务/缺陷/子任务，填一个即过校验）。按工作性质定优先序：**bug 修复优先「缺陷来源于缺陷」**（自引用：本单 ID 写入即过）；**feat 优先「缺陷来源于需求」**（MQL 搜同名需求，见下条 MQL 坑）。首选字段匹配不到（注意：**类型不匹配的写入会静默失败**——update 返回空成功但回读 null，如给「来源于需求」填缺陷 ID 被拒收）→ 依序继续试其余三个来源字段 → 四个全落不了值才问用户。**每次写入后必须回读确认生效再流转**（实测教训 PR #2065：「来源于缺陷」自引用过校验、「来源于需求」拒收缺陷 ID 且静默丢弃）。来源字段值格式与候选选择细节见官方 meegle skill 的 `references/sop-transition-state.md`。
 4. MQL 查需求关联时：FROM 项目名用中文名+反引号（simple_name 撞歧义空间报 no permission），story 类字段 key 是 `work_item_id` / `work_item_status`（非 `id`/`status`）。
 
 ## 收尾动作

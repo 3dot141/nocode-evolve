@@ -9,7 +9,7 @@ description: "飞书项目管理（Meego）。当用户给 project.feishu.cn 链
 
 命中本 skill 的请求：**把 arguments 透传调用 meegle skill**（平台原生 Skill 调用）：
 
-Use `Skill(nocode:meegle)`.
+Use `Skill(meegle)`（官方 meegle install 装入 `~/.claude/skills/meegle`，无插件前缀；未安装时先 `npx -y @lark-project/meegle@latest install`）.
 
 
 

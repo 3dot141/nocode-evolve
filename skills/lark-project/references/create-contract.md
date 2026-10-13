@@ -24,7 +24,7 @@
 ## 3. 版本字段（`influence_version`，workitem_related_multi_select）
 
 - 版本是 version 类型工作项，命名 `fx-data-X.Y.Z`。用户给两段口径（如 10.19）→ 补全成 `fx-data-10.19.0` 再查；给非常规三段口径（如 10.0.19）先按版本列表比对，无匹配则问用户，不猜。
-- 查找与取 ID（坑：状态字段是 `work_item_status`，`status` 报 attr not found；MQL 细节见 meegle 的 mql-syntax）：
+- 查找与取 ID（坑：状态字段是 `work_item_status`，`status` 报 attr not found；MQL 语法见官方 meegle skill 的 `references/mql-basics.md` / `mql-operators.md`）：
 
 ```bash
 meegle workitem query --project-key 67d7ba04296cba3d3ece0694 \
