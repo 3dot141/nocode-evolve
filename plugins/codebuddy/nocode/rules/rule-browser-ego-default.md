@@ -21,6 +21,7 @@ skip: false
    ego-browser import --browser edge [--profile <dir-name>]
    ```
    返回结构化 JSON 结果；`source_no_importable_profiles`（code 4）表示 Edge 无可导入 profile——检查 Edge 是否装有 profile 数据、ego lite 对 Edge 数据目录的磁盘访问权限，向用户说明后重试或降级。导入成功后在同一 taskSpace 重试原操作。
+   ⚠ **副作用预告**：import 可能把 ego lite 设为系统默认浏览器（返回 `default_browser_set: true`），macOS 会弹系统确认框——执行前先告知用户此副作用；用户不想改默认浏览器时可在弹窗拒绝（导入不受影响），已被改的从「系统设置 → 桌面与程序坞 → 默认网页浏览器」改回。
 3. 导入后仍失败：向用户说明卡点（哪个域/哪种 token 拿不到），由用户决定手动登录或其他方案——不要静默放弃或伪造成功。
 
 ## 边界
