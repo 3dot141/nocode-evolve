@@ -17,11 +17,10 @@ skip: false
 1. **先直接尝试**：ego-browser 复用用户配置文件，残留登录态可能已够用——不要预判失败。
 2. **遇到登录墙/token 缺失**（如接口返回 `Token is empty`、跳登录页）：**agent 自行执行 ego-browser 导入 Edge 登录数据**，不要让用户手动操作：
    ```bash
-   ego-browser import list                        # 先查可用浏览器与 profile
-   ego-browser import --browser edge [--profile <dir-name>]
+   ego-browser import list                                  # 先查可用浏览器与 profile
+   ego-browser import --browser edge --no-default [--profile <dir-name>]
    ```
-   返回结构化 JSON 结果；`source_no_importable_profiles`（code 4）表示 Edge 无可导入 profile——检查 Edge 是否装有 profile 数据、ego lite 对 Edge 数据目录的磁盘访问权限，向用户说明后重试或降级。导入成功后在同一 taskSpace 重试原操作。
-   ⚠ **副作用预告**：import 可能把 ego lite 设为系统默认浏览器（返回 `default_browser_set: true`），macOS 会弹系统确认框——执行前先告知用户此副作用；用户不想改默认浏览器时可在弹窗拒绝（导入不受影响），已被改的从「系统设置 → 桌面与程序坞 → 默认网页浏览器」改回。
+   **默认带 `--no-default`**：官方参数，导入登录数据但不把 ego lite 设为系统默认浏览器——不带的副作用是 ego lite 会抢默认浏览器并触发 macOS 系统弹窗。返回结构化 JSON 结果；`source_no_importable_profiles`（code 4）表示 Edge 无可导入 profile——检查 Edge 是否装有 profile 数据、ego lite 对 Edge 数据目录的磁盘访问权限，向用户说明后重试或降级。导入成功后在同一 taskSpace 重试原操作。
 3. 导入后仍失败：向用户说明卡点（哪个域/哪种 token 拿不到），由用户决定手动登录或其他方案——不要静默放弃或伪造成功。
 
 ## 边界
