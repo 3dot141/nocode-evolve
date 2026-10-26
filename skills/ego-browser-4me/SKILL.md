@@ -5,11 +5,17 @@ description: Use when a browser task needs the user's own logged-in session — 
 
 # ego-browser-4me
 
-`ego-browser` 的默认 profile 常常**没有**你要的登录态 —— 它可能是另一个人格，
-或是另一台浏览器导入的。直接拿它访问需要登录的站点，结果是一直停在登录页；
-而这个现象看起来像「没权限」，容易误判成账号问题。
+本 skill **是 `ego-browser` 的前置步骤，不是它的替代**。
+浏览器操作本身（API、选择器、截图、CDP 逃逸口）全部以 `ego-browser` 为准：
 
-本 skill 固定一条顺序，避免在登录页上白费功夫。
+> 动手前先 `Skill(nocode:ego-browser)` 读它的使用指南；本 skill 只补它没有的那一段
+> ——「怎么拿到用户自己的登录态」。
+
+为什么需要补这一段：`ego-browser` 的默认 profile 常常**没有**你要的登录态，
+它可能是另一个人格，或是另一台浏览器导入的。直接拿它访问需要登录的站点，
+结果是一直停在登录页；而这个现象看起来像「没权限」，容易误判成账号问题。
+
+所以固定顺序：**先按本 skill 把 profile 换对，再按 `ego-browser` 的指南执行任务。**
 
 ## 流程
 
@@ -64,7 +70,8 @@ console.log(await page.evaluate(() => ({ url: location.pathname, title: document
 ```
 
 - 落在登录页 → 这个 profile 没有该站会话，**回第 1 步换个来源**
-- 正常进入 → 才开始执行用户的实际任务
+- 正常进入 → 至此前置条件就绪，**回到 `Skill(nocode:ego-browser)` 按它的指南执行**
+  （本 skill 不重复描述 snapshot / click / evaluate 的用法，那些以它为准）
 
 ## 已知坑
 
@@ -79,6 +86,8 @@ console.log(await page.evaluate(() => ({ url: location.pathname, title: document
 - **用默认 profile 去开需登录的站点** —— 默认 profile 往往是另一个账号，表现为莫名停在登录页。
 - **导入时省掉 `--no-default`** —— 会改掉用户的系统默认浏览器。
 - **不验证就点按钮** —— 在登录页上找元素，得到的全是「找不到」。
+- **把本 skill 当成 `ego-browser` 的完整替代** —— 这里只有换 profile 这一段；
+  API 用法、选择器语法、截图与 CDP 逃逸口一律去 `ego-browser` 查，不要凭记忆写。
 
 ## 复用
 
