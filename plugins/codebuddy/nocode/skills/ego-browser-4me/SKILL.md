@@ -92,6 +92,59 @@ console.log(await page.evaluate(() => ({ url: location.pathname, title: document
 - 正常进入 → 至此前置条件就绪，**回到 `Skill(nocode:ego-browser)` 按它的指南执行**
   （本 skill 不重复描述 snapshot / click / evaluate 的用法，那些以它为准）
 
+### 6. 任务结束关闭空间
+
+按「关闭 task space」章节执行。默认 `await task.finish({ keep: [] })`；要确保空间消失就用 `completeTaskSpace(id, { keep: false })`。**别把空间留到下次。**
+
+## 关闭 task space（任务结束时必做）
+
+任务做完就关空间，不要留在那里——每留一个就占一份内存、一个窗口，而且下次同名创建会踩到复用陷阱。这一步**放在任务的最后一次脚本里做完**，不要留到「下次」。
+
+### 按意图选关闭方式
+
+| 意图 | 调用 | 空间是否消失 |
+|---|---|---|
+| 结果要给用户看 | `await task.finish({ keep: ["p1"] })` | 否，页面留给用户 |
+| 任务完成，什么都不用留 | `await task.finish({ keep: [] })` | **不一定**，见下 |
+| 确保空间消失 | `await completeTaskSpace(id, { keep: false })` | 是 |
+| 千万别用 | `ego.deleteSpaces({ ids })` | 会弹确认框，无人值守时不返回 |
+
+### `finish({ keep: [] })` 为什么有时留着空间
+
+空间里只要有未托管的 tab、或 `openedBy === "unknown"` 的 tab（`release()` 还给用户的页面就是这种），`finish` 会走另一条分支：关掉 agent 页面后只把 `ownership` 从 `agent` 翻成 `user`，空间留在列表里。**这是设计行为，不是失败。**
+
+`completeTaskSpace(id, { keep: false })` 没有这个判断，无条件调用 `closeTaskSpace()`。任务结束时想干净收场，用它。
+
+### 空间名为空时 helper 找不到它
+
+`completeTaskSpace()` / `taskSpace()` 依赖名字解析。实测遇到 `name: ""` 的空间时，helper 版 `listTaskSpaces()` 会把它直接过滤掉（`helpers.ts` 的 `normalizeTaskSpace` 用 `name` 组装 `taskId`，空串被判无效返回 `null`），于是 `completeTaskSpace(8, …)` 报 `task space not found: 8`，而原生 `ego.listTaskSpaces()` 明明能看到它。
+
+用原生 API 直接关：
+
+```js
+ego.useTaskSpace(id);
+await ego.closeTaskSpace();     // 返回 "<id> task space closed."
+```
+
+空间是 user-owned 时先 `await ego.claimTaskSpace(id)`。
+
+### 批量清理时的顺序
+
+先查再关，别盲删：
+
+```js
+const native = await ego.listTaskSpaces();
+const ids = native.taskSpaces.map((x) => x.id);
+for (const id of ids) {
+  const sp = native.taskSpaces.find((x) => x.id === id);
+  if (sp.ownership === "user") await ego.claimTaskSpace(id);
+  ego.useTaskSpace(id);
+  await ego.closeTaskSpace();
+}
+```
+
+用原生 `ego.listTaskSpaces()` 而不是 helper 版——helper 会漏掉空名空间，导致你以为清完了其实还剩。
+
 ## 已知坑
 
 | 现象 | 原因 | 处理 |
@@ -101,6 +154,10 @@ console.log(await page.evaluate(() => ({ url: location.pathname, title: document
 | 导入后 profile 数量没变 | 导入的档案已存在 | 用 `--profile` 指名具体档案 |
 | 删了 profile 目录，`profiles()` 里还在 | 索引没删干净时，ego 用 `Local State` 的 `info_cache` 把条目补回去；而 `info_cache` 里带 `ego_import_source_browser` 标记的条目，会在下次导入时按来源重建 | 先退出 ego 再删目录 + 删 `info_cache` 条目，见「收尾」 |
 | 删完重启，又冒出一个更大的 profile | 来源浏览器（Edge/Chrome）仍可导入，或有另一个会话执行了 `ego-browser import` | 用 `import list` 确认来源是否仍可用；不打算复用就别重启 ego，见「收尾」第 5 步 |
+| `finish({ keep: [] })` 调完空间还在列表 | 空间含未托管或 `openedBy: "unknown"` 的 tab，走了 `completeTaskSpace` 分支 | 改用 `completeTaskSpace(id, { keep: false })`，见「关闭 task space」 |
+| `completeTaskSpace(id, …)` 报 `task space not found` | 该空间 `name` 为空串，helper 的 `normalizeTaskSpace` 会把它丢弃 | 用原生 `ego.useTaskSpace(id)` + `ego.closeTaskSpace()` |
+| 批量清理后仍有空间残留 | 用了 helper 版 `listTaskSpaces()`，它漏掉空名空间 | 改用原生 `ego.listTaskSpaces()` 列全量 |
+| `deleteSpaces` 调用后脚本挂住不返回 | 它弹确认框等用户点击，无人值守时不返回也不报错 | 不要用它清理；用 `closeTaskSpace` / `completeTaskSpace` |
 | `gh:` 请求 GitHub Pages API 报 `Resource not accessible by integration` | `pages` **不是合法 OAuth scope**（`invalid_scope`）；该端点只认带 admin 权限的 PAT | 走网页端操作，不要反复试 API |
 
 ## 不要
@@ -129,34 +186,7 @@ const spaces = await listTaskSpaces();
 
 ### 2. 关掉本次的任务空间
 
-```js
-await task.finish({ keep: [] });
-```
-
-`finish()` 只能调用一次，之后不能再操作它的任何 Page。
-
-**`finish({ keep: [] })` 有时不删空间，这是设计行为。** 空间里只要有未托管的 tab、或 `openedBy === "unknown"` 的 tab（`release()` 还给用户的页面就是），`finish` 会走另一条分支：关闭 agent 页面后只把 `ownership` 翻成 `user`，空间留在列表里。
-
-要确保空间真的消失，用这个——它无条件走 `closeTaskSpace()`，不受 protected tab 影响：
-
-```js
-await completeTaskSpace(id, { keep: false });
-```
-
-**不要用 `ego.deleteSpaces()` 清理。** 它会弹出确认对话框等用户点击；无人值守的 agent 流程里既不返回也不报错，表现为脚本挂死。
-
-### 空间名为空时 helper 找不到它
-
-`completeTaskSpace()` / `taskSpace()` 等 helper 依赖名字解析。实测遇到一个 `name: ""` 的空间时，helper 版的 `listTaskSpaces()` 会把它直接过滤掉（`helpers.ts` 的 `normalizeTaskSpace` 用 `name` 组装 `taskId`，空串被当作无效返回 `null`），于是 `completeTaskSpace(8, …)` 报 `task space not found: 8`，而原生 `ego.listTaskSpaces()` 明明能看到它。
-
-绕过办法是用原生 API 直接关：
-
-```js
-ego.useTaskSpace(8);
-await ego.closeTaskSpace();     // 返回 "8 task space closed."
-```
-
-空间是 user-owned 时先 `await ego.claimTaskSpace(id)`。
+见「关闭 task space」章节。一次性 profile 任务里，关完空间再往下走 profile 清理。
 
 ### 3. 退出 ego
 
