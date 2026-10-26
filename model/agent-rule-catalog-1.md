@@ -7,7 +7,6 @@
 
 | 文件相对地址 | 描述 |
 |---|---|
-| rules/rule-browser-ego-default.md | 任何任务需要打开、操作或自动化浏览器（访问网页、下载带登录态的资源、截图、站点测试/dogfooding、访问需登录的内部系统）时触发——默认走 Skill(nocode:ego-browser) 完成，不启动 Playwright/puppeteer/独立 headless 等替代浏览器方案；当 ego-browser 缺少目标站点登录态时，agent 自行执行 ego-browser import 从 Edge 导入登录数据（不要让用户手动登录或手动导入），导入失败按返回码排错。不触发：用户明确点名其他浏览器工具、纯 HTTP 无浏览器语义的请求（curl/fetch 直接请求）、桌面应用自动化。 |
 | rules/rule-codex-review.md | 独立 review 路由规则。仅在 reviewing 引擎或上游流程明确要求独立审查时触发， 使用当前平台的原生 agent 请求隔离 reviewer，并如实记录实际独立性。 默认自审、普通代码检查、未获用户授权的升审不触发。 |
 | rules/rule-commit-task-key.md | 生成或编写含飞书任务号标注（#<前缀>-<ID> 形态，如 #g-7073131785）的 commit message、 PR 标题或任务关联文本时触发——任务号必须先用 meego 按纯数字 ID 查工作项真实 Key （meegle workitem get 返回项的编号），用查到的完整 Key 作标注，禁止按仓库历史 commit 的 f-/g-/m- 前缀分布推测。不触发: 用户已提供带前缀完整 Key、 纯数字 #ID 无前缀要求的仓库、与飞书任务无关的 commit（#none 类）。 |
 | rules/rule-cross-repo-lookup.md | 从当前仓库进入另一个物理 git repo 只读检查代码 (Read / rg / git log / 对照实现) 前触发——同一逻辑仓库磁盘上常有主仓 + 多份平级 worktree 拷贝, 先 git worktree list 枚举唯一候选集, 与当前分支同名的 worktree 优先, 进入后 branch --show-current 验证再读, 不沿用记忆/上下文残留路径。 不触发: 在当前仓库内部检索、要去改那个仓库的文件 (走 rule-git-worktree 关联仓库节)、本会话已按本流程验证过且分支未切换的路径复用。 |

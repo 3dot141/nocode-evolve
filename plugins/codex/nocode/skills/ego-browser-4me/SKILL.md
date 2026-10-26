@@ -1,19 +1,24 @@
 ---
 name: ego-browser-4me
-description: "Use when a browser task needs the user's own logged-in session — App Store Connect, 飞书/Lark, 各类…"
+description: "Use before ANY browser automation task — 打开站点、抓取页面数据、截图、访问后台、下载登录态资源、站点测试/dogfooding，包括看起来是公开、无…"
 ---
 
 # ego-browser-4me
 
-本 skill **是 `ego-browser` 的前置步骤，不是它的替代**。
+**任何浏览器自动化任务的默认入口。** 先按本 skill 选定正确的 profile，再按 `ego-browser` 的指南执行操作。
+
 浏览器操作本身（API、选择器、截图、CDP 逃逸口）全部以 `ego-browser` 为准：
 
 > 动手前先 `Skill(nocode:ego-browser)` 读它的使用指南；本 skill 只补它没有的那一段
 > ——「怎么拿到用户自己的登录态」。
 
-为什么需要补这一段：`ego-browser` 的默认 profile 常常**没有**你要的登录态，
-它可能是另一个人格，或是另一台浏览器导入的。直接拿它访问需要登录的站点，
-结果是一直停在登录页；而这个现象看起来像「没权限」，容易误判成账号问题。
+为什么要先走这一步：`ego-browser` 的默认 profile 常常**不是**你要的那个——
+它可能是另一个人格，或是另一台浏览器导入的。直接拿它访问站点，结果是一直停在登录页；
+而这个现象看起来像「没权限」，容易误判成账号问题。
+
+看起来公开的站点也可能踩：同一个 URL 在不同 profile 下可能是登录态、地域、账号权益不同的两份结果，
+而失败时页面通常不会报错——你会拿到一份看起来正常、实际不是目标身份的数据。
+所以「这次不需要登录」的预判本身不可靠，先确认 profile 是更便宜的顺序。
 
 所以固定顺序：**先按本 skill 把 profile 换对，再按 `ego-browser` 的指南执行任务。**
 
