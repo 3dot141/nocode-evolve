@@ -145,6 +145,19 @@ await completeTaskSpace(id, { keep: false });
 
 **不要用 `ego.deleteSpaces()` 清理。** 它会弹出确认对话框等用户点击；无人值守的 agent 流程里既不返回也不报错，表现为脚本挂死。
 
+### 空间名为空时 helper 找不到它
+
+`completeTaskSpace()` / `taskSpace()` 等 helper 依赖名字解析。实测遇到一个 `name: ""` 的空间时，helper 版的 `listTaskSpaces()` 会把它直接过滤掉（`helpers.ts` 的 `normalizeTaskSpace` 用 `name` 组装 `taskId`，空串被当作无效返回 `null`），于是 `completeTaskSpace(8, …)` 报 `task space not found: 8`，而原生 `ego.listTaskSpaces()` 明明能看到它。
+
+绕过办法是用原生 API 直接关：
+
+```js
+ego.useTaskSpace(8);
+await ego.closeTaskSpace();     // 返回 "8 task space closed."
+```
+
+空间是 user-owned 时先 `await ego.claimTaskSpace(id)`。
+
 ### 3. 退出 ego
 
 ```bash
