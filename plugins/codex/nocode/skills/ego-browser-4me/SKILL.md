@@ -1,11 +1,13 @@
 ---
 name: ego-browser-4me
-description: "Use before ANY browser automation task — 打开站点、抓取页面数据、截图、访问后台、下载登录态资源、站点测试/dogfooding，包括看起来是公开、无…"
+description: "Use when 消息里出现 ego-browser / ego lite / ego-lite（含询问工具自身能力：profile 管理、环境重置、task space 清理、版本与安装升…"
 ---
 
 # ego-browser-4me
 
 **任何浏览器自动化任务的默认入口。** 先按本 skill 选定正确的 profile，再按 `ego-browser` 的指南执行操作。
+
+问到 ego 工具本身（有哪些 profile、怎么删 profile、怎么重置环境、task space 怎么清）也走本 skill——「收尾」章节就是 profile 删除与环境清理的完整方案，不要先去 `ego-browser` 里翻。
 
 浏览器操作本身（API、选择器、截图、CDP 逃逸口）全部以 `ego-browser` 为准：
 
@@ -56,7 +58,19 @@ ego-browser nodejs -e 'console.log(JSON.stringify(await profiles(), null, 2))'
 ### 4. 用该 id 新建任务空间
 
 ```js
-const task = await taskSpace("<任务名>-<yymmdd>", { profileId: "Profile N" });
+const task = await taskSpace("<topic>-<yymmdd>-<hhmmss>", { profileId: "Profile N" });
+```
+
+**命名固定为 `<topic>-<yymmdd>-<hhmmss>`**，例如 `asc-upload-261026-134512`。
+
+- `topic`：2–8 字符的 kebab-case 任务主题，可检索（`asc-upload`、`jira-triage`）
+- `yymmdd`：**创建当日**日期
+- `hhmmss`：24 小时制，本地时间，补零
+
+为什么带时分秒：`taskSpace()` 撞名时两种结果都不是你要的——不传 `profileId` 会**静默复用**旧空间（继承它残留的 tab、登录态、页面状态，任务从半途开始且无提示）；传了 `profileId` 则直接报错 `profileId only applies when creating a new task space`。秒级时间戳让每次创建都落在新名字上，两种撞名都不会发生，也省掉先查名是否被占这一步。
+
+```bash
+date "+%y%m%d-%H%M%S"   # 取当前时间戳
 ```
 
 `profileId` 只在**创建**空间时生效。对已存在的空间再传会直接报错：
@@ -85,7 +99,8 @@ console.log(await page.evaluate(() => ({ url: location.pathname, title: document
 | 一直重定向到登录页 | 该 profile 没有此站会话 | 换另一个 browser_source；或请用户先在那台浏览器登录一次再导入 |
 | `profileId only applies when creating…` | 空间已存在 | 换新空间名 |
 | 导入后 profile 数量没变 | 导入的档案已存在 | 用 `--profile` 指名具体档案 |
-| 删了 profile 目录，`profiles()` 里还在 | ego 运行中，它用内存副本把索引写回 `Local State` | 先退出 ego 再改索引，见「收尾」 |
+| 删了 profile 目录，`profiles()` 里还在 | 索引没删干净时，ego 用 `Local State` 的 `info_cache` 把条目补回去；而 `info_cache` 里带 `ego_import_source_browser` 标记的条目，会在下次导入时按来源重建 | 先退出 ego 再删目录 + 删 `info_cache` 条目，见「收尾」 |
+| 删完重启，又冒出一个更大的 profile | 来源浏览器（Edge/Chrome）仍可导入，或有另一个会话执行了 `ego-browser import` | 用 `import list` 确认来源是否仍可用；不打算复用就别重启 ego，见「收尾」第 5 步 |
 | `gh:` 请求 GitHub Pages API 报 `Resource not accessible by integration` | `pages` **不是合法 OAuth scope**（`invalid_scope`）；该端点只认带 admin 权限的 PAT | 走网页端操作，不要反复试 API |
 
 ## 不要
@@ -119,6 +134,13 @@ await task.finish({ keep: [] });
 ```
 
 `finish()` 只能调用一次，之后不能再操作它的任何 Page。
+
+**调完要复查**：`finish()` 不保证空间真的消失。实测同一个批次里，有的空间被直接移除，有的只是把 `ownership` 从 `agent` 翻成 `user` 留在列表里。复查并对残留补一次 `deleteSpaces`：
+
+```js
+const left = (await ego.listTaskSpaces()).taskSpaces.map((s) => s.id);
+if (left.length) console.log("残留:", await ego.deleteSpaces({ ids: left }));
+```
 
 ### 3. 退出 ego
 
@@ -156,6 +178,13 @@ open -a "ego lite"
 ```js
 console.log(await profiles());   // 应当只剩需要保留的那几个
 ```
+
+**重启有副作用，先判断要不要重启**：只要来源浏览器还可用，ego 启动时可能按 `ego_import_source_*` 标记重新导入，把你刚删的 profile 换个 id 再建出来（本次实测：删完两个 profile 重启后，生成了一个 3.2G 的新 profile）。
+
+- 还要继续用 ego → 重启并复查 `profiles()`，出现新 profile 属于预期，按需保留或再清
+- 本次任务已结束、暂时不用 ego → **跳过重启**，下次手动打开时再处理
+
+另外确认没有别的会话正在跑 `ego-browser import`——并发导入会同时产生多个 profile，让删除结果看起来像没生效。
 
 ## 复用
 
