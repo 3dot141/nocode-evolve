@@ -7,7 +7,14 @@ description: "Use when 消息里出现 ego-browser / ego lite / ego-lite（含�
 
 **任何浏览器自动化任务的默认入口。** 先按本 skill 选定正确的 profile，再按 `ego-browser` 的指南执行操作。
 
-问到 ego 工具本身（有哪些 profile、怎么删 profile、怎么重置环境、task space 怎么清）也走本 skill——「收尾」章节就是 profile 删除与环境清理的完整方案，不要先去 `ego-browser` 里翻。
+问到 ego 工具本身（有哪些 profile、怎么删 profile、怎么重置环境、task space 怎么清）也走本 skill——「profile 清理」章节就是 profile 删除与环境清理的完整方案，不要先去 `ego-browser` 里翻。
+
+**两条清理规则的边界，别混：**
+
+| 对象 | 何时清 |
+|---|---|
+| task space | **每次任务结束就清**（见「关闭 task space」），默认动作 |
+| profile | **仅在用户明确说要清时**（见「profile 清理」），不主动做 |
 
 浏览器操作本身（API、选择器、截图、CDP 逃逸口）全部以 `ego-browser` 为准：
 
@@ -96,6 +103,8 @@ console.log(await page.evaluate(() => ({ url: location.pathname, title: document
 
 按「关闭 task space」章节执行。默认 `await task.finish({ keep: [] })`；要确保空间消失就用 `completeTaskSpace(id, { keep: false })`。**别把空间留到下次。**
 
+空间关掉就够了，**profile 不要动**——登录态下次还要用，除非用户明确要求清理。
+
 ## 关闭 task space（任务结束时必做）
 
 任务做完就关空间，不要留在那里——每留一个就占一份内存、一个窗口，而且下次同名创建会踩到复用陷阱。这一步**放在任务的最后一次脚本里做完**，不要留到「下次」。
@@ -152,8 +161,8 @@ for (const id of ids) {
 | 一直重定向到登录页 | 该 profile 没有此站会话 | 换另一个 browser_source；或请用户先在那台浏览器登录一次再导入 |
 | `profileId only applies when creating…` | 空间已存在 | 换新空间名 |
 | 导入后 profile 数量没变 | 导入的档案已存在 | 用 `--profile` 指名具体档案 |
-| 删了 profile 目录，`profiles()` 里还在 | 索引没删干净时，ego 用 `Local State` 的 `info_cache` 把条目补回去；而 `info_cache` 里带 `ego_import_source_browser` 标记的条目，会在下次导入时按来源重建 | 先退出 ego 再删目录 + 删 `info_cache` 条目，见「收尾」 |
-| 删完重启，又冒出一个更大的 profile | 来源浏览器（Edge/Chrome）仍可导入，或有另一个会话执行了 `ego-browser import` | 用 `import list` 确认来源是否仍可用；不打算复用就别重启 ego，见「收尾」第 5 步 |
+| 删了 profile 目录，`profiles()` 里还在 | 索引没删干净时，ego 用 `Local State` 的 `info_cache` 把条目补回去；带 `ego_import_source_browser` 标记的条目还会在下次导入时按来源重建 | 先退出 ego 再删目录 + 删 `info_cache` 条目，见「profile 清理」 |
+| 删完重启，又冒出一个更大的 profile | 来源浏览器仍可导入，ego 启动时会按标记重新导入 | 用 `import list` 确认来源；不打算复用就别重启 ego，见「profile 清理」第 4 步 |
 | `finish({ keep: [] })` 调完空间还在列表 | 空间含未托管或 `openedBy: "unknown"` 的 tab，走了 `completeTaskSpace` 分支 | 改用 `completeTaskSpace(id, { keep: false })`，见「关闭 task space」 |
 | `completeTaskSpace(id, …)` 报 `task space not found` | 该空间 `name` 为空串，helper 的 `normalizeTaskSpace` 会把它丢弃 | 用原生 `ego.useTaskSpace(id)` + `ego.closeTaskSpace()` |
 | 批量清理后仍有空间残留 | 用了 helper 版 `listTaskSpaces()`，它漏掉空名空间 | 改用原生 `ego.listTaskSpaces()` 列全量 |
@@ -168,36 +177,44 @@ for (const id of ids) {
 - **把本 skill 当成 `ego-browser` 的完整替代** —— 这里只有换 profile 这一段；
   API 用法、选择器语法、截图与 CDP 逃逸口一律去 `ego-browser` 查，不要凭记忆写。
 
-## 收尾
+## profile 清理（仅在用户明确要求时）
 
-任务完成后**主动清理**，否则每跑一次就多一个 3.5GB 的 profile 目录。
+**默认不清理 profile。** 任务结束只关 task space（见上一章），profile 留着——它装着登录态，下次任务还要接着用。导入一次 3.5GB，删了再导要重来一遍。
 
-### 1. 先查有没有别的工作空间在用
+只有用户**明确说了要清理**（「清掉这个 profile」「删了我不要了」「重置环境」这类），才往下走。判断不准就问一句，不要自己决定删。
+
+### 先确认三件事
 
 ```js
-const spaces = await listTaskSpaces();
+const profiles = await profiles();          // 现存哪些
+const native = await ego.listTaskSpaces();  // 谁在占用
 ```
 
-返回每项含 `{ id, name, profileId, profileName, ownership }`。
+1. **要删哪个** —— 按 `id` 确认（`Profile N`），名字可能重复
+2. **谁在占用** —— 有 space 用着它就先关空间，否则删不干净
+3. **是不是唯一** —— 删到 0 个 profile 前先问用户，可能需要先建一个
 
-**如果还有别的空间在跑**（`spaces` 非空，且不是自己正在关的那个），
-先问用户：「还有 N 个工作空间在运行（列出名字），清理 profile 会中断它们，确认继续？」
-得到肯定答复再往下。没有其它空间 → 直接执行。
+### 1. 关掉占用它的 task space
 
-### 2. 关掉本次的任务空间
+见「关闭 task space」章节。**用原生 `ego.listTaskSpaces()` 列全量**，helper 版会漏空名空间。
 
-见「关闭 task space」章节。一次性 profile 任务里，关完空间再往下走 profile 清理。
-
-### 3. 退出 ego
+### 2. 退出 ego
 
 ```bash
 osascript -e 'quit app "ego lite"'
 ```
 
-**这一步不能省。** ego 运行时会用内存里的副本周期性把 `info_cache` 写回
-`Local State` —— 只删目录或只改索引，都会被它覆盖回去，表现为「删了还在」。
+`osascript` 有时被拒（实测两次都失败），兜底用 SIGTERM：
 
-### 4. 删目录 + 删索引
+```bash
+kill -TERM $(pgrep -f "ego lite.app/Contents/MacOS/ego lite")
+```
+
+**这一步不能省。** ego 运行时会用内存副本周期性把 `info_cache` 写回 `Local State` —— 只删目录或只改索引都会被覆盖回去，表现为「删了还在」。
+
+### 3. 删目录 + 删索引
+
+两处都要删：只删目录 → 索引残留；只删索引 → 磁盘不回收。
 
 ```bash
 P=~/Library/Application\ Support/Citro\ Labs/ego\ lite
@@ -206,35 +223,57 @@ rm -rf "$P/Profile N"
 
 ```python
 import json, os
+
 p = os.path.expanduser("~/Library/Application Support/Citro Labs/ego lite/Local State")
+KEEP = "Profile K"          # 要保留的那个 id
+TARGET = "Profile N"        # 要删的那个 id
+
 d = json.load(open(p))
-d.get("profile", {}).get("info_cache", {}).pop("Profile N", None)
-json.dump(d, open(p, "w"), ensure_ascii=False)
+prof = d["profile"]
+
+prof["info_cache"].pop(TARGET, None)                       # 条目本身
+for key in ("profiles_order", "last_active_profiles"):     # 顺序与活跃列表
+    if prof.get(key):
+        prof[key] = [x for x in prof[key] if x != TARGET]
+if prof.get("last_used") == TARGET:                        # 默认指向
+    prof["last_used"] = KEEP
+
+json.dump(d, open(p, "w"), ensure_ascii=False, indent=2)
 ```
 
-两处都要删：只删目录 → 索引残留，下次误用该 id 会重建一个空 profile；
-只删索引 → 目录留在磁盘上，3.5GB 不回收。
+`info_cache` 条目里带 `ego_import_source_browser` 等标记，条目删掉标记一并消失。
 
-### 5. 重启并验证
+### 4. 重启前先想清楚
 
 ```bash
 open -a "ego lite"
 ```
 
+**重启可能把你刚删的东西造回来。** ego 启动时若发现来源浏览器还可导入，会按 `ego_import_source_*` 标记重新导入一个（实测：`--clear-existing-profiles` 后重启，`new_profile_dirs: []` 但仍生成了新 profile，因为新 profile 是重启后应用自己导的，不在 CLI 流程里）。
+
+| 情况 | 做法 |
+|---|---|
+| 用户还要继续用 ego | 重启，然后复查 `profiles()`，出现新 profile 属于预期 |
+| 用户暂时不用 | **跳过重启**，下次手动打开时再处理 |
+| 想彻底不再导入 | 只能从源头断：在源浏览器里退出该 profile，或删掉它 |
+
+### 5. 验证
+
 ```js
-console.log(await profiles());   // 应当只剩需要保留的那几个
+console.log(await profiles());
+console.log(await ego.listTaskSpaces());
 ```
 
-**重启有副作用，先判断要不要重启**：只要来源浏览器还可用，ego 启动时可能按 `ego_import_source_*` 标记重新导入，把你刚删的 profile 换个 id 再建出来（本次实测：删完两个 profile 重启后，生成了一个 3.2G 的新 profile）。
+确认目标 profile 已消失、剩下的那个仍是用户要的。若冒出新 profile，向用户说明这是重新导入的结果，问是否要再清一次——不要默默反复删。
 
-- 还要继续用 ego → 重启并复查 `profiles()`，出现新 profile 属于预期，按需保留或再清
-- 本次任务已结束、暂时不用 ego → **跳过重启**，下次手动打开时再处理
+### 绝不主动做的事
 
-另外确认没有别的会话正在跑 `ego-browser import`——并发导入会同时产生多个 profile，让删除结果看起来像没生效。
+- 任务结束时顺手清 profile
+- 因为「看起来是一次性导入」就自行删除
+- 没用 `--clear-existing-profiles` 之外的途径批量删（那个 flag 会清掉**所有** profile，包括用户要留的）
 
-## 复用
+## 一次性导入的复用
 
-如果这个 profile **还会继续用**（比如每天都要访问同一个后台），就跳过收尾的
-3~5 步，只做第 2 步。下次直接取它的 `id` 建新空间即可，不必重复导入。
+为某次任务临时导入的 profile，任务结束后**仍然默认保留**。下次要用直接取它的 `id` 建新空间，不必重新导入。
 
-判断依据是「一次性导入 vs 长期使用」：为某次任务临时导入的，用完就清。
+只有用户说过「这个导入是一次性的、用完清掉」且**在任务结束时再次确认**，才走上一章的清理流程。
