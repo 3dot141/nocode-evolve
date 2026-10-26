@@ -2,6 +2,8 @@
 
 **只在用户明确要求清理时读这个文件。** 任务正常结束时不要碰 profile——它装着登录态，下次还要用。
 
+**读完回到主文件继续流程。** 关空间相关问题走 [closing-task-space.md](closing-task-space.md)；报错速查走 [troubleshooting.md](troubleshooting.md)。
+
 ## 先确认三件事
 
 ```js

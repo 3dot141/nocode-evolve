@@ -2,6 +2,8 @@
 
 主文件只给「默认用哪个」，这里展开为什么、以及各种边界情况。
 
+**读完回到主文件第 5 步继续，不要在这里另起流程。** 其他问题查 [troubleshooting.md](troubleshooting.md)；要清 profile 走 [profile-cleanup.md](profile-cleanup.md)。
+
 ## 四种关闭方式对照
 
 | 意图 | 调用 | 空间是否消失 | 何时用 |

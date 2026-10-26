@@ -1,6 +1,9 @@
 # 已知坑速查
 
-按现象查表。需要展开的见对应 reference。
+按现象查表。查到后**回到主文件继续**，或按表里的指引转入对应 reference。
+
+- 空间关闭的完整方案 → [closing-task-space.md](closing-task-space.md)
+- profile 清理与环境重置 → [profile-cleanup.md](profile-cleanup.md)
 
 ## profile 与导入
 

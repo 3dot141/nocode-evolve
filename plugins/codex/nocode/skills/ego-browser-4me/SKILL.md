@@ -33,6 +33,8 @@ ego-browser import --browser <edge|chrome|brave> [--profile <dir>] --no-default
 
 已经导入过就直接跳到第 2 步，不必重复导入。
 
+导入这一步出问题（重定向到登录页、profile 数量没变、想知道新 profile 叫什么、想排除扩展），读 `references/troubleshooting.md` 或 `references/profile-cleanup.md` 的「能力边界」节。
+
 ### 2. 确认 profile id
 
 ```bash
@@ -69,15 +71,25 @@ await completeTaskSpace(id, { keep: false });         // 要确保空间消失
 
 **别把空间留到下次。** profile 不要动——登录态下次还要用。
 
-需要批量清理、空名空间、或想搞清楚 `finish` 为什么有时留着空间 → `references/closing-task-space.md`。
+关上之后遇到下面任一情况，**停下读 `references/closing-task-space.md`**，不要自己试：
+
+- 调用报 `task space not found`
+- 调完 `listTaskSpaces()` 里空间还在
+- 一次要关多个
+- 想用 `deleteSpaces`（先读再决定，大概率会挂）
 
 ## 按需展开
 
-| 场景 | 读 |
+主文件只够跑通标准流程。命中下表的触发条件时**先读对应文件再动手**：
+
+| 触发条件 | 读 |
 |---|---|
-| 空间关不掉、批量清理、`deleteSpaces` 相关 | `references/closing-task-space.md` |
-| 用户明确要求清理 profile / 重置环境 | `references/profile-cleanup.md` |
-| 遇到报错或异常现象 | `references/troubleshooting.md` |
+| 空间关不掉、报 `task space not found`、要批量清理、想用 `deleteSpaces` | `references/closing-task-space.md` |
+| 用户说「清掉这个 profile」「重置环境」「删了不要了」 | `references/profile-cleanup.md` |
+| 出现任何报错、或行为与预期不符 | `references/troubleshooting.md` |
+| 用户问「能不能创建 profile / 改默认 / 导入时不要扩展」 | `references/profile-cleanup.md` 的「能力边界」节 |
+
+**读完之后回到主文件继续流程，不要在 reference 里另起一套步骤。**
 
 ## 不要
 
