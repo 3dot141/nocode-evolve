@@ -85,6 +85,8 @@ console.log(await page.evaluate(() => ({ url: location.pathname, title: document
 | 一直重定向到登录页 | 该 profile 没有此站会话 | 换另一个 browser_source；或请用户先在那台浏览器登录一次再导入 |
 | `profileId only applies when creating…` | 空间已存在 | 换新空间名 |
 | 导入后 profile 数量没变 | 导入的档案已存在 | 用 `--profile` 指名具体档案 |
+| 删了 profile 目录，`profiles()` 里还在 | ego 运行中，它用内存副本把索引写回 `Local State` | 先退出 ego 再改索引，见「收尾」 |
+| `gh:` 请求 GitHub Pages API 报 `Resource not accessible by integration` | `pages` **不是合法 OAuth scope**（`invalid_scope`）；该端点只认带 admin 权限的 PAT | 走网页端操作，不要反复试 API |
 
 ## 不要
 
@@ -94,7 +96,70 @@ console.log(await page.evaluate(() => ({ url: location.pathname, title: document
 - **把本 skill 当成 `ego-browser` 的完整替代** —— 这里只有换 profile 这一段；
   API 用法、选择器语法、截图与 CDP 逃逸口一律去 `ego-browser` 查，不要凭记忆写。
 
+## 收尾
+
+任务完成后**主动清理**，否则每跑一次就多一个 3.5GB 的 profile 目录。
+
+### 1. 先查有没有别的工作空间在用
+
+```js
+const spaces = await listTaskSpaces();
+```
+
+返回每项含 `{ id, name, profileId, profileName, ownership }`。
+
+**如果还有别的空间在跑**（`spaces` 非空，且不是自己正在关的那个），
+先问用户：「还有 N 个工作空间在运行（列出名字），清理 profile 会中断它们，确认继续？」
+得到肯定答复再往下。没有其它空间 → 直接执行。
+
+### 2. 关掉本次的任务空间
+
+```js
+await task.finish({ keep: [] });
+```
+
+`finish()` 只能调用一次，之后不能再操作它的任何 Page。
+
+### 3. 退出 ego
+
+```bash
+osascript -e 'quit app "ego lite"'
+```
+
+**这一步不能省。** ego 运行时会用内存里的副本周期性把 `info_cache` 写回
+`Local State` —— 只删目录或只改索引，都会被它覆盖回去，表现为「删了还在」。
+
+### 4. 删目录 + 删索引
+
+```bash
+P=~/Library/Application\ Support/Citro\ Labs/ego\ lite
+rm -rf "$P/Profile N"
+```
+
+```python
+import json, os
+p = os.path.expanduser("~/Library/Application Support/Citro Labs/ego lite/Local State")
+d = json.load(open(p))
+d.get("profile", {}).get("info_cache", {}).pop("Profile N", None)
+json.dump(d, open(p, "w"), ensure_ascii=False)
+```
+
+两处都要删：只删目录 → 索引残留，下次误用该 id 会重建一个空 profile；
+只删索引 → 目录留在磁盘上，3.5GB 不回收。
+
+### 5. 重启并验证
+
+```bash
+open -a "ego lite"
+```
+
+```js
+console.log(await profiles());   // 应当只剩需要保留的那几个
+```
+
 ## 复用
 
-导入过的 `Profile N` 会保留。同类任务下次直接取它的 `id`，
-不必重复导入 —— 否则每跑一次就多一个 Profile，越堆越乱。
+如果这个 profile **还会继续用**（比如每天都要访问同一个后台），就跳过收尾的
+3~5 步，只做第 2 步。下次直接取它的 `id` 建新空间即可，不必重复导入。
+
+判断依据是「一次性导入 vs 长期使用」：为某次任务临时导入的，用完就清。
