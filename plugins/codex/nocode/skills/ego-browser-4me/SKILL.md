@@ -135,12 +135,15 @@ await task.finish({ keep: [] });
 
 `finish()` 只能调用一次，之后不能再操作它的任何 Page。
 
-**调完要复查**：`finish()` 不保证空间真的消失。实测同一个批次里，有的空间被直接移除，有的只是把 `ownership` 从 `agent` 翻成 `user` 留在列表里。复查并对残留补一次 `deleteSpaces`：
+**`finish({ keep: [] })` 有时不删空间，这是设计行为。** 空间里只要有未托管的 tab、或 `openedBy === "unknown"` 的 tab（`release()` 还给用户的页面就是），`finish` 会走另一条分支：关闭 agent 页面后只把 `ownership` 翻成 `user`，空间留在列表里。
+
+要确保空间真的消失，用这个——它无条件走 `closeTaskSpace()`，不受 protected tab 影响：
 
 ```js
-const left = (await ego.listTaskSpaces()).taskSpaces.map((s) => s.id);
-if (left.length) console.log("残留:", await ego.deleteSpaces({ ids: left }));
+await completeTaskSpace(id, { keep: false });
 ```
+
+**不要用 `ego.deleteSpaces()` 清理。** 它会弹出确认对话框等用户点击；无人值守的 agent 流程里既不返回也不报错，表现为脚本挂死。
 
 ### 3. 退出 ego
 
