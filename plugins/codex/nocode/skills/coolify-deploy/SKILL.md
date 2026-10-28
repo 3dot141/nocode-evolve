@@ -157,7 +157,7 @@ api() { curl -sS -X POST -H "1Panel-Token: $SIG" -H "1Panel-Timestamp: $TS" \
 
 | 操作 | 端点 | body |
 |---|---|---|
-| 查站点 | `websites/search` | `{"page":1,"pageSize":50,"orderBy":"created_at","order":"desc"}` |
+| 查站点 | `websites/search` | `{"page":1,"pageSize":50,"orderBy":"created_at","order":"descending"}` |
 | 查分组 | `groups/search` | `{"type":"website"}` |
 | 创建站点 | `websites` | 见下 |
 | 绑证书 | `websites/{id}/https` | 见下 |
@@ -188,30 +188,48 @@ POST websites/{id}/https
  "httpConfig":"HTTPSOnly","SSLProtocol":["TLSv1.3","TLSv1.2"],"httpsPorts":[400xx]}
 ```
 
-### 已知限制：HTTPS 端口回退到 10018
+### 端口修正（全自动，无需登录服务器）
 
-绑定证书后生成的配置是：
-
-```nginx
-listen 400xx ;            # HTTP
-listen 10018 ssl http2 ;  # HTTPS 落到 OpenResty 默认端口
-```
-
-`applySSL` 读取的 `domain.SSL` 不落库（恒为 false），HTTPS 端口回退到
-`app_installs.https_port`（本机 10018）。必须手工修正：
+绑证书后 HTTPS 会落到 OpenResty 默认端口（本机 `10018`），因为 `applySSL` 读取的
+`domain.SSL` 不落库（恒为 false）。用「取配置 → 改 → 写回」修正：
 
 ```bash
-CONF=/opt/1panel/apps/openresty/openresty/conf/conf.d/<代号>.conf
-# 1) listen 400xx ; → listen 400xx ssl http2 ;
-# 2) 删掉 listen 10018 ssl http2 ; 及其 quic/reuseport 行（若该端口无其他站点使用）
-docker exec openresty openresty -t && docker exec openresty openresty -s reload
+source ~/Run/Env/1panel/api.env
+TS=$(date +%s); SIG=$(printf "1panel%s%s" "$PANEL_TOKEN" "$TS" | md5)
+SITE_ID=<id>; PORT=400xx
+
+python3 - "$PANEL_URL" "$SIG" "$TS" "$SITE_ID" "$PORT" <<'PY'
+import sys, json, urllib.request
+url, sig, ts, site_id, port = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5]
+def call(path, body=None, method="POST"):
+    data = json.dumps(body).encode() if body is not None else None
+    req = urllib.request.Request(url + "/api/v1/" + path, data=data, method=method)
+    req.add_header("1Panel-Token", sig); req.add_header("1Panel-Timestamp", ts)
+    req.add_header("Content-Type", "application/json")
+    with urllib.request.urlopen(req) as r: return json.loads(r.read())
+conf = call(f"websites/{site_id}/config/openresty", method="GET")["data"]["content"]
+new = conf.replace(f"listen {port} ;", f"listen {port} ssl http2 ;")
+new = new.replace("    listen 10018 ssl http2 ; \n", "")
+new = new.replace("    listen [::]:10018 ssl http2 ; \n", "")
+res = call("websites/nginx/update", {"id": int(site_id), "content": new})
+print("update:", res.get("code"))
+PY
 ```
 
-### 完整流程
+`nginx/update` 内部执行 `nginx -t`，失败自动回滚并返回错误。
+
+### 完整流程（全自动）
 
 ```text
-API 建站 → API 绑证书 → 修正 listen → openresty -t / reload → 外网验证
+① POST websites                          创建站点
+② POST websites/{id}/https               绑定证书
+③ GET  websites/{id}/config/openresty    取配置
+④ POST websites/nginx/update             改 listen 写回
+⑤ curl https://...:400xx 验证
 ```
+
+取 id 用 `websites/search`：`orderBy` 只能是 `created_at` 等白名单值，
+`order` 必须写 `ascending` / `descending`（写 `desc` 会 400）。
 
 ## 已知偏差
 
