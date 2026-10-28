@@ -135,8 +135,34 @@ curl -sS -o /dev/null -w "%{http_code}\n" http://127.0.0.1:200xx
 | 改完不生效 | 1Panel 数据库可能滞后于 `conf.d`，**以配置文件为准**；重载 OpenResty |
 | 外网打不开但本机 curl 通 | 上游安全组未放行该端口（仅 40050-40100 段可用） |
 
+## 1Panel MCP
+
+| 项 | 值 |
+|---|---|
+| 二进制 | `~/.local/share/mise/installs/go-github-com-1panel-dev-mcp-1panel/0.1.3/bin/mcp-1panel` |
+| 版本约束 | 本机 1Panel 是 **v1.10.34-lts**，只能用 mcp-1panel **v0.1.3**；v0.2.0+ 写死 `/api/v2`，请求返回 HTML 导致 MCP 报解析错误 |
+| 凭据 | `~/Run/Env/service.yes365.fun/1panel.env` |
+
+不走 MCP 直接调 v1 API 时：
+
+```bash
+KEY=$(grep PANEL_TOKEN ~/Run/Env/service.yes365.fun/1panel.env | cut -d= -f2)
+TS=$(date +%s)
+TOKEN=$(printf "1panel%s%s" "$KEY" "$TS" | md5)
+curl -s -X POST -H "1Panel-Token: $TOKEN" -H "1Panel-Timestamp: $TS" \
+  -H "Content-Type: application/json" \
+  -d '{"page":1,"pageSize":10,"orderBy":"created_at","order":"desc"}' \
+  http://service.yes365.fun:10015/api/v1/websites/search
+```
+
+两条硬约束：**必须用 POST**（GET 会被当 Web 请求返回 HTML）；**签名必须带 `1panel` 前缀**（`md5("1panel" + apiKey + timestamp)`），漏掉前缀返回 `401 API 接口密钥错误`。
+
 ## 已知偏差
 
 1Panel 数据库 `websites.proxy` 字段与 `conf.d` 实际配置存在历史不一致
 （例：40050 库内 `20050`、配置 `20060`；40020 库内 `13001`、配置 `13000`）。
 排查一律以 `conf.d` 为准，不要只看数据库。
+
+配置层手工复制的站点（如 40051）不会写入 1Panel 数据库，UI 中不可见。
+功能正常，但面板内无法管理，且在该端口新建站点会冲突。需要面板可管理时，
+应删除手工配置后再通过 1Panel 创建。
