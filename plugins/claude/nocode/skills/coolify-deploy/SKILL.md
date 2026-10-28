@@ -138,27 +138,83 @@ curl -sS -o /dev/null -w "%{http_code}\n" http://127.0.0.1:200xx
 | 改完不生效 | 1Panel 数据库可能滞后于 `conf.d`，**以配置文件为准**；重载 OpenResty |
 | 外网打不开但本机 curl 通 | 上游安全组未放行该端口（仅 40050-40100 段可用） |
 
-## 1Panel MCP
+## 1Panel API 自动化
 
-| 项 | 值 |
-|---|---|
-| 二进制 | `~/.local/share/mise/installs/go-github-com-1panel-dev-mcp-1panel/0.1.3/bin/mcp-1panel` |
-| 版本约束 | 本机 1Panel 是 **v1.10.34-lts**，只能用 mcp-1panel **v0.1.3**；v0.2.0+ 写死 `/api/v2`，请求返回 HTML 导致 MCP 报解析错误 |
-| 凭据 | `~/Run/Env/service.yes365.fun/1panel.env` |
+1Panel v1 OpenAPI 可完成建站、绑证书、查询。凭据：`~/Run/Env/1panel/api.env`。
 
-不走 MCP 直接调 v1 API 时：
+### 认证
+
+必须 **POST**；签名 `md5("1panel" + token + timestamp)`：
 
 ```bash
-KEY=$(grep PANEL_TOKEN ~/Run/Env/service.yes365.fun/1panel.env | cut -d= -f2)
+source ~/Run/Env/1panel/api.env
 TS=$(date +%s)
-TOKEN=$(printf "1panel%s%s" "$KEY" "$TS" | md5)
-curl -s -X POST -H "1Panel-Token: $TOKEN" -H "1Panel-Timestamp: $TS" \
-  -H "Content-Type: application/json" \
-  -d '{"page":1,"pageSize":10,"orderBy":"created_at","order":"desc"}' \
-  http://service.yes365.fun:10015/api/v1/websites/search
+SIG=$(printf "1panel%s%s" "$PANEL_TOKEN" "$TS" | md5)
+api() { curl -sS -X POST -H "1Panel-Token: $SIG" -H "1Panel-Timestamp: $TS" \
+  -H "Content-Type: application/json" -d "$2" "$PANEL_URL/api/v1/$1"; }
 ```
 
-两条硬约束：**必须用 POST**（GET 会被当 Web 请求返回 HTML）；**签名必须带 `1panel` 前缀**（`md5("1panel" + apiKey + timestamp)`），漏掉前缀返回 `401 API 接口密钥错误`。
+漏掉 `1panel` 前缀返回 `401 API 接口密钥错误`；用 GET 会被当 Web 请求返回 HTML。
+
+### 常用端点
+
+| 操作 | 端点 | body |
+|---|---|---|
+| 查站点 | `websites/search` | `{"page":1,"pageSize":50,"orderBy":"created_at","order":"desc"}` |
+| 查分组 | `groups/search` | `{"type":"website"}` |
+| 创建站点 | `websites` | 见下 |
+| 绑证书 | `websites/{id}/https` | 见下 |
+| 删除站点 | `websites/del` | `{"id":<id>,"forceDelete":true}` |
+
+### 创建站点
+
+```json
+{
+  "primaryDomain": "service.yes365.fun:400xx",
+  "type": "proxy",
+  "alias": "<代号>",
+  "proxy": "http://127.0.0.1:200xx",
+  "webSiteGroupID": 2,
+  "domains": [{"domain": "service.yes365.fun", "port": 400xx}],
+  "appType": "new",
+  "siteDir": "<代号>"
+}
+```
+
+`primaryDomain` 在开源源码里不存在，但本机商业版强制要求；`webSiteGroupID` 默认组为 `2`。
+
+### 绑定证书
+
+```json
+POST websites/{id}/https
+{"websiteId":<id>,"enable":true,"websiteSSLId":5,"type":"existed",
+ "httpConfig":"HTTPSOnly","SSLProtocol":["TLSv1.3","TLSv1.2"],"httpsPorts":[400xx]}
+```
+
+### 已知限制：HTTPS 端口回退到 10018
+
+绑定证书后生成的配置是：
+
+```nginx
+listen 400xx ;            # HTTP
+listen 10018 ssl http2 ;  # HTTPS 落到 OpenResty 默认端口
+```
+
+`applySSL` 读取的 `domain.SSL` 不落库（恒为 false），HTTPS 端口回退到
+`app_installs.https_port`（本机 10018）。必须手工修正：
+
+```bash
+CONF=/opt/1panel/apps/openresty/openresty/conf/conf.d/<代号>.conf
+# 1) listen 400xx ; → listen 400xx ssl http2 ;
+# 2) 删掉 listen 10018 ssl http2 ; 及其 quic/reuseport 行（若该端口无其他站点使用）
+docker exec openresty openresty -t && docker exec openresty openresty -s reload
+```
+
+### 完整流程
+
+```text
+API 建站 → API 绑证书 → 修正 listen → openresty -t / reload → 外网验证
+```
 
 ## 已知偏差
 
