@@ -57,7 +57,7 @@ S0 工具选择 → S1 现状 → S2 方向 → S3 系统 → S4 页面 → S5 �
 2. **Design Widget**——组件库，每件一个独立文件，外加一个 index 聚合；按通用组件库分类（导航 / 数据展示 / 数据录入 / 反馈 / 按钮与容器）
 3. **交互地图**——页面之间怎么走：聚合视图（全部跨页动作）+ 每页一张卡片（页面间 / 页面内分列）
 
-产出：`ui-overview`、`ux-overview`、`design-widget/`。
+产出：`ui-overview`、`ux-overview`、`design-widget/`。结构与可抄骨架见 `references/artifacts.md`。
 
 ### S4 · 页面
 
@@ -70,7 +70,7 @@ S0 工具选择 → S1 现状 → S2 方向 → S3 系统 → S4 页面 → S5 �
 | Design Widget | 本页用了哪几个组件、各自职责；只引用不重复定义 |
 | Design Token | 本页实际用到的值；没列出的不许用 |
 
-**并行规则**：页面数 > 3 时派子 agent 分组产出，≤ 3 时主 agent 自己做。
+**并行规则**：页面数 > 3 时派子 agent 分组产出，≤ 3 时主 agent 自己做（分工与 prompt 模板见 `references/parallel.md`）。
 所有子 agent 必须共享同一份 `_shared-design.md`（token、骨架、组件类、输出路径、内容纪律）。
 先做 1 份样板，用户确认结构与形态后，才批量铺其余。
 
@@ -82,7 +82,9 @@ S0 工具选择 → S1 现状 → S2 方向 → S3 系统 → S4 页面 → S5 �
 - 逐份抽查：至少看第一屏与最后一屏，确认无遮挡
 - 对齐清单：设计与现有实现的差异，逐条列出
 
-通过线由主 agent 判断——检测脚本是手段，不是通过标准。
+通过线由主 agent 判断——检测脚本是手段，不是通过标准。检测命令、截图口径与审核清单见 `references/verification.md`。
+
+各阶段的详细操作、gate 判据与常见卡点见 `references/workflow.md`。
 
 ## 硬规则
 
