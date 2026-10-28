@@ -32,7 +32,7 @@ skip: false
 ## ENV_ROOT 约定
 
 - 根目录由 `ENV_ROOT` 指定，未设置时用 `~/Run/Env`。
-- 一个服务一个文件：`<vendor>/<service>.env`，例如 `apple/appstore-connect.env`。
+- 一个服务一个文件：`<vendor>/<service>.env`，例如 `apple/appstore-connect.env`；只有一个文件的服务可直接放根目录（如 `ssh.env`）。
 - 凭据值与私钥都可入库（`${ENV_ROOT}` 自身是独立 private 仓库）；私钥若被工具按固定路径读取，用软链接指回默认位置，保持唯一实体，不复制第二份。
 - 文件权限 600。
 
